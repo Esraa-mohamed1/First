@@ -1,17 +1,24 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { X, CheckCircle2, ShieldCheck, Mail, User, Phone, Globe, Lock } from 'lucide-react';
 import { useModal } from '@/context/ModalContext';
 
 const RegistrationModal = () => {
     const { isOpen, closeModal } = useModal();
     const [step, setStep] = useState(1);
+    const router = useRouter();
 
     if (!isOpen) return null;
 
     const nextStep = () => setStep(step + 1);
     const prevStep = () => setStep(step - 1);
+
+    const handleComplete = () => {
+        closeModal();
+        router.push('/auth/payment');
+    };
 
     const renderStep = () => {
         switch (step) {
@@ -117,7 +124,7 @@ const RegistrationModal = () => {
                         </div>
                         <h2 className="text-3xl font-black text-[#1a1a1a] mb-4">تم إنشاء الحساب بنجاح</h2>
                         <p className="text-[#6b7280] font-bold text-lg mb-10 leading-relaxed">أهلاً بك في First! يمكنك الآن البدء في إدارة أكاديميتك وتطوير خدماتك.</p>
-                        <button onClick={closeModal} className="w-full py-5 bg-[#2563eb] text-white font-black rounded-[2rem] shadow-xl hover:-translate-y-1 transition-all">
+                        <button onClick={handleComplete} className="w-full py-5 bg-[#2563eb] text-white font-black rounded-[2rem] shadow-xl hover:-translate-y-1 transition-all">
                             ابدأ الآن
                         </button>
                     </div>

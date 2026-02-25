@@ -19,7 +19,6 @@ export default function Home() {
             <div className="animate-on-scroll"><Problem /></div>
             <div className="animate-on-scroll"><Benefits /></div>
             <div className="animate-on-scroll"><Pricing /></div>
-            <div className="animate-on-scroll"><Testimonials /></div>
             <div className="animate-on-scroll"><CTA /></div>
             <Footer />
         </main>
