@@ -1,5 +1,5 @@
 import Image from "next/image";
-import statsBg from "@/assets/stats.jpg";
+import paymentbg from "@/assets/paymentbg.jpg";
 
 export default function AuthLayout({
   children,
@@ -7,21 +7,22 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4">
+    <div className="min-h-screen relative flex items-center justify-center p-4 font-sans">
       {/* Background Image with Blur */}
       <div className="absolute inset-0 z-0">
         <Image
-          src={statsBg}
+          src={paymentbg}
           alt="Background"
           fill
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
+        {/* Light overlay for better contrast */}
+        <div className="absolute inset-0 bg-white/20 backdrop-blur-sm" />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 w-full max-w-6xl">
+      <div className="relative z-10 w-full flex justify-center items-center">
         {children}
       </div>
     </div>

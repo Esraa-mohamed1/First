@@ -3,8 +3,8 @@ import Link from "next/link";
 
 export default function SuccessPage() {
   return (
-    <div className="flex items-center justify-center min-h-[50vh]">
-      <div className="bg-white rounded-[2rem] p-12 text-center shadow-2xl w-full max-w-md animate-in fade-in zoom-in duration-500">
+    <div className="flex items-center justify-center min-h-[50vh] w-full">
+      <div className="bg-white rounded-[2rem] p-16 text-center shadow-2xl w-full max-w-2xl animate-in fade-in zoom-in duration-500">
         <h1 className="text-2xl font-bold mb-2">عملية الدفع</h1>
         <p className="text-gray-500 mb-8">تمت عملية الدفع بنجاح</p>
 

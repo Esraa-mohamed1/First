@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ModalProvider } from "@/context/ModalContext";
 import RegistrationModal from "@/components/Modals/RegistrationModal";
+import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
     title: "First - Landing Page",
@@ -19,6 +20,7 @@ export default function RootLayout({
                 <ModalProvider>
                     {children}
                     <RegistrationModal />
+                    <Toaster position="top-center" />
                 </ModalProvider>
             </body>
         </html>

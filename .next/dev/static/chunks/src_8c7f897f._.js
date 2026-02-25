@@ -485,22 +485,38 @@ const Pricing = ()=>{
             className: "container mx-auto px-4",
             children: [
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                    className: "text-center mb-20 max-w-3xl mx-auto",
+                    className: "text-center mb-24 relative z-10",
                     children: [
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
-                            className: "text-4xl font-extrabold mb-6 relative inline-block pb-2 after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-1 after:bg-[#FFD200] after:rounded-sm",
-                            children: "اختر باقتك وابدأ إدارة أكاديميتك بسهولة"
+                            className: "text-3xl md:text-5xl font-black text-gray-900 leading-tight",
+                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                className: "relative inline-block",
+                                children: [
+                                    "اختر باقتك وابدأ إدارة أكاديميتك بسهولة",
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        className: "absolute bottom-2 left-0 w-full h-1 bg-yellow-300/60 -z-10 rounded-sm"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/components/Sections/Pricing.tsx",
+                                        lineNumber: 58,
+                                        columnNumber: 29
+                                    }, ("TURBOPACK compile-time value", void 0))
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/components/Sections/Pricing.tsx",
+                                lineNumber: 56,
+                                columnNumber: 25
+                            }, ("TURBOPACK compile-time value", void 0))
                         }, void 0, false, {
                             fileName: "[project]/src/components/Sections/Pricing.tsx",
                             lineNumber: 55,
                             columnNumber: 21
                         }, ("TURBOPACK compile-time value", void 0)),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                            className: "text-[#6b7280] leading-relaxed text-lg font-semibold",
-                            children: "أختر الباقة المناسبة لاحتياجات أكاديميتك وابدأ إدارة المدربين والخدمات بسهولة مع نظام مرن ينمو معك."
+                            className: "mt-6 text-xl text-gray-600 max-w-2xl mx-auto font-medium",
+                            children: "اختر الباقة المناسبة لاحتياجات أكاديميتك وابدأ إدارة المدربين والخدمات بسهولة مع نظام مرن ينمو معك."
                         }, void 0, false, {
                             fileName: "[project]/src/components/Sections/Pricing.tsx",
-                            lineNumber: 58,
+                            lineNumber: 61,
                             columnNumber: 21
                         }, ("TURBOPACK compile-time value", void 0))
                     ]
@@ -519,7 +535,7 @@ const Pricing = ()=>{
                                     children: plan.tag
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/Sections/Pricing.tsx",
-                                    lineNumber: 70,
+                                    lineNumber: 74,
                                     columnNumber: 33
                                 }, ("TURBOPACK compile-time value", void 0)),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -530,7 +546,7 @@ const Pricing = ()=>{
                                             children: plan.name
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/Sections/Pricing.tsx",
-                                            lineNumber: 76,
+                                            lineNumber: 80,
                                             columnNumber: 33
                                         }, ("TURBOPACK compile-time value", void 0)),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -541,7 +557,7 @@ const Pricing = ()=>{
                                                     children: plan.price
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/components/Sections/Pricing.tsx",
-                                                    lineNumber: 80,
+                                                    lineNumber: 84,
                                                     columnNumber: 37
                                                 }, ("TURBOPACK compile-time value", void 0)),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -549,19 +565,19 @@ const Pricing = ()=>{
                                                     children: "SAR"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/components/Sections/Pricing.tsx",
-                                                    lineNumber: 81,
+                                                    lineNumber: 85,
                                                     columnNumber: 37
                                                 }, ("TURBOPACK compile-time value", void 0))
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/components/Sections/Pricing.tsx",
-                                            lineNumber: 79,
+                                            lineNumber: 83,
                                             columnNumber: 33
                                         }, ("TURBOPACK compile-time value", void 0))
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/Sections/Pricing.tsx",
-                                    lineNumber: 75,
+                                    lineNumber: 79,
                                     columnNumber: 29
                                 }, ("TURBOPACK compile-time value", void 0)),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("ul", {
@@ -576,12 +592,12 @@ const Pricing = ()=>{
                                                         strokeWidth: 4
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/Sections/Pricing.tsx",
-                                                        lineNumber: 89,
+                                                        lineNumber: 93,
                                                         columnNumber: 45
                                                     }, ("TURBOPACK compile-time value", void 0))
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/components/Sections/Pricing.tsx",
-                                                    lineNumber: 88,
+                                                    lineNumber: 92,
                                                     columnNumber: 41
                                                 }, ("TURBOPACK compile-time value", void 0)),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -589,18 +605,18 @@ const Pricing = ()=>{
                                                     children: feature
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/components/Sections/Pricing.tsx",
-                                                    lineNumber: 91,
+                                                    lineNumber: 95,
                                                     columnNumber: 41
                                                 }, ("TURBOPACK compile-time value", void 0))
                                             ]
                                         }, idx, true, {
                                             fileName: "[project]/src/components/Sections/Pricing.tsx",
-                                            lineNumber: 87,
+                                            lineNumber: 91,
                                             columnNumber: 37
                                         }, ("TURBOPACK compile-time value", void 0)))
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/Sections/Pricing.tsx",
-                                    lineNumber: 85,
+                                    lineNumber: 89,
                                     columnNumber: 29
                                 }, ("TURBOPACK compile-time value", void 0)),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -609,18 +625,18 @@ const Pricing = ()=>{
                                     children: plan.buttonText
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/Sections/Pricing.tsx",
-                                    lineNumber: 96,
+                                    lineNumber: 100,
                                     columnNumber: 29
                                 }, ("TURBOPACK compile-time value", void 0))
                             ]
                         }, index, true, {
                             fileName: "[project]/src/components/Sections/Pricing.tsx",
-                            lineNumber: 65,
+                            lineNumber: 69,
                             columnNumber: 25
                         }, ("TURBOPACK compile-time value", void 0)))
                 }, void 0, false, {
                     fileName: "[project]/src/components/Sections/Pricing.tsx",
-                    lineNumber: 63,
+                    lineNumber: 67,
                     columnNumber: 17
                 }, ("TURBOPACK compile-time value", void 0))
             ]
