@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/AB/Desktop/First/First/src/components/ScrollReveal.tsx"],"sourcesContent":["'use client';\r\n\r\nimport { useEffect } from 'react';\r\n\r\nexport default function ScrollReveal() {\r\n    useEffect(() => {\r\n        const observer = new IntersectionObserver((entries) => {\r\n            entries.forEach((entry) => {\r\n                if (entry.isIntersecting) {\r\n                    entry.target.classList.add('reveal');\r\n                }\r\n            });\r\n        }, { threshold: 0.1 });\r\n\r\n        const elements = document.querySelectorAll('.animate-on-scroll');\r\n        elements.forEach((el) => observer.observe(el));\r\n\r\n        return () => observer.disconnect();\r\n    }, []);\r\n\r\n    return null;\r\n}\r\n"],"names":[],"mappings":";;;;AAEA;;AAFA;;AAIe,SAAS;;IACpB,IAAA,0KAAS;kCAAC;YACN,MAAM,WAAW,IAAI;0CAAqB,CAAC;oBACvC,QAAQ,OAAO;kDAAC,CAAC;4BACb,IAAI,MAAM,cAAc,EAAE;gCACtB,MAAM,MAAM,CAAC,SAAS,CAAC,GAAG,CAAC;4BAC/B;wBACJ;;gBACJ;yCAAG;gBAAE,WAAW;YAAI;YAEpB,MAAM,WAAW,SAAS,gBAAgB,CAAC;YAC3C,SAAS,OAAO;0CAAC,CAAC,KAAO,SAAS,OAAO,CAAC;;YAE1C;0CAAO,IAAM,SAAS,UAAU;;QACpC;iCAAG,EAAE;IAEL,OAAO;AACX;GAjBwB;KAAA"}}]
+}

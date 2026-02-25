@@ -1,0 +1,201 @@
+/* [project]/src/components/Sections/Pricing.module.css [app-client] (css) */
+.Pricing-module__vgnR6q__pricing {
+  background: #f8faff;
+  padding: 8rem 0;
+}
+
+.Pricing-module__vgnR6q__header {
+  text-align: center;
+  max-width: 800px;
+  margin-bottom: 5rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.Pricing-module__vgnR6q__header h2 {
+  margin-bottom: 1.5rem;
+  padding-bottom: .5rem;
+  font-size: 2.5rem;
+  font-weight: 800;
+  display: inline-block;
+  position: relative;
+}
+
+.Pricing-module__vgnR6q__header h2:after {
+  content: "";
+  background: #ffd200;
+  border-radius: 2px;
+  height: 4px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.Pricing-module__vgnR6q__header p {
+  color: #4b5563;
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.Pricing-module__vgnR6q__grid {
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2rem;
+  padding-top: 3rem;
+  display: flex;
+}
+
+.Pricing-module__vgnR6q__card {
+  background: #fff;
+  border: 1px solid #4f83ff;
+  border-radius: 60px 15px;
+  flex-direction: column;
+  flex: 1;
+  min-width: 320px;
+  padding: 2.5rem 2rem;
+  transition: all .3s;
+  display: flex;
+  position: relative;
+  box-shadow: 0 10px 25px #00000008;
+}
+
+.Pricing-module__vgnR6q__featured {
+  color: #fff;
+  z-index: 10;
+  background: #4f83ff;
+  border: none;
+  transform: scale(1.05);
+  box-shadow: 0 20px 40px #4f83ff4d;
+}
+
+.Pricing-module__vgnR6q__tag {
+  color: #fff;
+  white-space: nowrap;
+  background: #ffd200;
+  border-radius: 30px;
+  padding: .5rem 2.5rem;
+  font-size: .95rem;
+  font-weight: 800;
+  position: absolute;
+  top: -1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 4px 10px #0000001a;
+}
+
+.Pricing-module__vgnR6q__cardHeader {
+  text-align: right;
+  margin-bottom: 2rem;
+}
+
+.Pricing-module__vgnR6q__planName {
+  color: #1a1a1a;
+  margin-bottom: .5rem;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.Pricing-module__vgnR6q__featured .Pricing-module__vgnR6q__planName {
+  color: #fff;
+}
+
+.Pricing-module__vgnR6q__price {
+  color: #4f83ff;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: .5rem;
+  display: flex;
+}
+
+.Pricing-module__vgnR6q__featured .Pricing-module__vgnR6q__price {
+  color: #fff;
+}
+
+.Pricing-module__vgnR6q__amount {
+  font-size: 2.2rem;
+  font-weight: 900;
+}
+
+.Pricing-module__vgnR6q__currency {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.Pricing-module__vgnR6q__features {
+  margin-bottom: 2.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.Pricing-module__vgnR6q__features li {
+  color: #4a4a4a;
+  justify-content: flex-end;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: 1.25rem;
+  font-size: .95rem;
+  font-weight: 700;
+  display: flex;
+}
+
+.Pricing-module__vgnR6q__featured .Pricing-module__vgnR6q__features li {
+  color: #fff;
+}
+
+.Pricing-module__vgnR6q__check {
+  color: #fff;
+  background: #4f83ff;
+  border-radius: 50%;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 3px;
+  display: flex;
+}
+
+.Pricing-module__vgnR6q__featured .Pricing-module__vgnR6q__check {
+  color: #4f83ff;
+  background: #fff;
+}
+
+.Pricing-module__vgnR6q__btn {
+  color: #fff;
+  background: #4f83ff;
+  border-radius: 12px;
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  transition: all .3s;
+}
+
+.Pricing-module__vgnR6q__featured .Pricing-module__vgnR6q__btn {
+  color: #4f83ff;
+  background: #fff;
+}
+
+.Pricing-module__vgnR6q__btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-3px);
+}
+
+@media (max-width: 1100px) {
+  .Pricing-module__vgnR6q__grid {
+    flex-direction: column;
+    align-items: center;
+    gap: 4rem;
+    padding-top: 4rem;
+  }
+
+  .Pricing-module__vgnR6q__card {
+    width: 100%;
+    max-width: 400px;
+    transform: none !important;
+  }
+}
+
+/*# sourceMappingURL=src_components_Sections_Pricing_module_css_bad6b30c._.single.css.map*/

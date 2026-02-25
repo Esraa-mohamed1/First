@@ -1,0 +1,253 @@
+/* [project]/src/components/Footer/Footer.module.css [app-client] (css) */
+.Footer-module__Grjkva__footer {
+  background: radial-gradient(circle at 100% 100%, #0136a733 5%, #0000 20%), radial-gradient(circle at 0 100%, #0136a733 5%, #0000 20%), linear-gradient(#fff 0%, #f8faff 80%);
+  padding: 8rem 0 2rem;
+  position: relative;
+}
+
+.Footer-module__Grjkva__footer .Footer-module__Grjkva__footer {
+  background: linear-gradient(90deg, #fff 0% 65%, #7dd3fc 85%, #60a5fa 100%);
+  border-radius: 60px 60px 0 0;
+  margin-top: 4rem;
+  padding: 8rem 0 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.Footer-module__Grjkva__footer .Footer-module__Grjkva__footer:before {
+  content: "";
+  background: radial-gradient(circle at top, #3b82f626, #0000 70%);
+  height: 200px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.Footer-module__Grjkva__footer .Footer-module__Grjkva__top {
+  z-index: 1;
+  justify-content: space-between;
+  gap: 4rem;
+  display: flex;
+  position: relative;
+}
+
+.Footer-module__Grjkva__footer .Footer-module__Grjkva__brand {
+  flex: 1;
+}
+
+.Footer-module__Grjkva__footer .Footer-module__Grjkva__logo {
+  color: #2563eb;
+  margin-bottom: 1.5rem;
+  font-size: 2.5rem;
+  font-weight: 800;
+}
+
+.Footer-module__Grjkva__footer .Footer-module__Grjkva__brand p {
+  color: #1f2937;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.Footer-module__Grjkva__footer .Footer-module__Grjkva__socials {
+  gap: 1.5rem;
+  margin-top: 1rem;
+  display: flex;
+}
+
+.Footer-module__Grjkva__footer .Footer-module__Grjkva__socials a {
+  color: #2563eb;
+  background: #fff;
+  border-radius: 50%;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  transition: all .2s;
+  display: flex;
+  box-shadow: 0 4px 6px -1px #0000001a;
+}
+
+.Footer-module__Grjkva__footer .Footer-module__Grjkva__socials a:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 15px -3px #2563eb33;
+}
+
+.Footer-module__Grjkva__footer .Footer-module__Grjkva__links {
+  flex: 3;
+  justify-content: space-around;
+  gap: 4rem;
+  display: flex;
+}
+
+.Footer-module__Grjkva__footer .Footer-module__Grjkva__column h3 {
+  color: #1f2937;
+  margin-bottom: 2rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.Footer-module__Grjkva__footer .Footer-module__Grjkva__column ul {
+  list-style: none;
+}
+
+.Footer-module__Grjkva__footer .Footer-module__Grjkva__column ul li {
+  margin-bottom: 1rem;
+}
+
+.Footer-module__Grjkva__footer .Footer-module__Grjkva__column ul li a {
+  color: #6b7280;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: color .2s;
+}
+
+.Footer-module__Grjkva__footer .Footer-module__Grjkva__column ul li a:hover {
+  color: #2563eb;
+}
+
+@media (max-width: 992px) {
+  .Footer-module__Grjkva__footer .Footer-module__Grjkva__footer {
+    border-radius: 40px 40px 0 0;
+  }
+
+  .Footer-module__Grjkva__footer .Footer-module__Grjkva__top {
+    text-align: center;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .Footer-module__Grjkva__footer .Footer-module__Grjkva__socials {
+    justify-content: center;
+  }
+
+  .Footer-module__Grjkva__footer .Footer-module__Grjkva__links {
+    text-align: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 3rem;
+  }
+}
+
+.Footer-module__Grjkva__footer {
+  border-radius: 60px 60px 0 0;
+  margin-top: 4rem;
+  overflow: hidden;
+}
+
+.Footer-module__Grjkva__footer:before {
+  content: "";
+  background: radial-gradient(circle at top, #2563eb0d, #0000 70%);
+  height: 200px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.Footer-module__Grjkva__top {
+  z-index: 1;
+  justify-content: space-between;
+  gap: 4rem;
+  display: flex;
+  position: relative;
+}
+
+.Footer-module__Grjkva__brand {
+  flex: 1;
+}
+
+.Footer-module__Grjkva__logo {
+  color: #2563eb;
+  margin-bottom: 1.5rem;
+  font-size: 2.5rem;
+  font-weight: 800;
+}
+
+.Footer-module__Grjkva__brand p {
+  color: #1f2937;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.Footer-module__Grjkva__socials {
+  gap: 1.5rem;
+  margin-top: 1rem;
+  display: flex;
+}
+
+.Footer-module__Grjkva__socials a {
+  color: #2563eb;
+  background: #fff;
+  border-radius: 50%;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  transition: all .2s;
+  display: flex;
+  box-shadow: 0 4px 6px -1px #0000001a;
+}
+
+.Footer-module__Grjkva__socials a:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 15px -3px #2563eb33;
+}
+
+.Footer-module__Grjkva__links {
+  flex: 3;
+  justify-content: space-around;
+  gap: 4rem;
+  display: flex;
+}
+
+.Footer-module__Grjkva__column h3 {
+  color: #1f2937;
+  margin-bottom: 2rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.Footer-module__Grjkva__column ul {
+  list-style: none;
+}
+
+.Footer-module__Grjkva__column ul li {
+  margin-bottom: 1rem;
+}
+
+.Footer-module__Grjkva__column ul li a {
+  color: #6b7280;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: color .2s;
+}
+
+.Footer-module__Grjkva__column ul li a:hover {
+  color: #2563eb;
+}
+
+@media (max-width: 992px) {
+  .Footer-module__Grjkva__footer {
+    border-radius: 40px 40px 0 0;
+  }
+
+  .Footer-module__Grjkva__top {
+    text-align: center;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .Footer-module__Grjkva__socials {
+    justify-content: center;
+  }
+
+  .Footer-module__Grjkva__links {
+    text-align: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 3rem;
+  }
+}
+
+/*# sourceMappingURL=src_components_Footer_Footer_module_css_bad6b30c._.single.css.map*/

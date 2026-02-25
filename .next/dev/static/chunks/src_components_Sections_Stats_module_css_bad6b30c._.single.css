@@ -1,0 +1,64 @@
+/* [project]/src/components/Sections/Stats.module.css [app-client] (css) */
+.Stats-module__qTnpfq__stats {
+  color: #fff;
+  background: var(--primary-blue);
+  margin: 4rem 0;
+  padding: 8rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.Stats-module__qTnpfq__overlay {
+  opacity: .5;
+  z-index: 1;
+  background: linear-gradient(110deg, #5d8ff3e6, #6b9bf7d9);
+  position: absolute;
+  inset: 0;
+}
+
+.Stats-module__qTnpfq__bgImage {
+  -o-object-fit: cover;
+  object-fit: cover;
+  z-index: 0;
+  opacity: .6;
+}
+
+.Stats-module__qTnpfq__container {
+  z-index: 2;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6rem;
+  display: flex;
+  position: relative;
+}
+
+.Stats-module__qTnpfq__item {
+  text-align: center;
+  flex: 1;
+  min-width: 200px;
+}
+
+.Stats-module__qTnpfq__value {
+  margin-bottom: .5rem;
+  font-size: 3.5rem;
+  font-weight: 800;
+}
+
+.Stats-module__qTnpfq__label {
+  opacity: 1;
+  font-size: 1.15rem;
+  font-weight: 700;
+  transition: all .3s;
+}
+
+.Stats-module__qTnpfq__item:hover .Stats-module__qTnpfq__label {
+  color: var(--secondary-yellow);
+}
+
+@media (max-width: 768px) {
+  .Stats-module__qTnpfq__value {
+    font-size: 2rem;
+  }
+}
+
+/*# sourceMappingURL=src_components_Sections_Stats_module_css_bad6b30c._.single.css.map*/
