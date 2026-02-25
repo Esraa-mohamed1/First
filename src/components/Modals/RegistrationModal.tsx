@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, CheckCircle2, ShieldCheck, Mail, User, Phone, Globe, Lock, Loader2 } from 'lucide-react';
+import { X, CheckCircle2, ShieldCheck, Mail, Phone, Globe, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useModal } from '@/context/ModalContext';
 import { createAccount } from '@/services/auth';
 import toast from 'react-hot-toast';
@@ -13,9 +13,12 @@ const RegistrationModal = () => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
 
+    const [contactMethod, setContactMethod] = useState<'email' | 'phone'>('email');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
     // Form State
     const [formData, setFormData] = useState({
-        name: '',
         email: '',
         phone: '',
         academy_name: '',
@@ -30,16 +33,32 @@ const RegistrationModal = () => {
     };
 
     const validateStep1 = () => {
-        if (!formData.name || !formData.email || !formData.phone) {
-            toast.error('يرجى ملء جميع الحقول');
+        if (contactMethod === 'email' && !formData.email) {
+            toast.error('يرجى إدخال البريد الإلكتروني');
+            return false;
+        }
+        if (contactMethod === 'phone' && !formData.phone) {
+            toast.error('يرجى إدخال رقم الجوال');
+            return false;
+        }
+        if (!formData.password) {
+            toast.error('يرجى إدخال كلمة المرور');
+            return false;
+        }
+        if (!formData.confirmPassword) {
+            toast.error('يرجى تأكيد كلمة المرور');
+            return false;
+        }
+        if (formData.password !== formData.confirmPassword) {
+            toast.error('كلمة المرور غير متطابقة');
             return false;
         }
         return true;
     };
 
     const validateStep2 = () => {
-        if (!formData.academy_name || !formData.password) {
-            toast.error('يرجى ملء جميع الحقول');
+        if (!formData.academy_name) {
+            toast.error('يرجى إدخال اسم الأكاديمية');
             return false;
         }
         return true;
@@ -55,15 +74,15 @@ const RegistrationModal = () => {
         setIsLoading(true);
         try {
             await createAccount({
-                name: formData.name,
-                email: formData.email,
-                phone: formData.phone,
+                name: 'User', // Default name as requested to remove the field
+                email: contactMethod === 'email' ? formData.email : '',
+                phone: contactMethod === 'phone' ? formData.phone : '',
                 academy_name: formData.academy_name,
                 password: formData.password
             });
             
             toast.success('تم إنشاء الحساب بنجاح');
-            setStep(3); // Go to verification or success
+            window.location.reload(); // Refresh the page as requested
         } catch (error: any) {
             toast.error(error.message || 'حدث خطأ أثناء إنشاء الحساب');
         } finally {
@@ -75,7 +94,7 @@ const RegistrationModal = () => {
 
     const handleComplete = () => {
         closeModal();
-        router.push('/auth/payment');
+        // router.push('/auth/payment'); // Removed as requested
     };
 
     const renderStep = () => {
@@ -86,47 +105,105 @@ const RegistrationModal = () => {
                         <div className="text-center mb-8">
                             <h2 className="text-2xl font-black text-[#1a1a1a]">إنشاء حساب</h2>
                         </div>
+                        
+                        {/* Contact Method Toggle */}
+                        <div className="flex bg-[#f8faff] p-1 rounded-2xl mb-6">
+                            <button
+                                onClick={() => setContactMethod('email')}
+                                className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${
+                                    contactMethod === 'email' 
+                                    ? 'bg-white text-[#2563eb] shadow-sm' 
+                                    : 'text-[#6b7280] hover:text-[#4a4a4a]'
+                                }`}
+                            >
+                                البريد الإلكتروني
+                            </button>
+                            <button
+                                onClick={() => setContactMethod('phone')}
+                                className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${
+                                    contactMethod === 'phone' 
+                                    ? 'bg-white text-[#2563eb] shadow-sm' 
+                                    : 'text-[#6b7280] hover:text-[#4a4a4a]'
+                                }`}
+                            >
+                                رقم الجوال
+                            </button>
+                        </div>
+
                         <div className="space-y-4">
+                            {contactMethod === 'email' ? (
+                                <div className="relative">
+                                    <label className="block text-right text-sm font-bold text-[#4a4a4a] mb-2 px-1">البريد الإلكتروني</label>
+                                    <div className="relative">
+                                        <input 
+                                            type="email" 
+                                            name="email"
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            placeholder="example@mail.com" 
+                                            className="w-full p-4 pr-12 text-right bg-[#f8faff] border border-[#e2e8f0] rounded-2xl focus:border-[#2563eb] outline-none transition-all font-bold" 
+                                        />
+                                        <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2563eb]" size={20} />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="relative">
+                                    <label className="block text-right text-sm font-bold text-[#4a4a4a] mb-2 px-1">رقم الجوال</label>
+                                    <div className="relative">
+                                        <input 
+                                            type="tel" 
+                                            name="phone"
+                                            value={formData.phone}
+                                            onChange={handleChange}
+                                            placeholder="05xxxxxxxx" 
+                                            className="w-full p-4 pr-12 text-right bg-[#f8faff] border border-[#e2e8f0] rounded-2xl focus:border-[#2563eb] outline-none transition-all font-bold" 
+                                        />
+                                        <Phone className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2563eb]" size={20} />
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="relative">
-                                <label className="block text-right text-sm font-bold text-[#4a4a4a] mb-2 px-1">الاسم بالكامل</label>
+                                <label className="block text-right text-sm font-bold text-[#4a4a4a] mb-2 px-1">كلمة المرور</label>
                                 <div className="relative">
                                     <input 
-                                        type="text" 
-                                        name="name"
-                                        value={formData.name}
+                                        type={showPassword ? "text" : "password"}
+                                        name="password"
+                                        value={formData.password}
                                         onChange={handleChange}
-                                        placeholder="أدخل اسمك بالكامل" 
+                                        placeholder="********" 
                                         className="w-full p-4 pr-12 text-right bg-[#f8faff] border border-[#e2e8f0] rounded-2xl focus:border-[#2563eb] outline-none transition-all font-bold" 
                                     />
-                                    <User className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2563eb]" size={20} />
+                                    <Lock className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2563eb]" size={20} />
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6b7280] hover:text-[#2563eb] transition-colors"
+                                    >
+                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
                                 </div>
                             </div>
+
                             <div className="relative">
-                                <label className="block text-right text-sm font-bold text-[#4a4a4a] mb-2 px-1">البريد الإلكتروني</label>
+                                <label className="block text-right text-sm font-bold text-[#4a4a4a] mb-2 px-1">تأكيد كلمة المرور</label>
                                 <div className="relative">
                                     <input 
-                                        type="email" 
-                                        name="email"
-                                        value={formData.email}
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        name="confirmPassword"
+                                        value={formData.confirmPassword}
                                         onChange={handleChange}
-                                        placeholder="example@mail.com" 
+                                        placeholder="********" 
                                         className="w-full p-4 pr-12 text-right bg-[#f8faff] border border-[#e2e8f0] rounded-2xl focus:border-[#2563eb] outline-none transition-all font-bold" 
                                     />
-                                    <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2563eb]" size={20} />
-                                </div>
-                            </div>
-                            <div className="relative">
-                                <label className="block text-right text-sm font-bold text-[#4a4a4a] mb-2 px-1">رقم الجوال</label>
-                                <div className="relative">
-                                    <input 
-                                        type="tel" 
-                                        name="phone"
-                                        value={formData.phone}
-                                        onChange={handleChange}
-                                        placeholder="05xxxxxxxx" 
-                                        className="w-full p-4 pr-12 text-right bg-[#f8faff] border border-[#e2e8f0] rounded-2xl focus:border-[#2563eb] outline-none transition-all font-bold" 
-                                    />
-                                    <Phone className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2563eb]" size={20} />
+                                    <Lock className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2563eb]" size={20} />
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6b7280] hover:text-[#2563eb] transition-colors"
+                                    >
+                                        {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -163,20 +240,6 @@ const RegistrationModal = () => {
                                         className="w-full p-4 pr-12 text-right bg-[#f8faff] border border-[#e2e8f0] rounded-2xl focus:border-[#2563eb] outline-none transition-all font-bold" 
                                     />
                                     <Globe className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2563eb]" size={20} />
-                                </div>
-                            </div>
-                            <div className="relative">
-                                <label className="block text-right text-sm font-bold text-[#4a4a4a] mb-2 px-1">كلمة المرور</label>
-                                <div className="relative">
-                                    <input 
-                                        type="password" 
-                                        name="password"
-                                        value={formData.password}
-                                        onChange={handleChange}
-                                        placeholder="********" 
-                                        className="w-full p-4 pr-12 text-right bg-[#f8faff] border border-[#e2e8f0] rounded-2xl focus:border-[#2563eb] outline-none transition-all font-bold" 
-                                    />
-                                    <Lock className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2563eb]" size={20} />
                                 </div>
                             </div>
                         </div>
@@ -270,3 +333,4 @@ const RegistrationModal = () => {
 };
 
 export default RegistrationModal;
+

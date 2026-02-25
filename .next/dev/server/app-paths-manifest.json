@@ -1,7 +1,5 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
   "/auth/payment/page": "app/auth/payment/page.js",
-  "/auth/processing/page": "app/auth/processing/page.js",
   "/auth/setup/page": "app/auth/setup/page.js",
   "/auth/success/page": "app/auth/success/page.js",
   "/page": "app/page.js"

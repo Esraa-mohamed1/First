@@ -675,16 +675,16 @@ h1, h2, h3, h4, h5, h6 {
   height: 1px;
 }
 
+.min-h-\[280px\] {
+  min-height: 280px;
+}
+
 .min-h-\[50vh\] {
   min-height: 50vh;
 }
 
 .min-h-screen {
   min-height: 100vh;
-}
-
-.min-h-\[280px\] {
-  min-height: 280px;
 }
 
 .w-1\/2 {
@@ -1596,6 +1596,11 @@ h1, h2, h3, h4, h5, h6 {
   padding-bottom: 6rem;
 }
 
+.py-3 {
+  padding-top: .75rem;
+  padding-bottom: .75rem;
+}
+
 .py-32 {
   padding-top: 8rem;
   padding-bottom: 8rem;
@@ -2182,6 +2187,11 @@ html, body {
 .hover\:text-\[\#2563eb\]:hover {
   --tw-text-opacity: 1;
   color: rgb(37 99 235 / var(--tw-text-opacity, 1));
+}
+
+.hover\:text-\[\#4a4a4a\]:hover {
+  --tw-text-opacity: 1;
+  color: rgb(74 74 74 / var(--tw-text-opacity, 1));
 }
 
 .hover\:text-pink-500:hover {

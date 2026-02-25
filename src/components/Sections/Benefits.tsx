@@ -5,7 +5,7 @@ import { BarChart3, Rocket, Users } from 'lucide-react';
 const Benefits = () => {
     const steps = [
         {
-            number: '01',
+            number: '٠١',
             title: 'لوحة تحكم متكاملة لإدارة الأكاديمية',
             desc: 'متابعة وإدارة كل تفاصيل الأكاديمية بسهولة',
             icon: <BarChart3 className="w-6 h-6 text-blue-600" />,
@@ -14,7 +14,7 @@ const Benefits = () => {
             iconColor: 'text-blue-600'
         },
         {
-            number: '02',
+            number: '٠٢',
             title: 'تقارير وإحصائيات فورية',
             desc: 'بيانات واضحة عن أداء الأكاديمية',
             icon: <Rocket className="w-6 h-6 text-yellow-500" />,
@@ -23,7 +23,7 @@ const Benefits = () => {
             iconColor: 'text-yellow-500'
         },
         {
-            number: '03',
+            number: '٠٣',
             title: 'ادارة الاشتراكات والمدفوعات',
             desc: 'تحكم كامل في الفواتير وخطط الاشتراك',
             icon: <Users className="w-6 h-6 text-purple-500" />,
