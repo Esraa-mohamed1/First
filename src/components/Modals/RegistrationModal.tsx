@@ -8,7 +8,7 @@ import { createAccount } from '@/services/auth';
 import toast from 'react-hot-toast';
 
 const RegistrationModal = () => {
-    const { isOpen, closeModal } = useModal();
+    const { isOpen, view, closeModal, openModal } = useModal();
     const [step, setStep] = useState(1);
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
@@ -26,7 +26,7 @@ const RegistrationModal = () => {
         confirmPassword: ''
     });
 
-    if (!isOpen) return null;
+    if (!isOpen || view !== 'registration') return null;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -219,6 +219,16 @@ const RegistrationModal = () => {
                             <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="google" />
                             التسجيل عن طريق جوجل
                         </button>
+
+                        <p className="text-center text-sm font-bold text-[#6b7280] mt-4">
+                            لديك حساب بالفعل؟{' '}
+                            <button 
+                                onClick={() => openModal('login')} 
+                                className="text-[#2563eb] underline"
+                            >
+                                تسجيل الدخول
+                            </button>
+                        </p>
                     </div>
                 );
             case 2:

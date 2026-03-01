@@ -5,7 +5,7 @@ import footerBg from '@/assets/footer-bg.png';
 
 const Footer = () => {
     return (
-        <footer className="relative py-20 overflow-hidden bg-white">
+        <footer className="relative py-20 overflow-hidden bg-white shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
             {/* Background Image */}
             <div className="absolute inset-0 z-0">
                 <Image
@@ -15,8 +15,6 @@ const Footer = () => {
                     className="object-cover"
                     priority
                 />
-                {/* Optional Overlay if needed for text readability */}
-                {/* <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div> */}
             </div>
 
             <div className="container mx-auto px-6 relative z-10">
@@ -29,16 +27,16 @@ const Footer = () => {
                         <div className="flex flex-col gap-4 items-end md:items-start w-full">
                             <p className="font-bold text-gray-800 text-lg">تابعنا عبر</p>
                             <div className="flex gap-4">
-                                <Link href="#" className="w-8 h-8 flex items-center justify-center text-gray-700 hover:text-[#2563eb] hover:scale-110 transition-all">
-                                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                                <Link href="#" className="w-10 h-10 flex items-center justify-center text-gray-700 bg-white rounded-full shadow-md hover:text-[#2563eb] hover:shadow-lg hover:-translate-y-1 transition-all">
+                                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                                         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                                     </svg>
                                 </Link>
-                                <Link href="#" className="w-8 h-8 flex items-center justify-center text-gray-700 hover:text-pink-500 hover:scale-110 transition-all">
-                                    <Instagram size={28} />
+                                <Link href="#" className="w-10 h-10 flex items-center justify-center text-gray-700 bg-white rounded-full shadow-md hover:text-pink-500 hover:shadow-lg hover:-translate-y-1 transition-all">
+                                    <Instagram size={20} />
                                 </Link>
-                                <Link href="#" className="w-8 h-8 flex items-center justify-center text-gray-700 hover:text-[#1877F2] hover:scale-110 transition-all">
-                                    <Facebook size={28} />
+                                <Link href="#" className="w-10 h-10 flex items-center justify-center text-gray-700 bg-white rounded-full shadow-md hover:text-[#1877F2] hover:shadow-lg hover:-translate-y-1 transition-all">
+                                    <Facebook size={20} />
                                 </Link>
                             </div>
                         </div>

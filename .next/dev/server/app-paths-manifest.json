@@ -1,7 +1,7 @@
 {
-  "/auth/payment/page": "app/auth/payment/page.js",
-  "/auth/processing/page": "app/auth/processing/page.js",
-  "/auth/setup/page": "app/auth/setup/page.js",
-  "/auth/success/page": "app/auth/success/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/dashboard/packages/create/page": "app/dashboard/packages/create/page.js",
+  "/dashboard/packages/page": "app/dashboard/packages/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
   "/page": "app/page.js"
 }

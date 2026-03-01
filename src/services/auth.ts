@@ -10,3 +10,13 @@ export const createAccount = async (payload: CreateAccountPayload) => {
     throw error.response?.data || error;
   }
 };
+
+export const login = async (payload: any) => {
+    try {
+        const response = await api.post<ApiResponse<any>>('/login', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Failed to login:', error);
+        throw error.response?.data || error;
+    }
+};
