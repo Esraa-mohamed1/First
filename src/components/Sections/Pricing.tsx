@@ -63,52 +63,49 @@ const Pricing = () => {
                 </div>
 
 
-                <div className="flex flex-col lg:flex-row justify-center gap-8 items-start pt-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch pt-12">
                     {displayPlans.map((plan, index) => {
-                        const isPopular = plan.is_popular; // Assuming API returns this flag
-                        
+                        const isPopular = plan.recomnd === 1; // Updated to match API field 'recomnd'
+
                         return (
                             <div
                                 key={plan.id || index}
-                                className={`flex-1 bg-white border ${isPopular ? 'border-none bg-[#4F83FF] text-white scale-105 shadow-[0_20px_40px_rgba(79,131,255,0.3)] z-10' : 'border-[#4F83FF] text-[#4a4a4a] shadow-[0_10px_25px_rgba(0,0,0,0.03)]'} rounded-[60px_15px_60px_15px] p-8 transition-all duration-300 ease-in-out min-w-[320px] relative`}
+                                className={`flex flex-col bg-white border ${isPopular ? 'border-none bg-[#4F83FF] text-white scale-105 shadow-[0_20px_40px_rgba(79,131,255,0.3)] z-10' : 'border-[#4F83FF] text-[#4a4a4a] shadow-[0_10px_25px_rgba(0,0,0,0.03)]'} rounded-[60px_15px_60px_15px] p-8 transition-all duration-300 ease-in-out relative`}
                             >
                                 {isPopular && (
                                     <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-[#FFD200] text-white px-10 py-2 rounded-full font-black text-sm shadow-md whitespace-nowrap">
                                         الاكثر انتشاراً
                                     </div>
                                 )}
-
                                 <div className="text-right mb-10 space-y-2">
                                     <h3 className={`text-xl font-black ${isPopular ? 'text-white' : 'text-[#1a1a1a]'}`}>
-                                        {plan.name}
+                                        {plan.titile}
                                     </h3>
                                     <div className={`flex flex-col items-start gap-0 ${isPopular ? 'text-white' : 'text-[#4F83FF]'}`}>
                                         <span className="text-xl font-black">{plan.price}</span>
                                         <span className="text-xs font-bold opacity-80 uppercase tracking-tighter -mt-1">SAR</span>
                                     </div>
                                 </div>
-
-                                <ul className="list-none p-0 mb-10 min-h-[280px]">
-                                    {/* Assuming features is an array of strings. If it's a string, we might need to split it */}
-                                    {(Array.isArray(plan.features) ? plan.features.slice(0, 5) : []).map((feature, idx) => (
+                                <ul className="list-none p-0 mb-10 flex-grow">
+                                    {(Array.isArray(plan.features) ? plan.features.slice(0, 5) : []).map((feature: any, idx) => (
                                         <li key={idx} className="flex items-start justify-start gap-3 mb-5 text-[0.95rem] font-bold">
                                             <div className={`w-5 h-5 flex-shrink-0 rounded-full flex items-center justify-center p-1 mt-0.5 ${isPopular ? 'bg-white text-[#4F83FF]' : 'bg-[#4F83FF] text-white'}`}>
                                                 <Check size={14} strokeWidth={4} />
                                             </div>
-                                            <span className={`text-right leading-snug ${isPopular ? 'text-white' : 'text-[#4a4a4a]'}`}>{feature}</span>
+                                            <span className={`text-right leading-snug ${isPopular ? 'text-white' : 'text-[#4a4a4a]'}`}>
+                                                {typeof feature === 'string' ? feature : feature.title || feature.lable}
+                                            </span>
                                         </li>
                                     ))}
-                                    {/* Empty state message if no features */}
                                     {(!plan.features || plan.features.length === 0) && (
                                         <li className="text-center text-gray-400 py-4 font-bold">
                                             لا توجد مميزات إضافية
                                         </li>
                                     )}
                                 </ul>
-
                                 <button
                                     onClick={() => openModal('registration')}
-                                    className={`w-full py-4 text-2xl font-black rounded-xl transition-all duration-300 hover:-translate-y-1 hover:brightness-110 ${isPopular ? 'bg-white text-[#4F83FF]' : 'bg-[#4F83FF] text-white'}`}
+                                    className={`w-full py-4 text-xl font-black rounded-xl transition-all duration-300 hover:-translate-y-1 hover:brightness-110 mt-auto ${isPopular ? 'bg-white text-[#4F83FF]' : 'bg-[#4F83FF] text-white'}`}
                                 >
                                     اشترك الآن
                                 </button>

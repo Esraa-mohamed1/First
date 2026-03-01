@@ -1,5 +1,5 @@
 import api from '@/lib/api';
-import { ApiResponse, CreateAccountPayload } from '@/types/api';
+import { ApiResponse, CreateAccountPayload, LoginResponse } from '@/types/api';
 
 export const createAccount = async (payload: CreateAccountPayload) => {
   try {
@@ -11,12 +11,12 @@ export const createAccount = async (payload: CreateAccountPayload) => {
   }
 };
 
-export const login = async (payload: any) => {
-    try {
-        const response = await api.post<ApiResponse<any>>('/login', payload);
-        return response.data;
-    } catch (error: any) {
-        console.error('Failed to login:', error);
-        throw error.response?.data || error;
-    }
+export const login = async (payload: any): Promise<LoginResponse> => {
+  try {
+    const response = await api.post<LoginResponse>('/login', payload);
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to login:', error);
+    throw error.response?.data || error;
+  }
 };

@@ -6,6 +6,7 @@ import { X, Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useModal } from '@/context/ModalContext';
 import { login } from '@/services/auth';
 import toast from 'react-hot-toast';
+import { useGoogleLogin } from '@react-oauth/google';
 
 const LoginModal = () => {
     const { isOpen, view, closeModal, openModal } = useModal();
@@ -17,6 +18,32 @@ const LoginModal = () => {
     const [formData, setFormData] = useState({
         email: '',
         password: ''
+    });
+
+    const handleGoogleLogin = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            console.log('Google Login Success:', tokenResponse);
+            setIsLoading(true);
+            try {
+                // In a real app, you'd send this to your backend:
+                // await axios.post('/api/google-login', { token: tokenResponse.access_token });
+
+                toast.success('تم تسجيل الدخول بجوجل بنجاح');
+                // Store a dummy token or handle as needed for testing
+                document.cookie = `token=google_simulated_token; path=/; max-age=86400; SameSite=Lax`;
+
+                closeModal();
+                router.push('/dashboard');
+            } catch (error) {
+                toast.error('فشل تسجيل الدخول بجوجل');
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        onError: () => {
+            console.error('Google Login Error');
+            toast.error('فشل الاتصال بحساب جوجل. تأكد من إعداد "Redirect URI" في لوحة تحكم جوجل');
+        },
     });
 
     if (!isOpen || view !== 'login') return null;
@@ -34,21 +61,20 @@ const LoginModal = () => {
         setIsLoading(true);
         try {
             const response = await login(formData);
-            
-            toast.success('تم تسجيل الدخول بنجاح');
-            closeModal();
-            
-            // Store token if needed (assuming response.data.token or similar)
-            // localStorage.setItem('token', response.data.token);
 
-            // Role-based navigation
-            // Assuming the API returns a role in the response data
-            const role = response.data?.role || 'user'; 
-            
-            if (role === 'admin') {
+            // Per the provided response structure, token is at the root
+            if (response.token) {
+                // Store token in cookies
+                const token = response.token;
+                document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+
+                toast.success('تم تسجيل الدخول بنجاح');
+                closeModal();
+
+                // Navigate to dashboard
                 router.push('/dashboard');
             } else {
-                router.push('/');
+                toast.error(response.message || 'فشل تسجيل الدخول');
             }
         } catch (error: any) {
             // Handle specific error messages from the API
@@ -84,13 +110,13 @@ const LoginModal = () => {
                             <div className="relative">
                                 <label className="block text-right text-sm font-bold text-[#4a4a4a] mb-2 px-1">البريد الإلكتروني</label>
                                 <div className="relative">
-                                    <input 
-                                        type="email" 
+                                    <input
+                                        type="email"
                                         name="email"
                                         value={formData.email}
                                         onChange={handleChange}
-                                        placeholder="example@mail.com" 
-                                        className="w-full p-4 pr-12 text-right bg-[#f8faff] border border-[#e2e8f0] rounded-2xl focus:border-[#2563eb] outline-none transition-all font-bold" 
+                                        placeholder="example@mail.com"
+                                        className="w-full p-4 pr-12 text-right bg-[#f8faff] border border-[#e2e8f0] rounded-2xl focus:border-[#2563eb] outline-none transition-all font-bold"
                                     />
                                     <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2563eb]" size={20} />
                                 </div>
@@ -99,16 +125,16 @@ const LoginModal = () => {
                             <div className="relative">
                                 <label className="block text-right text-sm font-bold text-[#4a4a4a] mb-2 px-1">كلمة المرور</label>
                                 <div className="relative">
-                                    <input 
+                                    <input
                                         type={showPassword ? "text" : "password"}
                                         name="password"
                                         value={formData.password}
                                         onChange={handleChange}
-                                        placeholder="********" 
-                                        className="w-full p-4 pr-12 text-right bg-[#f8faff] border border-[#e2e8f0] rounded-2xl focus:border-[#2563eb] outline-none transition-all font-bold" 
+                                        placeholder="********"
+                                        className="w-full p-4 pr-12 text-right bg-[#f8faff] border border-[#e2e8f0] rounded-2xl focus:border-[#2563eb] outline-none transition-all font-bold"
                                     />
                                     <Lock className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2563eb]" size={20} />
-                                    <button 
+                                    <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
                                         className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6b7280] hover:text-[#2563eb] transition-colors"
@@ -117,7 +143,7 @@ const LoginModal = () => {
                                     </button>
                                 </div>
                             </div>
-                            
+
                             <div className="flex justify-end">
                                 <button className="text-sm font-bold text-[#2563eb] hover:underline">
                                     نسيت كلمة المرور؟
@@ -125,8 +151,8 @@ const LoginModal = () => {
                             </div>
                         </div>
 
-                        <button 
-                            onClick={handleLogin} 
+                        <button
+                            onClick={handleLogin}
                             disabled={isLoading}
                             className="w-full py-4 bg-[#2563eb] text-white font-black rounded-2xl shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
@@ -145,16 +171,20 @@ const LoginModal = () => {
                             <span className="flex-shrink mx-4 text-sm text-[#6b7280] font-bold">أو</span>
                             <div className="flex-grow border-t border-[#e2e8f0]"></div>
                         </div>
-                        
-                        <button className="w-full py-4 bg-white border border-[#e2e8f0] text-[#1a1a1a] font-black rounded-2xl hover:bg-[#f8faff] transition-all flex items-center justify-center gap-3">
+
+                        <button
+                            onClick={() => handleGoogleLogin()}
+                            className="w-full py-4 bg-white border border-[#e2e8f0] text-[#1a1a1a] font-black rounded-2xl hover:bg-[#f8faff] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                            disabled={isLoading}
+                        >
                             <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="google" />
                             تسجيل الدخول عن طريق جوجل
                         </button>
 
                         <p className="text-center text-sm font-bold text-[#6b7280] mt-4">
                             ليس لديك حساب؟{' '}
-                            <button 
-                                onClick={() => openModal('registration')} 
+                            <button
+                                onClick={() => openModal('registration')}
                                 className="text-[#2563eb] underline"
                             >
                                 إنشاء حساب جديد
