@@ -166,20 +166,24 @@ const LoginModal = () => {
                             )}
                         </button>
 
-                        <div className="relative flex items-center justify-center py-2">
-                            <div className="flex-grow border-t border-[#e2e8f0]"></div>
-                            <span className="flex-shrink mx-4 text-sm text-[#6b7280] font-bold">أو</span>
-                            <div className="flex-grow border-t border-[#e2e8f0]"></div>
-                        </div>
+                        {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
+                            <>
+                                <div className="relative flex items-center justify-center py-2">
+                                    <div className="flex-grow border-t border-[#e2e8f0]"></div>
+                                    <span className="flex-shrink mx-4 text-sm text-[#6b7280] font-bold">أو</span>
+                                    <div className="flex-grow border-t border-[#e2e8f0]"></div>
+                                </div>
 
-                        <button
-                            onClick={() => handleGoogleLogin()}
-                            className="w-full py-4 bg-white border border-[#e2e8f0] text-[#1a1a1a] font-black rounded-2xl hover:bg-[#f8faff] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-                            disabled={isLoading}
-                        >
-                            <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="google" />
-                            تسجيل الدخول عن طريق جوجل
-                        </button>
+                                <button
+                                    onClick={() => handleGoogleLogin()}
+                                    className="w-full py-4 bg-white border border-[#e2e8f0] text-[#1a1a1a] font-black rounded-2xl hover:bg-[#f8faff] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                                    disabled={isLoading}
+                                >
+                                    <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="google" />
+                                    تسجيل الدخول عن طريق جوجل
+                                </button>
+                            </>
+                        )}
 
                         <p className="text-center text-sm font-bold text-[#6b7280] mt-4">
                             ليس لديك حساب؟{' '}

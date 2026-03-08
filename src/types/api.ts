@@ -50,6 +50,68 @@ export interface LoginResponse {
   token: string;
 }
 
+export interface Lesson {
+  id: number;
+  title: string;
+  description: string;
+  type: 'video' | 'pdf' | 'powerpoint';
+  video_id?: string;
+  file_url?: string;
+  duration?: number;
+  is_free: boolean;
+  order: number;
+}
+
+export interface Unit {
+  id: number;
+  title: string;
+  description: string;
+  order: number;
+  lessons: Lesson[];
+}
+
+export interface Course {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  instructor: string;
+  price: number;
+  final_price: number;
+  cover_image?: string;
+  status: 'published' | 'draft';
+  type: string;
+  units: Unit[];
+}
+
+export interface CreateCoursePayload {
+  title: string;
+  description: string;
+  category: string;
+  instructor: string;
+  price: number;
+  final_price: number;
+  status: 'published' | 'draft';
+  type: string;
+  cover_image?: string;
+}
+
+export interface CreateUnitPayload {
+  course_id: number;
+  title: string;
+  description: string;
+}
+
+export interface CreateLessonPayload {
+  unit_id: number;
+  title: string;
+  description: string;
+  type: 'video' | 'pdf' | 'powerpoint';
+  video_id?: string;
+  file_url?: string;
+  is_free: boolean;
+}
+
 export interface ApiResponse<T> {
   status: boolean;
   message: string;
