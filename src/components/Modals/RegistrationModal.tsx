@@ -73,7 +73,7 @@ const RegistrationModal = () => {
 
         setIsLoading(true);
         try {
-            await createAccount({
+            const response = await createAccount({
                 name: 'User', // Default name as requested to remove the field
                 email: contactMethod === 'email' ? formData.email : '',
                 phone: contactMethod === 'phone' ? formData.phone : '',
@@ -82,7 +82,12 @@ const RegistrationModal = () => {
             });
             
             toast.success('تم إنشاء الحساب بنجاح');
-            window.location.reload(); // Refresh the page as requested
+            
+            if (response.paymentLink) {
+                window.location.href = response.paymentLink;
+            } else {
+                setStep(4);
+            }
         } catch (error: any) {
             toast.error(error.message || 'حدث خطأ أثناء إنشاء الحساب');
         } finally {
