@@ -4,9 +4,46 @@ import { ApiResponse, CreateAccountPayload, LoginResponse } from '@/types/api';
 export const createAccount = async (payload: CreateAccountPayload) => {
   try {
     const response = await api.post<ApiResponse<any>>('/create-account-academy', payload);
+
+    if (response.data.status) {
+      // If a package is selected, create a payment link
+      if (payload.package_id) {
+        try {
+          const paymentResponse = await api.post<ApiResponse<any>>('/create-link-payment', {
+            package_id: payload.package_id,
+            email: payload.email,
+            phone: payload.phone,
+            name: payload.name,
+          });
+
+          if (paymentResponse.data.status && paymentResponse.data.data) {
+             // Assuming the link is in data or data.link, adjust based on actual API response
+            return {
+              ...response.data,
+              paymentLink: paymentResponse.data.data // Verify if it's a string or object { link: '...' }
+            };
+          }
+        } catch (paymentError) {
+          console.error('Failed to create payment link:', paymentError);
+          // Return success for account creation but indicate payment failure?
+          // For now, let's just return the account creation response
+        }
+      }
+    }
+    
     return response.data;
   } catch (error: any) {
     console.error('Failed to create account:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const createAccountInfoAcademy = async (payload: any) => {
+  try {
+    const response = await api.post<ApiResponse<any>>('/create-account-info-academy', payload);
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to create academy info:', error);
     throw error.response?.data || error;
   }
 };
