@@ -1,7 +1,7 @@
 import api from '@/lib/api';
 import { ApiResponse, CreateAccountPayload, LoginResponse } from '@/types/api';
 
-export const createAccount = async (payload: CreateAccountPayload) => {
+export const createAccount = async (payload: CreateAccountPayload): Promise<ApiResponse<any> & { paymentLink?: any }> => {
   try {
     const response = await api.post<ApiResponse<any>>('/create-account-academy', payload);
 
