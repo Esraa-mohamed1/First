@@ -9,8 +9,8 @@ const Nav = () => {
     return (
         <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-[100] shadow-[0_4px_30px_0px_rgba(72,128,255,0.2)]">
             <div className="max-w-[1400px] mx-auto px-8 py-4 flex items-center justify-between">
-                <div className="text-3xl font-black text-[#2563eb]">
-                    <Link href="/">First</Link>
+                <div className="text-5xl font-black font-bold text-[#2563eb]">
+                    <Link href="/">درب</Link>
                 </div>
 
                 <ul className="hidden md:flex items-center gap-10 font-bold text-[#1f2937]">

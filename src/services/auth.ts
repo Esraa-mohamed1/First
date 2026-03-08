@@ -17,10 +17,12 @@ export const createAccount = async (payload: CreateAccountPayload): Promise<ApiR
           });
 
           if (paymentResponse.data.status && paymentResponse.data.data) {
-             // Assuming the link is in data or data.link, adjust based on actual API response
+             const linkData = paymentResponse.data.data;
+             const link = typeof linkData === 'string' ? linkData : (linkData.link || linkData.url);
+
             return {
               ...response.data,
-              paymentLink: paymentResponse.data.data // Verify if it's a string or object { link: '...' }
+              paymentLink: link 
             };
           }
         } catch (paymentError) {

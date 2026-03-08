@@ -8,7 +8,7 @@ import { createAccount } from '@/services/auth';
 import toast from 'react-hot-toast';
 
 const RegistrationModal = () => {
-    const { isOpen, view, closeModal, openModal } = useModal();
+    const { isOpen, view, closeModal, openModal, data } = useModal();
     const [step, setStep] = useState(1);
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
@@ -25,6 +25,8 @@ const RegistrationModal = () => {
         password: '',
         confirmPassword: ''
     });
+
+    const [paymentLink, setPaymentLink] = useState<string | null>(null);
 
     if (!isOpen || view !== 'registration') return null;
 
@@ -78,13 +80,29 @@ const RegistrationModal = () => {
                 email: contactMethod === 'email' ? formData.email : '',
                 phone: contactMethod === 'phone' ? formData.phone : '',
                 academy_name: formData.academy_name,
-                password: formData.password
+                password: formData.password,
+                package_id: data?.package_id
             });
             
             toast.success('تم إنشاء الحساب بنجاح');
+
+            if (response.data?.token) {
+                localStorage.setItem('token', response.data.token);
+            } else if (response.token) {
+                 localStorage.setItem('token', response.token);
+            }
             
+            // Cache user info for setup step
+            if (contactMethod === 'email' && formData.email) {
+                localStorage.setItem('user_email', formData.email);
+            } else if (contactMethod === 'phone' && formData.phone) {
+                localStorage.setItem('user_phone', formData.phone);
+            }
+            localStorage.setItem('user_academy_name', formData.academy_name);
+
             if (response.paymentLink) {
-                window.location.href = response.paymentLink;
+                setPaymentLink(response.paymentLink);
+                setStep(4);
             } else {
                 setStep(4);
             }
@@ -99,7 +117,11 @@ const RegistrationModal = () => {
 
     const handleComplete = () => {
         closeModal();
-        // router.push('/auth/payment'); // Removed as requested
+        if (paymentLink) {
+            window.location.href = paymentLink;
+        } else {
+            router.push('/auth/setup');
+        }
     };
 
     const renderStep = () => {

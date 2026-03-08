@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { LayoutGrid, GraduationCap, ChevronDown, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import Image from 'next/image';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -46,7 +47,20 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     )}>
       {/* Logo & Close */}
       <div className="p-8 pb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-black text-[#2563eb]">Prime Academy</h1>
+           <div className="flex items-center gap-4 pl-4 border-r border-gray-100 mr-2">
+              <div className="text-right">
+                <h4 className="text-base font-black text-gray-900 leading-none">أحمد محمد</h4>
+                <p className="text-sm text-gray-400 font-bold mt-1">الادمن</p>
+              </div>
+              <div className="w-14 h-14 rounded-2xl bg-blue-50 border-2 border-white shadow-md overflow-hidden relative">
+                <Image
+                  src="/assets/Ellipse.png"
+                  alt="Profile"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            </div>
         <button
           onClick={onClose}
           className="p-2 hover:bg-gray-100 rounded-xl transition-all lg:hidden"
