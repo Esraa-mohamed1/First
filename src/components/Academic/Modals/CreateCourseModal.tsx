@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Play, Video, MapPin, Check, Plus } from 'lucide-react';
+import { X, Play, Video, MapPin, Check, Plus, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createCourse } from '@/services/courses';
 
@@ -67,6 +67,7 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
   };
 
   const nextStep = () => setStep(prev => prev + 1);
+  const prevStep = () => setStep(prev => prev - 1);
 
   const handleCreateCourse = async () => {
     if (!title || !category || !description) {
@@ -240,7 +241,11 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
                 </div>
               </div>
 
-              <div className="flex justify-end pt-4">
+              <div className="flex justify-between pt-4">
+                <button onClick={prevStep} className="px-8 py-4 bg-gray-100 text-gray-900 font-black rounded-2xl hover:bg-gray-200 transition-all flex items-center gap-2">
+                  <ArrowRight size={20} />
+                  السابق
+                </button>
                 <button onClick={nextStep} className="px-16 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all">التالي</button>
               </div>
             </div>
@@ -315,11 +320,19 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
                 </div>
               </div>
 
-              <div className="flex justify-center w-full max-w-md pt-4">
+              <div className="flex justify-between w-full max-w-md pt-4 gap-4">
+                <button 
+                  onClick={prevStep} 
+                  disabled={isSubmitting}
+                  className="px-8 py-4 bg-gray-100 text-gray-900 font-black rounded-2xl hover:bg-gray-200 transition-all flex items-center gap-2 disabled:opacity-70"
+                >
+                  <ArrowRight size={20} />
+                  السابق
+                </button>
                 <button 
                   onClick={handleCreateCourse} 
                   disabled={isSubmitting}
-                  className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="flex-1 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? 'جاري الإنشاء...' : 'إنشاء الدورة'}
                 </button>
