@@ -116,7 +116,7 @@ const OverviewChart = () => {
               strokeWidth={2} 
               fillOpacity={1} 
               fill="url(#colorValue)" 
-              activeDot={{ r: 6, strokeWidth: 0, fill: '#2563eb', stroke: '#fff', strokeWidth: 2 }}
+              activeDot={{ r: 6, fill: '#2563eb', stroke: '#fff', strokeWidth: 2 }}
             />
           </AreaChart>
         </ResponsiveContainer>

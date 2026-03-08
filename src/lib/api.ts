@@ -1,13 +1,12 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api', 
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.40:8000/api/front', 
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add a request interceptor to include auth token if available
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {

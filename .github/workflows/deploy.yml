@@ -1,0 +1,39 @@
+name: Deploy Next.js Project
+
+on:
+  push:
+    branches:
+      - master
+      - main   
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy via SSH
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
+            
+            cd /var/www/test-next 
+            
+            git fetch origin main
+            git reset --hard origin/main
+            
+            npm install
+            
+            npm run build
+            
+            pm2 restart next-app || pm2 start npm --name "next-app" -- start
+            
+            pm2 save
+          EOF

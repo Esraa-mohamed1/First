@@ -1,7 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Play, Video, MapPin, Check, Plus, Upload, FileText, FilePieChart as FilePowerpoint } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { X, Play, Video, MapPin, Check, Plus } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { createCourse } from '@/services/courses';
 
 interface CreateCourseModalProps {
   isOpen: boolean;
@@ -9,16 +12,23 @@ interface CreateCourseModalProps {
 }
 
 const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [courseType, setCourseType] = useState<string | null>(null);
   
+  // Basic Info States
+  const [title, setTitle] = useState('');
+  const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
+  const [instructor, setInstructor] = useState('');
+
   // Pricing Step States
   const [pricingType, setPricingType] = useState<'free' | 'paid'>('paid');
   const [status, setStatus] = useState<'published' | 'draft'>('draft');
+  const [price, setPrice] = useState('');
+  const [finalPrice, setFinalPrice] = useState('');
   
-  // Lesson Upload Step States
-  const [lessonType, setLessonType] = useState<'video' | 'pdf' | 'powerpoint'>('video');
-  const [uploadProgress, setUploadProgress] = useState(65);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const courseTypes = [
     {
@@ -46,16 +56,52 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
   const handleClose = () => {
     setStep(1);
     setCourseType(null);
+    setTitle('');
+    setCategory('');
+    setDescription('');
+    setInstructor('');
+    setPrice('');
+    setFinalPrice('');
+    setIsSubmitting(false);
     onClose();
   };
 
   const nextStep = () => setStep(prev => prev + 1);
 
+  const handleCreateCourse = async () => {
+    if (!title || !category || !description) {
+      toast.error('يرجى تعبئة جميع الحقول المطلوبة');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const newCourse = await createCourse({
+        title,
+        category,
+        description,
+        instructor,
+        price: Number(price),
+        final_price: Number(finalPrice),
+        status,
+        type: courseType || 'registered',
+      });
+      toast.success('تم إنشاء الدورة بنجاح');
+      handleClose();
+      router.push(`/academic/courses/${newCourse.id}`);
+    } catch (error) {
+      toast.error('فشل إنشاء الدورة');
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" dir="rtl">
       <div className="relative w-full max-w-4xl bg-white rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
         
-        {/* Modal Header with Progress (Only for step 2, 3, 4) */}
+        {/* Modal Header with Progress */}
         {step > 1 && (
           <div className="p-8 pb-0 flex items-center justify-center gap-12 relative">
              <div className="flex items-center gap-4 relative z-10">
@@ -68,19 +114,10 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
              <div className={`h-1 flex-1 max-w-[150px] rounded-full transition-all ${step >= 3 ? 'bg-blue-600' : 'bg-gray-100'}`}></div>
 
              <div className="flex items-center gap-4 relative z-10">
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all ${step >= 3 ? 'border-blue-600 bg-blue-50 text-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.3)]' : 'border-gray-200 text-gray-400'}`}>
-                  {step > 3 ? <Check size={24} className="text-blue-600" /> : <span className="text-xl font-black">٢</span>}
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all ${step === 3 ? 'border-blue-600 bg-blue-50 text-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.3)]' : 'border-gray-200 text-gray-400'}`}>
+                  <span className="text-xl font-black">٢</span>
                 </div>
-                <span className={`font-black text-sm ${step >= 3 ? 'text-gray-900' : 'text-gray-400'}`}>التسعير</span>
-             </div>
-
-             <div className={`h-1 flex-1 max-w-[150px] rounded-full transition-all ${step >= 4 ? 'bg-blue-600' : 'bg-gray-100'}`}></div>
-
-             <div className="flex items-center gap-4 relative z-10">
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all ${step === 4 ? 'border-blue-600 bg-blue-50 text-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.3)]' : 'border-gray-200 text-gray-400'}`}>
-                  <span className="text-xl font-black">٣</span>
-                </div>
-                <span className={`font-black text-sm ${step === 4 ? 'text-gray-900' : 'text-gray-400'}`}>محتوي الدرس</span>
+                <span className={`font-black text-sm ${step === 3 ? 'text-gray-900' : 'text-gray-400'}`}>التسعير</span>
              </div>
           </div>
         )}
@@ -143,25 +180,49 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <label className="block text-sm font-black text-gray-900 text-right">اسم الدورة</label>
-                    <input type="text" placeholder="ادخل اسم الدورة" className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all" />
+                    <input 
+                      type="text" 
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="ادخل اسم الدورة" 
+                      className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all" 
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="block text-sm font-black text-gray-900 text-right">الفئة</label>
-                    <select className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold appearance-none text-right transition-all">
-                      <option>ادخل الفئة</option>
+                    <select 
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold appearance-none text-right transition-all"
+                    >
+                      <option value="">ادخل الفئة</option>
+                      <option value="programming">برمجة</option>
+                      <option value="design">تصميم</option>
+                      <option value="marketing">تسويق</option>
                     </select>
                   </div>
                   <div className="space-y-2">
                     <label className="block text-sm font-black text-gray-900 text-right">اضف وصف للدورة</label>
-                    <textarea placeholder="ادخل وصف للدورة" className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold min-h-[150px] text-right transition-all"></textarea>
+                    <textarea 
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="ادخل وصف للدورة" 
+                      className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold min-h-[150px] text-right transition-all"
+                    ></textarea>
                   </div>
                 </div>
 
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <label className="block text-sm font-black text-gray-900 text-right">اسم المدرب</label>
-                    <select className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold appearance-none text-right transition-all">
-                      <option>ادخل اسم المدرب</option>
+                    <select 
+                      value={instructor}
+                      onChange={(e) => setInstructor(e.target.value)}
+                      className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold appearance-none text-right transition-all"
+                    >
+                      <option value="">ادخل اسم المدرب</option>
+                      <option value="Ahmed">أحمد محمد</option>
+                      <option value="Karim">كريم محمد</option>
                     </select>
                   </div>
                   <div className="space-y-2">
@@ -212,12 +273,24 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
 
                 <div className="space-y-2">
                   <label className="block text-sm font-black text-gray-900 text-right">السعر</label>
-                  <input type="text" placeholder="ادخل سعر الدورة" className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all" />
+                  <input 
+                    type="text" 
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    placeholder="ادخل سعر الدورة" 
+                    className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all" 
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <label className="block text-sm font-black text-gray-900 text-right">السعر النهائي بعد الخصم</label>
-                  <input type="text" placeholder="ادخل السعر النهائي بعد الخصم" className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all" />
+                  <input 
+                    type="text" 
+                    value={finalPrice}
+                    onChange={(e) => setFinalPrice(e.target.value)}
+                    placeholder="ادخل السعر النهائي بعد الخصم" 
+                    className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all" 
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -243,93 +316,13 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
               </div>
 
               <div className="flex justify-center w-full max-w-md pt-4">
-                <button onClick={nextStep} className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all">حفظ و متابعة</button>
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Lesson Content & Upload */}
-          {step === 4 && (
-            <div className="space-y-10">
-              <h2 className="text-2xl font-black text-center text-gray-900">اضافة درس جديد</h2>
-              
-              <div className="space-y-6 max-w-2xl mx-auto">
-                <div className="space-y-2">
-                  <label className="block text-sm font-black text-gray-900 text-right">عنوان الدرس</label>
-                  <input type="text" placeholder="ادخل عنوان للدرس" className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all" />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-black text-gray-900 text-right">اضف وصف مختصر للدرس</label>
-                  <textarea placeholder="ادخل وصف للدرس" className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold min-h-[120px] text-right transition-all"></textarea>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-black text-gray-900 text-right">نوع الدرس</label>
-                  <div className="grid grid-cols-3 gap-4 bg-gray-50/50 p-2 rounded-[24px]">
-                    <button 
-                      onClick={() => setLessonType('powerpoint')}
-                      className={`flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold transition-all ${lessonType === 'powerpoint' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
-                    >
-                      <FilePowerpoint size={20} />
-                      <span>ملف Powerpoint</span>
-                    </button>
-                    <button 
-                      onClick={() => setLessonType('pdf')}
-                      className={`flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold transition-all ${lessonType === 'pdf' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
-                    >
-                      <FileText size={20} />
-                      <span>ملف PDF</span>
-                    </button>
-                    <button 
-                      onClick={() => setLessonType('video')}
-                      className={`flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold transition-all ${lessonType === 'video' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
-                    >
-                      <Video size={20} />
-                      <span>فيديو</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <label className="block text-sm font-black text-gray-900 text-right">محتوي الدرس</label>
-                  <div className="border-2 border-dashed border-gray-100 rounded-[32px] p-10 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-blue-600 transition-all">
-                    <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
-                      <Upload className="text-blue-600" size={32} />
-                    </div>
-                    <div className="text-center">
-                      <p className="font-black text-gray-900">اضغط للتحميل او اسحب الملف الي هنا</p>
-                      <p className="text-xs font-bold text-gray-400 mt-1">الحجم الاقصي للملف : MP4,PDF,PPTX. 500MB</p>
-                    </div>
-                  </div>
-
-                  {/* Progress Indicator */}
-                  <div className="bg-blue-50/50 p-6 rounded-[24px] space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white rounded-xl shadow-sm">
-                          <FileText className="text-blue-600" size={24} />
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-black text-gray-900">الفرق بين UX و UI , أمثلة عملية من تطبيقات حقيقية</p>
-                          <p className="text-xs font-bold text-gray-400">142.5 MB / 250 MB . 45s remaining</p>
-                        </div>
-                      </div>
-                      <Check size={20} className="text-blue-600" />
-                    </div>
-                    <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-blue-600 rounded-full transition-all duration-1000" 
-                        style={{ width: `${uploadProgress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-center gap-4 max-w-2xl mx-auto pt-4">
-                <button onClick={handleClose} className="px-16 py-4 bg-gray-100 text-gray-900 font-black rounded-2xl hover:bg-gray-200 transition-all">الغاء</button>
-                <button onClick={handleClose} className="px-16 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all">حفظ الدرس</button>
+                <button 
+                  onClick={handleCreateCourse} 
+                  disabled={isSubmitting}
+                  className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'جاري الإنشاء...' : 'إنشاء الدورة'}
+                </button>
               </div>
             </div>
           )}

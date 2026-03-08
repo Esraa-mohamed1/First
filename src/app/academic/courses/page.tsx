@@ -2,6 +2,7 @@
 
 import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 const coursesData = [
   { id: 1, name: 'أساسيات الحاسوب', category: 'تكنولوجيا', type: 'مسجلة', instructor: 'كريم محمد', price: '1,250', subscribers: 850, lessons: 250, date: '22/10/2022', status: 'مسودة' },
@@ -15,6 +16,7 @@ const coursesData = [
 ];
 
 export default function CoursesPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
 
   return (
@@ -84,7 +86,11 @@ export default function CoursesPage() {
             </thead>
             <tbody className="text-gray-900 font-bold">
               {coursesData.map((course, index) => (
-                <tr key={course.id} className="hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0 group">
+                <tr 
+                  key={course.id} 
+                  className="hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0 group cursor-pointer"
+                  onClick={() => router.push(`/academic/courses/${course.id}`)}
+                >
                   <td className="px-8 py-8 whitespace-nowrap">
                     <div className="flex flex-col gap-1">
                       <span className="text-lg font-black">{course.name}</span>
