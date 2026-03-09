@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { useModal } from '@/context/ModalContext';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-const Nav = () => {
+const NavSearchParamsHandler = () => {
     const { openModal } = useModal();
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -19,8 +19,17 @@ const Nav = () => {
         }
     }, [searchParams, openModal, router]);
 
+    return null;
+};
+
+const Nav = () => {
+    const { openModal } = useModal();
+
     return (
         <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-[100] shadow-[0_4px_30px_0px_rgba(72,128,255,0.2)]">
+            <Suspense fallback={null}>
+                <NavSearchParamsHandler />
+            </Suspense>
             <div className="max-w-[1400px] mx-auto px-8 py-4 flex items-center justify-between">
                 <div className="text-5xl font-black font-bold text-[#2563eb]">
                     <Link href="/">درب</Link>
