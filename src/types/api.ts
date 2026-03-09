@@ -86,14 +86,15 @@ export interface Course {
 
 export interface CreateCoursePayload {
   title: string;
-  description: string;
-  category: string;
-  instructor: string;
-  price: number;
-  final_price: number;
-  status: 'published' | 'draft';
+  user_id: string | number;
   type: string;
-  cover_image?: string;
+  price_type: 'free' | 'paid';
+  price: string | number;
+  final_price: string | number;
+  status: 'published' | 'draft';
+  image?: File;
+  category_id: string | number;
+  description: string;
 }
 
 export interface CreateUnitPayload {

@@ -19,7 +19,7 @@ export default function SetupPage() {
   
   const [domainPrefix, setDomainPrefix] = useState('');
   const [domainError, setDomainError] = useState<string | null>(null);
-  const domainSuffix = '.localhost:3000'; // Static part
+  const domainSuffix = '.darab.academy'; // Static part
 
   useEffect(() => {
     // Prefill data from registration step

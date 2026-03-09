@@ -1,23 +1,56 @@
 'use client';
 
-import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft } from 'lucide-react';
-import { useState } from 'react';
+import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
-const coursesData = [
-  { id: 1, name: 'أساسيات الحاسوب', category: 'تكنولوجيا', type: 'مسجلة', instructor: 'كريم محمد', price: '1,250', subscribers: 850, lessons: 250, date: '22/10/2022', status: 'مسودة' },
-  { id: 2, name: 'أساسيات البرمجة', category: 'البرمجة', type: 'اونلاين', instructor: 'محمود ابراهيم', price: '2,250', subscribers: 250, lessons: 250, date: '19/8/2019', status: '' },
-  { id: 3, name: 'تطوير مواقع الويب', category: 'البرمجة', type: 'مسجلة', instructor: 'احمد محمد', price: '2,110', subscribers: 150, lessons: 150, date: '14/1/2023', status: 'مسودة' },
-  { id: 4, name: 'تحليل البيانات', category: 'علوم البيانات', type: 'حضوري', instructor: 'علي محمد', price: '1,250', subscribers: 310, lessons: 100, date: '12/10/2022', status: '' },
-  { id: 5, name: 'أساسيات البرمجة', category: 'البرمجة', type: 'اونلاين', instructor: 'كريم محمد', price: '1,250', subscribers: 500, lessons: 50, date: '7/7/2018', status: '' },
-  { id: 6, name: 'تطوير مواقع الويب', category: 'البرمجة', type: 'مسجلة', instructor: 'احمد محمد', price: '2,110', subscribers: 150, lessons: 150, date: '14/1/2023', status: 'مسودة' },
-  { id: 7, name: 'تحليل البيانات', category: 'علوم البيانات', type: 'اونلاين', instructor: 'علي محمد', price: '2,110', subscribers: 150, lessons: 150, date: '14/1/2023', status: '' },
-  { id: 8, name: 'تطوير مواقع الويب', category: 'البرمجة', type: 'مسجلة', instructor: 'احمد محمد', price: '2,110', subscribers: 150, lessons: 150, date: '14/1/2023', status: 'مسودة' },
-];
+import { getCourses } from '@/services/courses';
+import { Course } from '@/types/api';
+import toast from 'react-hot-toast';
 
 export default function CoursesPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const fetchCourses = async () => {
+    setLoading(true);
+    try {
+      const data = await getCourses();
+      setCourses(data || []);
+    } catch (error) {
+      console.error(error);
+      toast.error('فشل تحميل الدورات');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCourseTypeLabel = (type: string) => {
+    switch (type) {
+      case 'registered': return 'مسجلة';
+      case 'online': return 'اونلاين';
+      case 'offline': return 'حضوري';
+      default: return type;
+    }
+  };
+
+  const getCourseTypeColor = (type: string) => {
+    switch (type) {
+      case 'registered': return 'bg-orange-50 text-orange-500';
+      case 'online': return 'bg-green-50 text-green-500';
+      case 'offline': return 'bg-gray-100 text-gray-500';
+      default: return 'bg-gray-100 text-gray-500';
+    }
+  };
+
+  const filteredCourses = courses.filter(course => 
+    course.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-8">
@@ -68,79 +101,96 @@ export default function CoursesPage() {
       </div>
 
       {/* Courses Table Container */}
-      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="text-right text-gray-400 font-black text-base border-b border-gray-50">
-                <th className="px-8 py-8 whitespace-nowrap">اسم الدورة</th>
-                <th className="px-8 py-8 whitespace-nowrap">التصنيف</th>
-                <th className="px-8 py-8 whitespace-nowrap">نوع الدورة</th>
-                <th className="px-8 py-8 whitespace-nowrap">المدرب</th>
-                <th className="px-8 py-8 whitespace-nowrap">السعر</th>
-                <th className="px-8 py-8 whitespace-nowrap">عدد المشتركين</th>
-                <th className="px-8 py-8 whitespace-nowrap">عدد الدروس</th>
-                <th className="px-8 py-8 whitespace-nowrap">تاريخ الإضافة</th>
-                <th className="px-8 py-8 whitespace-nowrap"></th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-900 font-bold">
-              {coursesData.map((course, index) => (
-                <tr 
-                  key={course.id} 
-                  className="hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0 group cursor-pointer"
-                  onClick={() => router.push(`/academic/courses/${course.id}`)}
-                >
-                  <td className="px-8 py-8 whitespace-nowrap">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-lg font-black">{course.name}</span>
-                      {course.status && (
-                        <span className="bg-gray-100 text-gray-400 px-3 py-1 rounded-full text-xs w-fit">
-                          {course.status}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.category}</td>
-                  <td className="px-8 py-8 whitespace-nowrap">
-                    <span className={`px-5 py-2 rounded-xl text-sm font-black ${
-                      course.type === 'مسجلة' ? 'bg-orange-50 text-orange-500' : 
-                      course.type === 'اونلاين' ? 'bg-green-50 text-green-500' : 
-                      'bg-gray-100 text-gray-500'
-                    }`}>
-                      {course.type}
-                    </span>
-                  </td>
-                  <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.instructor}</td>
-                  <td className="px-8 py-8 whitespace-nowrap font-black">{course.price}</td>
-                  <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.subscribers}</td>
-                  <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.lessons}</td>
-                  <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.date}</td>
-                  <td className="px-8 py-8 whitespace-nowrap">
-                    <button className="p-2 hover:bg-gray-100 rounded-xl transition-all">
-                      <MoreVertical size={20} className="text-gray-400" />
-                    </button>
-                  </td>
+      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden min-h-[400px]">
+        {loading ? (
+          <div className="flex items-center justify-center h-full min-h-[400px]">
+            <Loader2 className="animate-spin text-blue-600" size={40} />
+          </div>
+        ) : filteredCourses.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-gray-400">
+            <p className="text-xl font-bold">لا توجد دورات حالياً</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="text-right text-gray-400 font-black text-base border-b border-gray-50">
+                  <th className="px-8 py-8 whitespace-nowrap">اسم الدورة</th>
+                  <th className="px-8 py-8 whitespace-nowrap">التصنيف</th>
+                  <th className="px-8 py-8 whitespace-nowrap">نوع الدورة</th>
+                  <th className="px-8 py-8 whitespace-nowrap">المدرب</th>
+                  <th className="px-8 py-8 whitespace-nowrap">السعر</th>
+                  <th className="px-8 py-8 whitespace-nowrap">عدد المشتركين</th>
+                  <th className="px-8 py-8 whitespace-nowrap">عدد الدروس</th>
+                  <th className="px-8 py-8 whitespace-nowrap">تاريخ الإضافة</th>
+                  <th className="px-8 py-8 whitespace-nowrap"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="text-gray-900 font-bold">
+                {filteredCourses.map((course) => (
+                  <tr 
+                    key={course.id} 
+                    className="hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0 group cursor-pointer"
+                    onClick={() => router.push(`/academic/courses/${course.id}`)}
+                  >
+                    <td className="px-8 py-8 whitespace-nowrap">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-lg font-black">{course.title}</span>
+                        {course.status && (
+                          <span className={`px-3 py-1 rounded-full text-xs w-fit ${
+                            course.status === 'published' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+                          }`}>
+                            {course.status === 'published' ? 'منشورة' : 'مسودة'}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.category}</td>
+                    <td className="px-8 py-8 whitespace-nowrap">
+                      <span className={`px-5 py-2 rounded-xl text-sm font-black ${getCourseTypeColor(course.type)}`}>
+                        {getCourseTypeLabel(course.type)}
+                      </span>
+                    </td>
+                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.instructor}</td>
+                    <td className="px-8 py-8 whitespace-nowrap font-black">{course.price}</td>
+                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">0</td> {/* Placeholder for subscribers */}
+                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">
+                      {course.units?.reduce((acc, unit) => acc + (unit.lessons?.length || 0), 0) || 0}
+                    </td>
+                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">
+                       {/* Placeholder for date since created_at is not in interface, using generic date or skipping */}
+                       --/--/----
+                    </td>
+                    <td className="px-8 py-8 whitespace-nowrap">
+                      <button className="p-2 hover:bg-gray-100 rounded-xl transition-all">
+                        <MoreVertical size={20} className="text-gray-400" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-        {/* Pagination */}
-        <div className="px-10 py-8 border-t border-gray-50 flex items-center justify-between bg-white">
-          <div className="flex gap-3">
-            <button className="w-12 h-12 flex items-center justify-center rounded-2xl border border-gray-100 text-gray-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
-              <ChevronRight size={24} />
-            </button>
-            <button className="w-12 h-12 flex items-center justify-center rounded-2xl border border-gray-100 text-gray-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
-              <ChevronLeft size={24} />
-            </button>
+        {/* Pagination - Keep it static for now or hide if no items */}
+        {!loading && filteredCourses.length > 0 && (
+          <div className="px-10 py-8 border-t border-gray-50 flex items-center justify-between bg-white">
+            <div className="flex gap-3">
+              <button className="w-12 h-12 flex items-center justify-center rounded-2xl border border-gray-100 text-gray-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
+                <ChevronRight size={24} />
+              </button>
+              <button className="w-12 h-12 flex items-center justify-center rounded-2xl border border-gray-100 text-gray-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
+                <ChevronLeft size={24} />
+              </button>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-bold text-gray-400">
+                عرض {filteredCourses.length} من أصل {filteredCourses.length} دورة
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-bold text-gray-400">عرض 8 من أصل 50 دورة</span>
-          </div>
-        </div>
+        )}
       </div>
 
       <style jsx global>{`

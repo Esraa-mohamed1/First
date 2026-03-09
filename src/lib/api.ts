@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://72.62.27.82/api/front', 
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://api.darab.academy/api/front', 
   headers: {
     'Content-Type': 'application/json',
   },

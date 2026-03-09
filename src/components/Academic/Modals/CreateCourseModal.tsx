@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { X, Play, Video, MapPin, Check, Plus, ArrowRight } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { X, Play, Video, MapPin, Check, Plus, ArrowRight, Upload, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createCourse } from '@/services/courses';
+import { uploadFile } from '@/services/upload';
 
 interface CreateCourseModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface CreateCourseModalProps {
 
 const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
   const router = useRouter();
+  const pathname = usePathname();
   const [step, setStep] = useState(1);
   const [courseType, setCourseType] = useState<string | null>(null);
   
@@ -21,6 +23,11 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
   const [instructor, setInstructor] = useState('');
+  
+  // Image Upload State
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Pricing Step States
   const [pricingType, setPricingType] = useState<'free' | 'paid'>('paid');
@@ -62,12 +69,23 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
     setInstructor('');
     setPrice('');
     setFinalPrice('');
+    setSelectedFile(null);
+    setPreviewUrl(null);
     setIsSubmitting(false);
     onClose();
   };
 
   const nextStep = () => setStep(prev => prev + 1);
   const prevStep = () => setStep(prev => prev - 1);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
+    }
+  };
 
   const handleCreateCourse = async () => {
     if (!title || !category || !description) {
@@ -79,17 +97,26 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
     try {
       const newCourse = await createCourse({
         title,
-        category,
+        category_id: category, // Using category value as ID for now
         description,
-        instructor,
-        price: Number(price),
-        final_price: Number(finalPrice),
+        user_id: 2, // Hardcoded for now as per requirement
+        price: pricingType === 'free' ? 0 : Number(price),
+        final_price: pricingType === 'free' ? 0 : Number(finalPrice),
         status,
         type: courseType || 'registered',
+        price_type: pricingType,
+        image: selectedFile || undefined,
       });
+
       toast.success('تم إنشاء الدورة بنجاح');
       handleClose();
-      router.push(`/academic/courses/${newCourse.id}`);
+      
+      // Navigate to courses page or refresh if already there
+      if (pathname === '/academic/courses') {
+        window.location.reload();
+      } else {
+        router.push('/academic/courses');
+      }
     } catch (error) {
       toast.error('فشل إنشاء الدورة');
       console.error(error);
@@ -197,9 +224,9 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
                       className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold appearance-none text-right transition-all"
                     >
                       <option value="">ادخل الفئة</option>
-                      <option value="programming">برمجة</option>
-                      <option value="design">تصميم</option>
-                      <option value="marketing">تسويق</option>
+                      <option value="1">برمجة</option>
+                      <option value="2">تصميم</option>
+                      <option value="3">تسويق</option>
                     </select>
                   </div>
                   <div className="space-y-2">
@@ -228,14 +255,30 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
                   </div>
                   <div className="space-y-2">
                     <label className="block text-sm font-black text-gray-900 text-right">صورة الدورة</label>
-                    <div className="border-2 border-dashed border-gray-100 rounded-[32px] p-12 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-blue-600 transition-all min-h-[250px]">
-                      <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-50 transition-colors">
-                        <Plus className="text-gray-400 group-hover:text-blue-600" size={32} />
-                      </div>
-                      <div className="text-center">
-                        <p className="font-black text-gray-900">اضف صورة الدورة</p>
-                        <p className="text-xs font-bold text-gray-400 mt-1">صورة غلاف دورة : 1270x820</p>
-                      </div>
+                    <div 
+                      className="border-2 border-dashed border-gray-100 rounded-[32px] p-12 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-blue-600 transition-all min-h-[250px] relative overflow-hidden"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        className="hidden" 
+                        accept="image/*"
+                        onChange={handleFileChange}
+                      />
+                      {previewUrl ? (
+                        <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover rounded-[30px]" />
+                      ) : (
+                        <>
+                          <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                            <Plus className="text-gray-400 group-hover:text-blue-600" size={32} />
+                          </div>
+                          <div className="text-center">
+                            <p className="font-black text-gray-900">اضف صورة الدورة</p>
+                            <p className="text-xs font-bold text-gray-400 mt-1">صورة غلاف دورة : 1270x820</p>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -332,9 +375,16 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
                 <button 
                   onClick={handleCreateCourse} 
                   disabled={isSubmitting}
-                  className="flex-1 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="flex-1 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {isSubmitting ? 'جاري الإنشاء...' : 'إنشاء الدورة'}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="animate-spin" size={20} />
+                      <span>جاري الإنشاء...</span>
+                    </>
+                  ) : (
+                    'إنشاء الدورة'
+                  )}
                 </button>
               </div>
             </div>
