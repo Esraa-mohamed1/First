@@ -104,7 +104,7 @@ const Pricing = () => {
                                     )}
                                 </ul>
                                 <button
-                                    onClick={() => openModal('registration')}
+                                    onClick={() => openModal('registration', { package_id: plan.id })}
                                     className={`w-full py-4 text-xl font-black rounded-xl transition-all duration-300 hover:-translate-y-1 hover:brightness-110 mt-auto ${isPopular ? 'bg-white text-[#4F83FF]' : 'bg-[#4F83FF] text-white'}`}
                                 >
                                     اشترك الآن

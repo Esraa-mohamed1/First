@@ -62,21 +62,37 @@ const LoginModal = () => {
         try {
             const response = await login(formData);
 
-            // Per the provided response structure, token is at the root
-            if (response.token) {
-                // Store token in cookies
-                const token = response.token;
+            // Updated response structure based on API feedback:
+            // { data: { id, name, email }, meta: { access_token, token_type } }
+            if (response.meta && response.meta.access_token) {
+                // Store token in cookies and localStorage
+                const token = response.meta.access_token;
                 document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+                localStorage.setItem('token', token);
+                
+                // Store user info
+                if (response.data) {
+                    localStorage.setItem('user_info', JSON.stringify({
+                        name: response.data.name,
+                        email: response.data.email,
+                        role: 'الادمن' // Default role since it's not in the response yet
+                    }));
+                }
+                
+                // Note: The new response structure doesn't seem to have `link_academy` or `academy_link_name` directly in `data`.
+                // However, we rely on `academy_link_name` being in localStorage from the setup step or extracted from hostname.
+                // If it's missing here, we might need another way to get it, but for now we assume it's set or handled by interceptor fallback.
 
                 toast.success('تم تسجيل الدخول بنجاح');
                 closeModal();
 
-                // Navigate to dashboard
-                router.push('/dashboard');
+                // Navigate to academic dashboard (since this is academy login)
+                router.push('/academic');
             } else {
-                toast.error(response.message || 'فشل تسجيل الدخول');
+                toast.error('فشل تسجيل الدخول: استجابة غير صالحة');
             }
         } catch (error: any) {
+            console.error('Login error:', error);
             // Handle specific error messages from the API
             const errorMessage = error.message || error.error || 'حدث خطأ أثناء تسجيل الدخول';
             toast.error(errorMessage);

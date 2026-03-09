@@ -1,7 +1,7 @@
 import api from '@/lib/api';
 import { ApiResponse, CreateAccountPayload, LoginResponse } from '@/types/api';
 
-export const createAccount = async (payload: CreateAccountPayload): Promise<ApiResponse<any> & { paymentLink?: any }> => {
+export const createAccount = async (payload: CreateAccountPayload): Promise<ApiResponse<any> & { paymentLink?: any; token?: string }> => {
   try {
     const response = await api.post<ApiResponse<any>>('/create-account-academy', payload);
 
@@ -17,10 +17,12 @@ export const createAccount = async (payload: CreateAccountPayload): Promise<ApiR
           });
 
           if (paymentResponse.data.status && paymentResponse.data.data) {
-             // Assuming the link is in data or data.link, adjust based on actual API response
+             const linkData = paymentResponse.data.data;
+             const link = typeof linkData === 'string' ? linkData : (linkData.link || linkData.url);
+
             return {
               ...response.data,
-              paymentLink: paymentResponse.data.data // Verify if it's a string or object { link: '...' }
+              paymentLink: link 
             };
           }
         } catch (paymentError) {
@@ -50,7 +52,7 @@ export const createAccountInfoAcademy = async (payload: any) => {
 
 export const login = async (payload: any): Promise<LoginResponse> => {
   try {
-    const response = await api.post<LoginResponse>('/login', payload);
+    const response = await api.post<LoginResponse>('https://api.darab.academy/api/auth/login', payload);
     return response.data;
   } catch (error: any) {
     console.error('Failed to login:', error);

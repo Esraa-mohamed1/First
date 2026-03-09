@@ -7,7 +7,8 @@ type ModalType = 'registration' | 'login' | null;
 interface ModalContextType {
     isOpen: boolean;
     view: ModalType;
-    openModal: (view: ModalType) => void;
+    data: any;
+    openModal: (view: ModalType, data?: any) => void;
     closeModal: () => void;
 }
 
@@ -16,19 +17,22 @@ const ModalContext = createContext<ModalContextType | undefined>(undefined);
 export function ModalProvider({ children }: { children: React.ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
     const [view, setView] = useState<ModalType>(null);
+    const [data, setData] = useState<any>(null);
 
-    const openModal = (view: ModalType) => {
+    const openModal = (view: ModalType, data: any = null) => {
         setView(view);
+        setData(data);
         setIsOpen(true);
     };
 
     const closeModal = () => {
         setIsOpen(false);
         setView(null);
+        setData(null);
     };
 
     return (
-        <ModalContext.Provider value={{ isOpen, view, openModal, closeModal }}>
+        <ModalContext.Provider value={{ isOpen, view, data, openModal, closeModal }}>
             {children}
         </ModalContext.Provider>
     );

@@ -5,6 +5,7 @@ import { X, Play, Video, FileText, FilePieChart as FilePowerpoint, Upload, Check
 import toast from 'react-hot-toast';
 import { createLesson } from '@/services/courses';
 import { createVideoResource, uploadVideoFile, waitForVideoReady } from '@/services/bunnyStream';
+import { uploadFile } from '@/services/upload';
 
 interface AddLessonModalProps {
   isOpen: boolean;
@@ -61,11 +62,12 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
       return;
     }
 
+    if (!selectedFile) {
+      toast.error('اختر ملف الدرس أولاً');
+      return;
+    }
+
     if (lessonType === 'video') {
-      if (!selectedFile) {
-        toast.error('اختر ملف فيديو أولاً');
-        return;
-      }
       if (!libraryId || !bunnyApiKey) {
         toast.error('بيانات Bunny غير متوفرة');
         return;
@@ -75,20 +77,28 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
     setIsSubmitting(true);
     try {
       let finalVideoId = videoId;
+      let finalFileUrl = null;
 
-      // Only process video if type is video and not already ready
-      if (lessonType === 'video' && uploadStatus !== 'ready') {
-        setUploadStatus('creating');
-        const guid = await createVideoResource(libraryId, bunnyApiKey, title);
-        setVideoId(guid);
-        finalVideoId = guid;
+      if (lessonType === 'video') {
+        // Only process video if type is video and not already ready
+        if (uploadStatus !== 'ready') {
+          setUploadStatus('creating');
+          const guid = await createVideoResource(libraryId, bunnyApiKey, title);
+          setVideoId(guid);
+          finalVideoId = guid;
 
+          setUploadStatus('uploading');
+          await uploadVideoFile(libraryId, bunnyApiKey, guid, selectedFile!, setUploadProgress);
+
+          setUploadStatus('processing');
+          await waitForVideoReady(libraryId, bunnyApiKey, guid, setProcessingStatus);
+          
+          setUploadStatus('ready');
+        }
+      } else {
+        // Handle PDF/Powerpoint Upload
         setUploadStatus('uploading');
-        await uploadVideoFile(libraryId, bunnyApiKey, guid, selectedFile!, setUploadProgress);
-
-        setUploadStatus('processing');
-        await waitForVideoReady(libraryId, bunnyApiKey, guid, setProcessingStatus);
-        
+        finalFileUrl = await uploadFile(selectedFile);
         setUploadStatus('ready');
       }
 
@@ -99,6 +109,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
         description,
         type: lessonType,
         video_id: finalVideoId || undefined,
+        file_url: finalFileUrl || undefined,
         is_free: false, // Default to paid
       });
 
@@ -171,9 +182,10 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
               </div>
             </div>
 
-            {lessonType === 'video' && (
-              <div className="space-y-4">
-                <label className="block text-sm font-black text-gray-900 text-right">محتوي الدرس</label>
+            <div className="space-y-4">
+                <label className="block text-sm font-black text-gray-900 text-right">
+                  {lessonType === 'video' ? 'محتوي الدرس' : lessonType === 'pdf' ? 'ملف PDF' : 'ملف Powerpoint'}
+                </label>
                 <div
                   className="border-2 border-dashed border-gray-100 rounded-[32px] p-10 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-blue-600 transition-all"
                   onClick={() => fileInputRef.current?.click()}
@@ -181,7 +193,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="video/*"
+                    accept={lessonType === 'video' ? 'video/*' : lessonType === 'pdf' ? '.pdf' : '.ppt,.pptx'}
                     className="hidden"
                     onChange={handleFileChange}
                   />
@@ -192,7 +204,9 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
                     <p className="font-black text-gray-900">
                       {selectedFile ? selectedFile.name : 'اضغط للتحميل او اسحب الملف الي هنا'}
                     </p>
-                    <p className="text-xs font-bold text-gray-400 mt-1">الحجم الاقصي للملف : MP4. 500MB</p>
+                    <p className="text-xs font-bold text-gray-400 mt-1">
+                      {lessonType === 'video' ? 'الحجم الاقصي للملف : MP4. 500MB' : 'الحجم الاقصي للملف : 50MB'}
+                    </p>
                   </div>
                 </div>
 
@@ -245,7 +259,6 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
                   </div>
                 )}
               </div>
-            )}
           </div>
 
           <div className="flex justify-center gap-4 max-w-2xl mx-auto pt-4">
