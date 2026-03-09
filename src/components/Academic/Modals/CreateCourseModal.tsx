@@ -80,7 +80,7 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
   const validateStep2 = () => {
     const newErrors: Record<string, string> = {};
     if (!title.trim()) newErrors.title = 'اسم الدورة مطلوب';
-    if (!category) newErrors.category = 'الفئة مطلوبة';
+    // if (!category) newErrors.category = 'الفئة مطلوبة';
     if (!description.trim()) newErrors.description = 'وصف الدورة مطلوب';
     if (!instructor) newErrors.instructor = 'اسم المدرب مطلوب';
     if (!selectedFile) newErrors.image = 'صورة الدورة مطلوبة';
@@ -127,9 +127,9 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
     setIsSubmitting(true);
     try {
       const typeValue = courseType || 'recorded';
-      const newCourse = await createCourse({
+      const payload: any = {
         title,
-        category_id: category, // Using category value as ID for now
+        // category_id: category, // Temporarily disabled
         description,
         user_id: 2, // Hardcoded for now as per requirement
         price: pricingType === 'free' ? 0 : Number(price),
@@ -138,7 +138,9 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
         type: typeValue,
         price_type: pricingType,
         image: selectedFile || undefined,
-      });
+      };
+
+      const newCourse = await createCourse(payload);
 
       toast.success('تم إنشاء الدورة بنجاح');
       handleClose();
@@ -271,7 +273,7 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
                     />
                     {errors.title && <p className="text-red-500 text-sm font-bold">{errors.title}</p>}
                   </div>
-                  <div className="space-y-2">
+                  {/* <div className="space-y-2">
                     <label className="block text-sm font-black text-gray-900 text-right">
                       الفئة <span className="text-red-500">*</span>
                     </label>
@@ -286,7 +288,7 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
                       <option value="3">تسويق</option>
                     </select>
                     {errors.category && <p className="text-red-500 text-sm font-bold">{errors.category}</p>}
-                  </div>
+                  </div> */}
                   <div className="space-y-2">
                     <label className="block text-sm font-black text-gray-900 text-right">
                       اضف وصف للدورة <span className="text-red-500">*</span>

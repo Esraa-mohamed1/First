@@ -11,7 +11,9 @@ export const createCourse = async (payload: CreateCoursePayload): Promise<Course
     formData.append('price', String(payload.price));
     formData.append('final_price', String(payload.final_price));
     formData.append('status', payload.status);
-    formData.append('category_id', String(payload.category_id));
+    if (payload.category_id !== undefined && payload.category_id !== null) {
+      formData.append('category_id', String(payload.category_id));
+    }
     formData.append('description', payload.description);
 
     if (payload.image) {
@@ -33,6 +35,7 @@ export const createCourse = async (payload: CreateCoursePayload): Promise<Course
 export const getCourses = async (): Promise<Course[]> => {
   try {
     const response = await academyApi.get<ApiResponse<Course[]>>('courses');
+  
     return response.data.data;
   } catch (error: any) {
     console.error('Failed to get courses:', error);
@@ -52,7 +55,8 @@ export const getCourse = async (id: number | string): Promise<Course> => {
 
 export const createUnit = async (payload: CreateUnitPayload): Promise<Unit> => {
   try {
-    const response = await academyApi.post<ApiResponse<Unit>>('units', payload);
+    const response = await academyApi.post<ApiResponse<Unit>>('chapters', payload);
+    // Handle the case where data is directly in response.data.data
     return response.data.data;
   } catch (error: any) {
     console.error('Failed to create unit:', error);

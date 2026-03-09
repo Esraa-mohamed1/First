@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, GraduationCap, ChevronDown, X, LogOut } from 'lucide-react';
+import { LayoutGrid, GraduationCap, ChevronLeft, X, LogOut } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Image from 'next/image';
@@ -28,7 +28,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
   useEffect(() => {
     // Get user info from localStorage or decode token if available
-    // For now, let's assume we stored user info in localStorage during login
     const storedUser = localStorage.getItem('user_info');
     if (storedUser) {
         try {
@@ -108,11 +107,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           return (
             <div key={item.label} className="space-y-1">
               <div
-                onClick={() => hasSubItems && toggleExpand(item.label)}
                 className="cursor-pointer"
               >
                 <Link
-                  href={hasSubItems ? '#' : item.href}
+                  href={item.href}
                   className={twMerge(
                     clsx(
                       'flex items-center justify-between px-5 py-4 rounded-2xl transition-all duration-300 group',
@@ -122,9 +120,12 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                     )
                   )}
                   onClick={(e) => {
-                    if (hasSubItems) {
-                      e.preventDefault();
-                    }
+                     // If we are already on the page, toggle. Otherwise, just navigate.
+                     // Actually, we can always toggle if we want, or just let navigation happen.
+                     // The user wants to see the page, so navigation is key.
+                     if (hasSubItems) {
+                        toggleExpand(item.label);
+                     }
                   }}
                 >
                   <div className="flex items-center gap-4">
@@ -134,11 +135,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                     <span className="font-bold text-[15px]">{item.label}</span>
                   </div>
                   {hasSubItems && (
-                    <ChevronDown
+                    <ChevronLeft
                       size={18}
                       className={twMerge(
                         "transition-transform duration-300 text-gray-400",
-                        isExpanded ? "rotate-180" : ""
+                        isExpanded ? "-rotate-90" : ""
                       )}
                     />
                   )}
@@ -149,19 +150,19 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               {hasSubItems && isExpanded && (
                 <div className="relative mr-[38px] pr-4 mt-1 space-y-1">
                   {/* Vertical Line */}
-                  <div className="absolute right-0 top-0 bottom-4 w-px bg-blue-100"></div>
+                  <div className="absolute right-3 top-0 bottom-4 w-px bg-blue-100"></div>
 
                   {(item as any).subItems.map((subItem: any) => {
                     const isSubActive = pathname === subItem.href;
                     return (
                       <div key={subItem.label} className="relative pr-6">
                          {/* Horizontal Curve */}
-                        <div className="absolute right-0 top-1/2 w-4 h-4 border-b border-r border-blue-100 rounded-br-xl -translate-y-1/2 translate-x-[1px]"></div>
+                        <div className="absolute right-[-2.5px] top-1/2 bottom-1/2 w-6 border-r-[2px] border-b-[2px] border-secondary-100/50 border-[#D9E4FF] rounded-br-lg pointer-events-none" />
                         
                         <Link
                           href={subItem.href}
                           className={twMerge(
-                            "block py-3 px-4 text-[14px] font-bold rounded-xl transition-all duration-200",
+                            "block py-2 px-2 text-[14px] font-bold rounded-xl transition-all duration-200",
                             isSubActive
                               ? "text-[#2563eb]"
                               : "text-gray-400 hover:text-gray-900 hover:bg-gray-50"

@@ -80,14 +80,20 @@ export interface Course {
   id: number;
   title: string;
   description: string;
-  category: string;
-  instructor: string;
-  price: number;
-  final_price: number;
-  cover_image?: string;
+  category?: string; // Derived from category_id or backend logic
+  category_id?: number | null;
+  instructor?: string; // Not in API response, maybe derived or missing
+  user_id: number;
+  price: string | number; // API returns string "0.26"
+  final_price: string | number;
+  price_type: 'free' | 'paid';
+  image?: string; // API returns "image" URL string
+  cover_image?: string; // Old field, maybe deprecated?
   status: 'published' | 'draft';
   type: string;
-  units: Unit[];
+  units?: Unit[];
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CreateCoursePayload {
@@ -99,14 +105,15 @@ export interface CreateCoursePayload {
   final_price: string | number;
   status: 'published' | 'draft';
   image?: File;
-  category_id: string | number;
+  category_id?: string | number;
   description: string;
 }
 
 export interface CreateUnitPayload {
   course_id: number;
   title: string;
-  description: string;
+  description?: string;
+  order?: number;
 }
 
 export interface CreateLessonPayload {
@@ -120,7 +127,8 @@ export interface CreateLessonPayload {
 }
 
 export interface ApiResponse<T> {
-  status: boolean;
+  status: boolean | number;
+  success?: boolean;
   message: string;
   data: T;
 }

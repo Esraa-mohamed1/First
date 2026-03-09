@@ -145,21 +145,22 @@ export default function CoursesPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.category}</td>
+                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.category || 'غير مصنف'}</td>
                     <td className="px-8 py-8 whitespace-nowrap">
                       <span className={`px-5 py-2 rounded-xl text-sm font-black ${getCourseTypeColor(course.type)}`}>
                         {getCourseTypeLabel(course.type)}
                       </span>
                     </td>
-                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.instructor}</td>
-                    <td className="px-8 py-8 whitespace-nowrap font-black">{course.price}</td>
+                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.instructor || 'أحمد محمد'}</td>
+                    <td className="px-8 py-8 whitespace-nowrap font-black">
+                      {Number(course.price) === 0 ? 'مجاني' : `${course.price} ر.س`}
+                    </td>
                     <td className="px-8 py-8 whitespace-nowrap text-gray-500">0</td> {/* Placeholder for subscribers */}
                     <td className="px-8 py-8 whitespace-nowrap text-gray-500">
                       {course.units?.reduce((acc, unit) => acc + (unit.lessons?.length || 0), 0) || 0}
                     </td>
                     <td className="px-8 py-8 whitespace-nowrap text-gray-500">
-                       {/* Placeholder for date since created_at is not in interface, using generic date or skipping */}
-                       --/--/----
+                       {course.created_at ? new Date(course.created_at).toLocaleDateString('ar-EG') : '--/--/----'}
                     </td>
                     <td className="px-8 py-8 whitespace-nowrap">
                       <button className="p-2 hover:bg-gray-100 rounded-xl transition-all">

@@ -49,4 +49,33 @@ academyApi.interceptors.request.use(
   }
 );
 
+academyApi.interceptors.response.use(
+  (response) => {
+    // Check for 401 in successful response body
+    if (response.data && response.data.success === false && response.data.status === 401) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user_info');
+        localStorage.removeItem('academy_link_name');
+        document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
+        window.location.href = '/auth/login';
+        return Promise.reject(new Error('Token invalid or expired'));
+      }
+    }
+    return response;
+  },
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user_info');
+        localStorage.removeItem('academy_link_name');
+        document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
+        window.location.href = '/auth/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default academyApi;
