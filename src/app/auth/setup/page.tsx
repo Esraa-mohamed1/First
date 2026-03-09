@@ -98,6 +98,10 @@ export default function SetupPage() {
       };
 
       await createAccountInfoAcademy(payload);
+      
+      // Save academy link name to localStorage for subsequent login header
+      localStorage.setItem('academy_link_name', fullLink);
+      
       toast.success('تم حفظ معلومات الأكاديمية بنجاح');
       router.push('/auth/processing');
     } catch (error: any) {

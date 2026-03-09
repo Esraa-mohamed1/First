@@ -45,9 +45,15 @@ export interface CreateAccountPayload {
 }
 
 export interface LoginResponse {
-  message: string;
-  user: any;
-  token: string;
+  data: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  meta: {
+    access_token: string;
+    token_type: string;
+  };
 }
 
 export interface Lesson {

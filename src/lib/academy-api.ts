@@ -1,16 +1,18 @@
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://api.darab.academy/api/front', 
+const academyApi = axios.create({
+  baseURL: 'https://api.darab.academy/api/academy/', 
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-api.interceptors.request.use(
+academyApi.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token');
+      // The user requested to use the "link name of the logged in academy"
+      // We stored this as 'academy_link_name' in LoginModal.
       let tenantKey = localStorage.getItem('academy_link_name');
 
       // If tenant key not found in localStorage, try to get it from hostname
@@ -30,10 +32,14 @@ api.interceptors.request.use(
 
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+      } else {
+        console.warn('AcademyAPI: No token found in localStorage');
       }
-
+      
       if (tenantKey) {
         config.headers['X-Tenant-Key'] = tenantKey;
+      } else {
+        console.warn('AcademyAPI: No academy_link_name found in localStorage/hostname');
       }
     }
     return config;
@@ -43,4 +49,4 @@ api.interceptors.request.use(
   }
 );
 
-export default api;
+export default academyApi;

@@ -2,9 +2,22 @@
 
 import Link from 'next/link';
 import { useModal } from '@/context/ModalContext';
+import { useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 const Nav = () => {
     const { openModal } = useModal();
+    const searchParams = useSearchParams();
+    const router = useRouter();
+
+    useEffect(() => {
+        const action = searchParams.get('action');
+        if (action === 'login') {
+            openModal('login');
+            // Clean up the URL
+            router.replace('/');
+        }
+    }, [searchParams, openModal, router]);
 
     return (
         <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-[100] shadow-[0_4px_30px_0px_rgba(72,128,255,0.2)]">

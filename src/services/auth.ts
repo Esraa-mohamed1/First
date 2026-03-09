@@ -52,7 +52,7 @@ export const createAccountInfoAcademy = async (payload: any) => {
 
 export const login = async (payload: any): Promise<LoginResponse> => {
   try {
-    const response = await api.post<LoginResponse>('/login', payload);
+    const response = await api.post<LoginResponse>('https://api.darab.academy/api/auth/login', payload);
     return response.data;
   } catch (error: any) {
     console.error('Failed to login:', error);

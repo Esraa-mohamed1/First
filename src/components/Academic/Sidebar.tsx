@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, GraduationCap, ChevronDown, X } from 'lucide-react';
+import { LayoutGrid, GraduationCap, ChevronDown, X, LogOut } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Image from 'next/image';
+
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -21,6 +22,34 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     setExpandedItems((prev) =>
       prev.includes(label) ? prev.filter((i) => i !== label) : [...prev, label]
     );
+  };
+
+  const [user, setUser] = useState<{name: string, role: string} | null>(null);
+
+  useEffect(() => {
+    // Get user info from localStorage or decode token if available
+    // For now, let's assume we stored user info in localStorage during login
+    const storedUser = localStorage.getItem('user_info');
+    if (storedUser) {
+        try {
+            setUser(JSON.parse(storedUser));
+        } catch (e) {
+            console.error("Failed to parse user info");
+        }
+    }
+  }, []);
+
+  const handleLogout = () => {
+      // Clear all auth related items
+      localStorage.removeItem('token');
+      localStorage.removeItem('user_info');
+      localStorage.removeItem('academy_link_name');
+      
+      // Clear cookies
+      document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
+      
+      // Redirect to home
+      window.location.href = '/';
   };
 
   const menuItems = [
@@ -49,8 +78,8 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       <div className="p-8 pb-4 flex items-center justify-between">
            <div className="flex items-center gap-4 pl-4 border-r border-gray-100 mr-2">
               <div className="text-right">
-                <h4 className="text-base font-black text-gray-900 leading-none">أحمد محمد</h4>
-                <p className="text-sm text-gray-400 font-bold mt-1">الادمن</p>
+                <h4 className="text-base font-black text-gray-900 leading-none">{user?.name || 'أحمد محمد'}</h4>
+                <p className="text-sm text-gray-400 font-bold mt-1">{user?.role || 'الادمن'}</p>
               </div>
               <div className="w-14 h-14 rounded-2xl bg-blue-50 border-2 border-white shadow-md overflow-hidden relative">
                 <Image
@@ -149,6 +178,16 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           );
         })}
       </nav>
+      {/* Logout Button */}
+      <div className="p-6 border-t border-gray-100">
+        <button 
+            onClick={handleLogout}
+            className="flex items-center gap-4 w-full px-5 py-4 text-red-500 hover:bg-red-50 rounded-2xl transition-all duration-300 font-bold"
+        >
+            <LogOut size={22} />
+            <span className="font-bold text-[15px]">تسجيل الخروج</span>
+        </button>
+      </div>
     </aside>
   );
 };
