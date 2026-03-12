@@ -65,7 +65,7 @@ export const login = async (payload: any): Promise<LoginResponse> => {
 
 export const getProfileStatus = async (): Promise<any> => {
   try {
-    const response = await api.get<any>('https://api.darab.academy/api/auth/me');
+    const response = await api.get<any>('https://api.darab.academy/api/academy/me');
     return response.data;
   } catch (error: any) {
     console.error('Failed to get profile status:', error);

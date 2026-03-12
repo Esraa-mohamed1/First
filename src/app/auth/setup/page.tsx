@@ -145,7 +145,10 @@ export default function SetupPage() {
       const dashboardPath = process.env.NEXT_PUBLIC_TENANT_DASHBOARD_PATH || '/academic/courses/categories';
       const protocol = window.location.protocol; // http: or https:
       
-      const tenantUrl = `${protocol}//${domainPrefix}${tenantSuffix}${dashboardPath}`;
+      // Get the token we just received
+      const token = localStorage.getItem('token');
+      
+      const tenantUrl = `${protocol}//${domainPrefix}${tenantSuffix}${dashboardPath}${token ? `?token=${token}` : ''}`;
       
       console.log('Redirecting to tenant dashboard:', tenantUrl);
 
