@@ -18,7 +18,10 @@ export const createAccount = async (payload: CreateAccountPayload): Promise<ApiR
 
           if (paymentResponse.data.status && paymentResponse.data.data) {
              const linkData = paymentResponse.data.data;
-             const link = typeof linkData === 'string' ? linkData : (linkData.link || linkData.url);
+             // Handle various potential structures of the payment link response
+             const link = typeof linkData === 'string' ? linkData : (linkData.link || linkData.url || linkData.payment_url);
+
+             console.log('Payment Link Created:', link);
 
             return {
               ...response.data,
@@ -56,6 +59,16 @@ export const login = async (payload: any): Promise<LoginResponse> => {
     return response.data;
   } catch (error: any) {
     console.error('Failed to login:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const getProfileStatus = async (): Promise<any> => {
+  try {
+    const response = await api.get<any>('https://api.darab.academy/api/auth/me');
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to get profile status:', error);
     throw error.response?.data || error;
   }
 };

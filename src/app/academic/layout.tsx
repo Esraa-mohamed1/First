@@ -1,8 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Academic/Sidebar';
 import Header from '@/components/Academic/Header';
+import { getProfileStatus } from '@/services/auth';
+import { AlertCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function AcademicLayout({
   children,
@@ -10,9 +13,49 @@ export default function AcademicLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isVerified, setIsVerified] = useState<boolean | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkVerification = async () => {
+      try {
+        const response = await getProfileStatus();
+        const userData = response.data || response;
+        
+        setIsVerified(!!userData.email_verified_at);
+        console.log('Academic verification status:', !!userData.email_verified_at, userData);
+      } catch (error) {
+        console.error('Failed to check verification:', error);
+        setIsVerified(false);
+      }
+    };
+    
+    checkVerification();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFF] flex" dir="rtl">
+    <div className="min-h-screen bg-[#F8FAFF] flex relative" dir="rtl">
+      {/* Verification Overlay */}
+      {isVerified === false && (
+        <div className="fixed inset-0 z-[100] backdrop-blur-md bg-white/50 flex items-center justify-center">
+          <div className="bg-white p-10 rounded-[2rem] shadow-2xl text-center max-w-md border border-red-100 animate-in fade-in zoom-in duration-300 mx-4">
+            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="w-10 h-10 text-red-500" />
+            </div>
+            <h3 className="text-2xl font-black text-gray-900 mb-3">حسابك غير مفعل بعد</h3>
+            <p className="text-gray-500 mb-8 text-lg font-medium leading-relaxed">
+              يرجى تفعيل حسابك للاستمرار في استخدام لوحة التحكم والاستفادة من كافة المميزات.
+            </p>
+            <button 
+              onClick={() => router.push('/auth/verification')}
+              className="w-full py-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-red-500/30 hover:-translate-y-1"
+            >
+              تفعيل الحساب
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Mobile Overlay */}
       {isSidebarOpen && (
         <div

@@ -4,10 +4,13 @@ import { Users, GraduationCap, Building2, TrendingUp, AlertCircle, Plus } from '
 import StatCard from '@/components/Dashboard/StatsCard';
 import OverviewChart from '@/components/Dashboard/Charts/OverviewChart';
 import RevenueChart from '@/components/Dashboard/Charts/RevenueChart';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { getProfileStatus } from '@/services/auth';
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 relative">
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-black text-gray-900">لوحة التحكم</h2>

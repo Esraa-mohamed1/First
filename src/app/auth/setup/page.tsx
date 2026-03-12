@@ -3,7 +3,7 @@
 import { Link as LinkIcon, ChevronDown, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createAccountInfoAcademy } from "@/services/auth";
+import { createAccountInfoAcademy, login } from "@/services/auth";
 import toast from "react-hot-toast";
 
 export default function SetupPage() {
@@ -103,10 +103,83 @@ export default function SetupPage() {
       localStorage.setItem('academy_link_name', fullLink);
       
       toast.success('تم حفظ معلومات الأكاديمية بنجاح');
-      router.push('/auth/processing');
+
+      // Auto login
+      const password = localStorage.getItem('user_password');
+      if (password && (cachedEmail || cachedPhone)) {
+          console.log('Attempting auto-login...');
+          try {
+              const loginResponse = await login({
+                  email: cachedEmail || undefined,
+                  phone: cachedPhone || undefined,
+                  password: password
+              });
+              console.log('Auto-login successful', loginResponse);
+
+              if (loginResponse.meta && loginResponse.meta.access_token) {
+                  const token = loginResponse.meta.access_token;
+                  document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+                  localStorage.setItem('token', token);
+                  
+                  if (loginResponse.data) {
+                      localStorage.setItem('user_info', JSON.stringify({
+                          name: loginResponse.data.name,
+                          email: loginResponse.data.email,
+                          role: 'الادمن'
+                      }));
+                  }
+              }
+          } catch (loginError) {
+              console.error('Auto login failed:', loginError);
+              toast.error('فشل تسجيل الدخول التلقائي. يرجى تسجيل الدخول يدوياً.');
+          }
+      } else {
+          console.log('Skipping auto-login: Missing credentials', { password: !!password, email: !!cachedEmail, phone: !!cachedPhone });
+      }
+
+      // Clear sensitive data
+      localStorage.removeItem('user_password');
+
+      // Construct tenant URL
+      const tenantSuffix = process.env.NEXT_PUBLIC_TENANT_DOMAIN_SUFFIX || '.darab.academy.localhost:3000';
+      const dashboardPath = process.env.NEXT_PUBLIC_TENANT_DASHBOARD_PATH || '/academic/courses/categories';
+      const protocol = window.location.protocol; // http: or https:
+      
+      const tenantUrl = `${protocol}//${domainPrefix}${tenantSuffix}${dashboardPath}`;
+      
+      console.log('Redirecting to tenant dashboard:', tenantUrl);
+
+      window.location.href = tenantUrl;
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || 'حدث خطأ أثناء حفظ المعلومات');
+      
+      let handled = false;
+
+      // Handle structured validation errors
+      if (error.error && typeof error.error === 'object') {
+        const errors = error.error;
+        
+        // Specifically handle link_academy error
+        if (errors.link_academy) {
+          const msg = Array.isArray(errors.link_academy) ? errors.link_academy[0] : errors.link_academy;
+          setDomainError(msg);
+          toast.error(msg);
+          handled = true;
+        }
+        
+        // Handle other field errors
+        Object.keys(errors).forEach(key => {
+          if (key !== 'link_academy') {
+              const msg = Array.isArray(errors[key]) ? errors[key][0] : errors[key];
+              toast.error(msg);
+              handled = true;
+          }
+        });
+      }
+      
+      if (!handled) {
+        toast.error(error.message || 'حدث خطأ أثناء حفظ المعلومات');
+      }
     } finally {
       setLoading(false);
     }

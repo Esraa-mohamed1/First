@@ -5,9 +5,11 @@ import { useModal } from '@/context/ModalContext';
 import { useEffect, useState } from 'react';
 import { getPackages } from '@/services/packages';
 import { Package } from '@/types/api';
+import { useRouter } from 'next/navigation';
 
 const Pricing = () => {
     const { openModal } = useModal();
+    const router = useRouter();
     const [plans, setPlans] = useState<Package[]>([]);
     const [loading, setLoading] = useState(true);
 

@@ -9,13 +9,6 @@ export default function ProcessingPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      // Redirect to login page after 3 seconds
-      // Using query param to trigger login modal if needed, or just redirect to home where login can be opened
-      // But user requested "navigate to the login page". Since login is a modal, we might need to handle this.
-      // Assuming we redirect to home and let them click login, OR if there's a dedicated login page (doesn't seem to be one based on file structure, it's a modal).
-      // However, the user said "navigate to the login page". 
-      // If we look at the file structure, there is no /login page. Login is a modal.
-      // Let's redirect to home with a query param that opens the login modal.
       router.push("/?action=login");
     }, 3000);
 
