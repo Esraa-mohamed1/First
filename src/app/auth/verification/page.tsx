@@ -2,12 +2,12 @@
 
 import { ShieldCheck, Mail, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { sendOtp, verifyOtp } from "@/services/auth";
 
-export default function VerificationPage() {
+function VerificationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [step, setStep] = useState<'initial' | 'otp'>('initial');
@@ -198,5 +198,13 @@ export default function VerificationPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function VerificationPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">جاري التحميل...</div>}>
+      <VerificationContent />
+    </Suspense>
   );
 }
