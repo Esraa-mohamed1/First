@@ -27,6 +27,7 @@ export interface Package {
   custom_domains: number;
   video_hours: number;
   features: any[];
+  package_features?: any[];
   trial_days?: number;
   order?: number;
   recomnd?: number; // 1 for recommended/popular
