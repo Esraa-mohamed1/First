@@ -75,6 +75,7 @@ const LoginModal = () => {
                     localStorage.setItem('user_info', JSON.stringify({
                         name: response.data.name,
                         email: response.data.email,
+                        phone: response.data.phone,
                         role: 'الادمن' // Default role since it's not in the response yet
                     }));
                 }

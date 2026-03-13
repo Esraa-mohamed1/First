@@ -1,6 +1,8 @@
 import api from '@/lib/api';
 import { ApiResponse, Package, CreatePackagePayload, Feature } from '@/types/api';
 
+const SUPER_ADMIN_API_URL = 'https://api.darab.academy/api/superAdmin';
+
 export const getPackages = async (): Promise<Package[]> => {
   try {
     const response = await api.get<ApiResponse<Package[]>>('/packages');
@@ -16,7 +18,9 @@ export const getPackages = async (): Promise<Package[]> => {
 
 export const createPackage = async (payload: CreatePackagePayload): Promise<ApiResponse<Package>> => {
   try {
-    const response = await api.post<ApiResponse<Package>>('/packages', payload);
+    const response = await api.post<ApiResponse<Package>>('/packages', payload, {
+      baseURL: SUPER_ADMIN_API_URL
+    });
     return response.data;
   } catch (error: any) {
     console.error('Failed to create package:', error);
@@ -26,7 +30,9 @@ export const createPackage = async (payload: CreatePackagePayload): Promise<ApiR
 
 export const getFeatures = async (): Promise<Feature[]> => {
   try {
-    const response = await api.get<ApiResponse<Feature[]>>('/features');
+    const response = await api.get<ApiResponse<Feature[]>>('/features', {
+      baseURL: SUPER_ADMIN_API_URL
+    });
     if (response.data.status) {
       return response.data.data;
     }
@@ -39,7 +45,9 @@ export const getFeatures = async (): Promise<Feature[]> => {
 
 export const createFeature = async (title: string): Promise<ApiResponse<Feature>> => {
   try {
-    const response = await api.post<ApiResponse<Feature>>('/features', { title });
+    const response = await api.post<ApiResponse<Feature>>('/features', { title }, {
+      baseURL: SUPER_ADMIN_API_URL
+    });
     return response.data;
   } catch (error: any) {
     console.error('Failed to create feature:', error);
@@ -49,7 +57,9 @@ export const createFeature = async (title: string): Promise<ApiResponse<Feature>
 
 export const getPackageById = async (id: number): Promise<Package | null> => {
   try {
-    const response = await api.get<ApiResponse<Package>>(`/packages/${id}`);
+    const response = await api.get<ApiResponse<Package>>(`/packages/${id}`, {
+      baseURL: SUPER_ADMIN_API_URL
+    });
     if (response.data.status) {
       return response.data.data;
     }
@@ -62,7 +72,9 @@ export const getPackageById = async (id: number): Promise<Package | null> => {
 
 export const updatePackage = async (id: number, payload: CreatePackagePayload): Promise<ApiResponse<Package>> => {
   try {
-    const response = await api.put<ApiResponse<Package>>(`/packages/${id}`, payload);
+    const response = await api.put<ApiResponse<Package>>(`/packages/${id}`, payload, {
+      baseURL: SUPER_ADMIN_API_URL
+    });
     return response.data;
   } catch (error: any) {
     console.error(`Failed to update package ${id}:`, error);
@@ -72,7 +84,9 @@ export const updatePackage = async (id: number, payload: CreatePackagePayload): 
 
 export const deletePackage = async (id: number): Promise<ApiResponse<any>> => {
   try {
-    const response = await api.delete<ApiResponse<any>>(`/packages/${id}`);
+    const response = await api.delete<ApiResponse<any>>(`/packages/${id}`, {
+      baseURL: SUPER_ADMIN_API_URL
+    });
     return response.data;
   } catch (error: any) {
     console.error(`Failed to delete package ${id}:`, error);
@@ -81,7 +95,9 @@ export const deletePackage = async (id: number): Promise<ApiResponse<any>> => {
 };
 export const updateFeature = async (id: number, title: string): Promise<ApiResponse<Feature>> => {
   try {
-    const response = await api.put<ApiResponse<Feature>>(`/features/${id}`, { title });
+    const response = await api.put<ApiResponse<Feature>>(`/features/${id}`, { title }, {
+      baseURL: SUPER_ADMIN_API_URL
+    });
     return response.data;
   } catch (error: any) {
     console.error(`Failed to update feature ${id}:`, error);
@@ -91,7 +107,9 @@ export const updateFeature = async (id: number, title: string): Promise<ApiRespo
 
 export const deleteFeature = async (id: number): Promise<ApiResponse<any>> => {
   try {
-    const response = await api.delete<ApiResponse<any>>(`/features/${id}`);
+    const response = await api.delete<ApiResponse<any>>(`/features/${id}`, {
+      baseURL: SUPER_ADMIN_API_URL
+    });
     return response.data;
   } catch (error: any) {
     console.error(`Failed to delete feature ${id}:`, error);
@@ -101,7 +119,9 @@ export const deleteFeature = async (id: number): Promise<ApiResponse<any>> => {
 
 export const associateFeatures = async (payload: { package_id: number, feature_id: number, value: string, lable: string }): Promise<ApiResponse<any>> => {
   try {
-    const response = await api.post<ApiResponse<any>>('/feature_packages', payload);
+    const response = await api.post<ApiResponse<any>>('/feature_packages', payload, {
+      baseURL: SUPER_ADMIN_API_URL
+    });
     return response.data;
   } catch (error: any) {
     console.error('Failed to associate feature:', error);

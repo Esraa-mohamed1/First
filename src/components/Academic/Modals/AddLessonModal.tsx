@@ -68,6 +68,20 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
     }
 
     if (lessonType === 'video') {
+      // Check for free_trial status
+      const storedUser = localStorage.getItem('user_info');
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          if (userData.statusPayed === 'free_trial') {
+             toast.error('عفواً، لا يمكنك رفع الفيديوهات في النسخة التجريبية. يرجى ترقية باقتك.');
+             return;
+          }
+        } catch (e) {
+          console.error("Failed to parse user info", e);
+        }
+      }
+
       if (!libraryId || !bunnyApiKey) {
         toast.error('بيانات Bunny غير متوفرة');
         return;

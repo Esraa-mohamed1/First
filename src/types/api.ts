@@ -49,6 +49,7 @@ export interface LoginResponse {
     id: number;
     name: string;
     email: string;
+    phone?: string;
   };
   meta: {
     access_token: string;

@@ -18,7 +18,10 @@ export const createAccount = async (payload: CreateAccountPayload): Promise<ApiR
 
           if (paymentResponse.data.status && paymentResponse.data.data) {
              const linkData = paymentResponse.data.data;
-             const link = typeof linkData === 'string' ? linkData : (linkData.link || linkData.url);
+             // Handle various potential structures of the payment link response
+             const link = typeof linkData === 'string' ? linkData : (linkData.link || linkData.url || linkData.payment_url);
+
+             console.log('Payment Link Created:', link);
 
             return {
               ...response.data,
@@ -59,3 +62,35 @@ export const login = async (payload: any): Promise<LoginResponse> => {
     throw error.response?.data || error;
   }
 };
+
+export const getProfileStatus = async (): Promise<any> => {
+  try {
+    const response = await api.get<any>('https://api.darab.academy/api/academy/me');
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to get profile status:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const sendOtp = async (contact: string): Promise<ApiResponse<any>> => {
+  try {
+    const response = await api.post<ApiResponse<any>>('https://api.darab.academy/api/academy/send-otp', { contact });
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to send OTP:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const verifyOtp = async (contact: string, otp: string): Promise<ApiResponse<any>> => {
+  try {
+    const response = await api.post<ApiResponse<any>>('https://api.darab.academy/api/academy/check-otp', { contact, otp });
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to verify OTP:', error);
+    throw error.response?.data || error;
+  }
+};
+
+

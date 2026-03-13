@@ -5,9 +5,11 @@ import { useModal } from '@/context/ModalContext';
 import { useEffect, useState } from 'react';
 import { getPackages } from '@/services/packages';
 import { Package } from '@/types/api';
+import { useRouter } from 'next/navigation';
 
 const Pricing = () => {
     const { openModal } = useModal();
+    const router = useRouter();
     const [plans, setPlans] = useState<Package[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -65,12 +67,12 @@ const Pricing = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch pt-12">
                     {displayPlans.map((plan, index) => {
-                        const isPopular = plan.recomnd === 1; // Updated to match API field 'recomnd'
+                        const isPopular = plan.recomnd === 1;
 
                         return (
                             <div
                                 key={plan.id || index}
-                                className={`flex flex-col bg-white border ${isPopular ? 'border-none bg-[#4F83FF] text-white scale-105 shadow-[0_20px_40px_rgba(79,131,255,0.3)] z-10' : 'border-[#4F83FF] text-[#4a4a4a] shadow-[0_10px_25px_rgba(0,0,0,0.03)]'} rounded-[60px_15px_60px_15px] p-8 transition-all duration-300 ease-in-out relative`}
+                                className={`flex flex-col bg-white border ${isPopular ? 'border-2 border-[#FFD200] relative transform scale-105 shadow-xl z-10' : 'border-[#4F83FF] shadow-[0_10px_25px_rgba(0,0,0,0.03)]'} rounded-[60px_15px_60px_15px] p-8 transition-all duration-300 ease-in-out`}
                             >
                                 {isPopular && (
                                     <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-[#FFD200] text-white px-10 py-2 rounded-full font-black text-sm shadow-md whitespace-nowrap">
@@ -78,26 +80,27 @@ const Pricing = () => {
                                     </div>
                                 )}
                                 <div className="text-right mb-10 space-y-2">
-                                    <h3 className={`text-xl font-black ${isPopular ? 'text-white' : 'text-[#1a1a1a]'}`}>
+                                    <h3 className="text-xl font-black text-[#1a1a1a]">
                                         {plan.titile}
                                     </h3>
-                                    <div className={`flex flex-col items-start gap-0 ${isPopular ? 'text-white' : 'text-[#4F83FF]'}`}>
+                                    <div className="flex flex-col items-start gap-0 text-[#4F83FF]">
                                         <span className="text-xl font-black">{plan.price}</span>
                                         <span className="text-xs font-bold opacity-80 uppercase tracking-tighter -mt-1">SAR</span>
                                     </div>
                                 </div>
                                 <ul className="list-none p-0 mb-10 flex-grow">
-                                    {(Array.isArray(plan.features) ? plan.features.slice(0, 5) : []).map((feature: any, idx) => (
+                                    {(plan.package_features && plan.package_features.length > 0 ? plan.package_features : 
+                                      (Array.isArray(plan.features) ? plan.features : [])).slice(0, 5).map((feature: any, idx: number) => (
                                         <li key={idx} className="flex items-start justify-start gap-3 mb-5 text-[0.95rem] font-bold">
-                                            <div className={`w-5 h-5 flex-shrink-0 rounded-full flex items-center justify-center p-1 mt-0.5 ${isPopular ? 'bg-white text-[#4F83FF]' : 'bg-[#4F83FF] text-white'}`}>
+                                            <div className="w-5 h-5 flex-shrink-0 rounded-full flex items-center justify-center p-1 mt-0.5 bg-[#4F83FF] text-white">
                                                 <Check size={14} strokeWidth={4} />
                                             </div>
-                                            <span className={`text-right leading-snug ${isPopular ? 'text-white' : 'text-[#4a4a4a]'}`}>
-                                                {typeof feature === 'string' ? feature : feature.title || feature.lable}
+                                            <span className="text-right leading-snug text-[#4a4a4a]">
+                                                {typeof feature === 'string' ? feature : feature.lable || feature.title || feature.value}
                                             </span>
                                         </li>
                                     ))}
-                                    {(!plan.features || plan.features.length === 0) && (
+                                    {(!plan.package_features || plan.package_features.length === 0) && (!plan.features || plan.features.length === 0) && (
                                         <li className="text-center text-gray-400 py-4 font-bold">
                                             لا توجد مميزات إضافية
                                         </li>
@@ -105,7 +108,7 @@ const Pricing = () => {
                                 </ul>
                                 <button
                                     onClick={() => openModal('registration', { package_id: plan.id })}
-                                    className={`w-full py-4 text-xl font-black rounded-xl transition-all duration-300 hover:-translate-y-1 hover:brightness-110 mt-auto ${isPopular ? 'bg-white text-[#4F83FF]' : 'bg-[#4F83FF] text-white'}`}
+                                    className={`w-full py-4 text-xl font-black rounded-xl transition-all duration-300 hover:-translate-y-1 hover:brightness-110 mt-auto ${isPopular ? 'bg-[#FFD200] text-white shadow-lg shadow-yellow-200' : 'bg-[#4F83FF] text-white'}`}
                                 >
                                     اشترك الآن
                                 </button>
