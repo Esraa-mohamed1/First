@@ -28,12 +28,13 @@ export default function CourseDetailsPage() {
   const fetchCourse = async () => {
     try {
       const data = await getCourse(id);
+      
+      // Map 'chapters' to 'units' if needed
+      if ((data as any).chapters) {
+          data.units = (data as any).chapters;
+      }
+      
       setCourse(data);
-      // Map 'chapters' to 'units' if the API returns 'chapters' instead of 'units'
-      // Based on the user input, the backend might be returning 'chapters' or we need to ensure 'units' are populated
-      // If the API returns units inside the course object, we are good.
-      // If it's a separate call or different key, we need to adjust.
-      // Assuming 'units' in Course interface maps to the response's chapters/units list.
       
       if (data.units) {
         setExpandedUnits(data.units.map(u => u.id));
