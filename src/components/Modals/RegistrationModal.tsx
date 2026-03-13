@@ -179,14 +179,21 @@ const RegistrationModal = () => {
 
         setIsLoading(true);
         try {
-            const response = await createAccount({
-                name: 'User', // Default name as requested to remove the field
-                email: contactMethod === 'email' ? formData.email : '',
-                phone: contactMethod === 'phone' ? formData.phone : '',
+            // Only send the selected contact method
+            const accountPayload: any = {
+                name: 'User',
                 academy_name: formData.academy_name,
                 password: formData.password,
                 package_id: data?.package_id
-            });
+            };
+
+            if (contactMethod === 'email') {
+                accountPayload.email = formData.email;
+            } else {
+                accountPayload.phone = formData.phone;
+            }
+
+            const response = await createAccount(accountPayload);
             
             if (response.data?.token) {
                 localStorage.setItem('token', response.data.token);
@@ -194,11 +201,13 @@ const RegistrationModal = () => {
                  localStorage.setItem('token', response.token);
             }
             
-            // Cache user info for setup step
-            if (contactMethod === 'email' && formData.email) {
+            // Cache user info for setup step - Clear the other one to avoid confusion
+            if (contactMethod === 'email') {
                 localStorage.setItem('user_email', formData.email);
-            } else if (contactMethod === 'phone' && formData.phone) {
+                localStorage.removeItem('user_phone');
+            } else {
                 localStorage.setItem('user_phone', formData.phone);
+                localStorage.removeItem('user_email');
             }
             localStorage.setItem('user_academy_name', formData.academy_name);
             // Cache password for auto-login in setup step

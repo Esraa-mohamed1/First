@@ -87,15 +87,19 @@ export default function SetupPage() {
       const cachedPhone = localStorage.getItem('user_phone');
 
       // Map form data to API payload
-      const payload = {
+      const payload: any = {
         username: formData.academy_name, // Using academy name as username
         phone_academy: formData.phone,
-        email: cachedEmail || undefined,
-        phone: cachedPhone || undefined,
         country_code: formData.country === 'saudi' ? 'SA' : formData.country === 'egypt' ? 'EG' : formData.country === 'uae' ? 'AE' : formData.country,
         specialties: formData.field,
         link_academy: fullLink // Use the constructed link
       };
+
+      if (cachedEmail) {
+          payload.email = cachedEmail;
+      } else if (cachedPhone) {
+          payload.phone = cachedPhone;
+      }
 
       await createAccountInfoAcademy(payload);
       
@@ -106,6 +110,8 @@ export default function SetupPage() {
 
       // Auto login
       const password = localStorage.getItem('user_password');
+      let loginSuccess = false;
+
       if (password && (cachedEmail || cachedPhone)) {
           console.log('Attempting auto-login...');
           try {
@@ -124,10 +130,12 @@ export default function SetupPage() {
                   if (loginResponse.data) {
                       localStorage.setItem('user_info', JSON.stringify({
                           name: loginResponse.data.name,
-                          email: loginResponse.data.email,
+                          email: loginResponse.data.email || cachedEmail,
+                          phone: loginResponse.data.phone || cachedPhone,
                           role: 'الادمن'
                       }));
                   }
+                  loginSuccess = true;
               }
           } catch (loginError) {
               console.error('Auto login failed:', loginError);
@@ -139,6 +147,16 @@ export default function SetupPage() {
 
       // Clear sensitive data
       localStorage.removeItem('user_password');
+
+      if (!loginSuccess) {
+           const tenantSuffix = process.env.NEXT_PUBLIC_TENANT_DOMAIN_SUFFIX || '.darab.academy.localhost:3000';
+         const protocol = window.location.protocol; 
+         const tenantUrl = `${protocol}//${domainPrefix}${tenantSuffix}/auth/setup`; 
+         
+         console.log('Auto-login failed. Redirecting to tenant login:', tenantUrl);
+         window.location.href = tenantUrl;
+         return; 
+      }
 
       // Construct tenant URL
       const tenantSuffix = process.env.NEXT_PUBLIC_TENANT_DOMAIN_SUFFIX || '.darab.academy.localhost:3000';

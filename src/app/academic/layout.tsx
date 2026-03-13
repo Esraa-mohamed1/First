@@ -54,6 +54,22 @@ export default function AcademicLayout({
     checkVerification();
   }, []);
 
+  const handleVerificationClick = () => {
+    // Get contact info from local storage
+    const userStr = localStorage.getItem('user_info');
+    let contact = '';
+    if (userStr) {
+        try {
+            const user = JSON.parse(userStr);
+            contact = user.email || user.phone || '';
+        } catch (e) {
+            console.error('Failed to parse user info');
+        }
+    }
+    
+    router.push(`/auth/verification?contact=${encodeURIComponent(contact)}`);
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFF] flex relative" dir="rtl">
       {/* Account Blocked Overlay */}
@@ -89,7 +105,7 @@ export default function AcademicLayout({
               يرجى تفعيل حسابك للاستمرار في استخدام لوحة التحكم والاستفادة من كافة المميزات.
             </p>
             <button 
-              onClick={() => router.push('/auth/verification')}
+              onClick={handleVerificationClick}
               className="w-full py-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-red-500/30 hover:-translate-y-1"
             >
               تفعيل الحساب
