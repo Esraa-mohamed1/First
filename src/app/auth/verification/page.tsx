@@ -162,7 +162,7 @@ function VerificationContent() {
                     تم إرسال رمز مكوّن من 6 أرقام إلى {contact}. يرجى إدخاله للمتابعة.
                 </p>
 
-                <div className="flex justify-center gap-3 mb-8 flex-row-reverse" dir="ltr">
+                <div className="flex justify-center gap-3 mb-8" dir="ltr">
                     {otp.map((digit, index) => (
                         <input
                             key={index}

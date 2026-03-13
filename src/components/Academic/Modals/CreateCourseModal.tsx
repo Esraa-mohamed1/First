@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { X, Play, Video, MapPin, Check, Plus, ArrowRight, Upload, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createCourse } from '@/services/courses';
+import { getProfileStatus } from '@/services/auth';
 import { uploadFile } from '@/services/upload';
 
 interface CreateCourseModalProps {
@@ -126,12 +127,24 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
 
     setIsSubmitting(true);
     try {
+      // Get user ID from profile
+      let userId = 2; // Fallback default
+      try {
+        const profile = await getProfileStatus();
+        const userData = profile.data || profile;
+        if (userData && userData.id) {
+          userId = userData.id;
+        }
+      } catch (err) {
+        console.error('Failed to get user profile, using fallback ID', err);
+      }
+
       const typeValue = courseType || 'recorded';
       const payload: any = {
         title,
         // category_id: category, // Temporarily disabled
         description,
-        user_id: 2, // Hardcoded for now as per requirement
+        user_id: userId,
         price: pricingType === 'free' ? 0 : Number(price),
         final_price: pricingType === 'free' ? 0 : Number(finalPrice),
         status,

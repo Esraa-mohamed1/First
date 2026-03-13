@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { createLesson } from '@/services/courses';
 import { createVideoResource, uploadVideoFile, waitForVideoReady } from '@/services/bunnyStream';
 import { uploadFile } from '@/services/upload';
+import { getProfileStatus } from '@/services/auth';
 
 interface AddLessonModalProps {
   isOpen: boolean;
@@ -68,17 +69,35 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
     }
 
     if (lessonType === 'video') {
-      // Check for free_trial status
-      const storedUser = localStorage.getItem('user_info');
-      if (storedUser) {
-        try {
-          const userData = JSON.parse(storedUser);
-          if (userData.statusPayed === 'free_trial') {
-             toast.error('عفواً، لا يمكنك رفع الفيديوهات في النسخة التجريبية. يرجى ترقية باقتك.');
-             return;
-          }
-        } catch (e) {
-          console.error("Failed to parse user info", e);
+      // Check for free_trial status via API (more reliable than local storage)
+      try {
+        const profile = await getProfileStatus();
+        const userData = profile.data || profile;
+        
+        if (userData && userData.statusPayed === 'free_trial') {
+            toast.error('عفواً، لا يمكنك رفع الفيديوهات في النسخة التجريبية. يرجى ترقية باقتك.', {
+                duration: 5000,
+                icon: '🔒'
+            });
+            return;
+        }
+      } catch (err) {
+        console.error("Failed to check user status", err);
+        // Fallback to local storage if API fails
+        const storedUser = localStorage.getItem('user_info');
+        if (storedUser) {
+            try {
+            const userData = JSON.parse(storedUser);
+            if (userData.statusPayed === 'free_trial') {
+                toast.error('عفواً، لا يمكنك رفع الفيديوهات في النسخة التجريبية. يرجى ترقية باقتك.', {
+                    duration: 5000,
+                    icon: '🔒'
+                });
+                return;
+            }
+            } catch (e) {
+            console.error("Failed to parse user info", e);
+            }
         }
       }
 
@@ -169,28 +188,56 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
               ></textarea>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <label className="block text-sm font-black text-gray-900 text-right">نوع الدرس</label>
-              <div className="grid grid-cols-3 gap-4 bg-gray-50/50 p-2 rounded-[24px]">
+              <div className="relative flex bg-gray-100 p-1.5 rounded-[20px] shadow-inner">
+                {/* Sliding Indicator */}
+                <div 
+                  className="absolute top-1.5 bottom-1.5 bg-white rounded-[16px] shadow-sm transition-all duration-300 ease-in-out z-0"
+                  style={{
+                    width: 'calc(33.333% - 4px)',
+                    // Since it's RTL (right-to-left), we calculate 'right' position or use 'left' inversely
+                    // For RTL container: 
+                    // Video is first (rightmost), PDF middle, Powerpoint last (leftmost)
+                    // But in code order: Powerpoint, PDF, Video
+                    // Let's rely on standard left positioning but flipped logic if needed or just order buttons correctly
+                    // Assuming LTR logic for positioning in code, but visual RTL
+                    // Let's fix the logic for RTL context or LTR flex
+                    // Flex direction is row (default LTR) unless dir="rtl" is inherited.
+                    // The modal has dir="rtl".
+                    // So in RTL: First child (Powerpoint) is on the Right.
+                    // Second (PDF) is Middle.
+                    // Third (Video) is Left.
+                    // Wait, in RTL flex: start is right.
+                    // So Powerpoint (1st child) -> Right
+                    // PDF (2nd child) -> Middle
+                    // Video (3rd child) -> Left
+                    
+                    // So we need to control 'right' property instead of 'left' for RTL, or 'left' if we want to be explicit.
+                    // Let's use 'right' for RTL context to be safe.
+                    right: lessonType === 'powerpoint' ? '4px' : lessonType === 'pdf' ? 'calc(33.333% + 2px)' : 'calc(66.666% - 2px)',
+                  }}
+                />
+                
                 <button 
                   onClick={() => setLessonType('powerpoint')}
-                  className={`flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold transition-all ${lessonType === 'powerpoint' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-[16px] font-bold text-sm transition-colors duration-300 ${lessonType === 'powerpoint' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                 >
-                  <FilePowerpoint size={20} />
+                  <FilePowerpoint size={18} />
                   <span>ملف Powerpoint</span>
                 </button>
                 <button 
                   onClick={() => setLessonType('pdf')}
-                  className={`flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold transition-all ${lessonType === 'pdf' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-[16px] font-bold text-sm transition-colors duration-300 ${lessonType === 'pdf' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                 >
-                  <FileText size={20} />
+                  <FileText size={18} />
                   <span>ملف PDF</span>
                 </button>
                 <button 
                   onClick={() => setLessonType('video')}
-                  className={`flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold transition-all ${lessonType === 'video' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-[16px] font-bold text-sm transition-colors duration-300 ${lessonType === 'video' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                 >
-                  <Video size={20} />
+                  <Video size={18} />
                   <span>فيديو</span>
                 </button>
               </div>
