@@ -74,6 +74,17 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
         const profile = await getProfileStatus();
         const userData = profile.data || profile;
         
+        // Check verification status
+        if (userData && !userData.email_verified_at) {
+             toast.error('عفواً، يرجى تفعيل حسابك أولاً لتتمكن من رفع الفيديوهات.', {
+                duration: 5000,
+                icon: '📧'
+            });
+            // Redirect to verification page or show verification modal?
+            // For now just block action
+            return;
+        }
+
         if (userData && userData.statusPayed === 'free_trial') {
             toast.error('عفواً، لا يمكنك رفع الفيديوهات في النسخة التجريبية. يرجى ترقية باقتك.', {
                 duration: 5000,
@@ -88,6 +99,15 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
         if (storedUser) {
             try {
             const userData = JSON.parse(storedUser);
+            
+            if (!userData.email_verified_at) {
+                 toast.error('عفواً، يرجى تفعيل حسابك أولاً لتتمكن من رفع الفيديوهات.', {
+                    duration: 5000,
+                    icon: '📧'
+                });
+                return;
+            }
+
             if (userData.statusPayed === 'free_trial') {
                 toast.error('عفواً، لا يمكنك رفع الفيديوهات في النسخة التجريبية. يرجى ترقية باقتك.', {
                     duration: 5000,

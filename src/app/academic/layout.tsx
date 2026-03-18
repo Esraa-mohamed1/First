@@ -93,8 +93,8 @@ export default function AcademicLayout({
         </div>
       )}
 
-      {/* Verification Overlay */}
-      {isVerified === false && isActive !== false && (
+      {/* Verification Overlay - Removed as per user request */}
+      {/* {isVerified === false && isActive !== false && (
         <div className="fixed inset-0 z-[100] backdrop-blur-md bg-white/50 flex items-center justify-center">
           <div className="bg-white p-10 rounded-[2rem] shadow-2xl text-center max-w-md border border-red-100 animate-in fade-in zoom-in duration-300 mx-4">
             <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -112,7 +112,7 @@ export default function AcademicLayout({
             </button>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Mobile Overlay */}
       {isSidebarOpen && (
