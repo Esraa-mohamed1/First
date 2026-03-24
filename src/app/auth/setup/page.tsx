@@ -148,8 +148,11 @@ export default function SetupPage() {
       // Clear sensitive data
       localStorage.removeItem('user_password');
 
+      const isLocal = window.location.hostname.includes('localhost');
+      const defaultSuffix = isLocal ? '.darab.academy.localhost:3000' : '.darab.academy';
+
       if (!loginSuccess) {
-           const tenantSuffix = process.env.NEXT_PUBLIC_TENANT_DOMAIN_SUFFIX || '.darab.academy.localhost:3000';
+           const tenantSuffix = process.env.NEXT_PUBLIC_TENANT_DOMAIN_SUFFIX || defaultSuffix;
          const protocol = window.location.protocol; 
          const tenantUrl = `${protocol}//${domainPrefix}${tenantSuffix}/auth/setup`; 
          
@@ -159,7 +162,7 @@ export default function SetupPage() {
       }
 
       // Construct tenant URL
-      const tenantSuffix = process.env.NEXT_PUBLIC_TENANT_DOMAIN_SUFFIX || '.darab.academy.localhost:3000';
+      const tenantSuffix = process.env.NEXT_PUBLIC_TENANT_DOMAIN_SUFFIX || defaultSuffix;
       const dashboardPath = process.env.NEXT_PUBLIC_TENANT_DASHBOARD_PATH || '/academic/courses/categories';
       const protocol = window.location.protocol; // http: or https:
       

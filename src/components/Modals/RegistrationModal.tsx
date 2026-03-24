@@ -18,7 +18,6 @@ const RegistrationModal = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    // Form State
     const [formData, setFormData] = useState({
         email: '',
         phone: '',
@@ -35,25 +34,20 @@ const RegistrationModal = () => {
         confirmPassword: ''
     });
 
-    const [paymentLink, setPaymentLink] = useState<string | null>(null);
+
 
     const handleGoogleLogin = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
             console.log('Google Login Success:', tokenResponse);
-            
-            if (!data?.package_id) {
-                toast.error('يجب اختيار باقة أولاً');
-                return;
-            }
+
 
             setIsLoading(true);
             try {
                 // Simulate backend call
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                
+
                 toast.success('تم إنشاء الحساب بجوجل بنجاح');
-                
-                // Store simulated token
+
                 const token = "google_simulated_token_" + Date.now();
                 localStorage.setItem('token', token);
                 document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
@@ -73,7 +67,6 @@ const RegistrationModal = () => {
         },
     });
 
-    // Reset state when modal opens
     React.useEffect(() => {
         if (isOpen && view === 'registration') {
             setStep(1);
@@ -91,7 +84,7 @@ const RegistrationModal = () => {
                 password: '',
                 confirmPassword: ''
             });
-            setPaymentLink(null);
+
             setIsLoading(false);
             setContactMethod('email');
         }
@@ -111,10 +104,6 @@ const RegistrationModal = () => {
         const newErrors = { ...errors };
         let isValid = true;
 
-        if (!data?.package_id) {
-            toast.error('يجب اختيار باقة أولاً');
-            isValid = false;
-        }
 
         if (contactMethod === 'email') {
             if (!formData.email) {
@@ -137,8 +126,8 @@ const RegistrationModal = () => {
             newErrors.password = 'يرجى إدخال كلمة المرور';
             isValid = false;
         } else if (formData.password.length < 6) {
-             newErrors.password = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
-             isValid = false;
+            newErrors.password = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+            isValid = false;
         }
 
         if (!formData.confirmPassword) {
@@ -172,10 +161,6 @@ const RegistrationModal = () => {
 
     const handleCreateAccount = async () => {
         if (!validateStep2()) return;
-        if (!data?.package_id) {
-            toast.error('يجب اختيار باقة أولاً');
-            return;
-        }
 
         setIsLoading(true);
         try {
@@ -194,13 +179,13 @@ const RegistrationModal = () => {
             }
 
             const response = await createAccount(accountPayload);
-            
+
             if (response.data?.token) {
                 localStorage.setItem('token', response.data.token);
             } else if (response.token) {
-                 localStorage.setItem('token', response.token);
+                localStorage.setItem('token', response.token);
             }
-            
+
             // Cache user info for setup step - Clear the other one to avoid confusion
             if (contactMethod === 'email') {
                 localStorage.setItem('user_email', formData.email);
@@ -213,13 +198,8 @@ const RegistrationModal = () => {
             // Cache password for auto-login in setup step
             localStorage.setItem('user_password', formData.password);
 
-            if (response.paymentLink) {
-                toast.success('جاري التحويل لصفحة الدفع...');
-                window.location.href = response.paymentLink;
-            } else {
-                toast.success('تم إنشاء الحساب بنجاح');
-                setStep(4);
-            }
+            toast.success('تم إنشاء الحساب بنجاح');
+            setStep(4);
         } catch (error: any) {
             toast.error(error.message || 'حدث خطأ أثناء إنشاء الحساب');
         } finally {
@@ -231,11 +211,7 @@ const RegistrationModal = () => {
 
     const handleComplete = () => {
         closeModal();
-        if (paymentLink) {
-            window.location.href = paymentLink;
-        } else {
-            router.push('/auth/setup');
-        }
+        router.push('/auth/setup');
     };
 
     const renderStep = () => {
@@ -246,26 +222,24 @@ const RegistrationModal = () => {
                         <div className="text-center mb-6">
                             <h2 className="text-2xl font-black text-[#1a1a1a]">إنشاء حساب</h2>
                         </div>
-                        
+
                         {/* Contact Method Toggle */}
                         <div className="flex bg-[#f8faff] p-1 rounded-xl mb-4">
                             <button
                                 onClick={() => setContactMethod('email')}
-                                className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                                    contactMethod === 'email' 
-                                    ? 'bg-white text-[#2563eb] shadow-sm' 
-                                    : 'text-[#6b7280] hover:text-[#4a4a4a]'
-                                }`}
+                                className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${contactMethod === 'email'
+                                        ? 'bg-white text-[#2563eb] shadow-sm'
+                                        : 'text-[#6b7280] hover:text-[#4a4a4a]'
+                                    }`}
                             >
                                 البريد الإلكتروني
                             </button>
                             <button
                                 onClick={() => setContactMethod('phone')}
-                                className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                                    contactMethod === 'phone' 
-                                    ? 'bg-white text-[#2563eb] shadow-sm' 
-                                    : 'text-[#6b7280] hover:text-[#4a4a4a]'
-                                }`}
+                                className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${contactMethod === 'phone'
+                                        ? 'bg-white text-[#2563eb] shadow-sm'
+                                        : 'text-[#6b7280] hover:text-[#4a4a4a]'
+                                    }`}
                             >
                                 رقم الجوال
                             </button>
@@ -276,12 +250,12 @@ const RegistrationModal = () => {
                                 <div className="relative">
                                     <label className="block text-right text-xs font-bold text-[#4a4a4a] mb-1.5 px-1">البريد الإلكتروني</label>
                                     <div className="relative">
-                                        <input 
-                                            type="email" 
+                                        <input
+                                            type="email"
                                             name="email"
                                             value={formData.email}
                                             onChange={handleChange}
-                                            placeholder="example@mail.com" 
+                                            placeholder="example@mail.com"
                                             className={`w-full p-3 pr-10 text-right bg-[#f8faff] border rounded-xl focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.email ? 'border-red-500 focus:border-red-500' : 'border-[#e2e8f0]'}`}
                                         />
                                         <Mail className={`absolute right-3 top-1/2 -translate-y-1/2 ${errors.email ? 'text-red-500' : 'text-[#2563eb]'}`} size={18} />
@@ -292,12 +266,12 @@ const RegistrationModal = () => {
                                 <div className="relative">
                                     <label className="block text-right text-xs font-bold text-[#4a4a4a] mb-1.5 px-1">رقم الجوال</label>
                                     <div className="relative">
-                                        <input 
-                                            type="tel" 
+                                        <input
+                                            type="tel"
                                             name="phone"
                                             value={formData.phone}
                                             onChange={handleChange}
-                                            placeholder="05xxxxxxxx" 
+                                            placeholder="05xxxxxxxx"
                                             className={`w-full p-3 pr-10 text-right bg-[#f8faff] border rounded-xl focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.phone ? 'border-red-500 focus:border-red-500' : 'border-[#e2e8f0]'}`}
                                         />
                                         <Phone className={`absolute right-3 top-1/2 -translate-y-1/2 ${errors.phone ? 'text-red-500' : 'text-[#2563eb]'}`} size={18} />
@@ -309,16 +283,16 @@ const RegistrationModal = () => {
                             <div className="relative">
                                 <label className="block text-right text-xs font-bold text-[#4a4a4a] mb-1.5 px-1">كلمة المرور</label>
                                 <div className="relative">
-                                    <input 
+                                    <input
                                         type={showPassword ? "text" : "password"}
                                         name="password"
                                         value={formData.password}
                                         onChange={handleChange}
-                                        placeholder="********" 
+                                        placeholder="********"
                                         className={`w-full p-3 pr-10 text-right bg-[#f8faff] border rounded-xl focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.password ? 'border-red-500 focus:border-red-500' : 'border-[#e2e8f0]'}`}
                                     />
                                     <Lock className={`absolute right-3 top-1/2 -translate-y-1/2 ${errors.password ? 'text-red-500' : 'text-[#2563eb]'}`} size={18} />
-                                    <button 
+                                    <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
                                         className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280] hover:text-[#2563eb] transition-colors"
@@ -332,16 +306,16 @@ const RegistrationModal = () => {
                             <div className="relative">
                                 <label className="block text-right text-xs font-bold text-[#4a4a4a] mb-1.5 px-1">تأكيد كلمة المرور</label>
                                 <div className="relative">
-                                    <input 
+                                    <input
                                         type={showConfirmPassword ? "text" : "password"}
                                         name="confirmPassword"
                                         value={formData.confirmPassword}
                                         onChange={handleChange}
-                                        placeholder="********" 
+                                        placeholder="********"
                                         className={`w-full p-3 pr-10 text-right bg-[#f8faff] border rounded-xl focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.confirmPassword ? 'border-red-500 focus:border-red-500' : 'border-[#e2e8f0]'}`}
                                     />
                                     <Lock className={`absolute right-3 top-1/2 -translate-y-1/2 ${errors.confirmPassword ? 'text-red-500' : 'text-[#2563eb]'}`} size={18} />
-                                    <button 
+                                    <button
                                         type="button"
                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                         className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280] hover:text-[#2563eb] transition-colors"
@@ -360,7 +334,7 @@ const RegistrationModal = () => {
                             <span className="flex-shrink mx-4 text-xs text-[#6b7280] font-bold">أو</span>
                             <div className="flex-grow border-t border-[#e2e8f0]"></div>
                         </div>
-                        <button 
+                        <button
                             onClick={() => handleGoogleLogin()}
                             className="w-full py-3.5 bg-white border border-[#e2e8f0] text-[#1a1a1a] font-black rounded-xl hover:bg-[#f8faff] transition-all flex items-center justify-center gap-2 text-sm"
                         >
@@ -370,8 +344,8 @@ const RegistrationModal = () => {
 
                         <p className="text-center text-xs font-bold text-[#6b7280] mt-3">
                             لديك حساب بالفعل؟{' '}
-                            <button 
-                                onClick={() => openModal('login')} 
+                            <button
+                                onClick={() => openModal('login')}
                                 className="text-[#2563eb] underline"
                             >
                                 تسجيل الدخول
@@ -389,12 +363,12 @@ const RegistrationModal = () => {
                             <div className="relative">
                                 <label className="block text-right text-sm font-bold text-[#4a4a4a] mb-2 px-1">اسم الأكاديمية</label>
                                 <div className="relative">
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         name="academy_name"
                                         value={formData.academy_name}
                                         onChange={handleChange}
-                                        placeholder="أدخل اسم أكاديميتك" 
+                                        placeholder="أدخل اسم أكاديميتك"
                                         className={`w-full p-4 pr-12 text-right bg-[#f8faff] border rounded-2xl focus:border-[#2563eb] outline-none transition-all font-bold ${errors.academy_name ? 'border-red-500 focus:border-red-500' : 'border-[#e2e8f0]'}`}
                                     />
                                     <Globe className={`absolute right-4 top-1/2 -translate-y-1/2 ${errors.academy_name ? 'text-red-500' : 'text-[#2563eb]'}`} size={20} />
@@ -403,8 +377,8 @@ const RegistrationModal = () => {
                             </div>
                         </div>
                         <div className="flex gap-4">
-                            <button 
-                                onClick={handleCreateAccount} 
+                            <button
+                                onClick={handleCreateAccount}
                                 disabled={isLoading}
                                 className="flex-[2] py-4 bg-[#2563eb] text-white font-black rounded-2xl shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                             >
@@ -451,7 +425,7 @@ const RegistrationModal = () => {
                         <h2 className="text-3xl font-black text-[#1a1a1a] mb-4">تم إنشاء الحساب بنجاح</h2>
                         <p className="text-[#6b7280] font-bold text-lg mb-10 leading-relaxed">أهلاً بك في First! يمكنك الآن البدء في إدارة أكاديميتك وتطوير خدماتك.</p>
                         <button onClick={handleComplete} className="w-full py-5 bg-[#2563eb] text-white font-black rounded-[2rem] shadow-xl hover:-translate-y-1 transition-all">
-                            {paymentLink ? 'الذهاب للدفع' : 'ابدأ الآن'}
+                            ابدأ الآن
                         </button>
                     </div>
                 );
