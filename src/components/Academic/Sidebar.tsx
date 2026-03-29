@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, GraduationCap, ChevronLeft, X, LogOut } from 'lucide-react';
+import { LayoutGrid, GraduationCap, ChevronLeft, X, LogOut, Package, CreditCard, FileText, Settings } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Image from 'next/image';
@@ -58,6 +58,16 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       href: '/academic',
     },
     {
+      label: 'ادارة الباقات',
+      icon: Package,
+      href: '/academic/packages',
+    },
+    {
+      label: 'المدفوعات',
+      icon: CreditCard,
+      href: '/academic/payments',
+    },
+    {
       label: 'الدورات',
       icon: GraduationCap,
       href: '/academic/courses',
@@ -65,6 +75,16 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         { label: 'فئات الدورات', href: '/academic/courses/categories' },
         { label: 'الأحصائيات', href: '/academic/courses/stats' },
       ],
+    },
+    {
+      label: 'التقارير',
+      icon: FileText,
+      href: '/academic/reports',
+    },
+    {
+      label: 'الأعدادات',
+      icon: Settings,
+      href: '/academic/settings/academy',
     },
   ];
 

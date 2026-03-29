@@ -1,6 +1,7 @@
 'use client';
 
-import { Users, GraduationCap, Video, CreditCard, TrendingUp, Plus } from 'lucide-react';
+import { useState } from 'react';
+import { Users, GraduationCap, Video, CreditCard, TrendingUp, Plus, LayoutDashboard } from 'lucide-react';
 import StatCard from '@/components/Academic/StatsCard';
 import OverviewChart from '@/components/Academic/Charts/OverviewChart';
 import RevenueChart from '@/components/Academic/Charts/RevenueChart';
@@ -8,8 +9,11 @@ import VisitsByDeviceChart from '@/components/Academic/Charts/VisitsByDeviceChar
 import VisitsByCountryChart from '@/components/Academic/Charts/VisitsByCountryChart';
 import PackageCard from '@/components/Academic/PackageCard';
 import QuickActions from '@/components/Academic/QuickActions';
+import SetupProgress from '@/components/Academic/SetupProgress';
 
 export default function AcademicDashboardPage() {
+  const [showSetup, setShowSetup] = useState(true);
+
   const students = [
     { name: 'أحمد هاني محمد', date: '22/10/2022', status: 'مدفوع', course: 'أساسيات برمجة' },
     { name: 'محمود غنى', date: '19/8/2019', status: 'انتظار', course: 'تحليل بيانات' },
@@ -32,6 +36,14 @@ export default function AcademicDashboardPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-black text-gray-900">لوحة التحكم</h2>
         <div className="flex gap-4">
+          <button 
+            onClick={() => setShowSetup(!showSetup)}
+            className="flex items-center gap-3 bg-white border border-gray-100 hover:bg-gray-50 text-gray-500 px-6 py-3 rounded-2xl font-bold text-sm transition-all shadow-sm"
+          >
+            <span>{showSetup ? 'عرض الاحصائيات' : 'اعدادات البدء'}</span>
+            <LayoutDashboard size={18} />
+          </button>
+          
           <button className="flex items-center gap-3 bg-white border border-gray-100 hover:bg-gray-50 text-gray-500 px-6 py-3 rounded-2xl font-bold text-sm transition-all shadow-sm">
             <span>تاريخ</span>
             <TrendingUp size={18} />
@@ -39,8 +51,12 @@ export default function AcademicDashboardPage() {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {showSetup ? (
+        <SetupProgress />
+      ) : (
+        <>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="عدد الطلاب النشطة"
           value="2,689"
@@ -197,6 +213,8 @@ export default function AcademicDashboardPage() {
           <button className="w-full mt-8 py-4 border border-gray-100 rounded-2xl text-gray-400 font-bold hover:bg-gray-50 transition-colors">عرض المزيد</button>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }
