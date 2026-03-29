@@ -7,12 +7,15 @@ import { useModal } from '@/context/ModalContext';
 import { createAccount } from '@/services/auth';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
+import { useCountry } from '@/hooks/useCountry';
+import { PhoneInput } from '@/components/CountrySelector';
 
 const RegistrationModal = () => {
     const { isOpen, view, closeModal, openModal, data } = useModal();
     const [step, setStep] = useState(1);
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const { selectedCountry } = useCountry();
 
     const [contactMethod, setContactMethod] = useState<'email' | 'phone'>('email');
     const [showPassword, setShowPassword] = useState(false);
@@ -265,17 +268,14 @@ const RegistrationModal = () => {
                             ) : (
                                 <div className="relative">
                                     <label className="block text-right text-xs font-bold text-[#4a4a4a] mb-1.5 px-1">رقم الجوال</label>
-                                    <div className="relative">
-                                        <input
-                                            type="tel"
-                                            name="phone"
-                                            value={formData.phone}
-                                            onChange={handleChange}
-                                            placeholder="05xxxxxxxx"
-                                            className={`w-full p-3 pr-10 text-right bg-[#f8faff] border rounded-xl focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.phone ? 'border-red-500 focus:border-red-500' : 'border-[#e2e8f0]'}`}
-                                        />
-                                        <Phone className={`absolute right-3 top-1/2 -translate-y-1/2 ${errors.phone ? 'text-red-500' : 'text-[#2563eb]'}`} size={18} />
-                                    </div>
+                                    <PhoneInput
+                                        name="phone"
+                                        label=""
+                                        value={formData.phone}
+                                        onChange={handleChange}
+                                        className={`w-full p-3 pr-12 text-left bg-[#f8faff] border rounded-xl focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.phone ? 'border-red-500 focus:border-red-500' : 'border-[#e2e8f0]'}`}
+                                        containerClassName="mb-1"
+                                    />
                                     {errors.phone && <p className="text-red-500 text-[10px] font-bold mt-1 mr-1">{errors.phone}</p>}
                                 </div>
                             )}

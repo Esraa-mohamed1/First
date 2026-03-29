@@ -8,8 +8,25 @@ import Pricing from '@/components/Sections/Pricing';
 import Testimonials from '@/components/Sections/Testimonials';
 import CTA from '@/components/Sections/CTA';
 import ScrollReveal from '@/components/ScrollReveal';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 
-export default function Home() {
+export default async function Home() {
+    const headersList = await headers();
+    const host = headersList.get('host') || '';
+
+    // If the host is not the main root domain, it means we are on an academy subdomain
+    const isMainDomain =
+        host === 'localhost:3000' ||
+        host === 'darab.academy.localhost:3000' ||
+        host === 'darab.academy' ||
+        host === 'www.darab.academy' ||
+        host.startsWith('127.0.0.1');
+
+    if (!isMainDomain) {
+        redirect('/auth/login');
+    }
+
     return (
         <main>
             <ScrollReveal />

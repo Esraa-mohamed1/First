@@ -8,7 +8,7 @@ export const createAccount = async (payload: CreateAccountPayload): Promise<ApiR
     if (response.data.status) {
       return response.data;
     }
-    
+
     return response.data;
   } catch (error: any) {
     console.error('Failed to create account:', error);
@@ -62,6 +62,16 @@ export const verifyOtp = async (contact: string, otp: string): Promise<ApiRespon
     return response.data;
   } catch (error: any) {
     console.error('Failed to verify OTP:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const getMyUsageLimit = async (): Promise<any> => {
+  try {
+    const response = await api.get<any>('https://api.darab.academy/api/academy/my-usage-limit');
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to get my usage limit:', error);
     throw error.response?.data || error;
   }
 };

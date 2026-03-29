@@ -75,27 +75,6 @@ export default function AcademicLayout({
     <div className="min-h-screen bg-[#F8FAFF] flex relative" dir="rtl">
 
 
-      {/* Verification Overlay - Removed as per user request */}
-      {/* {isVerified === false && isActive !== false && (
-        <div className="fixed inset-0 z-[100] backdrop-blur-md bg-white/50 flex items-center justify-center">
-          <div className="bg-white p-10 rounded-[2rem] shadow-2xl text-center max-w-md border border-red-100 animate-in fade-in zoom-in duration-300 mx-4">
-            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <AlertCircle className="w-10 h-10 text-red-500" />
-            </div>
-            <h3 className="text-2xl font-black text-gray-900 mb-3">حسابك غير مفعل بعد</h3>
-            <p className="text-gray-500 mb-8 text-lg font-medium leading-relaxed">
-              يرجى تفعيل حسابك للاستمرار في استخدام لوحة التحكم والاستفادة من كافة المميزات.
-            </p>
-            <button 
-              onClick={handleVerificationClick}
-              className="w-full py-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-red-500/30 hover:-translate-y-1"
-            >
-              تفعيل الحساب
-            </button>
-          </div>
-        </div>
-      )} */}
-
 
       {isSidebarOpen && (
         <div
@@ -115,3 +94,28 @@ export default function AcademicLayout({
     </div>
   );
 }
+
+
+
+
+
+{/* Verification Overlay - Removed as per user request */ }
+{/* {isVerified === false && isActive !== false && (
+        <div className="fixed inset-0 z-[100] backdrop-blur-md bg-white/50 flex items-center justify-center">
+          <div className="bg-white p-10 rounded-[2rem] shadow-2xl text-center max-w-md border border-red-100 animate-in fade-in zoom-in duration-300 mx-4">
+            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="w-10 h-10 text-red-500" />
+            </div>
+            <h3 className="text-2xl font-black text-gray-900 mb-3">حسابك غير مفعل بعد</h3>
+            <p className="text-gray-500 mb-8 text-lg font-medium leading-relaxed">
+              يرجى تفعيل حسابك للاستمرار في استخدام لوحة التحكم والاستفادة من كافة المميزات.
+            </p>
+            <button 
+              onClick={handleVerificationClick}
+              className="w-full py-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-red-500/30 hover:-translate-y-1"
+            >
+              تفعيل الحساب
+            </button>
+          </div>
+        </div>
+      )} */}

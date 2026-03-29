@@ -1,7 +1,7 @@
 'use client';
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import React from 'react';
+import { CountryProvider } from '@/providers/CountryProvider';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
     // Provide a dummy ID if missing to prevent GoogleOAuthProvider from crashing
@@ -10,7 +10,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
     return (
         <GoogleOAuthProvider clientId={clientId}>
-            {children}
+            <CountryProvider>
+                {children}
+            </CountryProvider>
         </GoogleOAuthProvider>
     );
 }

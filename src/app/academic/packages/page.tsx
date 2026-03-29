@@ -1,25 +1,30 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { getProfileStatus } from '@/services/auth';
+import { getProfileStatus, getMyUsageLimit } from '@/services/auth';
 import { Upload, Download, Search, Link2, Award, MessageSquare, FileText, Cloud, Users, User, BookOpen } from 'lucide-react';
 
 export default function PackagesPage() {
   const [usageData, setUsageData] = useState<any>(null);
+  const [limitsData, setLimitsData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUsage = async () => {
+    const fetchData = async () => {
       try {
-        const profile = await getProfileStatus();
+        const [profile, limits] = await Promise.all([
+          getProfileStatus(),
+          getMyUsageLimit()
+        ]);
         setUsageData(profile.data || profile);
+        setLimitsData(limits?.data || []);
       } catch (err) {
-        console.error('Failed to fetch usage:', err);
+        console.error('Failed to fetch data:', err);
       } finally {
         setLoading(false);
       }
     };
-    fetchUsage();
+    fetchData();
   }, []);
 
   const formatBytes = (bytes: number) => {
@@ -30,41 +35,66 @@ export default function PackagesPage() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  // Static mock data from the UI provided
-  const stats = [
-    {
-      label: 'عدد الدورات المستخدمة',
-      value: '8/20',
-      percent: '40',
-      icon: BookOpen,
-      color: 'bg-indigo-50 text-indigo-500',
-      progressColor: 'bg-indigo-500'
-    },
-    {
-      label: 'عدد الطلاب النشطين',
-      value: '120/200',
-      percent: '60',
-      icon: BookOpen, // Looks like a general education icon in image
-      color: 'bg-emerald-50 text-emerald-500',
-      progressColor: 'bg-emerald-500'
-    },
-    {
-      label: 'عدد المدربين من الحد المسموح',
-      value: '16/20',
-      percent: '80',
-      icon: Users,
-      color: 'bg-orange-50 text-orange-400',
-      progressColor: 'bg-orange-400'
-    },
-    {
-      label: 'عدد المدربين من الحد المسموح', // Using exact text from image
-      value: '85/100 GB',
-      percent: '90',
-      icon: Cloud,
-      color: 'bg-red-50 text-red-400',
-      progressColor: 'bg-red-500'
-    },
-  ];
+  const getStatConfig = (slug: string) => {
+    switch (slug) {
+      case 'max_courses':
+        return { label: 'عدد الدورات المستخدمة', icon: BookOpen, color: 'bg-indigo-50 text-indigo-500', progressColor: 'bg-indigo-500', isStorage: false };
+      case 'max_students':
+        return { label: 'عدد الطلاب النشطين', icon: Users, color: 'bg-emerald-50 text-emerald-500', progressColor: 'bg-emerald-500', isStorage: false };
+      case 'storage_limit':
+        return { label: 'مساحة التخزين التخزين', icon: Cloud, color: 'bg-red-50 text-red-400', progressColor: 'bg-red-500', isStorage: true };
+      default:
+        return { label: 'ميزة', icon: Award, color: 'bg-gray-50 text-gray-400', progressColor: 'bg-gray-500', isStorage: false };
+    }
+  };
+
+  const stats = limitsData.length > 0
+    ? limitsData.map((item: any) => {
+      const config = getStatConfig(item.feature_slug);
+      const used = parseFloat(item.used_amount || '0');
+      const total = parseFloat(item.total_limit || '0');
+      const percentage = total > 0 ? ((used / total) * 100).toFixed(0) : '0';
+
+      let valueStr = `${used}/${total}`;
+      if (config.isStorage) {
+        valueStr = `${item.used_amount}/${item.total_limit} GB`;
+      }
+
+      return {
+        label: config.label,
+        value: valueStr,
+        percent: percentage,
+        icon: config.icon,
+        color: config.color,
+        progressColor: config.progressColor
+      };
+    })
+    : [
+      {
+        label: 'عدد الدورات المستخدمة',
+        value: '0/0',
+        percent: '0',
+        icon: BookOpen,
+        color: 'bg-indigo-50 text-indigo-500',
+        progressColor: 'bg-indigo-500'
+      },
+      {
+        label: 'عدد الطلاب النشطين',
+        value: '0/0',
+        percent: '0',
+        icon: Users,
+        color: 'bg-emerald-50 text-emerald-500',
+        progressColor: 'bg-emerald-500'
+      },
+      {
+        label: 'مساحة التخزين',
+        value: '0/0 GB',
+        percent: '0',
+        icon: Cloud,
+        color: 'bg-red-50 text-red-400',
+        progressColor: 'bg-red-500'
+      },
+    ];
 
   const features = [
     { label: 'الدومين الخاص', available: true, icon: Link2 },

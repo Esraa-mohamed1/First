@@ -85,23 +85,23 @@ const Pricing = () => {
                                     </h3>
                                     <div className="flex flex-col items-start gap-0 text-[#4F83FF]">
                                         <span className="text-xl font-black">{plan.price}</span>
-                                        <span className="text-xs font-bold opacity-80 uppercase tracking-tighter -mt-1">SAR</span>
+                                        <span className="text-xs  opacity-80 uppercase tracking-tighter -mt-1">SAR</span>
                                     </div>
                                 </div>
                                 <ul className="list-none p-0 mb-10 flex-grow">
-                                    {(plan.package_features && plan.package_features.length > 0 ? plan.package_features : 
-                                      (Array.isArray(plan.features) ? plan.features : [])).slice(0, 5).map((feature: any, idx: number) => (
-                                        <li key={idx} className="flex items-start justify-start gap-3 mb-5 text-[0.95rem] font-bold">
-                                            <div className="w-5 h-5 flex-shrink-0 rounded-full flex items-center justify-center p-1 mt-0.5 bg-[#4F83FF] text-white">
-                                                <Check size={14} strokeWidth={4} />
-                                            </div>
-                                            <span className="text-right leading-snug text-[#4a4a4a]">
-                                                {typeof feature === 'string' ? feature : feature.lable || feature.title || feature.value}
-                                            </span>
-                                        </li>
-                                    ))}
+                                    {(plan.package_features && plan.package_features.length > 0 ? plan.package_features :
+                                        (Array.isArray(plan.features) ? plan.features : [])).slice(0, 5).map((feature: any, idx: number) => (
+                                            <li key={idx} className="flex items-start justify-start gap-3 mb-5 text-[0.95rem] font-bold">
+                                                <div className="w-5 h-5 flex-shrink-0 rounded-full flex items-center justify-center p-1 mt-0.5 bg-[#4F83FF] text-white">
+                                                    <Check size={14} strokeWidth={4} />
+                                                </div>
+                                                <span className="text-right leading-snug text-[#4a4a4a]">
+                                                    {typeof feature === 'string' ? feature : feature.lable || feature.title || feature.value}
+                                                </span>
+                                            </li>
+                                        ))}
                                     {(!plan.package_features || plan.package_features.length === 0) && (!plan.features || plan.features.length === 0) && (
-                                        <li className="text-center text-gray-400 py-4 font-bold">
+                                        <li className="text-center text-gray-400 py-4 ">
                                             لا توجد مميزات إضافية
                                         </li>
                                     )}

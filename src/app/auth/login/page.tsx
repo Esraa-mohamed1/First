@@ -2,17 +2,22 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, Loader2, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Loader2, Eye, EyeOff, ArrowRight, Phone } from 'lucide-react';
 import { login } from '@/services/auth';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
+import { useCountry } from '@/hooks/useCountry';
+import { PhoneInput } from '@/components/CountrySelector';
 
 export default function AcademyLoginPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('phone');
+    const { selectedCountry } = useCountry();
     const [formData, setFormData] = useState({
         email: '',
+        phone: '',
         password: ''
     });
     const handleGoogleLogin = useGoogleLogin({
@@ -42,14 +47,24 @@ export default function AcademyLoginPage() {
     const handleLogin = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
 
-        if (!formData.email || !formData.password) {
-            toast.error('يرجى ملء جميع الحقول');
-            return;
+        if (loginMethod === 'email' && !formData.email) {
+            toast.error('يرجى إدخال البريد الإلكتروني'); return;
+        }
+        if (loginMethod === 'phone' && !formData.phone) {
+            toast.error('يرجى إدخال رقم الجوال'); return;
+        }
+        if (!formData.password) {
+            toast.error('يرجى إدخال كلمة المرور'); return;
         }
 
         setIsLoading(true);
         try {
-            const response = await login(formData);
+            // Adjust payload based on login method
+            const payload = loginMethod === 'email'
+                ? { email: formData.email, password: formData.password }
+                : { phone: formData.phone, password: formData.password };
+
+            const response = await login(payload);
 
             if (response.meta && response.meta.access_token) {
                 const token = response.meta.access_token;
@@ -88,29 +103,62 @@ export default function AcademyLoginPage() {
                         <div className="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-blue-200 mx-auto">
                             <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14v6.5"></path></svg>
                         </div>
-                        <h1 className="text-3xl font-black text-gray-900 tracking-tight">مرحباً بعودتك!</h1>
-                        <p className="text-gray-500 font-bold mt-2 text-sm">سجل دخولك لمتابعة إدارة أكاديميتك</p>
+                        <h1 className="text-[40px] font-medium text-gray-900 leading-none text-center tracking-normal">مرحبا بعودتك!</h1>
+                        <p className="text-gray-500 font-normal mt-4 text-[26px] leading-none text-center tracking-normal">سجل دخولك لمتابعة إدارة أكاديميتك</p>
                     </div>
 
                     <form onSubmit={handleLogin} className="space-y-6">
+
+                        {/* Login Method Toggle */}
+                        <div className="flex bg-gray-100 p-1 rounded-2xl relative">
+                            <button
+                                type="button"
+                                onClick={() => setLoginMethod('phone')}
+                                className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${loginMethod === 'phone' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                <Phone size={18} />
+                                رقم الجوال
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setLoginMethod('email')}
+                                className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${loginMethod === 'email' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                <Mail size={18} />
+                                البريد الإلكتروني
+                            </button>
+                        </div>
+
                         <div className="space-y-6">
-                            <div className="group">
-                                <label className="block text-right text-sm font-bold text-gray-700 mb-2 px-1 relative inline-block transition-transform group-focus-within:-translate-y-1 group-focus-within:text-blue-600">
-                                    البريد الإلكتروني
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        placeholder="admin@academy.com"
-                                        className="w-full p-4 pr-12 text-right bg-gray-50/50 border-2 border-transparent rounded-[20px] focus:bg-white focus:border-blue-500 hover:bg-gray-50 outline-none transition-all duration-300 font-bold text-gray-900 shadow-sm focus:shadow-md focus:shadow-blue-100"
-                                        required
-                                    />
-                                    <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" size={20} />
+                            {loginMethod === 'email' ? (
+                                <div className="group">
+                                    <label className="block text-right text-sm font-bold text-gray-700 mb-2 px-1 relative inline-block transition-transform group-focus-within:-translate-y-1 group-focus-within:text-blue-600">
+                                        البريد الإلكتروني
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            placeholder="admin@academy.com"
+                                            className="w-full p-4 pr-12 text-right bg-gray-50/50 border-2 border-transparent rounded-[20px] focus:bg-white focus:border-blue-500 hover:bg-gray-50 outline-none transition-all duration-300 font-bold text-gray-900 shadow-sm focus:shadow-md focus:shadow-blue-100"
+                                            required
+                                        />
+                                        <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" size={20} />
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="group">
+                                    <PhoneInput
+                                        name="phone"
+                                        value={formData.phone}
+                                        onChange={handleChange}
+                                        className="p-4 pr-12 text-left bg-gray-50/50 border-2 border-transparent rounded-[20px] focus:bg-white focus:border-blue-500 hover:bg-gray-50 outline-none transition-all duration-300 font-bold text-gray-900 shadow-sm focus:shadow-md focus:shadow-blue-100"
+                                        containerClassName="mb-1"
+                                    />
+                                </div>
+                            )}
 
                             {/* Password Input */}
                             <div className="group">
@@ -159,7 +207,7 @@ export default function AcademyLoginPage() {
                                 ) : (
                                     <>
                                         <span>تسجيل الدخول</span>
-                                        <ArrowRight className="w-5 h-5 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                                        <ArrowRight className="w-5 h-5 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300  " />
                                     </>
                                 )}
                             </button>
@@ -168,7 +216,7 @@ export default function AcademyLoginPage() {
                                 <button
                                     type="button"
                                     onClick={() => handleGoogleLogin()}
-                                    className="w-full py-4 bg-white border-2 border-gray-100 text-gray-700 font-bold rounded-[20px] hover:border-blue-100 hover:bg-blue-50/30 hover:text-blue-600 active:scale-95 transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50 shadow-sm"
+                                    className="w-full py-4 bg-white border-2 border-gray-100 text-gray-700 font-bold rounded-[20px] hover:border-blue-100 hover:bg-blue-50/30 hover:text-blue-600 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
                                     disabled={isLoading}
                                 >
                                     <img src="https://www.google.com/favicon.ico" className="w-5 h-5 drop-shadow-sm" alt="Google" />

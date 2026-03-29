@@ -2,21 +2,26 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
+import { X, Mail, Lock, Loader2, Eye, EyeOff, Phone } from 'lucide-react';
 import { useModal } from '@/context/ModalContext';
 import { login } from '@/services/auth';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
+import { useCountry } from '@/hooks/useCountry';
+import { PhoneInput } from '@/components/CountrySelector';
 
 const LoginModal = () => {
     const { isOpen, view, closeModal, openModal } = useModal();
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('phone');
+    const { selectedCountry } = useCountry();
 
     // Form State
     const [formData, setFormData] = useState({
         email: '',
+        phone: '',
         password: ''
     });
 
@@ -53,14 +58,23 @@ const LoginModal = () => {
     };
 
     const handleLogin = async () => {
-        if (!formData.email || !formData.password) {
-            toast.error('يرجى ملء جميع الحقول');
-            return;
+        if (loginMethod === 'email' && !formData.email) {
+            toast.error('يرجى إدخال البريد الإلكتروني'); return;
+        }
+        if (loginMethod === 'phone' && !formData.phone) {
+            toast.error('يرجى إدخال رقم الجوال'); return;
+        }
+        if (!formData.password) {
+            toast.error('يرجى إدخال كلمة المرور'); return;
         }
 
         setIsLoading(true);
         try {
-            const response = await login(formData);
+            const payload = loginMethod === 'email' 
+                ? { email: formData.email, password: formData.password }
+                : { phone: formData.phone, password: formData.password };
+                
+            const response = await login(payload);
 
             // Updated response structure based on API feedback:
             // { data: { id, name, email }, meta: { access_token, token_type } }
@@ -122,10 +136,31 @@ const LoginModal = () => {
                             <h2 className="text-2xl font-black text-[#1a1a1a]">تسجيل الدخول</h2>
                             <p className="text-[#6b7280] font-bold mt-2">مرحباً بك مجدداً</p>
                         </div>
+                        
+                        {/* Login Method Toggle */}
+                        <div className="flex bg-[#f8faff] p-1 rounded-2xl relative">
+                            <button
+                                type="button"
+                                onClick={() => setLoginMethod('phone')}
+                                className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${loginMethod === 'phone' ? 'bg-white text-[#2563eb] shadow-sm' : 'text-[#6b7280] hover:text-[#4a4a4a]'}`}
+                            >
+                                <Phone size={18} />
+                                رقم الجوال
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setLoginMethod('email')}
+                                className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${loginMethod === 'email' ? 'bg-white text-[#2563eb] shadow-sm' : 'text-[#6b7280] hover:text-[#4a4a4a]'}`}
+                            >
+                                <Mail size={18} />
+                                البريد الإلكتروني
+                            </button>
+                        </div>
 
                         <div className="space-y-4">
-                            <div className="relative">
-                                <label className="block text-right text-sm font-bold text-[#4a4a4a] mb-2 px-1">البريد الإلكتروني</label>
+                            {loginMethod === 'email' ? (
+                                <div className="relative">
+                                    <label className="block text-right text-sm font-bold text-[#4a4a4a] mb-2 px-1">البريد الإلكتروني</label>
                                 <div className="relative">
                                     <input
                                         type="email"
@@ -138,6 +173,17 @@ const LoginModal = () => {
                                     <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2563eb]" size={20} />
                                 </div>
                             </div>
+                            ) : (
+                                <div className="relative">
+                                    <PhoneInput
+                                        name="phone"
+                                        value={formData.phone}
+                                        onChange={handleChange}
+                                        className="p-4 pr-12 text-left bg-[#f8faff] border border-[#e2e8f0] rounded-2xl focus:border-[#2563eb] outline-none transition-all font-bold"
+                                        containerClassName="mb-1"
+                                    />
+                                </div>
+                            )}
 
                             <div className="relative">
                                 <label className="block text-right text-sm font-bold text-[#4a4a4a] mb-2 px-1">كلمة المرور</label>
