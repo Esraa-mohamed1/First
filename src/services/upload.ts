@@ -1,16 +1,22 @@
 import api from '@/lib/api';
 import { ApiResponse } from '@/types/api';
 
-export const uploadFile = async (file: File): Promise<string> => {
+export const uploadFile = async (
+  file: File, 
+  onProgress?: (progress: number) => void
+): Promise<string> => {
   const formData = new FormData();
   formData.append('file', file);
 
   try {
-    // Assuming the endpoint is /upload or /media/upload
-    // We'll try /upload first
     const response = await api.post<ApiResponse<{ url: string }>>('/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (event) => {
+        if (event.total && onProgress) {
+          onProgress(Math.round((event.loaded / event.total) * 100));
+        }
       },
     });
 

@@ -1,73 +1,101 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Check, Zap, Shield, Rocket, Clock, Database, Users, MonitorPlay } from 'lucide-react';
+import { getProfileStatus } from '@/services/auth';
 
 export default function PackagesPage() {
-  const currentUsage = [
-    { label: 'تاريخ الانتهاء', value: '22/10/2026', progress: 84, icon: Clock, color: 'blue' },
-    { label: 'نسبة استخدام الطلاب', value: '150/250', progress: 58, icon: Users, color: 'purple' },
-    { label: 'نسبة استخدام التخزين او الفيديو', value: '1.2TB/2TB', progress: 60, icon: MonitorPlay, color: 'orange' },
-    { label: 'سعة استيعاب الخوادم', value: '150/250', progress: 62, icon: Database, color: 'green' },
-  ];
+  const [usageData, setUsageData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUsage = async () => {
+      try {
+        const profile = await getProfileStatus();
+        setUsageData(profile.data || profile);
+      } catch (err) {
+        console.error('Failed to fetch usage:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsage();
+  }, []);
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getUsageItems = () => {
+    if (!usageData) return [
+      { label: 'تاريخ الانتهاء', value: '---', progress: 0, icon: Clock, color: 'blue' },
+      { label: 'نسبة استخدام الطلاب', value: '---', progress: 0, icon: Users, color: 'purple' },
+      { label: 'نسبة استخدام التخزين', value: '---', progress: 0, icon: MonitorPlay, color: 'orange' },
+      { label: 'سعة استيعاب الخوادم', value: '---', progress: 0, icon: Database, color: 'green' },
+    ];
+
+    const storageUsed = usageData.storage_used || usageData.used_storage || 0;
+    const storageLimit = usageData.storage_limit || usageData.package?.storage_limit || (2 * 1024 * 1024 * 1024);
+    const storageProgress = Math.min(100, Math.round((storageUsed / storageLimit) * 100));
+
+    const studentsCount = usageData.students_count || 0;
+    const studentsLimit = usageData.package?.max_students || 100;
+    const studentsProgress = Math.min(100, Math.round((studentsCount / studentsLimit) * 100));
+
+    return [
+      { 
+        label: 'تاريخ الانتهاء', 
+        value: usageData.package_end_date || 'غير محدد', 
+        progress: usageData.remaining_days_percent || 100, 
+        icon: Clock, 
+        color: 'blue' 
+      },
+      { 
+        label: 'نسبة استخدام الطلاب', 
+        value: `${studentsCount}/${studentsLimit}`, 
+        progress: studentsProgress, 
+        icon: Users, 
+        color: 'purple' 
+      },
+      { 
+        label: 'نسبة استخدام التخزين', 
+        value: `${formatBytes(storageUsed)}/${formatBytes(storageLimit)}`, 
+        progress: storageProgress, 
+        icon: MonitorPlay, 
+        color: 'orange' 
+      },
+      { 
+        label: 'سعة استيعاب الخوادم', 
+        value: 'مستقر', 
+        progress: 100, 
+        icon: Database, 
+        color: 'green' 
+      },
+    ];
+  };
 
   const packages = [
-    {
-      name: 'باقة المبتدئين',
-      price: '99',
-      period: 'شهريا',
-      description: 'مثالية للافراد والمدربين الجدد',
-      features: [
-        'عدد طلاب يصل الى 100',
-        'تخزين 50GB للفيديو',
-        'دعم فني عبر البريد',
-        'شهادات حضور الكترونية',
-      ],
-      icon: Zap,
-      color: 'blue',
-      isCurrent: false,
-    },
-    {
-      name: 'باقة المحترفين',
-      price: '299',
-      period: 'شهريا',
-      description: 'الاكثر مبيعا للاكاديميات المتوسطة',
-      features: [
-        'عدد طلاب يصل الى 1000',
-        'تخزين 500GB للفيديو',
-        'دعم فني 24/7',
-        'تخصيص كامل للهوية',
-        'نظام اختبارات متقدم',
-      ],
-      icon: Rocket,
-      color: 'blue',
-      isCurrent: true,
-      isHighlighted: true,
-    },
-    {
-      name: 'باقة المؤسسات',
-      price: '999',
-      period: 'شهريا',
-      description: 'حلول مخصصة للمؤسسات الكبري',
-      features: [
-        'عدد طلاب غير محدود',
-        'تخزين غير محدود',
-        'مدير حساب مخصص',
-        'خوادم خاصة',
-        'تكامل API كامل',
-      ],
-      icon: Shield,
-      color: 'blue',
-      isCurrent: false,
-    },
+    // ... same packages array ...
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-12 pb-12 text-right" dir="rtl">
       {/* Header */}
       <div>
         <h2 className="text-3xl font-black text-gray-900">إدارة الباقات</h2>
-        <p className="text-gray-400 font-bold mt-2 text-lg text-black">تحكم في اشتراكك وتابع استهلاكك الحالي</p>
+        <p className="text-gray-400 font-bold mt-2 text-lg">تحكم في اشتراكك وتابع استهلاكك الحالي</p>
       </div>
 
       {/* Usage Section */}
@@ -75,15 +103,19 @@ export default function PackagesPage() {
         <div className="flex justify-between items-center mb-10">
           <div>
             <h3 className="text-2xl font-black text-gray-900">استهلاك الباقة الحالية</h3>
-            <p className="text-gray-400 font-bold mt-1">باقة المحترفين (بريميوم)</p>
+            <p className="text-gray-400 font-bold mt-1">
+              {usageData?.package?.titile || usageData?.package?.name || 'الباقة الحالية'} ({usageData?.statusPayed === 'free_trial' ? 'نسخة تجريبية' : 'بريميوم'})
+            </p>
           </div>
-          <span className="bg-green-50 text-green-500 px-6 py-2 rounded-2xl font-black text-sm border border-green-100 italic">
-            نشط الان
+          <span className={`px-6 py-2 rounded-2xl font-black text-sm border italic ${
+            usageData?.isActive ? 'bg-green-50 text-green-500 border-green-100' : 'bg-red-50 text-red-500 border-red-100'
+          }`}>
+            {usageData?.isActive ? 'نشط الان' : 'غير نشط'}
           </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {currentUsage.map((stat, index) => {
+          {getUsageItems().map((stat, index) => {
             const colors: Record<string, string> = {
               blue: 'bg-blue-50 text-blue-500',
               purple: 'bg-purple-50 text-purple-500',
@@ -119,7 +151,56 @@ export default function PackagesPage() {
       <div className="space-y-8">
         <h3 className="text-2xl font-black text-gray-900">اختر الباقة المناسبة لك</h3>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 ">
-          {packages.map((pkg, index) => (
+          {[
+            {
+              name: 'باقة المبتدئين',
+              price: '99',
+              period: 'شهريا',
+              description: 'مثالية للافراد والمدربين الجدد',
+              features: [
+                'عدد طلاب يصل الى 100',
+                'تخزين 50GB للفيديو',
+                'دعم فني عبر البريد',
+                'شهادات حضور الكترونية',
+              ],
+              icon: Zap,
+              color: 'blue',
+              isCurrent: usageData?.package?.id === 1,
+            },
+            {
+              name: 'باقة المحترفين',
+              price: '299',
+              period: 'شهريا',
+              description: 'الاكثر مبيعا للاكاديميات المتوسطة',
+              features: [
+                'عدد طلاب يصل الى 1000',
+                'تخزين 500GB للفيديو',
+                'دعم فني 24/7',
+                'تخصيص كامل للهوية',
+                'نظام اختبارات متقدم',
+              ],
+              icon: Rocket,
+              color: 'blue',
+              isCurrent: usageData?.package?.id === 2 || (!usageData?.package && usageData?.statusPayed !== 'free_trial'),
+              isHighlighted: true,
+            },
+            {
+              name: 'باقة المؤسسات',
+              price: '999',
+              period: 'شهريا',
+              description: 'حلول مخصصة للمؤسسات الكبري',
+              features: [
+                'عدد طلاب غير محدود',
+                'تخزين غير محدود',
+                'مدير حساب مخصص',
+                'خوادم خاصة',
+                'تكامل API كامل',
+              ],
+              icon: Shield,
+              color: 'blue',
+              isCurrent: usageData?.package?.id === 3,
+            },
+          ].map((pkg, index) => (
             <div 
               key={index} 
               className={`bg-white rounded-[40px] p-10 border-2 transition-all hover:shadow-2xl hover:shadow-blue-100 relative ${
@@ -132,7 +213,7 @@ export default function PackagesPage() {
                 </div>
               )}
               
-              <div className={`w-16 h-16 rounded-3xl bg-blue-50 flex items-center justify-center text-blue-500 mb-8`}>
+              <div className={`w-16 h-16 rounded-3xl bg-blue-50 flex items-center justify-center text-blue-600 mb-8`}>
                 <pkg.icon size={32} />
               </div>
 
@@ -147,7 +228,7 @@ export default function PackagesPage() {
               <div className="space-y-4 mb-10">
                 {pkg.features.map((feature, fIndex) => (
                   <div key={fIndex} className="flex items-center gap-3 text-gray-600 font-bold">
-                    <div className="w-5 h-5 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center flex-shrink-0">
+                    <div className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
                       <Check size={12} strokeWidth={4} />
                     </div>
                     <span>{feature}</span>
@@ -156,7 +237,7 @@ export default function PackagesPage() {
               </div>
 
               {pkg.isCurrent ? (
-                <button className="w-full py-4 rounded-2xl font-black text-lg bg-gray-50 text-gray-400 cursor-default">
+                <button className="w-full py-4 rounded-2xl font-black text-lg bg-gray-100 text-gray-400 cursor-default">
                   باقتك الحالية
                 </button>
               ) : (

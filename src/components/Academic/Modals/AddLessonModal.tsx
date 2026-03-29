@@ -69,7 +69,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
     }
 
     if (lessonType === 'video') {
-      // Check for free_trial status via API (more reliable than local storage)
+      // Check for free_trial status and storage via API
       try {
         const profile = await getProfileStatus();
         const userData = profile.data || profile;
@@ -80,9 +80,22 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
                 duration: 5000,
                 icon: '📧'
             });
-            // Redirect to verification page or show verification modal?
-            // For now just block action
             return;
+        }
+
+        // Check storage usage
+        // Assuming the API returns usage in bytes: total_storage and used_storage
+        // Or similar fields like storage_limit and current_usage
+        const totalStorage = userData.storage_limit || userData.package?.storage_limit || (2048 * 1024 * 1024); // Default 2GB if not found
+        const usedStorage = userData.storage_used || userData.used_storage || 0;
+        const remainingStorage = totalStorage - usedStorage;
+
+        if (selectedFile.size > remainingStorage) {
+          toast.error(`عفواً، مساحة التخزين المتبقية غير كافية لرفع هذا الملف. المساحة المتاحة: ${Math.round(remainingStorage / 1024 / 1024)} MB`, {
+            duration: 5000,
+            icon: '⚠️'
+          });
+          return;
         }
 
         if (userData && userData.statusPayed === 'free_trial') {
@@ -94,37 +107,32 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
         }
       } catch (err) {
         console.error("Failed to check user status", err);
-        // Fallback to local storage if API fails
-        const storedUser = localStorage.getItem('user_info');
-        if (storedUser) {
-            try {
-            const userData = JSON.parse(storedUser);
-            
-            if (!userData.email_verified_at) {
-                 toast.error('عفواً، يرجى تفعيل حسابك أولاً لتتمكن من رفع الفيديوهات.', {
-                    duration: 5000,
-                    icon: '📧'
-                });
-                return;
-            }
-
-            if (userData.statusPayed === 'free_trial') {
-                toast.error('عفواً، لا يمكنك رفع الفيديوهات في النسخة التجريبية. يرجى ترقية باقتك.', {
-                    duration: 5000,
-                    icon: '🔒'
-                });
-                return;
-            }
-            } catch (e) {
-            console.error("Failed to parse user info", e);
-            }
-        }
       }
 
       if (!libraryId || !bunnyApiKey) {
         toast.error('بيانات Bunny غير متوفرة');
         return;
       }
+    } else {
+        // Even for non-video, check storage
+        try {
+            const profile = await getProfileStatus();
+            const userData = profile.data || profile;
+            
+            const totalStorage = userData.storage_limit || userData.package?.storage_limit || (2048 * 1024 * 1024);
+            const usedStorage = userData.storage_used || userData.used_storage || 0;
+            const remainingStorage = totalStorage - usedStorage;
+
+            if (selectedFile.size > remainingStorage) {
+              toast.error(`عفواً، مساحة التخزين المتبقية غير كافية. المساحة المتاحة: ${Math.round(remainingStorage / 1024 / 1024)} MB`, {
+                duration: 5000,
+                icon: '⚠️'
+              });
+              return;
+            }
+        } catch (err) {
+            console.error("Failed to check storage", err);
+        }
     }
 
     setIsSubmitting(true);
@@ -151,7 +159,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
       } else {
         // Handle PDF/Powerpoint Upload
         setUploadStatus('uploading');
-        finalFileUrl = await uploadFile(selectedFile);
+        finalFileUrl = await uploadFile(selectedFile!, setUploadProgress);
         setUploadStatus('ready');
       }
 
@@ -313,12 +321,17 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
                         style={{ width: `${uploadProgress}%` }}
                       ></div>
                     </div>
-                    <div className="text-right text-xs font-bold text-gray-500">
-                      {uploadStatus === 'creating' && 'جاري إنشاء الفيديو'}
-                      {uploadStatus === 'uploading' && 'جاري رفع الفيديو'}
-                      {uploadStatus === 'processing' && 'جاري معالجة الفيديو'}
-                      {uploadStatus === 'ready' && 'الفيديو جاهز للمشاهدة'}
-                      {uploadStatus === 'error' && 'حدث خطأ أثناء الرفع'}
+                    <div className="flex justify-between items-center text-xs font-bold text-gray-500">
+                      <div className="text-right">
+                        {uploadStatus === 'creating' && 'جاري إنشاء الفيديو'}
+                        {uploadStatus === 'uploading' && (lessonType === 'video' ? 'جاري رفع الفيديو' : 'جاري رفع الملف')}
+                        {uploadStatus === 'processing' && 'جاري معالجة الفيديو'}
+                        {uploadStatus === 'ready' && (lessonType === 'video' ? 'الفيديو جاهز للمشاهدة' : 'الملف جاهز')}
+                        {uploadStatus === 'error' && 'حدث خطأ أثناء الرفع'}
+                      </div>
+                      <div className="text-blue-600 font-black">
+                        {uploadStatus === 'uploading' && `${uploadProgress}%`}
+                      </div>
                     </div>
                   </div>
                 )}

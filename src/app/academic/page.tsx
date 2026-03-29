@@ -117,9 +117,8 @@ export default function AcademicDashboardPage() {
         <VisitsByCountryChart />
       </div>
 
-      {/* Package & Actions Section */}
+      {/* Actions Section */}
       <div className="grid grid-cols-1 gap-8">
-        <PackageCard />
         <QuickActions />
       </div>
 
