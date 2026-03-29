@@ -26,6 +26,12 @@ export default function AcademicLayout({
         document.cookie = `token=${urlToken}; path=/; max-age=86400; SameSite=Lax`;
         const newUrl = window.location.pathname;
         window.history.replaceState({}, document.title, newUrl);
+      } else {
+        const localToken = localStorage.getItem('token');
+        if (!localToken) {
+          router.push('/auth/login');
+          return;
+        }
       }
     }
 
@@ -43,11 +49,12 @@ export default function AcademicLayout({
         console.log('Academic verification status:', !!userData.email_verified_at, userData);
       } catch (error) {
         console.error('Failed to check verification:', error);
+        router.push('/auth/login');
       }
     };
 
     checkVerification();
-  }, []);
+  }, [router]);
 
   const handleVerificationClick = () => {
     const userStr = localStorage.getItem('user_info');
