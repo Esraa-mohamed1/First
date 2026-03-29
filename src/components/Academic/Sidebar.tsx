@@ -84,7 +84,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     {
       label: 'الأعدادات',
       icon: Settings,
-      href: '/academic/settings/academy',
+      href: '/academic/settings',
     },
   ];
 

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ImagePlus, ChevronDown } from 'lucide-react';
+import { ImagePlus, ChevronDown, ChevronLeft } from 'lucide-react';
+import Link from 'next/link';
 
 export default function AcademyDataPage() {
   const [formData, setFormData] = useState({
@@ -30,7 +31,15 @@ export default function AcademyDataPage() {
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl font-black text-gray-900">بيانات الاكاديمية</h2>
+        <div className="flex items-center gap-4">
+          <Link 
+            href="/academic/settings" 
+            className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-blue-500 hover:border-blue-100 transition-all shadow-sm"
+          >
+            <ChevronLeft size={24} className="rotate-180" />
+          </Link>
+          <h2 className="text-2xl font-black text-gray-900">بيانات الاكاديمية</h2>
+        </div>
       </div>
 
       <div className="bg-white rounded-[2rem] p-8 lg:p-12 shadow-sm border border-gray-100">
