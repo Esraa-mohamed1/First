@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, GraduationCap, ChevronLeft, X, LogOut, Package, CreditCard, FileText, Settings } from 'lucide-react';
+import { LayoutGrid, GraduationCap, ChevronLeft, X, LogOut, Package, CreditCard, FileText, Settings, TrendingUp } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Image from 'next/image';

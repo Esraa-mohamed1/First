@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { X, Play, Video, MapPin, Check, Plus, ArrowRight, Upload, Loader2 } from 'lucide-react';
+import { X, Play, Video, MapPin, Check, Plus, ArrowRight, Upload, Loader2, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createCourse } from '@/services/courses';
 import { getProfileStatus, getMyUsageLimit } from '@/services/auth';
@@ -16,12 +17,13 @@ interface CreateCourseModalProps {
 const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
   const router = useRouter();
   const pathname = usePathname();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(2);
   const [courseType, setCourseType] = useState<string | null>(null);
 
   // Basic Info States
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
+  const [categories, setCategories] = useState<any[]>([]);
   const [description, setDescription] = useState('');
   const [instructor, setInstructor] = useState('');
 
@@ -38,6 +40,21 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (isOpen) {
+      const fetchCategories = async () => {
+        try {
+          const { getCategories } = await import('@/services/courses');
+          const data = await getCategories();
+          setCategories(data);
+        } catch (error) {
+          console.error('Failed to fetch categories:', error);
+        }
+      };
+      fetchCategories();
+    }
+  }, [isOpen]);
 
   const courseTypes = [
     {
@@ -63,7 +80,7 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
   if (!isOpen) return null;
 
   const handleClose = () => {
-    setStep(1);
+    setStep(2);
     setCourseType(null);
     setTitle('');
     setCategory('');
@@ -81,7 +98,7 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
   const validateStep2 = () => {
     const newErrors: Record<string, string> = {};
     if (!title.trim()) newErrors.title = 'اسم الدورة مطلوب';
-    // if (!category) newErrors.category = 'الفئة مطلوبة';
+    if (!category) newErrors.category = 'التصنيف مطلوب';
     if (!description.trim()) newErrors.description = 'وصف الدورة مطلوب';
     if (!instructor) newErrors.instructor = 'اسم المدرب مطلوب';
     if (!selectedFile) newErrors.image = 'صورة الدورة مطلوبة';
@@ -158,7 +175,7 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
       const typeValue = courseType || 'recorded';
       const payload: any = {
         title,
-        // category_id: category, // Temporarily disabled
+        category_id: category,
         description,
         user_id: userId,
         price: pricingType === 'free' ? 0 : Number(price),
@@ -213,7 +230,7 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
         <div className="relative w-full max-w-4xl bg-white rounded-[24px] md:rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
 
           {/* Modal Header with Progress */}
-          {step > 1 && (
+          {step >= 2 && (
             <div className="p-4 md:p-8 pb-0 flex items-center justify-center gap-4 md:gap-12 relative">
               <div className="flex items-center gap-2 md:gap-4 relative z-10">
                 <div className={`w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center border-2 transition-all ${step >= 2 ? 'border-blue-600 bg-blue-50 text-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.3)]' : 'border-gray-200 text-gray-400'}`}>
@@ -299,22 +316,27 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
                       />
                       {errors.title && <p className="text-red-500 text-sm font-bold">{errors.title}</p>}
                     </div>
-                    {/* <div className="space-y-2">
-                    <label className="block text-sm font-black text-gray-900 text-right">
-                      الفئة <span className="text-red-500">*</span>
-                    </label>
-                    <select 
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className={`w-full p-4 bg-white border rounded-2xl outline-none focus:border-blue-600 font-bold appearance-none text-right transition-all ${errors.category ? 'border-red-500' : 'border-gray-100'}`}
-                    >
-                      <option value="">ادخل الفئة</option>
-                      <option value="1">برمجة</option>
-                      <option value="2">تصميم</option>
-                      <option value="3">تسويق</option>
-                    </select>
-                    {errors.category && <p className="text-red-500 text-sm font-bold">{errors.category}</p>}
-                  </div> */}
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-black text-gray-900 text-right">
+                        التصنيف <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={category}
+                          onChange={(e) => setCategory(e.target.value)}
+                          className={`w-full p-4 bg-white border rounded-2xl outline-none focus:border-blue-600 font-bold appearance-none text-right transition-all ${errors.category ? 'border-red-500' : 'border-gray-100'}`}
+                        >
+                          <option value="">اختر التصنيف</option>
+                          {categories.map((cat) => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
+                      </div>
+                      {errors.category && <p className="text-red-500 text-sm font-bold">{errors.category}</p>}
+                    </div>
+
                     <div className="space-y-2">
                       <label className="block text-sm font-black text-gray-900 text-right">
                         اضف وصف للدورة <span className="text-red-500">*</span>
@@ -334,15 +356,18 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
                       <label className="block text-sm font-black text-gray-900 text-right">
                         اسم المدرب <span className="text-red-500">*</span>
                       </label>
-                      <select
-                        value={instructor}
-                        onChange={(e) => setInstructor(e.target.value)}
-                        className={`w-full p-4 bg-white border rounded-2xl outline-none focus:border-blue-600 font-bold appearance-none text-right transition-all ${errors.instructor ? 'border-red-500' : 'border-gray-100'}`}
-                      >
-                        <option value="">ادخل اسم المدرب</option>
-                        <option value="Ahmed">أحمد محمد</option>
-                        <option value="Karim">كريم محمد</option>
-                      </select>
+                      <div className="relative">
+                        <select
+                          value={instructor}
+                          onChange={(e) => setInstructor(e.target.value)}
+                          className={`w-full p-4 bg-white border rounded-2xl outline-none focus:border-blue-600 font-bold appearance-none text-right transition-all ${errors.instructor ? 'border-red-500' : 'border-gray-100'}`}
+                        >
+                          <option value="">ادخل اسم المدرب</option>
+                          <option value="Ahmed">أحمد محمد</option>
+                          <option value="Karim">كريم محمد</option>
+                        </select>
+                        <ChevronDown className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
+                      </div>
                       {errors.instructor && <p className="text-red-500 text-sm font-bold">{errors.instructor}</p>}
                     </div>
                     <div className="space-y-2">
@@ -379,11 +404,7 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
                   </div>
                 </div>
 
-                <div className="flex justify-between pt-4">
-                  <button onClick={prevStep} className="px-8 py-4 bg-gray-100 text-gray-900 font-black rounded-2xl hover:bg-gray-200 transition-all flex items-center gap-2">
-                    <ArrowRight size={20} />
-                    السابق
-                  </button>
+                <div className="flex justify-end pt-4">
                   <button onClick={nextStep} className="px-16 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all">التالي</button>
                 </div>
               </div>
@@ -471,7 +492,7 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
                   </div>
                 </div>
 
-                <div className="flex justify-between w-full max-w-md pt-4 gap-4">
+                <div className="flex justify-center w-full max-w-md pt-4 gap-4">
                   <button
                     onClick={prevStep}
                     disabled={isSubmitting}
