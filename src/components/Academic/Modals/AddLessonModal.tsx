@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { X, Play, Video, FileText, FilePieChart as FilePowerpoint, Upload, Check } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { X, Play, Video, FileText, FilePieChart as FilePowerpoint, Upload, Check, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createLesson } from '@/services/courses';
 import { createVideoResource, uploadVideoFile, waitForVideoReady } from '@/services/bunnyStream';
@@ -19,8 +20,9 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const router = useRouter();
 
-  // Upload States
+  // usestate for upload progress
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'creating' | 'uploading' | 'processing' | 'ready' | 'error'>('idle');
   const [videoId, setVideoId] = useState<string | null>(null);
@@ -75,10 +77,32 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
 
         // Check verification status
         if (userData && !userData.email_verified_at) {
-          toast.error('عفواً، يرجى تفعيل حسابك أولاً لتتمكن من رفع الفيديوهات.', {
-            duration: 5000,
-            icon: '📧'
-          });
+          toast.custom((t) => (
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl shadow-lg flex items-start gap-4" dir="rtl">
+              <div className="bg-red-100 p-2 rounded-full shrink-0">
+                <span className="text-xl">📧</span>
+              </div>
+              <div>
+                <h3 className="font-black text-red-800 text-lg mb-1">تأكيد الحساب مطلوب</h3>
+                <p className="text-red-600 font-bold text-sm mb-4">
+                  عفواً، لا يمكنك رفع الفيديوهات قبل تفعيل حسابك، يرجى إدخال رمز التحقق المستلم.
+                </p>
+                <button
+                  onClick={() => {
+                    toast.dismiss(t.id);
+                    handleClose();
+                    router.push('/auth/verification');
+                  }}
+                  className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-black rounded-xl shadow-sm transition-colors"
+                >
+                  الانتقال لصفحة التفعيل (OTP)
+                </button>
+              </div>
+              <button onClick={() => toast.dismiss(t.id)} className="mr-auto text-red-400 hover:text-red-600 shrink-0">
+                <X size={20} />
+              </button>
+            </div>
+          ), { duration: 8000 });
           return;
         }
 
@@ -101,13 +125,6 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
           return;
         }
 
-        if (userData && userData.statusPayed === 'free_trial') {
-          toast.error('عفواً، لا يمكنك رفع الفيديوهات في النسخة التجريبية. يرجى ترقية باقتك.', {
-            duration: 5000,
-            icon: '🔒'
-          });
-          return;
-        }
       } catch (err) {
         console.error("Failed to check user status", err);
       }
@@ -280,70 +297,84 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
               <label className="block text-sm font-black text-gray-900 text-right">
                 {lessonType === 'video' ? 'محتوي الدرس' : lessonType === 'pdf' ? 'ملف PDF' : 'ملف Powerpoint'}
               </label>
-              <div
-                className="border-2 border-dashed border-gray-100 rounded-[32px] p-10 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-blue-600 transition-all"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept={lessonType === 'video' ? 'video/*' : lessonType === 'pdf' ? '.pdf' : '.ppt,.pptx'}
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-                <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
-                  <Upload className="text-blue-600" size={32} />
+              {!selectedFile ? (
+                <div
+                  className="border-2 border-dashed border-gray-100 rounded-[32px] p-10 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-blue-600 transition-all bg-zinc-50 hover:bg-white"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept={lessonType === 'video' ? 'video/*' : lessonType === 'pdf' ? '.pdf' : '.ppt,.pptx'}
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Upload className="text-blue-600" size={32} />
+                  </div>
+                  <div className="text-center">
+                    <p className="font-black text-gray-900 text-lg">
+                      اضغط لاختيار أو اسحب الملف إلى هنا
+                    </p>
+                    <p className="text-sm font-bold text-gray-500 mt-2">
+                      {lessonType === 'video' ? 'الحجم الأقصى للملف: 500MB (يفضل MP4)' : 'الحجم الأقصى للملف: 50MB'}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <p className="font-black text-gray-900">
-                    {selectedFile ? selectedFile.name : 'اضغط للتحميل او اسحب الملف الي هنا'}
-                  </p>
-                  <p className="text-xs font-bold text-gray-400 mt-1">
-                    {lessonType === 'video' ? 'الحجم الاقصي للملف : MP4. 500MB' : 'الحجم الاقصي للملف : 50MB'}
-                  </p>
-                </div>
-              </div>
-
-              {selectedFile && (
-                <div className="bg-blue-50/50 p-6 rounded-[24px] space-y-4">
+              ) : (
+                <div className="bg-white border-2 border-blue-100 p-6 rounded-[24px] shadow-sm space-y-5">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-white rounded-xl shadow-sm">
-                        <FileText className="text-blue-600" size={24} />
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl shadow-sm">
+                        {lessonType === 'video' ? <Video size={28} /> : lessonType === 'pdf' ? <FileText size={28} /> : <FilePowerpoint size={28} />}
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-black text-gray-900">{title || selectedFile.name}</p>
-                        <p className="text-xs font-bold text-gray-400">
-                          {Math.round(selectedFile.size / 1024 / 1024)} MB
+                        <p className="text-base font-black text-gray-900 line-clamp-1 break-all" dir="ltr">{selectedFile.name}</p>
+                        <p className="text-sm font-bold text-gray-500 mt-0.5">
+                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                         </p>
                       </div>
                     </div>
-                    {uploadStatus === 'ready' && <Check size={20} className="text-blue-600" />}
+                    {uploadStatus === 'idle' ? (
+                      <button onClick={() => { setSelectedFile(null); }} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors">
+                        <X size={20} />
+                      </button>
+                    ) : uploadStatus === 'ready' ? (
+                      <Check size={28} className="text-green-500" />
+                    ) : (
+                      <Loader2 size={24} className="text-blue-600 animate-spin" />
+                    )}
                   </div>
-                  <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-600 rounded-full transition-all duration-1000"
-                      style={{ width: `${uploadProgress}%` }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between items-center text-xs font-bold text-gray-500">
-                    <div className="text-right">
-                      {uploadStatus === 'creating' && 'جاري إنشاء الفيديو'}
-                      {uploadStatus === 'uploading' && (lessonType === 'video' ? 'جاري رفع الفيديو' : 'جاري رفع الملف')}
-                      {uploadStatus === 'processing' && 'جاري معالجة الفيديو'}
-                      {uploadStatus === 'ready' && (lessonType === 'video' ? 'الفيديو جاهز للمشاهدة' : 'الملف جاهز')}
-                      {uploadStatus === 'error' && 'حدث خطأ أثناء الرفع'}
+
+                  {uploadStatus !== 'idle' && (
+                    <div className="space-y-2 pt-2 border-t border-gray-100">
+                      <div className="flex justify-between items-center text-xs font-bold text-gray-600">
+                        <div className="text-right flex items-center gap-2">
+                          {uploadStatus === 'creating' && 'جاري تحضير الخوادم...'}
+                          {uploadStatus === 'uploading' && (lessonType === 'video' ? 'جاري رفع الفيديو للشبكة السحابية' : 'جاري رفع الملف')}
+                          {uploadStatus === 'processing' && 'جاري معالجة وتشفير الفيديو...'}
+                          {uploadStatus === 'ready' && (lessonType === 'video' ? 'الفيديو جاهز للمشاهدة' : 'الملف جاهز')}
+                          {uploadStatus === 'error' && <span className="text-red-500">حدث خطأ أثناء الرفع</span>}
+                        </div>
+                        {uploadStatus === 'uploading' && (
+                          <div className="text-blue-600 font-black text-sm" dir="ltr">
+                            {uploadProgress.toFixed(0)}%
+                          </div>
+                        )}
+                      </div>
+                      <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-300 ease-out ${uploadStatus === 'error' ? 'bg-red-500' : 'bg-blue-600'}`}
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                      </div>
                     </div>
-                    <div className="text-blue-600 font-black">
-                      {uploadStatus === 'uploading' && `${uploadProgress}%`}
-                    </div>
-                  </div>
+                  )}
                 </div>
               )}
-
               {uploadStatus === 'processing' && processingStatus !== null && (
-                <div className="text-right text-sm font-bold text-gray-500">
-                  حالة المعالجة الحالية: {processingStatus}
+                <div className="text-right text-sm font-bold text-blue-600 bg-blue-50 p-3 rounded-xl">
+                  تشفير السحابة: {processingStatus}%
                 </div>
               )}
 
@@ -364,10 +395,15 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
             <button onClick={handleClose} className="px-16 py-4 bg-gray-100 text-gray-900 font-black rounded-2xl hover:bg-gray-200 transition-all">الغاء</button>
             <button
               onClick={handleUploadLesson}
-              disabled={isSubmitting}
-              className="px-16 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={isSubmitting || !selectedFile}
+              className="px-8 sm:px-16 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
             >
-              {isSubmitting ? 'جاري الحفظ...' : 'حفظ الدرس'}
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={24} className="animate-spin" />
+                  جاري رفع وحفظ الدرس...
+                </>
+              ) : 'حفظ الدرس'}
             </button>
           </div>
         </div>

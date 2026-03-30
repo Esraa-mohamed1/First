@@ -91,3 +91,13 @@ export const deleteLesson = async (id: number): Promise<void> => {
     throw error.response?.data || error;
   }
 };
+
+export const getCategories = async (): Promise<any[]> => {
+  try {
+    const response = await academyApi.get<ApiResponse<any[]>>('/categories');
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to get categories:', error);
+    return [];
+  }
+};

@@ -76,4 +76,12 @@ export const getMyUsageLimit = async (): Promise<any> => {
   }
 };
 
-
+export const getMyPackage = async (): Promise<any> => {
+  try {
+    const response = await api.get<any>('https://api.darab.academy/api/academy/my-package');
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to get my package:', error);
+    throw error.response?.data || error;
+  }
+};

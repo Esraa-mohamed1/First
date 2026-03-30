@@ -44,24 +44,28 @@ export const getVideoStatus = async (libraryId: string, apiKey: string, videoId:
       AccessKey: apiKey,
     },
   });
-  return response.data?.status as number | undefined;
+  return {
+    status: response.data?.status as number | undefined,
+    encodeProgress: response.data?.encodeProgress as number | undefined
+  };
 };
 
 export const waitForVideoReady = async (
   libraryId: string,
   apiKey: string,
   videoId: string,
-  onStatus?: (status: number) => void,
+  onStatus?: (progress: number) => void,
   maxAttempts = 80,
   delayMs = 3000
 ) => {
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const status = await getVideoStatus(libraryId, apiKey, videoId);
-    if (typeof status === 'number') {
-      if (onStatus) {
-        onStatus(status);
+    const data = await getVideoStatus(libraryId, apiKey, videoId);
+    if (typeof data.status === 'number') {
+      if (onStatus && typeof data.encodeProgress === 'number') {
+        onStatus(data.encodeProgress);
       }
-      if (status === 3) {
+      if (data.status === 3 || data.status === 4) { // Finished or ready
+        if (onStatus) onStatus(100);
         return;
       }
     }

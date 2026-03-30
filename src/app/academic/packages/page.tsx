@@ -1,23 +1,28 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { getProfileStatus, getMyUsageLimit } from '@/services/auth';
+import { getProfileStatus, getMyUsageLimit, getMyPackage } from '@/services/auth';
 import { Upload, Download, Search, Link2, Award, MessageSquare, FileText, Cloud, Users, User, BookOpen } from 'lucide-react';
 
 export default function PackagesPage() {
   const [usageData, setUsageData] = useState<any>(null);
   const [limitsData, setLimitsData] = useState<any[]>([]);
+  const [packageData, setPackageData] = useState<any>(null);
+  const [packageHistory, setPackageHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [profile, limits] = await Promise.all([
+        const [profile, limits, pkgRes] = await Promise.all([
           getProfileStatus(),
-          getMyUsageLimit()
+          getMyUsageLimit(),
+          getMyPackage()
         ]);
         setUsageData(profile.data || profile);
         setLimitsData(limits?.data || []);
+        setPackageData(pkgRes?.data?.[0] || null);
+        setPackageHistory(pkgRes?.data || []);
       } catch (err) {
         console.error('Failed to fetch data:', err);
       } finally {
@@ -103,12 +108,20 @@ export default function PackagesPage() {
     { label: 'التقارير المتقدمة', available: false, icon: FileText, note: 'متاحة في الباقات المتقدمة' },
   ];
 
-  const history = [
+  const historyFallback = [
     { id: '033215', date: '22/1/2020', name: 'الباقة البريميوم', price: '4,200', method: 'تحويل بنكي' },
     { id: '033216', date: '3/6/2022', name: 'الباقة البريميوم', price: '4,200', method: 'بطاقة الائتمان' },
     { id: '033217', date: '8/7/2025', name: 'الباقة البريميوم', price: '4,200', method: 'المحفظة الالكترونية' },
     { id: '033218', date: '2/3/2021', name: 'الباقة البريميوم', price: '4,200', method: 'بطاقة الائتمان' },
   ];
+
+  const displayHistory = packageHistory.length > 0 ? packageHistory.map(item => ({
+    id: item.id || '-',
+    date: item.start_date ? new Date(item.start_date).toLocaleDateString('ar-EG') : '-',
+    name: item.package_name || '-',
+    price: item.price || '0',
+    method: item.transaction_id || 'غير محدد'
+  })) : historyFallback;
 
   if (loading) {
     return (
@@ -126,9 +139,13 @@ export default function PackagesPage() {
 
           {/* Right side: Title & Badge */}
           <div className="flex items-center gap-4">
-            <h2 className="text-3xl font-black text-gray-900">الباقة البريميوم</h2>
-            <span className="px-5 py-1.5 rounded-xl text-green-600 bg-green-50 text-sm font-bold border border-green-100">
-              نشط
+            <h2 className="text-3xl font-black text-gray-900">{packageData?.package_name || 'الباقة الحالية'}</h2>
+            <span className={`px-5 py-1.5 rounded-xl text-sm font-bold border ${
+              packageData?.status === 'active' || packageData?.active === 1
+                ? 'text-green-600 bg-green-50 border-green-100'
+                : 'text-red-600 bg-red-50 border-red-100'
+            }`}>
+              {packageData?.status === 'active' || packageData?.active === 1 ? 'نشط' : 'غير نشط'}
             </span>
           </div>
 
@@ -137,11 +154,15 @@ export default function PackagesPage() {
             <div className="flex gap-10">
               <div className="text-left">
                 <p className="text-gray-400 font-bold mb-1">نهاية الأشتراك</p>
-                <p className="text-gray-900 font-bold">9/5/2024</p>
+                <p className="text-gray-900 font-bold" dir="ltr">
+                  {packageData?.end_date ? new Date(packageData.end_date).toLocaleDateString('ar-EG') : 'غير محدد'}
+                </p>
               </div>
               <div className="text-left">
                 <p className="text-gray-400 font-bold mb-1">بداية الأشتراك</p>
-                <p className="text-gray-900 font-bold">10/2/2024</p>
+                <p className="text-gray-900 font-bold" dir="ltr">
+                  {packageData?.start_date ? new Date(packageData.start_date).toLocaleDateString('ar-EG') : 'غير محدد'}
+                </p>
               </div>
             </div>
 
@@ -254,7 +275,7 @@ export default function PackagesPage() {
               </tr>
             </thead>
             <tbody>
-              {history.map((item, i) => (
+              {displayHistory.map((item, i) => (
                 <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
                   <td className="py-4 px-6 font-medium text-gray-500">{item.id}</td>
                   <td className="py-4 px-6 font-medium text-gray-500">{item.date}</td>
@@ -271,8 +292,9 @@ export default function PackagesPage() {
       {/* Upgrade Banner */}
       <div className="bg-blue-500 rounded-[32px] p-10 relative overflow-hidden text-center text-white">
         {/* Decorator Circles */}
-        <div className="absolute -bottom-24 -left-24 w-64 h-64 border-[30px] border-blue-400/30 rounded-full"></div>
-        <div className="absolute -bottom-12 -left-12 w-48 h-48 border-[20px] border-blue-400/30 rounded-full"></div>
+        <div className="absolute -bottom-32 -left-32 w-80 h-80 border-[40px] border-blue-400/20 rounded-full"></div>
+        <div className="absolute -bottom-20 -left-20 w-56 h-56 border-[30px] border-blue-400/30 rounded-full"></div>
+        <div className="absolute -bottom-8 -left-8 w-32 h-32 border-[20px] border-blue-400/40 rounded-full"></div>
 
         <div className="relative z-10 max-w-2xl mx-auto space-y-6">
           <h3 className="text-2xl font-black">"هل تحتاج إلى مساحة أكبر للطلاب والدورات؟ جرّب باقة أعلى!"</h3>
