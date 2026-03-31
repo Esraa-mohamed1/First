@@ -12,9 +12,10 @@ import { uploadFile } from '@/services/upload';
 interface CreateCourseModalProps {
   isOpen: boolean;
   onClose: () => void;
+  courseId?: number | null;
 }
 
-const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
+const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const [step, setStep] = useState(2);
@@ -43,18 +44,42 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
 
   useEffect(() => {
     if (isOpen) {
-      const fetchCategories = async () => {
+      const fetchInitialData = async () => {
         try {
-          const { getCategories } = await import('@/services/courses');
-          const data = await getCategories();
-          setCategories(data);
+          const { getCategories, getCourse } = await import('@/services/courses');
+          
+          // Parallel fetch categories and course data (if editing)
+          const fetchPromises: any[] = [getCategories()];
+          if (courseId) {
+            fetchPromises.push(getCourse(courseId));
+          }
+
+          const results = await Promise.all(fetchPromises);
+          const cats = results[0];
+          setCategories(cats);
+
+          if (courseId && results[1]) {
+            const course = results[1];
+            setTitle(course.title || '');
+            setCategory(course.category_id || '');
+            setDescription(course.description || '');
+            setInstructor(course.instructor || '');
+            setPricingType(course.price_type || (Number(course.price) === 0 ? 'free' : 'paid'));
+            setStatus(course.status || 'draft');
+            setPrice(course.price?.toString() || '');
+            setFinalPrice(course.final_price?.toString() || '');
+            setCourseType(course.type || 'recorded');
+            if (course.image) {
+              setPreviewUrl(course.image);
+            }
+          }
         } catch (error) {
-          console.error('Failed to fetch categories:', error);
+          console.error('Failed to fetch initial data:', error);
         }
       };
-      fetchCategories();
+      fetchInitialData();
     }
-  }, [isOpen]);
+  }, [isOpen, courseId]);
 
   const courseTypes = [
     {
@@ -156,20 +181,22 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
         console.error('Failed to get user profile', err);
       }
 
-      try {
-        const usageResponse = await getMyUsageLimit();
-        const maxCoursesObj = usageResponse?.data?.find((i: any) => i.feature_slug === 'max_courses');
-        if (maxCoursesObj) {
-          const used = parseFloat(maxCoursesObj.used_amount || '0');
-          const max = parseFloat(maxCoursesObj.total_limit || '0');
-          if (used >= max) {
-            toast.error('عفواً، لقد وصلت للحد الأقصى المسموح به لعدد الدورات. يرجى ترقية باقتك.');
-            setIsSubmitting(false);
-            return;
+      if (!courseId) {
+        try {
+          const usageResponse = await getMyUsageLimit();
+          const maxCoursesObj = usageResponse?.data?.find((i: any) => i.feature_slug === 'max_courses');
+          if (maxCoursesObj) {
+            const used = parseFloat(maxCoursesObj.used_amount || '0');
+            const max = parseFloat(maxCoursesObj.total_limit || '0');
+            if (used >= max) {
+              toast.error('عفواً، لقد وصلت للحد الأقصى المسموح به لعدد الدورات. يرجى ترقية باقتك.');
+              setIsSubmitting(false);
+              return;
+            }
           }
+        } catch (err) {
+          console.error('Failed to get usage limits', err);
         }
-      } catch (err) {
-        console.error('Failed to get usage limits', err);
       }
 
       const typeValue = courseType || 'recorded';
@@ -186,9 +213,15 @@ const CreateCourseModal = ({ isOpen, onClose }: CreateCourseModalProps) => {
         image: selectedFile || undefined,
       };
 
-      const newCourse = await createCourse(payload);
+      if (courseId) {
+        const { updateCourse } = await import('@/services/courses');
+        await updateCourse(courseId, payload);
+        toast.success('تم تحديث الدورة بنجاح');
+      } else {
+        await createCourse(payload);
+        toast.success('تم إنشاء الدورة بنجاح');
+      }
 
-      toast.success('تم إنشاء الدورة بنجاح');
       handleClose();
 
       // Navigate to courses page or refresh if already there

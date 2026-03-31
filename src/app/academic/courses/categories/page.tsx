@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 import { Plus, LayoutGrid, Search, Edit, Trash2, Loader2, X, Check } from 'lucide-react';
 import { getCategories, updateCategory, createCategory, deleteCategory } from '@/services/courses';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
 
 export default function CategoriesPage() {
   const router = useRouter();
@@ -75,14 +79,34 @@ export default function CategoriesPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm('هل أنت متأكد من حذف هذه الفئة؟')) {
+    const result = await MySwal.fire({
+      title: 'هل أنت متأكد؟',
+      text: "سيتم حذف الفئة نهائياً!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'نعم، احذفها!',
+      cancelButtonText: 'إلغاء',
+      reverseButtons: true
+    });
+
+    if (result.isConfirmed) {
       setActionLoading(true);
       try {
         await deleteCategory(id);
-        toast.success('تم حذف الفئة بنجاح');
+        MySwal.fire(
+          'تم الحذف!',
+          'تم حذف الفئة بنجاح.',
+          'success'
+        );
         fetchCategories();
       } catch (error) {
-        toast.error('فشل حذف الفئة');
+        MySwal.fire(
+          'فشل!',
+          'حدث خطأ أثناء محاولة حذف الفئة.',
+          'error'
+        );
       } finally {
         setActionLoading(false);
       }

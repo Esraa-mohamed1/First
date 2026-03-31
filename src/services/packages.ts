@@ -1,4 +1,5 @@
 import api from '@/lib/api';
+import academyApi from '@/lib/academy-api';
 import { ApiResponse, Package, CreatePackagePayload, Feature } from '@/types/api';
 
 const SUPER_ADMIN_API_URL = 'https://api.darab.academy/api/superAdmin';
@@ -13,6 +14,25 @@ export const getPackages = async (): Promise<Package[]> => {
   } catch (error) {
     console.error('Failed to fetch packages:', error);
     return [];
+  }
+};
+
+export const subscribeToPackage = async (packageId: number, email?: string): Promise<string> => {
+  try {
+    const response = await api.post<ApiResponse<any>>('create-link-payment', { 
+      package_id: packageId,
+      email: email 
+    });
+    // Handle response formats for paymentLink
+    const paymentLink = response.data.paymentLink || response.data.data?.paymentLink || (typeof response.data.data === 'string' ? response.data.data : null);
+    
+    if (paymentLink) {
+      return paymentLink;
+    }
+    throw new Error('رابط الدفع غير موجود في الرد');
+  } catch (error: any) {
+    console.error('Failed to subscribe to package:', error);
+    throw error.response?.data || error;
   }
 };
 

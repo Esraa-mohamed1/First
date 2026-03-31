@@ -174,7 +174,13 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
           await uploadVideoFile(libraryId, bunnyApiKey, guid, selectedFile!, setUploadProgress);
 
           setUploadStatus('processing');
-          await waitForVideoReady(libraryId, bunnyApiKey, guid, setProcessingStatus);
+          try {
+            await waitForVideoReady(libraryId, bunnyApiKey, guid, setProcessingStatus);
+          } catch (pollingError: any) {
+            console.warn('Video processing is slow but continuing on Bunny.net servers:', pollingError);
+            // Don't fail the whole lesson creation if just polling timed out
+            // The video is already uploaded and Bunny will finish processing it.
+          }
 
           setUploadStatus('ready');
         }

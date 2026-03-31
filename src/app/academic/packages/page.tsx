@@ -2,13 +2,16 @@
 
 import React, { useEffect, useState } from 'react';
 import { getProfileStatus, getMyUsageLimit, getMyPackage } from '@/services/auth';
-import { Upload, Download, Search, Link2, Award, MessageSquare, FileText, Cloud, Users, User, BookOpen } from 'lucide-react';
+import { Upload, Download, Search, Link2, Award, MessageSquare, FileText, Cloud, Users, User, BookOpen, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function PackagesPage() {
+  const router = useRouter();
   const [usageData, setUsageData] = useState<any>(null);
   const [limitsData, setLimitsData] = useState<any[]>([]);
   const [packageData, setPackageData] = useState<any>(null);
   const [packageHistory, setPackageHistory] = useState<any[]>([]);
+  const [featuresList, setFeaturesList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,10 +22,39 @@ export default function PackagesPage() {
           getMyUsageLimit(),
           getMyPackage()
         ]);
-        setUsageData(profile.data || profile);
-        setLimitsData(limits?.data || []);
-        setPackageData(pkgRes?.data?.[0] || null);
-        setPackageHistory(pkgRes?.data || []);
+        
+        // Handle different possible response structures (with or without .data wrapper)
+        const profileData = profile?.data || profile;
+        const limitsDataRaw = limits?.data || (Array.isArray(limits) ? limits : []);
+        const packageDataRaw = pkgRes?.data || pkgRes;
+
+        setUsageData(profileData);
+        setLimitsData(limitsDataRaw);
+        
+        if (packageDataRaw) {
+          // If the structure is { package_info: ..., features: ... }
+          if (packageDataRaw.package_info) {
+            setPackageData(packageDataRaw.package_info);
+            
+            // Features might be a single object or an array
+            const features = packageDataRaw.features;
+            if (features) {
+              const featuresArray = Array.isArray(features) ? features : [features];
+              const extractedFeatures = featuresArray.map((f: any) => ({
+                label: f.lable || f.name || 'ميزة',
+                available: f.value !== '0',
+                icon: Award,
+                note: f.value === '0' ? (f.lable || 'غير مدعوم') : ''
+              }));
+              setFeaturesList(extractedFeatures);
+            }
+          } else {
+            // Fallback for other structures
+            setPackageData(packageDataRaw);
+          }
+        }
+        
+        setPackageHistory(Array.isArray(pkgRes?.data) ? pkgRes.data : (Array.isArray(pkgRes) ? pkgRes : []));
       } catch (err) {
         console.error('Failed to fetch data:', err);
       } finally {
@@ -32,13 +64,7 @@ export default function PackagesPage() {
     fetchData();
   }, []);
 
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+  const isFreePackage = parseFloat(packageData?.price || '0') === 0;
 
   const getStatConfig = (slug: string) => {
     switch (slug) {
@@ -47,7 +73,7 @@ export default function PackagesPage() {
       case 'max_students':
         return { label: 'عدد الطلاب النشطين', icon: Users, color: 'bg-emerald-50 text-emerald-500', progressColor: 'bg-emerald-500', isStorage: false };
       case 'storage_limit':
-        return { label: 'مساحة التخزين التخزين', icon: Cloud, color: 'bg-red-50 text-red-400', progressColor: 'bg-red-500', isStorage: true };
+        return { label: 'مساحة التخزين', icon: Cloud, color: 'bg-red-50 text-red-400', progressColor: 'bg-red-500', isStorage: true };
       default:
         return { label: 'ميزة', icon: Award, color: 'bg-gray-50 text-gray-400', progressColor: 'bg-gray-500', isStorage: false };
     }
@@ -100,13 +126,6 @@ export default function PackagesPage() {
         progressColor: 'bg-red-500'
       },
     ];
-
-  const features = [
-    { label: 'الدومين الخاص', available: true, icon: Link2 },
-    { label: 'الشهادات', available: true, icon: Award },
-    { label: 'الرسائل الجماعية', available: true, icon: MessageSquare },
-    { label: 'التقارير المتقدمة', available: false, icon: FileText, note: 'متاحة في الباقات المتقدمة' },
-  ];
 
   const historyFallback = [
     { id: '033215', date: '22/1/2020', name: 'الباقة البريميوم', price: '4,200', method: 'تحويل بنكي' },
@@ -167,10 +186,15 @@ export default function PackagesPage() {
             </div>
 
             <div className="flex gap-4">
-              <button className="px-6 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-colors">
-                تجديد الاشتراك
-              </button>
-              <button className="px-6 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold transition-colors">
+              {!isFreePackage && (
+                <button className="px-6 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-colors">
+                  تجديد الاشتراك
+                </button>
+              )}
+              <button 
+                onClick={() => router.push('/academic/packages/upgrade')}
+                className="px-6 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold transition-colors"
+              >
                 ترقية الباقة
               </button>
             </div>
@@ -213,7 +237,7 @@ export default function PackagesPage() {
         <p className="text-gray-400 font-bold mb-8">تعرف على الأدوات والخصائص المتاحة لك لإدارة أكاديميتك بكفاءة.</p>
 
         <div className="space-y-6">
-          {features.map((feature, i) => (
+          {featuresList.map((feature, i) => (
             <div key={i} className="flex items-center justify-between border-b border-gray-50 pb-6 last:border-0 last:pb-0">
               <div className="flex items-center gap-3">
                 <feature.icon size={20} className="text-gray-400" />
@@ -301,7 +325,10 @@ export default function PackagesPage() {
           <p className="text-blue-100 leading-relaxed font-bold text-sm">
             لقد اقتربت من الحد الأقصى للطلاب والدورات في خطتك الحالية لتستمر أكاديميتك في النمو بدون أي قيود، يمكنك الترقية إلى باقة أعلى الآن، بهذه الطريقة ستتمكن من إضافة عدد أكبر من الطلاب والدورات، والاستفادة من مميزات إضافية
           </p>
-          <button className="bg-white text-blue-500 hover:bg-blue-50 px-10 py-3 rounded-2xl font-black transition-colors mt-2">
+          <button 
+            onClick={() => router.push('/academic/packages/upgrade')}
+            className="bg-white text-blue-500 hover:bg-blue-50 px-10 py-3 rounded-2xl font-black transition-colors mt-2"
+          >
             ترقية الآن
           </button>
         </div>

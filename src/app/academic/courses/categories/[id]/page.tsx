@@ -1,11 +1,16 @@
 'use client';
 
-import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, ArrowRight } from 'lucide-react';
+import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, ArrowRight, X } from 'lucide-react';
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCourses, deleteCourse, getCategories } from '@/services/courses';
 import { Course } from '@/types/api';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+import CreateCourseModal from '@/components/Academic/Modals/CreateCourseModal';
+
+const MySwal = withReactContent(Swal);
 
 export default function CategoryCoursesPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -16,6 +21,10 @@ export default function CategoryCoursesPage({ params }: { params: Promise<{ id: 
   const [categoryName, setCategoryName] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
+
+  // Edit Modal States
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -44,14 +53,39 @@ export default function CategoryCoursesPage({ params }: { params: Promise<{ id: 
     }
   };
 
+  const handleEditCourse = (id: number) => {
+    setSelectedCourseId(id);
+    setIsEditModalOpen(true);
+  };
+
   const handleDelete = async (courseId: number) => {
-    if (window.confirm('هل أنت متأكد من حذف هذه الدورة؟')) {
+    const result = await MySwal.fire({
+      title: 'هل أنت متأكد؟',
+      text: "سيتم حذف هذه الدورة نهائياً!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'نعم، احذفها!',
+      cancelButtonText: 'إلغاء',
+      reverseButtons: true
+    });
+
+    if (result.isConfirmed) {
       try {
         await deleteCourse(courseId);
-        toast.success('تم حذف الدورة بنجاح');
+        MySwal.fire(
+          'تم الحذف!',
+          'تم حذف الدورة بنجاح.',
+          'success'
+        );
         setCourses(prev => prev.filter(c => c.id !== courseId));
       } catch (error) {
-        toast.error('فشل حذف الدورة');
+        MySwal.fire(
+          'فشل!',
+          'حدث خطأ أثناء محاولة حذف الدورة.',
+          'error'
+        );
       }
     }
   };
@@ -194,7 +228,7 @@ export default function CategoryCoursesPage({ params }: { params: Promise<{ id: 
                     <td className="px-8 py-8 whitespace-nowrap">
                       <div className="flex items-center justify-center gap-2">
                         <button 
-                          onClick={() => router.push(`/academic/courses/${course.id}`)}
+                          onClick={() => handleEditCourse(course.id)}
                           className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-xl transition-all"
                           title="تعديل المحتوى"
                         >
@@ -216,6 +250,15 @@ export default function CategoryCoursesPage({ params }: { params: Promise<{ id: 
           </div>
         )}
       </div>
+
+      <CreateCourseModal 
+        isOpen={isEditModalOpen} 
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedCourseId(null);
+        }} 
+        courseId={selectedCourseId}
+      />
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {

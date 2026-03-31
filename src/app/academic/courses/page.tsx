@@ -1,17 +1,26 @@
 'use client';
 
-import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2 } from 'lucide-react';
+import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCourses, deleteCourse } from '@/services/courses';
+import { getCourses, deleteCourse, getCourse } from '@/services/courses';
 import { Course } from '@/types/api';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+import CreateCourseModal from '@/components/Academic/Modals/CreateCourseModal';
+
+const MySwal = withReactContent(Swal);
 
 export default function CoursesPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Edit Modal States
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchCourses();
@@ -31,16 +40,41 @@ export default function CoursesPage() {
   };
 
   const handleDeleteCourse = async (id: number) => {
-    if (window.confirm('هل أنت متأكد من حذف هذه الدورة؟')) {
+    const result = await MySwal.fire({
+      title: 'هل أنت متأكد؟',
+      text: "لن تتمكن من التراجع عن هذا الإجراء!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'نعم، احذفها!',
+      cancelButtonText: 'إلغاء',
+      reverseButtons: true
+    });
+
+    if (result.isConfirmed) {
       try {
         await deleteCourse(id);
-        toast.success('تم حذف الدورة بنجاح');
+        MySwal.fire(
+          'تم الحذف!',
+          'تم حذف الدورة بنجاح.',
+          'success'
+        );
         setCourses(prev => prev.filter(course => course.id !== id));
       } catch (error) {
         console.error(error);
-        toast.error('فشل حذف الدورة');
+        MySwal.fire(
+          'فشل!',
+          'حدث خطأ أثناء محاولة حذف الدورة.',
+          'error'
+        );
       }
     }
+  };
+
+  const handleEditCourse = (id: number) => {
+    setSelectedCourseId(id);
+    setIsEditModalOpen(true);
   };
 
   const getCourseTypeLabel = (type: string) => {
@@ -180,7 +214,7 @@ export default function CoursesPage() {
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            router.push(`/academic/courses/${course.id}`);
+                            handleEditCourse(course.id);
                           }}
                           className="p-2 hover:bg-blue-50 text-blue-600 rounded-xl transition-all"
                           title="تعديل"
@@ -225,6 +259,15 @@ export default function CoursesPage() {
           </div>
         )}
       </div>
+
+      <CreateCourseModal 
+        isOpen={isEditModalOpen} 
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedCourseId(null);
+        }} 
+        courseId={selectedCourseId}
+      />
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
