@@ -1,9 +1,9 @@
 'use client';
 
-import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, X } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, ArrowRight, X } from 'lucide-react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCourses, deleteCourse, getCourse } from '@/services/courses';
+import { getCourses, deleteCourse, getCategories } from '@/services/courses';
 import { Course } from '@/types/api';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
@@ -12,37 +12,56 @@ import CreateCourseModal from '@/components/Academic/Modals/CreateCourseModal';
 
 const MySwal = withReactContent(Swal);
 
-export default function CoursesPage() {
+export default function CategoryCoursesPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const { id: categoryId } = use(params);
   const [searchTerm, setSearchTerm] = useState('');
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  
+  const [categoryName, setCategoryName] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+
   // Edit Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
 
   useEffect(() => {
-    fetchCourses();
-  }, []);
+    fetchData();
+  }, [categoryId]);
 
-  const fetchCourses = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await getCourses();
-      setCourses(data || []);
+      const [coursesData, categoriesData] = await Promise.all([
+        getCourses(),
+        getCategories()
+      ]);
+      
+      // Filter courses by category_id
+      const filtered = (coursesData || []).filter(c => String(c.category_id) === String(categoryId));
+      setCourses(filtered);
+
+      // Find category name
+      const cat = categoriesData.find(c => String(c.id) === String(categoryId));
+      if (cat) setCategoryName(cat.name);
     } catch (error) {
       console.error(error);
-      toast.error('فشل تحميل الدورات');
+      toast.error('فشل تحميل البيانات');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteCourse = async (id: number) => {
+  const handleEditCourse = (id: number) => {
+    setSelectedCourseId(id);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = async (courseId: number) => {
     const result = await MySwal.fire({
       title: 'هل أنت متأكد؟',
-      text: "لن تتمكن من التراجع عن هذا الإجراء!",
+      text: "سيتم حذف هذه الدورة نهائياً!",
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
@@ -54,15 +73,14 @@ export default function CoursesPage() {
 
     if (result.isConfirmed) {
       try {
-        await deleteCourse(id);
+        await deleteCourse(courseId);
         MySwal.fire(
           'تم الحذف!',
           'تم حذف الدورة بنجاح.',
           'success'
         );
-        setCourses(prev => prev.filter(course => course.id !== id));
+        setCourses(prev => prev.filter(c => c.id !== courseId));
       } catch (error) {
-        console.error(error);
         MySwal.fire(
           'فشل!',
           'حدث خطأ أثناء محاولة حذف الدورة.',
@@ -72,38 +90,48 @@ export default function CoursesPage() {
     }
   };
 
-  const handleEditCourse = (id: number) => {
-    setSelectedCourseId(id);
-    setIsEditModalOpen(true);
-  };
-
   const getCourseTypeLabel = (type: string) => {
     switch (type) {
-      case 'registered': return 'مسجلة';
+      case 'recorded': return 'مسجلة';
       case 'online': return 'اونلاين';
-      case 'offline': return 'حضوري';
+      case 'physical': return 'حضوري';
       default: return type;
     }
   };
 
   const getCourseTypeColor = (type: string) => {
     switch (type) {
-      case 'registered': return 'bg-orange-50 text-orange-500';
+      case 'recorded': return 'bg-orange-50 text-orange-500';
       case 'online': return 'bg-green-50 text-green-500';
-      case 'offline': return 'bg-gray-100 text-gray-500';
+      case 'physical': return 'bg-gray-100 text-gray-500';
       default: return 'bg-gray-100 text-gray-500';
     }
   };
 
-  const filteredCourses = courses.filter(course => 
-    course.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCourses = courses.filter(course => {
+    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || course.status === statusFilter;
+    const matchesType = typeFilter === 'all' || course.type === typeFilter;
+    return matchesSearch && matchesStatus && matchesType;
+  });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-4 md:p-6" dir="rtl">
+      {/* Breadcrumbs / Back */}
+      <button 
+        onClick={() => router.back()}
+        className="flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors font-bold"
+      >
+        <ArrowRight size={20} />
+        <span>العودة للفئات</span>
+      </button>
+
       {/* Header & Filters */}
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-        <h2 className="text-3xl font-black text-gray-900">الدورات</h2>
+        <div>
+          <h2 className="text-3xl font-black text-gray-900">دورات {categoryName}</h2>
+          <p className="text-gray-500 font-bold mt-2">عرض وإدارة جميع الدورات في هذا القسم</p>
+        </div>
         
         <div className="flex flex-wrap items-center gap-4">
           <div className="relative w-full lg:w-80">
@@ -117,34 +145,33 @@ export default function CoursesPage() {
             />
           </div>
 
-          <button className="flex items-center gap-3 bg-white border border-gray-100 px-6 py-3.5 rounded-2xl text-sm font-black text-gray-500 shadow-sm hover:bg-gray-50 transition-all">
-            <span>الحالة</span>
-            <ChevronDown size={18} />
-          </button>
+          <div className="relative">
+            <select 
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="appearance-none bg-white border border-gray-100 px-8 py-3.5 rounded-2xl text-sm font-black text-gray-500 shadow-sm hover:bg-gray-50 transition-all outline-none"
+            >
+              <option value="all">كل الحالات</option>
+              <option value="published">منشورة</option>
+              <option value="draft">مسودة</option>
+            </select>
+            <ChevronDown size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
 
-          <button className="flex items-center gap-3 bg-white border border-gray-100 px-6 py-3.5 rounded-2xl text-sm font-black text-gray-500 shadow-sm hover:bg-gray-50 transition-all">
-            <span>نوع الدورة</span>
-            <ChevronDown size={18} />
-          </button>
-
-          <button className="flex items-center gap-3 bg-white border border-gray-100 px-6 py-3.5 rounded-2xl text-sm font-black text-gray-500 shadow-sm hover:bg-gray-50 transition-all">
-            <span>المدرب</span>
-            <ChevronDown size={18} />
-          </button>
-
-          <button className="flex items-center gap-3 bg-white border border-gray-100 px-6 py-3.5 rounded-2xl text-sm font-black text-gray-500 shadow-sm hover:bg-gray-50 transition-all">
-            <span>التاريخ</span>
-            <ChevronDown size={18} />
-          </button>
+          <div className="relative">
+            <select 
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="appearance-none bg-white border border-gray-100 px-8 py-3.5 rounded-2xl text-sm font-black text-gray-500 shadow-sm hover:bg-gray-50 transition-all outline-none"
+            >
+              <option value="all">كل الأنواع</option>
+              <option value="recorded">مسجلة</option>
+              <option value="online">لايف</option>
+              <option value="physical">حضوري</option>
+            </select>
+            <ChevronDown size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
         </div>
-      </div>
-
-      {/* Export Button */}
-      <div className="flex justify-start">
-        <button className="flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl font-black text-base shadow-lg shadow-blue-200 transition-all">
-          <Download size={20} />
-          <span>تصدير Excel</span>
-        </button>
       </div>
 
       {/* Courses Table Container */}
@@ -155,7 +182,7 @@ export default function CoursesPage() {
           </div>
         ) : filteredCourses.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-gray-400">
-            <p className="text-xl font-bold">لا توجد دورات حالياً</p>
+            <p className="text-xl font-bold">لا توجد دورات حالياً في هذه الفئة</p>
           </div>
         ) : (
           <div className="overflow-x-auto custom-scrollbar">
@@ -163,22 +190,17 @@ export default function CoursesPage() {
               <thead>
                 <tr className="text-right text-gray-400 font-black text-base border-b border-gray-50">
                   <th className="px-8 py-8 whitespace-nowrap">اسم الدورة</th>
-                  <th className="px-8 py-8 whitespace-nowrap">التصنيف</th>
                   <th className="px-8 py-8 whitespace-nowrap">نوع الدورة</th>
-                  <th className="px-8 py-8 whitespace-nowrap">المدرب</th>
                   <th className="px-8 py-8 whitespace-nowrap">السعر</th>
-                  <th className="px-8 py-8 whitespace-nowrap">عدد المشتركين</th>
-                  <th className="px-8 py-8 whitespace-nowrap">عدد الدروس</th>
                   <th className="px-8 py-8 whitespace-nowrap">تاريخ الإضافة</th>
-                  <th className="px-8 py-8 whitespace-nowrap"></th>
+                  <th className="px-8 py-8 whitespace-nowrap text-center">الإجراءات</th>
                 </tr>
               </thead>
               <tbody className="text-gray-900 font-bold">
                 {filteredCourses.map((course) => (
                   <tr 
                     key={course.id} 
-                    className="hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0 group cursor-pointer"
-                    onClick={() => router.push(`/academic/courses/${course.id}`)}
+                    className="hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0 group"
                   >
                     <td className="px-8 py-8 whitespace-nowrap">
                       <div className="flex flex-col gap-1">
@@ -192,41 +214,29 @@ export default function CoursesPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.category || 'غير مصنف'}</td>
                     <td className="px-8 py-8 whitespace-nowrap">
                       <span className={`px-5 py-2 rounded-xl text-sm font-black ${getCourseTypeColor(course.type)}`}>
                         {getCourseTypeLabel(course.type)}
                       </span>
                     </td>
-                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.instructor || 'أحمد محمد'}</td>
                     <td className="px-8 py-8 whitespace-nowrap font-black">
                       {Number(course.price) === 0 ? 'مجاني' : `${course.price} ر.س`}
-                    </td>
-                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">0</td> {/* Placeholder for subscribers */}
-                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">
-                      {course.units?.reduce((acc, unit) => acc + (unit.lessons?.length || 0), 0) || 0}
                     </td>
                     <td className="px-8 py-8 whitespace-nowrap text-gray-500">
                        {course.created_at ? new Date(course.created_at).toLocaleDateString('ar-EG') : '--/--/----'}
                     </td>
                     <td className="px-8 py-8 whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-center gap-2">
                         <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditCourse(course.id);
-                          }}
-                          className="p-2 hover:bg-blue-50 text-blue-600 rounded-xl transition-all"
-                          title="تعديل"
+                          onClick={() => handleEditCourse(course.id)}
+                          className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-xl transition-all"
+                          title="تعديل المحتوى"
                         >
                           <Edit size={18} />
                         </button>
                         <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteCourse(course.id);
-                          }}
-                          className="p-2 hover:bg-red-50 text-red-600 rounded-xl transition-all"
+                          onClick={() => handleDelete(course.id)}
+                          className="p-2 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl transition-all"
                           title="حذف"
                         >
                           <Trash2 size={18} />
@@ -237,25 +247,6 @@ export default function CoursesPage() {
                 ))}
               </tbody>
             </table>
-          </div>
-        )}
-
-        {/* Pagination - Keep it static for now or hide if no items */}
-        {!loading && filteredCourses.length > 0 && (
-          <div className="px-10 py-8 border-t border-gray-50 flex items-center justify-between bg-white">
-            <div className="flex gap-3">
-              <button className="w-12 h-12 flex items-center justify-center rounded-2xl border border-gray-100 text-gray-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
-                <ChevronRight size={24} />
-              </button>
-              <button className="w-12 h-12 flex items-center justify-center rounded-2xl border border-gray-100 text-gray-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
-                <ChevronLeft size={24} />
-              </button>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-bold text-gray-400">
-                عرض {filteredCourses.length} من أصل {filteredCourses.length} دورة
-              </span>
-            </div>
           </div>
         )}
       </div>

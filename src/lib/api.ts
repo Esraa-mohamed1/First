@@ -7,22 +7,20 @@ const api = axios.create({
   },
 });
 
+
+
+
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token');
       let tenantKey = localStorage.getItem('academy_link_name');
-
-      // If tenant key not found in localStorage, try to get it from hostname
       if (!tenantKey) {
         let hostname = window.location.hostname;
-        
-        // Remove .localhost if present (for local development)
+        // Remove .localhost if present
         if (hostname.endsWith('.localhost')) {
           hostname = hostname.replace('.localhost', '');
         }
-
-        // Check if hostname is not localhost or empty
         if (hostname && hostname !== 'localhost') {
            tenantKey = hostname;
         }

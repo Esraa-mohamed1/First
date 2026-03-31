@@ -5,14 +5,16 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createAccountInfoAcademy, login } from "@/services/auth";
 import toast from "react-hot-toast";
+import { useCountry } from "@/hooks/useCountry";
+import { CountrySelect, PhoneInput } from "@/components/CountrySelector";
 
 export default function SetupPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const { selectedCountry } = useCountry();
   const [formData, setFormData] = useState({
     academy_name: '',
     phone: '',
-    country: '',
     field: '',
     link: ''
   });
@@ -67,7 +69,7 @@ export default function SetupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.academy_name || !formData.phone || !formData.country || !formData.field || !domainPrefix) {
+    if (!formData.academy_name || !formData.phone || !selectedCountry?.isoCode || !formData.field || !domainPrefix) {
       toast.error('يرجى ملء جميع الحقول المطلوبة');
       return;
     }
@@ -90,7 +92,7 @@ export default function SetupPage() {
       const payload: any = {
         username: formData.academy_name, // Using academy name as username
         phone_academy: formData.phone,
-        country_code: formData.country === 'saudi' ? 'SA' : formData.country === 'egypt' ? 'EG' : formData.country === 'uae' ? 'AE' : formData.country,
+        country_code: selectedCountry?.isoCode, // Passed efficiently via context
         specialties: formData.field,
         link_academy: fullLink // Use the constructed link
       };
@@ -148,8 +150,11 @@ export default function SetupPage() {
       // Clear sensitive data
       localStorage.removeItem('user_password');
 
+      const isLocal = window.location.hostname.includes('localhost');
+      const defaultSuffix = isLocal ? '.darab.academy.localhost:3000' : '.darab.academy';
+
       if (!loginSuccess) {
-           const tenantSuffix = process.env.NEXT_PUBLIC_TENANT_DOMAIN_SUFFIX || '.darab.academy.localhost:3000';
+           const tenantSuffix = process.env.NEXT_PUBLIC_TENANT_DOMAIN_SUFFIX || defaultSuffix;
          const protocol = window.location.protocol; 
          const tenantUrl = `${protocol}//${domainPrefix}${tenantSuffix}/auth/setup`; 
          
@@ -159,7 +164,7 @@ export default function SetupPage() {
       }
 
       // Construct tenant URL
-      const tenantSuffix = process.env.NEXT_PUBLIC_TENANT_DOMAIN_SUFFIX || '.darab.academy.localhost:3000';
+      const tenantSuffix = process.env.NEXT_PUBLIC_TENANT_DOMAIN_SUFFIX || defaultSuffix;
       const dashboardPath = process.env.NEXT_PUBLIC_TENANT_DASHBOARD_PATH || '/academic/courses/categories';
       const protocol = window.location.protocol; // http: or https:
       
@@ -231,35 +236,21 @@ export default function SetupPage() {
 
             {/* Mobile Number */}
             <div className="space-y-2">
-              <label className="block text-sm font-bold text-gray-700">رقم جوال اساسي</label>
-              <input
-                type="text"
+              <PhoneInput
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="ادخل رقم الجوال"
-                className="w-full p-4 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-left"
                 dir="ltr"
+                label="رقم جوال اساسي"
+                className="w-full text-left"
               />
             </div>
 
             {/* Country */}
             <div className="space-y-2 relative">
               <label className="block text-sm font-bold text-gray-700">الدولة</label>
-              <div className="relative">
-                <select 
-                  name="country"
-                  value={formData.country}
-                  onChange={handleChange}
-                  className="w-full p-4 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-gray-500 cursor-pointer transition-all"
-                >
-                  <option value="">الدولة</option>
-                  <option value="saudi">السعودية</option>
-                  <option value="egypt">مصر</option>
-                  <option value="uae">الإمارات</option>
-                </select>
-                <ChevronDown className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              </div>
+              <CountrySelect className="h-[42px]" />
             </div>
 
             {/* Field/Category */}

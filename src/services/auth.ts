@@ -6,36 +6,9 @@ export const createAccount = async (payload: CreateAccountPayload): Promise<ApiR
     const response = await api.post<ApiResponse<any>>('/create-account-academy', payload);
 
     if (response.data.status) {
-      // If a package is selected, create a payment link
-      if (payload.package_id) {
-        try {
-          const paymentResponse = await api.post<ApiResponse<any>>('/create-link-payment', {
-            package_id: payload.package_id,
-            email: payload.email,
-            phone: payload.phone,
-            name: payload.name,
-          });
-
-          if (paymentResponse.data.status && paymentResponse.data.data) {
-             const linkData = paymentResponse.data.data;
-             // Handle various potential structures of the payment link response
-             const link = typeof linkData === 'string' ? linkData : (linkData.link || linkData.url || linkData.payment_url);
-
-             console.log('Payment Link Created:', link);
-
-            return {
-              ...response.data,
-              paymentLink: link 
-            };
-          }
-        } catch (paymentError) {
-          console.error('Failed to create payment link:', paymentError);
-          // Return success for account creation but indicate payment failure?
-          // For now, let's just return the account creation response
-        }
-      }
+      return response.data;
     }
-    
+
     return response.data;
   } catch (error: any) {
     console.error('Failed to create account:', error);
@@ -93,4 +66,22 @@ export const verifyOtp = async (contact: string, otp: string): Promise<ApiRespon
   }
 };
 
+export const getMyUsageLimit = async (): Promise<any> => {
+  try {
+    const response = await api.get<any>('https://api.darab.academy/api/academy/my-usage-limit');
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to get my usage limit:', error);
+    throw error.response?.data || error;
+  }
+};
 
+export const getMyPackage = async (): Promise<any> => {
+  try {
+    const response = await api.get<any>('https://api.darab.academy/api/academy/my-package');
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to get my package:', error);
+    throw error.response?.data || error;
+  }
+};

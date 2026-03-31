@@ -91,3 +91,71 @@ export const deleteLesson = async (id: number): Promise<void> => {
     throw error.response?.data || error;
   }
 };
+
+export const getCategories = async (): Promise<any[]> => {
+  try {
+    const response = await academyApi.get<ApiResponse<any[]>>('categories');
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to get categories:', error);
+    return [];
+  }
+};
+
+export const getStats = async (): Promise<any> => {
+  try {
+    const response = await academyApi.get<ApiResponse<any>>('stats');
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to get stats:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const updateCategory = async (id: number, name: string): Promise<any> => {
+  try {
+    const response = await academyApi.put<ApiResponse<any>>(`categories/${id}`, { name });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to update category:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const createCategory = async (name: string): Promise<any> => {
+  try {
+    const response = await academyApi.post<ApiResponse<any>>('categories', { name });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to create category:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const deleteCategory = async (id: number): Promise<void> => {
+  try {
+    await academyApi.delete(`categories/${id}`);
+  } catch (error: any) {
+    console.error('Failed to delete category:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const deleteCourse = async (id: number): Promise<void> => {
+  try {
+    await academyApi.delete(`courses/${id}`);
+  } catch (error: any) {
+    console.error('Failed to delete course:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const updateCourse = async (id: number, payload: any): Promise<Course> => {
+  try {
+    const response = await academyApi.put<ApiResponse<Course>>(`courses/${id}`, payload);
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to update course:', error);
+    throw error.response?.data || error;
+  }
+};
