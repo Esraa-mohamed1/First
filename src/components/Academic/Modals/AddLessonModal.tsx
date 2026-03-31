@@ -13,10 +13,12 @@ interface AddLessonModalProps {
   onClose: () => void;
   unitId: number;
   lessonsCount: number;
+  courseName: string;
+  instructorName: string;
   onLessonAdded: () => void;
 }
 
-const AddLessonModal = ({ isOpen, onClose, unitId, lessonsCount, onLessonAdded }: AddLessonModalProps) => {
+const AddLessonModal = ({ isOpen, onClose, unitId, lessonsCount, courseName, instructorName, onLessonAdded }: AddLessonModalProps) => {
   const [lessonType, setLessonType] = useState<'video' | 'pdf' | 'powerpoint'>('video');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -121,12 +123,14 @@ const AddLessonModal = ({ isOpen, onClose, unitId, lessonsCount, onLessonAdded }
         let remainingStorage = 2048 * 1024 * 1024; // Default 2GB
         if (storageLimitObj) {
           const totalGB = parseFloat(storageLimitObj.total_limit || '0');
-          const usedGB = parseFloat(storageLimitObj.used_amount || '0');
-          remainingStorage = (totalGB - usedGB) * 1024 * 1024 * 1024;
+          const usedMB = parseFloat(storageLimitObj.used_amount || '0');
+          // total_limit is in GB, used_amount is in MB
+          remainingStorage = (totalGB * 1024 * 1024 * 1024) - (usedMB * 1024 * 1024);
         }
 
         if (selectedFile.size > remainingStorage) {
-          toast.error(`عفواً، مساحة التخزين المتبقية غير كافية لرفع هذا الملف. المساحة المتاحة: ${Math.round(remainingStorage / 1024 / 1024)} MB`, {
+          const remainingMB = (remainingStorage / (1024 * 1024)).toFixed(2);
+          toast.error(`عفواً، مساحة التخزين المتبقية غير كافية لرفع هذا الملف. المساحة المتاحة: ${remainingMB} MB`, {
             duration: 5000,
             icon: '⚠️'
           });
@@ -146,12 +150,14 @@ const AddLessonModal = ({ isOpen, onClose, unitId, lessonsCount, onLessonAdded }
         let remainingStorage = 2048 * 1024 * 1024; // Default 2GB
         if (storageLimitObj) {
           const totalGB = parseFloat(storageLimitObj.total_limit || '0');
-          const usedGB = parseFloat(storageLimitObj.used_amount || '0');
-          remainingStorage = (totalGB - usedGB) * 1024 * 1024 * 1024;
+          const usedMB = parseFloat(storageLimitObj.used_amount || '0');
+          // total_limit is in GB, used_amount is in MB
+          remainingStorage = (totalGB * 1024 * 1024 * 1024) - (usedMB * 1024 * 1024);
         }
 
         if (selectedFile.size > remainingStorage) {
-          toast.error(`عفواً، مساحة التخزين المتبقية غير كافية. المساحة المتاحة: ${Math.round(remainingStorage / 1024 / 1024)} MB`, {
+          const remainingMB = (remainingStorage / (1024 * 1024)).toFixed(2);
+          toast.error(`عفواً، مساحة التخزين المتبقية غير كافية. المساحة المتاحة: ${remainingMB} MB`, {
             duration: 5000,
             icon: '⚠️'
           });
@@ -211,14 +217,18 @@ const AddLessonModal = ({ isOpen, onClose, unitId, lessonsCount, onLessonAdded }
             }
           }
 
-          console.log('Video upload subdomain resolution:', {
+          // Build the final collection name using the course info
+          const collectionName = `${courseName}-${instructorName}-${subdomain}`;
+
+          console.log('Video upload collection resolution:', {
             rawTenant,
             userData: !!userData,
-            resolvedSubdomain: subdomain
+            resolvedSubdomain: subdomain,
+            collectionName: collectionName
           });
 
-          // 1. Get or Create Collection for this subdomain
-          const collectionId = await getOrCreateCollection(libraryId, bunnyApiKey, subdomain);
+          // 1. Get or Create Collection for this specific course
+          const collectionId = await getOrCreateCollection(libraryId, bunnyApiKey, collectionName);
           
           // 2. Create Video within that collection
           const guid = await createVideoResource(libraryId, bunnyApiKey, title, collectionId);

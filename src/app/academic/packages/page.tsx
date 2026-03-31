@@ -84,11 +84,17 @@ export default function PackagesPage() {
       const config = getStatConfig(item.feature_slug);
       const used = parseFloat(item.used_amount || '0');
       const total = parseFloat(item.total_limit || '0');
-      const percentage = total > 0 ? ((used / total) * 100).toFixed(0) : '0';
-
+      
+      let percentage = '0';
       let valueStr = `${used}/${total}`;
+
       if (config.isStorage) {
-        valueStr = `${item.used_amount}/${item.total_limit} GB`;
+        // total_limit is in GB, used_amount is in MB
+        const totalMB = total * 1024;
+        percentage = totalMB > 0 ? ((used / totalMB) * 100).toFixed(1) : '0';
+        valueStr = `${used} MB / ${total} GB`;
+      } else {
+        percentage = total > 0 ? ((used / total) * 100).toFixed(0) : '0';
       }
 
       return {

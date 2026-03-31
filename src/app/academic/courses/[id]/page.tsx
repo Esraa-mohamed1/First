@@ -294,6 +294,8 @@ export default function CourseDetailsPage() {
         onClose={() => setIsAddLessonOpen(false)}
         unitId={selectedUnitId!}
         lessonsCount={selectedUnitLessonCount}
+        courseName={course.title}
+        instructorName={course.instructor || 'Unknown'}
         onLessonAdded={fetchCourse}
       />
     </div>

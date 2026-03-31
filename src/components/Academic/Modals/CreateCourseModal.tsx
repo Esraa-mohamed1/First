@@ -170,7 +170,7 @@ const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps
     setIsSubmitting(true);
     try {
       // Get user ID from profile
-      let userId = 2; // Fallback default
+      let userId = 2; 
       try {
         const profile = await getProfileStatus();
         const userData = profile.data || profile;
