@@ -1,9 +1,61 @@
 import axios from 'axios';
 
-export const createVideoResource = async (libraryId: string, apiKey: string, title: string) => {
+export interface BunnyCollection {
+  guid: string;
+  name: string;
+  videoCount: number;
+  totalSize: number;
+  previewVideoIds: string[] | null;
+}
+
+export const getCollections = async (libraryId: string, apiKey: string): Promise<BunnyCollection[]> => {
+  const response = await axios.get(`https://video.bunnycdn.com/library/${libraryId}/collections`, {
+    headers: {
+      AccessKey: apiKey,
+      accept: 'application/json',
+    },
+  });
+  return response.data?.items || [];
+};
+
+export const createCollection = async (libraryId: string, apiKey: string, name: string): Promise<string> => {
+  const response = await axios.post(
+    `https://video.bunnycdn.com/library/${libraryId}/collections`,
+    { name },
+    {
+      headers: {
+        AccessKey: apiKey,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+    }
+  );
+  return response.data?.guid;
+};
+
+export const getOrCreateCollection = async (libraryId: string, apiKey: string, subdomain: string): Promise<string> => {
+  const collections = await getCollections(libraryId, apiKey);
+  const existing = collections.find((c: BunnyCollection) => c.name.toLowerCase() === subdomain.toLowerCase());
+  
+  if (existing) {
+    return existing.guid;
+  }
+
+  return createCollection(libraryId, apiKey, subdomain);
+};
+
+export const createVideoResource = async (
+  libraryId: string, 
+  apiKey: string, 
+  title: string,
+  collectionId?: string
+) => {
   const response = await axios.post(
     `https://video.bunnycdn.com/library/${libraryId}/videos`,
-    { title },
+    { 
+      title,
+      ...(collectionId && { collectionId })
+    },
     {
       headers: {
         AccessKey: apiKey,

@@ -119,13 +119,16 @@ export interface CreateUnitPayload {
 }
 
 export interface CreateLessonPayload {
-  unit_id: number;
+  chapter_id: number;
   title: string;
   description: string;
   type: 'video' | 'pdf' | 'powerpoint';
   video_id?: string;
   file_url?: string;
   is_free: boolean;
+  library_id?: string;
+  order: number;
+  file_size_mb: number;
 }
 
 export interface ApiResponse<T> {

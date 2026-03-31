@@ -5,17 +5,18 @@ import { useRouter } from 'next/navigation';
 import { X, Play, Video, FileText, FilePieChart as FilePowerpoint, Upload, Check, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createLesson } from '@/services/courses';
-import { createVideoResource, uploadVideoFile, waitForVideoReady } from '@/services/bunnyStream';
+import { createVideoResource, uploadVideoFile, waitForVideoReady, getOrCreateCollection } from '@/services/bunnyStream';
 import { uploadFile } from '@/services/upload';
 import { getProfileStatus, getMyUsageLimit } from '@/services/auth';
 interface AddLessonModalProps {
   isOpen: boolean;
   onClose: () => void;
   unitId: number;
+  lessonsCount: number;
   onLessonAdded: () => void;
 }
 
-const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonModalProps) => {
+const AddLessonModal = ({ isOpen, onClose, unitId, lessonsCount, onLessonAdded }: AddLessonModalProps) => {
   const [lessonType, setLessonType] = useState<'video' | 'pdf' | 'powerpoint'>('video');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -69,14 +70,21 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
       return;
     }
 
+    // Fetch profile once for validation and subdomain
+    let userData: any = null;
+    let profileResponse: any = null;
+    try {
+      profileResponse = await getProfileStatus();
+      userData = profileResponse.data || profileResponse;
+    } catch (err) {
+      console.error("Failed to check user status", err);
+    }
+
     if (lessonType === 'video') {
       // Check for free_trial status and storage via API
-      try {
-        const profile = await getProfileStatus();
-        const userData = profile.data || profile;
-
+      if (userData) {
         // Check verification status
-        if (userData && !userData.email_verified_at) {
+        if (!userData.email_verified_at) {
           toast.custom((t) => (
             <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl shadow-lg flex items-start gap-4" dir="rtl">
               <div className="bg-red-100 p-2 rounded-full shrink-0">
@@ -124,9 +132,6 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
           });
           return;
         }
-
-      } catch (err) {
-        console.error("Failed to check user status", err);
       }
 
       if (!libraryId || !bunnyApiKey) {
@@ -166,7 +171,57 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
         // Only process video if type is video and not already ready
         if (uploadStatus !== 'ready') {
           setUploadStatus('creating');
-          const guid = await createVideoResource(libraryId, bunnyApiKey, title);
+          
+          // Determine the raw tenant/subdomain string from all possible sources
+          let rawTenant = typeof window !== 'undefined' ? (localStorage.getItem('academy_link_name') || localStorage.getItem('xtenant')) : null;
+          
+          if (!rawTenant && typeof window !== 'undefined') {
+            let hostname = window.location.hostname;
+            if (hostname.endsWith('.localhost')) {
+              hostname = hostname.replace('.localhost', '');
+            }
+            if (hostname && hostname !== 'localhost' && hostname !== 'darab.academy') {
+              rawTenant = hostname;
+            }
+          }
+
+          // Fallbacks from API response
+          if (!rawTenant) {
+            rawTenant = 
+              userData?.link_academy ||
+              userData?.xtenant || 
+              userData?.xtenant_name || 
+              profileResponse?.xtenant || 
+              profileResponse?.xtenant_name || 
+              userData?.subdomain || 
+              userData?.academy_subdomain ||
+              userData?.academy_link_name ||
+              userData?.academy_name;
+          }
+
+          let subdomain = rawTenant || 'default';
+
+          // Extract the subdomain part if it's a full domain (e.g., "math.darab.academy" -> "math")
+          if (subdomain && subdomain.includes('.')) {
+            const parts = subdomain.split('.');
+            // If it's something like "math.darab.academy", take "math"
+            // But avoid taking "localhost" if that's all there is
+            if (parts.length > 1) {
+              subdomain = parts[0];
+            }
+          }
+
+          console.log('Video upload subdomain resolution:', {
+            rawTenant,
+            userData: !!userData,
+            resolvedSubdomain: subdomain
+          });
+
+          // 1. Get or Create Collection for this subdomain
+          const collectionId = await getOrCreateCollection(libraryId, bunnyApiKey, subdomain);
+          
+          // 2. Create Video within that collection
+          const guid = await createVideoResource(libraryId, bunnyApiKey, title, collectionId);
           setVideoId(guid);
           finalVideoId = guid;
 
@@ -193,13 +248,16 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
 
       // Create Lesson in Backend
       await createLesson({
-        unit_id: unitId,
+        chapter_id: unitId,
         title,
         description,
         type: lessonType,
         video_id: finalVideoId || undefined,
         file_url: finalFileUrl || undefined,
         is_free: false, // Default to paid
+        library_id: libraryId,
+        order: lessonsCount + 1,
+        file_size_mb: Number((selectedFile!.size / (1024 * 1024)).toFixed(2))
       });
 
       toast.success('تم حفظ الدرس بنجاح');

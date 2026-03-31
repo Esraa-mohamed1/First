@@ -24,6 +24,7 @@ export default function CourseDetailsPage() {
   // Modals State
   const [isAddLessonOpen, setIsAddLessonOpen] = useState(false);
   const [selectedUnitId, setSelectedUnitId] = useState<number | null>(null);
+  const [selectedUnitLessonCount, setSelectedUnitLessonCount] = useState<number>(0);
 
   const fetchCourse = async () => {
     try {
@@ -60,7 +61,9 @@ export default function CourseDetailsPage() {
   };
 
   const handleAddLesson = (unitId: number) => {
+    const unit = course?.units?.find(u => u.id === unitId);
     setSelectedUnitId(unitId);
+    setSelectedUnitLessonCount(unit?.lessons?.length || 0);
     setIsAddLessonOpen(true);
   };
 
@@ -290,6 +293,7 @@ export default function CourseDetailsPage() {
         isOpen={isAddLessonOpen}
         onClose={() => setIsAddLessonOpen(false)}
         unitId={selectedUnitId!}
+        lessonsCount={selectedUnitLessonCount}
         onLessonAdded={fetchCourse}
       />
     </div>
