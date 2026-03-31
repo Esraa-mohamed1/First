@@ -24,7 +24,8 @@ export const subscribeToPackage = async (packageId: number, email?: string): Pro
       email: email 
     });
     // Handle response formats for paymentLink
-    const paymentLink = response.data.paymentLink || response.data.data?.paymentLink || (typeof response.data.data === 'string' ? response.data.data : null);
+    const data = response.data as any;
+    const paymentLink = data.paymentLink || data.data?.paymentLink || (typeof data.data === 'string' ? data.data : null);
     
     if (paymentLink) {
       return paymentLink;

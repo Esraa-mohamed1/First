@@ -93,7 +93,7 @@ export default function UpgradePackagesPage() {
             )}
 
             <div className="mb-6">
-              <h3 className="text-xl md:text-2xl font-black text-gray-900 mb-2">{pkg.titile || pkg.title}</h3>
+              <h3 className="text-xl md:text-2xl font-black text-gray-900 mb-2">{(pkg as any).titile || (pkg as any).title}</h3>
               <p className="text-gray-400 font-bold text-xs md:text-sm line-clamp-2">{pkg.description}</p>
             </div>
 
