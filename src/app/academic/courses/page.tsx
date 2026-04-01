@@ -194,9 +194,31 @@ export default function CoursesPage() {
                     <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.category || 'غير مصنف'}</td>
                     <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.instructor || 'أحمد محمد'}</td>
                     <td className="px-8 py-8 whitespace-nowrap font-black">
-                      {Number(course.price) === 0 ? 'مجاني' : `${course.price} ر.س`}
+                      {Number(course.price) === 0 ? (
+                        <span className="text-green-600">مجاني</span>
+                      ) : (
+                        <div className="flex flex-col gap-1">
+                          {course.final_price && Number(course.final_price) < Number(course.price) ? (
+                            <>
+                              <div className="flex items-center gap-2">
+
+                                <span className="text-lg text-gray-900">{course.final_price} ر.س</span>
+                                <div className="flex justify-center">
+                                  <span className="text-sm text-gray-400 line-through decoration-blue-500 font-bold">{course.price} ر.س</span>
+                                </div>
+                              </div>
+                              <span className="text-[12px] bg-green-100 text-green-600 px-2 py-0.5 rounded-full w-fit">
+                                خصم {Number(course.price) - Number(course.final_price)} ر.س
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-lg text-gray-900">{course.price} ر.س</span>
+                          )}
+                        </div>
+                      )}
                     </td>
-                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">0</td> {/* Placeholder for subscribers */}
+                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">0</td>
+
                     <td className="px-8 py-8 whitespace-nowrap text-gray-500">
                       {course.units?.reduce((acc, unit) => acc + (unit.lessons?.length || 0), 0) || 0}
                     </td>
