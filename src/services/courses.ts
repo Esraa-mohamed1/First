@@ -112,9 +112,9 @@ export const getStats = async (): Promise<any> => {
   }
 };
 
-export const updateCategory = async (id: number, name: string): Promise<any> => {
+export const updateCategory = async (id: number, name: string, is_active: number = 1): Promise<any> => {
   try {
-    const response = await academyApi.put<ApiResponse<any>>(`categories/${id}`, { name });
+    const response = await academyApi.put<ApiResponse<any>>(`categories/${id}`, { name, is_active });
     return response.data.data;
   } catch (error: any) {
     console.error('Failed to update category:', error);
@@ -122,9 +122,9 @@ export const updateCategory = async (id: number, name: string): Promise<any> => 
   }
 };
 
-export const createCategory = async (name: string): Promise<any> => {
+export const createCategory = async (name: string, is_active: number = 1): Promise<any> => {
   try {
-    const response = await academyApi.post<ApiResponse<any>>('categories', { name });
+    const response = await academyApi.post<ApiResponse<any>>('categories', { name, is_active });
     return response.data.data;
   } catch (error: any) {
     console.error('Failed to create category:', error);

@@ -24,6 +24,7 @@ export default function CourseDetailsPage() {
   // Modals State
   const [isAddLessonOpen, setIsAddLessonOpen] = useState(false);
   const [selectedUnitId, setSelectedUnitId] = useState<number | null>(null);
+  const [selectedUnitTitle, setSelectedUnitTitle] = useState<string>('');
 
   const fetchCourse = async () => {
     try {
@@ -59,8 +60,9 @@ export default function CourseDetailsPage() {
     );
   };
 
-  const handleAddLesson = (unitId: number) => {
+  const handleAddLesson = (unitId: number, unitTitle: string) => {
     setSelectedUnitId(unitId);
+    setSelectedUnitTitle(unitTitle);
     setIsAddLessonOpen(true);
   };
 
@@ -254,7 +256,7 @@ export default function CourseDetailsPage() {
                   {/* Add Lesson Button - Dotted Container Style */}
                   <div className="border-2 border-dashed border-gray-300 rounded-xl p-1.5">
                     <button 
-                      onClick={() => handleAddLesson(unit.id)}
+                      onClick={() => handleAddLesson(unit.id, unit.title)}
                       className="w-full py-3 rounded-lg text-gray-500 font-bold hover:text-blue-600 hover:bg-gray-50 transition-all flex items-center justify-center gap-2 text-sm"
                     >
                       <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center group-hover:bg-blue-600 transition-colors">
@@ -290,6 +292,9 @@ export default function CourseDetailsPage() {
         isOpen={isAddLessonOpen}
         onClose={() => setIsAddLessonOpen(false)}
         unitId={selectedUnitId!}
+        unitName={selectedUnitTitle}
+        courseTitle={course.title}
+        instructorName={course.instructor || ''}
         onLessonAdded={fetchCourse}
       />
     </div>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { ModalProvider } from "@/context/ModalContext";
 import RegistrationModal from "@/components/Modals/RegistrationModal";
@@ -7,7 +7,10 @@ import LoginModal from "@/components/Modals/LoginModal";
 import { Toaster } from "react-hot-toast";
 import Providers from "@/components/Providers";
 
-const inter = Inter({ weight: "400", subsets: ["latin-ext"] });
+const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({ 
+    weight: ["400", "700"], // Normal and Bold
+    subsets: ["arabic"] 
+});
 
 export const metadata: Metadata = {
     title: "First - Landing Page",
@@ -20,7 +23,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="ar" dir="rtl" className={inter.className}>
+        <html lang="ar" dir="rtl" className={ibmPlexSansArabic.className}>
             <body suppressHydrationWarning>
                 <Providers>
                     <ModalProvider>

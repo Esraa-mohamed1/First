@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, X } from 'lucide-react';
+import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, X, BarChart3, Eye } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCourses, deleteCourse, getCourse } from '@/services/courses';
@@ -17,7 +17,8 @@ export default function CoursesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  
+  const [activeDropdownId, setActiveDropdownId] = useState<number | null>(null);
+
   // Edit Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
@@ -45,8 +46,8 @@ export default function CoursesPage() {
       text: "لن تتمكن من التراجع عن هذا الإجراء!",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
       confirmButtonText: 'نعم، احذفها!',
       cancelButtonText: 'إلغاء',
       reverseButtons: true
@@ -95,7 +96,7 @@ export default function CoursesPage() {
     }
   };
 
-  const filteredCourses = courses.filter(course => 
+  const filteredCourses = courses.filter(course =>
     course.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -104,12 +105,12 @@ export default function CoursesPage() {
       {/* Header & Filters */}
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <h2 className="text-3xl font-black text-gray-900">الدورات</h2>
-        
+
         <div className="flex flex-wrap items-center gap-4">
           <div className="relative w-full lg:w-80">
             <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="البحث بالأسم"
               className="w-full bg-white border border-gray-100 rounded-2xl py-3.5 pr-12 pl-4 text-sm font-bold outline-none focus:border-blue-500 shadow-sm transition-all"
               value={searchTerm}
@@ -148,7 +149,7 @@ export default function CoursesPage() {
       </div>
 
       {/* Courses Table Container */}
-      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden min-h-[400px]">
+      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm min-h-[550px] pb-52 md:pb-0">
         {loading ? (
           <div className="flex items-center justify-center h-full min-h-[400px]">
             <Loader2 className="animate-spin text-blue-600" size={40} />
@@ -158,13 +159,12 @@ export default function CoursesPage() {
             <p className="text-xl font-bold">لا توجد دورات حالياً</p>
           </div>
         ) : (
-          <div className="overflow-x-auto custom-scrollbar">
+          <div className="overflow-x-auto custom-scrollbar pb-60">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="text-right text-gray-400 font-black text-base border-b border-gray-50">
                   <th className="px-8 py-8 whitespace-nowrap">اسم الدورة</th>
                   <th className="px-8 py-8 whitespace-nowrap">التصنيف</th>
-                  <th className="px-8 py-8 whitespace-nowrap">نوع الدورة</th>
                   <th className="px-8 py-8 whitespace-nowrap">المدرب</th>
                   <th className="px-8 py-8 whitespace-nowrap">السعر</th>
                   <th className="px-8 py-8 whitespace-nowrap">عدد المشتركين</th>
@@ -175,8 +175,8 @@ export default function CoursesPage() {
               </thead>
               <tbody className="text-gray-900 font-bold">
                 {filteredCourses.map((course) => (
-                  <tr 
-                    key={course.id} 
+                  <tr
+                    key={course.id}
                     className="hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0 group cursor-pointer"
                     onClick={() => router.push(`/academic/courses/${course.id}`)}
                   >
@@ -184,53 +184,124 @@ export default function CoursesPage() {
                       <div className="flex flex-col gap-1">
                         <span className="text-lg font-black">{course.title}</span>
                         {course.status && (
-                          <span className={`px-3 py-1 rounded-full text-xs w-fit ${
-                            course.status === 'published' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
-                          }`}>
+                          <span className={`px-3 py-1 rounded-full text-xs w-fit ${course.status === 'published' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+                            }`}>
                             {course.status === 'published' ? 'منشورة' : 'مسودة'}
                           </span>
                         )}
                       </div>
                     </td>
                     <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.category || 'غير مصنف'}</td>
-                    <td className="px-8 py-8 whitespace-nowrap">
-                      <span className={`px-5 py-2 rounded-xl text-sm font-black ${getCourseTypeColor(course.type)}`}>
-                        {getCourseTypeLabel(course.type)}
-                      </span>
-                    </td>
                     <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.instructor || 'أحمد محمد'}</td>
                     <td className="px-8 py-8 whitespace-nowrap font-black">
-                      {Number(course.price) === 0 ? 'مجاني' : `${course.price} ر.س`}
+                      {Number(course.price) === 0 ? (
+                        <span className="text-green-600">مجاني</span>
+                      ) : (
+                        <div className="flex flex-col gap-1">
+                          {course.final_price && Number(course.final_price) < Number(course.price) ? (
+                            <>
+                              <div className="flex items-center gap-2">
+
+                                <span className="text-lg text-gray-900">{course.final_price} ر.س</span>
+                                <div className="flex justify-center">
+                                  <span className="text-sm text-gray-400 line-through decoration-blue-500 font-bold">{course.price} ر.س</span>
+                                </div>
+                              </div>
+                              <span className="text-[12px] bg-green-100 text-green-600 px-2 py-0.5 rounded-full w-fit">
+                                خصم {Number(course.price) - Number(course.final_price)} ر.س
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-lg text-gray-900">{course.price} ر.س</span>
+                          )}
+                        </div>
+                      )}
                     </td>
-                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">0</td> {/* Placeholder for subscribers */}
+                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">0</td>
+
                     <td className="px-8 py-8 whitespace-nowrap text-gray-500">
                       {course.units?.reduce((acc, unit) => acc + (unit.lessons?.length || 0), 0) || 0}
                     </td>
                     <td className="px-8 py-8 whitespace-nowrap text-gray-500">
-                       {course.created_at ? new Date(course.created_at).toLocaleDateString('ar-EG') : '--/--/----'}
+                      {course.created_at ? new Date(course.created_at).toLocaleDateString('ar-EG') : '--/--/----'}
                     </td>
                     <td className="px-8 py-8 whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-2">
-                        <button 
+                      <div className="flex items-center justify-end relative">
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleEditCourse(course.id);
+                            setActiveDropdownId(activeDropdownId === course.id ? null : course.id);
                           }}
-                          className="p-2 hover:bg-blue-50 text-blue-600 rounded-xl transition-all"
-                          title="تعديل"
+                          className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all"
                         >
-                          <Edit size={18} />
+                          <MoreVertical size={20} />
                         </button>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteCourse(course.id);
-                          }}
-                          className="p-2 hover:bg-red-50 text-red-600 rounded-xl transition-all"
-                          title="حذف"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+
+                        {activeDropdownId === course.id && (
+                          <>
+                            {/* Backdrop to close dropdown */}
+                            <div
+                              className="fixed inset-0 z-[100]"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveDropdownId(null);
+                              }}
+                            />
+
+                            {/* Dropdown Menu */}
+                            <div className="absolute left-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-2xl shadow-xl z-[101] py-2 animate-in fade-in zoom-in slide-in-from-top-2 duration-200">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditCourse(course.id);
+                                  setActiveDropdownId(null);
+                                }}
+                                className="w-full px-4 py-2.5 text-right text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center justify-end gap-3 transition-colors"
+                              >
+                                <span>تعديل الدورة</span>
+                                <Edit size={16} className="text-blue-600" />
+                              </button>
+
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveDropdownId(null);
+                                  toast('هذه الميزة ستتوفر قريباً');
+                                }}
+                                className="w-full px-4 py-2.5 text-right text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center justify-end gap-3 transition-colors"
+                              >
+                                <span>احصائيات الدورة</span>
+                                <BarChart3 size={16} className="text-orange-600" />
+                              </button>
+
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveDropdownId(null);
+                                  router.push(`/academic/courses/${course.id}`);
+                                }}
+                                className="w-full px-4 py-2.5 text-right text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center justify-end gap-3 transition-colors"
+                              >
+                                <span>مشاهدة الدورة</span>
+                                <Eye size={16} className="text-green-600" />
+                              </button>
+
+                              <div className="h-px bg-gray-100 my-1 mx-2" />
+
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteCourse(course.id);
+                                  setActiveDropdownId(null);
+                                }}
+                                className="w-full px-4 py-2.5 text-right text-sm font-bold text-red-600 hover:bg-red-50 flex items-center justify-end gap-3 transition-colors"
+                              >
+                                <span>حذف</span>
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -260,12 +331,12 @@ export default function CoursesPage() {
         )}
       </div>
 
-      <CreateCourseModal 
-        isOpen={isEditModalOpen} 
+      <CreateCourseModal
+        isOpen={isEditModalOpen}
         onClose={() => {
           setIsEditModalOpen(false);
           setSelectedCourseId(null);
-        }} 
+        }}
         courseId={selectedCourseId}
       />
 
