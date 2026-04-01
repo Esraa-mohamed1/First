@@ -37,7 +37,7 @@ export default function CategoryCoursesPage({ params }: { params: Promise<{ id: 
         getCourses(),
         getCategories()
       ]);
-      
+
       // Filter courses by category_id
       const filtered = (coursesData || []).filter(c => String(c.category_id) === String(categoryId));
       setCourses(filtered);
@@ -64,8 +64,8 @@ export default function CategoryCoursesPage({ params }: { params: Promise<{ id: 
       text: "سيتم حذف هذه الدورة نهائياً!",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
       confirmButtonText: 'نعم، احذفها!',
       cancelButtonText: 'إلغاء',
       reverseButtons: true
@@ -118,7 +118,7 @@ export default function CategoryCoursesPage({ params }: { params: Promise<{ id: 
   return (
     <div className="space-y-8 p-4 md:p-6" dir="rtl">
       {/* Breadcrumbs / Back */}
-      <button 
+      <button
         onClick={() => router.back()}
         className="flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors font-bold"
       >
@@ -132,12 +132,12 @@ export default function CategoryCoursesPage({ params }: { params: Promise<{ id: 
           <h2 className="text-3xl font-black text-gray-900">دورات {categoryName}</h2>
           <p className="text-gray-500 font-bold mt-2">عرض وإدارة جميع الدورات في هذا القسم</p>
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-4">
           <div className="relative w-full lg:w-80">
             <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="البحث بالأسم"
               className="w-full bg-white border border-gray-100 rounded-2xl py-3.5 pr-12 pl-4 text-sm font-bold outline-none focus:border-blue-500 shadow-sm transition-all"
               value={searchTerm}
@@ -146,7 +146,7 @@ export default function CategoryCoursesPage({ params }: { params: Promise<{ id: 
           </div>
 
           <div className="relative">
-            <select 
+            <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="appearance-none bg-white border border-gray-100 px-8 py-3.5 rounded-2xl text-sm font-black text-gray-500 shadow-sm hover:bg-gray-50 transition-all outline-none"
@@ -159,7 +159,7 @@ export default function CategoryCoursesPage({ params }: { params: Promise<{ id: 
           </div>
 
           <div className="relative">
-            <select 
+            <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
               className="appearance-none bg-white border border-gray-100 px-8 py-3.5 rounded-2xl text-sm font-black text-gray-500 shadow-sm hover:bg-gray-50 transition-all outline-none"
@@ -198,17 +198,16 @@ export default function CategoryCoursesPage({ params }: { params: Promise<{ id: 
               </thead>
               <tbody className="text-gray-900 font-bold">
                 {filteredCourses.map((course) => (
-                  <tr 
-                    key={course.id} 
+                  <tr
+                    key={course.id}
                     className="hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0 group"
                   >
                     <td className="px-8 py-8 whitespace-nowrap">
                       <div className="flex flex-col gap-1">
                         <span className="text-lg font-black">{course.title}</span>
                         {course.status && (
-                          <span className={`px-3 py-1 rounded-full text-xs w-fit ${
-                            course.status === 'published' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
-                          }`}>
+                          <span className={`px-3 py-1 rounded-full text-xs w-fit ${course.status === 'published' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+                            }`}>
                             {course.status === 'published' ? 'منشورة' : 'مسودة'}
                           </span>
                         )}
@@ -223,18 +222,18 @@ export default function CategoryCoursesPage({ params }: { params: Promise<{ id: 
                       {Number(course.price) === 0 ? 'مجاني' : `${course.price} ر.س`}
                     </td>
                     <td className="px-8 py-8 whitespace-nowrap text-gray-500">
-                       {course.created_at ? new Date(course.created_at).toLocaleDateString('ar-EG') : '--/--/----'}
+                      {course.created_at ? new Date(course.created_at).toLocaleDateString('ar-EG') : '--/--/----'}
                     </td>
                     <td className="px-8 py-8 whitespace-nowrap">
                       <div className="flex items-center justify-center gap-2">
-                        <button 
+                        <button
                           onClick={() => handleEditCourse(course.id)}
                           className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-xl transition-all"
                           title="تعديل المحتوى"
                         >
                           <Edit size={18} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDelete(course.id)}
                           className="p-2 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl transition-all"
                           title="حذف"
@@ -251,12 +250,12 @@ export default function CategoryCoursesPage({ params }: { params: Promise<{ id: 
         )}
       </div>
 
-      <CreateCourseModal 
-        isOpen={isEditModalOpen} 
+      <CreateCourseModal
+        isOpen={isEditModalOpen}
         onClose={() => {
           setIsEditModalOpen(false);
           setSelectedCourseId(null);
-        }} 
+        }}
         courseId={selectedCourseId}
       />
 

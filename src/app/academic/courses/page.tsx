@@ -17,7 +17,7 @@ export default function CoursesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Edit Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
@@ -45,8 +45,8 @@ export default function CoursesPage() {
       text: "لن تتمكن من التراجع عن هذا الإجراء!",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
       confirmButtonText: 'نعم، احذفها!',
       cancelButtonText: 'إلغاء',
       reverseButtons: true
@@ -95,7 +95,7 @@ export default function CoursesPage() {
     }
   };
 
-  const filteredCourses = courses.filter(course => 
+  const filteredCourses = courses.filter(course =>
     course.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -104,12 +104,12 @@ export default function CoursesPage() {
       {/* Header & Filters */}
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <h2 className="text-3xl font-black text-gray-900">الدورات</h2>
-        
+
         <div className="flex flex-wrap items-center gap-4">
           <div className="relative w-full lg:w-80">
             <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="البحث بالأسم"
               className="w-full bg-white border border-gray-100 rounded-2xl py-3.5 pr-12 pl-4 text-sm font-bold outline-none focus:border-blue-500 shadow-sm transition-all"
               value={searchTerm}
@@ -175,8 +175,8 @@ export default function CoursesPage() {
               </thead>
               <tbody className="text-gray-900 font-bold">
                 {filteredCourses.map((course) => (
-                  <tr 
-                    key={course.id} 
+                  <tr
+                    key={course.id}
                     className="hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0 group cursor-pointer"
                     onClick={() => router.push(`/academic/courses/${course.id}`)}
                   >
@@ -184,9 +184,8 @@ export default function CoursesPage() {
                       <div className="flex flex-col gap-1">
                         <span className="text-lg font-black">{course.title}</span>
                         {course.status && (
-                          <span className={`px-3 py-1 rounded-full text-xs w-fit ${
-                            course.status === 'published' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
-                          }`}>
+                          <span className={`px-3 py-1 rounded-full text-xs w-fit ${course.status === 'published' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+                            }`}>
                             {course.status === 'published' ? 'منشورة' : 'مسودة'}
                           </span>
                         )}
@@ -207,11 +206,11 @@ export default function CoursesPage() {
                       {course.units?.reduce((acc, unit) => acc + (unit.lessons?.length || 0), 0) || 0}
                     </td>
                     <td className="px-8 py-8 whitespace-nowrap text-gray-500">
-                       {course.created_at ? new Date(course.created_at).toLocaleDateString('ar-EG') : '--/--/----'}
+                      {course.created_at ? new Date(course.created_at).toLocaleDateString('ar-EG') : '--/--/----'}
                     </td>
                     <td className="px-8 py-8 whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
-                        <button 
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleEditCourse(course.id);
@@ -221,7 +220,7 @@ export default function CoursesPage() {
                         >
                           <Edit size={18} />
                         </button>
-                        <button 
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDeleteCourse(course.id);
@@ -260,12 +259,12 @@ export default function CoursesPage() {
         )}
       </div>
 
-      <CreateCourseModal 
-        isOpen={isEditModalOpen} 
+      <CreateCourseModal
+        isOpen={isEditModalOpen}
         onClose={() => {
           setIsEditModalOpen(false);
           setSelectedCourseId(null);
-        }} 
+        }}
         courseId={selectedCourseId}
       />
 

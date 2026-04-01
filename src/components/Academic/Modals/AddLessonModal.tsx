@@ -5,17 +5,21 @@ import { useRouter } from 'next/navigation';
 import { X, Play, Video, FileText, FilePieChart as FilePowerpoint, Upload, Check, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createLesson } from '@/services/courses';
-import { createVideoResource, uploadVideoFile, waitForVideoReady } from '@/services/bunnyStream';
+import { createVideoResource, uploadVideoFile, waitForVideoReady, fetchCollections, createCollection } from '@/services/bunnyStream';
 import { uploadFile } from '@/services/upload';
 import { getProfileStatus, getMyUsageLimit } from '@/services/auth';
+import VerificationModal from '@/components/Academic/Modals/VerificationModal';
 interface AddLessonModalProps {
   isOpen: boolean;
   onClose: () => void;
   unitId: number;
+  unitName: string; // Add unitName
+  courseTitle: string;
+  instructorName: string; // Add instructorName
   onLessonAdded: () => void;
 }
 
-const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonModalProps) => {
+const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instructorName, onLessonAdded }: AddLessonModalProps) => {
   const [lessonType, setLessonType] = useState<'video' | 'pdf' | 'powerpoint'>('video');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -28,6 +32,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
   const [videoId, setVideoId] = useState<string | null>(null);
   const [processingStatus, setProcessingStatus] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const libraryId = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID || '';
@@ -77,32 +82,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
 
         // Check verification status
         if (userData && !userData.email_verified_at) {
-          toast.custom((t) => (
-            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl shadow-lg flex items-start gap-4" dir="rtl">
-              <div className="bg-red-100 p-2 rounded-full shrink-0">
-                <span className="text-xl">📧</span>
-              </div>
-              <div>
-                <h3 className="font-black text-red-800 text-lg mb-1">تأكيد الحساب مطلوب</h3>
-                <p className="text-red-600 font-bold text-sm mb-4">
-                  عفواً، لا يمكنك رفع الفيديوهات قبل تفعيل حسابك، يرجى إدخال رمز التحقق المستلم.
-                </p>
-                <button
-                  onClick={() => {
-                    toast.dismiss(t.id);
-                    handleClose();
-                    router.push('/auth/verification');
-                  }}
-                  className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-black rounded-xl shadow-sm transition-colors"
-                >
-                  الانتقال لصفحة التفعيل (OTP)
-                </button>
-              </div>
-              <button onClick={() => toast.dismiss(t.id)} className="mr-auto text-red-400 hover:text-red-600 shrink-0">
-                <X size={20} />
-              </button>
-            </div>
-          ), { duration: 8000 });
+          setIsVerificationModalOpen(true);
           return;
         }
 
@@ -166,7 +146,54 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
         // Only process video if type is video and not already ready
         if (uploadStatus !== 'ready') {
           setUploadStatus('creating');
-          const guid = await createVideoResource(libraryId, bunnyApiKey, title);
+          
+          // Collection Creation/Fetching logic
+          let currentCollectionId = '';
+          try {
+            // Get data from localStorage or hostname (replicate academy-api logic)
+            let tenantName = localStorage.getItem('academy_link_name');
+            if (!tenantName && typeof window !== 'undefined') {
+              let hostname = window.location.hostname;
+              if (hostname.endsWith('.localhost')) {
+                hostname = hostname.replace('.localhost', '');
+              }
+              if (hostname && hostname !== 'localhost') {
+                tenantName = hostname;
+              }
+            }
+            tenantName = tenantName || 'Default';
+            
+            // Get profile for academy_name
+            const profile = await getProfileStatus();
+            const userData = profile.data || profile;
+            const academyName = userData?.academy_name || 'MyAcademy';
+            
+            // Store important names in localStorage for persistence
+            localStorage.setItem('cached_academy_name', academyName);
+            if (instructorName) {
+              localStorage.setItem('cached_instructor_name', instructorName);
+            }
+            
+            const finalInstructor = instructorName || localStorage.getItem('cached_instructor_name') || 'Instructor';
+            
+            // Construct collection name: (Tenant-Instructor-Course)
+            const finalCollectionName = `(${tenantName}-${finalInstructor}-${courseTitle})`;
+            
+            const collections = await fetchCollections(libraryId, bunnyApiKey);
+            const existingCollection = collections.find((c: any) => c.name === finalCollectionName);
+            
+            if (existingCollection) {
+              currentCollectionId = existingCollection.guid;
+            } else {
+              currentCollectionId = await createCollection(libraryId, bunnyApiKey, finalCollectionName);
+            }
+          } catch (colErr) {
+            console.error('Failed to handle collection, proceeding without one:', colErr);
+          }
+
+          // Construct video title: (Course-Unit-Lesson)
+          const finalVideoTitle = `(${courseTitle}-${unitName}-${title})`;
+          const guid = await createVideoResource(libraryId, bunnyApiKey, finalVideoTitle, currentCollectionId || undefined);
           setVideoId(guid);
           finalVideoId = guid;
 
@@ -422,6 +449,16 @@ const AddLessonModal = ({ isOpen, onClose, unitId, onLessonAdded }: AddLessonMod
           <X size={24} />
         </button>
       </div>
+
+      {/* Verification Modal integration */}
+      <VerificationModal 
+        isOpen={isVerificationModalOpen}
+        onClose={() => setIsVerificationModalOpen(false)}
+        onSuccess={() => {
+          // After verification, the user can try uploading again
+          toast.success('حسابك مفعل الآن، يمكنك البدء في رفع الفيديو');
+        }}
+      />
     </div>
   );
 };

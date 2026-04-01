@@ -1,9 +1,14 @@
 import axios from 'axios';
 
-export const createVideoResource = async (libraryId: string, apiKey: string, title: string) => {
+export const createVideoResource = async (libraryId: string, apiKey: string, title: string, collectionId?: string) => {
+  const payload: any = { title };
+  if (collectionId) {
+    payload.collectionId = collectionId;
+  }
+
   const response = await axios.post(
     `https://video.bunnycdn.com/library/${libraryId}/videos`,
-    { title },
+    payload,
     {
       headers: {
         AccessKey: apiKey,
@@ -16,6 +21,29 @@ export const createVideoResource = async (libraryId: string, apiKey: string, tit
     throw new Error('Missing guid');
   }
   return guid as string;
+};
+
+export const fetchCollections = async (libraryId: string, apiKey: string) => {
+  const response = await axios.get(`https://video.bunnycdn.com/library/${libraryId}/collections`, {
+    headers: {
+      AccessKey: apiKey,
+    },
+  });
+  return response.data?.items || [];
+};
+
+export const createCollection = async (libraryId: string, apiKey: string, name: string) => {
+  const response = await axios.post(
+    `https://video.bunnycdn.com/library/${libraryId}/collections`,
+    { name },
+    {
+      headers: {
+        AccessKey: apiKey,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  return response.data?.guid as string;
 };
 
 export const uploadVideoFile = async (
