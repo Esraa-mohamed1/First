@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, X } from 'lucide-react';
+import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, X, BarChart3, Eye } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCourses, deleteCourse, getCourse } from '@/services/courses';
@@ -17,6 +17,7 @@ export default function CoursesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeDropdownId, setActiveDropdownId] = useState<number | null>(null);
 
   // Edit Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -148,7 +149,7 @@ export default function CoursesPage() {
       </div>
 
       {/* Courses Table Container */}
-      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden min-h-[400px]">
+      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm min-h-[550px] pb-52 md:pb-0">
         {loading ? (
           <div className="flex items-center justify-center h-full min-h-[400px]">
             <Loader2 className="animate-spin text-blue-600" size={40} />
@@ -158,13 +159,12 @@ export default function CoursesPage() {
             <p className="text-xl font-bold">لا توجد دورات حالياً</p>
           </div>
         ) : (
-          <div className="overflow-x-auto custom-scrollbar">
+          <div className="overflow-x-auto custom-scrollbar pb-60">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="text-right text-gray-400 font-black text-base border-b border-gray-50">
                   <th className="px-8 py-8 whitespace-nowrap">اسم الدورة</th>
                   <th className="px-8 py-8 whitespace-nowrap">التصنيف</th>
-                  <th className="px-8 py-8 whitespace-nowrap">نوع الدورة</th>
                   <th className="px-8 py-8 whitespace-nowrap">المدرب</th>
                   <th className="px-8 py-8 whitespace-nowrap">السعر</th>
                   <th className="px-8 py-8 whitespace-nowrap">عدد المشتركين</th>
@@ -192,11 +192,6 @@ export default function CoursesPage() {
                       </div>
                     </td>
                     <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.category || 'غير مصنف'}</td>
-                    <td className="px-8 py-8 whitespace-nowrap">
-                      <span className={`px-5 py-2 rounded-xl text-sm font-black ${getCourseTypeColor(course.type)}`}>
-                        {getCourseTypeLabel(course.type)}
-                      </span>
-                    </td>
                     <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.instructor || 'أحمد محمد'}</td>
                     <td className="px-8 py-8 whitespace-nowrap font-black">
                       {Number(course.price) === 0 ? 'مجاني' : `${course.price} ر.س`}
@@ -209,27 +204,82 @@ export default function CoursesPage() {
                       {course.created_at ? new Date(course.created_at).toLocaleDateString('ar-EG') : '--/--/----'}
                     </td>
                     <td className="px-8 py-8 whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end relative">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleEditCourse(course.id);
+                            setActiveDropdownId(activeDropdownId === course.id ? null : course.id);
                           }}
-                          className="p-2 hover:bg-blue-50 text-blue-600 rounded-xl transition-all"
-                          title="تعديل"
+                          className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all"
                         >
-                          <Edit size={18} />
+                          <MoreVertical size={20} />
                         </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteCourse(course.id);
-                          }}
-                          className="p-2 hover:bg-red-50 text-red-600 rounded-xl transition-all"
-                          title="حذف"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+
+                        {activeDropdownId === course.id && (
+                          <>
+                            {/* Backdrop to close dropdown */}
+                            <div
+                              className="fixed inset-0 z-[100]"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveDropdownId(null);
+                              }}
+                            />
+
+                            {/* Dropdown Menu */}
+                            <div className="absolute left-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-2xl shadow-xl z-[101] py-2 animate-in fade-in zoom-in slide-in-from-top-2 duration-200">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditCourse(course.id);
+                                  setActiveDropdownId(null);
+                                }}
+                                className="w-full px-4 py-2.5 text-right text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center justify-end gap-3 transition-colors"
+                              >
+                                <span>تعديل الدورة</span>
+                                <Edit size={16} className="text-blue-600" />
+                              </button>
+
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveDropdownId(null);
+                                  toast('هذه الميزة ستتوفر قريباً');
+                                }}
+                                className="w-full px-4 py-2.5 text-right text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center justify-end gap-3 transition-colors"
+                              >
+                                <span>احصائيات الدورة</span>
+                                <BarChart3 size={16} className="text-orange-600" />
+                              </button>
+
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveDropdownId(null);
+                                  router.push(`/academic/courses/${course.id}`);
+                                }}
+                                className="w-full px-4 py-2.5 text-right text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center justify-end gap-3 transition-colors"
+                              >
+                                <span>مشاهدة الدورة</span>
+                                <Eye size={16} className="text-green-600" />
+                              </button>
+
+                              <div className="h-px bg-gray-100 my-1 mx-2" />
+
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteCourse(course.id);
+                                  setActiveDropdownId(null);
+                                }}
+                                className="w-full px-4 py-2.5 text-right text-sm font-bold text-red-600 hover:bg-red-50 flex items-center justify-end gap-3 transition-colors"
+                              >
+                                <span>حذف</span>
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
