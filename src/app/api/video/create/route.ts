@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error('Error creating Bunny video:', error.response?.data || error.message);
     return NextResponse.json(
-      { error: 'Failed to create video on Bunny.net' },
+      { error: 'Failed to create video on provider' },
       { status: 500 }
     );
   }

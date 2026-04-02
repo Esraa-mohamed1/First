@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Play, Video, FileText, FilePieChart as FilePowerpoint, Upload, Check, Loader2 } from 'lucide-react';
+import { X, Play, Video, FileText, FilePieChart as FilePowerpoint, Upload, Check, CheckCircle2, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createLesson } from '@/services/courses';
 import { createVideoResource, uploadVideoFile, waitForVideoReady, fetchCollections, createCollection } from '@/services/bunnyStream';
@@ -110,7 +110,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
       }
 
       if (!libraryId || !bunnyApiKey) {
-        toast.error('بيانات Bunny غير متوفرة');
+        toast.error('بيانات الخدمة غير متوفرة');
         return;
       }
       // Even for non-video, check storage
@@ -204,9 +204,9 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
           try {
             await waitForVideoReady(libraryId, bunnyApiKey, guid, setProcessingStatus);
           } catch (pollingError: any) {
-            console.warn('Video processing is slow but continuing on Bunny.net servers:', pollingError);
+            console.warn('Video processing is slow but continuing on provider servers:', pollingError);
             // Don't fail the whole lesson creation if just polling timed out
-            // The video is already uploaded and Bunny will finish processing it.
+            // The video is already uploaded and provider will finish processing it.
           }
 
           setUploadStatus('ready');
@@ -220,12 +220,15 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
 
       // Create Lesson in Backend
       await createLesson({
-        unit_id: unitId,
+        chapter_id: unitId,
         title,
         description,
         type: lessonType,
         video_id: finalVideoId || undefined,
         file_url: finalFileUrl || undefined,
+        library_id: libraryId || undefined,
+        order: 1, // Default order
+        file_size_mb: selectedFile ? parseFloat((selectedFile.size / (1024 * 1024)).toFixed(2)) : 0,
         is_free: false, // Default to paid
       });
 
@@ -407,7 +410,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
               )}
               {uploadStatus === 'processing' && processingStatus !== null && (
                 <div className="text-right text-sm font-bold text-blue-600 bg-blue-50 p-3 rounded-xl">
-                  تشفير السحابة: {processingStatus}%
+                  تشفير البيانات: {processingStatus}%
                 </div>
               )}
 
@@ -425,18 +428,20 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
           </div>
 
           <div className="flex justify-center gap-4 max-w-2xl mx-auto pt-4">
-            <button onClick={handleClose} className="px-16 py-4 bg-gray-100 text-gray-900 font-black rounded-2xl hover:bg-gray-200 transition-all">الغاء</button>
+            <button onClick={handleClose} className="px-16 py-4 bg-gray-100 text-gray-900 font-black rounded-full hover:bg-gray-200 transition-all">الغاء</button>
             <button
               onClick={handleUploadLesson}
               disabled={isSubmitting || !selectedFile}
-              className="px-8 sm:px-16 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+              className="px-12 sm:px-16 py-4 bg-blue-600 text-white font-bold rounded-full shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3 text-sm"
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={24} className="animate-spin" />
-                  جاري رفع وحفظ الدرس...
-                </>
-              ) : 'حفظ الدرس'}
+              <span>{isSubmitting ? 'جاري الحفظ...' : 'حفظ الدرس'}</span>
+              <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center p-0.5">
+                 {isSubmitting ? (
+                   <Loader2 className="animate-spin text-white" size={14} />
+                 ) : (
+                   <CheckCircle2 size={16} strokeWidth={3} className="text-white" />
+                 )}
+              </div>
             </button>
           </div>
         </div>

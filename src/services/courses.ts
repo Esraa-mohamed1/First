@@ -64,12 +64,32 @@ export const createUnit = async (payload: CreateUnitPayload): Promise<Unit> => {
   }
 };
 
+export const updateUnit = async (id: number, payload: any): Promise<Unit> => {
+  try {
+    const response = await academyApi.put<ApiResponse<Unit>>(`chapters/${id}`, payload);
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to update unit:', error);
+    throw error.response?.data || error;
+  }
+};
+
 export const createLesson = async (payload: CreateLessonPayload): Promise<Lesson> => {
   try {
     const response = await academyApi.post<ApiResponse<Lesson>>('lessons', payload);
     return response.data.data;
   } catch (error: any) {
     console.error('Failed to create lesson:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const updateLesson = async (id: number, payload: any): Promise<Lesson> => {
+  try {
+    const response = await academyApi.put<ApiResponse<Lesson>>(`lessons/${id}`, payload);
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to update lesson:', error);
     throw error.response?.data || error;
   }
 };

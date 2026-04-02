@@ -37,7 +37,20 @@ const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps
   const [pricingType, setPricingType] = useState<'free' | 'paid'>('paid');
   const [status, setStatus] = useState<'published' | 'draft'>('draft');
   const [price, setPrice] = useState('');
+  const [discount, setDiscount] = useState('');
   const [finalPrice, setFinalPrice] = useState('');
+
+  // Auto-calculate final price when price or discount changes
+  useEffect(() => {
+    const p = parseFloat(price);
+    const d = parseFloat(discount);
+    if (!isNaN(p) && !isNaN(d)) {
+      const calculatedFinal = p - (p * (d / 100));
+      setFinalPrice(calculatedFinal.toFixed(2));
+    } else if (!isNaN(p) && discount === '') {
+      setFinalPrice(price);
+    }
+  }, [price, discount]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -112,6 +125,7 @@ const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps
     setDescription('');
     setInstructor('');
     setPrice('');
+    setDiscount('');
     setFinalPrice('');
     setSelectedFile(null);
     setPreviewUrl(null);
@@ -126,14 +140,8 @@ const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps
     if (!category) newErrors.category = 'التصنيف مطلوب';
     if (!description.trim()) newErrors.description = 'وصف الدورة مطلوب';
     if (!instructor) newErrors.instructor = 'اسم المدرب مطلوب';
-    if (!selectedFile) newErrors.image = 'صورة الدورة مطلوبة';
+    if (!selectedFile && !previewUrl) newErrors.image = 'صورة الدورة مطلوبة';
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const validateStep3 = () => {
-    const newErrors: Record<string, string> = {};
     if (pricingType === 'paid') {
       if (!price) newErrors.price = 'السعر مطلوب';
       else if (isNaN(Number(price))) newErrors.price = 'السعر يجب أن يكون رقماً';
@@ -142,8 +150,13 @@ const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps
       else if (isNaN(Number(finalPrice))) newErrors.finalPrice = 'السعر النهائي يجب أن يكون رقماً';
       else if (Number(finalPrice) > Number(price)) newErrors.finalPrice = 'السعر النهائي يجب أن يكون أقل من السعر الأصلي';
     }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep3 = () => {
+    return true;
   };
 
   const nextStep = () => {
@@ -331,11 +344,13 @@ const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps
               </div>
             )}
 
-            {/* Step 2: Basic Info */}
+            {/* Step 2: Basic Info & Pricing */}
             {step === 2 && (
               <div className="space-y-6 md:space-y-8">
+                <h2 className="text-xl font-black text-center text-blue-600 mb-2 border-b-2 border-blue-600 pb-2 w-fit mx-auto">بيانات الدورة الاساسية</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                  <div className="space-y-4 md:space-y-6">
+                  {/* Right Column: Name, Category, Description, Pricing */}
+                  <div className="space-y-4 md:space-y-6 order-1 md:order-2">
                     <div className="space-y-2">
                       <label className="block text-sm font-black text-gray-900 text-right">
                         اسم الدورة <span className="text-red-500">*</span>
@@ -352,7 +367,7 @@ const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps
 
                     <div className="space-y-2">
                       <label className="block text-sm font-black text-gray-900 text-right">
-                        التصنيف <span className="text-red-500">*</span>
+                        الفئة <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
                         <select
@@ -360,7 +375,7 @@ const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps
                           onChange={(e) => setCategory(e.target.value)}
                           className={`w-full p-4 bg-white border rounded-2xl outline-none focus:border-blue-600 font-bold appearance-none text-right transition-all ${errors.category ? 'border-red-500' : 'border-gray-100'}`}
                         >
-                          <option value="">اختر التصنيف</option>
+                          <option value="">ادخل الفئة</option>
                           {categories.map((cat) => (
                             <option key={cat.id} value={cat.id}>{cat.name}</option>
                           ))}
@@ -382,9 +397,72 @@ const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps
                       ></textarea>
                       {errors.description && <p className="text-red-500 text-sm font-bold">{errors.description}</p>}
                     </div>
+
+                    {/* Pricing Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                      <div className="space-y-2">
+                        <label className="block text-sm font-black text-gray-900 text-right">السعر</label>
+                        <input
+                          type="number"
+                          disabled={pricingType === 'free'}
+                          value={price}
+                          onChange={(e) => setPrice(e.target.value)}
+                          placeholder="ادخل سعر الدورة"
+                          className={`w-full p-3 bg-white border rounded-xl outline-none focus:border-blue-600 font-bold text-right transition-all ${pricingType === 'free' ? 'opacity-50' : ''} ${errors.price ? 'border-red-500' : 'border-gray-100'}`}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-black text-gray-900 text-right">الخصم (%)</label>
+                        <input
+                          type="number"
+                          disabled={pricingType === 'free'}
+                          value={discount}
+                          onChange={(e) => setDiscount(e.target.value)}
+                          placeholder="الخصم"
+                          className="w-full p-3 bg-white border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-right transition-all disabled:opacity-50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-black text-gray-900 text-right">السعر بعد الخصم</label>
+                        <input
+                          type="number"
+                          disabled={pricingType === 'free'}
+                          value={finalPrice}
+                          readOnly
+                          placeholder="السعر بعد الخصم"
+                          className={`w-full p-3 bg-white border rounded-xl outline-none focus:border-blue-600 font-bold text-right transition-all ${pricingType === 'free' ? 'opacity-50' : ''} ${errors.finalPrice ? 'border-red-500' : 'border-gray-100'}`}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3 pt-2">
+                      <span className="font-black text-gray-900">مجاني</span>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={pricingType === 'free'}
+                          onChange={(e) => {
+                            const isFree = e.target.checked;
+                            setPricingType(isFree ? 'free' : 'paid');
+                            if (isFree) {
+                              setPrice('0');
+                              setFinalPrice('0');
+                              setDiscount('0');
+                            } else {
+                              setPrice('');
+                              setFinalPrice('');
+                              setDiscount('');
+                            }
+                          }}
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
                   </div>
 
-                  <div className="space-y-4 md:space-y-6">
+                  {/* Left Column: Trainer, Image Upload */}
+                  <div className="space-y-4 md:space-y-6 order-2 md:order-1">
                     <div className="space-y-2">
                       <label className="block text-sm font-black text-gray-900 text-right">
                         اسم المدرب <span className="text-red-500">*</span>
@@ -403,12 +481,13 @@ const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps
                       </div>
                       {errors.instructor && <p className="text-red-500 text-sm font-bold">{errors.instructor}</p>}
                     </div>
+
                     <div className="space-y-2">
                       <label className="block text-sm font-black text-gray-900 text-right">
                         صورة الدورة <span className="text-red-500">*</span>
                       </label>
                       <div
-                        className={`border-2 border-dashed rounded-[32px] p-8 md:p-12 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-blue-600 transition-all min-h-[250px] relative overflow-hidden ${errors.image ? 'border-red-500' : 'border-gray-100'}`}
+                        className={`border-2 border-dashed rounded-[32px] p-8 md:p-12 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-blue-600 transition-all min-h-[300px] relative overflow-hidden ${errors.image ? 'border-red-500' : 'border-gray-100'}`}
                         onClick={() => fileInputRef.current?.click()}
                       >
                         <input
@@ -423,7 +502,7 @@ const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps
                         ) : (
                           <>
                             <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-50 transition-colors">
-                              <Plus className="text-gray-400 group-hover:text-blue-600" size={32} />
+                              <Upload className="text-gray-400 group-hover:text-blue-600" size={32} />
                             </div>
                             <div className="text-center">
                               <p className="font-black text-gray-900">اضف صورة الدورة</p>
@@ -443,83 +522,28 @@ const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps
               </div>
             )}
 
-            {/* Step 3: Pricing */}
+            {/* Step 3: Status & Finalize (Now contains Status) */}
             {step === 3 && (
               <div className="space-y-6 md:space-y-10 flex flex-col items-center">
+                 <h2 className="text-2xl md:text-3xl font-black text-center text-gray-900">حالة الدورة</h2>
                 <div className="w-full max-w-md space-y-4 md:space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div
-                      onClick={() => {
-                        setPricingType('free');
-                        setErrors(prev => ({ ...prev, price: '', finalPrice: '' }));
-                      }}
-                      className={`p-4 border-2 rounded-2xl flex items-center justify-between font-bold cursor-pointer transition-all ${pricingType === 'free' ? 'border-blue-600 bg-blue-50/10' : 'border-gray-100 bg-white'}`}
-                    >
-                      <span className={pricingType === 'free' ? 'text-blue-600' : 'text-gray-900'}>مجاني</span>
-                      <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${pricingType === 'free' ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-300'}`}>
-                        {pricingType === 'free' && <Check size={14} className="text-white" />}
-                      </div>
-                    </div>
-                    <div
-                      onClick={() => setPricingType('paid')}
-                      className={`p-4 border-2 rounded-2xl flex items-center justify-between font-bold cursor-pointer transition-all ${pricingType === 'paid' ? 'border-blue-600 bg-blue-50/10' : 'border-gray-100 bg-white'}`}
-                    >
-                      <span className={pricingType === 'paid' ? 'text-blue-600' : 'text-gray-900'}>مدفوع</span>
-                      <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${pricingType === 'paid' ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-300'}`}>
-                        {pricingType === 'paid' && <Check size={14} className="text-white" />}
-                      </div>
-                    </div>
-                  </div>
-
-                  {pricingType === 'paid' && (
-                    <>
-                      <div className="space-y-2">
-                        <label className="block text-sm font-black text-gray-900 text-right">السعر</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={price}
-                          onChange={(e) => setPrice(e.target.value)}
-                          placeholder="ادخل سعر الدورة"
-                          className={`w-full p-4 bg-white border rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all ${errors.price ? 'border-red-500' : 'border-gray-100'}`}
-                        />
-                        {errors.price && <p className="text-red-500 text-sm font-bold">{errors.price}</p>}
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="block text-sm font-black text-gray-900 text-right">السعر النهائي بعد الخصم</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={finalPrice}
-                          onChange={(e) => setFinalPrice(e.target.value)}
-                          placeholder="ادخل السعر النهائي بعد الخصم"
-                          className={`w-full p-4 bg-white border rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all ${errors.finalPrice ? 'border-red-500' : 'border-gray-100'}`}
-                        />
-                        {errors.finalPrice && <p className="text-red-500 text-sm font-bold">{errors.finalPrice}</p>}
-                      </div>
-                    </>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div
                       onClick={() => setStatus('published')}
-                      className={`p-4 border-2 rounded-2xl flex items-center justify-between font-bold cursor-pointer transition-all ${status === 'published' ? 'border-blue-600 bg-blue-50/10' : 'border-gray-100 bg-white'}`}
+                      className={`p-6 border-2 rounded-2xl flex items-center justify-between font-bold cursor-pointer transition-all ${status === 'published' ? 'border-blue-600 bg-blue-50/10 shadow-lg shadow-blue-50' : 'border-gray-100 bg-white'}`}
                     >
-                      <span className={status === 'published' ? 'text-blue-600' : 'text-gray-900'}>منشورة</span>
-                      <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${status === 'published' ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-300'}`}>
-                        {status === 'published' && <Check size={14} className="text-white" />}
+                      <span className={`text-xl ${status === 'published' ? 'text-blue-600' : 'text-gray-900'}`}>منشورة</span>
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${status === 'published' ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-300'}`}>
+                        {status === 'published' && <Check size={16} className="text-white" />}
                       </div>
                     </div>
                     <div
                       onClick={() => setStatus('draft')}
-                      className={`p-4 border-2 rounded-2xl flex items-center justify-between font-bold cursor-pointer transition-all ${status === 'draft' ? 'border-blue-600 bg-blue-50/10' : 'border-gray-100 bg-white'}`}
+                      className={`p-6 border-2 rounded-2xl flex items-center justify-between font-bold cursor-pointer transition-all ${status === 'draft' ? 'border-blue-600 bg-blue-50/10 shadow-lg shadow-blue-50' : 'border-gray-100 bg-white'}`}
                     >
-                      <span className={status === 'draft' ? 'text-blue-600' : 'text-gray-900'}>مسودة</span>
-                      <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${status === 'draft' ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-300'}`}>
-                        {status === 'draft' && <Check size={14} className="text-white" />}
+                      <span className={`text-xl ${status === 'draft' ? 'text-blue-600' : 'text-gray-900'}`}>مسودة</span>
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${status === 'draft' ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-300'}`}>
+                        {status === 'draft' && <Check size={16} className="text-white" />}
                       </div>
                     </div>
                   </div>
@@ -528,8 +552,7 @@ const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps
                 <div className="flex justify-center w-full max-w-md pt-4 gap-4">
                   <button
                     onClick={prevStep}
-                    disabled={isSubmitting}
-                    className="px-8 py-4 bg-gray-100 text-gray-900 font-black rounded-2xl hover:bg-gray-200 transition-all flex items-center gap-2 disabled:opacity-70"
+                    className="px-8 py-4 bg-gray-100 text-gray-900 font-black rounded-2xl hover:bg-gray-200 transition-all flex items-center gap-2"
                   >
                     <ArrowRight size={20} />
                     السابق
@@ -542,10 +565,10 @@ const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps
                     {isSubmitting ? (
                       <>
                         <Loader2 className="animate-spin" size={20} />
-                        <span>جاري الإنشاء...</span>
+                        <span>جاري الحفظ...</span>
                       </>
                     ) : (
-                      'إنشاء الدورة'
+                      'حفظ الدورة'
                     )}
                   </button>
                 </div>

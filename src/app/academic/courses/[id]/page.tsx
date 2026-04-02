@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Edit, Video, CheckCircle2 } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2 } from 'lucide-react';
 import { getCourse, deleteUnit, deleteLesson, createUnit } from '@/services/courses';
 import { Course, Unit, Lesson } from '@/types/api';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
+import EditUnitModal from '@/components/Academic/Modals/EditUnitModal';
+import EditLessonModal from '@/components/Academic/Modals/EditLessonModal';
 import toast from 'react-hot-toast';
 
 export default function CourseDetailsPage() {
@@ -25,6 +27,12 @@ export default function CourseDetailsPage() {
   const [isAddLessonOpen, setIsAddLessonOpen] = useState(false);
   const [selectedUnitId, setSelectedUnitId] = useState<number | null>(null);
   const [selectedUnitTitle, setSelectedUnitTitle] = useState<string>('');
+
+  // Edit State
+  const [isEditUnitOpen, setIsEditUnitOpen] = useState(false);
+  const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
+  const [isEditLessonOpen, setIsEditLessonOpen] = useState(false);
+  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
 
   const fetchCourse = async () => {
     try {
@@ -116,6 +124,28 @@ export default function CourseDetailsPage() {
     }
   };
 
+  const handleEditUnit = (unitId: number) => {
+    const unit = course?.units?.find(u => u.id === unitId);
+    if (unit) {
+      setEditingUnit(unit);
+      setIsEditUnitOpen(true);
+    }
+  };
+
+  const handleEditLesson = (lessonId: number) => {
+    // Find lesson in all units
+    let lesson: Lesson | undefined;
+    course?.units?.forEach(u => {
+      const found = u.lessons?.find(l => l.id === lessonId);
+      if (found) lesson = found;
+    });
+
+    if (lesson) {
+      setEditingLesson(lesson);
+      setIsEditLessonOpen(true);
+    }
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">جاري التحميل...</div>;
   }
@@ -139,9 +169,9 @@ export default function CourseDetailsPage() {
           </div>
           <button 
             onClick={() => setIsAddingUnit(!isAddingUnit)}
-            className="bg-blue-600 text-white px-5 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-sm"
+            className="bg-blue-600 text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-md shadow-blue-100"
           >
-            <Plus size={16} />
+            <Plus size={18} strokeWidth={3} />
             <span>اضافة وحدة</span>
           </button>
         </div>
@@ -175,14 +205,14 @@ export default function CourseDetailsPage() {
           <div className="flex justify-end gap-2">
             <button 
               onClick={() => setIsAddingUnit(false)}
-              className="px-6 py-2 bg-gray-100 text-gray-600 font-bold rounded-lg hover:bg-gray-200 transition-all text-sm"
+              className="px-6 py-2.5 bg-gray-100 text-gray-600 font-bold rounded-full hover:bg-gray-200 transition-all text-sm"
             >
               الغاء
             </button>
             <button 
               onClick={handleSaveUnit}
               disabled={isSavingUnit}
-              className="px-8 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-all disabled:opacity-70 text-sm"
+              className="px-10 py-2.5 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-700 transition-all disabled:opacity-70 text-sm shadow-lg shadow-blue-50"
             >
               {isSavingUnit ? 'جاري الحفظ...' : 'حفظ'}
             </button>
@@ -211,6 +241,12 @@ export default function CourseDetailsPage() {
                 </div>
                 
                 <div className="flex items-center gap-2">
+                   <button 
+                    onClick={(e) => { e.stopPropagation(); handleEditUnit(unit.id); }}
+                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                  >
+                    <Pencil size={16} />
+                  </button>
                    <button 
                     onClick={(e) => { e.stopPropagation(); handleDeleteUnit(unit.id); }}
                     className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
@@ -243,12 +279,20 @@ export default function CourseDetailsPage() {
                           </div>
                         </div>
                         
-                        <button 
-                          onClick={() => handleDeleteLesson(lesson.id)}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleEditLesson(lesson.id); }}
+                            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleDeleteLesson(lesson.id); }}
+                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
                     ))
                   ) : null}
@@ -257,10 +301,10 @@ export default function CourseDetailsPage() {
                   <div className="border-2 border-dashed border-gray-300 rounded-xl p-1.5">
                     <button 
                       onClick={() => handleAddLesson(unit.id, unit.title)}
-                      className="w-full py-3 rounded-lg text-gray-500 font-bold hover:text-blue-600 hover:bg-gray-50 transition-all flex items-center justify-center gap-2 text-sm"
+                      className="w-full py-3.5 rounded-xl text-gray-500 font-bold hover:text-blue-600 hover:bg-blue-50/50 transition-all flex items-center justify-center gap-2 text-sm group"
                     >
-                      <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center group-hover:bg-blue-600 transition-colors">
-                          <Plus size={12} className="text-white" />
+                      <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center group-hover:bg-blue-600 transition-all transform group-hover:scale-110">
+                          <Plus size={14} strokeWidth={3} className="text-white" />
                       </div>
                       <span>اضف درس جديد</span>
                     </button>
@@ -296,6 +340,19 @@ export default function CourseDetailsPage() {
         courseTitle={course.title}
         instructorName={course.instructor || ''}
         onLessonAdded={fetchCourse}
+      />
+      <EditUnitModal 
+        isOpen={isEditUnitOpen}
+        onClose={() => setIsEditUnitOpen(false)}
+        unit={editingUnit}
+        onUnitUpdated={fetchCourse}
+      />
+
+      <EditLessonModal 
+        isOpen={isEditLessonOpen}
+        onClose={() => setIsEditLessonOpen(false)}
+        lesson={editingLesson}
+        onLessonUpdated={fetchCourse}
       />
     </div>
   );

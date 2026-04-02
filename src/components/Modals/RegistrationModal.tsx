@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, CheckCircle2, ShieldCheck, Mail, Phone, Globe, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
+import { X, CheckCircle2, ShieldCheck, Mail, Phone, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useModal } from '@/context/ModalContext';
 import { createAccount } from '@/services/auth';
 import toast from 'react-hot-toast';
@@ -24,7 +24,6 @@ const RegistrationModal = () => {
     const [formData, setFormData] = useState({
         email: '',
         phone: '',
-        academy_name: '',
         password: '',
         confirmPassword: ''
     });
@@ -32,29 +31,29 @@ const RegistrationModal = () => {
     const [errors, setErrors] = useState({
         email: '',
         phone: '',
-        academy_name: '',
         password: '',
         confirmPassword: ''
     });
 
-
+    // Password validation state
+    const [passwordCriteria, setPasswordCriteria] = useState({
+        length: false,
+        number: false,
+        special: false,
+        match: false
+    });
 
     const handleGoogleLogin = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
             console.log('Google Login Success:', tokenResponse);
-
-
             setIsLoading(true);
             try {
                 // Simulate backend call
                 await new Promise(resolve => setTimeout(resolve, 1000));
-
                 toast.success('تم إنشاء الحساب بجوجل بنجاح');
-
                 const token = "google_simulated_token_" + Date.now();
                 localStorage.setItem('token', token);
                 document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
-
                 closeModal();
                 router.push('/auth/setup');
             } catch (error) {
@@ -76,18 +75,21 @@ const RegistrationModal = () => {
             setFormData({
                 email: '',
                 phone: '',
-                academy_name: '',
                 password: '',
                 confirmPassword: ''
             });
             setErrors({
                 email: '',
                 phone: '',
-                academy_name: '',
                 password: '',
                 confirmPassword: ''
             });
-
+            setPasswordCriteria({
+                length: false,
+                number: false,
+                special: false,
+                match: false
+            });
             setIsLoading(false);
             setContactMethod('email');
         }
@@ -96,17 +98,41 @@ const RegistrationModal = () => {
     if (!isOpen || view !== 'registration') return null;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-        // Clear error when user types
-        if (errors[e.target.name as keyof typeof errors]) {
-            setErrors({ ...errors, [e.target.name]: '' });
+        const { name, value } = e.target;
+
+        // Sanitize phone input and show error if invalid chars
+        if (name === 'phone') {
+            const hasNonDigits = /\D/.test(value);
+            if (hasNonDigits) {
+                setErrors(prev => ({ ...prev, phone: 'يرجى إدخال أرقام فقط' }));
+            }
+            const sanitizedValue = value.replace(/\D/g, '');
+            setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+            // Clear error when user types
+            if (errors[name as keyof typeof errors]) {
+                setErrors(prev => ({ ...prev, [name]: '' }));
+            }
+        }
+
+        // Live password validation
+        if (name === 'password' || name === 'confirmPassword') {
+            const pwd = name === 'password' ? value : formData.password;
+            const cfm = name === 'confirmPassword' ? value : formData.confirmPassword;
+
+            setPasswordCriteria({
+                length: pwd.length >= 8,
+                number: /[0-9]/.test(pwd),
+                special: /[!@#$%^&*(),.?":{}|<>]/.test(pwd),
+                match: pwd === cfm && pwd !== ''
+            });
         }
     };
 
     const validateStep1 = () => {
         const newErrors = { ...errors };
         let isValid = true;
-
 
         if (contactMethod === 'email') {
             if (!formData.email) {
@@ -128,8 +154,8 @@ const RegistrationModal = () => {
         if (!formData.password) {
             newErrors.password = 'يرجى إدخال كلمة المرور';
             isValid = false;
-        } else if (formData.password.length < 6) {
-            newErrors.password = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+        } else if (formData.password.length < 8) {
+            newErrors.password = 'كلمة المرور يجب أن تكون 8 أحرف على الأقل';
             isValid = false;
         }
 
@@ -145,32 +171,16 @@ const RegistrationModal = () => {
         return isValid;
     };
 
-    const validateStep2 = () => {
-        const newErrors = { ...errors };
-        let isValid = true;
-
-        if (!formData.academy_name) {
-            newErrors.academy_name = 'يرجى إدخال اسم الأكاديمية';
-            isValid = false;
-        }
-
-        setErrors(newErrors);
-        return isValid;
-    };
-
-    const handleNextStep1 = () => {
-        if (validateStep1()) setStep(2);
+    const handleNextStep = () => {
+        if (validateStep1()) handleCreateAccount();
     };
 
     const handleCreateAccount = async () => {
-        if (!validateStep2()) return;
-
         setIsLoading(true);
         try {
-            // Only send the selected contact method
             const accountPayload: any = {
-                name: 'User',
-                academy_name: formData.academy_name,
+                name: (contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone),
+                academy_name: (contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone) + "'s Academy",
                 password: formData.password,
                 package_id: data?.package_id
             };
@@ -189,7 +199,6 @@ const RegistrationModal = () => {
                 localStorage.setItem('token', response.token);
             }
 
-            // Cache user info for setup step - Clear the other one to avoid confusion
             if (contactMethod === 'email') {
                 localStorage.setItem('user_email', formData.email);
                 localStorage.removeItem('user_phone');
@@ -197,8 +206,6 @@ const RegistrationModal = () => {
                 localStorage.setItem('user_phone', formData.phone);
                 localStorage.removeItem('user_email');
             }
-            localStorage.setItem('user_academy_name', formData.academy_name);
-            // Cache password for auto-login in setup step
             localStorage.setItem('user_password', formData.password);
 
             toast.success('تم إنشاء الحساب بنجاح');
@@ -217,186 +224,199 @@ const RegistrationModal = () => {
         router.push('/auth/setup');
     };
 
+    const toggleContactMethod = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setContactMethod(prev => prev === 'email' ? 'phone' : 'email');
+        setErrors(prev => ({ ...prev, email: '', phone: '' }));
+    };
+
     const renderStep = () => {
         switch (step) {
             case 1:
                 return (
                     <div className="space-y-4">
                         <div className="text-center mb-6">
-                            <h2 className="text-2xl font-black text-[#1a1a1a]">إنشاء حساب</h2>
+                            <h2 className="text-3xl font-black text-[#1a1a1a]">إنشاء حساب</h2>
+                            <p className="text-[#6b7280] font-bold mt-2">ابدأ رحلتك التعليمية اليوم</p>
                         </div>
 
-                        {/* Contact Method Toggle */}
-                        <div className="flex bg-[#f8faff] p-1 rounded-xl mb-4">
-                            <button
-                                onClick={() => setContactMethod('email')}
-                                className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${contactMethod === 'email'
-                                        ? 'bg-white text-[#2563eb] shadow-sm'
-                                        : 'text-[#6b7280] hover:text-[#4a4a4a]'
-                                    }`}
-                            >
-                                البريد الإلكتروني
-                            </button>
-                            <button
-                                onClick={() => setContactMethod('phone')}
-                                className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${contactMethod === 'phone'
-                                        ? 'bg-white text-[#2563eb] shadow-sm'
-                                        : 'text-[#6b7280] hover:text-[#4a4a4a]'
-                                    }`}
-                            >
-                                رقم الجوال
-                            </button>
-                        </div>
-
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {contactMethod === 'email' ? (
-                                <div className="relative">
-                                    <label className="block text-right text-xs font-bold text-[#4a4a4a] mb-1.5 px-1">البريد الإلكتروني</label>
-                                    <div className="relative">
+                                <div className="space-y-1">
+                                    <div className="flex items-center justify-between px-1">
+                                        <label className="block text-right text-xs font-bold text-[#4a4a4a]">البريد الإلكتروني</label>
+                                    </div>
+                                    <div className="relative group">
                                         <input
                                             type="email"
                                             name="email"
                                             value={formData.email}
                                             onChange={handleChange}
                                             placeholder="example@mail.com"
-                                            className={`w-full p-3 pr-10 text-right bg-[#f8faff] border rounded-xl focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.email ? 'border-red-500 focus:border-red-500' : 'border-[#e2e8f0]'}`}
+                                            className={`w-full p-3.5 pr-11 text-right bg-[#f8faff] border rounded-2xl focus:bg-white focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.email ? 'border-red-500' : 'border-[#e2e8f0]'}`}
                                         />
-                                        <Mail className={`absolute right-3 top-1/2 -translate-y-1/2 ${errors.email ? 'text-red-500' : 'text-[#2563eb]'}`} size={18} />
+                                        <Mail className={`absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors ${errors.email ? 'text-red-500' : 'text-[#2563eb]/60 group-focus-within:text-[#2563eb]'}`} size={18} />
                                     </div>
-                                    {errors.email && <p className="text-red-500 text-[10px] font-bold mt-1 mr-1">{errors.email}</p>}
+                                    <div className="flex items-center justify-between px-1">
+                                        {errors.email ? <p className="text-red-500 text-[10px] font-bold">{errors.email}</p> : <div></div>}
+                                        <button
+                                            type="button"
+                                            onClick={toggleContactMethod}
+                                            className="text-[11px] font-black text-[#2563eb] hover:underline flex items-center gap-1 mt-0.5"
+                                        >
+                                            <Phone size={12} strokeWidth={3} /> التسجيل بالجوال
+                                        </button>
+                                    </div>
                                 </div>
                             ) : (
-                                <div className="relative">
-                                    <label className="block text-right text-xs font-bold text-[#4a4a4a] mb-1.5 px-1">رقم الجوال</label>
+                                <div className="space-y-1">
+                                    <div className="flex items-center justify-between px-1">
+                                        <label className="block text-right text-xs font-bold text-[#4a4a4a]">رقم الجوال</label>
+                                    </div>
                                     <PhoneInput
                                         name="phone"
                                         label=""
                                         value={formData.phone}
                                         onChange={handleChange}
-                                        className={`w-full p-3 pr-12 text-left bg-[#f8faff] border rounded-xl focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.phone ? 'border-red-500 focus:border-red-500' : 'border-[#e2e8f0]'}`}
-                                        containerClassName="mb-1"
+                                        className={`w-full p-3.5 pr-11 text-left bg-[#f8faff] border rounded-2xl focus:bg-white focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.phone && errors.phone !== 'يرجى إدخال أرقام فقط' ? 'border-red-500' : 'border-[#e2e8f0]'}`}
+                                        containerClassName="mb-0"
                                     />
-                                    {errors.phone && <p className="text-red-500 text-[10px] font-bold mt-1 mr-1">{errors.phone}</p>}
+                                    <div className="flex items-center justify-between px-1">
+                                        {errors.phone ? <p className="text-red-500 text-[10px] font-bold">{errors.phone}</p> : <div></div>}
+                                        <button
+                                            type="button"
+                                            onClick={toggleContactMethod}
+                                            className="text-[11px] font-black text-[#2563eb] hover:underline flex items-center gap-1 mt-0.5"
+                                        >
+                                            <Mail size={12} strokeWidth={3} /> التسجيل بالبريد
+                                        </button>
+                                    </div>
                                 </div>
                             )}
 
-                            <div className="relative">
-                                <label className="block text-right text-xs font-bold text-[#4a4a4a] mb-1.5 px-1">كلمة المرور</label>
-                                <div className="relative">
+                            <div className="space-y-1.5">
+                                <label className="block text-right text-xs font-bold text-[#4a4a4a] px-1">كلمة المرور</label>
+                                <div className="relative group">
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         name="password"
                                         value={formData.password}
                                         onChange={handleChange}
-                                        placeholder="********"
-                                        className={`w-full p-3 pr-10 text-right bg-[#f8faff] border rounded-xl focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.password ? 'border-red-500 focus:border-red-500' : 'border-[#e2e8f0]'}`}
+                                        placeholder="••••••••"
+                                        className={`w-full p-3.5 pr-11 text-right bg-[#f8faff] border rounded-2xl focus:bg-white focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.password ? 'border-red-500' : 'border-[#e2e8f0]'}`}
                                     />
-                                    <Lock className={`absolute right-3 top-1/2 -translate-y-1/2 ${errors.password ? 'text-red-500' : 'text-[#2563eb]'}`} size={18} />
+                                    <Lock className={`absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors ${errors.password ? 'text-red-500' : 'text-[#2563eb]/60 group-focus-within:text-[#2563eb]'}`} size={18} />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280] hover:text-[#2563eb] transition-colors"
+                                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#2563eb] transition-colors p-1"
                                     >
                                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
-                                {errors.password && <p className="text-red-500 text-[10px] font-bold mt-1 mr-1">{errors.password}</p>}
+                                {errors.password && <p className="text-red-500 text-[10px] font-bold mr-1">{errors.password}</p>}
+
+                                {formData.password && (
+                                    <div className="bg-[#f0f9ff]/50 p-2.5 rounded-xl border border-blue-50 mt-2">
+                                        <div className="flex flex-wrap gap-4 items-center justify-start" dir="rtl">
+                                            <div className={`flex items-center gap-1.5 transition-all duration-300 ${passwordCriteria.length ? 'opacity-100' : 'opacity-60'}`}>
+                                                <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors ${passwordCriteria.length ? 'bg-green-500' : 'bg-gray-200'}`}>
+                                                    <CheckCircle2 size={10} className="text-white" />
+                                                </div>
+                                                <span className={`text-[10px] font-black ${passwordCriteria.length ? 'text-green-600' : 'text-gray-500 text-xs'}`}>8 أحرف</span>
+                                            </div>
+                                            <div className={`flex items-center gap-1.5 transition-all duration-300 ${passwordCriteria.number ? 'opacity-100' : 'opacity-60'}`}>
+                                                <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors ${passwordCriteria.number ? 'bg-green-500' : 'bg-gray-200'}`}>
+                                                    <CheckCircle2 size={10} className="text-white" />
+                                                </div>
+                                                <span className={`text-[10px] font-black ${passwordCriteria.number ? 'text-green-600' : 'text-gray-500'}`}>رقم واحد</span>
+                                            </div>
+                                            <div className={`flex items-center gap-1.5 transition-all duration-300 ${passwordCriteria.special ? 'opacity-100' : 'opacity-60'}`}>
+                                                <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors ${passwordCriteria.special ? 'bg-green-500' : 'bg-gray-200'}`}>
+                                                    <CheckCircle2 size={10} className="text-white" />
+                                                </div>
+                                                <span className={`text-[10px] font-black ${passwordCriteria.special ? 'text-green-600' : 'text-gray-500'}`}>رمز خاص</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="relative">
-                                <label className="block text-right text-xs font-bold text-[#4a4a4a] mb-1.5 px-1">تأكيد كلمة المرور</label>
-                                <div className="relative">
+                            <div className="space-y-1.5">
+                                <label className="block text-right text-xs font-bold text-[#4a4a4a] px-1">تأكيد كلمة المرور</label>
+                                <div className="relative group">
                                     <input
                                         type={showConfirmPassword ? "text" : "password"}
                                         name="confirmPassword"
                                         value={formData.confirmPassword}
                                         onChange={handleChange}
-                                        placeholder="********"
-                                        className={`w-full p-3 pr-10 text-right bg-[#f8faff] border rounded-xl focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.confirmPassword ? 'border-red-500 focus:border-red-500' : 'border-[#e2e8f0]'}`}
+                                        placeholder="••••••••"
+                                        className={`w-full p-3.5 pr-11 text-right bg-[#f8faff] border rounded-2xl focus:bg-white focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.confirmPassword ? 'border-red-500' : 'border-[#e2e8f0]'}`}
                                     />
-                                    <Lock className={`absolute right-3 top-1/2 -translate-y-1/2 ${errors.confirmPassword ? 'text-red-500' : 'text-[#2563eb]'}`} size={18} />
+                                    <Lock className={`absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors ${errors.confirmPassword ? 'text-red-500' : 'text-[#2563eb]/60 group-focus-within:text-[#2563eb]'}`} size={18} />
                                     <button
                                         type="button"
                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280] hover:text-[#2563eb] transition-colors"
+                                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#2563eb] transition-colors p-1"
                                     >
                                         {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
-                                {errors.confirmPassword && <p className="text-red-500 text-[10px] font-bold mt-1 mr-1">{errors.confirmPassword}</p>}
+                                {errors.confirmPassword && <p className="text-red-500 text-[10px] font-bold mr-1">{errors.confirmPassword}</p>}
+
+                                {formData.confirmPassword && (
+                                    <div className={`flex items-center gap-2 text-[10px] font-black mt-2 px-1 transition-all duration-300 ${passwordCriteria.match ? 'text-green-600' : 'text-red-500'}`} dir="rtl">
+                                        <div className={`w-4 h-4 rounded-full flex items-center justify-center ${passwordCriteria.match ? 'bg-green-500' : 'bg-red-400'}`}>
+                                            <CheckCircle2 size={10} className="text-white" />
+                                        </div>
+                                        {passwordCriteria.match ? 'كلمات المرور متطابقة' : 'كلمات المرور غير متطابقة'}
+                                    </div>
+                                )}
                             </div>
                         </div>
-                        <button onClick={handleNextStep1} className="w-full py-3.5 bg-[#2563eb] text-white font-black rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all text-sm mt-2">
-                            التالي
+
+                        <button 
+                            onClick={handleNextStep} 
+                            disabled={isLoading}
+                            className="w-full py-4 bg-[#2563eb] text-white font-black rounded-2xl shadow-xl hover:shadow-[#2563eb]/30 hover:-translate-y-1 active:scale-95 transition-all text-base mt-2 shadow-blue-500/20 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="animate-spin" size={18} />
+                                    جاري المعالجة...
+                                </>
+                            ) : (
+                                'التالي'
+                            )}
                         </button>
-                        <div className="relative flex items-center justify-center py-1">
+
+                        <div className="relative flex items-center justify-center py-2">
                             <div className="flex-grow border-t border-[#e2e8f0]"></div>
-                            <span className="flex-shrink mx-4 text-xs text-[#6b7280] font-bold">أو</span>
+                            <span className="flex-shrink mx-4 text-[10px] text-[#6b7280] font-black uppercase tracking-[0.2em]">أو</span>
                             <div className="flex-grow border-t border-[#e2e8f0]"></div>
                         </div>
+
                         <button
                             onClick={() => handleGoogleLogin()}
-                            className="w-full py-3.5 bg-white border border-[#e2e8f0] text-[#1a1a1a] font-black rounded-xl hover:bg-[#f8faff] transition-all flex items-center justify-center gap-2 text-sm"
+                            className="w-full py-4 bg-white border border-[#e2e8f0] text-[#1a1a1a] font-black rounded-2xl hover:bg-[#f8faff] hover:border-[#2563eb]/20 transition-all flex items-center justify-center gap-3 text-sm shadow-sm group active:scale-95"
                         >
-                            <img src="https://www.google.com/favicon.ico" className="w-4 h-4" alt="google" />
+                            <img src="https://www.google.com/favicon.ico" className="w-4 h-4 shadow-sm group-hover:scale-110 transition-transform" alt="google" />
                             التسجيل عن طريق جوجل
                         </button>
 
-                        <p className="text-center text-xs font-bold text-[#6b7280] mt-3">
+                        <p className="text-center text-xs font-bold text-[#6b7280] mt-4">
                             لديك حساب بالفعل؟{' '}
                             <button
                                 onClick={() => openModal('login')}
-                                className="text-[#2563eb] underline"
+                                className="text-[#2563eb] hover:underline font-black px-1"
                             >
                                 تسجيل الدخول
                             </button>
                         </p>
-                    </div>
+                    </div >
                 );
             case 2:
-                return (
-                    <div className="space-y-6">
-                        <div className="text-center mb-8">
-                            <h2 className="text-2xl font-black text-[#1a1a1a]">معلومات الأكاديمية</h2>
-                        </div>
-                        <div className="space-y-4">
-                            <div className="relative">
-                                <label className="block text-right text-sm font-bold text-[#4a4a4a] mb-2 px-1">اسم الأكاديمية</label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        name="academy_name"
-                                        value={formData.academy_name}
-                                        onChange={handleChange}
-                                        placeholder="أدخل اسم أكاديميتك"
-                                        className={`w-full p-4 pr-12 text-right bg-[#f8faff] border rounded-2xl focus:border-[#2563eb] outline-none transition-all font-bold ${errors.academy_name ? 'border-red-500 focus:border-red-500' : 'border-[#e2e8f0]'}`}
-                                    />
-                                    <Globe className={`absolute right-4 top-1/2 -translate-y-1/2 ${errors.academy_name ? 'text-red-500' : 'text-[#2563eb]'}`} size={20} />
-                                </div>
-                                {errors.academy_name && <p className="text-red-500 text-xs font-bold mt-1 mr-1">{errors.academy_name}</p>}
-                            </div>
-                        </div>
-                        <div className="flex gap-4">
-                            <button
-                                onClick={handleCreateAccount}
-                                disabled={isLoading}
-                                className="flex-[2] py-4 bg-[#2563eb] text-white font-black rounded-2xl shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-                            >
-                                {isLoading ? (
-                                    <>
-                                        <Loader2 className="animate-spin" size={20} />
-                                        جاري الإنشاء...
-                                    </>
-                                ) : (
-                                    'إنشاء الحساب'
-                                )}
-                            </button>
-                            <button onClick={prevStep} disabled={isLoading} className="flex-1 py-4 bg-[#f8faff] border border-[#e2e8f0] text-[#4a4a4a] font-black rounded-2xl hover:bg-[#e2e8f0] transition-all disabled:opacity-70">
-                                رجوع
-                            </button>
-                        </div>
-                    </div>
-                );
+                return null;
             case 3:
                 return (
                     <div className="space-y-6">
@@ -423,8 +443,8 @@ const RegistrationModal = () => {
                             <CheckCircle2 size={64} className="text-green-500" />
                         </div>
                         <h2 className="text-3xl font-black text-[#1a1a1a] mb-4">تم إنشاء الحساب بنجاح</h2>
-                        <p className="text-[#6b7280] font-bold text-lg mb-10 leading-relaxed">أهلاً بك في First! يمكنك الآن البدء في إدارة أكاديميتك وتطوير خدماتك.</p>
-                        <button onClick={handleComplete} className="w-full py-5 bg-[#2563eb] text-white font-black rounded-[2rem] shadow-xl hover:-translate-y-1 transition-all">
+                        <p className="text-[#6b7280] font-bold text-lg mb-10 leading-relaxed text-center rtl:text-right">أهلاً بك في First! يمكنك الآن البدء في إدارة أكاديميتك وتطوير خدماتك.</p>
+                        <button onClick={handleComplete} className="w-full py-5 bg-[#2563eb] text-white font-black rounded-[2rem] shadow-xl hover:-translate-y-1 transition-all active:scale-95">
                             ابدأ الآن
                         </button>
                     </div>
@@ -440,10 +460,10 @@ const RegistrationModal = () => {
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeModal}></div>
 
             {/* Modal Content */}
-            <div className="relative w-full max-w-[420px] md:max-w-[500px] mx-4 bg-white rounded-[30px] shadow-2xl overflow-hidden animate-on-scroll reveal transform scale-100">
+            <div className="relative w-full max-w-[420px] md:max-w-[500px] mx-4 bg-white rounded-[40px] shadow-2xl overflow-hidden animate-on-scroll reveal transform scale-100 border border-gray-100">
                 <button
                     onClick={closeModal}
-                    className="absolute top-6 left-6 text-[#6b7280] hover:text-[#1a1a1a] transition-colors p-2"
+                    className="absolute top-6 left-6 text-[#6b7280] hover:text-[#1a1a1a] transition-colors p-2 z-[10]"
                 >
                     <X size={24} />
                 </button>
@@ -453,10 +473,10 @@ const RegistrationModal = () => {
                 </div>
 
                 {/* Footer Progress */}
-                {step < 4 && (
-                    <div className="px-10 pb-8 flex justify-center gap-2">
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${step === i ? 'w-10 bg-[#2563eb]' : 'w-4 bg-[#e2e8f0]'}`}></div>
+                {step < 2 && (
+                    <div className="px-10 pb-8 flex justify-center gap-3">
+                        {[1].map((i) => (
+                            <div key={i} className={`h-2 rounded-full transition-all duration-500 ${step === i ? 'w-12 bg-[#2563eb]' : 'w-4 bg-gray-200'}`}></div>
                         ))}
                     </div>
                 )}

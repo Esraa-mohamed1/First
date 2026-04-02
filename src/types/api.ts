@@ -60,6 +60,8 @@ export interface LoginResponse {
 
 export interface Lesson {
   id: number;
+  unit_id?: number;
+  chapter_id?: number;
   title: string;
   description: string;
   type: 'video' | 'pdf' | 'powerpoint';
@@ -72,6 +74,7 @@ export interface Lesson {
 
 export interface Unit {
   id: number;
+  course_id?: number;
   title: string;
   description: string;
   order: number;
@@ -119,12 +122,15 @@ export interface CreateUnitPayload {
 }
 
 export interface CreateLessonPayload {
-  unit_id: number;
+  chapter_id: number;
   title: string;
   description: string;
   type: 'video' | 'pdf' | 'powerpoint';
   video_id?: string;
   file_url?: string;
+  library_id?: string;
+  order?: number;
+  file_size_mb?: number;
   is_free: boolean;
 }
 

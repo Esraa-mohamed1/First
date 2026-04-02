@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Mail, Lock, Loader2, Eye, EyeOff, Phone } from 'lucide-react';
+import { X, Mail, Lock, Loader2, Eye, EyeOff, Phone, CheckCircle2 } from 'lucide-react';
 import { useModal } from '@/context/ModalContext';
 import { login } from '@/services/auth';
 import toast from 'react-hot-toast';
@@ -25,18 +25,26 @@ const LoginModal = () => {
         password: ''
     });
 
+    const [errors, setErrors] = useState({
+        email: '',
+        phone: '',
+        password: ''
+    });
+
+    // Password validation state
+    const [passwordCriteria, setPasswordCriteria] = useState({
+        length: false,
+        number: false,
+        special: false
+    });
+
     const handleGoogleLogin = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
             console.log('Google Login Success:', tokenResponse);
             setIsLoading(true);
             try {
-                // In a real app, you'd send this to your backend:
-                // await axios.post('/api/google-login', { token: tokenResponse.access_token });
-
                 toast.success('تم تسجيل الدخول بجوجل بنجاح');
-                // Store a dummy token or handle as needed for testing
                 document.cookie = `token=google_simulated_token; path=/; max-age=86400; SameSite=Lax`;
-
                 closeModal();
                 router.push('/dashboard');
             } catch (error) {
@@ -54,19 +62,62 @@ const LoginModal = () => {
     if (!isOpen || view !== 'login') return null;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        
+        // Sanitize phone input and show error if invalid chars
+        if (name === 'phone') {
+            const hasNonDigits = /\D/.test(value);
+            if (hasNonDigits) {
+                setErrors(prev => ({ ...prev, phone: 'يرجى إدخال أرقام فقط' }));
+            }
+            const sanitizedValue = value.replace(/\D/g, '');
+            setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+            // Clear errors
+            setErrors(prev => ({ ...prev, [name]: '' }));
+        }
+
+        // Live password validation
+        if (name === 'password') {
+            setPasswordCriteria({
+                length: value.length >= 8,
+                number: /[0-9]/.test(value),
+                special: /[!@#$%^&*(),.?":{}|<>]/.test(value)
+            });
+        }
+    };
+
+    const validateForm = () => {
+        let isValid = true;
+        const newErrors = { email: '', phone: '', password: '' };
+
+        if (loginMethod === 'email') {
+            if (!formData.email) {
+                newErrors.email = 'يرجى إدخال البريد الإلكتروني';
+                isValid = false;
+            } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+                newErrors.email = 'البريد الإلكتروني غير صالح';
+                isValid = false;
+            }
+        } else {
+            if (!formData.phone) {
+                newErrors.phone = 'يرجى إدخال رقم الجوال';
+                isValid = false;
+            }
+        }
+
+        if (!formData.password) {
+            newErrors.password = 'يرجى إدخال كلمة المرور';
+            isValid = false;
+        }
+
+        setErrors(newErrors);
+        return isValid;
     };
 
     const handleLogin = async () => {
-        if (loginMethod === 'email' && !formData.email) {
-            toast.error('يرجى إدخال البريد الإلكتروني'); return;
-        }
-        if (loginMethod === 'phone' && !formData.phone) {
-            toast.error('يرجى إدخال رقم الجوال'); return;
-        }
-        if (!formData.password) {
-            toast.error('يرجى إدخال كلمة المرور'); return;
-        }
+        if (!validateForm()) return;
 
         setIsLoading(true);
         try {
@@ -76,44 +127,39 @@ const LoginModal = () => {
                 
             const response = await login(payload);
 
-            // Updated response structure based on API feedback:
-            // { data: { id, name, email }, meta: { access_token, token_type } }
             if (response.meta && response.meta.access_token) {
-                // Store token in cookies and localStorage
                 const token = response.meta.access_token;
                 document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
                 localStorage.setItem('token', token);
                 
-                // Store user info
                 if (response.data) {
                     localStorage.setItem('user_info', JSON.stringify({
                         name: response.data.name,
                         email: response.data.email,
                         phone: response.data.phone,
-                        role: 'الادمن' // Default role since it's not in the response yet
+                        role: 'الادمن'
                     }));
                 }
                 
-                // Note: The new response structure doesn't seem to have `link_academy` or `academy_link_name` directly in `data`.
-                // However, we rely on `academy_link_name` being in localStorage from the setup step or extracted from hostname.
-                // If it's missing here, we might need another way to get it, but for now we assume it's set or handled by interceptor fallback.
-
                 toast.success('تم تسجيل الدخول بنجاح');
                 closeModal();
-
-                // Navigate to academic dashboard (since this is academy login)
                 router.push('/academic');
             } else {
                 toast.error('فشل تسجيل الدخول: استجابة غير صالحة');
             }
         } catch (error: any) {
             console.error('Login error:', error);
-            // Handle specific error messages from the API
             const errorMessage = error.message || error.error || 'حدث خطأ أثناء تسجيل الدخول';
             toast.error(errorMessage);
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const toggleLoginMethod = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setLoginMethod(prev => prev === 'email' ? 'phone' : 'email');
+        setErrors({ email: '', phone: '', password: '' });
     };
 
     return (
@@ -122,93 +168,125 @@ const LoginModal = () => {
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeModal}></div>
 
             {/* Modal Content */}
-            <div className="relative w-full max-w-[500px] bg-white rounded-[40px] shadow-2xl overflow-hidden animate-on-scroll reveal transform scale-100">
+            <div className="relative w-full max-w-[420px] md:max-w-[480px] bg-white rounded-[40px] shadow-2xl overflow-hidden animate-on-scroll reveal transform scale-100 border border-gray-100">
                 <button
                     onClick={closeModal}
-                    className="absolute top-6 left-6 text-[#6b7280] hover:text-[#1a1a1a] transition-colors p-2"
+                    className="absolute top-6 left-6 text-[#6b7280] hover:text-[#1a1a1a] transition-colors p-2 z-10"
                 >
                     <X size={24} />
                 </button>
 
-                <div className="p-10 pt-16">
+                <div className="p-8 pt-12 md:p-10 md:pt-16">
                     <div className="space-y-6">
                         <div className="text-center mb-8">
-                            <h2 className="text-2xl font-black text-[#1a1a1a]">تسجيل الدخول</h2>
+                            <h2 className="text-3xl font-black text-[#1a1a1a]">تسجيل الدخول</h2>
                             <p className="text-[#6b7280] font-bold mt-2">مرحباً بك مجدداً</p>
                         </div>
                         
-                        {/* Login Method Toggle */}
-                        <div className="flex bg-[#f8faff] p-1 rounded-2xl relative">
-                            <button
-                                type="button"
-                                onClick={() => setLoginMethod('phone')}
-                                className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${loginMethod === 'phone' ? 'bg-white text-[#2563eb] shadow-sm' : 'text-[#6b7280] hover:text-[#4a4a4a]'}`}
-                            >
-                                <Phone size={18} />
-                                رقم الجوال
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setLoginMethod('email')}
-                                className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${loginMethod === 'email' ? 'bg-white text-[#2563eb] shadow-sm' : 'text-[#6b7280] hover:text-[#4a4a4a]'}`}
-                            >
-                                <Mail size={18} />
-                                البريد الإلكتروني
-                            </button>
-                        </div>
-
-                        <div className="space-y-4">
+                        <div className="space-y-5">
                             {loginMethod === 'email' ? (
-                                <div className="relative">
-                                    <label className="block text-right text-sm font-bold text-[#4a4a4a] mb-2 px-1">البريد الإلكتروني</label>
-                                <div className="relative">
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        placeholder="example@mail.com"
-                                        className="w-full p-4 pr-12 text-right bg-[#f8faff] border border-[#e2e8f0] rounded-2xl focus:border-[#2563eb] outline-none transition-all font-bold"
-                                    />
-                                    <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2563eb]" size={20} />
+                                <div className="space-y-1">
+                                    <div className="flex items-center justify-between px-1">
+                                        <label className="block text-right text-xs font-bold text-[#4a4a4a]">البريد الإلكتروني</label>
+                                    </div>
+                                    <div className="relative group">
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            placeholder="example@mail.com"
+                                            className={`w-full p-3.5 pr-11 text-right bg-[#f8faff] border rounded-2xl focus:bg-white focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.email ? 'border-red-500' : 'border-[#e2e8f0]'}`}
+                                        />
+                                        <Mail className={`absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors ${errors.email ? 'text-red-500' : 'text-[#2563eb]/60 group-focus-within:text-[#2563eb]'}`} size={18} />
+                                    </div>
+                                    <div className="flex items-center justify-between px-1">
+                                        {errors.email ? <p className="text-red-500 text-[10px] font-bold">{errors.email}</p> : <div></div>}
+                                        <button 
+                                            type="button"
+                                            onClick={toggleLoginMethod}
+                                            className="text-[11px] font-black text-[#2563eb] hover:underline flex items-center gap-1 mt-0.5"
+                                        >
+                                            <Phone size={12} strokeWidth={3} /> تسجيل الدخول بالجوال
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
                             ) : (
-                                <div className="relative">
+                                <div className="space-y-1">
+                                    <div className="flex items-center justify-between px-1">
+                                        <label className="block text-right text-xs font-bold text-[#4a4a4a]">رقم الجوال</label>
+                                    </div>
                                     <PhoneInput
                                         name="phone"
+                                        label=""
                                         value={formData.phone}
                                         onChange={handleChange}
-                                        className="p-4 pr-12 text-left bg-[#f8faff] border border-[#e2e8f0] rounded-2xl focus:border-[#2563eb] outline-none transition-all font-bold"
-                                        containerClassName="mb-1"
+                                        className={`w-full p-3.5 pr-11 text-left bg-[#f8faff] border rounded-2xl focus:bg-white focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.phone && errors.phone !== 'يرجى إدخال أرقام فقط' ? 'border-red-500' : 'border-[#e2e8f0]'}`}
+                                        containerClassName="mb-0"
                                     />
+                                    <div className="flex items-center justify-between px-1">
+                                        {errors.phone ? <p className="text-red-500 text-[10px] font-bold">{errors.phone}</p> : <div></div>}
+                                        <button 
+                                            type="button"
+                                            onClick={toggleLoginMethod}
+                                            className="text-[11px] font-black text-[#2563eb] hover:underline flex items-center gap-1 mt-0.5"
+                                        >
+                                            <Mail size={12} strokeWidth={3} /> تسجيل الدخول بالبريد
+                                        </button>
+                                    </div>
                                 </div>
                             )}
 
-                            <div className="relative">
-                                <label className="block text-right text-sm font-bold text-[#4a4a4a] mb-2 px-1">كلمة المرور</label>
-                                <div className="relative">
+                            <div className="space-y-1.5">
+                                <label className="block text-right text-xs font-bold text-[#4a4a4a] px-1">كلمة المرور</label>
+                                <div className="relative group">
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         name="password"
                                         value={formData.password}
                                         onChange={handleChange}
-                                        placeholder="********"
-                                        className="w-full p-4 pr-12 text-right bg-[#f8faff] border border-[#e2e8f0] rounded-2xl focus:border-[#2563eb] outline-none transition-all font-bold"
+                                        placeholder="••••••••"
+                                        className={`w-full p-3.5 pr-11 text-right bg-[#f8faff] border rounded-2xl focus:bg-white focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.password ? 'border-red-500' : 'border-[#e2e8f0]'}`}
                                     />
-                                    <Lock className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2563eb]" size={20} />
+                                    <Lock className={`absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors ${errors.password ? 'text-red-500' : 'text-[#2563eb]/60 group-focus-within:text-[#2563eb]'}`} size={18} />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6b7280] hover:text-[#2563eb] transition-colors"
+                                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#2563eb] transition-colors p-1"
                                     >
-                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
+                                {errors.password && <p className="text-red-500 text-[10px] font-bold mr-1">{errors.password}</p>}
+                                
+                                {formData.password && (
+                                    <div className="bg-[#f0f9ff]/50 p-2.5 rounded-xl border border-blue-50 mt-2">
+                                        <div className="flex flex-wrap gap-4 items-center justify-start" dir="rtl">
+                                            <div className={`flex items-center gap-1.5 transition-all duration-300 ${passwordCriteria.length ? 'opacity-100' : 'opacity-60'}`}>
+                                                <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors ${passwordCriteria.length ? 'bg-green-500' : 'bg-gray-200'}`}>
+                                                    <CheckCircle2 size={10} className="text-white" />
+                                                </div>
+                                                <span className={`text-[10px] font-black ${passwordCriteria.length ? 'text-green-600' : 'text-gray-500 text-xs'}`}>8 أحرف</span>
+                                            </div>
+                                            <div className={`flex items-center gap-1.5 transition-all duration-300 ${passwordCriteria.number ? 'opacity-100' : 'opacity-60'}`}>
+                                                <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors ${passwordCriteria.number ? 'bg-green-500' : 'bg-gray-200'}`}>
+                                                    <CheckCircle2 size={10} className="text-white" />
+                                                </div>
+                                                <span className={`text-[10px] font-black ${passwordCriteria.number ? 'text-green-600' : 'text-gray-500'}`}>رقم واحد</span>
+                                            </div>
+                                            <div className={`flex items-center gap-1.5 transition-all duration-300 ${passwordCriteria.special ? 'opacity-100' : 'opacity-60'}`}>
+                                                <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors ${passwordCriteria.special ? 'bg-green-500' : 'bg-gray-200'}`}>
+                                                    <CheckCircle2 size={10} className="text-white" />
+                                                </div>
+                                                <span className={`text-[10px] font-black ${passwordCriteria.special ? 'text-green-600' : 'text-gray-500'}`}>رمز خاص</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="flex justify-end">
-                                <button className="text-sm font-bold text-[#2563eb] hover:underline">
+                            <div className="flex justify-end px-1">
+                                <button className="text-xs font-bold text-gray-500 hover:text-[#2563eb] transition-colors hover:underline">
                                     نسيت كلمة المرور؟
                                 </button>
                             </div>
@@ -217,12 +295,12 @@ const LoginModal = () => {
                         <button
                             onClick={handleLogin}
                             disabled={isLoading}
-                            className="w-full py-4 bg-[#2563eb] text-white font-black rounded-2xl shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                            className="w-full py-4 bg-[#2563eb] text-white font-black rounded-2xl shadow-xl hover:shadow-[#2563eb]/30 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed text-base shadow-blue-500/20"
                         >
                             {isLoading ? (
                                 <>
                                     <Loader2 className="animate-spin" size={20} />
-                                    جاري تسجيل الدخول...
+                                    جاري المعالجة...
                                 </>
                             ) : (
                                 'تسجيل الدخول'
@@ -233,26 +311,26 @@ const LoginModal = () => {
                             <>
                                 <div className="relative flex items-center justify-center py-2">
                                     <div className="flex-grow border-t border-[#e2e8f0]"></div>
-                                    <span className="flex-shrink mx-4 text-sm text-[#6b7280] font-bold">أو</span>
+                                    <span className="flex-shrink mx-4 text-[10px] text-[#6b7280] font-black uppercase tracking-[0.2em]">أو</span>
                                     <div className="flex-grow border-t border-[#e2e8f0]"></div>
                                 </div>
 
                                 <button
                                     onClick={() => handleGoogleLogin()}
-                                    className="w-full py-4 bg-white border border-[#e2e8f0] text-[#1a1a1a] font-black rounded-2xl hover:bg-[#f8faff] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                                    className="w-full py-4 bg-white border border-[#e2e8f0] text-[#1a1a1a] font-black rounded-2xl hover:bg-[#f8faff] hover:border-[#2563eb]/20 transition-all flex items-center justify-center gap-3 text-sm shadow-sm group active:scale-95"
                                     disabled={isLoading}
                                 >
-                                    <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="google" />
+                                    <img src="https://www.google.com/favicon.ico" className="w-4 h-4 shadow-sm group-hover:scale-110 transition-transform" alt="google" />
                                     تسجيل الدخول عن طريق جوجل
                                 </button>
                             </>
                         )}
 
-                        <p className="text-center text-sm font-bold text-[#6b7280] mt-4">
+                        <p className="text-center text-xs font-bold text-[#6b7280] mt-4">
                             ليس لديك حساب؟{' '}
                             <button
                                 onClick={() => openModal('registration')}
-                                className="text-[#2563eb] underline"
+                                className="text-[#2563eb] hover:underline font-black px-1"
                             >
                                 إنشاء حساب جديد
                             </button>
