@@ -74,66 +74,49 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
       return;
     }
 
-    if (lessonType === 'video') {
-      // Check for free_trial status and storage via API
-      try {
-        const profile = await getProfileStatus();
-        const userData = profile.data || profile;
-
-        // Check verification status
-        if (userData && !userData.email_verified_at) {
-          setIsVerificationModalOpen(true);
+    // --- Storage Limit Verification ---
+    try {
+      const usageResponse = await getMyUsageLimit();
+      const storageLimitObj = usageResponse?.data?.find((item: any) => item.feature_slug === 'storage_limit');
+      
+      if (storageLimitObj) {
+        const totalGB = parseFloat(storageLimitObj.total_limit || '0');
+        const usedGB = parseFloat(storageLimitObj.used_amount || '0');
+        
+        // Calculate remaining in bytes
+        const remainingStorage = (totalGB - usedGB) * 1024 * 1024 * 1024;
+        
+        if (remainingStorage <= 0 || selectedFile.size > remainingStorage) {
+          const availableMB = Math.max(0, Math.round(remainingStorage / 1024 / 1024));
+          toast.error(
+            `عفواً، لقد تجاوزت المساحة المخصصة لك. المساحة المتاحة: ${availableMB} MB. برجاء ترقية حسابك لرفع المزيد من الملفات.`, 
+            { duration: 5000, icon: '⚠️' }
+          );
           return;
         }
-
-        // Check storage usage via getMyUsageLimit
-        const usageResponse = await getMyUsageLimit();
-        const storageLimitObj = usageResponse?.data?.find((item: any) => item.feature_slug === 'storage_limit');
-
-        let remainingStorage = 2048 * 1024 * 1024; // Default 2GB
-        if (storageLimitObj) {
-          const totalGB = parseFloat(storageLimitObj.total_limit || '0');
-          const usedGB = parseFloat(storageLimitObj.used_amount || '0');
-          remainingStorage = (totalGB - usedGB) * 1024 * 1024 * 1024;
-        }
-
-        if (selectedFile.size > remainingStorage) {
-          toast.error(`عفواً، مساحة التخزين المتبقية غير كافية لرفع هذا الملف. المساحة المتاحة: ${Math.round(remainingStorage / 1024 / 1024)} MB`, {
-            duration: 5000,
-            icon: '⚠️'
-          });
-          return;
-        }
-
-      } catch (err) {
-        console.error("Failed to check user status", err);
       }
+    } catch (err) {
+      console.error("Failed to check storage limits:", err);
+      // Optional: Continue if we can't check, OR block if strict. 
+      // For now, let's allow but log. If strict, we'd 'return' here.
+    }
 
+    if (lessonType === 'video') {
       if (!libraryId || !bunnyApiKey) {
         toast.error('بيانات الخدمة غير متوفرة');
         return;
       }
-      // Even for non-video, check storage
+
+      // Check verification status
       try {
-        const usageResponse = await getMyUsageLimit();
-        const storageLimitObj = usageResponse?.data?.find((item: any) => item.feature_slug === 'storage_limit');
-
-        let remainingStorage = 2048 * 1024 * 1024; // Default 2GB
-        if (storageLimitObj) {
-          const totalGB = parseFloat(storageLimitObj.total_limit || '0');
-          const usedGB = parseFloat(storageLimitObj.used_amount || '0');
-          remainingStorage = (totalGB - usedGB) * 1024 * 1024 * 1024;
-        }
-
-        if (selectedFile.size > remainingStorage) {
-          toast.error(`عفواً، مساحة التخزين المتبقية غير كافية. المساحة المتاحة: ${Math.round(remainingStorage / 1024 / 1024)} MB`, {
-            duration: 5000,
-            icon: '⚠️'
-          });
+        const profile = await getProfileStatus();
+        const userData = profile.data || profile;
+        if (userData && !userData.email_verified_at) {
+          setIsVerificationModalOpen(true);
           return;
         }
       } catch (err) {
-        console.error("Failed to check storage", err);
+        console.error("Failed to check user status", err);
       }
     }
 

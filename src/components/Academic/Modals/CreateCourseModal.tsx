@@ -273,7 +273,7 @@ const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps
   return (
     <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/40 backdrop-blur-sm" dir="rtl">
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative w-full max-w-4xl bg-white rounded-[24px] md:rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+        <div className="relative w-full max-w-6xl bg-white rounded-[24px] md:rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
 
           {/* Modal Header with Progress */}
           {step >= 2 && (
@@ -346,34 +346,51 @@ const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps
 
             {/* Step 2: Basic Info & Pricing */}
             {step === 2 && (
-              <div className="space-y-6 md:space-y-8">
-                <h2 className="text-xl font-black text-center text-blue-600 mb-2 border-b-2 border-blue-600 pb-2 w-fit mx-auto">بيانات الدورة الاساسية</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                  {/* Right Column: Name, Category, Description, Pricing */}
-                  <div className="space-y-4 md:space-y-6 order-1 md:order-2">
-                    <div className="space-y-2">
-                      <label className="block text-sm font-black text-gray-900 text-right">
-                        اسم الدورة <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        placeholder="ادخل اسم الدورة"
-                        className={`w-full p-4 bg-white border rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all ${errors.title ? 'border-red-500' : 'border-gray-100'}`}
-                      />
-                      {errors.title && <p className="text-red-500 text-sm font-bold">{errors.title}</p>}
-                    </div>
+              <div className="space-y-8">
+                {/* Section Title with Underline */}
+                <div className="flex flex-col items-center mb-8">
+                  <h2 className="text-2xl font-black text-gray-900 mb-1">بيانات الدورة الاساسية</h2>
+                  <div className="w-24 h-1 bg-blue-600 rounded-full"></div>
+                </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                  {/* Row 1: Course Name (Left) & Instructor (Right) */}
+                  <div className="space-y-2 order-2 md:order-1">
+                    <label className="block text-sm font-black text-gray-900 text-right">اسم الدورة</label>
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="ادخل اسم الدورة"
+                      className={`w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all ${errors.title ? 'border-red-500' : ''}`}
+                    />
+                  </div>
+
+                  <div className="space-y-2 order-1 md:order-2">
+                    <label className="block text-sm font-black text-gray-900 text-right">اسم المدرب</label>
+                    <div className="relative">
+                      <select
+                        value={instructor}
+                        onChange={(e) => setInstructor(e.target.value)}
+                        className={`w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold appearance-none text-right transition-all ${errors.instructor ? 'border-red-500' : ''}`}
+                      >
+                        <option value="">ادخل اسم المدرب</option>
+                        <option value="Ahmed">أحمد محمد</option>
+                        <option value="Karim">كريم محمد</option>
+                      </select>
+                      <ChevronDown className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
+                    </div>
+                  </div>
+
+                  {/* Middle Section: Category/Description (Left) & Image (Right) */}
+                  <div className="space-y-6 order-4 md:order-3">
                     <div className="space-y-2">
-                      <label className="block text-sm font-black text-gray-900 text-right">
-                        الفئة <span className="text-red-500">*</span>
-                      </label>
+                      <label className="block text-sm font-black text-gray-900 text-right">الفئة</label>
                       <div className="relative">
                         <select
                           value={category}
                           onChange={(e) => setCategory(e.target.value)}
-                          className={`w-full p-4 bg-white border rounded-2xl outline-none focus:border-blue-600 font-bold appearance-none text-right transition-all ${errors.category ? 'border-red-500' : 'border-gray-100'}`}
+                          className={`w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold appearance-none text-right transition-all ${errors.category ? 'border-red-500' : ''}`}
                         >
                           <option value="">ادخل الفئة</option>
                           {categories.map((cat) => (
@@ -382,142 +399,101 @@ const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps
                         </select>
                         <ChevronDown className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
                       </div>
-                      {errors.category && <p className="text-red-500 text-sm font-bold">{errors.category}</p>}
                     </div>
 
                     <div className="space-y-2">
-                      <label className="block text-sm font-black text-gray-900 text-right">
-                        اضف وصف للدورة <span className="text-red-500">*</span>
-                      </label>
+                      <label className="block text-sm font-black text-gray-900 text-right">اضف وصف للدورة</label>
                       <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="ادخل وصف للدورة"
-                        className={`w-full p-4 bg-white border rounded-2xl outline-none focus:border-blue-600 font-bold min-h-[150px] text-right transition-all ${errors.description ? 'border-red-500' : 'border-gray-100'}`}
+                        className={`w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold min-h-[180px] text-right transition-all ${errors.description ? 'border-red-500' : ''}`}
                       ></textarea>
-                      {errors.description && <p className="text-red-500 text-sm font-bold">{errors.description}</p>}
-                    </div>
-
-                    {/* Pricing Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                      <div className="space-y-2">
-                        <label className="block text-sm font-black text-gray-900 text-right">السعر</label>
-                        <input
-                          type="number"
-                          disabled={pricingType === 'free'}
-                          value={price}
-                          onChange={(e) => setPrice(e.target.value)}
-                          placeholder="ادخل سعر الدورة"
-                          className={`w-full p-3 bg-white border rounded-xl outline-none focus:border-blue-600 font-bold text-right transition-all ${pricingType === 'free' ? 'opacity-50' : ''} ${errors.price ? 'border-red-500' : 'border-gray-100'}`}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-sm font-black text-gray-900 text-right">الخصم (%)</label>
-                        <input
-                          type="number"
-                          disabled={pricingType === 'free'}
-                          value={discount}
-                          onChange={(e) => setDiscount(e.target.value)}
-                          placeholder="الخصم"
-                          className="w-full p-3 bg-white border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-right transition-all disabled:opacity-50"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-sm font-black text-gray-900 text-right">السعر بعد الخصم</label>
-                        <input
-                          type="number"
-                          disabled={pricingType === 'free'}
-                          value={finalPrice}
-                          readOnly
-                          placeholder="السعر بعد الخصم"
-                          className={`w-full p-3 bg-white border rounded-xl outline-none focus:border-blue-600 font-bold text-right transition-all ${pricingType === 'free' ? 'opacity-50' : ''} ${errors.finalPrice ? 'border-red-500' : 'border-gray-100'}`}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-end gap-3 pt-2">
-                      <span className="font-black text-gray-900">مجاني</span>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          className="sr-only peer"
-                          checked={pricingType === 'free'}
-                          onChange={(e) => {
-                            const isFree = e.target.checked;
-                            setPricingType(isFree ? 'free' : 'paid');
-                            if (isFree) {
-                              setPrice('0');
-                              setFinalPrice('0');
-                              setDiscount('0');
-                            } else {
-                              setPrice('');
-                              setFinalPrice('');
-                              setDiscount('');
-                            }
-                          }}
-                        />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                      </label>
                     </div>
                   </div>
 
-                  {/* Left Column: Trainer, Image Upload */}
-                  <div className="space-y-4 md:space-y-6 order-2 md:order-1">
-                    <div className="space-y-2">
-                      <label className="block text-sm font-black text-gray-900 text-right">
-                        اسم المدرب <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <select
-                          value={instructor}
-                          onChange={(e) => setInstructor(e.target.value)}
-                          className={`w-full p-4 bg-white border rounded-2xl outline-none focus:border-blue-600 font-bold appearance-none text-right transition-all ${errors.instructor ? 'border-red-500' : 'border-gray-100'}`}
-                        >
-                          <option value="">ادخل اسم المدرب</option>
-                          <option value="Ahmed">أحمد محمد</option>
-                          <option value="Karim">كريم محمد</option>
-                        </select>
-                        <ChevronDown className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
-                      </div>
-                      {errors.instructor && <p className="text-red-500 text-sm font-bold">{errors.instructor}</p>}
+                  <div className="space-y-2 order-3 md:order-4">
+                    <label className="block text-sm font-black text-gray-900 text-right">صورة الدورة</label>
+                    <div
+                      className={`border-2 border-dashed rounded-[32px] p-8 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-blue-600 transition-all h-full min-h-[300px] relative overflow-hidden ${errors.image ? 'border-red-500' : 'border-gray-50'}`}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                      />
+                      {previewUrl ? (
+                        <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover rounded-[30px]" />
+                      ) : (
+                        <>
+                          <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                            <Upload className="text-gray-400 group-hover:text-blue-600" size={32} />
+                          </div>
+                          <div className="text-center">
+                            <p className="font-black text-gray-900">اضف صورة الدورة</p>
+                            <p className="text-[10px] font-bold text-gray-400 mt-1">صورة غلاف دورة : 1270x820</p>
+                          </div>
+                        </>
+                      )}
                     </div>
+                  </div>
 
+                  {/* Bottom Section: Prices (Left) & Free Toggle (Right) */}
+                  <div className="grid grid-cols-2 gap-4 order-6 md:order-5">
                     <div className="space-y-2">
-                      <label className="block text-sm font-black text-gray-900 text-right">
-                        صورة الدورة <span className="text-red-500">*</span>
-                      </label>
-                      <div
-                        className={`border-2 border-dashed rounded-[32px] p-8 md:p-12 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-blue-600 transition-all min-h-[300px] relative overflow-hidden ${errors.image ? 'border-red-500' : 'border-gray-100'}`}
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          className="hidden"
-                          accept="image/*"
-                          onChange={handleFileChange}
-                        />
-                        {previewUrl ? (
-                          <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover rounded-[30px]" />
-                        ) : (
-                          <>
-                            <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-50 transition-colors">
-                              <Upload className="text-gray-400 group-hover:text-blue-600" size={32} />
-                            </div>
-                            <div className="text-center">
-                              <p className="font-black text-gray-900">اضف صورة الدورة</p>
-                              <p className="text-xs font-bold text-gray-400 mt-1">صورة غلاف دورة : 1270x820</p>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                      {errors.image && <p className="text-red-500 text-sm font-bold">{errors.image}</p>}
+                       <label className="block text-sm font-black text-gray-900 text-right">السعر بعد الخصم</label>
+                       <input
+                         type="number"
+                         disabled={pricingType === 'free'}
+                         value={finalPrice}
+                         readOnly
+                         placeholder="ادخل السعر بعد الخصم"
+                         className={`w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all ${pricingType === 'free' ? 'opacity-50' : ''}`}
+                       />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="block text-sm font-black text-gray-900 text-right">السعر</label>
+                       <input
+                         type="number"
+                         disabled={pricingType === 'free'}
+                         value={price}
+                         onChange={(e) => setPrice(e.target.value)}
+                         placeholder="ادخل سعر الدورة"
+                         className={`w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all ${pricingType === 'free' ? 'opacity-50' : ''}`}
+                       />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-center order-5 md:order-6">
+                    <div 
+                      onClick={() => {
+                        const isCurrentlyFree = pricingType === 'free';
+                        setPricingType(isCurrentlyFree ? 'paid' : 'free');
+                        if (!isCurrentlyFree) {
+                          setPrice('0');
+                          setFinalPrice('0');
+                          setDiscount('0');
+                        } else {
+                          setPrice('');
+                          setFinalPrice('');
+                          setDiscount('');
+                        }
+                      }}
+                      className={`flex items-center gap-3 px-6 py-3 rounded-full border-2 cursor-pointer transition-all ${pricingType === 'free' ? 'border-blue-600 bg-blue-50/50' : 'border-gray-100 hover:border-blue-200'}`}
+                    >
+                       <span className="font-black text-gray-900">مجاني</span>
+                       <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${pricingType === 'free' ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-300'}`}>
+                          {pricingType === 'free' && <Check className="text-white" size={14} strokeWidth={3} />}
+                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex justify-end pt-4">
-                  <button onClick={nextStep} className="px-16 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all">التالي</button>
+                <div className="flex justify-end pt-6">
+                  <button onClick={nextStep} className="px-24 py-4 bg-blue-600 text-white font-black rounded-xl shadow-xl shadow-blue-100 hover:brightness-110 active:scale-95 transition-all">التالي</button>
                 </div>
               </div>
             )}
