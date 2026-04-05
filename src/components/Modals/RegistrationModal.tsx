@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, CheckCircle2, ShieldCheck, Mail, Phone, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useModal } from '@/context/ModalContext';
@@ -42,6 +42,37 @@ const RegistrationModal = () => {
         special: false,
         match: false
     });
+
+    const [otp, setOtp] = useState(['', '', '', '']);
+    const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+    const handleOtpChange = (index: number, value: string) => {
+        if (value.length > 1) value = value[0];
+        if (!/^\d*$/.test(value)) return;
+
+        const newOtp = [...otp];
+        newOtp[index] = value;
+        setOtp(newOtp);
+
+        if (value && index < 3) {
+            otpRefs.current[index + 1]?.focus();
+        }
+        if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }));
+    };
+
+    const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Backspace' && !otp[index] && index > 0) {
+            otpRefs.current[index - 1]?.focus();
+        }
+    };
+
+    const handleVerifyRegistration = () => {
+        if (otp.join('').length !== 4) {
+            setErrors(prev => ({ ...prev, phone: 'يرجى إدخال الرمز كاملاً' }));
+            return;
+        }
+        setStep(4);
+    };
 
     const handleGoogleLogin = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
@@ -100,14 +131,22 @@ const RegistrationModal = () => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
 
-        // Sanitize phone input and show error if invalid chars
         if (name === 'phone') {
             const hasNonDigits = /\D/.test(value);
+            const sanitizedValue = value.replace(/\D/g, '');
+            
+            setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
+            
+            // Handle error logic
             if (hasNonDigits) {
                 setErrors(prev => ({ ...prev, phone: 'يرجى إدخال أرقام فقط' }));
+            } else if (sanitizedValue.length > 0 && sanitizedValue.length < 10) {
+                setErrors(prev => ({ ...prev, phone: 'رقم الجوال يجب أن يكون 10 أرقام على الأقل' }));
+            } else if (sanitizedValue.length > 15) {
+                setErrors(prev => ({ ...prev, phone: 'رقم الجوال طويل جداً' }));
+            } else {
+                setErrors(prev => ({ ...prev, phone: '' }));
             }
-            const sanitizedValue = value.replace(/\D/g, '');
-            setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
             // Clear error when user types
@@ -147,6 +186,12 @@ const RegistrationModal = () => {
         if (contactMethod === 'phone') {
             if (!formData.phone) {
                 newErrors.phone = 'يرجى إدخال رقم الجوال';
+                isValid = false;
+            } else if (formData.phone.length < 10) {
+                newErrors.phone = 'رقم الجوال يجب أن يكون 10 أرقام على الأقل';
+                isValid = false;
+            } else if (formData.phone.length > 15) {
+                newErrors.phone = 'رقم الجوال طويل جداً';
                 isValid = false;
             }
         }
@@ -278,7 +323,7 @@ const RegistrationModal = () => {
                                         label=""
                                         value={formData.phone}
                                         onChange={handleChange}
-                                        className={`w-full p-3.5 pr-11 text-left bg-[#f8faff] border rounded-2xl focus:bg-white focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.phone && errors.phone !== 'يرجى إدخال أرقام فقط' ? 'border-red-500' : 'border-[#e2e8f0]'}`}
+                                        className={`w-full p-3.5 pr-11 text-left bg-[#f8faff] border rounded-2xl focus:bg-white focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.phone ? 'border-red-500' : 'border-[#e2e8f0]'}`}
                                         containerClassName="mb-0"
                                     />
                                     <div className="flex items-center justify-between px-1">
@@ -378,7 +423,7 @@ const RegistrationModal = () => {
                         <button 
                             onClick={handleNextStep} 
                             disabled={isLoading}
-                            className="w-full py-4 bg-[#2563eb] text-white font-black rounded-2xl shadow-xl hover:shadow-[#2563eb]/30 hover:-translate-y-1 active:scale-95 transition-all text-base mt-2 shadow-blue-500/20 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="w-full py-5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-black rounded-3xl shadow-2xl shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-1 active:scale-95 transition-all text-xl mt-2 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                         >
                             {isLoading ? (
                                 <>
@@ -419,23 +464,46 @@ const RegistrationModal = () => {
                 return null;
             case 3:
                 return (
-                    <div className="space-y-6">
-                        <div className="text-center mb-8">
-                            <ShieldCheck className="mx-auto text-[#fbbf24] mb-4" size={64} />
-                            <h2 className="text-2xl font-black text-[#1a1a1a]">تأكيد الرمز</h2>
-                            <p className="text-[#6b7280] font-bold mt-2">أدخل الرمز المرسل لجوالك</p>
-                        </div>
-                        <div className="flex justify-center gap-4 py-4" dir="ltr">
-                            {[1, 2, 3, 4].map((i) => (
-                                <input key={i} type="text" maxLength={1} className="w-16 h-16 text-center text-3xl font-black bg-[#f8faff] border border-[#e2e8f0] rounded-2xl focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10 outline-none transition-all" />
-                            ))}
-                        </div>
-                        <button onClick={() => setStep(4)} className="w-full py-4 bg-[#2563eb] text-white font-black rounded-2xl shadow-lg hover:brightness-110 active:scale-95 transition-all">
-                            تأكيد
-                        </button>
-                        <p className="text-center text-sm font-bold text-[#6b7280]">لم يصلك الرمز؟ <button className="text-[#2563eb] underline">إعادة الإرسال</button></p>
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="text-center mb-6">
+                    <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-sm">
+                        <ShieldCheck size={40} />
                     </div>
-                );
+                    <h2 className="text-3xl font-black text-[#1a1a1a]">تأكيد الرمز</h2>
+                    <p className="text-[#6b7280] font-bold mt-2">أدخل الرمز المكون من 4 أرقام</p>
+                </div>
+                
+                <div className="space-y-4">
+                    <div className="flex justify-center gap-4 py-4" dir="ltr">
+                        {otp.map((digit, index) => (
+                            <input 
+                                key={index} 
+                                ref={el => { otpRefs.current[index] = el; }}
+                                type="text" 
+                                inputMode="numeric"
+                                maxLength={1} 
+                                value={digit}
+                                onChange={(e) => handleOtpChange(index, e.target.value)}
+                                onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                                className={`w-16 h-20 text-center text-4xl font-black rounded-[20px] outline-none transition-all shadow-sm ${errors.phone ? 'bg-red-50 border-2 border-red-500 text-red-600' : 'bg-[#f8faff] border border-[#e2e8f0] text-gray-900 focus:border-[#2563eb] focus:bg-white focus:ring-4 focus:ring-[#2563eb]/10'}`} 
+                            />
+                        ))}
+                    </div>
+                    {errors.phone && <p className="text-red-500 text-center font-black text-sm">{errors.phone}</p>}
+                </div>
+
+                <button 
+                    onClick={handleVerifyRegistration} 
+                    className="w-full py-6 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-black rounded-3xl shadow-2xl shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-1 active:scale-95 transition-all text-xl"
+                >
+                    تأكيد الرمز
+                </button>
+                
+                <p className="text-center text-sm font-bold text-[#6b7280]">
+                    لم يصلك الرمز؟ <button className="text-[#2563eb] hover:underline font-black">إعادة الإرسال</button>
+                </p>
+            </div>
+        );
             case 4:
                 return (
                     <div className="text-center py-12 px-6">
@@ -444,7 +512,7 @@ const RegistrationModal = () => {
                         </div>
                         <h2 className="text-3xl font-black text-[#1a1a1a] mb-4">تم إنشاء الحساب بنجاح</h2>
                         <p className="text-[#6b7280] font-bold text-lg mb-10 leading-relaxed text-center rtl:text-right">أهلاً بك في First! يمكنك الآن البدء في إدارة أكاديميتك وتطوير خدماتك.</p>
-                        <button onClick={handleComplete} className="w-full py-5 bg-[#2563eb] text-white font-black rounded-[2rem] shadow-xl hover:-translate-y-1 transition-all active:scale-95">
+                        <button onClick={handleComplete} className="w-full py-6 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-black rounded-[2.5rem] shadow-2xl shadow-blue-500/20 hover:-translate-y-1 transition-all active:scale-95 text-xl">
                             ابدأ الآن
                         </button>
                     </div>
@@ -455,9 +523,9 @@ const RegistrationModal = () => {
     };
 
     return (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeModal}></div>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-transparent backdrop-blur-md">
+            {/* Invisible but clickable backdrop overlay to close */}
+            <div className="absolute inset-0" onClick={closeModal}></div>
 
             {/* Modal Content */}
             <div className="relative w-full max-w-[420px] md:max-w-[500px] mx-4 bg-white rounded-[40px] shadow-2xl overflow-hidden animate-on-scroll reveal transform scale-100 border border-gray-100">

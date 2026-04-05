@@ -60,18 +60,24 @@ const LoginModal = () => {
     });
 
     if (!isOpen || view !== 'login') return null;
-
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        
-        // Sanitize phone input and show error if invalid chars
         if (name === 'phone') {
             const hasNonDigits = /\D/.test(value);
+            const sanitizedValue = value.replace(/\D/g, '');
+            
+            setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
+            
+            // Handle error logic
             if (hasNonDigits) {
                 setErrors(prev => ({ ...prev, phone: 'يرجى إدخال أرقام فقط' }));
+            } else if (sanitizedValue.length > 0 && sanitizedValue.length < 10) {
+                setErrors(prev => ({ ...prev, phone: 'رقم الجوال يجب أن يكون 10 أرقام على الأقل' }));
+            } else if (sanitizedValue.length > 15) {
+                setErrors(prev => ({ ...prev, phone: 'رقم الجوال طويل جداً' }));
+            } else {
+                setErrors(prev => ({ ...prev, phone: '' }));
             }
-            const sanitizedValue = value.replace(/\D/g, '');
-            setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
             // Clear errors
@@ -103,6 +109,12 @@ const LoginModal = () => {
         } else {
             if (!formData.phone) {
                 newErrors.phone = 'يرجى إدخال رقم الجوال';
+                isValid = false;
+            } else if (formData.phone.length < 10) {
+                newErrors.phone = 'رقم الجوال يجب أن يكون 10 أرقام على الأقل';
+                isValid = false;
+            } else if (formData.phone.length > 15) {
+                newErrors.phone = 'رقم الجوال طويل جداً';
                 isValid = false;
             }
         }
@@ -163,9 +175,9 @@ const LoginModal = () => {
     };
 
     return (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeModal}></div>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-transparent backdrop-blur-md">
+            {/* Invisible but clickable backdrop overlay to close */}
+            <div className="absolute inset-0" onClick={closeModal}></div>
 
             {/* Modal Content */}
             <div className="relative w-full max-w-[420px] md:max-w-[480px] bg-white rounded-[40px] shadow-2xl overflow-hidden animate-on-scroll reveal transform scale-100 border border-gray-100">
@@ -221,7 +233,7 @@ const LoginModal = () => {
                                         label=""
                                         value={formData.phone}
                                         onChange={handleChange}
-                                        className={`w-full p-3.5 pr-11 text-left bg-[#f8faff] border rounded-2xl focus:bg-white focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.phone && errors.phone !== 'يرجى إدخال أرقام فقط' ? 'border-red-500' : 'border-[#e2e8f0]'}`}
+                                        className={`w-full p-3.5 pr-11 text-left bg-[#f8faff] border rounded-2xl focus:bg-white focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.phone ? 'border-red-500' : 'border-[#e2e8f0]'}`}
                                         containerClassName="mb-0"
                                     />
                                     <div className="flex items-center justify-between px-1">
@@ -295,7 +307,7 @@ const LoginModal = () => {
                         <button
                             onClick={handleLogin}
                             disabled={isLoading}
-                            className="w-full py-4 bg-[#2563eb] text-white font-black rounded-2xl shadow-xl hover:shadow-[#2563eb]/30 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed text-base shadow-blue-500/20"
+                            className="w-full py-5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-black rounded-3xl shadow-2xl shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed text-xl"
                         >
                             {isLoading ? (
                                 <>

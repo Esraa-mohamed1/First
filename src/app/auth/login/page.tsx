@@ -57,11 +57,20 @@ export default function AcademyLoginPage() {
         // Sanitize phone input and show error if invalid chars
         if (name === 'phone') {
             const hasNonDigits = /\D/.test(value);
+            const sanitizedValue = value.replace(/\D/g, '');
+            
+            setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
+            
+            // Handle error logic
             if (hasNonDigits) {
                 setErrors(prev => ({ ...prev, phone: 'يرجى إدخال أرقام فقط' }));
+            } else if (sanitizedValue.length > 0 && sanitizedValue.length < 10) {
+                setErrors(prev => ({ ...prev, phone: 'رقم الجوال يجب أن يكون 10 أرقام على الأقل' }));
+            } else if (sanitizedValue.length > 15) {
+                setErrors(prev => ({ ...prev, phone: 'رقم الجوال طويل جداً' }));
+            } else {
+                setErrors(prev => ({ ...prev, phone: '' }));
             }
-            const sanitizedValue = value.replace(/\D/g, '');
-            setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
             setErrors(prev => ({ ...prev, [name]: '' }));
@@ -91,6 +100,12 @@ export default function AcademyLoginPage() {
         } else {
             if (!formData.phone) {
                 newErrors.phone = 'يرجى إدخال رقم الجوال';
+                isValid = false;
+            } else if (formData.phone.length < 10) {
+                newErrors.phone = 'رقم الجوال يجب أن يكون 10 أرقام على الأقل';
+                isValid = false;
+            } else if (formData.phone.length > 15) {
+                newErrors.phone = 'رقم الجوال طويل جداً';
                 isValid = false;
             }
         }
@@ -200,7 +215,7 @@ export default function AcademyLoginPage() {
                                         label=""
                                         value={formData.phone}
                                         onChange={handleChange}
-                                        className={`p-4 pr-12 text-left bg-gray-50 border-2 rounded-[24px] focus:bg-white focus:border-blue-500 outline-none transition-all duration-300 font-bold text-gray-900 shadow-sm ${errors.phone && errors.phone !== 'يرجى إدخال أرقام فقط' ? 'border-red-500' : 'border-transparent'}`}
+                                        className={`p-4 pr-12 text-left bg-gray-50 border-2 rounded-[24px] focus:bg-white focus:border-blue-500 outline-none transition-all duration-300 font-bold text-gray-900 shadow-sm ${errors.phone ? 'border-red-500' : 'border-transparent'}`}
                                         containerClassName="mb-1"
                                     />
                                     <div className="flex items-center justify-between px-1">
