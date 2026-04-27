@@ -4,6 +4,7 @@ import "./globals.css";
 import { ModalProvider } from "@/context/ModalContext";
 import RegistrationModal from "@/components/Modals/RegistrationModal";
 import LoginModal from "@/components/Modals/LoginModal";
+import CreateCourseModal from "@/components/Modals/CreateCourseModal";
 import { Toaster } from "react-hot-toast";
 import Providers from "@/components/Providers";
 
@@ -30,6 +31,7 @@ export default function RootLayout({
                         {children}
                         <RegistrationModal />
                         <LoginModal />
+                        <CreateCourseModal />
                         <Toaster position="top-center" />
                     </ModalProvider>
                 </Providers>

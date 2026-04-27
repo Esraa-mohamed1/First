@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState } from 'react';
 
-type ModalType = 'registration' | 'login' | null;
+type ModalType = 'registration' | 'login' | 'create-course' | null;
 
 interface ModalContextType {
     isOpen: boolean;

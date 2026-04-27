@@ -43,8 +43,115 @@ export default function AcademicDashboardPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-                {/* MAIN COLUMN (RIGHT in Dashboard logic) */}
-                <div className="lg:col-span-12 xl:col-span-9 space-y-8 order-2 xl:order-1">
+                {/* SIDEBAR COLUMN (Now on the LEFT in RTL layout = order-2) */}
+                <div className="lg:col-span-12 xl:col-span-3 order-2 xl:sticky xl:top-28">
+                    <div className="bg-white rounded-[3.5rem] border border-gray-100 shadow-2xl shadow-gray-200/5 p-8 space-y-12">
+                        
+                        {/* 7. Checklist Section */}
+                        <div className="space-y-10">
+                            <div className="flex items-center justify-end gap-5">
+                                <h3 className="font-black text-gray-900 text-2xl tracking-tight text-right">خطواتك الأولى</h3>
+                                <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center shadow-sm shrink-0">
+                                    <Rocket size={32} />
+                                </div>
+                            </div>
+
+                            <div className="space-y-10 pt-4 relative">
+                                {/* Vertical Line on the Right */}
+                                <div className="absolute right-[1.2rem] top-10 bottom-10 w-0.5 bg-gray-100" />
+
+                                {/* Item 1: Completed */}
+                                <div className="flex items-center justify-end gap-5 group cursor-pointer relative pr-10">
+                                    <div className="text-right">
+                                        <h4 className="text-xl font-black text-gray-900">1- اعدادات الملف</h4>
+                                        <p className="text-sm text-gray-400 font-bold mt-1 leading-relaxed">اكملت المعلومات الأساسية</p>
+                                    </div>
+                                    <div className="absolute right-0 w-10 h-10 rounded-full bg-green-600 flex items-center justify-center shrink-0 shadow-lg shadow-green-100 z-10">
+                                        <Check size={24} className="text-white" strokeWidth={4} />
+                                    </div>
+                                </div>
+
+                                {/* Item 2: Active */}
+                                <div className="flex items-center justify-end gap-5 group cursor-pointer relative pr-10">
+                                    <div className="text-right">
+                                        <h4 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">2- انشاء دورة</h4>
+                                        <p className="text-sm text-gray-400 font-bold mt-1 leading-relaxed">ابدأ بانشاء دورتك الأولى</p>
+                                        <span className="text-blue-600 underline font-black text-base block mt-2 hover:bg-blue-50 transition-all">ابدأ الأن</span>
+                                    </div>
+                                    <div className="absolute right-0 w-10 h-10 rounded-full border border-gray-200 bg-[#f3f4f6] flex items-center justify-center shrink-0 text-gray-900 font-black text-lg group-hover:border-blue-600 group-hover:text-blue-600 transition-all shadow-sm z-10">
+                                        2
+                                    </div>
+                                </div>
+
+                                {/* Item 3: Pending */}
+                                <div className="flex items-center justify-end gap-5 group cursor-pointer relative pr-10">
+                                    <div className="text-right">
+                                        <h4 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">3- اضافة مدربين</h4>
+                                        <p className="text-sm text-gray-400 font-bold mt-1 leading-relaxed">ابدأ بالخطوات لاكمال الفريق</p>
+                                    </div>
+                                    <div className="absolute right-0 w-10 h-10 rounded-full border border-gray-200 bg-[#f3f4f6] flex items-center justify-center shrink-0 text-gray-400 font-black text-lg group-hover:border-blue-200 transition-colors z-10">
+                                        3
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Advice Section */}
+                        <div className="bg-[#f3f4f6]/60 rounded-[2.5rem] p-8 flex flex-col items-center gap-4">
+                            <div className="flex flex-row items-center justify-center gap-4 w-full">
+                                <span className="text-xl font-black text-blue-600">نصيحة اليوم</span>
+                                <div className="text-blue-600 bg-white p-2 text-center rounded-2xl shadow-sm">
+                                    <Lightbulb size={24} />
+                                </div>
+                            </div>
+                            <p className="text-base text-gray-400 font-bold leading-relaxed text-center px-2">
+                                &quot;اضافة فيديوهات تعريفية قصيرة لكل دورة يزيد من معدلات التسجيل&quot;
+                            </p>
+                        </div>
+
+                        {/* 8. Promotional Section */}
+                        <div className="pt-4 space-y-8 relative group">
+                            <div className="flex items-center justify-between w-full">
+                                <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-300">
+                                    <GripHorizontal size={16} />
+                                </div>
+                                <h4 className="text-sm font-black text-gray-900 leading-tight text-right pr-4 border-r-2 border-blue-600">هل تريد المزيد من المستخدمين على موقعك؟</h4>
+                            </div>
+
+                            <div className="relative h-48 w-full flex justify-center group-hover:scale-105 transition-transform duration-700">
+                                <Image
+                                    src="/assets/Ellipse.png"
+                                    alt="Promotional Banner"
+                                    width={200}
+                                    height={200}
+                                    className="object-contain"
+                                />
+                            </div>
+
+                            <div className="space-y-4 px-2 text-right">
+                                <h4 className="text-base font-black text-gray-900 leading-snug">عزّز موقعك على محرك Microsoft Bing</h4>
+                                <p className="text-[11px] text-gray-400 font-bold leading-relaxed">توفر أدوات Bing Webmaster بيانات أداء الموقع ورؤى مجانية لتحسين محركات البحث(SEO) لمساعدتك على تحسين ترتيب موقعك في نتائج بحث Bing</p>
+                            </div>
+
+                            <div className="w-full flex items-center gap-4">
+                                <button className="flex-1 py-4 bg-white border border-blue-600 text-blue-600 rounded-2xl font-black text-sm hover:bg-blue-600 hover:text-white transition-all shadow-lg active:scale-95">ابدأ الأن</button>
+                                <button className="text-orange-400 font-black text-sm hover:underline px-6">لا،شكرا</button>
+                            </div>
+
+                            <div className="flex justify-center gap-1.5 pb-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-gray-200"></div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-gray-200"></div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-gray-200"></div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-gray-200"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                {/* MAIN COLUMN (Now on the RIGHT in RTL layout = order-1) */}
+                <div className="lg:col-span-12 xl:col-span-9 space-y-8 order-1">
 
                     {/* 1. Stats Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -78,19 +185,17 @@ export default function AcademicDashboardPage() {
                         />
                     </div>
 
-                    {/* 2. Primary Charts (Line & Bar) */}
                     <div className="grid grid-cols-1 gap-8">
                         <OverviewChart />
                         <RevenueChart />
                     </div>
 
-                    {/* 3. Secondary Charts (Side by Side) */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <VisitsByDeviceChart />
                         <VisitsByCountryChart />
                     </div>
 
-                    {/* 4. Table Section */}
+                    {/* Table Section */}
                     <div className="bg-white rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-200/20 overflow-hidden p-8 lg:p-10">
                         <div className="flex flex-col sm:flex-row justify-between items-center mb-10 gap-8">
                             <div className="space-y-1 text-right">
@@ -115,7 +220,7 @@ export default function AcademicDashboardPage() {
                             </div>
                         </div>
 
-                        <div className="overflow-x-auto min-h-[400px]">
+                        <div className="overflow-x-auto min-h-[300px]">
                             <table className="w-full border-separate border-spacing-y-3">
                                 <thead>
                                     <tr className="text-right text-gray-400 text-xs font-black uppercase tracking-widest bg-gray-50/50 rounded-2xl">
@@ -158,15 +263,9 @@ export default function AcademicDashboardPage() {
                                 </tbody>
                             </table>
                         </div>
-                        <button className="w-full mt-10 py-5 bg-gray-50 hover:bg-gray-100 rounded-3xl text-gray-400 text-sm font-black transition-all hover:text-gray-600 group">
-                            <span className="flex items-center justify-center gap-2">
-                                عرض جميع الطلاب المسجلين
-                                <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-                            </span>
-                        </button>
                     </div>
 
-                    {/* 5. Course Library Placeholder */}
+                    {/* Course Placeholder */}
                     <div className="bg-white rounded-[3.5rem] border-2 border-dashed border-gray-100 p-16 text-center flex flex-col items-center gap-8 shadow-sm group hover:border-blue-200 transition-all">
                         <div className="w-24 h-24 bg-gray-50 rounded-[2rem] flex items-center justify-center text-gray-200 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all group-hover:scale-110 duration-500">
                             <BookOpen size={56} />
@@ -181,7 +280,7 @@ export default function AcademicDashboardPage() {
                         </button>
                     </div>
 
-                    {/* 6. Premium Package Usage Tracking */}
+                    {/* Package Tracking */}
                     <div className="bg-white rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-200/10 p-10 space-y-12">
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
                             <div className="flex items-center justify-end gap-5 w-full text-right">
@@ -207,7 +306,6 @@ export default function AcademicDashboardPage() {
                                 <div className="h-3 bg-white border border-gray-100 rounded-full overflow-hidden shadow-inner">
                                     <div className="bg-gradient-to-l from-blue-600 to-blue-400 h-full rounded-full transition-all duration-1000 w-[10%]" />
                                 </div>
-                                <p className="text-[11px] text-gray-400 font-bold text-center">تبقي لديك <span className="text-gray-900">5،312 طالباً</span> إضافياً في باقتك</p>
                             </div>
 
                             <div className="space-y-5 bg-gray-50/50 p-6 rounded-3xl border border-gray-50 relative overflow-hidden group text-right">
@@ -221,7 +319,6 @@ export default function AcademicDashboardPage() {
                                 <div className="h-3 bg-white border border-gray-100 rounded-full overflow-hidden shadow-inner">
                                     <div className="bg-gradient-to-l from-red-600 to-red-400 h-full rounded-full transition-all duration-1000 w-[82%]" />
                                 </div>
-                                <p className="text-[11px] text-red-500 font-black text-center animate-pulse">تنبيه: لقد اوشكت على استنزاف مساحة التخزين الخاصة بك</p>
                             </div>
 
                             <div className="space-y-5 bg-gray-50/50 p-6 rounded-3xl border border-gray-50">
@@ -235,128 +332,14 @@ export default function AcademicDashboardPage() {
                                 <div className="h-3 bg-white border border-gray-100 rounded-full overflow-hidden shadow-inner">
                                     <div className="bg-gradient-to-l from-green-500 to-green-400 h-full rounded-full transition-all duration-1000 w-[35%]" />
                                 </div>
-                                <p className="text-[11px] text-gray-400 font-bold text-center">يمكنك اضافة <span className="text-gray-900">15 دورة اضافية</span> حالياً</p>
                             </div>
                         </div>
                     </div>
 
                 </div>
 
-                {/* SIDEBAR COLUMN (LEFT) */}
-                <div className="lg:col-span-12 xl:col-span-3 space-y-8 xl:sticky xl:top-28 order-1 xl:order-2">
-
-                    {/* 7. Checklist Section */}
-                    <div className="bg-white rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-200/10 p-8 space-y-8">
-                        <div className="flex items-center ">
-                            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center shadow-sm">
-                                <Rocket size={32} />
-                            </div>
-                            <h3 className="font-black text-gray-900 text-2xl tracking-tight text-right">خطواتك الأولى</h3>
-                        </div>
-
-                        <div className="space-y-10 pt-4 border-r-2 border-gray-50 pr-6 relative">
-                            {/* Item 1: Completed with Green Checkbox */}
-                            <div className="flex items-start gap-2 group cursor-pointer relative ">  <div className="w-10 h-10 rounded-xl bg-green-600 flex items-center justify-center shrink-0 shadow-lg shadow-green-100">
-                                <Check size={20} className="text-white" strokeWidth={5} />
-                            </div>
-                                <div className="text-right">
-                                    <h4 className="text-xl font-black text-gray-900">1- اعدادات الملف</h4>
-                                    <p className="text-sm text-gray-400 font-bold mt-1 leading-relaxed">اكملت المعلومات الأساسية</p>
-                                </div>
-                                <div className="absolute -right-[30px] top-4 w-2.5 h-2.5 rounded-full bg-green-600 shadow-[0_0_0_4px_rgba(34,197,94,0.1)] shrink-0 z-10" />
-                            </div>
-
-                            {/* Item 2: Active */}
-                            <div className="flex items-start gap-5 group cursor-pointer relative justify-end">
-                                <div className="text-right group">
-                                    <h4 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">2- انشاء دورة</h4>
-                                    <p className="text-sm text-gray-400 font-bold mt-1 leading-relaxed">ابدأ بانشاء دورتك الأولى</p>
-                                    <span className="text-blue-600 underline font-black text-sm block mt-2 hover:bg-blue-50 transition-all w-fit mr-auto">ابدأ الأن</span>
-                                </div>
-                                <div className="w-10 h-10 rounded-2xl border border-gray-200 bg-[#f8faff] flex items-center justify-center shrink-0 text-gray-400 font-black text-lg group-hover:border-blue-600 group-hover:text-blue-600 transition-all shadow-sm">
-                                    2
-                                </div>
-                                <div className="absolute -right-[30px] top-4 w-2.5 h-2.5 rounded-full bg-gray-200 shrink-0 z-10" />
-                            </div>
-
-                            {/* Item 3: Pending */}
-                            <div className="flex items-start gap-5 group cursor-pointer relative justify-end">
-                                <div className="text-right">
-                                    <h4 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">3- اضافة مدربين</h4>
-                                    <p className="text-sm text-gray-400 font-bold mt-1 leading-relaxed">ابدأ بالخطوات لاكمال الفريق</p>
-                                </div>
-                                <div className="w-10 h-10 rounded-2xl border border-gray-200 bg-[#f8faff] flex items-center justify-center shrink-0 text-gray-400 font-black text-lg group-hover:border-blue-200 transition-colors text-center shadow-sm">
-                                    3
-                                </div>
-                                <div className="absolute -right-[30px] top-4 w-2.5 h-2.5 rounded-full bg-gray-200 shrink-0 z-10" />
-                            </div>
-
-                            <div className="bg-[#f8faff] rounded-[2.5rem] p-8 border border-gray-50 flex flex-col items-center gap-4">
-                                <div className="flex flex-row-reverse items-center justify-center gap-4 w-full">
-                                    <div className="text-blue-600 bg-white p-2.5 rounded-2xl shadow-sm">
-                                        <Lightbulb size={24} />
-                                    </div>
-                                    <span className="text-xl font-black text-blue-600">نصيحة اليوم</span>
-                                </div>
-                                <p className="text-gray-400 font-bold leading-relaxed text-center px-2">
-                                    &quot;اضافة فيديوهات تعريفية قصيرة لكل دورة يزيد من معدلات التسجيل&quot;
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* 8. Promotional Carousel Banner */}
-                        <div className="bg-white rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-200/20 overflow-hidden relative group h-[480px]">
-                            <div className="h-full flex flex-col items-center justify-between p-8 text-center bg-white relative">
-
-                                <div className="flex items-center justify-between w-full mb-4">
-                                    <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-300">
-                                        <GripHorizontal size={16} />
-                                    </div>
-                                    <h4 className="text-sm font-black text-gray-900 leading-tight text-right">هل تريد المزيد من المستخدمين على موقعك؟</h4>
-                                </div>
-
-                                <div className="relative h-48 w-full group-hover:scale-105 transition-transform duration-1000">
-                                    <Image
-                                        src="/assets/Ellipse.png"
-                                        alt="Promotional Banner"
-                                        fill
-                                        className="object-contain"
-                                    />
-                                </div>
-
-                                <div className="space-y-4 px-2 text-right">
-                                    <h4 className="text-base font-black text-gray-900 leading-snug">عزّز موقعك على محرك Microsoft Bing</h4>
-                                    <p className="text-[11px] text-gray-400 font-bold leading-relaxed line-clamp-3">توفر أدوات Bing Webmaster بيانات أداء الموقع ورؤى مجانية لتحسين محركات البحث(SEO) لمساعدتك على تحسين ترتيب موقعك في نتائج بحث Bing</p>
-                                </div>
-
-                                <div className="w-full flex items-center gap-4 mt-4">
-                                    <button className="flex-1 py-3.5 bg-white border border-blue-600 text-blue-600 rounded-2xl font-black text-sm hover:bg-blue-600 hover:text-white transition-all active:scale-95">ابدأ الأن</button>
-                                    <button className="text-orange-400 font-black text-sm hover:underline px-4">لا،شكرا</button>
-                                </div>
-
-                                <div className="flex justify-center gap-1.5 pt-4 pb-2">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-200"></div>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-200"></div>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-200"></div>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-200"></div>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-200"></div>
-                                </div>
-                            </div>
-
-                            {/* Arrow Navigation */}
-                            <button className="absolute left-[-15px] top-1/2 -translate-y-1/2 p-2 bg-white shadow-xl border border-gray-50 rounded-full opacity-100 transition-all hover:bg-blue-600 hover:text-white z-10">
-                                <ChevronLeft size={20} />
-                            </button>
-                            <button className="absolute right-[-15px] top-1/2 -translate-y-1/2 p-2 bg-white shadow-xl border border-gray-50 rounded-full opacity-100 transition-all hover:bg-blue-600 hover:text-white z-10">
-                                <ChevronRight size={20} />
-                            </button>
-                        </div>
-
-                    </div>
-
-                </div>
             </div>
+
         </div>
     );
 }

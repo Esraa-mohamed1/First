@@ -25,16 +25,16 @@ const Hero = () => {
 
                 {/* Central Content */}
                 <div className="flex-[1.5] text-center z-10 px-4">
-                    <h1 className="text-7xl font-black leading-[1.1] mb-10 text-[#2563eb]">
+                    <h1 className="text-4xl md:text-5xl lg:text-7xl font-black leading-[1.2] lg:leading-[1.1] mb-6 md:mb-10 text-[#2563eb]">
                         ابدأ إدارة أكاديميتك <br />
                         <span className="text-[#fbbf24]">بسهولة</span>
                     </h1>
-                    <p className="text-2xl text-[#6b7280] mb-14 max-w-xl mx-auto font-medium leading-relaxed">
+                    <p className="text-lg md:text-xl lg:text-2xl text-[#6b7280] mb-8 md:mb-14 max-w-xl mx-auto font-medium leading-relaxed">
                         كل الأدوات اللي تحتاجها لإدارة الخدمات، العملاء، والحجوزات في مكان واحد. اختر باقتك وابدأ خلال دقائق.
                     </p>
                     <button
                         onClick={() => openModal('registration')}
-                        className="px-16 py-6 text-2xl font-black bg-[#2563eb] text-white rounded-[2rem] cursor-pointer shadow-[0_20px_40px_-10px_rgba(37,99,235,0.4)] hover:-translate-y-2 hover:shadow-[0_30px_60px_-15px_rgba(37,99,235,0.5)] transition-all duration-300 active:scale-95"
+                        className="px-10 lg:px-16 py-4 lg:py-6 text-xl lg:text-2xl font-black bg-[#2563eb] text-white rounded-2xl lg:rounded-[2rem] cursor-pointer shadow-[0_20px_40px_-10px_rgba(37,99,235,0.4)] hover:-translate-y-2 hover:shadow-[0_30px_60px_-15px_rgba(37,99,235,0.5)] transition-all duration-300 active:scale-95"
                     >
                         أختر باقتك الآن
                     </button>

@@ -16,6 +16,7 @@ export default async function Home() {
     const host = headersList.get('host') || '';
 
     // If the host is not the main root domain, it means we are on an academy subdomain
+    // We allow the home page (landing page) to be visible on subdomains for guest access
     const isMainDomain =
         host === 'localhost:3000' ||
         host === 'darab.academy.localhost:3000' ||
@@ -23,9 +24,12 @@ export default async function Home() {
         host === 'www.darab.academy' ||
         host.startsWith('127.0.0.1');
 
+    // Remove the redirect to allow guests to see the landing page on subdomains
+    /*
     if (!isMainDomain) {
         redirect('/auth/login');
     }
+    */
 
     return (
         <main>

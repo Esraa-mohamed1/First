@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, X, BarChart3, Eye } from 'lucide-react';
+import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, X, BarChart3, Eye, Plus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCourses, deleteCourse, getCourse } from '@/services/courses';
@@ -8,7 +8,8 @@ import { Course } from '@/types/api';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import CreateCourseModal from '@/components/Academic/Modals/CreateCourseModal';
+import CreateCourseModal from '@/components/Modals/CreateCourseModal';
+import { useModal } from '@/context/ModalContext';
 
 const MySwal = withReactContent(Swal);
 
@@ -19,9 +20,15 @@ export default function CoursesPage() {
   const [loading, setLoading] = useState(true);
   const [activeDropdownId, setActiveDropdownId] = useState<number | null>(null);
 
-  // Edit Modal States
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+  const { openModal } = useModal();
+  const [activeType, setActiveType] = useState('all');
+
+  const courseTabs = [
+    { id: 'all', label: 'الكل' },
+    { id: 'recorded', label: 'مسجلة' },
+    { id: 'online', label: 'اونلاين' },
+    { id: 'offline', label: 'حضوري' },
+  ];
 
   useEffect(() => {
     fetchCourses();
@@ -74,31 +81,38 @@ export default function CoursesPage() {
   };
 
   const handleEditCourse = (id: number) => {
-    setSelectedCourseId(id);
-    setIsEditModalOpen(true);
+    openModal('create-course', { courseId: id });
   };
 
   const getCourseTypeLabel = (type: string) => {
     switch (type) {
+      case 'recorded':
       case 'registered': return 'مسجلة';
       case 'online': return 'اونلاين';
-      case 'offline': return 'حضوري';
+      case 'offline':
+      case 'physical': return 'حضوري';
       default: return type;
     }
   };
 
   const getCourseTypeColor = (type: string) => {
     switch (type) {
+      case 'recorded':
       case 'registered': return 'bg-orange-50 text-orange-500';
       case 'online': return 'bg-green-50 text-green-500';
-      case 'offline': return 'bg-gray-100 text-gray-500';
+      case 'offline':
+      case 'physical': return 'bg-gray-100 text-gray-500';
       default: return 'bg-gray-100 text-gray-500';
     }
   };
 
-  const filteredCourses = courses.filter(course =>
-    course.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCourses = courses.filter(course => {
+    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = activeType === 'all' || course.type === activeType || 
+                       (activeType === 'recorded' && course.type === 'registered') ||
+                       (activeType === 'offline' && course.type === 'physical');
+    return matchesSearch && matchesType;
+  });
 
   return (
     <div className="space-y-8">
@@ -140,12 +154,37 @@ export default function CoursesPage() {
         </div>
       </div>
 
-      {/* Export Button */}
-      <div className="flex justify-start">
-        <button className="flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl font-black text-base shadow-lg shadow-blue-200 transition-all">
-          <Download size={20} />
-          <span>تصدير Excel</span>
-        </button>
+      {/* Export & Add Buttons */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-4">
+          {courseTabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveType(tab.id)}
+              className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all ${
+                activeType === tab.id
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-100'
+                  : 'bg-white text-gray-400 hover:bg-gray-50'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex gap-4">
+          <button 
+            onClick={() => openModal('create-course', { initialType: activeType !== 'all' ? activeType : null })}
+            className="flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl font-black text-base shadow-lg shadow-blue-200 transition-all"
+          >
+            <Plus size={20} />
+            <span>انشاء دورة</span>
+          </button>
+          <button className="flex items-center gap-3 bg-white border border-gray-100 text-gray-500 hover:bg-gray-50 px-8 py-3.5 rounded-2xl font-black text-base shadow-sm transition-all">
+            <Download size={20} />
+            <span>تصدير Excel</span>
+          </button>
+        </div>
       </div>
 
       {/* Courses Table Container */}
@@ -331,14 +370,7 @@ export default function CoursesPage() {
         )}
       </div>
 
-      <CreateCourseModal
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setSelectedCourseId(null);
-        }}
-        courseId={selectedCourseId}
-      />
+
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {

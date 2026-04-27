@@ -17,6 +17,7 @@ const VerificationModal = ({ isOpen, onClose, onSuccess }: VerificationModalProp
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [contact, setContact] = useState<string | null>(null);
+  const [countryCode, setCountryCode] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -25,6 +26,7 @@ const VerificationModal = ({ isOpen, onClose, onSuccess }: VerificationModalProp
         try {
           const user = JSON.parse(userStr);
           setContact(user.email || user.phone);
+          setCountryCode(user.country_code);
         } catch (e) {
           console.error('Failed to parse user info');
         }
@@ -42,7 +44,7 @@ const VerificationModal = ({ isOpen, onClose, onSuccess }: VerificationModalProp
 
     setLoading(true);
     try {
-      await sendOtp(contact);
+      await sendOtp(contact, countryCode || undefined);
       toast.success('تم إرسال رمز التحقق بنجاح');
       setStep('otp');
     } catch (error: any) {
@@ -104,7 +106,7 @@ const VerificationModal = ({ isOpen, onClose, onSuccess }: VerificationModalProp
     setErrors('');
     setLoading(true);
     try {
-      const response = await verifyOtp(contact, code);
+      const response = await verifyOtp(contact, code, countryCode || undefined);
       if (response.status) {
         toast.success('تم التحقق بنجاح');
         

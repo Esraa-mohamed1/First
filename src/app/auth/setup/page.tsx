@@ -18,7 +18,7 @@ export default function SetupPage() {
     field: '',
     link: ''
   });
-  
+
   const [domainPrefix, setDomainPrefix] = useState('');
   const [domainError, setDomainError] = useState<string | null>(null);
   const domainSuffix = '.darab.academy'; // Static part
@@ -36,47 +36,45 @@ export default function SetupPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-  
+
   const handleDomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      setDomainPrefix(value);
+    const value = e.target.value;
+    setDomainPrefix(value);
 
-      const fullLink = value + domainSuffix;
-      // Regex updated to allow only alphanumeric characters (no hyphens or underscores in the prefix)
-      // Original regex: /^((?!-))(xn--)?[a-zA-Z0-9][a-zA-Z0-9-_]{0,61}[a-zA-Z0-9]\.(xn--)?([a-zA-Z0-9-]{1,61}|[a-zA-Z]{2,})$/
-      // New logic: Check if the prefix contains ONLY alphanumeric characters
-      const alphanumericRegex = /^[a-zA-Z0-9]+$/;
-      
-      if (!value) {
-        setDomainError(null);
-        return;
-      }
+    const fullLink = value + domainSuffix;
+    // Regex updated to allow only alphanumeric characters (no hyphens or underscores in the prefix)
+    const alphanumericRegex = /^[a-zA-Z0-9]+$/;
 
-      if (!alphanumericRegex.test(value)) {
-         setDomainError('يجب أن يحتوي الرابط على أحرف وأرقام إنجليزية فقط');
-         return;
-      }
+    if (!value) {
+      setDomainError(null);
+      return;
+    }
 
-      // Also validate full structure just in case, but relax the prefix part of the complex regex or just rely on alphanumeric check
-      // The complex regex required 2+ chars and specific structure. Let's simplify since we enforce alphanumeric.
-      if (value.length < 2) {
-         setDomainError('يجب أن يكون الرابط حرفين على الأقل');
-      } else {
-        setDomainError(null);
-      }
+    if (!alphanumericRegex.test(value)) {
+      setDomainError('يجب أن يحتوي الرابط على أحرف وأرقام إنجليزية فقط');
+      return;
+    }
+
+    // Also validate full structure just in case, but relax the prefix part of the complex regex or just rely on alphanumeric check
+    // The complex regex required 2+ chars and specific structure. Let's simplify since we enforce alphanumeric.
+    if (value.length < 2) {
+      setDomainError('يجب أن يكون الرابط حرفين على الأقل');
+    } else {
+      setDomainError(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.academy_name || !formData.phone || !selectedCountry?.isoCode || !formData.field || !domainPrefix) {
       toast.error('يرجى ملء جميع الحقول المطلوبة');
       return;
     }
-    
+
     if (domainError) {
-        toast.error('يرجى تصحيح خطأ الرابط');
-        return;
+      toast.error('يرجى تصحيح خطأ الرابط');
+      return;
     }
 
     const fullLink = domainPrefix + domainSuffix;
@@ -92,22 +90,22 @@ export default function SetupPage() {
       const payload: any = {
         username: formData.academy_name, // Using academy name as username
         phone_academy: formData.phone,
-        country_code: selectedCountry?.isoCode, // Passed efficiently via context
+        country_code: selectedCountry?.dialCode?.replace('+', '') || '966', 
         specialties: formData.field,
         link_academy: fullLink // Use the constructed link
       };
 
       if (cachedEmail) {
-          payload.email = cachedEmail;
+        payload.email = cachedEmail;
       } else if (cachedPhone) {
-          payload.phone = cachedPhone;
+        payload.phone = cachedPhone;
       }
 
       await createAccountInfoAcademy(payload);
-      
+
       // Save academy link name to localStorage for subsequent login header
       localStorage.setItem('academy_link_name', fullLink);
-      
+
       toast.success('تم حفظ معلومات الأكاديمية بنجاح');
 
       // Auto login
@@ -115,36 +113,38 @@ export default function SetupPage() {
       let loginSuccess = false;
 
       if (password && (cachedEmail || cachedPhone)) {
-          console.log('Attempting auto-login...');
-          try {
-              const loginResponse = await login({
-                  email: cachedEmail || undefined,
-                  phone: cachedPhone || undefined,
-                  password: password
-              });
-              console.log('Auto-login successful', loginResponse);
+        console.log('Attempting auto-login...');
+        try {
+          const loginResponse = await login({
+            email: cachedEmail || undefined,
+            phone: cachedPhone || undefined,
+            password: password,
+            country_code: selectedCountry?.dialCode?.replace('+', '') || '966'
+          });
+          console.log('Auto-login successful', loginResponse);
 
-              if (loginResponse.meta && loginResponse.meta.access_token) {
-                  const token = loginResponse.meta.access_token;
-                  document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
-                  localStorage.setItem('token', token);
-                  
-                  if (loginResponse.data) {
-                      localStorage.setItem('user_info', JSON.stringify({
-                          name: loginResponse.data.name,
-                          email: loginResponse.data.email || cachedEmail,
-                          phone: loginResponse.data.phone || cachedPhone,
-                          role: 'الادمن'
-                      }));
-                  }
-                  loginSuccess = true;
-              }
-          } catch (loginError) {
-              console.error('Auto login failed:', loginError);
-              toast.error('فشل تسجيل الدخول التلقائي. يرجى تسجيل الدخول يدوياً.');
+          if (loginResponse.meta && loginResponse.meta.access_token) {
+            const token = loginResponse.meta.access_token;
+            document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+            localStorage.setItem('token', token);
+
+            if (loginResponse.data) {
+              localStorage.setItem('user_info', JSON.stringify({
+                name: loginResponse.data.name,
+                email: loginResponse.data.email || cachedEmail,
+                phone: loginResponse.data.phone || cachedPhone,
+                country_code: selectedCountry?.dialCode?.replace('+', '') || '966',
+                role: 'الادمن'
+              }));
+            }
+            loginSuccess = true;
           }
+        } catch (loginError) {
+          console.error('Auto login failed:', loginError);
+          toast.error('فشل تسجيل الدخول التلقائي. يرجى تسجيل الدخول يدوياً.');
+        }
       } else {
-          console.log('Skipping auto-login: Missing credentials', { password: !!password, email: !!cachedEmail, phone: !!cachedPhone });
+        console.log('Skipping auto-login: Missing credentials', { password: !!password, email: !!cachedEmail, phone: !!cachedPhone });
       }
 
       // Clear sensitive data
@@ -154,37 +154,37 @@ export default function SetupPage() {
       const defaultSuffix = isLocal ? '.darab.academy.localhost:3000' : '.darab.academy';
 
       if (!loginSuccess) {
-           const tenantSuffix = process.env.NEXT_PUBLIC_TENANT_DOMAIN_SUFFIX || defaultSuffix;
-         const protocol = window.location.protocol; 
-         const tenantUrl = `${protocol}//${domainPrefix}${tenantSuffix}/auth/setup`; 
-         
-         console.log('Auto-login failed. Redirecting to tenant login:', tenantUrl);
-         window.location.href = tenantUrl;
-         return; 
+        const tenantSuffix = process.env.NEXT_PUBLIC_TENANT_DOMAIN_SUFFIX || defaultSuffix;
+        const protocol = window.location.protocol;
+        const tenantUrl = `${protocol}//${domainPrefix}${tenantSuffix}/auth/setup`;
+
+        console.log('Auto-login failed. Redirecting to tenant login:', tenantUrl);
+        window.location.href = tenantUrl;
+        return;
       }
 
       // Construct tenant URL
       const tenantSuffix = process.env.NEXT_PUBLIC_TENANT_DOMAIN_SUFFIX || defaultSuffix;
       const dashboardPath = process.env.NEXT_PUBLIC_TENANT_DASHBOARD_PATH || '/academic/courses/categories';
       const protocol = window.location.protocol; // http: or https:
-      
+
       // Get the token we just received
       const token = localStorage.getItem('token');
-      
+
       const tenantUrl = `${protocol}//${domainPrefix}${tenantSuffix}${dashboardPath}${token ? `?token=${token}` : ''}`;
-      
+
       console.log('Redirecting to tenant dashboard:', tenantUrl);
 
       window.location.href = tenantUrl;
     } catch (error: any) {
       console.error(error);
-      
+
       let handled = false;
 
       // Handle structured validation errors
       if (error.error && typeof error.error === 'object') {
         const errors = error.error;
-        
+
         // Specifically handle link_academy error
         if (errors.link_academy) {
           const msg = Array.isArray(errors.link_academy) ? errors.link_academy[0] : errors.link_academy;
@@ -192,17 +192,17 @@ export default function SetupPage() {
           toast.error(msg);
           handled = true;
         }
-        
+
         // Handle other field errors
         Object.keys(errors).forEach(key => {
           if (key !== 'link_academy') {
-              const msg = Array.isArray(errors[key]) ? errors[key][0] : errors[key];
-              toast.error(msg);
-              handled = true;
+            const msg = Array.isArray(errors[key]) ? errors[key][0] : errors[key];
+            toast.error(msg);
+            handled = true;
           }
         });
       }
-      
+
       if (!handled) {
         toast.error(error.message || 'حدث خطأ أثناء حفظ المعلومات');
       }
@@ -257,7 +257,7 @@ export default function SetupPage() {
             <div className="space-y-2 relative">
               <label className="block text-sm font-bold text-gray-700">المجال</label>
               <div className="relative">
-                <select 
+                <select
                   name="field"
                   value={formData.field}
                   onChange={handleChange}

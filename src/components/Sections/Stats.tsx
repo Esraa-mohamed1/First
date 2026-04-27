@@ -19,11 +19,11 @@ const Stats = () => {
                 priority
             />
             <div className="absolute inset-0 bg-gradient-to-br from-[#5d8ff3]/90 to-[#6b9bf7]/85 opacity-50 z-[1]"></div>
-            <div className="max-w-[1400px] mx-auto px-4 relative z-[2] flex flex-wrap justify-between gap-18">
+            <div className="max-w-[1400px] mx-auto px-4 relative z-[2] grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 lg:gap-18">
                 {stats.map((item, index) => (
                     <div key={index} className="text-center group flex flex-col items-center">
-                        <div className="text-5xl font-black mb-4 drop-shadow-lg">{item.value}</div>
-                        <div className="text-2xl font-black transition-all duration-300 group-hover:text-[#fbbf24]">{item.label}</div>
+                        <div className="text-3xl md:text-5xl font-black mb-2 md:mb-4 drop-shadow-lg">{item.value}</div>
+                        <div className="text-lg md:text-2xl font-black transition-all duration-300 group-hover:text-[#fbbf24]">{item.label}</div>
                     </div>
                 ))}
             </div>

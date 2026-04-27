@@ -17,8 +17,6 @@ export default function AuthLayout({
           className="object-cover"
           priority
         />
-        {/* Light overlay for better contrast */}
-        <div className="absolute inset-0 bg-white/20 backdrop-blur-sm" />
       </div>
 
       {/* Content */}

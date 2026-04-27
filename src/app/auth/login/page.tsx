@@ -165,7 +165,7 @@ export default function AcademyLoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 relative font-sans overflow-hidden bg-gray-50/50" dir="rtl">
+        <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 relative font-sans overflow-hidden" dir="rtl">
             <div className="w-full max-w-2xl relative z-10 animate-fade-in-up">
                 <div className="bg-white p-10 sm:p-14 lg:p-16 rounded-[48px] shadow-2xl shadow-blue-900/5 border border-gray-100 backdrop-blur-sm">
                     <div className="mb-10 text-center">
@@ -290,7 +290,7 @@ export default function AcademyLoginPage() {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full py-4.5 bg-blue-600 text-white font-black text-lg rounded-[24px] shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-1 active:scale-95 transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group shadow-blue-500/20"
+                                className="w-full h-[60px] bg-blue-600 text-white font-black text-lg rounded-[24px] shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-1 active:scale-95 transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group shadow-blue-500/20"
                             >
                                 {isLoading ? (
                                     <>
@@ -309,7 +309,7 @@ export default function AcademyLoginPage() {
                                 <button
                                     type="button"
                                     onClick={() => handleGoogleLogin()}
-                                    className="w-full py-4.5 bg-white border-2 border-gray-100 text-gray-700 font-bold rounded-[24px] hover:border-blue-200 hover:bg-blue-50/30 hover:text-blue-600 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm group"
+                                    className="w-full h-[60px] bg-white border-2 border-gray-100 text-gray-700 font-bold rounded-[24px] hover:border-blue-200 hover:bg-blue-50/30 hover:text-blue-600 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm group"
                                     disabled={isLoading}
                                 >
                                     <img src="https://www.google.com/favicon.ico" className="w-5 h-5 shadow-sm group-hover:scale-110 transition-transform" alt="Google" />
@@ -319,15 +319,7 @@ export default function AcademyLoginPage() {
                         </div>
                     </form>
 
-                    <div className="mt-12 text-center text-gray-500 font-bold">
-                        <span>ليس لديك حساب؟ </span>
-                        <button 
-                            onClick={() => router.push('/')}
-                            className="text-blue-600 hover:underline font-black"
-                        >
-                            أنشئ حسابك الآن
-                        </button>
-                    </div>
+
                 </div>
             </div>
         </div>

@@ -8,7 +8,7 @@ import { Course } from '@/types/api';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import CreateCourseModal from '@/components/Academic/Modals/CreateCourseModal';
+import CreateCourseModal from '@/components/Modals/CreateCourseModal';
 
 const MySwal = withReactContent(Swal);
 

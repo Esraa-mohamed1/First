@@ -46,9 +46,9 @@ export const getProfileStatus = async (): Promise<any> => {
   }
 };
 
-export const sendOtp = async (contact: string): Promise<ApiResponse<any>> => {
+export const sendOtp = async (contact: string, country_code?: string): Promise<ApiResponse<any>> => {
   try {
-    const response = await api.post<ApiResponse<any>>('https://api.darab.academy/api/academy/send-otp', { contact });
+    const response = await api.post<ApiResponse<any>>('https://api.darab.academy/api/academy/send-otp', { contact, country_code });
     return response.data;
   } catch (error: any) {
     console.error('Failed to send OTP:', error);
@@ -56,9 +56,9 @@ export const sendOtp = async (contact: string): Promise<ApiResponse<any>> => {
   }
 };
 
-export const verifyOtp = async (contact: string, otp: string): Promise<ApiResponse<any>> => {
+export const verifyOtp = async (contact: string, otp: string, country_code?: string): Promise<ApiResponse<any>> => {
   try {
-    const response = await api.post<ApiResponse<any>>('https://api.darab.academy/api/academy/check-otp', { contact, otp });
+    const response = await api.post<ApiResponse<any>>('https://api.darab.academy/api/academy/check-otp', { contact, otp, country_code });
     return response.data;
   } catch (error: any) {
     console.error('Failed to verify OTP:', error);

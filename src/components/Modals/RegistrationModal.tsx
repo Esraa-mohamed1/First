@@ -227,7 +227,8 @@ const RegistrationModal = () => {
                 name: (contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone),
                 academy_name: (contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone) + "'s Academy",
                 password: formData.password,
-                package_id: data?.package_id
+                package_id: data?.package_id,
+                country_code: selectedCountry?.dialCode?.replace('+', '') || '966'
             };
 
             if (contactMethod === 'email') {

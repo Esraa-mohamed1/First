@@ -40,6 +40,7 @@ export interface CreateAccountPayload {
   name: string;
   email: string;
   phone: string;
+  country_code?: string;
   academy_name: string;
   password?: string;
   package_id?: number;

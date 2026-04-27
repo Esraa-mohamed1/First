@@ -2,11 +2,10 @@
 
 import { Bell, Search, Globe, Plus, Menu } from 'lucide-react';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
-import CreateCourseModal from './Modals/CreateCourseModal';
+import { useModal } from '@/context/ModalContext';
 
 const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const { openModal } = useModal();
   const [user, setUser] = useState<{name: string, role: string} | null>(null);
 
   useEffect(() => {
@@ -79,19 +78,25 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                 </div>
             </div>
 
+            {/* Add Course Button */}
+            <button 
+              onClick={() => openModal('create-course')}
+              className="flex items-center gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100 px-6 py-2.5 rounded-xl font-black text-sm transition-all"
+            >
+                <Plus size={16} strokeWidth={3} />
+                <span>انشاء دورة</span>
+            </button>
+
             {/* Preview Button */}
             <button className="hidden lg:flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-black text-sm shadow-lg shadow-blue-100 transition-all">
-                <Plus size={16} strokeWidth={3} />
+                <Globe size={16} strokeWidth={3} />
                 <span>معاينة الموقع</span>
             </button>
           </div>
         </div>
       </header>
 
-      <CreateCourseModal 
-        isOpen={isCreateModalOpen} 
-        onClose={() => setIsCreateModalOpen(false)} 
-      />
+
     </>
   );
 };

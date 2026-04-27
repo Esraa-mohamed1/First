@@ -50,22 +50,22 @@ const Pricing = () => {
     }
 
     return (
-        <section className="bg-[#f8faff] py-32">
+        <section className="bg-[#f8faff] py-16 md:py-32">
             <div className="container mx-auto px-4">
-                <div className="text-center mb-24 relative z-10">
-                    <h2 className="text-3xl md:text-5xl font-black text-gray-900 leading-tight">
+                <div className="text-center mb-16 md:mb-24 relative z-10">
+                    <h2 className="text-2xl md:text-5xl font-black text-gray-900 leading-tight">
                         <span className="relative inline-block">
                             اختر باقتك وابدأ إدارة أكاديميتك بسهولة
-                            <span className="absolute bottom-2 left-0 w-full h-3 bg-yellow-300/60 -z-10 rounded-sm"></span>
+                            <span className="absolute bottom-1 md:bottom-2 left-0 w-full h-2 md:h-3 bg-yellow-300/60 -z-10 rounded-sm"></span>
                         </span>
                     </h2>
-                    <p className="mt-6 text-xl text-gray-600 max-w-2xl mx-auto font-medium">
+                    <p className="mt-4 md:mt-6 text-lg md:text-xl text-gray-600 max-w-2xl mx-auto font-medium">
                         اختر الباقة المناسبة لاحتياجات أكاديميتك وابدأ إدارة المدربين والخدمات بسهولة مع نظام مرن ينمو معك.
                     </p>
                 </div>
 
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch pt-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6 xl:gap-8 items-stretch pt-8 md:pt-12">
                     {displayPlans.map((plan, index) => {
                         const isPopular = plan.recomnd === 1;
 

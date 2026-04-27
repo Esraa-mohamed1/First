@@ -135,7 +135,11 @@ const LoginModal = () => {
         try {
             const payload = loginMethod === 'email' 
                 ? { email: formData.email, password: formData.password }
-                : { phone: formData.phone, password: formData.password };
+                : { 
+                    phone: formData.phone, 
+                    password: formData.password,
+                    country_code: selectedCountry?.dialCode?.replace('+', '') || '966'
+                  };
                 
             const response = await login(payload);
 
@@ -149,6 +153,7 @@ const LoginModal = () => {
                         name: response.data.name,
                         email: response.data.email,
                         phone: response.data.phone,
+                        country_code: selectedCountry?.dialCode?.replace('+', '') || '966',
                         role: 'الادمن'
                     }));
                 }
