@@ -303,10 +303,6 @@ const CreateCourseModal = () => {
                 </div>
 
                 <div className="flex justify-center gap-4">
-                  <button className="flex items-center gap-2 bg-blue-50 text-blue-600 px-6 py-3 rounded-xl font-black text-sm hover:bg-blue-100 transition-all">
-                    <Globe size={18} />
-                    <span>معاينة الموقع</span>
-                  </button>
                   <button onClick={handleClose} className="px-12 py-3.5 bg-gray-100 text-gray-900 font-black rounded-2xl hover:bg-gray-200 transition-all">الغاء</button>
                 </div>
               </div>

@@ -2,6 +2,7 @@
 
 import { Bell, Search, Globe, Plus, Menu } from 'lucide-react';
 import Image from 'next/image';
+import { useState, useEffect } from 'react';
 import { useModal } from '@/context/ModalContext';
 
 const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
@@ -87,11 +88,7 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                 <span>انشاء دورة</span>
             </button>
 
-            {/* Preview Button */}
-            <button className="hidden lg:flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-black text-sm shadow-lg shadow-blue-100 transition-all">
-                <Globe size={16} strokeWidth={3} />
-                <span>معاينة الموقع</span>
-            </button>
+
           </div>
         </div>
       </header>

@@ -17,7 +17,7 @@ interface SidebarProps {
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const pathname = usePathname();
   const [expandedItems, setExpandedItems] = useState<string[]>(['الدورات']);
-  const [user, setUser] = useState<{name: string, role: string} | null>(null);
+  const [user, setUser] = useState<{ name: string, role: string } | null>(null);
   const { openModal } = useModal();
 
   const toggleExpand = (label: string) => {
@@ -29,11 +29,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   useEffect(() => {
     const storedUser = localStorage.getItem('user_info');
     if (storedUser) {
-        try {
-            setUser(JSON.parse(storedUser));
-        } catch (e) {
-            console.error("Failed to parse user info");
-        }
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Failed to parse user info");
+      }
     }
   }, []);
 
@@ -89,7 +89,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       <div className="p-8 pb-10 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-blue-100">
-             د
+            د
           </div>
           <h1 className="text-3xl font-black text-blue-600 tracking-tight">درب</h1>
         </div>
@@ -120,14 +120,14 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                 }}
                 className={twMerge(
                   'flex items-center justify-between px-5 py-4 rounded-2xl transition-all duration-300',
-                  isActive 
-                    ? 'bg-[#EBF1FF] text-[#2563eb]' 
+                  isActive
+                    ? 'bg-[#EBF1FF] text-[#2563eb]'
                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                 )}
               >
                 <div className="flex items-center gap-4">
                   <item.icon size={22} className={twMerge(
-                      isActive ? "text-[#2563eb]" : "text-gray-400 group-hover:text-gray-600"
+                    isActive ? "text-[#2563eb]" : "text-gray-400 group-hover:text-gray-600"
                   )} />
                   <span className="font-bold text-[15px]">{item.label}</span>
                 </div>
@@ -172,28 +172,27 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
       {/* Help & Support Area */}
       <div className="p-6 border-t border-gray-100 space-y-4">
-          <button
-             onClick={() => openModal('create-course')}
-             className="w-full bg-blue-600 rounded-xl p-3 flex items-center justify-center gap-2 text-white font-bold text-sm shadow-lg shadow-blue-100 hover:brightness-110 transition-all"
-          >
-             <Plus size={18} strokeWidth={3} />
-             <span>انشاء دورة جديدة</span>
+        <button
+          onClick={() => openModal('create-course')}
+          className="w-full bg-blue-600 rounded-xl p-3 flex items-center justify-center gap-2 text-white font-bold text-sm shadow-lg shadow-blue-100 hover:brightness-110 transition-all"
+        >
+          <Plus size={18} strokeWidth={3} />
+          <span>انشاء دورة جديدة</span>
+        </button>
+        <div className="flex flex-col gap-2 px-2">
+          <button className="flex items-center gap-3 text-gray-500 hover:text-blue-600 transition-colors font-bold text-sm group">
+            <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+              <Users size={16} />
+            </div>
+            <span>مركز المساعدة</span>
           </button>
-          <div className="flex flex-col gap-2 px-2">
-              <button className="flex items-center gap-3 text-gray-500 hover:text-blue-600 transition-colors font-bold text-sm group">
-                  <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
-                      <Users size={16} />
-                  </div>
-                  <span>مركز المساعدة</span>
-              </button>
-              <button className="flex items-center gap-3 text-red-500 hover:text-red-600 transition-colors font-bold text-sm group">
-                  <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center group-hover:bg-red-100 transition-colors">
-                      <LogOut size={16} />
-                  </div>
-                  <span>مركز المساعدة</span> {/* In image it says something else maybe? but let's keep log out or similar */}
-                  <span onClick={() => { localStorage.clear(); window.location.href='/'; }}>تسجيل الخروج</span>
-              </button>
-          </div>
+          <button className="flex items-center gap-3 text-red-500 hover:text-red-600 transition-colors font-bold text-sm group">
+            <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center group-hover:bg-red-100 transition-colors">
+              <LogOut size={16} />
+            </div>
+            <span onClick={() => { localStorage.clear(); window.location.href = '/'; }}>تسجيل الخروج</span>
+          </button>
+        </div>
       </div>
     </aside>
   );

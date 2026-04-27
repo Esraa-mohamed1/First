@@ -239,10 +239,13 @@ const RegistrationModal = () => {
 
             const response = await createAccount(accountPayload);
 
-            if (response.data?.token) {
-                localStorage.setItem('token', response.data.token);
-            } else if (response.token) {
-                localStorage.setItem('token', response.token);
+            const token = response.meta?.access_token || response.data?.token || response.token;
+            
+            if (token) {
+                localStorage.setItem('token', token);
+                document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+            } else {
+                console.warn('No token found in registration response', response);
             }
 
             if (contactMethod === 'email') {
@@ -257,7 +260,8 @@ const RegistrationModal = () => {
             toast.success('تم إنشاء الحساب بنجاح');
             setStep(4);
         } catch (error: any) {
-            toast.error(error.message || 'حدث خطأ أثناء إنشاء الحساب');
+            const errorMessage = error.message || error.error || (typeof error === 'string' ? error : 'حدث خطأ أثناء إنشاء الحساب');
+            toast.error(errorMessage);
         } finally {
             setIsLoading(false);
         }
