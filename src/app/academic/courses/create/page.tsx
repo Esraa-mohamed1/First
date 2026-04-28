@@ -17,7 +17,8 @@ import {
   FileText,
   Monitor,
   GripVertical,
-  Trash2
+  Trash2,
+  Share
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createCourse, createUnit, getCategories, getCourse, updateCourse } from '@/services/courses';
@@ -284,300 +285,349 @@ export default function CreateCoursePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Top Header/Action Bar */}
-        <div className="p-6 flex items-center justify-between mb-6">
-           <div className="flex items-center gap-3">
-              <button 
-                className="flex items-center gap-2 px-4 py-2 bg-[#E2FBE9] text-[#22C55E] rounded-lg font-bold text-sm hover:brightness-95 transition-all"
-                onClick={() => setStatus('published')}
-              >
-                <Send size={16} />
-                نشر
-              </button>
-              <button className="flex items-center gap-2 px-4 py-2 bg-white text-gray-600 border border-gray-100 rounded-lg font-bold text-sm hover:bg-gray-50 transition-all">
-                <Eye size={16} />
-                معاينة
-              </button>
-           </div>
-
-           {/* Tab Switcher */}
-           <div className="bg-white p-1.5 rounded-2xl flex items-center gap-2 shadow-sm border border-gray-50">
-              <button 
-                onClick={() => setActiveTab('info')}
-                className={`px-8 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'info' ? 'bg-blue-50 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                معلومات الدورة
-              </button>
-              <button 
-                onClick={() => setActiveTab('content')}
-                className={`px-8 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'content' ? 'bg-blue-50 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                محتوي الدورة
-              </button>
-              <button 
-                onClick={() => setActiveTab('pricing')}
-                className={`px-8 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'pricing' ? 'bg-blue-50 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                السعر
-              </button>
-           </div>
-
-           <button 
-             onClick={() => router.back()}
-             className="flex items-center gap-2 px-4 py-2 bg-white text-gray-600 border border-gray-100 rounded-lg font-bold text-sm hover:bg-gray-50 transition-all"
-           >
-             <ArrowRight size={16} className="rotate-180" />
-             عودة
-           </button>
+    <>
+      <div className="space-y-6 p-4 md:p-6" dir="rtl">
+        {/* Top Action Bar */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <button 
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-full font-bold text-sm transition-all shadow-md shadow-green-100"
+            onClick={() => setStatus('published')}
+          >
+            <Share size={18} />
+            <span>نشر</span>
+          </button>
+          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-8 py-3 rounded-full font-bold text-sm transition-all shadow-sm">
+            <Eye size={18} />
+            <span>معاينة</span>
+          </button>
         </div>
+      </div>
 
-        <div className="bg-white rounded-[24px] p-8 min-h-[600px] shadow-sm border border-gray-50">
-          
+      {/* Tabs Header */}
+      <div className="flex items-center justify-start gap-8 border-b border-gray-200 px-2 md:px-4 overflow-x-auto hide-scrollbar">
+        <button
+          onClick={() => setActiveTab('info')}
+          className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
+            activeTab === 'info' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          معلومات الدورة
           {activeTab === 'info' && (
-            <div className="space-y-8">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                {/* Right Side: Basic Info */}
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-black text-gray-900">اسم الدورة <span className="text-red-500">*</span></label>
-                    <input
-                      type="text"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="ادخل اسم الدورة"
-                      className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-black text-gray-900">صورة الدورة <span className="text-red-500">*</span></label>
-                    <div
-                      className="border-2 border-dashed border-gray-100 rounded-[24px] p-12 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-blue-600 transition-all min-h-[320px] relative overflow-hidden bg-gray-50/30"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-                      {previewUrl ? (
-                        <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
-                      ) : (
-                        <>
-                          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                            <Upload className="text-gray-400 group-hover:text-blue-600" size={32} />
-                          </div>
-                          <div className="text-center">
-                            <p className="font-black text-gray-900">اضف صورة الدورة</p>
-                            <p className="text-xs font-bold text-gray-400 mt-2">صورة غلاف دورة : 1270x820</p>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Left Side: Accordion Sections */}
-                <div className="space-y-4">
-                  {/* Description Section */}
-                  <div className="border border-gray-100 rounded-[20px] overflow-hidden bg-white shadow-sm">
-                    <button 
-                      onClick={() => toggleSection('description')}
-                      className="w-full p-5 flex items-center justify-between font-black text-gray-900 hover:bg-gray-50/50 transition-all"
-                    >
-                      <span>وصف الدورة</span>
-                      {openSections.description ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                    </button>
-                    {openSections.description && (
-                      <div className="p-5 pt-0">
-                        <textarea
-                          value={description}
-                          onChange={(e) => setDescription(e.target.value)}
-                          placeholder="ادخل وصف الدورة"
-                          className="w-full p-4 bg-[#F8FAFC] border border-gray-50 rounded-xl outline-none focus:border-blue-600 font-bold min-h-[150px] text-right resize-none transition-all"
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* What You Will Learn Section */}
-                  <div className="border border-gray-100 rounded-[20px] overflow-hidden bg-white shadow-sm">
-                    <button 
-                      onClick={() => toggleSection('learning')}
-                      className="w-full p-5 flex items-center justify-between font-black text-gray-900 hover:bg-gray-50/50 transition-all"
-                    >
-                      <span>ماذا تتعلم</span>
-                      {openSections.learning ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                    </button>
-                    {openSections.learning && (
-                      <div className="p-5 pt-0">
-                        <textarea
-                          value={whatYouWillLearn}
-                          onChange={(e) => setWhatYouWillLearn(e.target.value)}
-                          placeholder="ماذا تتعلم في هذه الدورة ؟"
-                          className="w-full p-4 bg-[#F8FAFC] border border-gray-50 rounded-xl outline-none focus:border-blue-600 font-bold min-h-[150px] text-right resize-none transition-all"
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Who Is This For Section */}
-                  <div className="border border-gray-100 rounded-[20px] overflow-hidden bg-white shadow-sm">
-                    <button 
-                      onClick={() => toggleSection('audience')}
-                      className="w-full p-5 flex items-center justify-between font-black text-gray-900 hover:bg-gray-50/50 transition-all"
-                    >
-                      <span>لمن هذه الدورة</span>
-                      {openSections.audience ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                    </button>
-                    {openSections.audience && (
-                      <div className="p-5 pt-0">
-                        <textarea
-                          value={whoIsThisFor}
-                          onChange={(e) => setWhoIsThisFor(e.target.value)}
-                          placeholder="اذكر لمن تكون هذه الدورة ؟"
-                          className="w-full p-4 bg-[#F8FAFC] border border-gray-50 rounded-xl outline-none focus:border-blue-600 font-bold min-h-[150px] text-right resize-none transition-all"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom Actions */}
-              <div className="flex items-center gap-4 pt-10">
-                <button 
-                  onClick={handleSave}
-                  disabled={isSubmitting}
-                  className="flex-1 max-w-[280px] flex items-center justify-center gap-3 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 hover:brightness-110 active:scale-95 transition-all disabled:opacity-70"
-                >
-                  {isSubmitting ? <Loader2 className="animate-spin" /> : <Save size={20} />}
-                  حفظ
-                </button>
-              </div>
-            </div>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
           )}
-
+        </button>
+        <button
+          onClick={() => setActiveTab('content')}
+          className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
+            activeTab === 'content' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          محتوي الدورة
           {activeTab === 'content' && (
-            <div className="space-y-8">
-              {/* Title and Summary */}
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-black text-gray-900">{title || 'اسم الدورة'}</h2>
-                <div className="bg-gray-50 px-6 py-3 rounded-xl border border-gray-100 flex items-center gap-8">
-                   <div className="flex items-center gap-2">
-                      <span className="text-gray-400 font-bold text-sm">الاجمالي {units.length} وحدة</span>
-                      <div className="w-[1px] h-4 bg-gray-200"></div>
-                      <span className="text-gray-900 font-black">{getTotalLessons()} دروس</span>
-                   </div>
-                </div>
-              </div>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('pricing')}
+          className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
+            activeTab === 'pricing' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          التسعير
+          {activeTab === 'pricing' && (
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
+          )}
+        </button>
+      </div>
 
-              {/* Add Unit Button */}
-              {isAddingUnit ? (
-                <div className="bg-white border-2 border-blue-600 rounded-[24px] p-6 space-y-4">
-                  <input
-                    type="text"
-                    value={newUnitTitle}
-                    onChange={(e) => setNewUnitTitle(e.target.value)}
-                    placeholder="ادخل اسم الوحدة"
-                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all"
-                    autoFocus
-                  />
-                  <div className="flex items-center gap-3">
-                    <button 
-                      onClick={handleAddUnit}
-                      className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-black hover:brightness-110 transition-all"
-                    >
-                      <Plus size={18} />
-                      اضافة
-                    </button>
-                    <button 
-                      onClick={() => { setIsAddingUnit(false); setNewUnitTitle(''); }}
-                      className="px-6 py-3 bg-gray-100 text-gray-600 rounded-xl font-black hover:bg-gray-200 transition-all"
-                    >
-                      الغاء
-                    </button>
+      {/* Tab Content */}
+      <div className="mt-6">
+        {activeTab === 'info' && (
+          <div className="max-w-4xl space-y-6">
+            {/* Course Title */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-1 text-sm font-black text-gray-900">
+                اسم الدورة <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="ادخل اسم الدورة"
+                className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all"
+              />
+            </div>
+
+            {/* Course Image */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-1 text-sm font-black text-gray-900">
+                صورة الدورة <span className="text-red-500">*</span>
+              </label>
+              <div 
+                className="border-2 border-dashed border-gray-200 rounded-[32px] p-8 flex flex-col items-center justify-center gap-4 bg-gray-50 cursor-pointer hover:border-blue-600 transition-all group"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+                {previewUrl ? (
+                  <div className="relative w-full max-w-[200px] aspect-video rounded-2xl overflow-hidden">
+                    <img src={previewUrl} alt="Course Preview" className="object-cover w-full h-full" />
                   </div>
-                </div>
-              ) : (
-                <button 
-                  onClick={() => setIsAddingUnit(true)}
-                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-black shadow-lg shadow-blue-500/20 hover:brightness-110 transition-all"
-                >
-                  <Plus size={20} />
-                  اضافة وحدة
-                </button>
-              )}
-
-              {/* Units List */}
-              <div className="space-y-4">
-                {units.map((unit, unitIndex) => (
-                  <div key={unit.id} className="border border-gray-100 rounded-[24px] p-6 bg-white">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="text-gray-400 cursor-grab"><GripVertical size={20} /></div>
-                        <h3 className="text-lg font-black text-gray-900">الوحدة {unitIndex + 1} : {unit.title}</h3>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button 
-                          onClick={() => handleDeleteUnit(unit.id)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                        <button 
-                          onClick={() => toggleUnit(unit.id)}
-                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                        >
-                          {expandedUnits[unit.id] ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                        </button>
-                      </div>
+                ) : (
+                  <>
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Upload className="text-blue-600" size={32} />
                     </div>
-
-                    {expandedUnits[unit.id] && (
-                      <div className="space-y-3">
-                        {/* Lessons List */}
-                        {unit.lessons?.map((lesson: any, lessonIndex: number) => (
-                          <div key={lesson.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-black text-sm">
-                                {lessonIndex + 1}
-                              </div>
-                              <span className="font-bold text-gray-900">{lesson.title}</span>
-                            </div>
-                            <button 
-                              onClick={() => handleDeleteLesson(unit.id, lesson.id)}
-                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                            >
-                              <X size={16} />
-                            </button>
-                          </div>
-                        ))}
-
-                        {/* Add Lesson */}
-                        <div 
-                          onClick={() => handleAddLesson(unit.id)}
-                          className="border-2 border-dashed border-gray-100 rounded-2xl p-6 flex items-center justify-center gap-3 text-gray-400 font-bold cursor-pointer hover:border-blue-600 hover:text-blue-600 transition-all"
-                        >
-                          <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center">
-                            <Plus size={18} />
-                          </div>
-                          اضف درس جديد
-                        </div>
+                    <div className="text-center">
+                      <p className="font-black text-gray-900 text-lg">اضف صورة الدورة</p>
+                      <p className="text-sm font-bold text-gray-500 mt-2">صورة غلاف الدورة : 820x1270</p>
                     </div>
-                  )}
-                </div>
-              ))}
-                {units.length === 0 && (
-                  <div className="text-center py-12">
-                    <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <FileText size={36} className="text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">لا توجد وحدات بعد</h3>
-                    <p className="text-gray-500 mb-6">ابدأ بإضافة وحدات لدورتك</p>
-                  </div>
+                  </>
                 )}
               </div>
             </div>
-          )}
+
+            {/* Description Accordion */}
+            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+              <button 
+                onClick={() => toggleSection('description')}
+                className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
+              >
+                <span className="font-black text-gray-900">وصف الدورة</span>
+                {openSections.description ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+              </button>
+              {openSections.description && (
+                <div className="p-5 pt-0 border-t border-gray-50">
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="ادخل وصف الدورة"
+                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[120px] transition-all"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* What to learn Accordion */}
+            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+              <button 
+                onClick={() => toggleSection('learning')}
+                className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
+              >
+                <span className="font-black text-gray-900">ماذا تتعلم</span>
+                {openSections.learning ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+              </button>
+              {openSections.learning && (
+                <div className="p-5 pt-0 border-t border-gray-50">
+                  <textarea
+                    value={whatYouWillLearn}
+                    onChange={(e) => setWhatYouWillLearn(e.target.value)}
+                    placeholder="ماذا سيتعلم الطالب من هذه الدورة؟"
+                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[120px] transition-all"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Target Audience Accordion */}
+            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+              <button 
+                onClick={() => toggleSection('audience')}
+                className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
+              >
+                <span className="font-black text-gray-900">لمن هذه الدورة</span>
+                {openSections.audience ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+              </button>
+              {openSections.audience && (
+                <div className="p-5 pt-0 border-t border-gray-50">
+                  <textarea
+                    value={whoIsThisFor}
+                    onChange={(e) => setWhoIsThisFor(e.target.value)}
+                    placeholder="الفئة المستهدفة من الدورة"
+                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[120px] transition-all"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-4 pt-4">
+              <button 
+                onClick={() => router.back()}
+                className="px-10 py-3 bg-gray-100 text-gray-600 font-black rounded-full hover:bg-gray-200 transition-all text-sm"
+              >
+                عودة
+              </button>
+              <button 
+                onClick={handleSave}
+                disabled={isSubmitting}
+                className="px-12 py-3 bg-blue-600 text-white font-black rounded-full shadow-lg shadow-blue-100 hover:brightness-110 transition-all text-sm disabled:opacity-70"
+              >
+                {isSubmitting ? 'جاري الحفظ...' : 'حفظ'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'content' && (
+          <div className="flex flex-col gap-6">
+            {/* Header & Add Unit */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between border border-blue-200 rounded-xl p-2 bg-white gap-3 shadow-sm">
+              <div className="flex-1 text-center md:text-right px-4 py-1.5">
+                 <span className="font-bold text-gray-800 text-sm">
+                   الاجمالي {units?.length || 0} وحدة فقط | {getTotalLessons()} دروس
+                 </span>
+              </div>
+              <button 
+                onClick={() => setIsAddingUnit(!isAddingUnit)}
+                className="bg-blue-600 text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-md shadow-blue-100"
+              >
+                <Plus size={18} strokeWidth={3} />
+                <span>اضافة وحدة</span>
+              </button>
+            </div>
+
+            {/* Add Unit Form (Inline) */}
+            {isAddingUnit && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4 animate-in fade-in slide-in-from-top-2">
+                <h3 className="text-lg font-black text-gray-900">ادخل بيانات الوحدة</h3>
+                <div className="space-y-3">
+                   <div className="space-y-1.5">
+                     <label className="block text-xs font-bold text-gray-500">اسم الوحدة</label>
+                     <input 
+                       type="text" 
+                       value={newUnitTitle}
+                       onChange={(e) => setNewUnitTitle(e.target.value)}
+                       placeholder="ادخل اسم الوحدة"
+                       className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm transition-all"
+                     />
+                   </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button 
+                    onClick={() => setIsAddingUnit(false)}
+                    className="px-6 py-2.5 bg-gray-100 text-gray-600 font-bold rounded-full hover:bg-gray-200 transition-all text-sm"
+                  >
+                    الغاء
+                  </button>
+                  <button 
+                    onClick={handleAddUnit}
+                    disabled={isSubmitting}
+                    className="px-10 py-2.5 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-700 transition-all disabled:opacity-70 text-sm shadow-lg shadow-blue-50"
+                  >
+                    {isSubmitting ? 'جاري الحفظ...' : 'حفظ'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Units List */}
+            <div className="space-y-3">
+              {units && units.length > 0 ? (
+                units.map((unit) => (
+                  <div key={unit.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    {/* Unit Header */}
+                    <div 
+                      className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50/50 transition-colors"
+                      onClick={() => toggleUnit(unit.id)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <button className="p-1.5 bg-gray-50 rounded-lg text-blue-600">
+                          {expandedUnits[unit.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </button>
+                        <div>
+                          <h3 className="text-base md:text-lg font-black text-gray-900">{unit.title}</h3>
+                          {unit.description && <p className="text-xs text-gray-400 font-bold mt-0.5">{unit.description}</p>}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                         <button 
+                          onClick={(e) => { e.stopPropagation(); handleDeleteUnit(unit.id); }}
+                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Lessons List */}
+                    {expandedUnits[unit.id] && (
+                      <div className="border-t border-gray-100 p-4 space-y-4 bg-gray-50/30">
+                        {unit.lessons && unit.lessons.length > 0 ? (
+                          unit.lessons.map((lesson: any) => (
+                            <div key={lesson.id} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl hover:border-blue-200 transition-all group shadow-sm">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                                  lesson.type === 'video' ? 'bg-blue-50 text-blue-600' : 
+                                  lesson.type === 'pdf' ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'
+                                }`}>
+                                  {lesson.type === 'video' ? <Video size={18} /> : 
+                                   lesson.type === 'pdf' ? <FileText size={18} /> : <FileText size={18} />}
+                                </div>
+                                <div>
+                                  <h4 className="font-bold text-gray-900 text-sm">{lesson.title}</h4>
+                                  <div className="flex items-center gap-2 text-[10px] text-gray-400 font-bold mt-0.5">
+                                     <span>{lesson.type === 'video' ? 'فيديو' : lesson.type === 'pdf' ? 'ملف PDF' : 'عرض تقديمي'}</span>
+                                     {lesson.duration && <span>• {lesson.duration} دقيقة</span>}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-1.5">
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); handleDeleteLesson(unit.id, lesson.id); }}
+                                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        ) : null}
+                        
+                        {/* Add Lesson Button - Dotted Container Style */}
+                        <div className="border-2 border-dashed border-gray-300 rounded-xl p-1.5">
+                          <button 
+                            onClick={() => handleAddLesson(unit.id)}
+                            className="w-full py-3.5 rounded-xl text-gray-500 font-bold hover:text-blue-600 hover:bg-blue-50/50 transition-all flex items-center justify-center gap-2 text-sm group"
+                          >
+                            <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center group-hover:bg-blue-600 transition-all transform group-hover:scale-110">
+                                <Plus size={14} strokeWidth={3} className="text-white" />
+                            </div>
+                            <span>اضف درس جديد</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                !isAddingUnit && (
+                  <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-100">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Plus className="text-gray-300" size={32} />
+                    </div>
+                    <h3 className="text-lg font-black text-gray-900 mb-1">لا يوجد وحدات حتى الآن</h3>
+                    <p className="text-gray-400 font-bold text-sm mb-6">ابدأ بإضافة وحدة جديدة لترتيب محتوى الدورة</p>
+                    <button 
+                      onClick={() => setIsAddingUnit(true)}
+                      className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all text-sm"
+                    >
+                      اضافة وحدة جديدة
+                    </button>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        )}
 
           {activeTab === 'pricing' && (
             <div className="max-w-2xl mx-auto space-y-10 pt-10">
@@ -637,17 +687,17 @@ export default function CreateCoursePage() {
             </div>
           )}
         </div>
+        
+        <AddLessonModal
+          isOpen={isLessonModalOpen}
+          onClose={() => { setIsLessonModalOpen(false); setCurrentUnitForLesson(null); }}
+          unitId={currentUnitForLesson || 0}
+          unitName={units.find(u => u.id === currentUnitForLesson)?.title || ''}
+          courseTitle={title}
+          instructorName=''
+          onLessonAdded={handleLessonAdded}
+        />
       </div>
-      
-      <AddLessonModal
-        isOpen={isLessonModalOpen}
-        onClose={() => { setIsLessonModalOpen(false); setCurrentUnitForLesson(null); }}
-        unitId={currentUnitForLesson || 0}
-        unitName={units.find(u => u.id === currentUnitForLesson)?.title || ''}
-        courseTitle={title}
-        instructorName=''
-        onLessonAdded={handleLessonAdded}
-      />
-    </div>
+    </>
   );
 }

@@ -127,6 +127,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                 onClick={() => {
                   if (hasSubItems) {
                     toggleExpand(item.label);
+                    router.push(item.href);
                   }
                 }}
                 className={twMerge(

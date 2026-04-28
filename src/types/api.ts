@@ -3,7 +3,7 @@ export type PackageStatus = 'active' | 'inactive';
 export interface Feature {
   id: number;
   title: string;
-  value?: string; // Value/limit for this feature in a specific package
+  value?: string; 
 }
 
 export interface PackageFeatureAssociation {
@@ -14,13 +14,13 @@ export interface PackageFeatureAssociation {
 
 export interface Package {
   id: number;
-  titile: string; // Intentional typo to match backend
+  titile: string; 
   price: string;
   description: string;
 
-  desc?: string | null; // Added to match backend JSON
+  desc?: string | null; 
   duration_months: number;
-  is_active: number; // 1 for active, 0 for inactive
+  is_active: number; 
   max_students: number;
   max_instructors: number;
   max_courses: number;
@@ -30,7 +30,7 @@ export interface Package {
   package_features?: any[];
   trial_days?: number;
   order?: number;
-  recomnd?: number; // 1 for recommended/popular
+  recomnd?: number; 
   is_popular?: boolean;
 }
 
@@ -85,15 +85,15 @@ export interface Course {
   id: number;
   title: string;
   description: string;
-  category?: string; // Derived from category_id or backend logic
+  category?: string; 
   category_id?: number | null;
-  instructor?: string; // Not in API response, maybe derived or missing
+  instructor?: string; 
   user_id: number;
-  price: string | number; // API returns string "0.26"
+  price: string | number; 
   final_price: string | number;
   price_type: 'free' | 'paid';
-  image?: string; // API returns "image" URL string
-  cover_image?: string; // Old field, maybe deprecated?
+  image?: string; 
+  cover_image?: string; 
   status: 'published' | 'draft';
   type: string;
   units?: Unit[];
@@ -132,6 +132,17 @@ export interface CreateLessonPayload {
   order?: number;
   file_size_mb?: number;
   is_free: boolean;
+}
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  role?: string;
+  status?: 'active' | 'inactive' | string;
+  created_at?: string;
+  avatar?: string;
 }
 
 export interface ApiResponse<T> {
