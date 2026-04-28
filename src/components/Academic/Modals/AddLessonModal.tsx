@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Play, Video, FileText, FilePieChart as FilePowerpoint, Upload, Check, CheckCircle2, Loader2, Trash2 } from 'lucide-react';
+import { X, Play, Video, FileText, FilePieChart as FilePowerpoint, Upload, Check, CheckCircle2, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createLesson } from '@/services/courses';
 import { createVideoResource, uploadVideoFile, waitForVideoReady, fetchCollections, createCollection } from '@/services/bunnyStream';
@@ -318,7 +318,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
               </label>
               {!selectedFile ? (
                 <div
-                  className="border-2 border-dashed border-gray-200 rounded-[32px] p-10 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-blue-600 transition-all bg-gray-50"
+                  className="border-2 border-dashed border-gray-100 rounded-[32px] p-10 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-blue-600 transition-all bg-zinc-50 hover:bg-white"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <input
@@ -333,58 +333,57 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
                   </div>
                   <div className="text-center">
                     <p className="font-black text-gray-900 text-lg">
-                      اضغط للتحميل او اسحب الملف الي هنا
+                      اضغط لاختيار أو اسحب الملف إلى هنا
                     </p>
                     <p className="text-sm font-bold text-gray-500 mt-2">
-                      الحجم الاقصي للملف : MP4,PDF,PPTX. 500MB
+                      {lessonType === 'video' ? 'الحجم الأقصى للملف: 500MB (يفضل MP4)' : 'الحجم الأقصى للملف: 50MB'}
                     </p>
                   </div>
                 </div>
               ) : (
-                <div className="bg-blue-600 p-6 rounded-[24px] shadow-lg space-y-4">
+                <div className="bg-white border-2 border-blue-100 p-6 rounded-[24px] shadow-sm space-y-5">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 w-full pr-12 relative">
-                      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 bg-white text-blue-600 rounded-full flex items-center justify-center shadow-sm">
-                        {lessonType === 'video' ? <Video size={20} /> : lessonType === 'pdf' ? <FileText size={20} /> : <FilePowerpoint size={20} />}
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl shadow-sm">
+                        {lessonType === 'video' ? <Video size={28} /> : lessonType === 'pdf' ? <FileText size={28} /> : <FilePowerpoint size={28} />}
                       </div>
-                      <div className="text-right flex-1 w-full">
-                        <p className="text-base font-black text-white line-clamp-1 break-all" dir="ltr">{selectedFile.name}</p>
-                        <div className="flex items-center gap-2 text-sm font-bold text-blue-100 mt-1">
-                           <span>{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</span>
-                           {uploadStatus === 'uploading' && <span>• 5.0MB/s</span>}
-                        </div>
+                      <div className="text-right">
+                        <p className="text-base font-black text-gray-900 line-clamp-1 break-all" dir="ltr">{selectedFile.name}</p>
+                        <p className="text-sm font-bold text-gray-500 mt-0.5">
+                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
                       </div>
                     </div>
                     {uploadStatus === 'idle' ? (
-                      <button onClick={() => { setSelectedFile(null); }} className="p-2 text-white hover:bg-white/20 rounded-xl transition-colors">
-                        <Trash2 size={20} />
+                      <button onClick={() => { setSelectedFile(null); }} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors">
+                        <X size={20} />
                       </button>
                     ) : uploadStatus === 'ready' ? (
-                      <Check size={28} className="text-green-300" />
+                      <Check size={28} className="text-green-500" />
                     ) : (
-                      <Loader2 size={24} className="text-white animate-spin" />
+                      <Loader2 size={24} className="text-blue-600 animate-spin" />
                     )}
                   </div>
 
                   {uploadStatus !== 'idle' && (
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center text-xs font-bold text-blue-100">
+                    <div className="space-y-2 pt-2 border-t border-gray-100">
+                      <div className="flex justify-between items-center text-xs font-bold text-gray-600">
                         <div className="text-right flex items-center gap-2">
                           {uploadStatus === 'creating' && 'جاري تحضير الخوادم...'}
                           {uploadStatus === 'uploading' && (lessonType === 'video' ? 'جاري رفع الفيديو للشبكة السحابية' : 'جاري رفع الملف')}
                           {uploadStatus === 'processing' && 'جاري معالجة وتشفير الفيديو...'}
                           {uploadStatus === 'ready' && (lessonType === 'video' ? 'الفيديو جاهز للمشاهدة' : 'الملف جاهز')}
-                          {uploadStatus === 'error' && <span className="text-red-300">حدث خطأ أثناء الرفع</span>}
+                          {uploadStatus === 'error' && <span className="text-red-500">حدث خطأ أثناء الرفع</span>}
                         </div>
                         {uploadStatus === 'uploading' && (
-                          <div className="text-white font-black text-sm" dir="ltr">
+                          <div className="text-blue-600 font-black text-sm" dir="ltr">
                             {uploadProgress.toFixed(0)}%
                           </div>
                         )}
                       </div>
-                      <div className="h-2 bg-blue-800 rounded-full overflow-hidden">
+                      <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full transition-all duration-300 ease-out ${uploadStatus === 'error' ? 'bg-red-400' : 'bg-white'}`}
+                          className={`h-full rounded-full transition-all duration-300 ease-out ${uploadStatus === 'error' ? 'bg-red-500' : 'bg-blue-600'}`}
                           style={{ width: `${uploadProgress}%` }}
                         ></div>
                       </div>

@@ -4,10 +4,12 @@ import { Bell, Search, Globe, Plus, Menu } from 'lucide-react';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import SelectCourseTypeModal from './Modals/SelectCourseTypeModal';
 
 const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
   const router = useRouter();
   const [user, setUser] = useState<{name: string, role: string} | null>(null);
+  const [isSelectTypeModalOpen, setIsSelectTypeModalOpen] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user_info');
@@ -81,7 +83,7 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
 
             {/* Add Course Button */}
             <button 
-              onClick={() => router.push('/academic/courses/create')}
+              onClick={() => setIsSelectTypeModalOpen(true)}
               className="hidden lg:flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-black text-sm shadow-lg shadow-blue-100 transition-all"
             >
                 <Plus size={16} strokeWidth={3} />
@@ -90,6 +92,10 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
           </div>
         </div>
       </header>
+      <SelectCourseTypeModal 
+        isOpen={isSelectTypeModalOpen} 
+        onClose={() => setIsSelectTypeModalOpen(false)} 
+      />
     </>
   );
 };

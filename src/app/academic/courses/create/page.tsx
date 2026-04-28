@@ -16,17 +16,20 @@ import {
   Video,
   FileText,
   Monitor,
-  GripVertical
+  GripVertical,
+  Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { createCourse, getCategories, updateCourse } from '@/services/courses';
+import { createCourse, createUnit, getCategories, getCourse, updateCourse } from '@/services/courses';
 import { getProfileStatus, getMyUsageLimit } from '@/services/auth';
+import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
 
 export default function CreateCoursePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const courseTypeParam = searchParams.get('type');
   const [activeTab, setActiveTab] = useState<'info' | 'content' | 'pricing'>('info');
+  const [courseId, setCourseId] = useState<number | null>(null);
   
   // Basic Info States
   const [title, setTitle] = useState('');
@@ -60,9 +63,62 @@ export default function CreateCoursePage() {
   const [expandedUnits, setExpandedUnits] = useState<Record<number, boolean>>({});
   const [isAddingLesson, setIsAddingLesson] = useState<Record<number, boolean>>({});
   const [newLessonTitles, setNewLessonTitles] = useState<Record<number, string>>({});
+  const [lessonVideos, setLessonVideos] = useState<Record<number, File | null>>({});
+  const [lessonVideoPreviews, setLessonVideoPreviews] = useState<Record<number, string>>({});
+  const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
+  const [currentUnitForLesson, setCurrentUnitForLesson] = useState<number | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const refreshCourseContent = async (id: number) => {
+    const data = await getCourse(id);
+    const unitsFromApi = (data as any).chapters ? (data as any).chapters : data.units;
+    setUnits(unitsFromApi || []);
+    if (unitsFromApi && Array.isArray(unitsFromApi)) {
+      const nextExpanded: Record<number, boolean> = {};
+      for (const u of unitsFromApi) nextExpanded[u.id] = true;
+      setExpandedUnits(nextExpanded);
+    }
+  };
+
+  const ensureCourseCreated = async () => {
+    if (courseId) return courseId;
+    if (!title.trim()) {
+      toast.error('يرجى إدخال عنوان الدورة أولاً');
+      throw new Error('Missing course title');
+    }
+
+    // Get user ID from profile (fallback keeps existing behavior)
+    let userId = 2;
+    try {
+      const profile = await getProfileStatus();
+      const userData = profile.data || profile;
+      if (userData && userData.id) userId = userData.id;
+    } catch (err) {
+      console.error('Failed to get user profile', err);
+    }
+
+    const payload: any = {
+      title,
+      category_id: category || undefined,
+      description,
+      user_id: userId,
+      what_you_will_learn: whatYouWillLearn,
+      who_is_this_for: whoIsThisFor,
+      price: pricingType === 'free' ? 0 : Number(price || 0),
+      final_price: pricingType === 'free' ? 0 : Number(price || 0),
+      status: 'draft',
+      type: courseTypeParam || 'recorded',
+      price_type: pricingType,
+      image: selectedFile || undefined,
+    };
+
+    const created = await createCourse(payload);
+    setCourseId(created.id);
+    await refreshCourseContent(created.id);
+    return created.id;
+  };
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -78,6 +134,81 @@ export default function CreateCoursePage() {
 
   const toggleSection = (section: string) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const toggleUnit = (unitId: number) => {
+    setExpandedUnits(prev => ({ ...prev, [unitId]: !prev[unitId] }));
+  };
+
+  const handleAddUnit = async () => {
+    if (!newUnitTitle.trim()) {
+      toast.error('يرجى إدخال اسم الوحدة');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const id = await ensureCourseCreated();
+      await createUnit({
+        course_id: id,
+        title: newUnitTitle,
+        description: '',
+        order: (units?.length || 0) + 1,
+      });
+      toast.success('تم إضافة الوحدة بنجاح');
+      setNewUnitTitle('');
+      setIsAddingUnit(false);
+      await refreshCourseContent(id);
+    } catch (e) {
+      toast.error('فشل إضافة الوحدة');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteUnit = (unitId: number) => {
+    setUnits(prev => prev.filter(unit => unit.id !== unitId));
+    setExpandedUnits(prev => {
+      const newState = { ...prev };
+      delete newState[unitId];
+      return newState;
+    });
+  };
+
+  const handleAddLesson = async (unitId: number) => {
+    // Ensure course exists so unitId is always a real backend chapter id
+    if (!courseId) {
+      try {
+        await ensureCourseCreated();
+      } catch {
+        return;
+      }
+    }
+    setCurrentUnitForLesson(unitId);
+    setIsLessonModalOpen(true);
+  };
+
+  const handleLessonAdded = async () => {
+    setIsLessonModalOpen(false);
+    setCurrentUnitForLesson(null);
+    if (courseId) {
+      await refreshCourseContent(courseId);
+    }
+  };
+
+  const handleDeleteLesson = (unitId: number, lessonId: number) => {
+    setUnits(prev => prev.map(unit => {
+      if (unit.id === unitId) {
+        return {
+          ...unit,
+          lessons: unit.lessons.filter((lesson: any) => lesson.id !== lessonId)
+        };
+      }
+      return unit;
+    }));
+  };
+
+  const getTotalLessons = () => {
+    return units.reduce((total, unit) => total + (unit.lessons?.length || 0), 0);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,12 +263,19 @@ export default function CreateCoursePage() {
         status,
         type: courseTypeParam || 'recorded',
         price_type: pricingType,
+        final_price: pricingType === 'free' ? 0 : Number(price),
         image: selectedFile || undefined,
       };
 
-      await createCourse(payload);
-      toast.success('تم إنشاء الدورة بنجاح');
-      router.push('/academic/courses');
+      if (courseId) {
+        await updateCourse(courseId, payload);
+        toast.success('تم حفظ الدورة بنجاح');
+        router.push(`/academic/courses/${courseId}`);
+      } else {
+        const created = await createCourse(payload);
+        toast.success('تم إنشاء الدورة بنجاح');
+        router.push(`/academic/courses/${created.id}`);
+      }
     } catch (error: any) {
       toast.error(error?.message || 'فشل الحفظ');
     } finally {
@@ -327,39 +465,116 @@ export default function CreateCoursePage() {
                    <div className="flex items-center gap-2">
                       <span className="text-gray-400 font-bold text-sm">الاجمالي {units.length} وحدة</span>
                       <div className="w-[1px] h-4 bg-gray-200"></div>
-                      <span className="text-gray-900 font-black">0 دروس</span>
+                      <span className="text-gray-900 font-black">{getTotalLessons()} دروس</span>
                    </div>
                 </div>
               </div>
 
               {/* Add Unit Button */}
-              <button className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-black shadow-lg shadow-blue-500/20 hover:brightness-110 transition-all">
-                <Plus size={20} />
-                اضافة وحدة
-              </button>
+              {isAddingUnit ? (
+                <div className="bg-white border-2 border-blue-600 rounded-[24px] p-6 space-y-4">
+                  <input
+                    type="text"
+                    value={newUnitTitle}
+                    onChange={(e) => setNewUnitTitle(e.target.value)}
+                    placeholder="ادخل اسم الوحدة"
+                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all"
+                    autoFocus
+                  />
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={handleAddUnit}
+                      className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-black hover:brightness-110 transition-all"
+                    >
+                      <Plus size={18} />
+                      اضافة
+                    </button>
+                    <button 
+                      onClick={() => { setIsAddingUnit(false); setNewUnitTitle(''); }}
+                      className="px-6 py-3 bg-gray-100 text-gray-600 rounded-xl font-black hover:bg-gray-200 transition-all"
+                    >
+                      الغاء
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => setIsAddingUnit(true)}
+                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-black shadow-lg shadow-blue-500/20 hover:brightness-110 transition-all"
+                >
+                  <Plus size={20} />
+                  اضافة وحدة
+                </button>
+              )}
 
               {/* Units List */}
               <div className="space-y-4">
-                 <div className="border border-gray-100 rounded-[24px] p-6 bg-white">
-                    <div className="flex items-center justify-between mb-8">
-                       <div className="flex items-center gap-4">
-                          <div className="text-gray-400 cursor-grab"><GripVertical size={20} /></div>
-                          <h3 className="text-lg font-black text-gray-900">الوحدة الأولي : مقدمة في تجربة وواجهة المستخدم</h3>
-                       </div>
-                       <div className="flex items-center gap-2">
-                          <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"><X size={18} className="rotate-45" /></button>
-                          <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"><ChevronDown size={20} /></button>
-                       </div>
+                {units.map((unit, unitIndex) => (
+                  <div key={unit.id} className="border border-gray-100 rounded-[24px] p-6 bg-white">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className="text-gray-400 cursor-grab"><GripVertical size={20} /></div>
+                        <h3 className="text-lg font-black text-gray-900">الوحدة {unitIndex + 1} : {unit.title}</h3>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => handleDeleteUnit(unit.id)}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                        <button 
+                          onClick={() => toggleUnit(unit.id)}
+                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                        >
+                          {expandedUnits[unit.id] ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Add Lesson Placeholder */}
-                    <div className="border-2 border-dashed border-gray-100 rounded-2xl p-6 flex items-center justify-center gap-3 text-gray-400 font-bold cursor-pointer hover:border-blue-600 hover:text-blue-600 transition-all">
-                       <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-50">
-                          <Plus size={18} />
-                       </div>
-                       اضف درس جديد
+                    {expandedUnits[unit.id] && (
+                      <div className="space-y-3">
+                        {/* Lessons List */}
+                        {unit.lessons?.map((lesson: any, lessonIndex: number) => (
+                          <div key={lesson.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-black text-sm">
+                                {lessonIndex + 1}
+                              </div>
+                              <span className="font-bold text-gray-900">{lesson.title}</span>
+                            </div>
+                            <button 
+                              onClick={() => handleDeleteLesson(unit.id, lesson.id)}
+                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ))}
+
+                        {/* Add Lesson */}
+                        <div 
+                          onClick={() => handleAddLesson(unit.id)}
+                          className="border-2 border-dashed border-gray-100 rounded-2xl p-6 flex items-center justify-center gap-3 text-gray-400 font-bold cursor-pointer hover:border-blue-600 hover:text-blue-600 transition-all"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center">
+                            <Plus size={18} />
+                          </div>
+                          اضف درس جديد
+                        </div>
                     </div>
-                 </div>
+                  )}
+                </div>
+              ))}
+                {units.length === 0 && (
+                  <div className="text-center py-12">
+                    <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <FileText size={36} className="text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">لا توجد وحدات بعد</h3>
+                    <p className="text-gray-500 mb-6">ابدأ بإضافة وحدات لدورتك</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -423,6 +638,16 @@ export default function CreateCoursePage() {
           )}
         </div>
       </div>
+      
+      <AddLessonModal
+        isOpen={isLessonModalOpen}
+        onClose={() => { setIsLessonModalOpen(false); setCurrentUnitForLesson(null); }}
+        unitId={currentUnitForLesson || 0}
+        unitName={units.find(u => u.id === currentUnitForLesson)?.title || ''}
+        courseTitle={title}
+        instructorName=''
+        onLessonAdded={handleLessonAdded}
+      />
     </div>
   );
 }

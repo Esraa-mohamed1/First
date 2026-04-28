@@ -18,6 +18,7 @@ const VerificationModal = ({ isOpen, onClose, onSuccess }: VerificationModalProp
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [contact, setContact] = useState<string | null>(null);
+  const [errors, setErrors] = useState<string>('');
   const { selectedCountry } = useCountry();
 
   useEffect(() => {
@@ -88,8 +89,6 @@ const VerificationModal = ({ isOpen, onClose, onSuccess }: VerificationModalProp
     const lastIndex = Math.min(pastedData.length - 1, 5);
     inputRefs.current[lastIndex]?.focus();
   };
-
-  const [errors, setErrors] = useState<string>('');
 
   const handleVerify = async () => {
     const code = otp.join('');

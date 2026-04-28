@@ -7,7 +7,7 @@ import { LayoutGrid, GraduationCap, Users, FileText, Package, TrendingUp, Settin
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Image from 'next/image';
-import CreateCourseModal from './Modals/CreateCourseModal';
+import SelectCourseTypeModal from './Modals/SelectCourseTypeModal';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -19,7 +19,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const router = useRouter();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [user, setUser] = useState<{name: string, role: string} | null>(null);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSelectTypeModalOpen, setIsSelectTypeModalOpen] = useState(false);
 
   const toggleExpand = (label: string) => {
     setExpandedItems(prev =>
@@ -40,6 +40,13 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     }
   }, []);
 
+  // Keep "الدورات" expanded while inside any courses page
+  useEffect(() => {
+    if (pathname.startsWith('/academic/courses')) {
+      setExpandedItems(prev => (prev.includes('الدورات') ? prev : [...prev, 'الدورات']));
+    }
+  }, [pathname]);
+
   const menuItems = [
     {
       label: 'الرئيسية',
@@ -51,10 +58,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       icon: GraduationCap,
       href: '/academic/courses',
       subItems: [
-        { label: 'فئات الدورات', href: '/academic/courses/categories' },
-        { label: 'الأحصائيات', href: '/academic/courses/stats' },
+        { label: 'دورة مسجلة', href: '/academic/courses/recorded' },
         { label: 'دورة لايف اون لاين', href: '/academic/courses/live-online' },
         { label: 'دورة حضوري', href: '/academic/courses/in-person' },
+        { label: 'فئات الدورات', href: '/academic/courses/categories' },
+        { label: 'الأحصائيات', href: '/academic/courses/stats' },
       ],
     },
     {
@@ -107,7 +115,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-6 space-y-2 overflow-y-auto max-h-[calc(100vh-250px)]">
+      <nav className="flex-1 px-6 space-y-2 overflow-y-auto max-h-[calc(100vh-250px)] scrollbar-hide">
         {menuItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/academic' && pathname.startsWith(item.href));
           const hasSubItems = (item as any).subItems && (item as any).subItems.length > 0;
@@ -165,7 +173,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                       href={subItem.href}
                       className={twMerge(
                         'block px-4 py-2 text-sm font-medium rounded-lg transition-colors',
-                        pathname === subItem.href
+                        pathname === subItem.href || pathname.startsWith(subItem.href + '/')
                           ? 'text-blue-600 bg-blue-50'
                           : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                       )}
@@ -183,7 +191,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       {/* Help & Support Area */}
       <div className="p-6 border-t border-gray-100 space-y-4">
           <div 
-             onClick={() => router.push('/academic/courses/create')}
+             onClick={() => setIsSelectTypeModalOpen(true)}
              className="bg-blue-600 rounded-xl p-3 flex items-center justify-center gap-2 text-white font-bold text-sm shadow-lg shadow-blue-100 cursor-pointer hover:brightness-110 transition-all"
           >
              <Plus size={18} strokeWidth={3} />
@@ -208,6 +216,19 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           </div>
       </div>
     </aside>
+    <SelectCourseTypeModal 
+      isOpen={isSelectTypeModalOpen} 
+      onClose={() => setIsSelectTypeModalOpen(false)} 
+    />
+    <style jsx global>{`
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    `}</style>
     </>
   );
 };
