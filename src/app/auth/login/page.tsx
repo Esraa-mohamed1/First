@@ -165,7 +165,7 @@ export default function AcademyLoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 relative font-sans overflow-hidden bg-gray-50/50" dir="rtl">
+        <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 relative font-sans overflow-hidden " dir="rtl">
             <div className="w-full max-w-2xl relative z-10 animate-fade-in-up">
                 <div className="bg-white p-10 sm:p-14 lg:p-16 rounded-[48px] shadow-2xl shadow-blue-900/5 border border-gray-100 backdrop-blur-sm">
                     <div className="mb-10 text-center">
@@ -319,15 +319,7 @@ export default function AcademyLoginPage() {
                         </div>
                     </form>
 
-                    <div className="mt-12 text-center text-gray-500 font-bold">
-                        <span>ليس لديك حساب؟ </span>
-                        <button 
-                            onClick={() => router.push('/')}
-                            className="text-blue-600 hover:underline font-black"
-                        >
-                            أنشئ حسابك الآن
-                        </button>
-                    </div>
+               
                 </div>
             </div>
         </div>

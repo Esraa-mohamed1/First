@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2 } from 'lucide-react';
-import { getCourse, deleteUnit, deleteLesson, createUnit } from '@/services/courses';
+import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye, Share } from 'lucide-react';
+import { getCourse, deleteUnit, deleteLesson, createUnit, updateCourse } from '@/services/courses';
 import { Course, Unit, Lesson } from '@/types/api';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
 import EditUnitModal from '@/components/Academic/Modals/EditUnitModal';
@@ -34,6 +34,55 @@ export default function CourseDetailsPage() {
   const [isEditLessonOpen, setIsEditLessonOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
 
+  // Tabs State
+  const [activeTab, setActiveTab] = useState<'info' | 'content' | 'pricing'>('info');
+
+  // Info Tab Form State
+  const [courseInfo, setCourseInfo] = useState({
+    title: '',
+    description: '',
+    what_to_learn: '',
+    target_audience: '',
+  });
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [expandedInfoSections, setExpandedInfoSections] = useState<string[]>(['description']);
+
+  const toggleInfoSection = (section: string) => {
+    setExpandedInfoSections(prev =>
+      prev.includes(section) ? prev.filter(s => s !== section) : [...prev, section]
+    );
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedImage(file);
+      setPreviewImage(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSaveCourseInfo = async () => {
+    // Basic implementation for saving course info
+    try {
+      const payload: any = {
+        title: courseInfo.title,
+        description: courseInfo.description,
+        what_to_learn: courseInfo.what_to_learn,
+        target_audience: courseInfo.target_audience,
+      };
+      if (selectedImage) {
+        payload.image = selectedImage;
+      }
+      // Assuming updateCourse takes ID and payload
+      await updateCourse(Number(id), payload);
+      toast.success('تم حفظ بيانات الدورة بنجاح');
+    } catch (error) {
+      toast.error('فشل حفظ بيانات الدورة');
+    }
+  };
+
   const fetchCourse = async () => {
     try {
       const data = await getCourse(id);
@@ -44,6 +93,15 @@ export default function CourseDetailsPage() {
       }
       
       setCourse(data);
+      setCourseInfo({
+        title: data.title || '',
+        description: data.description || '',
+        what_to_learn: (data as any).what_to_learn || '',
+        target_audience: (data as any).target_audience || '',
+      });
+      if (data.image) {
+        setPreviewImage(data.image);
+      }
       
       if (data.units) {
         setExpandedUnits(data.units.map(u => u.id));
@@ -156,179 +214,369 @@ export default function CourseDetailsPage() {
 
   return (
     <div className="space-y-6 p-4 md:p-6" dir="rtl">
-      {/* Header */}
-      <div className="flex flex-col gap-3">
-        <h1 className="text-xl md:text-2xl font-black text-gray-900">{course.title}</h1>
-        
-        {/* Summary Bar & Add Unit Button */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between border border-blue-200 rounded-xl p-2 bg-white gap-3 shadow-sm">
-          <div className="flex-1 text-center md:text-right px-4 py-1.5">
-             <span className="font-bold text-gray-800 text-sm">
-               الاجمالي {course.units?.length || 0} وحدة فقط | {course.units?.reduce((acc, unit) => acc + (unit.lessons?.length || 0), 0) || 0} دروس
-             </span>
-          </div>
-          <button 
-            onClick={() => setIsAddingUnit(!isAddingUnit)}
-            className="bg-blue-600 text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-md shadow-blue-100"
-          >
-            <Plus size={18} strokeWidth={3} />
-            <span>اضافة وحدة</span>
+      {/* Top Action Bar */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-full font-bold text-sm transition-all shadow-md shadow-green-100">
+            <Share size={18} />
+            <span>نشر</span>
+          </button>
+          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-8 py-3 rounded-full font-bold text-sm transition-all shadow-sm">
+            <Eye size={18} />
+            <span>معاينة</span>
           </button>
         </div>
       </div>
 
-      {/* Add Unit Form (Inline) */}
-      {isAddingUnit && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4 animate-in fade-in slide-in-from-top-2">
-          <h3 className="text-lg font-black text-gray-900">ادخل بيانات الوحدة</h3>
-          <div className="space-y-3">
-             <div className="space-y-1.5">
-               <label className="block text-xs font-bold text-gray-500">اسم الوحدة</label>
-               <input 
-                 type="text" 
-                 value={newUnitTitle}
-                 onChange={(e) => setNewUnitTitle(e.target.value)}
-                 placeholder="ادخل اسم الوحدة"
-                 className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm transition-all"
-               />
-             </div>
-             <div className="space-y-1.5">
-               <label className="block text-xs font-bold text-gray-500">وصف للوحدة</label>
-               <textarea 
-                 value={newUnitDescription}
-                 onChange={(e) => setNewUnitDescription(e.target.value)}
-                 placeholder="ادخل وصف للوحدة"
-                 className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[80px] transition-all"
-               />
-             </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <button 
-              onClick={() => setIsAddingUnit(false)}
-              className="px-6 py-2.5 bg-gray-100 text-gray-600 font-bold rounded-full hover:bg-gray-200 transition-all text-sm"
-            >
-              الغاء
-            </button>
-            <button 
-              onClick={handleSaveUnit}
-              disabled={isSavingUnit}
-              className="px-10 py-2.5 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-700 transition-all disabled:opacity-70 text-sm shadow-lg shadow-blue-50"
-            >
-              {isSavingUnit ? 'جاري الحفظ...' : 'حفظ'}
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Tabs Header */}
+      <div className="flex items-center justify-start gap-8 border-b border-gray-200 px-2 md:px-4 overflow-x-auto hide-scrollbar">
+        <button
+          onClick={() => setActiveTab('info')}
+          className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
+            activeTab === 'info' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          معلومات الدورة
+          {activeTab === 'info' && (
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('content')}
+          className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
+            activeTab === 'content' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          محتوي الدورة
+          {activeTab === 'content' && (
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('pricing')}
+          className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
+            activeTab === 'pricing' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          التسعير
+          {activeTab === 'pricing' && (
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
+          )}
+        </button>
+      </div>
 
-      {/* Units List */}
-      <div className="space-y-3">
-        {course.units && course.units.length > 0 ? (
-          course.units.map((unit) => (
-            <div key={unit.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              {/* Unit Header */}
+      {/* Tab Content */}
+      <div className="mt-6">
+        {activeTab === 'info' && (
+          <div className="max-w-4xl space-y-6">
+            {/* Course Title */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-1 text-sm font-black text-gray-900">
+                اسم الدورة <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={courseInfo.title}
+                onChange={(e) => setCourseInfo({ ...courseInfo, title: e.target.value })}
+                placeholder="ادخل اسم الدورة"
+                className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all"
+              />
+            </div>
+
+            {/* Course Image */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-1 text-sm font-black text-gray-900">
+                صورة الدورة <span className="text-red-500">*</span>
+              </label>
               <div 
-                className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50/50 transition-colors"
-                onClick={() => toggleUnit(unit.id)}
+                className="border-2 border-dashed border-gray-200 rounded-[32px] p-8 flex flex-col items-center justify-center gap-4 bg-gray-50 cursor-pointer hover:border-blue-600 transition-all group"
+                onClick={() => fileInputRef.current?.click()}
               >
-                <div className="flex items-center gap-3">
-                  <button className="p-1.5 bg-gray-50 rounded-lg text-blue-600">
-                    {expandedUnits.includes(unit.id) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                  </button>
-                  <div>
-                    <h3 className="text-base md:text-lg font-black text-gray-900">{unit.title}</h3>
-                    {unit.description && <p className="text-xs text-gray-400 font-bold mt-0.5">{unit.description}</p>}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+                {previewImage ? (
+                  <div className="relative w-full max-w-[200px] aspect-video rounded-2xl overflow-hidden">
+                    <img src={previewImage} alt="Course Preview" className="object-cover w-full h-full" />
                   </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                   <button 
-                    onClick={(e) => { e.stopPropagation(); handleEditUnit(unit.id); }}
-                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                  >
-                    <Pencil size={16} />
-                  </button>
-                   <button 
-                    onClick={(e) => { e.stopPropagation(); handleDeleteUnit(unit.id); }}
-                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
+                ) : (
+                  <>
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Upload className="text-blue-600" size={32} />
+                    </div>
+                    <div className="text-center">
+                      <p className="font-black text-gray-900 text-lg">اضف صورة الدورة</p>
+                      <p className="text-sm font-bold text-gray-500 mt-2">صورة غلاف الدورة : 820x1270</p>
+                    </div>
+                  </>
+                )}
               </div>
+            </div>
 
-              {/* Lessons List */}
-              {expandedUnits.includes(unit.id) && (
-                <div className="border-t border-gray-100 p-4 space-y-4 bg-gray-50/30">
-                  {unit.lessons && unit.lessons.length > 0 ? (
-                    unit.lessons.map((lesson) => (
-                      <div key={lesson.id} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl hover:border-blue-200 transition-all group shadow-sm">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                            lesson.type === 'video' ? 'bg-blue-50 text-blue-600' : 
-                            lesson.type === 'pdf' ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'
-                          }`}>
-                            {lesson.type === 'video' ? <Video size={18} /> : 
-                             lesson.type === 'pdf' ? <FileText size={18} /> : <FilePowerpoint size={18} />}
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-gray-900 text-sm">{lesson.title}</h4>
-                            <div className="flex items-center gap-2 text-[10px] text-gray-400 font-bold mt-0.5">
-                               <span>{lesson.type === 'video' ? 'فيديو' : lesson.type === 'pdf' ? 'ملف PDF' : 'عرض تقديمي'}</span>
-                               {lesson.duration && <span>• {lesson.duration} دقيقة</span>}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-1.5">
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleEditLesson(lesson.id); }}
-                            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                          >
-                            <Pencil size={16} />
-                          </button>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleDeleteLesson(lesson.id); }}
-                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  ) : null}
-                  
-                  {/* Add Lesson Button - Dotted Container Style */}
-                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-1.5">
-                    <button 
-                      onClick={() => handleAddLesson(unit.id, unit.title)}
-                      className="w-full py-3.5 rounded-xl text-gray-500 font-bold hover:text-blue-600 hover:bg-blue-50/50 transition-all flex items-center justify-center gap-2 text-sm group"
-                    >
-                      <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center group-hover:bg-blue-600 transition-all transform group-hover:scale-110">
-                          <Plus size={14} strokeWidth={3} className="text-white" />
-                      </div>
-                      <span>اضف درس جديد</span>
-                    </button>
-                  </div>
+            {/* Description Accordion */}
+            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+              <button 
+                onClick={() => toggleInfoSection('description')}
+                className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
+              >
+                <span className="font-black text-gray-900">وصف الدورة</span>
+                {expandedInfoSections.includes('description') ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+              </button>
+              {expandedInfoSections.includes('description') && (
+                <div className="p-5 pt-0 border-t border-gray-50">
+                  <textarea
+                    value={courseInfo.description}
+                    onChange={(e) => setCourseInfo({ ...courseInfo, description: e.target.value })}
+                    placeholder="ادخل وصف الدورة"
+                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[120px] transition-all"
+                  />
                 </div>
               )}
             </div>
-          ))
-        ) : (
-          !isAddingUnit && (
-            <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-100">
-              <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Plus className="text-gray-300" size={32} />
-              </div>
-              <h3 className="text-lg font-black text-gray-900 mb-1">لا يوجد وحدات حتى الآن</h3>
-              <p className="text-gray-400 font-bold text-sm mb-6">ابدأ بإضافة وحدة جديدة لترتيب محتوى الدورة</p>
+
+            {/* What to learn Accordion */}
+            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
               <button 
-                onClick={() => setIsAddingUnit(true)}
-                className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all text-sm"
+                onClick={() => toggleInfoSection('what_to_learn')}
+                className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
               >
-                اضافة وحدة جديدة
+                <span className="font-black text-gray-900">ماذا تتعلم</span>
+                {expandedInfoSections.includes('what_to_learn') ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+              </button>
+              {expandedInfoSections.includes('what_to_learn') && (
+                <div className="p-5 pt-0 border-t border-gray-50">
+                  <textarea
+                    value={courseInfo.what_to_learn}
+                    onChange={(e) => setCourseInfo({ ...courseInfo, what_to_learn: e.target.value })}
+                    placeholder="ماذا سيتعلم الطالب من هذه الدورة؟"
+                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[120px] transition-all"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Target Audience Accordion */}
+            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+              <button 
+                onClick={() => toggleInfoSection('target_audience')}
+                className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
+              >
+                <span className="font-black text-gray-900">لمن هذه الدورة</span>
+                {expandedInfoSections.includes('target_audience') ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+              </button>
+              {expandedInfoSections.includes('target_audience') && (
+                <div className="p-5 pt-0 border-t border-gray-50">
+                  <textarea
+                    value={courseInfo.target_audience}
+                    onChange={(e) => setCourseInfo({ ...courseInfo, target_audience: e.target.value })}
+                    placeholder="الفئة المستهدفة من الدورة"
+                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[120px] transition-all"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-4 pt-4">
+              <button className="px-10 py-3 bg-gray-100 text-gray-600 font-black rounded-full hover:bg-gray-200 transition-all text-sm">
+                عودة
+              </button>
+              <button 
+                onClick={handleSaveCourseInfo}
+                className="px-12 py-3 bg-blue-600 text-white font-black rounded-full shadow-lg shadow-blue-100 hover:brightness-110 transition-all text-sm"
+              >
+                حفظ
               </button>
             </div>
-          )
+          </div>
+        )}
+
+        {activeTab === 'content' && (
+          <div className="flex flex-col gap-6">
+            {/* Header & Add Unit */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between border border-blue-200 rounded-xl p-2 bg-white gap-3 shadow-sm">
+              <div className="flex-1 text-center md:text-right px-4 py-1.5">
+                 <span className="font-bold text-gray-800 text-sm">
+                   الاجمالي {course.units?.length || 0} وحدة فقط | {course.units?.reduce((acc, unit) => acc + (unit.lessons?.length || 0), 0) || 0} دروس
+                 </span>
+              </div>
+              <button 
+                onClick={() => setIsAddingUnit(!isAddingUnit)}
+                className="bg-blue-600 text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-md shadow-blue-100"
+              >
+                <Plus size={18} strokeWidth={3} />
+                <span>اضافة وحدة</span>
+              </button>
+            </div>
+
+            {/* Add Unit Form (Inline) */}
+            {isAddingUnit && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4 animate-in fade-in slide-in-from-top-2">
+                <h3 className="text-lg font-black text-gray-900">ادخل بيانات الوحدة</h3>
+                <div className="space-y-3">
+                   <div className="space-y-1.5">
+                     <label className="block text-xs font-bold text-gray-500">اسم الوحدة</label>
+                     <input 
+                       type="text" 
+                       value={newUnitTitle}
+                       onChange={(e) => setNewUnitTitle(e.target.value)}
+                       placeholder="ادخل اسم الوحدة"
+                       className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm transition-all"
+                     />
+                   </div>
+                   <div className="space-y-1.5">
+                     <label className="block text-xs font-bold text-gray-500">وصف للوحدة</label>
+                     <textarea 
+                       value={newUnitDescription}
+                       onChange={(e) => setNewUnitDescription(e.target.value)}
+                       placeholder="ادخل وصف للوحدة"
+                       className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[80px] transition-all"
+                     />
+                   </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button 
+                    onClick={() => setIsAddingUnit(false)}
+                    className="px-6 py-2.5 bg-gray-100 text-gray-600 font-bold rounded-full hover:bg-gray-200 transition-all text-sm"
+                  >
+                    الغاء
+                  </button>
+                  <button 
+                    onClick={handleSaveUnit}
+                    disabled={isSavingUnit}
+                    className="px-10 py-2.5 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-700 transition-all disabled:opacity-70 text-sm shadow-lg shadow-blue-50"
+                  >
+                    {isSavingUnit ? 'جاري الحفظ...' : 'حفظ'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Units List */}
+            <div className="space-y-3">
+              {course.units && course.units.length > 0 ? (
+                course.units.map((unit) => (
+                  <div key={unit.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    {/* Unit Header */}
+                    <div 
+                      className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50/50 transition-colors"
+                      onClick={() => toggleUnit(unit.id)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <button className="p-1.5 bg-gray-50 rounded-lg text-blue-600">
+                          {expandedUnits.includes(unit.id) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </button>
+                        <div>
+                          <h3 className="text-base md:text-lg font-black text-gray-900">{unit.title}</h3>
+                          {unit.description && <p className="text-xs text-gray-400 font-bold mt-0.5">{unit.description}</p>}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                         <button 
+                          onClick={(e) => { e.stopPropagation(); handleEditUnit(unit.id); }}
+                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                         <button 
+                          onClick={(e) => { e.stopPropagation(); handleDeleteUnit(unit.id); }}
+                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Lessons List */}
+                    {expandedUnits.includes(unit.id) && (
+                      <div className="border-t border-gray-100 p-4 space-y-4 bg-gray-50/30">
+                        {unit.lessons && unit.lessons.length > 0 ? (
+                          unit.lessons.map((lesson) => (
+                            <div key={lesson.id} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl hover:border-blue-200 transition-all group shadow-sm">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                                  lesson.type === 'video' ? 'bg-blue-50 text-blue-600' : 
+                                  lesson.type === 'pdf' ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'
+                                }`}>
+                                  {lesson.type === 'video' ? <Video size={18} /> : 
+                                   lesson.type === 'pdf' ? <FileText size={18} /> : <FilePowerpoint size={18} />}
+                                </div>
+                                <div>
+                                  <h4 className="font-bold text-gray-900 text-sm">{lesson.title}</h4>
+                                  <div className="flex items-center gap-2 text-[10px] text-gray-400 font-bold mt-0.5">
+                                     <span>{lesson.type === 'video' ? 'فيديو' : lesson.type === 'pdf' ? 'ملف PDF' : 'عرض تقديمي'}</span>
+                                     {lesson.duration && <span>• {lesson.duration} دقيقة</span>}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-1.5">
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); handleEditLesson(lesson.id); }}
+                                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                >
+                                  <Pencil size={16} />
+                                </button>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); handleDeleteLesson(lesson.id); }}
+                                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        ) : null}
+                        
+                        {/* Add Lesson Button - Dotted Container Style */}
+                        <div className="border-2 border-dashed border-gray-300 rounded-xl p-1.5">
+                          <button 
+                            onClick={() => handleAddLesson(unit.id, unit.title)}
+                            className="w-full py-3.5 rounded-xl text-gray-500 font-bold hover:text-blue-600 hover:bg-blue-50/50 transition-all flex items-center justify-center gap-2 text-sm group"
+                          >
+                            <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center group-hover:bg-blue-600 transition-all transform group-hover:scale-110">
+                                <Plus size={14} strokeWidth={3} className="text-white" />
+                            </div>
+                            <span>اضف درس جديد</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                !isAddingUnit && (
+                  <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-100">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Plus className="text-gray-300" size={32} />
+                    </div>
+                    <h3 className="text-lg font-black text-gray-900 mb-1">لا يوجد وحدات حتى الآن</h3>
+                    <p className="text-gray-400 font-bold text-sm mb-6">ابدأ بإضافة وحدة جديدة لترتيب محتوى الدورة</p>
+                    <button 
+                      onClick={() => setIsAddingUnit(true)}
+                      className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all text-sm"
+                    >
+                      اضافة وحدة جديدة
+                    </button>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'pricing' && (
+          <div className="max-w-4xl space-y-6">
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center">
+              <h3 className="text-lg font-black text-gray-900 mb-2">إعدادات التسعير</h3>
+              <p className="text-gray-500 font-bold text-sm">سيتم إضافة إعدادات التسعير قريباً</p>
+            </div>
+          </div>
         )}
       </div>
 

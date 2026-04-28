@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { LayoutGrid, GraduationCap, Users, FileText, Package, TrendingUp, Settings, LogOut, ChevronLeft, X, LayoutDashboard, Plus } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -16,9 +16,18 @@ interface SidebarProps {
 
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const pathname = usePathname();
+  const router = useRouter();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [user, setUser] = useState<{name: string, role: string} | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  const toggleExpand = (label: string) => {
+    setExpandedItems(prev =>
+      prev.includes(label)
+        ? prev.filter(item => item !== label)
+        : [...prev, label]
+    );
+  };
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user_info');
@@ -26,7 +35,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         try {
             setUser(JSON.parse(storedUser));
         } catch (e) {
-            console.error("Failed to parse user info");
+            console.error("Failed to parse user info:", e);
         }
     }
   }, []);
@@ -44,6 +53,8 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       subItems: [
         { label: 'فئات الدورات', href: '/academic/courses/categories' },
         { label: 'الأحصائيات', href: '/academic/courses/stats' },
+        { label: 'دورة لايف اون لاين', href: '/academic/courses/live-online' },
+        { label: 'دورة حضوري', href: '/academic/courses/in-person' },
       ],
     },
     {
@@ -100,34 +111,70 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         {menuItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/academic' && pathname.startsWith(item.href));
           const hasSubItems = (item as any).subItems && (item as any).subItems.length > 0;
+          const isExpanded = expandedItems.includes(item.label);
 
           return (
             <div key={item.label} className="group">
-              <Link
-                href={item.href}
+              <div
+                onClick={() => {
+                  if (hasSubItems) {
+                    toggleExpand(item.label);
+                  }
+                }}
                 className={twMerge(
                   'flex items-center justify-between px-5 py-4 rounded-2xl transition-all duration-300',
                   isActive 
                     ? 'bg-[#EBF1FF] text-[#2563eb]' 
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900',
+                  hasSubItems ? 'cursor-pointer' : ''
                 )}
               >
-                <div className="flex items-center gap-4">
-                  <item.icon size={22} className={twMerge(
-                      isActive ? "text-[#2563eb]" : "text-gray-400 group-hover:text-gray-600"
-                  )} />
-                  <span className="font-bold text-[15px]">{item.label}</span>
-                </div>
-                {hasSubItems && (
-                  <ChevronLeft
-                    size={16}
-                    className={twMerge(
-                      "transition-transform duration-300 text-gray-400",
-                      isActive ? "rotate-90 text-[#2563eb]" : ""
-                    )}
-                  />
+                {!hasSubItems ? (
+                  <Link href={item.href} className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-4">
+                      <item.icon size={22} className={twMerge(
+                          isActive ? "text-[#2563eb]" : "text-gray-400 group-hover:text-gray-600"
+                      )} />
+                      <span className="font-bold text-[15px]">{item.label}</span>
+                    </div>
+                  </Link>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-4">
+                      <item.icon size={22} className={twMerge(
+                          isActive ? "text-[#2563eb]" : "text-gray-400 group-hover:text-gray-600"
+                      )} />
+                      <span className="font-bold text-[15px]">{item.label}</span>
+                    </div>
+                    <ChevronLeft
+                      size={16}
+                      className={twMerge(
+                        "transition-transform duration-300 text-gray-400",
+                        isExpanded ? "-rotate-90 text-[#2563eb]" : ""
+                      )}
+                    />
+                  </>
                 )}
-              </Link>
+              </div>
+              
+              {hasSubItems && isExpanded && (
+                <div className="mt-2 ml-4 pl-4 border-l-2 border-gray-100 space-y-1">
+                  {(item as any).subItems.map((subItem: any) => (
+                    <Link
+                      key={subItem.href}
+                      href={subItem.href}
+                      className={twMerge(
+                        'block px-4 py-2 text-sm font-medium rounded-lg transition-colors',
+                        pathname === subItem.href
+                          ? 'text-blue-600 bg-blue-50'
+                          : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                      )}
+                    >
+                      {subItem.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
@@ -136,7 +183,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       {/* Help & Support Area */}
       <div className="p-6 border-t border-gray-100 space-y-4">
           <div 
-             onClick={() => setIsCreateModalOpen(true)}
+             onClick={() => router.push('/academic/courses/create')}
              className="bg-blue-600 rounded-xl p-3 flex items-center justify-center gap-2 text-white font-bold text-sm shadow-lg shadow-blue-100 cursor-pointer hover:brightness-110 transition-all"
           >
              <Plus size={18} strokeWidth={3} />
@@ -161,14 +208,8 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           </div>
       </div>
     </aside>
-
-      <CreateCourseModal 
-        isOpen={isCreateModalOpen} 
-        onClose={() => setIsCreateModalOpen(false)} 
-      />
     </>
   );
 };
 
 export default Sidebar;
-
