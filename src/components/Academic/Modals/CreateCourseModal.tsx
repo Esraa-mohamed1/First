@@ -18,7 +18,7 @@ interface CreateCourseModalProps {
 const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps) => {
   const router = useRouter();
   const pathname = usePathname();
-  const [step, setStep] = useState(2);
+  const [step, setStep] = useState(1);
   const [courseType, setCourseType] = useState<string | null>(null);
 
   // Basic Info States
@@ -118,7 +118,7 @@ const CreateCourseModal = ({ isOpen, onClose, courseId }: CreateCourseModalProps
   if (!isOpen) return null;
 
   const handleClose = () => {
-    setStep(2);
+    setStep(1);
     setCourseType(null);
     setTitle('');
     setCategory('');

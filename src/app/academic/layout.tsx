@@ -29,8 +29,14 @@ export default function AcademicLayout({
       } else {
         const localToken = localStorage.getItem('token');
         if (!localToken) {
-          router.push('/auth/login');
-          return;
+          // Allow guest access to landing page, redirect only if trying to access academic routes
+          if (typeof window !== 'undefined') {
+            const path = window.location.pathname;
+            if (path.startsWith('/academic')) {
+              router.push('/auth/login');
+              return;
+            }
+          }
         }
       }
     }
@@ -49,11 +55,20 @@ export default function AcademicLayout({
         console.log('Academic verification status:', !!userData.email_verified_at, userData);
       } catch (error) {
         console.error('Failed to check verification:', error);
-        router.push('/auth/login');
+        // Only redirect to login if not on guest landing page
+        if (typeof window !== 'undefined') {
+          const path = window.location.pathname;
+          if (path.startsWith('/academic')) {
+            router.push('/auth/login');
+          }
+        }
       }
     };
 
-    checkVerification();
+    const localToken = localStorage.getItem('token');
+    if (localToken) {
+      checkVerification();
+    }
   }, [router]);
 
   const handleVerificationClick = () => {

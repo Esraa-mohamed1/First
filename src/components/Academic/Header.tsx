@@ -79,10 +79,13 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                 </div>
             </div>
 
-            {/* Preview Button */}
-            <button className="hidden lg:flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-black text-sm shadow-lg shadow-blue-100 transition-all">
+            {/* Add Course Button */}
+            <button 
+              onClick={() => setIsCreateModalOpen(true)}
+              className="hidden lg:flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-black text-sm shadow-lg shadow-blue-100 transition-all"
+            >
                 <Plus size={16} strokeWidth={3} />
-                <span>معاينة الموقع</span>
+                <span>اضافة دورة</span>
             </button>
           </div>
         </div>

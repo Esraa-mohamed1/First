@@ -135,7 +135,7 @@ const LoginModal = () => {
         try {
             const payload = loginMethod === 'email' 
                 ? { email: formData.email, password: formData.password }
-                : { phone: formData.phone, password: formData.password };
+                : { phone: formData.phone, password: formData.password, country_code: selectedCountry?.isoCode };
                 
             const response = await login(payload);
 

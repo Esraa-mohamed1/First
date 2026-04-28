@@ -7,6 +7,7 @@ import { LayoutGrid, GraduationCap, Users, FileText, Package, TrendingUp, Settin
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Image from 'next/image';
+import CreateCourseModal from './Modals/CreateCourseModal';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -17,6 +18,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const pathname = usePathname();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [user, setUser] = useState<{name: string, role: string} | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user_info');
@@ -72,10 +74,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   ];
 
   return (
-    <aside className={twMerge(
-      "w-72 bg-white h-screen fixed right-0 top-0 border-l border-gray-100 flex flex-col z-[50] transition-transform duration-300 ease-in-out lg:translate-x-0 shadow-sm",
-      isOpen ? "translate-x-0" : "translate-x-full"
-    )}>
+    <>
+      <aside className={twMerge(
+        "w-72 bg-white h-screen fixed right-0 top-0 border-l border-gray-100 flex flex-col z-[50] transition-transform duration-300 ease-in-out lg:translate-x-0 shadow-sm",
+        isOpen ? "translate-x-0" : "translate-x-full"
+      )}>
       {/* Branding Section */}
       <div className="p-8 pb-10 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -132,7 +135,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
       {/* Help & Support Area */}
       <div className="p-6 border-t border-gray-100 space-y-4">
-          <div className="bg-blue-600 rounded-xl p-3 flex items-center justify-center gap-2 text-white font-bold text-sm shadow-lg shadow-blue-100 cursor-pointer hover:brightness-110 transition-all">
+          <div 
+             onClick={() => setIsCreateModalOpen(true)}
+             className="bg-blue-600 rounded-xl p-3 flex items-center justify-center gap-2 text-white font-bold text-sm shadow-lg shadow-blue-100 cursor-pointer hover:brightness-110 transition-all"
+          >
              <Plus size={18} strokeWidth={3} />
              <span>انشاء دورة جديدة</span>
           </div>
@@ -143,16 +149,24 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                   </div>
                   <span>مركز المساعدة</span>
               </button>
-              <button className="flex items-center gap-3 text-red-500 hover:text-red-600 transition-colors font-bold text-sm group">
+              <button 
+                  onClick={() => { localStorage.clear(); window.location.href='/'; }}
+                  className="flex items-center gap-3 text-red-500 hover:text-red-600 transition-colors font-bold text-sm group"
+              >
                   <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center group-hover:bg-red-100 transition-colors">
                       <LogOut size={16} />
                   </div>
-                  <span>مركز المساعدة</span> {/* In image it says something else maybe? but let's keep log out or similar */}
-                  <span onClick={() => { localStorage.clear(); window.location.href='/'; }}>تسجيل الخروج</span>
+                  <span>تسجيل الخروج</span>
               </button>
           </div>
       </div>
     </aside>
+
+      <CreateCourseModal 
+        isOpen={isCreateModalOpen} 
+        onClose={() => setIsCreateModalOpen(false)} 
+      />
+    </>
   );
 };
 

@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ShieldCheck, Mail, X, Loader2, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { sendOtp, verifyOtp } from '@/services/auth';
+import { useCountry } from '@/hooks/useCountry';
 
 interface VerificationModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ const VerificationModal = ({ isOpen, onClose, onSuccess }: VerificationModalProp
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [contact, setContact] = useState<string | null>(null);
+  const { selectedCountry } = useCountry();
 
   useEffect(() => {
     if (isOpen) {
@@ -42,7 +44,7 @@ const VerificationModal = ({ isOpen, onClose, onSuccess }: VerificationModalProp
 
     setLoading(true);
     try {
-      await sendOtp(contact);
+      await sendOtp(contact, selectedCountry?.isoCode);
       toast.success('تم إرسال رمز التحقق بنجاح');
       setStep('otp');
     } catch (error: any) {
@@ -104,7 +106,7 @@ const VerificationModal = ({ isOpen, onClose, onSuccess }: VerificationModalProp
     setErrors('');
     setLoading(true);
     try {
-      const response = await verifyOtp(contact, code);
+      const response = await verifyOtp(contact, code, selectedCountry?.isoCode);
       if (response.status) {
         toast.success('تم التحقق بنجاح');
         

@@ -234,6 +234,7 @@ const RegistrationModal = () => {
                 accountPayload.email = formData.email;
             } else {
                 accountPayload.phone = formData.phone;
+                accountPayload.country_code = selectedCountry?.isoCode;
             }
 
             const response = await createAccount(accountPayload);
