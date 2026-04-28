@@ -23,6 +23,8 @@ import {
 import toast from 'react-hot-toast';
 import { createCourse, createUnit, getCategories, getCourse, updateCourse } from '@/services/courses';
 import { getProfileStatus, getMyUsageLimit } from '@/services/auth';
+import { getUsers } from '@/services/users';
+import { User } from '@/types/api';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
 
 export default function CreateCoursePage() {
@@ -31,6 +33,7 @@ export default function CreateCoursePage() {
   const courseTypeParam = searchParams.get('type');
   const [activeTab, setActiveTab] = useState<'info' | 'content' | 'pricing'>('info');
   const [courseId, setCourseId] = useState<number | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   
   // Basic Info States
   const [title, setTitle] = useState('');
@@ -39,6 +42,8 @@ export default function CreateCoursePage() {
   const [description, setDescription] = useState('');
   const [whatYouWillLearn, setWhatYouWillLearn] = useState('');
   const [whoIsThisFor, setWhoIsThisFor] = useState('');
+  const [selectedInstructor, setSelectedInstructor] = useState<number | null>(null);
+  const [instructors, setInstructors] = useState<User[]>([]);
   
   // Accordion States
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -91,13 +96,9 @@ export default function CreateCoursePage() {
     }
 
     // Get user ID from profile (fallback keeps existing behavior)
-    let userId = 2;
-    try {
-      const profile = await getProfileStatus();
-      const userData = profile.data || profile;
-      if (userData && userData.id) userId = userData.id;
-    } catch (err) {
-      console.error('Failed to get user profile', err);
+    let userId = currentUser?.id || 2; // Default to 2 if no current user or ID
+    if (selectedInstructor) {
+      userId = selectedInstructor;
     }
 
     const payload: any = {
@@ -124,8 +125,20 @@ export default function CreateCoursePage() {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const cats = await getCategories();
+        const [cats, profile] = await Promise.all([
+          getCategories(),
+          getProfileStatus()
+        ]);
         setCategories(cats);
+
+        const userData = profile.data || profile;
+        if (userData) {
+          setCurrentUser(userData);
+          if (userData.role === 'admin') {
+            const allUsers = await getUsers();
+            setInstructors(allUsers.filter(user => user.role === 'instructor' || user.role === 'admin'));
+          }
+        }
       } catch (error) {
         console.error('Failed to fetch initial data:', error);
       }
@@ -225,15 +238,9 @@ export default function CreateCoursePage() {
     setIsSubmitting(true);
     try {
       // Get user ID from profile
-      let userId = 2;
-      try {
-        const profile = await getProfileStatus();
-        const userData = profile.data || profile;
-        if (userData && userData.id) {
-          userId = userData.id;
-        }
-      } catch (err) {
-        console.error('Failed to get user profile', err);
+      let userId = currentUser?.id || 2; // Default to 2 if no current user or ID
+      if (selectedInstructor) {
+        userId = selectedInstructor;
       }
 
       // Check usage limit for new courses
@@ -255,7 +262,7 @@ export default function CreateCoursePage() {
 
       const payload: any = {
         title,
-        category_id: category,
+        category_id: category ? Number(category) : undefined,
         description,
         user_id: userId,
         what_you_will_learn: whatYouWillLearn,
@@ -358,6 +365,42 @@ export default function CreateCoursePage() {
                 className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all"
               />
             </div>
+
+            {/* Category Dropdown */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-1 text-sm font-black text-gray-900">
+                الفئة <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all appearance-none"
+              >
+                <option value="">اختر فئة</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Instructor Dropdown (Admin Only) */}
+            {currentUser?.role === 'admin' && (
+              <div className="space-y-2">
+                <label className="flex items-center gap-1 text-sm font-black text-gray-900">
+                  المدرب
+                </label>
+                <select
+                  value={selectedInstructor || ''}
+                  onChange={(e) => setSelectedInstructor(Number(e.target.value))}
+                  className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all appearance-none"
+                >
+                  <option value="">اختر مدرب</option>
+                  {instructors.map((inst) => (
+                    <option key={inst.id} value={inst.id}>{inst.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Course Image */}
             <div className="space-y-2">

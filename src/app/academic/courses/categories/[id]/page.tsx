@@ -25,6 +25,7 @@ export default function CategoryCoursesPage({ params }: { params: Promise<{ id: 
   // Edit Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
     fetchData();
@@ -33,8 +34,12 @@ export default function CategoryCoursesPage({ params }: { params: Promise<{ id: 
   const fetchData = async () => {
     setLoading(true);
     try {
+      const profile = await getProfileStatus();
+      const userData = profile.data || profile;
+      setCurrentUser(userData);
+
       const [coursesData, categoriesData] = await Promise.all([
-        getCourses(),
+        getCourses(userData?.id, userData?.role),
         getCategories()
       ]);
 
