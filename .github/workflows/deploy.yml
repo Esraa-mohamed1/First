@@ -17,7 +17,6 @@ jobs:
         with:
           node-version: '18'
 
-      # ✅ ضيف الخطوة دي
       - name: Decrypt .env
         run: node decrypt-env.js
         env:
