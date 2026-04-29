@@ -44,7 +44,7 @@ export default function AcademicDashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
                 {/* MAIN COLUMN (RIGHT in Dashboard logic) */}
-                <div className="lg:col-span-12 xl:col-span-9 space-y-8 order-2 xl:order-1">
+                <div className="lg:col-span-8 xl:col-span-9 space-y-8 order-1">
 
                     {/* 1. Stats Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -243,7 +243,7 @@ export default function AcademicDashboardPage() {
                 </div>
 
                 {/* SIDEBAR COLUMN (LEFT) */}
-                <div className="lg:col-span-12 xl:col-span-3 space-y-8 xl:sticky xl:top-28 order-1 xl:order-2">
+                <div className="lg:col-span-4 xl:col-span-3 space-y-8 lg:sticky lg:top-28 order-2">
 
                     {/* 7. Checklist Section */}
                     <div className="bg-white rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-200/10 p-8 space-y-8">
