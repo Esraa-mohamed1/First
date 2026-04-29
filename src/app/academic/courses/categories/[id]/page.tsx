@@ -4,6 +4,7 @@ import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft,
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCourses, deleteCourse, getCategories } from '@/services/courses';
+import { getProfileStatus } from '@/services/auth';
 import { Course } from '@/types/api';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';

@@ -78,18 +78,18 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
     try {
       const usageResponse = await getMyUsageLimit();
       const storageLimitObj = usageResponse?.data?.find((item: any) => item.feature_slug === 'storage_limit');
-      
+
       if (storageLimitObj) {
         const totalGB = parseFloat(storageLimitObj.total_limit || '0');
         const usedGB = parseFloat(storageLimitObj.used_amount || '0');
-        
+
         // Calculate remaining in bytes
         const remainingStorage = (totalGB - usedGB) * 1024 * 1024 * 1024;
-        
+
         if (remainingStorage <= 0 || selectedFile.size > remainingStorage) {
           const availableMB = Math.max(0, Math.round(remainingStorage / 1024 / 1024));
           toast.error(
-            `عفواً، لقد تجاوزت المساحة المخصصة لك. المساحة المتاحة: ${availableMB} MB. برجاء ترقية حسابك لرفع المزيد من الملفات.`, 
+            `عفواً، لقد تجاوزت المساحة المخصصة لك. المساحة المتاحة: ${availableMB} MB. برجاء ترقية حسابك لرفع المزيد من الملفات.`,
             { duration: 5000, icon: '⚠️' }
           );
           return;
@@ -129,8 +129,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
         // Only process video if type is video and not already ready
         if (uploadStatus !== 'ready') {
           setUploadStatus('creating');
-          
-          // Collection Creation/Fetching logic
+
           let currentCollectionId = '';
           try {
             // Get data from localStorage or hostname (replicate academy-api logic)
@@ -145,26 +144,25 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
               }
             }
             tenantName = tenantName || 'Default';
-            
+
             // Get profile for academy_name
             const profile = await getProfileStatus();
             const userData = profile.data || profile;
             const academyName = userData?.academy_name || 'MyAcademy';
-            
+
             // Store important names in localStorage for persistence
             localStorage.setItem('cached_academy_name', academyName);
             if (instructorName) {
               localStorage.setItem('cached_instructor_name', instructorName);
             }
-            
+
             const finalInstructor = instructorName || localStorage.getItem('cached_instructor_name') || 'Instructor';
-            
-            // Construct collection name: (Tenant-Instructor-Course)
+
             const finalCollectionName = `(${tenantName}-${finalInstructor}-${courseTitle})`;
-            
+
             const collections = await fetchCollections(libraryId, bunnyApiKey);
             const existingCollection = collections.find((c: any) => c.name === finalCollectionName);
-            
+
             if (existingCollection) {
               currentCollectionId = existingCollection.guid;
             } else {
@@ -174,7 +172,6 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
             console.error('Failed to handle collection, proceeding without one:', colErr);
           }
 
-          // Construct video title: (Course-Unit-Lesson)
           const finalVideoTitle = `(${courseTitle}-${unitName}-${title})`;
           const guid = await createVideoResource(libraryId, bunnyApiKey, finalVideoTitle, currentCollectionId || undefined);
           setVideoId(guid);
@@ -188,14 +185,11 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
             await waitForVideoReady(libraryId, bunnyApiKey, guid, setProcessingStatus);
           } catch (pollingError: any) {
             console.warn('Video processing is slow but continuing on provider servers:', pollingError);
-            // Don't fail the whole lesson creation if just polling timed out
-            // The video is already uploaded and provider will finish processing it.
           }
 
           setUploadStatus('ready');
         }
       } else {
-        // Handle PDF/Powerpoint Upload
         setUploadStatus('uploading');
         finalFileUrl = await uploadFile(selectedFile!, setUploadProgress);
         setUploadStatus('ready');
@@ -419,11 +413,11 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
             >
               <span>{isSubmitting ? 'جاري الحفظ...' : 'حفظ الدرس'}</span>
               <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center p-0.5">
-                 {isSubmitting ? (
-                   <Loader2 className="animate-spin text-white" size={14} />
-                 ) : (
-                   <CheckCircle2 size={16} strokeWidth={3} className="text-white" />
-                 )}
+                {isSubmitting ? (
+                  <Loader2 className="animate-spin text-white" size={14} />
+                ) : (
+                  <CheckCircle2 size={16} strokeWidth={3} className="text-white" />
+                )}
               </div>
             </button>
           </div>
@@ -439,7 +433,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
       </div>
 
       {/* Verification Modal integration */}
-      <VerificationModal 
+      <VerificationModal
         isOpen={isVerificationModalOpen}
         onClose={() => setIsVerificationModalOpen(false)}
         onSuccess={() => {
