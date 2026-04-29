@@ -43,14 +43,8 @@ export default function CourseList({ typeFilter, title, description, createType 
       const userData = profile.data || profile;
       setCurrentUser(userData);
 
-      const data = await getCourses(userData?.id, userData?.role);
-      let filteredData = data || [];
-      
-      if (typeFilter) {
-        filteredData = filteredData.filter(c => c.type === typeFilter);
-      }
-      
-      setCourses(filteredData);
+      const data = await getCourses(userData?.id, userData?.role, typeFilter);
+      setCourses(data || []);
     } catch (error) {
       console.error(error);
       toast.error('فشل تحميل الدورات');

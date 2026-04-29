@@ -63,6 +63,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         { label: 'دورة حضوري', href: '/academic/courses/in-person' },
         { label: 'فئات الدورات', href: '/academic/courses/categories' },
         { label: 'الأحصائيات', href: '/academic/courses/stats' },
+        { label: 'معاينة كطالب (تجريبي)', href: '/academic/courses/3/student' },
       ],
     },
     {
@@ -167,7 +168,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               </div>
               
               {hasSubItems && isExpanded && (
-                <div className="mt-2 ml-4 pl-4 border-l-2 border-gray-100 space-y-1">
+                <div className="mt-2 mr-4 pr-4 border-r-2 border-gray-100 space-y-1">
                   {(item as any).subItems.map((subItem: any) => (
                     <Link
                       key={subItem.href}

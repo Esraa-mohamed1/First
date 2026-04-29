@@ -221,7 +221,10 @@ export default function CourseDetailsPage() {
             <Share size={18} />
             <span>نشر</span>
           </button>
-          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-8 py-3 rounded-full font-bold text-sm transition-all shadow-sm">
+          <button 
+            onClick={() => router.push(`/academic/courses/${id}/student`)}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-8 py-3 rounded-full font-bold text-sm transition-all shadow-sm"
+          >
             <Eye size={18} />
             <span>معاينة</span>
           </button>

@@ -47,7 +47,7 @@ export default function AcademicDashboardPage() {
                 <div className="lg:col-span-8 xl:col-span-9 space-y-8 order-1">
 
                     {/* 1. Stats Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6">
                         <StatCard
                             title="عدد الطلاب النشطة"
                             value="2,689"

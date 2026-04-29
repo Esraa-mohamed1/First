@@ -32,15 +32,25 @@ export const createCourse = async (payload: CreateCoursePayload): Promise<Course
   }
 };
 
-export const getCourses = async (userId?: number, userRole?: string): Promise<Course[]> => {
+export const getCourses = async (userId?: number, userRole?: string, type?: string): Promise<Course[]> => {
   try {
     let url = 'courses';
+    const params = new URLSearchParams();
+    
     if (userRole === 'academy' && userId) {
-      console.log("ssss",userRole)
-      url = `courses?user_id=${userId}`;
+      params.append('user_id', String(userId));
     }
+    
+    if (type) {
+      params.append('type', type);
+    }
+    
+    const queryString = params.toString();
+    if (queryString) {
+      url += `?${queryString}`;
+    }
+    
     const response = await academyApi.get<ApiResponse<Course[]>>(url);
-  
     return response.data.data;
   } catch (error: any) {
     console.error('Failed to get courses:', error);
