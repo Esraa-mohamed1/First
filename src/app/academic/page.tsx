@@ -8,12 +8,33 @@ import RevenueChart from '@/components/Academic/Charts/RevenueChart';
 import VisitsByDeviceChart from '@/components/Academic/Charts/VisitsByDeviceChart';
 import VisitsByCountryChart from '@/components/Academic/Charts/VisitsByCountryChart';
 import Image from 'next/image';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+import { useEffect } from 'react';
+
+const MySwal = withReactContent(Swal);
 
 function clsx(...classes: any[]) {
     return classes.filter(Boolean).join(' ');
 }
 
 export default function AcademicDashboardPage() {
+    useEffect(() => {
+        // Simulated storage check
+        const storageUsage = 82; // 82%
+        if (storageUsage > 80) {
+            MySwal.fire({
+                title: 'تنبيه مساحة التخزين',
+                text: 'لقد اوشكت على استنزاف مساحة التخزين الخاصة بك (82% مستخدم)',
+                icon: 'warning',
+                confirmButtonText: 'ترقية الباقة',
+                showCancelButton: true,
+                cancelButtonText: 'إغلاق',
+                confirmButtonColor: '#2563eb',
+            });
+        }
+    }, []);
+
     const students = [
         { name: 'أحمد هاني محمد', date: '22/10/2022', status: 'غير مدفوع', course: 'أساسيات برمجة' },
         { name: 'محمود فتحي', date: '19/8/2019', status: 'انتظار', course: 'تحليل بيانات' },

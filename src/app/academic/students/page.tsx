@@ -26,9 +26,7 @@ export default function StudentsPage() {
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      // The endpoint /users fetches all users, we might need to filter by role if needed.
-      // But based on instruction: "using endpoint /users"
-      const data = await getUsers();
+      const data = await getUsers('student');
       setStudents(data || []);
     } catch (error) {
       console.error(error);

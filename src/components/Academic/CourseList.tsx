@@ -183,6 +183,16 @@ export default function CourseList({ typeFilter, title, description, createType 
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  router.push(`/academic/courses/${course.id}/student`);
+                                }}
+                                className="w-full px-4 py-2.5 text-right text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center justify-end gap-3"
+                              >
+                                <span>معاينة كطالب</span>
+                                <Eye size={16} className="text-blue-600" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   handleDeleteCourse(course.id);
                                 }}
                                 className="w-full px-4 py-2.5 text-right text-sm font-bold text-red-600 hover:bg-red-50 flex items-center justify-end gap-3"

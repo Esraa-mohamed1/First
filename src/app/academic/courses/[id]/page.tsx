@@ -9,6 +9,7 @@ import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
 import EditUnitModal from '@/components/Academic/Modals/EditUnitModal';
 import EditLessonModal from '@/components/Academic/Modals/EditLessonModal';
 import toast from 'react-hot-toast';
+import QuillEditor from '@/components/Academic/QuillEditor';
 
 export default function CourseDetailsPage() {
   const params = useParams();
@@ -331,11 +332,10 @@ export default function CourseDetailsPage() {
               </button>
               {expandedInfoSections.includes('description') && (
                 <div className="p-5 pt-0 border-t border-gray-50">
-                  <textarea
+                  <QuillEditor
                     value={courseInfo.description}
-                    onChange={(e) => setCourseInfo({ ...courseInfo, description: e.target.value })}
+                    onChange={(val) => setCourseInfo({ ...courseInfo, description: val })}
                     placeholder="ادخل وصف الدورة"
-                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[120px] transition-all"
                   />
                 </div>
               )}
@@ -352,11 +352,10 @@ export default function CourseDetailsPage() {
               </button>
               {expandedInfoSections.includes('what_to_learn') && (
                 <div className="p-5 pt-0 border-t border-gray-50">
-                  <textarea
+                  <QuillEditor
                     value={courseInfo.what_to_learn}
-                    onChange={(e) => setCourseInfo({ ...courseInfo, what_to_learn: e.target.value })}
+                    onChange={(val) => setCourseInfo({ ...courseInfo, what_to_learn: val })}
                     placeholder="ماذا سيتعلم الطالب من هذه الدورة؟"
-                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[120px] transition-all"
                   />
                 </div>
               )}
@@ -373,11 +372,10 @@ export default function CourseDetailsPage() {
               </button>
               {expandedInfoSections.includes('target_audience') && (
                 <div className="p-5 pt-0 border-t border-gray-50">
-                  <textarea
+                  <QuillEditor
                     value={courseInfo.target_audience}
-                    onChange={(e) => setCourseInfo({ ...courseInfo, target_audience: e.target.value })}
+                    onChange={(val) => setCourseInfo({ ...courseInfo, target_audience: val })}
                     placeholder="الفئة المستهدفة من الدورة"
-                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[120px] transition-all"
                   />
                 </div>
               )}

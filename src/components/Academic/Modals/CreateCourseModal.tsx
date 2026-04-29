@@ -22,6 +22,7 @@ import {
 import toast from 'react-hot-toast';
 import { createCourse, getCategories, getCourse, updateCourse } from '@/services/courses';
 import { getProfileStatus, getMyUsageLimit } from '@/services/auth';
+import QuillEditor from '@/components/Academic/QuillEditor';
 
 interface CreateCourseModalProps {
   isOpen: boolean;
@@ -242,11 +243,10 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
                         </button>
                         {openSections.description && (
                           <div className="p-5 pt-0">
-                            <textarea
+                            <QuillEditor
                               value={description}
-                              onChange={(e) => setDescription(e.target.value)}
+                              onChange={setDescription}
                               placeholder="ادخل وصف الدورة"
-                              className="w-full p-4 bg-[#F8FAFC] border border-gray-50 rounded-xl outline-none focus:border-blue-600 font-bold min-h-[150px] text-right resize-none transition-all"
                             />
                           </div>
                         )}
@@ -263,11 +263,10 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
                         </button>
                         {openSections.learning && (
                           <div className="p-5 pt-0">
-                            <textarea
+                            <QuillEditor
                               value={whatYouWillLearn}
-                              onChange={(e) => setWhatYouWillLearn(e.target.value)}
+                              onChange={setWhatYouWillLearn}
                               placeholder="ماذا تتعلم في هذه الدورة ؟"
-                              className="w-full p-4 bg-[#F8FAFC] border border-gray-50 rounded-xl outline-none focus:border-blue-600 font-bold min-h-[150px] text-right resize-none transition-all"
                             />
                           </div>
                         )}
@@ -284,11 +283,10 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
                         </button>
                         {openSections.audience && (
                           <div className="p-5 pt-0">
-                            <textarea
+                            <QuillEditor
                               value={whoIsThisFor}
-                              onChange={(e) => setWhoIsThisFor(e.target.value)}
+                              onChange={setWhoIsThisFor}
                               placeholder="اذكر لمن تكون هذه الدورة ؟"
-                              className="w-full p-4 bg-[#F8FAFC] border border-gray-50 rounded-xl outline-none focus:border-blue-600 font-bold min-h-[150px] text-right resize-none transition-all"
                             />
                           </div>
                         )}

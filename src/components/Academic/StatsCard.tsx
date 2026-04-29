@@ -39,10 +39,10 @@ const StatCard = ({ title, value, trend, icon: Icon, color }: StatCardProps) => 
       <div className="flex items-start justify-between mb-4 md:mb-6 relative z-10">
         <div className="text-right space-y-0.5 md:space-y-1">
             <h3 className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-wider">{title}</h3>
-            <p className="text-xl md:text-2xl xl:text-3xl font-black text-gray-900 leading-tight tracking-tight">{value}</p>
+            <p className="text-lg md:text-xl xl:text-2xl font-black text-gray-900 leading-tight tracking-tight">{value}</p>
         </div>
-        <div className={twMerge("w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-[1.5rem] border-2 flex items-center justify-center shadow-sm group-hover:scale-110 transition-all duration-500", iconBg[color])}>
-          <Icon className={twMerge("w-5 h-5 md:w-8 md:h-8", colors[color].split(' ')[1])} />
+        <div className={twMerge("w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl border-2 flex items-center justify-center shadow-sm group-hover:scale-110 transition-all duration-500", iconBg[color])}>
+          <Icon className={twMerge("w-4 h-4 md:w-6 md:h-6", colors[color].split(' ')[1])} />
         </div>
       </div>
       

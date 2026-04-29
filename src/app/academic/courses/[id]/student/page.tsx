@@ -123,31 +123,10 @@ export default function CourseStudentViewPage() {
             {/* What you'll learn */}
             <div className="bg-white rounded-3xl p-8 md:p-10 border border-gray-100 shadow-xl shadow-gray-200/20">
               <h2 className="text-2xl font-black text-gray-900 mb-8">ماذا ستتعلم؟</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {(course as any).what_to_learn?.split('\n').filter(Boolean).map((item: string, i: number) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className="mt-1 bg-blue-50 text-blue-600 rounded-full p-1 shrink-0">
-                      <CheckCircle2 size={16} />
-                    </div>
-                    <span className="text-gray-600 font-bold leading-relaxed">{item}</span>
-                  </div>
-                )) || (
-                  <>
-                    <div className="flex items-start gap-3">
-                      <div className="mt-1 bg-blue-50 text-blue-600 rounded-full p-1 shrink-0">
-                        <CheckCircle2 size={16} />
-                      </div>
-                      <span className="text-gray-600 font-bold leading-relaxed">بناء أنظمة التصميم (Design Systems) القابلة للتوسع</span>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="mt-1 bg-blue-50 text-blue-600 rounded-full p-1 shrink-0">
-                        <CheckCircle2 size={16} />
-                      </div>
-                      <span className="text-gray-600 font-bold leading-relaxed">فهم سيكولوجية المستخدم وتطبيق مبادئ UX</span>
-                    </div>
-                  </>
-                )}
-              </div>
+              <div 
+                className="prose prose-blue max-w-none text-gray-600 font-bold leading-relaxed ql-editor"
+                dangerouslySetInnerHTML={{ __html: (course as any).what_to_learn || '' }}
+              />
             </div>
 
             {/* Course Content (Syllabus) */}
@@ -207,9 +186,10 @@ export default function CourseStudentViewPage() {
             <div className="space-y-6">
               <h2 className="text-2xl font-black text-gray-900">عن هذه الدورة</h2>
               <div className="bg-white rounded-3xl p-8 md:p-10 border border-gray-100 shadow-sm">
-                <div className="prose prose-blue max-w-none text-gray-600 font-bold leading-loose">
-                  {course.description || "لا يوجد وصف لهذه الدورة حالياً."}
-                </div>
+                <div 
+                  className="prose prose-blue max-w-none text-gray-600 font-bold leading-loose ql-editor"
+                  dangerouslySetInnerHTML={{ __html: course.description || "لا يوجد وصف لهذه الدورة حالياً." }}
+                />
               </div>
             </div>
           </div>

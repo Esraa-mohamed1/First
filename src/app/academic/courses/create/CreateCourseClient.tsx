@@ -21,6 +21,7 @@ import { getProfileStatus, getMyUsageLimit } from '@/services/auth';
 import { getUsers } from '@/services/users';
 import { User } from '@/types/api';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
+import QuillEditor from '@/components/Academic/QuillEditor';
 
 export default function CreateCourseClient() {
   const router = useRouter();
@@ -430,11 +431,10 @@ export default function CreateCourseClient() {
                 </button>
                 {openSections.description && (
                   <div className="p-5 pt-0 border-t border-gray-50">
-                    <textarea
+                    <QuillEditor
                       value={description}
-                      onChange={(e) => setDescription(e.target.value)}
+                      onChange={setDescription}
                       placeholder="ادخل وصف الدورة"
-                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[120px] transition-all"
                     />
                   </div>
                 )}
@@ -451,11 +451,10 @@ export default function CreateCourseClient() {
                 </button>
                 {openSections.learning && (
                   <div className="p-5 pt-0 border-t border-gray-50">
-                    <textarea
+                    <QuillEditor
                       value={whatYouWillLearn}
-                      onChange={(e) => setWhatYouWillLearn(e.target.value)}
+                      onChange={setWhatYouWillLearn}
                       placeholder="ماذا سيتعلم الطالب من هذه الدورة؟"
-                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[120px] transition-all"
                     />
                   </div>
                 )}
@@ -472,11 +471,10 @@ export default function CreateCourseClient() {
                 </button>
                 {openSections.audience && (
                   <div className="p-5 pt-0 border-t border-gray-50">
-                    <textarea
+                    <QuillEditor
                       value={whoIsThisFor}
-                      onChange={(e) => setWhoIsThisFor(e.target.value)}
+                      onChange={setWhoIsThisFor}
                       placeholder="الفئة المستهدفة من الدورة"
-                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[120px] transition-all"
                     />
                   </div>
                 )}
