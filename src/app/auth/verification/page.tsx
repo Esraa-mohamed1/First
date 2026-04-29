@@ -6,10 +6,12 @@ import { useState, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { sendOtp, verifyOtp } from "@/services/auth";
+import { useCountry } from "@/hooks/useCountry";
 
 function VerificationContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { selectedCountry } = useCountry();
     const [step, setStep] = useState<'initial' | 'otp'>('initial');
     const [loading, setLoading] = useState(false);
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -42,7 +44,7 @@ function VerificationContent() {
 
         setLoading(true);
         try {
-            await sendOtp(contact);
+            await sendOtp(contact, selectedCountry?.isoCode);
             toast.success('تم إرسال رمز التحقق بنجاح');
             setStep('otp');
         } catch (error: any) {
@@ -87,7 +89,7 @@ function VerificationContent() {
         setLoading(true);
         console.log('Verifying OTP...', { contact, code });
         try {
-            const response = await verifyOtp(contact, code);
+            const response = await verifyOtp(contact, code, selectedCountry?.isoCode);
             console.log('Verify OTP response:', response);
             if (response.status) {
                 toast.success('تم التحقق بنجاح');

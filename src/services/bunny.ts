@@ -20,7 +20,7 @@ export interface BunnyVideoResponse {
  */
 export const createVideoPlaceholder = async (title: string): Promise<BunnyVideoResponse> => {
   if (!BUNNY_LIBRARY_ID || !BUNNY_API_KEY) {
-    throw new Error('Bunny integration requires BUNNY_LIBRARY_ID and BUNNY_API_KEY in environment variables.');
+    throw new Error('Provider integration requires LIBRARY_ID and API_KEY in environment variables.');
   }
 
   const response = await axios.post(

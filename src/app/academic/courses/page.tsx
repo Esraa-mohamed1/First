@@ -3,7 +3,8 @@
 import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, X, BarChart3, Eye } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCourses, deleteCourse, getCourse } from '@/services/courses';
+import { getCourses, deleteCourse } from '@/services/courses';
+import { getProfileStatus } from '@/services/auth';
 import { Course } from '@/types/api';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
@@ -18,6 +19,7 @@ export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeDropdownId, setActiveDropdownId] = useState<number | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   // Edit Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -30,7 +32,11 @@ export default function CoursesPage() {
   const fetchCourses = async () => {
     setLoading(true);
     try {
-      const data = await getCourses();
+      const profile = await getProfileStatus();
+      const userData = profile.data || profile;
+      setCurrentUser(userData);
+
+      const data = await getCourses(userData?.id, userData?.role);
       setCourses(data || []);
     } catch (error) {
       console.error(error);

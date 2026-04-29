@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Play, Video, FileText, FilePieChart as FilePowerpoint, Upload, Check, Loader2 } from 'lucide-react';
+import { X, Play, Video, FileText, FilePieChart as FilePowerpoint, Upload, Check, CheckCircle2, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createLesson } from '@/services/courses';
 import { createVideoResource, uploadVideoFile, waitForVideoReady, fetchCollections, createCollection } from '@/services/bunnyStream';
@@ -74,66 +74,49 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
       return;
     }
 
+    // --- Storage Limit Verification ---
+    try {
+      const usageResponse = await getMyUsageLimit();
+      const storageLimitObj = usageResponse?.data?.find((item: any) => item.feature_slug === 'storage_limit');
+
+      if (storageLimitObj) {
+        const totalGB = parseFloat(storageLimitObj.total_limit || '0');
+        const usedGB = parseFloat(storageLimitObj.used_amount || '0');
+
+        // Calculate remaining in bytes
+        const remainingStorage = (totalGB - usedGB) * 1024 * 1024 * 1024;
+
+        if (remainingStorage <= 0 || selectedFile.size > remainingStorage) {
+          const availableMB = Math.max(0, Math.round(remainingStorage / 1024 / 1024));
+          toast.error(
+            `عفواً، لقد تجاوزت المساحة المخصصة لك. المساحة المتاحة: ${availableMB} MB. برجاء ترقية حسابك لرفع المزيد من الملفات.`,
+            { duration: 5000, icon: '⚠️' }
+          );
+          return;
+        }
+      }
+    } catch (err) {
+      console.error("Failed to check storage limits:", err);
+      // Optional: Continue if we can't check, OR block if strict. 
+      // For now, let's allow but log. If strict, we'd 'return' here.
+    }
+
     if (lessonType === 'video') {
-      // Check for free_trial status and storage via API
+      if (!libraryId || !bunnyApiKey) {
+        toast.error('بيانات الخدمة غير متوفرة');
+        return;
+      }
+
+      // Check verification status
       try {
         const profile = await getProfileStatus();
         const userData = profile.data || profile;
-
-        // Check verification status
         if (userData && !userData.email_verified_at) {
           setIsVerificationModalOpen(true);
           return;
         }
-
-        // Check storage usage via getMyUsageLimit
-        const usageResponse = await getMyUsageLimit();
-        const storageLimitObj = usageResponse?.data?.find((item: any) => item.feature_slug === 'storage_limit');
-
-        let remainingStorage = 2048 * 1024 * 1024; // Default 2GB
-        if (storageLimitObj) {
-          const totalGB = parseFloat(storageLimitObj.total_limit || '0');
-          const usedGB = parseFloat(storageLimitObj.used_amount || '0');
-          remainingStorage = (totalGB - usedGB) * 1024 * 1024 * 1024;
-        }
-
-        if (selectedFile.size > remainingStorage) {
-          toast.error(`عفواً، مساحة التخزين المتبقية غير كافية لرفع هذا الملف. المساحة المتاحة: ${Math.round(remainingStorage / 1024 / 1024)} MB`, {
-            duration: 5000,
-            icon: '⚠️'
-          });
-          return;
-        }
-
       } catch (err) {
         console.error("Failed to check user status", err);
-      }
-
-      if (!libraryId || !bunnyApiKey) {
-        toast.error('بيانات Bunny غير متوفرة');
-        return;
-      }
-      // Even for non-video, check storage
-      try {
-        const usageResponse = await getMyUsageLimit();
-        const storageLimitObj = usageResponse?.data?.find((item: any) => item.feature_slug === 'storage_limit');
-
-        let remainingStorage = 2048 * 1024 * 1024; // Default 2GB
-        if (storageLimitObj) {
-          const totalGB = parseFloat(storageLimitObj.total_limit || '0');
-          const usedGB = parseFloat(storageLimitObj.used_amount || '0');
-          remainingStorage = (totalGB - usedGB) * 1024 * 1024 * 1024;
-        }
-
-        if (selectedFile.size > remainingStorage) {
-          toast.error(`عفواً، مساحة التخزين المتبقية غير كافية. المساحة المتاحة: ${Math.round(remainingStorage / 1024 / 1024)} MB`, {
-            duration: 5000,
-            icon: '⚠️'
-          });
-          return;
-        }
-      } catch (err) {
-        console.error("Failed to check storage", err);
       }
     }
 
@@ -146,8 +129,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
         // Only process video if type is video and not already ready
         if (uploadStatus !== 'ready') {
           setUploadStatus('creating');
-          
-          // Collection Creation/Fetching logic
+
           let currentCollectionId = '';
           try {
             // Get data from localStorage or hostname (replicate academy-api logic)
@@ -162,26 +144,25 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
               }
             }
             tenantName = tenantName || 'Default';
-            
+
             // Get profile for academy_name
             const profile = await getProfileStatus();
             const userData = profile.data || profile;
             const academyName = userData?.academy_name || 'MyAcademy';
-            
+
             // Store important names in localStorage for persistence
             localStorage.setItem('cached_academy_name', academyName);
             if (instructorName) {
               localStorage.setItem('cached_instructor_name', instructorName);
             }
-            
+
             const finalInstructor = instructorName || localStorage.getItem('cached_instructor_name') || 'Instructor';
-            
-            // Construct collection name: (Tenant-Instructor-Course)
+
             const finalCollectionName = `(${tenantName}-${finalInstructor}-${courseTitle})`;
-            
+
             const collections = await fetchCollections(libraryId, bunnyApiKey);
             const existingCollection = collections.find((c: any) => c.name === finalCollectionName);
-            
+
             if (existingCollection) {
               currentCollectionId = existingCollection.guid;
             } else {
@@ -191,7 +172,6 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
             console.error('Failed to handle collection, proceeding without one:', colErr);
           }
 
-          // Construct video title: (Course-Unit-Lesson)
           const finalVideoTitle = `(${courseTitle}-${unitName}-${title})`;
           const guid = await createVideoResource(libraryId, bunnyApiKey, finalVideoTitle, currentCollectionId || undefined);
           setVideoId(guid);
@@ -204,15 +184,12 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
           try {
             await waitForVideoReady(libraryId, bunnyApiKey, guid, setProcessingStatus);
           } catch (pollingError: any) {
-            console.warn('Video processing is slow but continuing on Bunny.net servers:', pollingError);
-            // Don't fail the whole lesson creation if just polling timed out
-            // The video is already uploaded and Bunny will finish processing it.
+            console.warn('Video processing is slow but continuing on provider servers:', pollingError);
           }
 
           setUploadStatus('ready');
         }
       } else {
-        // Handle PDF/Powerpoint Upload
         setUploadStatus('uploading');
         finalFileUrl = await uploadFile(selectedFile!, setUploadProgress);
         setUploadStatus('ready');
@@ -220,12 +197,15 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
 
       // Create Lesson in Backend
       await createLesson({
-        unit_id: unitId,
+        chapter_id: unitId,
         title,
         description,
         type: lessonType,
         video_id: finalVideoId || undefined,
         file_url: finalFileUrl || undefined,
+        library_id: libraryId || undefined,
+        order: 1, // Default order
+        file_size_mb: selectedFile ? parseFloat((selectedFile.size / (1024 * 1024)).toFixed(2)) : 0,
         is_free: false, // Default to paid
       });
 
@@ -407,7 +387,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
               )}
               {uploadStatus === 'processing' && processingStatus !== null && (
                 <div className="text-right text-sm font-bold text-blue-600 bg-blue-50 p-3 rounded-xl">
-                  تشفير السحابة: {processingStatus}%
+                  تشفير البيانات: {processingStatus}%
                 </div>
               )}
 
@@ -425,18 +405,20 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
           </div>
 
           <div className="flex justify-center gap-4 max-w-2xl mx-auto pt-4">
-            <button onClick={handleClose} className="px-16 py-4 bg-gray-100 text-gray-900 font-black rounded-2xl hover:bg-gray-200 transition-all">الغاء</button>
+            <button onClick={handleClose} className="px-16 py-4 bg-gray-100 text-gray-900 font-black rounded-full hover:bg-gray-200 transition-all">الغاء</button>
             <button
               onClick={handleUploadLesson}
               disabled={isSubmitting || !selectedFile}
-              className="px-8 sm:px-16 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+              className="px-12 sm:px-16 py-4 bg-blue-600 text-white font-bold rounded-full shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3 text-sm"
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={24} className="animate-spin" />
-                  جاري رفع وحفظ الدرس...
-                </>
-              ) : 'حفظ الدرس'}
+              <span>{isSubmitting ? 'جاري الحفظ...' : 'حفظ الدرس'}</span>
+              <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center p-0.5">
+                {isSubmitting ? (
+                  <Loader2 className="animate-spin text-white" size={14} />
+                ) : (
+                  <CheckCircle2 size={16} strokeWidth={3} className="text-white" />
+                )}
+              </div>
             </button>
           </div>
         </div>
@@ -451,7 +433,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
       </div>
 
       {/* Verification Modal integration */}
-      <VerificationModal 
+      <VerificationModal
         isOpen={isVerificationModalOpen}
         onClose={() => setIsVerificationModalOpen(false)}
         onSuccess={() => {

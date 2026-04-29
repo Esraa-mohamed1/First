@@ -93,7 +93,7 @@ export const BunnyUploader = () => {
         },
       });
 
-      // 3. Start the edge upload from the browser directly to Bunny!
+      // 3. Start the edge upload from the browser directly to provider!
       upload.start();
 
     } catch (err: any) {
