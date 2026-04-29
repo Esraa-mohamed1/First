@@ -114,7 +114,7 @@ export default function AcademicLayout({
 
 
 
-{/* Verification Overlay - Removed as per user request */ }
+{/* Verification Overlay  */ }
 {/* {isVerified === false && isActive !== false && (
         <div className="fixed inset-0 z-[100] backdrop-blur-md bg-white/50 flex items-center justify-center">
           <div className="bg-white p-10 rounded-[2rem] shadow-2xl text-center max-w-md border border-red-100 animate-in fade-in zoom-in duration-300 mx-4">
