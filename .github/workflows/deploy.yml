@@ -18,10 +18,10 @@ jobs:
           node-version: '18'
 
       # ✅ ضيف الخطوة دي
-      - name: Decrypt .env
-        run: node decrypt-env.js
-        env:
-          ENV_SECRET: ${{ secrets.ENV_SECRET }}
+      # - name: Decrypt .env
+      #   run: node decrypt-env.js
+      #   env:
+      #     ENV_SECRET: ${{ secrets.ENV_SECRET }}
 
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.7.0
