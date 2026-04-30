@@ -43,12 +43,7 @@ export const ConnectedDevices = () => {
         </div>
       </div>
 
-      <div className="mt-8 flex justify-end">
-        <button className="flex items-center gap-2 text-red-600 font-bold hover:bg-red-50 px-6 py-3 rounded-2xl transition-all group">
-          تسجيل الخروج
-          <LogOut size={18} className="transform group-hover:-translate-x-1 transition-transform" />
-        </button>
-      </div>
+
     </div>
   );
 };

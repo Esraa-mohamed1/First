@@ -10,8 +10,8 @@ export const PersonalInfo = ({ profile }: PersonalInfoProps) => {
   return (
     <div className="bg-white rounded-3xl p-8 border border-gray-200 shadow-md relative overflow-hidden">
       <div className="flex items-center gap-3 mb-8">
-        <div className="bg-blue-50 text-blue-600 p-2 rounded-xl">
-          <User size={20} />
+        <div className="bg-blue-50 text-blue-600 p-2.5 rounded-2xl">
+          <User size={22} />
         </div>
         <h2 className="text-xl font-bold text-gray-800">المعلومات الشخصية</h2>
       </div>

@@ -18,12 +18,13 @@ export const ProfileHeader = ({ profile }: ProfileHeaderProps) => {
           <div className="w-24 h-24 rounded-2xl bg-white border-4 border-white overflow-hidden shadow-md flex items-center justify-center">
             {/* Avatar placeholder */}
             <div className="w-full h-full bg-gray-200"></div>
+            <img src="assets/profile.jpg" alt="" />
           </div>
           <button className="absolute -bottom-3 -right-3 bg-green-400 text-white p-2 rounded-xl border-2 border-white hover:bg-green-500 transition-colors shadow-sm">
             <Shield size={16} />
           </button>
         </div>
-        
+
         <div className="text-center md:text-right text-white">
           <h1 className="text-3xl font-bold mb-3 tracking-tight">{profile.name}</h1>
           <div className="flex items-center gap-3 justify-center md:justify-start">
@@ -38,7 +39,7 @@ export const ProfileHeader = ({ profile }: ProfileHeaderProps) => {
           </div>
         </div>
       </div>
-      
+
       <div className="relative z-10 mt-6 md:mt-0 self-start md:self-center w-full md:w-auto">
         <button className="w-full md:w-auto flex items-center justify-center gap-2 bg-white text-[#0f62fe] px-6 py-3 rounded-2xl font-bold hover:bg-blue-50 transition-colors shadow-sm">
           <Edit2 size={18} />

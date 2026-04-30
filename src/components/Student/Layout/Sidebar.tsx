@@ -3,13 +3,14 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  BookOpen, 
-  Trophy, 
-  Settings, 
+import {
+  LayoutDashboard,
+  BookOpen,
+  Trophy,
+  Settings,
   User,
-  GraduationCap
+  GraduationCap,
+  LogOut
 } from 'lucide-react';
 
 const sidebarItems = [
@@ -24,47 +25,70 @@ export const StudentSidebar = () => {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 bg-white border-l border-gray-100 flex flex-col h-full hidden lg:flex sticky top-0">
-      <div className="p-6 flex flex-col items-center border-b border-gray-50">
-        <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 mb-3">
-          <GraduationCap size={32} />
+    <aside className="w-72 bg-white border-l border-gray-100 flex flex-col h-screen sticky top-0 z-50 overflow-y-auto hidden lg:flex">
+      {/* Sidebar Header / Logo Area */}
+      <div className="p-8 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
+            <GraduationCap size={32} />
+          </div>
+          <div className="text-center">
+            <h2 className="text-xl font-black text-gray-900 tracking-tight">درب <span className="text-blue-600">Darrab</span></h2>
+            <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mt-1">منصة التعلم الذكي</p>
+          </div>
         </div>
-        <h2 className="text-lg font-bold text-gray-800">مرحباً بك</h2>
-        <p className="text-sm text-gray-500">طالب علم</p>
       </div>
-      
-      <nav className="flex-1 px-4 py-6 space-y-2">
+
+      <div className="px-6 mb-4">
+        <div className="h-px bg-gray-50 w-full"></div>
+      </div>
+
+      {/* Navigation Menu */}
+      <nav className="flex-1 px-4 space-y-1.5 py-4">
+        <p className="text-[10px] font-bold text-gray-400 px-4 mb-4 uppercase tracking-widest">القائمة الرئيسية</p>
         {sidebarItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/student' && pathname.startsWith(item.href));
           return (
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
-                isActive 
-                  ? 'bg-blue-50 text-blue-600 font-semibold shadow-sm' 
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-              }`}
+              className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 group relative ${isActive
+                ? 'bg-blue-50/50 text-blue-600 font-bold'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                }`}
             >
-              <item.icon 
-                size={20} 
-                className={`transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`}
+              {isActive && (
+                <div className="absolute right-0 top-3 bottom-3 w-1.5 bg-blue-600 rounded-l-full shadow-[0_0_10px_rgba(37,99,235,0.4)]"></div>
+              )}
+              <item.icon
+                size={22}
+                className={`transition-colors duration-300 ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`}
               />
-              <span>{item.name}</span>
+              <span className="text-sm">{item.name}</span>
             </Link>
           );
         })}
       </nav>
-      
-      <div className="p-6">
-        <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-4 text-white text-center relative overflow-hidden shadow-lg">
-          <div className="absolute top-0 right-0 -mr-4 -mt-4 w-20 h-20 bg-white opacity-10 rounded-full blur-xl"></div>
-          <h3 className="font-bold mb-1 relative z-10">النسخة الاحترافية</h3>
-          <p className="text-xs text-blue-100 mb-3 relative z-10">قم بترقية حسابك لمزيد من المزايا</p>
-          <button className="w-full bg-white text-blue-700 text-sm font-semibold py-2 rounded-lg hover:bg-blue-50 transition-colors relative z-10 shadow-sm">
-            ترقية الآن
+
+      {/* Sidebar Footer */}
+      <div className="p-6 mt-auto">
+        <div className="bg-gray-50 rounded-[2rem] p-4 mb-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-full bg-white border-2 border-white shadow-sm flex items-center justify-center overflow-hidden">
+              <User size={20} className="text-gray-400" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-800">أحمد محمد</p>
+              <p className="text-[10px] text-gray-500">طالب نشط</p>
+            </div>
+          </div>
+          <button className="w-full bg-white border border-gray-100 text-red-500 text-xs font-bold py-2.5 rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all flex items-center justify-center gap-2">
+            <LogOut size={14} />
+            تسجيل الخروج
           </button>
         </div>
+        
+        <p className="text-[10px] text-center text-gray-400 font-medium italic">إصدار 1.2.0 - © 2024</p>
       </div>
     </aside>
   );
