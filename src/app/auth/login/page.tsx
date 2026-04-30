@@ -53,14 +53,14 @@ export default function AcademyLoginPage() {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        
+
         // Sanitize phone input and show error if invalid chars
         if (name === 'phone') {
             const hasNonDigits = /\D/.test(value);
             const sanitizedValue = value.replace(/\D/g, '');
-            
+
             setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
-            
+
             // Handle error logic
             if (hasNonDigits) {
                 setErrors(prev => ({ ...prev, phone: 'يرجى إدخال أرقام فقط' }));
@@ -196,7 +196,7 @@ export default function AcademyLoginPage() {
                                     </div>
                                     <div className="flex items-center justify-between px-1">
                                         {errors.email ? <p className="text-red-500 text-xs font-bold">{errors.email}</p> : <div></div>}
-                                        <button 
+                                        <button
                                             type="button"
                                             onClick={toggleLoginMethod}
                                             className="text-[11px] font-black text-blue-600 hover:underline flex items-center gap-1 mt-0.5"
@@ -220,7 +220,7 @@ export default function AcademyLoginPage() {
                                     />
                                     <div className="flex items-center justify-between px-1">
                                         {errors.phone ? <p className="text-red-500 text-xs font-bold">{errors.phone}</p> : <div></div>}
-                                        <button 
+                                        <button
                                             type="button"
                                             onClick={toggleLoginMethod}
                                             className="text-[11px] font-black text-blue-600 hover:underline flex items-center gap-1 mt-0.5"
@@ -252,7 +252,7 @@ export default function AcademyLoginPage() {
                                     </button>
                                 </div>
                                 {errors.password && <p className="text-red-500 text-xs font-bold mr-1">{errors.password}</p>}
-                                
+
                                 {formData.password && (
                                     <div className="bg-[#f0f9ff]/50 p-3 rounded-2xl border border-blue-50 mt-3">
                                         <div className="flex flex-wrap gap-4 items-center justify-start" dir="rtl">
@@ -294,13 +294,13 @@ export default function AcademyLoginPage() {
                             >
                                 {isLoading ? (
                                     <>
-                                        <Loader2 className="animate-spin" size={22} />
+                                        <Loader2 className="animate-spin" size={24} />
                                         <span>جاري المعالجة...</span>
                                     </>
                                 ) : (
                                     <>
                                         <span>تسجيل الدخول</span>
-                                        <ArrowRight className="w-5 h-5 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                                        <ArrowRight className="w-5 h-14 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
                                     </>
                                 )}
                             </button>
@@ -319,7 +319,7 @@ export default function AcademyLoginPage() {
                         </div>
                     </form>
 
-               
+
                 </div>
             </div>
         </div>

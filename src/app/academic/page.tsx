@@ -19,21 +19,7 @@ function clsx(...classes: any[]) {
 }
 
 export default function AcademicDashboardPage() {
-    useEffect(() => {
-        // Simulated storage check
-        const storageUsage = 82; // 82%
-        if (storageUsage > 80) {
-            MySwal.fire({
-                title: 'تنبيه مساحة التخزين',
-                text: 'لقد اوشكت على استنزاف مساحة التخزين الخاصة بك (82% مستخدم)',
-                icon: 'warning',
-                confirmButtonText: 'ترقية الباقة',
-                showCancelButton: true,
-                cancelButtonText: 'إغلاق',
-                confirmButtonColor: '#2563eb',
-            });
-        }
-    }, []);
+
 
     const students = [
         { name: 'أحمد هاني محمد', date: '22/10/2022', status: 'غير مدفوع', course: 'أساسيات برمجة' },
@@ -68,7 +54,7 @@ export default function AcademicDashboardPage() {
                 <div className="lg:col-span-8 xl:col-span-9 space-y-8 order-1">
 
                     {/* 1. Stats Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
                         <StatCard
                             title="عدد الطلاب النشطة"
                             value="2,689"
@@ -112,7 +98,7 @@ export default function AcademicDashboardPage() {
                     </div>
 
                     {/* 4. Table Section */}
-                    <div className="bg-white rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-200/20 overflow-hidden p-8 lg:p-10">
+                    <div className="bg-white rounded-[2rem] md:rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-200/20 overflow-hidden p-5 md:p-8 lg:p-10">
                         <div className="flex flex-col sm:flex-row justify-between items-center mb-10 gap-8">
                             <div className="space-y-1 text-right">
                                 <h3 className="text-2xl font-black text-gray-900 tracking-tight">اخر الطلاب المسجلين</h3>

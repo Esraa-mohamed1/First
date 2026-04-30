@@ -63,13 +63,18 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         { label: 'دورة حضوري', href: '/academic/courses/in-person' },
         { label: 'فئات الدورات', href: '/academic/courses/categories' },
         { label: 'الأحصائيات', href: '/academic/courses/stats' },
-        { label: 'معاينة كطالب (تجريبي)', href: '/academic/courses/3/student' },
+        { label: 'معاينة كطالب (تجريبي)', href: '/academic/courses/8/student' },
       ],
     },
     {
       label: 'الطلاب',
       icon: Users,
       href: '/academic/students',
+    },
+    {
+      label: 'المدربين',
+      icon: GraduationCap,
+      href: '/academic/coaches',
     },
     {
       label: 'التقارير',
@@ -117,7 +122,12 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
         {/* Navigation */}
         <nav className="flex-1 px-6 space-y-2 overflow-y-auto max-h-[calc(100vh-250px)] scrollbar-hide">
-          {menuItems.map((item) => {
+          {menuItems.filter(item => {
+            if (user?.role === 'academy') {
+              if (item.label === 'التقارير' || item.label === 'الباقة والأستخدام' || item.label === 'المبيعات' || item.label === 'الأعدادات' || item.label === 'المدربين' || item.label === 'الطلاب') return false;
+            }
+            return true;
+          }).map((item) => {
             const isActive = pathname === item.href || (item.href !== '/academic' && pathname.startsWith(item.href));
             const hasSubItems = (item as any).subItems && (item as any).subItems.length > 0;
             const isExpanded = expandedItems.includes(item.label);
@@ -142,19 +152,19 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                   {!hasSubItems ? (
                     <Link href={item.href} className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-4">
-                        <item.icon size={22} className={twMerge(
+                        <item.icon size={20} className={twMerge(
                           isActive ? "text-[#2563eb]" : "text-gray-400 group-hover:text-gray-600"
                         )} />
-                        <span className="font-bold text-[15px]">{item.label}</span>
+                        <span className="font-bold text-[14px]">{item.label}</span>
                       </div>
                     </Link>
                   ) : (
                     <>
                       <div className="flex items-center gap-4">
-                        <item.icon size={22} className={twMerge(
+                        <item.icon size={20} className={twMerge(
                           isActive ? "text-[#2563eb]" : "text-gray-400 group-hover:text-gray-600"
                         )} />
-                        <span className="font-bold text-[15px]">{item.label}</span>
+                        <span className="font-bold text-[14px]">{item.label}</span>
                       </div>
                       <ChevronLeft
                         size={16}
