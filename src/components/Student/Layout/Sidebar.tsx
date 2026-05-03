@@ -10,12 +10,14 @@ import {
   Settings,
   User,
   GraduationCap,
-  LogOut
+  LogOut,
+  Library
 } from 'lucide-react';
 
 const sidebarItems = [
   { name: 'لوحة التحكم', href: '/student', icon: LayoutDashboard },
   { name: 'دوراتي', href: '/student/courses', icon: BookOpen },
+  { name: 'دورات الأكاديمية', href: '/user/courses', icon: Library },
   { name: 'الإنجازات', href: '/student/achievements', icon: Trophy },
   { name: 'الملف الشخصي', href: '/student/profile', icon: User },
   { name: 'الإعدادات', href: '/student/settings', icon: Settings },
@@ -87,7 +89,7 @@ export const StudentSidebar = () => {
             تسجيل الخروج
           </button>
         </div>
-        
+
         <p className="text-[10px] text-center text-gray-400 font-medium italic">إصدار 1.2.0 - © 2024</p>
       </div>
     </aside>

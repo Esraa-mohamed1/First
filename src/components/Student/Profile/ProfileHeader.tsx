@@ -1,12 +1,18 @@
+'use client';
+
 import React from 'react';
 import { UserProfile } from '@/types/student';
-import { Edit2, Star, Shield, Award } from 'lucide-react';
+import { Edit2, Star, Shield, Award, User } from 'lucide-react';
+import Image from 'next/image';
+import { useState } from 'react';
+import profileImg from '@/assets/profile.png';
 
 interface ProfileHeaderProps {
   profile: UserProfile;
 }
 
 export const ProfileHeader = ({ profile }: ProfileHeaderProps) => {
+  const [imgError, setImgError] = useState(false);
   return (
     <div className="bg-[#0f62fe] rounded-[2rem] p-8 flex flex-col md:flex-row items-center justify-between relative overflow-hidden shadow-lg shadow-blue-500/20">
       {/* Decorative background elements */}
@@ -15,10 +21,21 @@ export const ProfileHeader = ({ profile }: ProfileHeaderProps) => {
 
       <div className="flex flex-col md:flex-row items-center gap-6 relative z-10 w-full md:w-auto">
         <div className="relative">
-          <div className="w-24 h-24 rounded-2xl bg-white border-4 border-white overflow-hidden shadow-md flex items-center justify-center">
-            {/* Avatar placeholder */}
-            <div className="w-full h-full bg-gray-200"></div>
-            <img src="assets/profile.jpg" alt="" />
+          <div className="w-24 h-24 rounded-2xl bg-white border-4 border-white overflow-hidden shadow-md relative flex items-center justify-center">
+            {imgError ? (
+              <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                <User size={32} className="text-gray-400" />
+              </div>
+            ) : (
+              <Image
+                src={'https://tse3.mm.bing.net/th/id/OIP.fDmhZwPZ5SX4nj-RQi1AbwHaHa?w=704&h=704&rs=1&pid=ImgDetMain&o=7&rm=3'}
+                alt={profile.name}
+                fill
+                className="object-cover"
+                sizes="96px"
+                onError={() => setImgError(true)}
+              />
+            )}
           </div>
           <button className="absolute -bottom-3 -right-3 bg-green-400 text-white p-2 rounded-xl border-2 border-white hover:bg-green-500 transition-colors shadow-sm">
             <Shield size={16} />

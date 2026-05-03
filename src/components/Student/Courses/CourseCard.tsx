@@ -1,14 +1,20 @@
+'use client';
+
 import React from 'react';
 import { Course } from '@/types/student';
-import { ArrowLeft, BarChart } from 'lucide-react';
+import { ArrowLeft, BarChart, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 interface CourseCardProps {
   course: Course;
+  isSubscribed?: boolean;
 }
 
-export const CourseCard = ({ course }: CourseCardProps) => {
+export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => {
+  const [imgError, setImgError] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
+
   return (
     <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group flex flex-col h-full">
       <div className="relative h-48 w-full bg-gray-100 overflow-hidden">
@@ -20,32 +26,68 @@ export const CourseCard = ({ course }: CourseCardProps) => {
           </span>
         </div>
         
-        <div className="w-full h-full bg-blue-100 flex items-center justify-center">
-          <BarChart className="text-blue-300 w-16 h-16 opacity-50" />
+        <div className="w-full h-full bg-blue-50 flex items-center justify-center relative">
+          {course.image && !imgError ? (
+            <>
+              {isLoading && (
+                <div className="absolute inset-0 bg-gray-200 animate-pulse z-0" />
+              )}
+              <Image 
+                src={course.image}
+                alt={course.title || "Course Image"}
+                fill
+                className={`object-cover transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                onLoad={() => setIsLoading(false)}
+                onError={() => {
+                  setImgError(true);
+                  setIsLoading(false);
+                }}
+              />
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center text-blue-200">
+              <ImageIcon className="w-12 h-12 mb-2" />
+              <span className="text-xs font-medium">No Image</span>
+            </div>
+          )}
         </div>
       </div>
       
       <div className="p-5 flex-1 flex flex-col">
         <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-1">{course.title}</h3>
-        <p className="text-gray-500 text-sm mb-6 line-clamp-2 leading-relaxed">
-          {course.description}
-        </p>
+        <div 
+          className="text-gray-500 text-sm mb-6 line-clamp-2 leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: course.description }}
+        />
         
         <div className="mt-auto">
-          <div className="flex items-center justify-between text-xs text-gray-500 mb-2 font-medium">
-            <span>التقدم</span>
-            <span className="text-blue-600 font-bold">{course.progress}%</span>
-          </div>
-          <div className="w-full bg-gray-100 rounded-full h-2.5 mb-6 overflow-hidden">
-            <div 
-              className={`h-2.5 rounded-full ${course.progress === 100 ? 'bg-green-500' : 'bg-blue-600'} transition-all duration-1000 ease-out`} 
-              style={{ width: `${course.progress}%` }}
-            ></div>
-          </div>
+          {isSubscribed && (
+            <>
+              <div className="flex items-center justify-between text-xs text-gray-500 mb-2 font-medium">
+                <span>التقدم</span>
+                <span className="text-blue-600 font-bold">{course.progress}%</span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-2.5 mb-6 overflow-hidden">
+                <div 
+                  className={`h-2.5 rounded-full ${course.progress === 100 ? 'bg-green-500' : 'bg-blue-600'} transition-all duration-1000 ease-out`} 
+                  style={{ width: `${course.progress}%` }}
+                ></div>
+              </div>
+            </>
+          )}
           
-          {course.progress === 100 ? (
+          {!isSubscribed ? (
             <Link 
-              href={`/student/courses/${course.id}/certificate`}
+              href={`/user/courses/${course.id}`}
+              className="w-full flex items-center justify-center gap-2 text-blue-600 font-semibold py-2.5 border-2 border-blue-50 rounded-xl hover:bg-blue-50 hover:border-blue-100 transition-all group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 mt-auto"
+            >
+              معاينة الكورس
+              <ArrowLeft size={16} className="transform group-hover:-translate-x-2 transition-transform duration-300" />
+            </Link>
+          ) : course.progress === 100 ? (
+            <Link 
+              href={`/user/courses/${course.id}/certificate`}
               className="w-full flex items-center justify-center gap-2 bg-green-100 text-green-700 font-semibold py-2.5 rounded-xl hover:bg-green-200 transition-colors"
             >
               عرض الشهادة
@@ -53,7 +95,7 @@ export const CourseCard = ({ course }: CourseCardProps) => {
             </Link>
           ) : (
             <Link 
-              href={`/student/courses/${course.id}`}
+              href={`/user/courses/${course.id}`}
               className="w-full flex items-center justify-center gap-2 text-blue-600 font-semibold py-2.5 border-2 border-blue-50 rounded-xl hover:bg-blue-50 hover:border-blue-100 transition-all group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600"
             >
               دخول الدورة
