@@ -84,6 +84,7 @@ export interface Unit {
 export interface Course {
   id: number;
   title: string;
+  slug?: string;
   description: string;
   category?: string; 
   category_id?: number | null;
@@ -103,6 +104,7 @@ export interface Course {
 
 export interface CreateCoursePayload {
   title: string;
+  slug?: string;
   user_id: string | number;
   type: string;
   price_type: 'free' | 'paid';

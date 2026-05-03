@@ -137,16 +137,24 @@ export default function AcademyLoginPage() {
                 localStorage.setItem('token', token);
 
                 if (response.data) {
+                    const userRole = (response.data as any).role || 'student';
                     localStorage.setItem('user_info', JSON.stringify({
                         name: response.data.name,
                         email: response.data.email,
                         phone: response.data.phone,
-                        role: 'الادمن'
+                        role: userRole === 'admin' ? 'الادمن' : 'طالب'
                     }));
-                }
 
-                toast.success('تم تسجيل الدخول بنجاح');
-                router.push('/academic');
+                    toast.success('تم تسجيل الدخول بنجاح');
+                    
+                    if (userRole === 'admin') {
+                        router.push('/academic');
+                    } else {
+                        router.push('/student');
+                    }
+                } else {
+                    toast.error('فشل تسجيل الدخول: استجابة غير صالحة');
+                }
             } else {
                 toast.error('فشل تسجيل الدخول: استجابة غير صالحة');
             }
@@ -173,7 +181,7 @@ export default function AcademyLoginPage() {
                             <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14v6.5"></path></svg>
                         </div>
                         <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4">مرحبا بعودتك!</h1>
-                        <p className="text-gray-500 text-lg sm:text-xl font-bold">سجل دخولك لمتابعة إدارة أكاديميتك</p>
+                        <p className="text-gray-500 text-lg sm:text-xl font-bold">سجل دخولك لمتابعة رحلتك التعليمية</p>
                     </div>
 
                     <form onSubmit={handleLogin} className="space-y-8">
@@ -316,6 +324,19 @@ export default function AcademyLoginPage() {
                                     <span>الدخول باستخدام جوجل</span>
                                 </button>
                             )}
+                        </div>
+
+                        <div className="text-center pt-4">
+                            <p className="text-gray-500 font-bold">
+                                ليس لديك حساب؟{' '}
+                                <button
+                                    type="button"
+                                    onClick={() => router.push('/auth/register')}
+                                    className="text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+                                >
+                                    أنشئ حساباً جديداً كطالب
+                                </button>
+                            </p>
                         </div>
                     </form>
 

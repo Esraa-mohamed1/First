@@ -1,7 +1,8 @@
 import axios from 'axios';
-
+ let tenantKey = window.location.hostname;
 export const createVideoResource = async (libraryId: string, apiKey: string, title: string, collectionId?: string) => {
-  const payload: any = { title };
+
+  const payload: any = { title,tenantKey };
   if (collectionId) {
     payload.collectionId = collectionId;
   }
@@ -11,6 +12,7 @@ export const createVideoResource = async (libraryId: string, apiKey: string, tit
     payload,
     {
       headers: {
+        'X-Tenant-Key': tenantKey,
         AccessKey: apiKey,
         'Content-Type': 'application/json',
       },

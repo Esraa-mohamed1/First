@@ -7,6 +7,10 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: 'tse3.mm.bing.net',
             },
+            {
+                protocol: 'https',
+                hostname: 'api.darab.academy',
+            },
         ],
     },
 };

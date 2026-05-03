@@ -49,7 +49,6 @@ export const BunnyUploader = () => {
       setIsUploading(true);
       setProgress(0);
 
-      // 1. Request Video creation and get secure signature from our Next.js backend
       const response = await fetch("/api/video/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

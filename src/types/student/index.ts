@@ -1,6 +1,7 @@
 export interface Course {
   id: string;
   title: string;
+  slug?: string;
   description: string;
   progress: number;
   image: string;

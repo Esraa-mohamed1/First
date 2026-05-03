@@ -9,7 +9,7 @@ import {
   Video, Monitor, DownloadCloud, Headset, Lock,
   Layout, MousePointer2, Smartphone, PenTool
 } from 'lucide-react';
-import { getCourse } from '@/services/courses';
+import { getStudentCourse } from '@/services/student-courses';
 import { Course, Unit } from '@/types/api';
 import toast from 'react-hot-toast';
 import { twMerge } from 'tailwind-merge';
@@ -40,7 +40,7 @@ const STATIC_COURSE_FALLBACK = {
 export default function CourseStudentViewPage() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
+  const slug = params.slug as string;
   const [course, setCourse] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedUnits, setExpandedUnits] = useState<number[]>([]);
@@ -48,19 +48,19 @@ export default function CourseStudentViewPage() {
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const data = await getCourse(id);
+        const data = await getStudentCourse(slug);
         
-        // Merge API data with static fallbacks
+        // Use real API data with fallback to static if missing
         const mergedCourse = {
           id: data.id,
-          title: data.title || STATIC_COURSE_FALLBACK.title,
-          description: data.description || STATIC_COURSE_FALLBACK.description,
-          instructor: (data as any).instructor_name || STATIC_COURSE_FALLBACK.instructor,
-          category: data.category?.name || STATIC_COURSE_FALLBACK.category,
-          price: data.price || STATIC_COURSE_FALLBACK.price,
-          final_price: data.final_price || STATIC_COURSE_FALLBACK.final_price,
-          image: data.image || STATIC_COURSE_FALLBACK.image,
-          units: (data as any).chapters?.length > 0 ? (data as any).chapters : STATIC_COURSE_FALLBACK.units,
+          title: data.title,
+          description: data.description,
+          instructor: data.instructor?.name || 'Unknown Instructor',
+          category: (data as any).category?.name || 'General',
+          price: data.price,
+          final_price: data.final_price,
+          image: data.image,
+          units: data.units || (data as any).chapters || [],
         };
 
         setCourse(mergedCourse);
@@ -69,14 +69,14 @@ export default function CourseStudentViewPage() {
         }
       } catch (error) {
         console.warn('Course not found, showing mock data for preview:', error);
-        setCourse({ ...STATIC_COURSE_FALLBACK, id: Number(id) });
+        setCourse({ ...STATIC_COURSE_FALLBACK, slug: slug });
         setExpandedUnits([1]);
       } finally {
         setLoading(false);
       }
     };
     fetchCourse();
-  }, [id]);
+  }, [slug]);
 
   const toggleUnit = (unitId: number) => {
     setExpandedUnits(prev =>
@@ -139,26 +139,19 @@ export default function CourseStudentViewPage() {
             {(() => {
               const videoUrl = course.units?.[0]?.lessons?.[0]?.video_url;
               return (
-                <div className="relative aspect-video rounded-[3rem] overflow-hidden shadow-[0_30px_70px_rgba(15,23,42,0.15)] group cursor-pointer border-[6px] border-white transition-all hover:scale-[1.01]">
+                <div className="relative aspect-video rounded-[3rem] overflow-hidden shadow-[0_30px_70px_rgba(15,23,42,0.15)] border-[6px] border-white transition-all hover:scale-[1.01] bg-black">
                   {videoUrl ? (
                     <video 
                       src={videoUrl} 
                       controls 
-                      className="w-full h-full object-cover"
-                      poster={course.image || "https://tse1.mm.bing.net/th/id/OIP.UYagQDMo7CCbBLXOPB5etAHaHa?rs=1&pid=ImgDetMain&o=7&rm=3"}
+                      className="w-full h-full object-contain"
+                      poster={course.image}
                     />
                   ) : (
-                    <>
-                      <img src={course.image || "https://tse1.mm.bing.net/th/id/OIP.UYagQDMo7CCbBLXOPB5etAHaHa?rs=1&pid=ImgDetMain&o=7&rm=3"} alt="Preview" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center backdrop-blur-[2px] group-hover:backdrop-blur-0 transition-all">
-                        <div className="w-24 h-24 bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center border border-white/40 group-hover:bg-blue-600 group-hover:scale-110 transition-all shadow-2xl">
-                          <Play size={40} className="text-white ml-2" fill="currentColor" />
-                        </div>
-                        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-md px-8 py-3 rounded-2xl border border-white/20">
-                          <span className="text-white font-black text-lg tracking-wide">مشاهدة الإعلان الترويجي</span>
-                        </div>
-                      </div>
-                    </>
+                    <div className="w-full h-full flex flex-col items-center justify-center text-white gap-4 bg-slate-900">
+                      <Video size={48} className="text-slate-500" />
+                      <span className="font-bold text-lg">لا يوجد فيديو متاح حالياً</span>
+                    </div>
                   )}
                 </div>
               );
@@ -293,28 +286,6 @@ export default function CourseStudentViewPage() {
                 <button className="w-full py-4 bg-[#F3F4F6] hover:bg-[#E5E7EB] text-slate-700 rounded-[1.2rem] font-black text-lg transition-all active:scale-95">
                   إضافة للسلة
                 </button>
-              </div>
-
-              {/* Course Includes Section */}
-              <div className="w-full pt-6 border-t border-slate-100 space-y-6">
-                <h4 className="font-black text-slate-900 text-right text-lg">تتضمن هذه الدورة:</h4>
-                <div className="grid grid-cols-1 gap-4">
-                  {[
-                    { text: "وصول مدى الحياة للمحتوى", icon: Layout },
-                    { text: "شهادة إتمام معتمدة", icon: Award },
-                    { text: "موارد وملفات قابلة للتحميل", icon: DownloadCloud },
-                    { text: "دعم فني مباشر من المدرب", icon: Headset }
-                  ].map((f, i) => (
-                    <div key={i} className="flex items-center justify-between gap-4 text-slate-500">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-[#006692] shadow-sm">
-                          <f.icon size={16} />
-                        </div>
-                        <span className="text-sm font-bold">{f.text}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
 
               {/* Secure Payment Footer - Right Aligned */}

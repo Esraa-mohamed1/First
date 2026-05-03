@@ -28,7 +28,7 @@ export const ProfileHeader = ({ profile }: ProfileHeaderProps) => {
               </div>
             ) : (
               <Image
-                src={'https://tse3.mm.bing.net/th/id/OIP.fDmhZwPZ5SX4nj-RQi1AbwHaHa?w=704&h=704&rs=1&pid=ImgDetMain&o=7&rm=3'}
+                src={profile.avatar && !imgError ? profile.avatar : profileImg.src}
                 alt={profile.name}
                 fill
                 className="object-cover"
