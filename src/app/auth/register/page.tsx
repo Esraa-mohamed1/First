@@ -3,10 +3,13 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, Loader2, Eye, EyeOff, ArrowRight, User, Phone } from 'lucide-react';
-import { createUser } from '@/services/users';
-import toast from 'react-hot-toast';
+import { registerStudent } from '@/services/student-auth';
 import { useCountry } from '@/hooks/useCountry';
 import { PhoneInput } from '@/components/CountrySelector';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
 
 export default function StudentRegisterPage() {
     const router = useRouter();
@@ -90,19 +93,46 @@ export default function StudentRegisterPage() {
 
         setIsLoading(true);
         try {
-            await createUser({
+            const response = await registerStudent({
                 name: formData.name,
                 email: formData.email,
                 phone: formData.phone,
                 password: formData.password,
+                password_confirmation: formData.confirmPassword,
                 role: 'student'
             });
 
-            toast.success('تم إنشاء الحساب بنجاح! يمكنك الآن تسجيل الدخول');
-            router.push('/auth/login');
+            // The API response indicates success if it has data or a meta object with an access_token
+            if (response.data || (response.meta && response.meta.access_token)) {
+                // Save token if available
+                if (response.meta && response.meta.access_token) {
+                    const token = response.meta.access_token;
+                    document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+                    localStorage.setItem('token', token);
+                }
+
+                await MySwal.fire({
+                    title: 'تم إنشاء الحساب بنجاح!',
+                    text: 'لقد تم إنشاء حساب الطالب الخاص بك بنجاح. يمكنك الآن تسجيل الدخول.',
+                    icon: 'success',
+                    confirmButtonText: 'حسناً',
+                    confirmButtonColor: '#2563eb'
+                });
+                router.push('/auth/login');
+            } else {
+                throw response;
+            }
         } catch (error: any) {
-            const errorMessage = error.message || 'حدث خطأ أثناء إنشاء الحساب';
-            toast.error(errorMessage);
+            console.error('Registration error:', error);
+            const errorMessage = error.message || error.error || 'حدث خطأ أثناء إنشاء الحساب';
+            
+            MySwal.fire({
+                title: 'خطأ في إنشاء الحساب',
+                text: errorMessage,
+                icon: 'error',
+                confirmButtonText: 'حسناً',
+                confirmButtonColor: '#2563eb'
+            });
         } finally {
             setIsLoading(false);
         }
