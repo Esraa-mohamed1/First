@@ -36,6 +36,16 @@ export const login = async (payload: any): Promise<LoginResponse> => {
   }
 };
 
+export const superAdminLogin = async (payload: any): Promise<LoginResponse> => {
+  try {
+    const response = await api.post<LoginResponse>('https://api.darab.academy/api/superAdmin/login', payload);
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to login as superadmin:', error);
+    throw error.response?.data || error;
+  }
+};
+
 export const getProfileStatus = async (): Promise<any> => {
   try {
     const response = await api.get<any>('https://api.darab.academy/api/academy/me');

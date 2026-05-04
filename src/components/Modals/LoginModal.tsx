@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, Mail, Lock, Loader2, Eye, EyeOff, Phone, CheckCircle2 } from 'lucide-react';
 import { useModal } from '@/context/ModalContext';
-import { login } from '@/services/auth';
+import { superAdminLogin } from '@/services/auth';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useCountry } from '@/hooks/useCountry';
@@ -46,7 +46,7 @@ const LoginModal = () => {
                 toast.success('تم تسجيل الدخول بجوجل بنجاح');
                 document.cookie = `token=google_simulated_token; path=/; max-age=86400; SameSite=Lax`;
                 closeModal();
-                router.push('/dashboard');
+                window.location.href = '/dashboard';
             } catch (error) {
                 toast.error('فشل تسجيل الدخول بجوجل');
             } finally {
@@ -137,25 +137,26 @@ const LoginModal = () => {
                 ? { email: formData.email, password: formData.password }
                 : { phone: formData.phone, password: formData.password, country_code: selectedCountry?.isoCode };
                 
-            const response = await login(payload);
+            const response = await superAdminLogin(payload);
 
-            if (response.meta && response.meta.access_token) {
-                const token = response.meta.access_token;
+            const token = response?.meta?.access_token || response?.token || response?.access_token || response?.data?.token || response?.data?.access_token;
+
+            if (token) {
                 document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
                 localStorage.setItem('token', token);
                 
-                if (response.data) {
-                    localStorage.setItem('user_info', JSON.stringify({
-                        name: response.data.name,
-                        email: response.data.email,
-                        phone: response.data.phone,
-                        role: 'الادمن'
-                    }));
-                }
+                const user = response?.data?.user || response?.data || response?.user || {};
+                
+                localStorage.setItem('user_info', JSON.stringify({
+                    name: user.name || 'Admin',
+                    email: user.email || formData.email,
+                    phone: user.phone || formData.phone,
+                    role: 'الادمن'
+                }));
                 
                 toast.success('تم تسجيل الدخول بنجاح');
                 closeModal();
-                router.push('/academic');
+                window.location.href = '/dashboard';
             } else {
                 toast.error('فشل تسجيل الدخول: استجابة غير صالحة');
             }

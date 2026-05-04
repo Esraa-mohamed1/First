@@ -28,6 +28,7 @@ export interface Package {
   video_hours: number;
   features: any[];
   package_features?: any[];
+  packageFeatures?: any[];
   trial_days?: number;
   order?: number;
   recomnd?: number; 

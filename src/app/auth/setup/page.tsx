@@ -21,6 +21,7 @@ export default function SetupPage() {
 
   const [domainPrefix, setDomainPrefix] = useState('');
   const [domainError, setDomainError] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const domainSuffix = '.darab.academy'; // Static part
 
   useEffect(() => {
@@ -35,6 +36,9 @@ export default function SetupPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (formErrors[e.target.name]) {
+      setFormErrors({ ...formErrors, [e.target.name]: '' });
+    }
   };
 
   const handleDomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,6 +83,7 @@ export default function SetupPage() {
       return;
     }
 
+    setFormErrors({});
     const fullLink = domainPrefix + domainSuffix;
 
     setLoading(true);
@@ -182,25 +187,37 @@ export default function SetupPage() {
       let handled = false;
 
       // Handle structured validation errors
-      if (error.error && typeof error.error === 'object') {
-        const errors = error.error;
+      const validationErrors = error.errors || error.error;
+      if (validationErrors && typeof validationErrors === 'object') {
+        const newFormErrors: Record<string, string> = {};
 
         // Specifically handle link_academy error
-        if (errors.link_academy) {
-          const msg = Array.isArray(errors.link_academy) ? errors.link_academy[0] : errors.link_academy;
+        if (validationErrors.link_academy) {
+          const msg = Array.isArray(validationErrors.link_academy) ? validationErrors.link_academy[0] : validationErrors.link_academy;
           setDomainError(msg);
-          toast.error(msg);
           handled = true;
         }
 
+        // Map backend fields to form fields
+        const fieldMapping: Record<string, string> = {
+          username: 'academy_name',
+          phone_academy: 'phone',
+          specialties: 'field'
+        };
+
         // Handle other field errors
-        Object.keys(errors).forEach(key => {
+        Object.keys(validationErrors).forEach(key => {
           if (key !== 'link_academy') {
-            const msg = Array.isArray(errors[key]) ? errors[key][0] : errors[key];
-            toast.error(msg);
+            const msg = Array.isArray(validationErrors[key]) ? validationErrors[key][0] : validationErrors[key];
+            const formField = fieldMapping[key] || key;
+            newFormErrors[formField] = msg;
             handled = true;
           }
         });
+
+        if (Object.keys(newFormErrors).length > 0) {
+          setFormErrors(newFormErrors);
+        }
       }
 
       if (!handled) {
@@ -230,8 +247,11 @@ export default function SetupPage() {
                 value={formData.academy_name}
                 onChange={handleChange}
                 placeholder="اسم الاكاديمية"
-                className="w-full p-4 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className={`w-full p-4 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 transition-all ${formErrors.academy_name ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'}`}
               />
+              {formErrors.academy_name && (
+                <p className="text-red-500 text-sm font-bold mt-1 text-right">{formErrors.academy_name}</p>
+              )}
             </div>
 
             {/* Mobile Number */}
@@ -243,8 +263,11 @@ export default function SetupPage() {
                 placeholder="ادخل رقم الجوال"
                 dir="ltr"
                 label="رقم جوال اساسي"
-                className="w-full text-left"
+                className={`w-full text-left ${formErrors.phone ? 'border-red-500' : ''}`}
               />
+              {formErrors.phone && (
+                <p className="text-red-500 text-sm font-bold mt-1 text-right">{formErrors.phone}</p>
+              )}
             </div>
 
             {/* Country */}
@@ -261,7 +284,7 @@ export default function SetupPage() {
                   name="field"
                   value={formData.field}
                   onChange={handleChange}
-                  className="w-full p-4 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-gray-500 cursor-pointer transition-all"
+                  className={`w-full p-4 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 appearance-none text-gray-500 cursor-pointer transition-all ${formErrors.field ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'}`}
                 >
                   <option value="">ادخل مجال الاكاديمية</option>
                   <option value="educational">تعليمي</option>
@@ -270,6 +293,9 @@ export default function SetupPage() {
                 </select>
                 <ChevronDown className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
+              {formErrors.field && (
+                <p className="text-red-500 text-sm font-bold mt-1 text-right">{formErrors.field}</p>
+              )}
             </div>
           </div>
 
