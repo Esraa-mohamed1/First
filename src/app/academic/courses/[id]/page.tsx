@@ -42,13 +42,32 @@ export default function CourseDetailsPage() {
   const [courseInfo, setCourseInfo] = useState({
     title: '',
     description: '',
-    what_to_learn: '',
     target_audience: '',
   });
+  const [learningPoints, setLearningPoints] = useState<string[]>(['']);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [expandedInfoSections, setExpandedInfoSections] = useState<string[]>(['description']);
+
+  const handleAddLearningPoint = () => {
+    setLearningPoints([...learningPoints, '']);
+  };
+
+  const handleUpdateLearningPoint = (index: number, value: string) => {
+    const updated = [...learningPoints];
+    updated[index] = value;
+    setLearningPoints(updated);
+  };
+
+  const handleRemoveLearningPoint = (index: number) => {
+    if (learningPoints.length > 1) {
+      const updated = learningPoints.filter((_, i) => i !== index);
+      setLearningPoints(updated);
+    } else {
+      setLearningPoints(['']);
+    }
+  };
 
   const toggleInfoSection = (section: string) => {
     setExpandedInfoSections(prev =>
@@ -70,9 +89,16 @@ export default function CourseDetailsPage() {
       const payload: any = {
         title: courseInfo.title,
         description: courseInfo.description,
-        what_to_learn: courseInfo.what_to_learn,
         target_audience: courseInfo.target_audience,
       };
+
+      // Add learning points as infos[i][key], infos[i][value], infos[i][order]
+      learningPoints.filter(p => p.trim() !== '').forEach((point, index) => {
+        payload[`infos[${index}][key]`] = 'what_you_will_learn';
+        payload[`infos[${index}][value]`] = point;
+        payload[`infos[${index}][order]`] = index + 1;
+      });
+
       if (selectedImage) {
         payload.image = selectedImage;
       }
@@ -97,9 +123,34 @@ export default function CourseDetailsPage() {
       setCourseInfo({
         title: data.title || '',
         description: data.description || '',
-        what_to_learn: (data as any).what_to_learn || '',
         target_audience: (data as any).target_audience || '',
       });
+
+      // Parse learning points from infos or what_you_will_learn
+      let points: string[] = [];
+      
+      // Try from infos first (new structure)
+      if (data.infos && Array.isArray(data.infos)) {
+        points = data.infos
+          .filter((info: any) => info.key === 'what_you_will_learn')
+          .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+          .map((info: any) => info.value);
+      }
+
+      // Fallback to what_you_will_learn string if infos didn't have any
+      if (points.length === 0) {
+        try {
+          if (data.what_you_will_learn) {
+            const parsed = JSON.parse(data.what_you_will_learn);
+            points = Array.isArray(parsed) ? parsed : [data.what_you_will_learn];
+          }
+        } catch (e) {
+          if (data.what_you_will_learn) points = [data.what_you_will_learn];
+        }
+      }
+      
+      setLearningPoints(points.length > 0 ? points : ['']);
+
       if (data.image) {
         setPreviewImage(data.image);
       }
@@ -347,16 +398,43 @@ export default function CourseDetailsPage() {
                 onClick={() => toggleInfoSection('what_to_learn')}
                 className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
               >
-                <span className="font-black text-gray-900">ماذا تتعلم</span>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 size={18} className="text-blue-600" />
+                  <span className="font-black text-gray-900">ماذا ستتعلم؟</span>
+                </div>
                 {expandedInfoSections.includes('what_to_learn') ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
               </button>
               {expandedInfoSections.includes('what_to_learn') && (
-                <div className="p-5 pt-0 border-t border-gray-50">
-                  <QuillEditor
-                    value={courseInfo.what_to_learn}
-                    onChange={(val) => setCourseInfo({ ...courseInfo, what_to_learn: val })}
-                    placeholder="ماذا سيتعلم الطالب من هذه الدورة؟"
-                  />
+                <div className="p-5 pt-0 border-t border-gray-50 space-y-4">
+                  {learningPoints.map((point, index) => (
+                    <div key={index} className="relative group bg-gray-50 p-4 rounded-2xl border border-gray-100 transition-all hover:border-blue-200">
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                          النقطة {index + 1}
+                        </span>
+                        <button
+                          onClick={() => handleRemoveLearningPoint(index)}
+                          className="text-gray-400 hover:text-red-500 transition-colors p-1.5 hover:bg-red-50 rounded-lg"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                      <QuillEditor
+                        value={point}
+                        onChange={(val) => handleUpdateLearningPoint(index, val)}
+                        placeholder="ماذا سيتعلم الطالب من هذه النقطة؟"
+                      />
+                    </div>
+                  ))}
+                  <button
+                    onClick={handleAddLearningPoint}
+                    className="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center gap-3 text-gray-500 font-bold hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50/30 transition-all group"
+                  >
+                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                      <Plus size={18} />
+                    </div>
+                    <span>إضافة نقطة تعلم جديدة</span>
+                  </button>
                 </div>
               )}
             </div>

@@ -36,7 +36,7 @@ export default function CreateCourseClient() {
   const [category, setCategory] = useState('');
   const [categories, setCategories] = useState<any[]>([]);
   const [description, setDescription] = useState('');
-  const [whatYouWillLearn, setWhatYouWillLearn] = useState('');
+  const [learningPoints, setLearningPoints] = useState<string[]>(['']);
   const [whoIsThisFor, setWhoIsThisFor] = useState('');
   const [selectedInstructor, setSelectedInstructor] = useState<number | null>(null);
   const [instructors, setInstructors] = useState<User[]>([]);
@@ -73,6 +73,25 @@ export default function CreateCourseClient() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const handleAddLearningPoint = () => {
+    setLearningPoints([...learningPoints, '']);
+  };
+
+  const handleUpdateLearningPoint = (index: number, value: string) => {
+    const updated = [...learningPoints];
+    updated[index] = value;
+    setLearningPoints(updated);
+  };
+
+  const handleRemoveLearningPoint = (index: number) => {
+    if (learningPoints.length > 1) {
+      const updated = learningPoints.filter((_, i) => i !== index);
+      setLearningPoints(updated);
+    } else {
+      setLearningPoints(['']);
+    }
+  };
+
   const refreshCourseContent = async (id: number) => {
     const data = await getCourse(id);
     const unitsFromApi = (data as any).chapters ? (data as any).chapters : data.units;
@@ -102,7 +121,6 @@ export default function CreateCourseClient() {
       category_id: category || undefined,
       description,
       user_id: userId,
-      what_you_will_learn: whatYouWillLearn,
       who_is_this_for: whoIsThisFor,
       price: pricingType === 'free' ? 0 : Number(price || 0),
       final_price: pricingType === 'free' ? 0 : Number(price || 0),
@@ -111,6 +129,13 @@ export default function CreateCourseClient() {
       price_type: pricingType,
       image: selectedFile || undefined,
     };
+
+    // Add learning points as infos[i][key], infos[i][value], infos[i][order]
+    learningPoints.filter(p => p.trim() !== '').forEach((point, index) => {
+      payload[`infos[${index}][key]`] = 'what_you_will_learn';
+      payload[`infos[${index}][value]`] = point;
+      payload[`infos[${index}][order]`] = index + 1;
+    });
 
     const created = await createCourse(payload);
     setCourseId(created.id);
@@ -259,7 +284,6 @@ export default function CreateCourseClient() {
         category_id: category ? Number(category) : undefined,
         description,
         user_id: userId,
-        what_you_will_learn: whatYouWillLearn,
         who_is_this_for: whoIsThisFor,
         price: pricingType === 'free' ? 0 : Number(price),
         status,
@@ -268,6 +292,13 @@ export default function CreateCourseClient() {
         final_price: pricingType === 'free' ? 0 : Number(price),
         image: selectedFile || undefined,
       };
+
+      // Add learning points as infos[i][key], infos[i][value], infos[i][order]
+      learningPoints.filter(p => p.trim() !== '').forEach((point, index) => {
+        payload[`infos[${index}][key]`] = 'what_you_will_learn';
+        payload[`infos[${index}][value]`] = point;
+        payload[`infos[${index}][order]`] = index + 1;
+      });
 
       if (courseId) {
         await updateCourse(courseId, payload);
@@ -450,12 +481,36 @@ export default function CreateCourseClient() {
                   {openSections.learning ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
                 </button>
                 {openSections.learning && (
-                  <div className="p-5 pt-0 border-t border-gray-50">
-                    <QuillEditor
-                      value={whatYouWillLearn}
-                      onChange={setWhatYouWillLearn}
-                      placeholder="ماذا سيتعلم الطالب من هذه الدورة؟"
-                    />
+                  <div className="p-5 pt-0 border-t border-gray-50 space-y-4">
+                    {learningPoints.map((point, index) => (
+                      <div key={index} className="relative group bg-gray-50 p-4 rounded-2xl border border-gray-100 transition-all hover:border-blue-200">
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                            النقطة {index + 1}
+                          </span>
+                          <button
+                            onClick={() => handleRemoveLearningPoint(index)}
+                            className="text-gray-400 hover:text-red-500 transition-colors p-1.5 hover:bg-red-50 rounded-lg"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                        <QuillEditor
+                          value={point}
+                          onChange={(val) => handleUpdateLearningPoint(index, val)}
+                          placeholder="ماذا سيتعلم الطالب من هذه النقطة؟"
+                        />
+                      </div>
+                    ))}
+                    <button
+                      onClick={handleAddLearningPoint}
+                      className="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center gap-3 text-gray-500 font-bold hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50/30 transition-all group"
+                    >
+                      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                        <Plus size={18} />
+                      </div>
+                      <span>إضافة نقطة تعلم جديدة</span>
+                    </button>
                   </div>
                 )}
               </div>

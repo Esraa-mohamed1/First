@@ -51,6 +51,33 @@ export default function CourseStudentViewPage() {
         const data = await getStudentCourse(slug);
         
         // Use real API data with fallback to static if missing
+        let learningPoints: string[] = [];
+        
+        // Try from infos first (new structure)
+        if (data.infos && Array.isArray(data.infos)) {
+          learningPoints = data.infos
+            .filter((info: any) => info.key === 'what_you_will_learn' || info.key === 'what_you_learn')
+            .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+            .map((info: any) => info.value);
+        }
+
+        // Fallback to what_you_will_learn string if infos didn't have any
+        if (learningPoints.length === 0) {
+          try {
+            if (data.what_you_will_learn) {
+              const parsed = JSON.parse(data.what_you_will_learn);
+              learningPoints = Array.isArray(parsed) ? parsed : [data.what_you_will_learn];
+            } else if (data.what_you_learn) {
+              const parsed = JSON.parse(data.what_you_learn);
+              learningPoints = Array.isArray(parsed) ? parsed : [data.what_you_learn];
+            }
+          } catch (e) {
+            console.error('Failed to parse what_you_will_learn', e);
+            if (data.what_you_will_learn) learningPoints = [data.what_you_will_learn];
+            else if (data.what_you_learn) learningPoints = [data.what_you_learn];
+          }
+        }
+
         const mergedCourse = {
           id: data.id,
           title: data.title,
@@ -61,6 +88,7 @@ export default function CourseStudentViewPage() {
           final_price: data.final_price,
           image: data.image,
           units: data.units || (data as any).chapters || [],
+          learning_points: learningPoints,
         };
 
         setCourse(mergedCourse);
@@ -163,23 +191,38 @@ export default function CourseStudentViewPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[
-                  { title: "بناء أنظمة التصميم (Design Systems) القابلة للتوسع بشكل احترافي.", icon: Layout, color: "blue" },
-                  { title: "فهم سيكولوجية المستخدم وتطبيق مبادئ UX في قراراتك التصميمية.", icon: MousePointer2, color: "blue" },
-                  { title: "إتقان التصميم المتجاوب للهواتف والويب باستخدام أحدث أدوات Figma.", icon: Smartphone, color: "orange" },
-                  { title: "تحويل التصاميم إلى بروتوتايب تفاعلي يحاكي الواقع تماماً.", icon: PenTool, color: "slate" }
-                ].map((item, i) => (
-                  <div key={i} className="bg-white p-6 rounded-[2rem] border border-slate-100 flex items-center justify-between gap-6 group hover:border-blue-600 transition-all shadow-sm">
-                    <p className="text-slate-700 font-bold leading-relaxed text-right flex-1">{item.title}</p>
-                    <div className={twMerge(
-                      "w-12 h-12 rounded-full shrink-0 flex items-center justify-center",
-                      item.color === 'blue' ? 'bg-blue-50 text-blue-600' :
-                        item.color === 'orange' ? 'bg-orange-50 text-orange-600' : 'bg-slate-100 text-slate-600'
-                    )}>
-                      <item.icon size={24} />
+                {(course.learning_points?.length > 0 ? course.learning_points : [
+                  "بناء أنظمة التصميم (Design Systems) القابلة للتوسع بشكل احترافي.",
+                  "فهم سيكولوجية المستخدم وتطبيق مبادئ UX في قراراتك التصميمية.",
+                  "إتقان التصميم المتجاوب للهواتف والويب باستخدام أحدث أدوات Figma.",
+                  "تحويل التصاميم إلى بروتوتايب تفاعلي يحاكي الواقع تماماً."
+                ]).map((point: string, i: number) => {
+                  const icons = [Layout, MousePointer2, Smartphone, PenTool, Globe, Award, ShieldCheck, Video];
+                  const colors = ['blue', 'blue', 'orange', 'slate', 'green', 'purple', 'red', 'indigo'];
+                  const Icon = icons[i % icons.length];
+                  const color = colors[i % colors.length];
+
+                  return (
+                    <div key={i} className="bg-white p-6 rounded-[2rem] border border-slate-100 flex items-center justify-between gap-6 group hover:border-blue-600 transition-all shadow-sm">
+                      <div 
+                        className="text-slate-700 font-bold leading-relaxed text-right flex-1 ql-editor !p-0"
+                        dangerouslySetInnerHTML={{ __html: point }}
+                      />
+                      <div className={twMerge(
+                        "w-12 h-12 rounded-full shrink-0 flex items-center justify-center",
+                        color === 'blue' ? 'bg-blue-50 text-blue-600' :
+                          color === 'orange' ? 'bg-orange-50 text-orange-600' : 
+                          color === 'green' ? 'bg-green-50 text-green-600' :
+                          color === 'purple' ? 'bg-purple-50 text-purple-600' :
+                          color === 'red' ? 'bg-red-50 text-red-600' :
+                          color === 'indigo' ? 'bg-indigo-50 text-indigo-600' :
+                          'bg-slate-100 text-slate-600'
+                      )}>
+                        <Icon size={24} />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
