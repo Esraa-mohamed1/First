@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   BookOpen,
@@ -25,6 +25,14 @@ const sidebarItems = [
 
 export const StudentSidebar = () => {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user_info');
+    document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    router.push('/auth/login');
+  };
 
   return (
     <aside className="w-72 bg-white border-l border-gray-100 flex flex-col h-screen sticky top-0 z-50 overflow-y-auto hidden lg:flex">
@@ -84,7 +92,10 @@ export const StudentSidebar = () => {
               <p className="text-[10px] text-gray-500">طالب نشط</p>
             </div>
           </div>
-          <button className="w-full bg-white border border-gray-100 text-red-500 text-xs font-bold py-2.5 rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all flex items-center justify-center gap-2">
+          <button 
+            onClick={handleLogout}
+            className="w-full bg-white border border-gray-100 text-red-500 text-xs font-bold py-2.5 rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all flex items-center justify-center gap-2"
+          >
             <LogOut size={14} />
             تسجيل الخروج
           </button>

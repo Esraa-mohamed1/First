@@ -419,10 +419,12 @@ export default function CourseDetailsPage() {
                           <Trash2 size={16} />
                         </button>
                       </div>
-                      <QuillEditor
+                      <input
+                        type="text"
                         value={point}
-                        onChange={(val) => handleUpdateLearningPoint(index, val)}
+                        onChange={(e) => handleUpdateLearningPoint(index, e.target.value)}
                         placeholder="ماذا سيتعلم الطالب من هذه النقطة؟"
+                        className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:border-blue-500 outline-none transition-all font-bold text-gray-700"
                       />
                     </div>
                   ))}

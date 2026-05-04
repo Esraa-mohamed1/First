@@ -93,7 +93,7 @@ export default function AcademicLayout({
 
 
 
-      {!pathname.includes('/student') && (
+      {!pathname.match(/\/courses\/.*\/student/) && (
         <>
           {isSidebarOpen && (
             <div
@@ -106,10 +106,10 @@ export default function AcademicLayout({
         </>
       )}
 
-      <main className={twMerge("flex-1 transition-all duration-300 w-full overflow-x-hidden", !pathname.includes('/student') && "lg:mr-72")}>
-        {!pathname.includes('/student') && <Header onMenuClick={() => setIsSidebarOpen(true)} />}
+      <main className={twMerge("flex-1 transition-all duration-300 w-full overflow-x-hidden", !pathname.match(/\/courses\/.*\/student/) && "lg:mr-72")}>
+        {!pathname.match(/\/courses\/.*\/student/) && <Header onMenuClick={() => setIsSidebarOpen(true)} />}
         <div className={twMerge(
-          !pathname.includes('/student') ? "p-8 md:p-12 max-w-[1800px] mx-auto" : ""
+          !pathname.match(/\/courses\/.*\/student/) ? "p-8 md:p-12 max-w-[1800px] mx-auto" : ""
         )}>
           {children}
         </div>

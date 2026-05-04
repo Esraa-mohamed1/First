@@ -9,10 +9,14 @@ import {
   Video, Monitor, DownloadCloud, Headset, Lock,
   Layout, MousePointer2, Smartphone, PenTool
 } from 'lucide-react';
-import { getStudentCourse } from '@/services/student-courses';
+import { getStudentCourse, subscribeToCourse } from '@/services/student-courses';
 import { Course, Unit } from '@/types/api';
 import toast from 'react-hot-toast';
 import { twMerge } from 'tailwind-merge';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
 
 const STATIC_COURSE_FALLBACK = {
   title: "إتقان تطوير واجهات المستخدم بالتصميم الذكي",
@@ -43,6 +47,7 @@ export default function CourseStudentViewPage() {
   const slug = params.slug as string;
   const [course, setCourse] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSubscribing, setIsSubscribing] = useState(false);
   const [expandedUnits, setExpandedUnits] = useState<number[]>([]);
 
   useEffect(() => {
@@ -110,6 +115,47 @@ export default function CourseStudentViewPage() {
     setExpandedUnits(prev =>
       prev.includes(unitId) ? prev.filter(id => id !== unitId) : [...prev, unitId]
     );
+  };
+
+  const handleSubscribe = async () => {
+    if (!course) return;
+    
+    setIsSubscribing(true);
+    try {
+      const price = Number(course.final_price || course.price || 0);
+      const response = await subscribeToCourse(course.id, price);
+      
+      // Check all possible paths for the payment URL based on the response format
+      const paymentUrl = response.data?.payment_url || response.payment_url || response.paymentLink || response.data?.paymentLink || response.link;
+      
+      if (paymentUrl) {
+        await MySwal.fire({
+          title: 'سيتم توجيهك الآن',
+          text: 'جاري تحويلك إلى بوابة الدفع لإتمام عملية الاشتراك.',
+          icon: 'info',
+          timer: 2000,
+          showConfirmButton: false,
+          timerProgressBar: true
+        });
+        
+        window.location.href = paymentUrl;
+      } else {
+        throw new Error('لم يتم استلام رابط الدفع');
+      }
+    } catch (error: any) {
+      console.error('Subscription error:', error);
+      const errorMessage = error.message || 'حدث خطأ أثناء محاولة الاشتراك. يرجى المحاولة مرة أخرى.';
+      
+      MySwal.fire({
+        title: 'خطأ في الاشتراك',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonText: 'حسناً',
+        confirmButtonColor: '#006692'
+      });
+    } finally {
+      setIsSubscribing(false);
+    }
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center font-bold text-slate-900">جاري التحميل...</div>;
@@ -323,8 +369,14 @@ export default function CourseStudentViewPage() {
 
               {/* Action Buttons */}
               <div className="space-y-3 mb-8">
-                <button className="w-full py-4 bg-[#006692] hover:bg-[#00557a] text-white rounded-[1.2rem] font-black text-lg shadow-lg shadow-[#006692]/10 transition-all hover:-translate-y-0.5 active:scale-95">
-                  اشترك الآن
+                <button 
+                  onClick={handleSubscribe}
+                  disabled={isSubscribing}
+                  className="w-full py-4 bg-[#006692] hover:bg-[#00557a] text-white rounded-[1.2rem] font-black text-lg shadow-lg shadow-[#006692]/10 transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isSubscribing ? (
+                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : 'اشترك الآن'}
                 </button>
                 <button className="w-full py-4 bg-[#F3F4F6] hover:bg-[#E5E7EB] text-slate-700 rounded-[1.2rem] font-black text-lg transition-all active:scale-95">
                   إضافة للسلة
