@@ -24,7 +24,7 @@ export default function CustomDomainPage() {
     // Read domain name from window location instead of API GET
     if (typeof window !== 'undefined') {
       let hostname = window.location.hostname;
-      
+
       // Clean up localhost for display/editing if needed
       if (hostname === 'localhost') {
         const storedTenant = localStorage.getItem('academy_link_name');
@@ -60,46 +60,59 @@ export default function CustomDomainPage() {
     });
 
     if (!result.isConfirmed) return;
-    
+
     setIsSubmitting(true);
     setErrors({});
-    
+
     try {
       const response = await academyApi.put('custom-domain', {
         domain: editValue.trim()
       });
-      
+
       if (response.data.success) {
         toast.success('تم تحديث الدومين بنجاح. سيتم توجيهك الآن.');
-        
+
         // Update local storage
         if (typeof window !== 'undefined') {
           localStorage.setItem('academy_link_name', editValue.trim());
-          
+
           triggerPageLoader(true);
 
           // Construct new URL
           const protocol = window.location.protocol;
           const isLocal = window.location.hostname.includes('localhost');
           const port = window.location.port ? `:${window.location.port}` : '';
-          
+
           let newUrl = '';
           if (isLocal) {
-            // If on localhost, we likely use subdomains like je.darab.academy.localhost:3000
-            // We need to keep the structure
-            const baseParts = window.location.hostname.split('.');
-            // Assume the structure is [tenant].darab.academy.localhost
-            // We replace [tenant] with the new one
-            newUrl = `${protocol}//${editValue.trim()}${port}/academic`;
+            // If on localhost, handle sub-subdomains 
+            const currentHostname = window.location.hostname;
+            // Check if we are on a subdomain already
+            if (currentHostname.includes('.darab.academy.localhost')) {
+              // Replace the tenant part (everything before .darab.academy.localhost)
+              const tenantPrefix = editValue.trim().split('.')[0]; // Take the first part of the new domain
+              newUrl = `${protocol}//${tenantPrefix}.darab.academy.localhost${port}/academic`;
+            } else {
+              // Fallback for simple localhost
+              newUrl = `${protocol}//${editValue.trim()}${port}/academic`;
+            }
           } else {
+            // Production: Use the new domain directly
             newUrl = `${protocol}//${editValue.trim()}/academic`;
           }
 
           // Clear auth data and redirect
           setTimeout(() => {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user_info');
+            // Clear ALL local storage except maybe some essential UI state if needed
+            // But user said "clear local storage"
+            localStorage.clear();
+            // Re-set the new academy link name so the next page knows the tenant
+            localStorage.setItem('academy_link_name', editValue.trim());
+
+            // Clear cookies
             document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
+            document.cookie = "academy_link_name=; path=/; max-age=0; SameSite=Lax";
+
             window.location.href = newUrl;
           }, 1500);
         }
@@ -139,7 +152,7 @@ export default function CustomDomainPage() {
     });
 
     if (!result.isConfirmed) return;
-    
+
     try {
       setIsSubmitting(true);
       const response = await academyApi.delete('custom-domain');
@@ -147,7 +160,7 @@ export default function CustomDomainPage() {
         toast.success('تم حذف الدومين بنجاح');
         setCustomDomain(null);
         if (typeof window !== 'undefined') {
-            setEditValue(window.location.hostname);
+          setEditValue(window.location.hostname);
         }
       }
     } catch (error: any) {
@@ -190,12 +203,11 @@ export default function CustomDomainPage() {
               </div>
             </div>
             {customDomain && (
-               <div className={`px-6 py-2.5 rounded-2xl text-xs font-black shadow-sm ${
-                customDomain.status === 'active' ? 'bg-green-50 text-green-600' : 
-                customDomain.status === 'pending' ? 'bg-orange-50 text-orange-600 animate-pulse' : 'bg-red-50 text-red-600'
-              }`}>
-                {customDomain.status === 'active' ? 'نشط' : 
-                 customDomain.status === 'pending' ? 'جاري التحقق...' : 'فشل التحقق'}
+              <div className={`px-6 py-2.5 rounded-2xl text-xs font-black shadow-sm ${customDomain.status === 'active' ? 'bg-green-50 text-green-600' :
+                  customDomain.status === 'pending' ? 'bg-orange-50 text-orange-600 animate-pulse' : 'bg-red-50 text-red-600'
+                }`}>
+                {customDomain.status === 'active' ? 'نشط' :
+                  customDomain.status === 'pending' ? 'جاري التحقق...' : 'فشل التحقق'}
               </div>
             )}
           </div>
@@ -206,8 +218,8 @@ export default function CustomDomainPage() {
                 <div className="space-y-3">
                   <label className="text-lg font-black text-gray-800">تعديل اسم النطاق</label>
                   <div className="relative">
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={editValue}
                       onChange={(e) => setEditValue(e.target.value)}
                       placeholder="example.com"
@@ -225,16 +237,16 @@ export default function CustomDomainPage() {
                 </div>
 
                 <div className="flex items-center gap-4 pt-4">
-                  <button 
-                    onClick={handleUpdate} 
+                  <button
+                    onClick={handleUpdate}
                     disabled={isSubmitting}
                     className="flex-1 bg-blue-600 text-white py-5 rounded-[2rem] font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-3 disabled:opacity-50"
                   >
                     {isSubmitting ? <Loader2 className="animate-spin" /> : <Check size={24} strokeWidth={3} />}
                     <span>تحديث النطاق</span>
                   </button>
-                  <button 
-                    onClick={() => { setIsEditing(false); setErrors({}); setEditValue(customDomain?.domain || ''); }} 
+                  <button
+                    onClick={() => { setIsEditing(false); setErrors({}); setEditValue(customDomain?.domain || ''); }}
                     disabled={isSubmitting}
                     className="px-10 py-5 bg-gray-100 text-gray-500 rounded-[2rem] font-black text-lg hover:bg-gray-200 transition-all disabled:opacity-50"
                   >
@@ -256,7 +268,7 @@ export default function CustomDomainPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button 
+                  <button
                     onClick={() => { setIsEditing(true); setEditValue(customDomain?.domain || editValue); }}
                     className="p-4 bg-white text-gray-400 hover:text-blue-600 rounded-2xl border border-gray-100 shadow-sm transition-all"
                     title="تعديل"
@@ -264,7 +276,7 @@ export default function CustomDomainPage() {
                     <Edit2 size={22} />
                   </button>
                   {customDomain && (
-                    <button 
+                    <button
                       onClick={handleRemove}
                       disabled={isSubmitting}
                       className="p-4 bg-white text-gray-400 hover:text-red-600 rounded-2xl border border-gray-100 shadow-sm transition-all"
