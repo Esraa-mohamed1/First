@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Loader2, Globe, Check, X, AlertCircle, ShieldCheck, RefreshCw, Edit2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import academyApi from '@/lib/academy-api';
+import Swal from 'sweetalert2';
+import { triggerPageLoader } from '@/components/PageLoader';
 
 interface CustomDomain {
   domain: string;
@@ -41,11 +43,23 @@ export default function CustomDomainPage() {
   const handleUpdate = async () => {
     if (!editValue.trim()) return;
 
-    const confirmChange = window.confirm(
-      'تنبيه: تغيير الدومين سيؤدي إلى تسجيل خروجك وتحديث بيانات الدخول. هل أنت متأكد من الاستمرار؟'
-    );
+    const result = await Swal.fire({
+      title: 'تنبيه: تغيير الدومين',
+      text: 'تغيير الدومين سيؤدي إلى تسجيل خروجك وتحديث بيانات الدخول. هل أنت متأكد من الاستمرار؟',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#2563eb',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'نعم، قم بالتغيير',
+      cancelButtonText: 'إلغاء',
+      customClass: {
+        popup: 'rounded-[2rem]',
+        confirmButton: 'rounded-xl font-bold px-8 py-3',
+        cancelButton: 'rounded-xl font-bold px-8 py-3'
+      }
+    });
 
-    if (!confirmChange) return;
+    if (!result.isConfirmed) return;
     
     setIsSubmitting(true);
     setErrors({});
@@ -56,18 +70,38 @@ export default function CustomDomainPage() {
       });
       
       if (response.data.success) {
-        toast.success('تم تحديث الدومين بنجاح. سيتم توجيهك لتسجيل الدخول مرة أخرى.');
+        toast.success('تم تحديث الدومين بنجاح. سيتم توجيهك الآن.');
         
         // Update local storage
         if (typeof window !== 'undefined') {
           localStorage.setItem('academy_link_name', editValue.trim());
           
+          triggerPageLoader(true);
+
+          // Construct new URL
+          const protocol = window.location.protocol;
+          const isLocal = window.location.hostname.includes('localhost');
+          const port = window.location.port ? `:${window.location.port}` : '';
+          
+          let newUrl = '';
+          if (isLocal) {
+            // If on localhost, we likely use subdomains like je.darab.academy.localhost:3000
+            // We need to keep the structure
+            const baseParts = window.location.hostname.split('.');
+            // Assume the structure is [tenant].darab.academy.localhost
+            // We replace [tenant] with the new one
+            newUrl = `${protocol}//${editValue.trim()}${port}/academic`;
+          } else {
+            newUrl = `${protocol}//${editValue.trim()}/academic`;
+          }
+
           // Clear auth data and redirect
           setTimeout(() => {
             localStorage.removeItem('token');
             localStorage.removeItem('user_info');
-            window.location.href = '/auth/login';
-          }, 2000);
+            document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
+            window.location.href = newUrl;
+          }, 1500);
         }
 
         setCustomDomain(response.data.data || { domain: editValue.trim(), status: 'pending' });
@@ -90,7 +124,21 @@ export default function CustomDomainPage() {
   };
 
   const handleRemove = async () => {
-    if (!confirm('هل أنت متأكد من حذف الدومين المخصص؟')) return;
+    const result = await Swal.fire({
+      title: 'حذف الدومين المخصص',
+      text: 'هل أنت متأكد من حذف الدومين المخصص؟',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'نعم، حذف',
+      cancelButtonText: 'إلغاء',
+      customClass: {
+        popup: 'rounded-[2rem]',
+      }
+    });
+
+    if (!result.isConfirmed) return;
     
     try {
       setIsSubmitting(true);
@@ -98,7 +146,6 @@ export default function CustomDomainPage() {
       if (response.data.success) {
         toast.success('تم حذف الدومين بنجاح');
         setCustomDomain(null);
-        // After deletion, we might want to show the underlying tenant domain or clear it
         if (typeof window !== 'undefined') {
             setEditValue(window.location.hostname);
         }
