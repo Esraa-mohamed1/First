@@ -7,6 +7,7 @@ import { createAccountInfoAcademy, login } from "@/services/auth";
 import toast from "react-hot-toast";
 import { useCountry } from "@/hooks/useCountry";
 import { CountrySelect, PhoneInput } from "@/components/CountrySelector";
+import { triggerPageLoader } from "@/components/PageLoader";
 
 export default function SetupPage() {
   const router = useRouter();
@@ -164,6 +165,7 @@ export default function SetupPage() {
         const tenantUrl = `${protocol}//${domainPrefix}${tenantSuffix}/auth/setup`;
 
         console.log('Auto-login failed. Redirecting to tenant login:', tenantUrl);
+        triggerPageLoader(true);
         window.location.href = tenantUrl;
         return;
       }
@@ -180,6 +182,7 @@ export default function SetupPage() {
 
       console.log('Redirecting to tenant dashboard:', tenantUrl);
 
+      triggerPageLoader(true);
       window.location.href = tenantUrl;
     } catch (error: any) {
       console.error(error);

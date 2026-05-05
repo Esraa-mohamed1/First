@@ -6,6 +6,7 @@ import RegistrationModal from "@/components/Modals/RegistrationModal";
 import LoginModal from "@/components/Modals/LoginModal";
 import { Toaster } from "react-hot-toast";
 import Providers from "@/components/Providers";
+import PageLoader from "@/components/PageLoader";
 
 const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({ 
     weight: ["400", "700"], // Normal and Bold
@@ -28,6 +29,7 @@ export default function RootLayout({
                 <Providers>
                     <ModalProvider>
                         {children}
+                        <PageLoader />
                         <RegistrationModal />
                         <LoginModal />
                         <Toaster position="top-center" />

@@ -10,6 +10,8 @@ import { useGoogleLogin } from '@react-oauth/google';
 import { useCountry } from '@/hooks/useCountry';
 import { PhoneInput } from '@/components/CountrySelector';
 
+import { triggerPageLoader } from '@/components/PageLoader';
+
 const LoginModal = () => {
     const { isOpen, view, closeModal, openModal } = useModal();
     const router = useRouter();
@@ -46,6 +48,7 @@ const LoginModal = () => {
                 toast.success('تم تسجيل الدخول بجوجل بنجاح');
                 document.cookie = `token=google_simulated_token; path=/; max-age=86400; SameSite=Lax`;
                 closeModal();
+                triggerPageLoader(true);
                 window.location.href = '/dashboard';
             } catch (error) {
                 toast.error('فشل تسجيل الدخول بجوجل');
@@ -156,6 +159,7 @@ const LoginModal = () => {
                 
                 toast.success('تم تسجيل الدخول بنجاح');
                 closeModal();
+                triggerPageLoader(true);
                 window.location.href = '/dashboard';
             } else {
                 toast.error('فشل تسجيل الدخول: استجابة غير صالحة');

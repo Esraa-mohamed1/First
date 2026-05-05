@@ -45,6 +45,9 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     if (pathname.startsWith('/academic/courses')) {
       setExpandedItems(prev => (prev.includes('الدورات') ? prev : [...prev, 'الدورات']));
     }
+    if (pathname.startsWith('/academic/settings') || pathname === '/academic/domain') {
+      setExpandedItems(prev => (prev.includes('الأعدادات') ? prev : [...prev, 'الأعدادات']));
+    }
   }, [pathname]);
 
   const menuItems = [
@@ -95,6 +98,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       label: 'الأعدادات',
       icon: Settings,
       href: '/academic/settings',
+      subItems: [
+        { label: 'بيانات الأكاديمية', href: '/academic/settings/academy' },
+        { label: 'الدومين المخصص', href: '/academic/domain' },
+      ]
     },
   ];
 
