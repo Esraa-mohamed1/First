@@ -237,7 +237,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
                 placeholder="ادخل عنوان للدرس"
-                className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all"
+                className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all text-gray-900"
               />
             </div>
 
@@ -247,7 +247,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 placeholder="ادخل وصف للدرس"
-                className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold min-h-[120px] text-right transition-all"
+                className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold min-h-[120px] text-right transition-all text-gray-900"
               ></textarea>
             </div>
 

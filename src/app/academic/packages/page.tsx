@@ -275,7 +275,7 @@ export default function PackagesPage() {
               <input
                 type="text"
                 placeholder="البحث"
-                className="w-full bg-gray-50 border border-gray-100 rounded-xl pr-10 pl-4 py-2 text-sm outline-none focus:border-blue-500 font-medium text-right"
+                className="w-full bg-gray-50 border border-gray-100 rounded-xl pr-10 pl-4 py-2 text-sm outline-none focus:border-blue-500 font-medium text-right text-gray-900"
               />
             </div>
 

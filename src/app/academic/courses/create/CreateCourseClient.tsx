@@ -55,6 +55,8 @@ export default function CreateCourseClient() {
   const [pricingType, setPricingType] = useState<'free' | 'paid'>('paid');
   const [status, setStatus] = useState<'published' | 'draft'>('draft');
   const [price, setPrice] = useState('');
+  const [currency, setCurrency] = useState<'EGP' | 'SAR'>('SAR');
+
   // Course Content State
   const [units, setUnits] = useState<any[]>([]);
   const [isAddingUnit, setIsAddingUnit] = useState(false);
@@ -124,8 +126,10 @@ export default function CreateCourseClient() {
       status: 'draft',
       type: courseTypeParam || 'recorded',
       price_type: pricingType,
+      currency,
       image: selectedFile || undefined,
     };
+
 
     // Add learning points as infos[i][key], infos[i][value], infos[i][order]
     learningPoints.filter(p => p.trim() !== '').forEach((point, index) => {
@@ -287,8 +291,10 @@ export default function CreateCourseClient() {
         type: courseTypeParam || 'recorded',
         price_type: pricingType,
         final_price: pricingType === 'free' ? 0 : Number(price),
+        currency,
         image: selectedFile || undefined,
       };
+
 
       // Add learning points as infos[i][key], infos[i][value], infos[i][order]
       learningPoints.filter(p => p.trim() !== '').forEach((point, index) => {
@@ -378,7 +384,7 @@ export default function CreateCourseClient() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="ادخل اسم الدورة"
-                  className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all"
+                  className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all text-gray-900"
                 />
               </div>
 
@@ -390,7 +396,7 @@ export default function CreateCourseClient() {
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all appearance-none"
+                  className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all appearance-none text-gray-900"
                 >
                   <option value="">اختر فئة</option>
                   {categories.map((cat) => (
@@ -408,7 +414,7 @@ export default function CreateCourseClient() {
                   <select
                     value={selectedInstructor || ''}
                     onChange={(e) => setSelectedInstructor(Number(e.target.value))}
-                    className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all appearance-none"
+                    className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all appearance-none text-gray-900"
                   >
                     <option value="">اختر مدرب</option>
                     {instructors.map((inst) => (
@@ -497,7 +503,7 @@ export default function CreateCourseClient() {
                           value={point}
                           onChange={(e) => handleUpdateLearningPoint(index, e.target.value)}
                           placeholder="ماذا سيتعلم الطالب من هذه النقطة؟"
-                          className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:border-blue-500 outline-none transition-all font-bold text-gray-700"
+                          className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:border-blue-500 outline-none transition-all font-bold text-gray-900"
                         />
                       </div>
                     ))}
@@ -583,7 +589,7 @@ export default function CreateCourseClient() {
                         value={newUnitTitle}
                         onChange={(e) => setNewUnitTitle(e.target.value)}
                         placeholder="ادخل اسم الوحدة"
-                        className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm transition-all"
+                        className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm transition-all text-gray-900"
                       />
                     </div>
                   </div>
@@ -778,18 +784,29 @@ export default function CreateCourseClient() {
               {pricingType === 'paid' && (
                 <div className="space-y-4 animate-in slide-in-from-top-4 duration-300">
                   <label className="block text-sm font-black text-gray-900">سعر الدورة</label>
-                  <div className="relative">
+                  <div className="relative group">
                     <input
                       type="number"
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
                       placeholder="0.00"
-                      className="w-full p-5 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-left transition-all pl-16"
+                      className="w-full p-5 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-left transition-all pl-24 text-gray-900 shadow-sm"
                     />
-                    <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-gray-400">USD</span>
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 border-r border-gray-100 pr-4">
+                      <select 
+                        value={currency}
+                        onChange={(e) => setCurrency(e.target.value as any)}
+                        className="bg-transparent font-black text-blue-600 outline-none cursor-pointer text-sm text-gray-900"
+                      >
+                        <option value="SAR" className="text-gray-900">SAR (ر.س)</option>
+                        <option value="EGP" className="text-gray-900">EGP (ج.م)</option>
+                      </select>
+
+                    </div>
                   </div>
                 </div>
               )}
+
 
               <div className="flex justify-center pt-10">
                 <button

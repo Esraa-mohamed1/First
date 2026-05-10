@@ -50,6 +50,14 @@ export default function CourseDetailsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [expandedInfoSections, setExpandedInfoSections] = useState<string[]>(['description']);
 
+  // Pricing State
+  const [pricingType, setPricingType] = useState<'free' | 'paid'>('paid');
+  const [price, setPrice] = useState('');
+  const [currency, setCurrency] = useState<'EGP' | 'SAR'>('SAR');
+  const [isSavingPricing, setIsSavingPricing] = useState(false);
+
+
+
   const handleAddLearningPoint = () => {
     setLearningPoints([...learningPoints, '']);
   };
@@ -90,7 +98,12 @@ export default function CourseDetailsPage() {
         title: courseInfo.title,
         description: courseInfo.description,
         target_audience: courseInfo.target_audience,
+        price: pricingType === 'free' ? 0 : Number(price),
+        final_price: pricingType === 'free' ? 0 : Number(price),
+        price_type: pricingType,
+        currency: currency,
       };
+
 
       // Add learning points as infos[i][key], infos[i][value], infos[i][order]
       learningPoints.filter(p => p.trim() !== '').forEach((point, index) => {
@@ -109,6 +122,27 @@ export default function CourseDetailsPage() {
       toast.error('فشل حفظ بيانات الدورة');
     }
   };
+
+  const handleSavePricing = async () => {
+    setIsSavingPricing(true);
+    try {
+      const payload = {
+        price: pricingType === 'free' ? 0 : Number(price),
+        final_price: pricingType === 'free' ? 0 : Number(price),
+        price_type: pricingType,
+        currency: currency,
+      };
+
+      await updateCourse(Number(id), payload);
+      toast.success('تم حفظ بيانات التسعير بنجاح');
+      fetchCourse();
+    } catch (error) {
+      toast.error('فشل حفظ بيانات التسعير');
+    } finally {
+      setIsSavingPricing(false);
+    }
+  };
+
 
   const fetchCourse = async () => {
     try {
@@ -158,6 +192,10 @@ export default function CourseDetailsPage() {
       if (data.units) {
         setExpandedUnits(data.units.map(u => u.id));
       }
+
+      setPricingType(data.price_type || (Number(data.price) === 0 ? 'free' : 'paid'));
+      setPrice(data.price?.toString() || '');
+
     } catch (error) {
       console.error(error);
       toast.error('فشل تحميل بيانات الدورة');
@@ -334,7 +372,7 @@ export default function CourseDetailsPage() {
                 value={courseInfo.title}
                 onChange={(e) => setCourseInfo({ ...courseInfo, title: e.target.value })}
                 placeholder="ادخل اسم الدورة"
-                className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all"
+                className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all text-gray-900"
               />
             </div>
 
@@ -424,7 +462,7 @@ export default function CourseDetailsPage() {
                         value={point}
                         onChange={(e) => handleUpdateLearningPoint(index, e.target.value)}
                         placeholder="ماذا سيتعلم الطالب من هذه النقطة؟"
-                        className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:border-blue-500 outline-none transition-all font-bold text-gray-700"
+                        className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:border-blue-500 outline-none transition-all font-bold text-gray-900"
                       />
                     </div>
                   ))}
@@ -506,7 +544,7 @@ export default function CourseDetailsPage() {
                        value={newUnitTitle}
                        onChange={(e) => setNewUnitTitle(e.target.value)}
                        placeholder="ادخل اسم الوحدة"
-                       className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm transition-all"
+                       className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm transition-all text-gray-900"
                      />
                    </div>
                    <div className="space-y-1.5">
@@ -515,7 +553,7 @@ export default function CourseDetailsPage() {
                        value={newUnitDescription}
                        onChange={(e) => setNewUnitDescription(e.target.value)}
                        placeholder="ادخل وصف للوحدة"
-                       className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[80px] transition-all"
+                       className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[80px] transition-all text-gray-900"
                      />
                    </div>
                 </div>
@@ -652,13 +690,81 @@ export default function CourseDetailsPage() {
         )}
 
         {activeTab === 'pricing' && (
-          <div className="max-w-4xl space-y-6">
-            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center">
-              <h3 className="text-lg font-black text-gray-900 mb-2">إعدادات التسعير</h3>
-              <p className="text-gray-500 font-bold text-sm">سيتم إضافة إعدادات التسعير قريباً</p>
+          <div className="max-w-2xl mx-auto space-y-10 pt-10">
+            <div className="text-center space-y-2">
+              <h2 className="text-3xl font-black text-gray-900">تحديد سعر الدورة</h2>
+              <p className="text-gray-400 font-bold">اختر خطة التسعير المناسبة لدورتك</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div
+                onClick={() => setPricingType('free')}
+                className={`p-10 rounded-[32px] border-2 cursor-pointer transition-all text-center space-y-4 ${
+                  pricingType === 'free' ? 'border-blue-600 bg-blue-50/30' : 'border-gray-100 bg-white hover:border-blue-200'
+                }`}
+              >
+                <div className={`w-16 h-16 rounded-2xl mx-auto flex items-center justify-center ${pricingType === 'free' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600'}`}>
+                  <Play size={32} />
+                </div>
+                <h3 className="text-xl font-black text-gray-900">مجاني</h3>
+                <p className="text-sm font-bold text-gray-400">الدورة متاحة للجميع بدون مقابل مادي</p>
+              </div>
+
+              <div
+                onClick={() => setPricingType('paid')}
+                className={`p-10 rounded-[32px] border-2 cursor-pointer transition-all text-center space-y-4 ${
+                  pricingType === 'paid' ? 'border-blue-600 bg-blue-50/30' : 'border-gray-100 bg-white hover:border-blue-200'
+                }`}
+              >
+                <div className={`w-16 h-16 rounded-2xl mx-auto flex items-center justify-center ${pricingType === 'paid' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600'}`}>
+                  <FileText size={32} />
+                </div>
+                <h3 className="text-xl font-black text-gray-900">مدفوع</h3>
+                <p className="text-sm font-bold text-gray-400">حدد سعراً للدورة ليتمكن الطلاب من شرائها</p>
+              </div>
+            </div>
+
+            {pricingType === 'paid' && (
+              <div className="space-y-6 animate-in slide-in-from-top-4 duration-300">
+                <div className="space-y-2">
+                  <label className="block text-sm font-black text-gray-900">سعر الدورة</label>
+                  <div className="relative group">
+                    <input
+                      type="number"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full p-5 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-left transition-all pl-24 text-gray-900 shadow-sm group-hover:border-gray-200"
+                    />
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 border-r border-gray-100 pr-4">
+                      <select 
+                        value={currency}
+                        onChange={(e) => setCurrency(e.target.value as any)}
+                        className="bg-transparent font-black text-blue-600 outline-none cursor-pointer text-sm text-gray-900"
+                      >
+                        <option value="SAR" className="text-gray-900">SAR (ر.س)</option>
+                        <option value="EGP" className="text-gray-900">EGP (ج.م)</option>
+                      </select>
+
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+
+            <div className="flex justify-center pt-10">
+              <button
+                onClick={handleSavePricing}
+                disabled={isSavingPricing}
+                className="w-full max-w-[400px] py-5 bg-blue-600 text-white font-black rounded-2xl shadow-2xl shadow-blue-500/20 hover:brightness-110 active:scale-95 transition-all disabled:opacity-70"
+              >
+                {isSavingPricing ? 'جاري الحفظ...' : 'حفظ بيانات التسعير'}
+              </button>
             </div>
           </div>
         )}
+
       </div>
 
       <AddLessonModal 

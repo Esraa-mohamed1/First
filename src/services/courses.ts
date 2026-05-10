@@ -187,10 +187,34 @@ export const deleteCourse = async (id: number): Promise<void> => {
 
 export const updateCourse = async (id: number, payload: any): Promise<Course> => {
   try {
+    // If payload contains a file (image), we must use FormData
+    // and often backends (like Laravel) require POST with _method=PUT for multipart/form-data
+    if (payload.image instanceof File) {
+      const formData = new FormData();
+      Object.keys(payload).forEach(key => {
+        if (payload[key] !== undefined && payload[key] !== null) {
+          if (key === 'image') {
+            formData.append('image', payload.image);
+          } else {
+            formData.append(key, String(payload[key]));
+          }
+        }
+      });
+      formData.append('_method', 'PUT');
+      
+      const response = await academyApi.post<ApiResponse<Course>>(`courses/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data.data;
+    }
+
+    // Otherwise, standard JSON PUT
     const response = await academyApi.put<ApiResponse<Course>>(`courses/${id}`, payload);
     return response.data.data;
   } catch (error: any) {
     console.error('Failed to update course:', error);
     throw error.response?.data || error;
   }
-};
+};

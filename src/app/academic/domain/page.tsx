@@ -223,7 +223,7 @@ export default function CustomDomainPage() {
                       value={editValue}
                       onChange={(e) => setEditValue(e.target.value)}
                       placeholder="example.com"
-                      className={`w-full p-5 bg-gray-50 border ${errors.domain ? 'border-red-300' : 'border-gray-100'} rounded-[2rem] outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-left font-bold text-lg`}
+                      className={`w-full p-5 bg-gray-50 border ${errors.domain ? 'border-red-300' : 'border-gray-100'} rounded-[2rem] outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-left font-bold text-lg text-gray-900`}
                       dir="ltr"
                       autoFocus
                     />

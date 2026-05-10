@@ -59,7 +59,9 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
   // Pricing Step States
   const [pricingType, setPricingType] = useState<'free' | 'paid'>('paid');
   const [price, setPrice] = useState('');
+  const [currency, setCurrency] = useState<'EGP' | 'SAR'>('SAR');
   const [status, setStatus] = useState<'published' | 'draft'>('draft');
+
 
   // Course Content State (Mock for now to match UI)
   const [units, setUnits] = useState<any[]>([]);
@@ -120,11 +122,15 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
         what_you_will_learn: whatYouWillLearn,
         who_is_this_for: whoIsThisFor,
         price: pricingType === 'free' ? 0 : Number(price),
+        final_price: pricingType === 'free' ? 0 : Number(price),
         status,
         type: initialCourseType || 'recorded',
         price_type: pricingType,
+        currency,
         image: selectedFile || undefined,
       };
+
+
 
       if (courseId) {
         await updateCourse(courseId, payload);
@@ -202,7 +208,7 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
                           placeholder="ادخل اسم الدورة"
-                          className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all"
+                          className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all text-gray-900"
                         />
                       </div>
 
@@ -395,18 +401,29 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
                    {pricingType === 'paid' && (
                      <div className="space-y-4 animate-in slide-in-from-top-4 duration-300">
                         <label className="block text-sm font-black text-gray-900">سعر الدورة</label>
-                        <div className="relative">
+                        <div className="relative group">
                           <input
                             type="number"
                             value={price}
                             onChange={(e) => setPrice(e.target.value)}
                             placeholder="0.00"
-                            className="w-full p-5 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-left transition-all pl-16"
+                            className="w-full p-5 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-left transition-all pl-24 text-gray-900 shadow-sm"
                           />
-                          <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-gray-400">USD</span>
+                          <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 border-r border-gray-100 pr-4">
+                            <select 
+                              value={currency}
+                              onChange={(e) => setCurrency(e.target.value as any)}
+                              className="bg-transparent font-black text-blue-600 outline-none cursor-pointer text-sm text-gray-900"
+                            >
+                              <option value="SAR" className="text-gray-900">SAR (ر.س)</option>
+                              <option value="EGP" className="text-gray-900">EGP (ج.م)</option>
+                            </select>
+
+                          </div>
                         </div>
                      </div>
                    )}
+
 
                    <div className="flex justify-center pt-10">
                       <button 

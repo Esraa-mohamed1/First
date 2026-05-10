@@ -8,7 +8,7 @@ export default function StudentLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50/50 flex flex-col font-sans" dir="rtl">
+    <div className="min-h-screen bg-[#F8FAFF] flex flex-col font-sans" dir="rtl">
       <StudentHeader />
       <div className="flex flex-1 overflow-hidden">
         <StudentSidebar />

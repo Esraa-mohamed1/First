@@ -115,7 +115,9 @@ export interface CreateCoursePayload {
   image?: File;
   category_id?: string | number;
   description: string;
+  currency?: 'EGP' | 'SAR';
 }
+
 
 export interface CreateUnitPayload {
   course_id: number;

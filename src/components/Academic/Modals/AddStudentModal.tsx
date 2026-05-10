@@ -98,7 +98,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="مثال: أحمد محمد"
-                  className="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all"
+                  className="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
                 />
               </div>
             </div>
@@ -116,7 +116,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="example@email.com"
-                  className="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all"
+                  className="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
                 />
               </div>
             </div>
@@ -132,7 +132,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="05X XXX XXXX"
-                  className="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all"
+                  className="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
                   dir="ltr"
                 />
               </div>
@@ -151,7 +151,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="كلمة مرور قوية"
-                  className="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all"
+                  className="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
                 />
               </div>
             </div>
@@ -167,7 +167,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
                   name="role"
                   value={formData.role}
                   onChange={handleChange}
-                  className="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all appearance-none"
+                  className="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all appearance-none text-gray-900"
                 >
                   <option value="student">طالب</option>
                   <option value="admin">مسؤول</option>

@@ -84,7 +84,7 @@ const EditLessonModal = ({ isOpen, onClose, lesson, onLessonUpdated }: EditLesso
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="ادخل عنوان الدرس"
-                className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-right"
+                className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-right text-gray-900"
               />
             </div>
 
@@ -94,7 +94,7 @@ const EditLessonModal = ({ isOpen, onClose, lesson, onLessonUpdated }: EditLesso
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="ادخل وصفاً للدرس"
-                className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm min-h-[120px] transition-all text-right"
+                className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm min-h-[120px] transition-all text-right text-gray-900"
               />
             </div>
             
