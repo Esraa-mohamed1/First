@@ -4,23 +4,18 @@ import { ApiResponse, Course, CreateCoursePayload, CreateUnitPayload, CreateLess
 export const createCourse = async (payload: CreateCoursePayload): Promise<Course> => {
   try {
     const formData = new FormData();
-    formData.append('title', payload.title);
-    formData.append('user_id', String(payload.user_id));
-    formData.append('type', payload.type);
-    formData.append('price_type', payload.price_type);
-    formData.append('price', String(payload.price));
-    formData.append('final_price', String(payload.final_price));
-    formData.append('status', payload.status);
-    if (payload.category_id !== undefined && payload.category_id !== null) {
-      formData.append('category_id', String(payload.category_id));
-    }
-    formData.append('description', payload.description);
+    Object.keys(payload).forEach(key => {
+      const value = (payload as any)[key];
+      if (value !== undefined && value !== null) {
+        if (key === 'image' && value instanceof File) {
+          formData.append('image', value);
+        } else {
+          formData.append(key, String(value));
+        }
+      }
+    });
 
-    if (payload.image) {
-      formData.append('image', payload.image);
-    }
-
-      const response = await academyApi.post<ApiResponse<Course>>('courses', formData, {
+    const response = await academyApi.post<ApiResponse<Course>>('courses', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

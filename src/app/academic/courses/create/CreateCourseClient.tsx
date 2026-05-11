@@ -15,12 +15,16 @@ import {
   Trash2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import { createCourse, createUnit, getCategories, getCourse, updateCourse } from '@/services/courses';
 import { getProfileStatus, getMyUsageLimit } from '@/services/auth';
 import { getUsers } from '@/services/users';
 import { User } from '@/types/api';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
 import QuillEditor from '@/components/Academic/QuillEditor';
+
+const MySwal = withReactContent(Swal);
 
 export default function CreateCourseClient() {
   const router = useRouter();
@@ -270,7 +274,13 @@ export default function CreateCourseClient() {
           const used = parseFloat(maxCoursesObj.used_amount || '0');
           const max = parseFloat(maxCoursesObj.total_limit || '0');
           if (used >= max) {
-            toast.error('عفواً، لقد وصلت للحد الأقصى المسموح به لعدد الدورات. يرجى ترقية باقتك.');
+            await MySwal.fire({
+              title: 'وصلت للحد الأقصى',
+              text: 'عفواً، لقد وصلت للحد الأقصى المسموح به لعدد الدورات. يرجى ترقية باقتك.',
+              icon: 'warning',
+              confirmButtonText: 'حسناً',
+              confirmButtonColor: '#2563eb'
+            });
             setIsSubmitting(false);
             return;
           }

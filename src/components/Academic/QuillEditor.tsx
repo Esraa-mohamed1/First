@@ -12,7 +12,7 @@ interface QuillEditorProps {
 }
 
 const QuillEditor = ({ value, onChange, placeholder, className }: QuillEditorProps) => {
-  const ReactQuill = useMemo(() => dynamic(() => import('react-quill-new'), { 
+  const ReactQuill = useMemo(() => dynamic(() => import('react-quill-new'), {
     ssr: false,
     loading: () => <div className="h-32 bg-gray-50 animate-pulse rounded-xl" />
   }), []);
@@ -56,6 +56,7 @@ const QuillEditor = ({ value, onChange, placeholder, className }: QuillEditorPro
         .ql-editor {
           text-align: right;
           direction: rtl;
+          color: #1f2937;
         }
         .ql-tooltip {
           left: 0 !important;

@@ -13,7 +13,7 @@ export default function AcademyLoginPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('phone');
+    const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
     const { selectedCountry } = useCountry();
     const [formData, setFormData] = useState({
         email: '',

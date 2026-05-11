@@ -17,7 +17,7 @@ const LoginModal = () => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('phone');
+    const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
     const { selectedCountry } = useCountry();
 
     // Form State

@@ -4,6 +4,8 @@ import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, Play, Video, FileText, FilePieChart as FilePowerpoint, Upload, Check, CheckCircle2, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import { createLesson } from '@/services/courses';
 import { createVideoResource, uploadVideoFile, waitForVideoReady, fetchCollections, createCollection } from '@/services/bunnyStream';
 import { uploadFile } from '@/services/upload';
@@ -18,6 +20,8 @@ interface AddLessonModalProps {
   instructorName: string; // Add instructorName
   onLessonAdded: () => void;
 }
+
+const MySwal = withReactContent(Swal);
 
 const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instructorName, onLessonAdded }: AddLessonModalProps) => {
   const [lessonType, setLessonType] = useState<'video' | 'pdf' | 'powerpoint'>('video');
@@ -89,10 +93,13 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
 
         if (remainingStorage <= 0 || selectedFile.size > remainingStorage) {
           const availableMB = Math.max(0, Math.round(remainingStorage / 1024 / 1024));
-          toast.error(
-            `عفواً، لقد تجاوزت المساحة المخصصة لك. المساحة المتاحة: ${availableMB} MB. برجاء ترقية حسابك لرفع المزيد من الملفات.`,
-            { duration: 5000, icon: '⚠️' }
-          );
+          await MySwal.fire({
+            title: 'تجاوزت المساحة المخصصة',
+            text: `عفواً، لقد تجاوزت المساحة المخصصة لك. المساحة المتاحة: ${availableMB} MB. برجاء ترقية حسابك لرفع المزيد من الملفات.`,
+            icon: 'warning',
+            confirmButtonText: 'حسناً',
+            confirmButtonColor: '#2563eb'
+          });
           return;
         }
       }
