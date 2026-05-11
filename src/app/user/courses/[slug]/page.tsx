@@ -94,6 +94,7 @@ export default function CourseStudentViewPage() {
           image: data.image,
           units: data.units || (data as any).chapters || [],
           learning_points: learningPoints,
+          is_subscribed: (data as any).is_subscribed || false,
         };
 
         setCourse(mergedCourse);
@@ -345,53 +346,73 @@ export default function CourseStudentViewPage() {
 
           <div className="w-full xl:w-[360px] shrink-0 sticky xl:top-8 z-20">
             <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_15px_50px_rgba(0,0,0,0.05)] border border-slate-100 flex flex-col relative overflow-hidden">
-
-              <div className="text-right mb-2">
-                <span className="text-slate-400 font-bold text-base">استثمار الدورة</span>
-              </div>
-
-              {/* Price Section - Right Aligned */}
-              <div className="flex flex-col items-start mb-6">
-                <div className="flex items-center gap-3">
-                  <span className="text-5xl font-black text-slate-900 leading-none">{course.final_price || course.price || 299}</span>
-                  <span className="text-xl font-black text-[#006692] mt-3">ريال</span>
-                  {course.final_price && course.price && course.final_price !== course.price && (
-                     <span className="text-lg text-slate-300 line-through font-bold mt-3 ml-2">{course.price} ريال</span>
-                  )}
+              {course.is_subscribed ? (
+                <div className="space-y-6">
+                  <div className="text-center space-y-3">
+                    <div className="w-20 h-20 bg-green-50 text-green-600 rounded-3xl flex items-center justify-center mx-auto shadow-sm">
+                      <CheckCircle2 size={40} />
+                    </div>
+                    <h3 className="text-2xl font-black text-slate-900">أنت مشترك بالفعل</h3>
+                    <p className="text-slate-500 font-bold text-sm">استمتع برحلتك التعليمية وابدأ الآن في مشاهدة الدروس.</p>
+                  </div>
+                  <button 
+                    onClick={() => router.push(`/student/courses/${course.id}`)}
+                    className="w-full py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-[1.5rem] font-black text-xl shadow-xl shadow-blue-200 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3"
+                  >
+                    <Play size={20} fill="currentColor" />
+                    ابدأ التعلم الآن
+                  </button>
                 </div>
+              ) : (
+                <>
+                  <div className="text-right mb-2">
+                    <span className="text-slate-400 font-bold text-base">استثمار الدورة</span>
+                  </div>
 
-                {/* Offer Timer */}
-                <div className="flex items-center gap-2 text-[#A85E00] font-black text-sm mt-4">
-                  <Clock size={16} />
-                  <span>خصم 50% ينتهي خلال 14 ساعة!</span>
-                </div>
-              </div>
+                  {/* Price Section - Right Aligned */}
+                  <div className="flex flex-col items-start mb-6">
+                    <div className="flex items-center gap-3">
+                      <span className="text-5xl font-black text-slate-900 leading-none">{course.final_price || course.price || 299}</span>
+                      <span className="text-xl font-black text-[#006692] mt-3">ريال</span>
+                      {course.final_price && course.price && course.final_price !== course.price && (
+                        <span className="text-lg text-slate-300 line-through font-bold mt-3 ml-2">{course.price} ريال</span>
+                      )}
+                    </div>
 
-              {/* Action Buttons */}
-              <div className="space-y-3 mb-8">
-                <button 
-                  onClick={handleSubscribe}
-                  disabled={isSubscribing}
-                  className="w-full py-4 bg-[#006692] hover:bg-[#00557a] text-white rounded-[1.2rem] font-black text-lg shadow-lg shadow-[#006692]/10 transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isSubscribing ? (
-                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : 'اشترك الآن'}
-                </button>
-                <button className="w-full py-4 bg-[#F3F4F6] hover:bg-[#E5E7EB] text-slate-700 rounded-[1.2rem] font-black text-lg transition-all active:scale-95">
-                  إضافة للسلة
-                </button>
-              </div>
+                    {/* Offer Timer */}
+                    <div className="flex items-center gap-2 text-[#A85E00] font-black text-sm mt-4">
+                      <Clock size={16} />
+                      <span>خصم 50% ينتهي خلال 14 ساعة!</span>
+                    </div>
+                  </div>
 
-              {/* Secure Payment Footer - Right Aligned */}
-              <div className="mt-8 pt-6 border-t border-slate-50 w-full flex items-center justify-start gap-3">
-                <span className="text-xs text-slate-400 font-bold">وسائل دفع آمنة</span>
-                <div className="flex gap-2">
-                  <div className="h-6 w-10 bg-[#F3F4F6] rounded" />
-                  <div className="h-6 w-10 bg-[#F3F4F6] rounded" />
-                  <div className="h-6 w-10 bg-[#F3F4F6] rounded" />
-                </div>
-              </div>
+                  {/* Action Buttons */}
+                  <div className="space-y-3 mb-8">
+                    <button 
+                      onClick={handleSubscribe}
+                      disabled={isSubscribing}
+                      className="w-full py-4 bg-[#006692] hover:bg-[#00557a] text-white rounded-[1.2rem] font-black text-lg shadow-lg shadow-[#006692]/10 transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {isSubscribing ? (
+                        <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : 'اشترك الآن'}
+                    </button>
+                    <button className="w-full py-4 bg-[#F3F4F6] hover:bg-[#E5E7EB] text-slate-700 rounded-[1.2rem] font-black text-lg transition-all active:scale-95">
+                      إضافة للسلة
+                    </button>
+                  </div>
+
+                  {/* Secure Payment Footer - Right Aligned */}
+                  <div className="mt-8 pt-6 border-t border-slate-50 w-full flex items-center justify-start gap-3">
+                    <span className="text-xs text-slate-400 font-bold">وسائل دفع آمنة</span>
+                    <div className="flex gap-2">
+                      <div className="h-6 w-10 bg-[#F3F4F6] rounded" />
+                      <div className="h-6 w-10 bg-[#F3F4F6] rounded" />
+                      <div className="h-6 w-10 bg-[#F3F4F6] rounded" />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Guarantee Box */}

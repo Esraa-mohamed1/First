@@ -35,7 +35,7 @@ export const StudentSidebar = () => {
   };
 
   return (
-    <aside className="w-72 bg-white border-l border-gray-100 flex flex-col h-screen sticky top-0 z-50 overflow-y-auto hidden lg:flex">
+    <aside className="w-72 bg-white border-l border-gray-200/60 flex flex-col h-screen sticky top-0 z-50 overflow-y-auto hidden lg:flex">
       {/* Sidebar Header / Logo Area */}
       <div className="p-8 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">

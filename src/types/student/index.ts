@@ -8,6 +8,7 @@ export interface Course {
   instructor: string;
   category: string;
   status: 'in-progress' | 'completed' | 'not-started';
+  price_type?: 'free' | 'paid';
 }
 
 export interface UserProfile {

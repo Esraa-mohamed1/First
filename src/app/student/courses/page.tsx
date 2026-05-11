@@ -28,6 +28,7 @@ export default function CoursesPage() {
           instructor: course.instructor || 'Unknown', 
           category: course.category || 'Uncategorized', 
           status: 'not-started', 
+          price_type: course.price_type || (Number(course.price || 0) > 0 ? 'paid' : 'free'),
         }));
         setCourses(studentCourses);
       } catch (err) {
@@ -42,6 +43,9 @@ export default function CoursesPage() {
   }, []);
 
   const filteredCourses = courses.filter(course => {
+    // Only show paid courses in student dashboard "My Courses"
+    if (course.price_type !== 'paid') return false;
+    
     if (filter === 'all') return true;
     return course.status === filter;
   });
