@@ -1,177 +1,265 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ChevronLeft, ChevronRight, Share2, 
-  MoreVertical, ShieldCheck, BarChart3, 
-  Menu, X, Keyboard
+import {
+  ChevronLeft, ChevronRight,
+  Menu, X, Home, Trophy, Star, Sparkles, BookOpen, Rocket
 } from 'lucide-react';
+import Lottie from 'lottie-react';
 import { VideoPlayer } from '@/components/course/VideoPlayer';
 import { LessonSidebar } from '@/components/course/LessonSidebar';
 import { LessonContent } from '@/components/course/LessonContent';
 import { MOCK_COURSE } from '@/data/mockCourse';
 import { usePlayerStore } from '@/hooks/usePlayerStore';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 export default function LessonPage() {
-  const { 
-    currentLesson, setCurrentLesson, 
-    isSidebarOpen, toggleSidebar 
+  const {
+    currentLesson, setCurrentLesson,
+    isSidebarOpen, toggleSidebar
   } = usePlayerStore();
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [rocketData, setRocketData] = useState<any>(null);
 
   useEffect(() => {
-    // Initialize with first lesson if none selected
     if (!currentLesson) {
       setCurrentLesson(MOCK_COURSE.lessons[0]);
     }
+    // Fetch a nice rocket animation for the celebration
+    fetch('https://lottie.host/80e15967-b508-410a-8e2b-f8f4116d97c6/g7G8yvN0z6.json')
+      .then(res => res.json())
+      .then(data => setRocketData(data))
+      .catch(err => console.error('Failed to load rocket animation:', err));
   }, [currentLesson, setCurrentLesson]);
+
+  const handleComplete = () => {
+    setShowCelebration(true);
+    setTimeout(() => setShowCelebration(false), 4000);
+  };
 
   if (!currentLesson) return null;
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white selection:bg-blue-500/30">
-      {/* Background Cinematic Gradients */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 blur-[120px] rounded-full" />
-      </div>
+    <div className="min-h-screen bg-[#F0F7FF] text-slate-800 selection:bg-blue-500/10 font-medium">
+      {/* Immersive Celebration Overlay (Drawn on Screen) */}
+      <AnimatePresence>
+        {showCelebration && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center pointer-events-none overflow-hidden"
+          >
+            {/* Darkened Backdrop for better readability */}
+            <div className="absolute inset-0 bg-slate-900/10 backdrop-blur-[2px]" />
 
-      {/* Top Navigation */}
-      <header className="sticky top-0 z-50 bg-black/50 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-[1920px] mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button className="p-2 hover:bg-white/5 rounded-full transition-colors">
-              <ChevronLeft className="w-5 h-5 text-white/60" />
-            </button>
-            <div className="h-6 w-px bg-white/10 hidden sm:block" />
-            <div className="hidden sm:block">
-              <h1 className="text-sm font-bold text-white truncate max-w-[300px]">
+            {/* Drawing Canvas Overlay */}
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center">
+              {/* Drawing Text SVG */}
+              <svg width="800" height="200" viewBox="0 0 800 200" className="drop-shadow-[0_10px_30px_rgba(59,130,246,0.4)]">
+                <motion.text
+                  x="50%"
+                  y="50%"
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  initial={{ strokeDasharray: 1000, strokeDashoffset: 1000, fill: "rgba(255, 255, 255, 0)" }}
+                  animate={{
+                    strokeDashoffset: 0,
+                    fill: "rgba(255, 255, 255, 1)",
+                  }}
+                  transition={{
+                    duration: 2,
+                    ease: "easeInOut",
+                    fill: { delay: 1.5, duration: 0.5 }
+                  }}
+                  className="text-8xl font-black"
+                  style={{
+                    stroke: "#1e40af",
+                    strokeWidth: "2px",
+                    fontFamily: "system-ui, sans-serif"
+                  }}
+                >
+                  أحسنت يا بطل!
+                </motion.text>
+              </svg>
+            </div>
+
+            {/* Flying Rocket - Launches AFTER text is drawn */}
+            <motion.div
+              initial={{ y: 500, x: -200, scale: 0, rotate: -20, opacity: 0 }}
+              animate={{ y: 0, x: 0, scale: 1.2, rotate: 0, opacity: 1 }}
+              transition={{
+                duration: 1.5,
+                delay: 2.5 + Math.random() * 1.5,
+                repeat: Infinity,
+                repeatDelay: 1
+              }}
+              className="w-[400px] h-[400px] relative z-30"
+            >
+              {rocketData ? (
+                <Lottie animationData={rocketData} loop={true} className="w-full h-full" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Rocket size={150} className="text-blue-500 animate-bounce" />
+                </div>
+              )}
+            </motion.div>
+
+            {/* Sparkles and Stars "Drawn" around */}
+            <div className="absolute inset-0 z-10">
+              {[...Array(15)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{
+                    opacity: [0, 1, 0],
+                    scale: [0, 1.2, 0],
+                    x: Math.random() * 1200 - 600,
+                    y: Math.random() * 800 - 400
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    delay: 2.5 + Math.random() * 1.5,
+                    repeat: Infinity,
+                    repeatDelay: 1
+                  }}
+                  className="absolute left-1/2 top-1/2"
+                >
+                  <Star size={Math.random() * 30 + 10} className="text-amber-400" fill="currentColor" />
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Full Screen Confetti/Sparkles Effect */}
+            <div className="absolute inset-0 pointer-events-none">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0, 0.2, 0] }}
+                transition={{ duration: 3, repeat: Infinity }}
+                className="w-full h-full bg-gradient-to-t from-blue-500/10 via-transparent to-purple-500/10"
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Simplified Header */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b-2 border-slate-100">
+        <div className="max-w-[1920px] mx-auto px-4 md:px-8 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <Link href="/student/dashboard" className="w-12 h-12 bg-white border-2 border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 hover:text-blue-500 hover:border-blue-200 transition-all shadow-sm">
+              <Home size={24} />
+            </Link>
+
+            <div className="hidden md:block">
+              <h1 className="text-lg font-black text-slate-900 flex items-center gap-3">
+                <span className="w-2.5 h-8 bg-blue-500 rounded-full" />
                 {MOCK_COURSE.title}
               </h1>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[10px] font-bold text-blue-500 uppercase">Lesson {MOCK_COURSE.lessons.indexOf(currentLesson) + 1}</span>
-                <span className="text-[10px] font-medium text-white/30">•</span>
-                <span className="text-[10px] font-medium text-white/30 truncate max-w-[200px]">{currentLesson.title}</span>
-              </div>
+              <p className="text-[10px] font-black text-slate-400 mt-0.5 mr-5">{currentLesson.title}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20">
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
-              <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Protected Stream</span>
+          <div className="flex items-center gap-6">
+            <div className="hidden lg:flex items-center gap-4 bg-slate-50 p-2 rounded-2xl border-2 border-white shadow-inner">
+              <div className="relative w-12 h-12 flex items-center justify-center">
+                <svg className="w-full h-full -rotate-90">
+                  <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" strokeWidth="4" className="text-slate-200" />
+                  <motion.circle
+                    initial={{ strokeDashoffset: 132 }}
+                    animate={{ strokeDashoffset: 132 - (132 * 65) / 100 }}
+                    cx="24" cy="24" r="21" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray={132} className="text-green-500" strokeLinecap="round"
+                  />
+                </svg>
+                <span className="absolute text-[8px] font-black text-slate-900">65%</span>
+              </div>
+              <p className="text-[10px] font-black text-slate-900 pr-1">تقدمك</p>
             </div>
-            
-            <div className="h-6 w-px bg-white/10 mx-2" />
-            
-            <button className="p-2 hover:bg-white/5 rounded-xl transition-all text-white/60 hover:text-white group relative">
-              <Keyboard className="w-5 h-5" />
-              <span className="absolute top-full right-0 mt-2 px-2 py-1 bg-gray-900 border border-white/10 rounded text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                Shortcuts (K)
-              </span>
-            </button>
-            
-            <button 
-              onClick={toggleSidebar}
-              className="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition-all md:hidden"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 border-2 border-blue-100 flex items-center justify-center p-0.5 overflow-hidden shadow-sm">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4" alt="Hero" className="w-full h-full object-cover rounded-xl" />
+              </div>
+              <button
+                onClick={toggleSidebar}
+                className="p-3 bg-slate-900 text-white hover:bg-blue-600 rounded-xl transition-all md:hidden"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="flex relative h-[calc(100vh-64px)] overflow-hidden">
-        {/* Main Content Area */}
+      <main className="flex relative h-[calc(100vh-80px)] overflow-hidden">
         <div className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8">
-            
+          <div className="max-w-[1000px] mx-auto p-4 md:p-8 space-y-8">
+
             {/* Player Section */}
-            <section className="space-y-6">
-              <VideoPlayer 
-                src={currentLesson.videoUrl} 
-                userEmail="student@example.com" 
-              />
-              
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <section className="space-y-8">
+              <motion.div className="rounded-[2.5rem] overflow-hidden bg-white shadow-xl shadow-blue-900/5 border-2 border-white p-1">
+                <VideoPlayer
+                  src={currentLesson.videoUrl || "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"}
+                  userEmail="hero@tiqnia.academy"
+                />
+              </motion.div>
+
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] border-2 border-slate-100 shadow-lg shadow-slate-200/20">
                 <div className="space-y-2">
                   <div className="flex items-center gap-3">
-                    <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+                    <span className="px-3 py-1 rounded-lg bg-green-50 text-green-600 text-[9px] font-black uppercase tracking-wider">تشاهد الآن</span>
+                    <h2 className="text-2xl font-black text-slate-900">
                       {currentLesson.title}
                     </h2>
-                    <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] font-bold text-white/40 uppercase">
-                      {currentLesson.duration}
-                    </span>
                   </div>
-                  <p className="text-white/40 text-sm font-medium flex items-center gap-2">
-                    Part of <span className="text-white/70">{MOCK_COURSE.title}</span>
+                  <p className="text-slate-400 text-sm font-bold flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-blue-500" />
+                    {MOCK_COURSE.title}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white text-black rounded-2xl font-bold hover:bg-blue-500 hover:text-white transition-all duration-300">
-                    <BarChart3 className="w-4 h-4" />
-                    Complete Lesson
-                  </button>
-                  <div className="flex items-center gap-2">
-                    <button className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl transition-all border border-white/5">
-                      <Share2 className="w-5 h-5 text-white/60" />
-                    </button>
-                    <button className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl transition-all border border-white/5">
-                      <MoreVertical className="w-5 h-5 text-white/60" />
-                    </button>
-                  </div>
-                </div>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleComplete}
+                  className="px-10 py-4 bg-blue-600 text-white rounded-2xl font-black text-base hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20 flex items-center justify-center gap-3"
+                >
+                  <Trophy className="w-5 h-5" />
+                  أكملت الدرس!
+                </motion.button>
               </div>
 
-              {/* Lesson Navigation */}
-              <div className="flex items-center justify-between py-6 border-y border-white/5">
-                <button className="flex items-center gap-3 group">
-                  <div className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-white/5 transition-all">
-                    <ChevronLeft className="w-5 h-5 text-white/40 group-hover:text-white" />
-                  </div>
-                  <div className="hidden sm:block text-left">
-                    <p className="text-[10px] font-bold text-white/20 uppercase">Previous</p>
-                    <p className="text-xs font-bold text-white/60 group-hover:text-white transition-colors">Setup Environment</p>
-                  </div>
+              {/* Simple Navigation */}
+              <div className="grid grid-cols-2 gap-4">
+                <button className="flex items-center justify-center gap-4 p-6 bg-white border-2 border-slate-50 rounded-[2rem] hover:border-amber-400 hover:bg-amber-50/30 transition-all group shadow-sm">
+                  <ChevronLeft className="w-6 h-6 text-slate-300 group-hover:text-amber-600" />
+                  <span className="text-sm font-black text-slate-900">الدرس السابق</span>
                 </button>
 
-                <div className="flex items-center gap-4">
-                  <div className="hidden lg:flex flex-col items-end">
-                    <p className="text-[10px] font-bold text-white/20 uppercase text-right">Up Next</p>
-                    <p className="text-xs font-bold text-white/60">Advanced Styling</p>
-                  </div>
-                  <button className="flex items-center gap-3 group">
-                    <div className="hidden sm:block text-right">
-                      <p className="text-[10px] font-bold text-blue-500 uppercase">Next Lesson</p>
-                      <p className="text-xs font-bold text-white/60 group-hover:text-white transition-colors">Advanced Styling</p>
-                    </div>
-                    <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center group-hover:scale-110 transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)]">
-                      <ChevronRight className="w-5 h-5 text-white" />
-                    </div>
-                  </button>
-                </div>
+                <button className="flex items-center justify-center gap-4 p-6 bg-white border-2 border-slate-50 rounded-[2rem] hover:border-blue-400 hover:bg-blue-50/30 transition-all group shadow-sm">
+                  <span className="text-sm font-black text-slate-900">الدرس التالي</span>
+                  <ChevronRight className="w-6 h-6 text-slate-300 group-hover:text-blue-600" />
+                </button>
               </div>
             </section>
 
-            {/* Lesson Info Section */}
+            {/* Lesson Content Section */}
             <section className="pb-20">
-              <LessonContent lesson={currentLesson} />
+              <div className="bg-white rounded-[2.5rem] border-2 border-slate-50 shadow-lg shadow-slate-200/10 overflow-hidden">
+                <LessonContent lesson={currentLesson} />
+              </div>
             </section>
           </div>
         </div>
 
-        {/* Desktop Sidebar */}
-        <motion.aside 
-          initial={false}
-          animate={{ 
-            width: isSidebarOpen ? 400 : 0,
-            opacity: isSidebarOpen ? 1 : 0
-          }}
-          className="hidden md:block border-l border-white/5 bg-gray-950/20 backdrop-blur-sm overflow-hidden"
+        {/* Sidebar */}
+        <motion.aside
+          animate={{ width: isSidebarOpen ? 420 : 0, opacity: isSidebarOpen ? 1 : 0 }}
+          className="hidden md:block border-l-2 border-slate-50 bg-white overflow-hidden shadow-2xl"
         >
-          <div className="w-[400px]">
+          <div className="w-[420px] h-full">
             <LessonSidebar lessons={MOCK_COURSE.lessons} currentLessonId={currentLesson.id} />
           </div>
         </motion.aside>
@@ -184,7 +272,7 @@ export default function LessonPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={toggleSidebar}
-              className="fixed inset-0 bg-black/80 backdrop-blur-md z-[60] md:hidden"
+              className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[60] md:hidden"
             >
               <motion.div
                 initial={{ x: '100%' }}
@@ -192,15 +280,18 @@ export default function LessonPage() {
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
                 onClick={(e) => e.stopPropagation()}
-                className="absolute right-0 top-0 bottom-0 w-[85%] max-w-sm bg-gray-950 shadow-2xl"
+                className="absolute right-0 top-0 bottom-0 w-[90%] bg-white shadow-2xl rounded-l-[3rem]"
               >
-                <div className="flex items-center justify-between p-4 border-b border-white/5">
-                  <h3 className="font-bold">Course Content</h3>
-                  <button onClick={toggleSidebar} className="p-2 hover:bg-white/5 rounded-lg">
-                    <X className="w-5 h-5" />
+                <div className="flex items-center justify-between p-8 border-b-2 border-slate-50">
+                  <h3 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+                    <Sparkles className="w-8 h-8 text-amber-400" />
+                    خريطتنا التعليمية
+                  </h3>
+                  <button onClick={toggleSidebar} className="p-3 bg-slate-50 hover:bg-slate-100 rounded-2xl">
+                    <X className="w-7 h-7 text-slate-400" />
                   </button>
                 </div>
-                <div className="h-[calc(100vh-64px)]">
+                <div className="h-[calc(100vh-100px)]">
                   <LessonSidebar lessons={MOCK_COURSE.lessons} currentLessonId={currentLesson.id} />
                 </div>
               </motion.div>
@@ -208,14 +299,6 @@ export default function LessonPage() {
           )}
         </AnimatePresence>
       </main>
-
-      {/* Floating Action Hint */}
-      <div className="fixed bottom-6 left-6 z-40 hidden lg:block">
-        <div className="px-4 py-2 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 flex items-center gap-3 text-[10px] font-bold text-white/40 uppercase tracking-widest">
-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          Live Session Protected
-        </div>
-      </div>
     </div>
   );
 }

@@ -13,7 +13,6 @@ import {
   FileText,
   Monitor,
   Trash2,
-  Share,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createCourse, createUnit, getCategories, getCourse, updateCourse } from '@/services/courses';
@@ -329,7 +328,6 @@ export default function CreateCourseClient() {
               className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-full font-bold text-sm transition-all shadow-md shadow-green-100"
               onClick={() => setStatus('published')}
             >
-              <Share size={18} />
               <span>نشر</span>
             </button>
             <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-8 py-3 rounded-full font-bold text-sm transition-all shadow-sm">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye, Share } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye } from 'lucide-react';
 import { getCourse, deleteUnit, deleteLesson, createUnit, updateCourse } from '@/services/courses';
 import { Course, Unit, Lesson } from '@/types/api';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
@@ -308,7 +308,6 @@ export default function CourseDetailsPage() {
       <div className="flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3 w-full md:w-auto">
           <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-full font-bold text-sm transition-all shadow-md shadow-green-100">
-            <Share size={18} />
             <span>نشر</span>
           </button>
           <button 

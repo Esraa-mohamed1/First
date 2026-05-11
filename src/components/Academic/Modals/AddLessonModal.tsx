@@ -37,6 +37,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const libraryId = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID || '';
   const bunnyApiKey = process.env.NEXT_PUBLIC_BUNNY_STREAM_API_KEY || '';
+  const pullZoneId = process.env.NEXT_PUBLIC_BUNNY_PULL_ZONE_ID || '';
 
   if (!isOpen) return null;
 
@@ -204,6 +205,9 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
         video_id: finalVideoId || undefined,
         file_url: finalFileUrl || undefined,
         library_id: libraryId || undefined,
+        video_url: finalVideoId ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/playlist.m3u8` : undefined,
+        thumbnail_url: finalVideoId ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/thumbnail.jpg` : undefined,
+        embed_url: finalVideoId ? `https://iframe.mediadelivery.net/embed/${libraryId}/${finalVideoId}` : undefined,
         order: 1, // Default order
         file_size_mb: selectedFile ? parseFloat((selectedFile.size / (1024 * 1024)).toFixed(2)) : 0,
         is_free: false, // Default to paid

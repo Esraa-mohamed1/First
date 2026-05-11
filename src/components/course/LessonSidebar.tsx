@@ -1,10 +1,12 @@
 'use client';
 
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play, CheckCircle2, Lock, Clock, 
-  ChevronRight, ListVideo, Search
+  ChevronRight, ListVideo, Search, ChevronDown,
+  PlayCircle, FileText, HelpCircle, MonitorPlay,
+  Map, Flag, Star, Trophy, Rocket
 } from 'lucide-react';
 import { Lesson } from '@/types/course';
 import { usePlayerStore } from '@/hooks/usePlayerStore';
@@ -17,124 +19,195 @@ interface LessonSidebarProps {
 
 export const LessonSidebar: React.FC<LessonSidebarProps> = ({ lessons, currentLessonId }) => {
   const { setCurrentLesson } = usePlayerStore();
+  const [expandedUnits, setExpandedUnits] = useState<number[]>([1, 2]);
+
+  const toggleUnit = (id: number) => {
+    setExpandedUnits(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  // Simulate chapters for primary school
+  const chapters = [
+    { 
+      id: 1, 
+      title: 'الفصل الأول: البداية الرائعة', 
+      icon: Rocket,
+      color: 'blue',
+      lessons: lessons.slice(0, 3) 
+    },
+    { 
+      id: 2, 
+      title: 'الفصل الثاني: استكشاف المهارات', 
+      icon: Map,
+      color: 'amber',
+      lessons: lessons.slice(3) 
+    },
+  ];
 
   return (
-    <div className="flex flex-col h-full bg-gray-950/50 backdrop-blur-xl border-l border-white/5">
+    <div className="flex flex-col h-full bg-white">
       {/* Sidebar Header */}
-      <div className="p-6 border-b border-white/5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <ListVideo className="w-5 h-5 text-blue-500" />
-            Course Content
+      <div className="p-10 border-b-2 border-slate-50 bg-[#F8FBFF]">
+        <div className="flex items-center justify-between mb-8">
+          <h3 className="text-2xl font-black text-slate-900 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-[1.25rem] bg-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <Flag className="w-6 h-6 text-white" />
+            </div>
+            خريطة الرحلة
           </h3>
-          <span className="text-[10px] font-bold bg-white/5 px-2 py-1 rounded text-white/40 uppercase tracking-widest">
-            {lessons.length} Lessons
-          </span>
+          <div className="flex flex-col items-end">
+            <span className="text-xs font-black text-slate-400 uppercase">المستوى</span>
+            <span className="text-lg font-black text-blue-600">الأول</span>
+          </div>
         </div>
         
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
           <input 
             type="text" 
-            placeholder="Search lessons..."
-            className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-blue-500/50 transition-colors"
+            placeholder="ابحث عن محطة محددة..."
+            className="w-full bg-white border-2 border-slate-100 rounded-[1.5rem] py-4 pl-12 pr-6 text-sm text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-blue-400 transition-all shadow-sm font-bold"
           />
         </div>
       </div>
 
-      {/* Lessons List */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-2">
-        {lessons.map((lesson, index) => {
-          const isActive = lesson.id === currentLessonId;
-          const isLocked = lesson.isLocked;
-          const isCompleted = lesson.isCompleted;
-
-          return (
-            <motion.button
-              key={lesson.id}
-              whileHover={!isLocked ? { x: 4 } : {}}
-              whileTap={!isLocked ? { scale: 0.98 } : {}}
-              onClick={() => !isLocked && setCurrentLesson(lesson)}
-              disabled={isLocked}
-              className={cn(
-                "w-full flex items-start gap-4 p-4 rounded-2xl transition-all text-left group relative overflow-hidden",
-                isActive 
-                  ? "bg-blue-600/10 border border-blue-500/20" 
-                  : "hover:bg-white/5 border border-transparent",
-                isLocked && "opacity-50 grayscale cursor-not-allowed"
-              )}
+      {/* Chapters List */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
+        {chapters.map((chapter) => (
+          <div key={chapter.id} className="border-b-2 border-slate-50 last:border-0">
+            <button 
+              onClick={() => toggleUnit(chapter.id)}
+              className="w-full flex items-center justify-between p-8 hover:bg-slate-50/50 transition-colors text-right group"
             >
-              {isActive && (
-                <motion.div 
-                  layoutId="active-indicator"
-                  className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]"
-                />
-              )}
-
-              <div className="relative flex-shrink-0 mt-1">
-                {isCompleted ? (
-                  <div className="w-5 h-5 rounded-full bg-green-500/20 border border-green-500/50 flex items-center justify-center">
-                    <CheckCircle2 className="w-3 h-3 text-green-500" />
-                  </div>
-                ) : isLocked ? (
-                  <Lock className="w-5 h-5 text-white/20" />
-                ) : (
-                  <div className={cn(
-                    "w-5 h-5 rounded-full border flex items-center justify-center transition-colors",
-                    isActive ? "border-blue-500 bg-blue-500" : "border-white/20"
-                  )}>
-                    <Play className={cn(
-                      "w-2.5 h-2.5 fill-current",
-                      isActive ? "text-white" : "text-white/40"
-                    )} />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-bold text-white/30 uppercase">Lesson {index + 1}</span>
-                  {isLocked && <span className="text-[10px] font-bold text-blue-400 uppercase">Premium</span>}
-                </div>
-                <h4 className={cn(
-                  "text-sm font-semibold truncate transition-colors",
-                  isActive ? "text-white" : "text-white/60 group-hover:text-white"
+              <div className="flex items-center gap-5">
+                <div className={cn(
+                  "w-12 h-12 rounded-2xl flex items-center justify-center transition-all border-2 shadow-sm",
+                  expandedUnits.includes(chapter.id) 
+                    ? "bg-slate-900 border-slate-900 text-white" 
+                    : "bg-white border-slate-100 text-slate-400 group-hover:border-blue-200"
                 )}>
-                  {lesson.title}
-                </h4>
-                <div className="flex items-center gap-3 mt-2 text-[11px] text-white/30 font-medium">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {lesson.duration}
-                  </span>
-                  {isCompleted && (
-                    <span className="text-green-500/80 font-bold uppercase tracking-tighter">Completed</span>
-                  )}
+                  <chapter.icon className={cn("w-6 h-6 transition-transform", expandedUnits.includes(chapter.id) ? "scale-110" : "")} />
+                </div>
+                <div>
+                  <h4 className="text-lg font-black text-slate-900">{chapter.title}</h4>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{chapter.lessons.length} محطات</span>
+                    <div className="w-1 h-1 rounded-full bg-slate-300" />
+                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">فصل نشط</span>
+                  </div>
                 </div>
               </div>
+              <ChevronDown className={cn("w-5 h-5 text-slate-300 transition-transform", expandedUnits.includes(chapter.id) ? "rotate-180" : "")} />
+            </button>
 
-              {!isLocked && (
-                <ChevronRight className={cn(
-                  "w-4 h-4 mt-auto mb-auto transition-all",
-                  isActive ? "text-blue-500" : "text-white/10 group-hover:text-white/30"
-                )} />
+            <AnimatePresence>
+              {expandedUnits.includes(chapter.id) && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden bg-[#FBFDFF]"
+                >
+                  <div className="px-6 pb-6 space-y-2">
+                    {chapter.lessons.map((lesson, idx) => {
+                      const isActive = lesson.id === currentLessonId;
+                      const isLocked = lesson.isLocked;
+                      const isCompleted = lesson.isCompleted;
+
+                      return (
+                        <motion.button
+                          key={lesson.id}
+                          whileHover={!isLocked ? { scale: 1.02, x: 5 } : {}}
+                          whileTap={!isLocked ? { scale: 0.98 } : {}}
+                          onClick={() => !isLocked && setCurrentLesson(lesson)}
+                          disabled={isLocked}
+                          className={cn(
+                            "w-full flex items-start gap-5 p-5 rounded-[2rem] transition-all text-left relative overflow-hidden",
+                            isActive 
+                              ? "bg-blue-600 text-white shadow-xl shadow-blue-600/30 ring-4 ring-blue-600/10" 
+                              : "hover:bg-white hover:shadow-lg border-2 border-transparent",
+                            isLocked && "opacity-40 grayscale cursor-not-allowed bg-slate-50"
+                          )}
+                        >
+                          <div className="relative flex-shrink-0 mt-1">
+                            {isCompleted ? (
+                              <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center border-2", isActive ? "border-white/40 bg-white/20" : "bg-green-50 border-green-100")}>
+                                <CheckCircle2 className={cn("w-4 h-4", isActive ? "text-white" : "text-green-500")} />
+                              </div>
+                            ) : isLocked ? (
+                              <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center border-2 border-slate-200">
+                                <Lock className="w-4 h-4 text-slate-400" />
+                              </div>
+                            ) : (
+                              <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center border-2", isActive ? "bg-white/20 border-white/40" : "bg-blue-50 border-blue-100")}>
+                                <MonitorPlay className={cn("w-4 h-4", isActive ? "text-white" : "text-blue-600")} />
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <span className={cn("text-[10px] font-black uppercase tracking-widest", isActive ? "text-white/60" : "text-slate-400")}>
+                                محطة {idx + 1}
+                              </span>
+                              {isActive && (
+                                <motion.span 
+                                  animate={{ scale: [1, 1.1, 1] }}
+                                  transition={{ repeat: Infinity, duration: 2 }}
+                                  className="bg-white/20 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase flex items-center gap-1"
+                                >
+                                  <Star size={8} fill="currentColor" />
+                                  أنت هنا الآن
+                                </motion.span>
+                              )}
+                            </div>
+                            <h4 className={cn(
+                              "text-base font-black truncate transition-colors",
+                              isActive ? "text-white" : "text-slate-800"
+                            )}>
+                              {lesson.title}
+                            </h4>
+                            <div className={cn("flex items-center gap-4 mt-2 text-[10px] font-bold", isActive ? "text-white/50" : "text-slate-400")}>
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3.5 h-3.5" />
+                                {lesson.duration} دقيقة
+                              </span>
+                              {isCompleted && !isActive && (
+                                <span className="text-green-500 font-black uppercase flex items-center gap-1">
+                                  <Trophy size={10} />
+                                  مكتمل!
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
               )}
-            </motion.button>
-          );
-        })}
+            </AnimatePresence>
+          </div>
+        ))}
       </div>
 
-      {/* Sidebar Footer */}
-      <div className="p-6 bg-white/[0.02] border-t border-white/5">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold text-white/40">Overall Progress</span>
-          <span className="text-xs font-bold text-blue-500">65%</span>
+      {/* Playful Footer */}
+      <div className="p-10 bg-[#F8FBFF] border-t-2 border-slate-50">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex flex-col">
+            <span className="text-xs font-black text-slate-400 uppercase">مستوى ذكائك</span>
+            <span className="text-xl font-black text-slate-900">البطل الذكي</span>
+          </div>
+          <div className="w-16 h-16 bg-white rounded-2xl border-2 border-slate-100 flex items-center justify-center shadow-sm">
+            <Star className="w-8 h-8 text-amber-400 fill-amber-400" />
+          </div>
         </div>
-        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+        <div className="h-4 w-full bg-slate-200 rounded-full overflow-hidden p-1 border-2 border-white shadow-inner">
           <motion.div 
             initial={{ width: 0 }}
             animate={{ width: '65%' }}
-            className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]"
+            className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.4)]"
           />
         </div>
       </div>

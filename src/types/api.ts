@@ -134,6 +134,9 @@ export interface CreateLessonPayload {
   video_id?: string;
   file_url?: string;
   library_id?: string;
+  video_url?: string;
+  thumbnail_url?: string;
+  embed_url?: string;
   order?: number;
   file_size_mb?: number;
   is_free: boolean;

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Play, FileText, CheckCircle2, Clock, Globe, Award,
-  ChevronRight, Star, Users, Calendar, Share2,
+  ChevronRight, Star, Users, Calendar,
   ChevronDown, ChevronUp, Download, ShieldCheck,
   Video, Monitor, DownloadCloud, Headset, Lock,
   Layout, MousePointer2, Smartphone, PenTool
