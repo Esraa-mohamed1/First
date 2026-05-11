@@ -363,6 +363,23 @@ export default function CourseStudentViewPage() {
                     ابدأ التعلم الآن
                   </button>
                 </div>
+              ) : course.is_subscribed ? (
+                <div className="bg-blue-50/50 p-8 rounded-[2rem] border border-blue-100 text-center space-y-6">
+                  <div className="w-20 h-20 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mx-auto">
+                    <GraduationCap size={40} strokeWidth={1.5} />
+                  </div>
+                  <div className="space-y-1">
+                    <h2 className="text-2xl font-black text-blue-950">أهلاً بك في رحلتك التعليمية!</h2>
+                    <p className="text-slate-500 font-bold text-sm">استمتع برحلتك التعليمية وابدأ الآن في مشاهدة الدروس.</p>
+                  </div>
+                  <button 
+                    onClick={() => router.push(`/student/courses/${course.id}`)}
+                    className="w-full py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-[1.5rem] font-black text-xl shadow-xl shadow-blue-200 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3"
+                  >
+                    <Play size={20} fill="currentColor" />
+                    ابدأ التعلم الآن
+                  </button>
+                </div>
               ) : (
                 <>
                   <div className="text-right mb-2">

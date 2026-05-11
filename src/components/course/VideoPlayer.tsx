@@ -168,105 +168,75 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, userEmail }) => {
               </div>
             </div>
 
-            {/* Center Controls */}
-            <div className="absolute inset-0 flex items-center justify-center gap-12 pointer-events-none">
+              {/* Play/Pause Button */}
               <motion.button
-                whileHover={{ scale: 1.1, rotate: -15 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => skip(-10)}
-                className="w-16 h-16 rounded-[1.5rem] bg-white/10 backdrop-blur-xl flex items-center justify-center text-white border-2 border-white/10 pointer-events-auto hover:bg-white/20 transition-all"
-              >
-                <RotateCcw className="w-7 h-7" />
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
                 onClick={togglePlay}
-                className="w-28 h-28 bg-blue-600 rounded-[2.5rem] flex items-center justify-center text-white pointer-events-auto shadow-[0_20px_50px_rgba(37,99,235,0.4)] hover:bg-blue-500 transition-all border-4 border-white/20 relative group"
+                className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-xl flex items-center justify-center text-white border-2 border-white/10 pointer-events-auto hover:bg-white/30 transition-all"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
               >
-                <div className="absolute inset-0 bg-white/20 rounded-[2.5rem] animate-ping group-hover:hidden" />
-                {isPlaying ? <Pause className="w-12 h-12 fill-current" /> : <Play className="w-12 h-12 fill-current ml-2" />}
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.1, rotate: 15 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => skip(10)}
-                className="w-16 h-16 rounded-[1.5rem] bg-white/10 backdrop-blur-xl flex items-center justify-center text-white border-2 border-white/10 pointer-events-auto hover:bg-white/20 transition-all"
-              >
-                <FastForward className="w-7 h-7" />
+                {isPlaying ? <Pause className="w-10 h-10" fill="currentColor" /> : <Play className="w-10 h-10" fill="currentColor" />}
               </motion.button>
             </div>
 
             {/* Bottom Controls */}
-            <div className="space-y-8">
+            <div className="space-y-4 p-4">
               {/* Progress Bar */}
-              <div className="relative group/progress h-4 flex items-center cursor-pointer">
-                <div className="absolute inset-0 bg-white/20 rounded-full" />
-                <div 
-                  className="absolute h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full shadow-[0_0_20px_rgba(37,99,235,0.8)]" 
-                  style={{ width: `${progress}%` }}
+              <div
+                className="relative group/progress h-2 flex items-center cursor-pointer"
+                onMouseDown={handleSeekMouseDown}
+                onMouseMove={handleSeekMouseMove}
+                onMouseUp={handleSeekMouseUp}
+                onMouseLeave={handleSeekMouseUp}
+              >
+                <div className="absolute inset-0 bg-white/30 rounded-full" />
+                <div
+                  className="absolute h-full bg-blue-500 rounded-full"
+                  style={{ width: `${(currentTime / duration) * 100}%` }}
                 />
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={progress}
-                  onChange={handleSeek}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                <div
+                  className="absolute w-4 h-4 bg-blue-500 rounded-full shadow-lg"
+                  style={{ left: `${(currentTime / duration) * 100}%`, transform: 'translateX(-50%)' }}
                 />
-                <motion.div 
-                  className="absolute w-8 h-8 bg-white rounded-2xl shadow-2xl flex items-center justify-center border-4 border-blue-100"
-                  style={{ left: `calc(${progress}% - 16px)` }}
-                >
-                  <div className="w-2 h-2 bg-blue-600 rounded-full" />
-                </motion.div>
               </div>
 
+              {/* Time and Controls */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-8">
-                  <div className="flex items-center gap-3 text-white font-black text-lg bg-white/10 px-5 py-2 rounded-2xl border-2 border-white/10">
-                    <span className="text-blue-400">{Math.floor(currentTime / 60)}:{String(Math.floor(currentTime % 60)).padStart(2, '0')}</span>
-                    <span className="opacity-20">|</span>
-                    <span className="opacity-60">{Math.floor(duration / 60)}:{String(Math.floor(duration % 60)).padStart(2, '0')}</span>
-                  </div>
-
-                  <div className="hidden lg:flex items-center gap-4 group/volume">
-                    <button onClick={() => setVolume(volume === 0 ? 1 : 0)} className="text-white hover:scale-110 transition-transform">
-                      {volume === 0 ? <VolumeX className="w-8 h-8" /> : <Volume2 className="w-8 h-8" />}
-                    </button>
-                    <div className="w-32">
-                      <input 
-                        type="range" 
-                        min="0" 
-                        max="1" 
-                        step="0.1" 
-                        value={volume}
-                        onChange={(e) => setVolume(parseFloat(e.target.value))}
-                        className="w-full accent-blue-600 h-2 bg-white/20 rounded-full appearance-none cursor-pointer"
-                      />
-                    </div>
-                  </div>
+                <div className="flex items-center gap-4">
+                  <button onClick={togglePlay} className="text-white hover:text-blue-400 transition-colors">
+                    {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
+                  </button>
+                  <span className="text-white font-medium text-sm">
+                    {formatTime(currentTime)} / {formatTime(duration)}
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-4">
-                  <div className="flex bg-white/10 backdrop-blur-xl rounded-[1.5rem] p-1.5 border-2 border-white/10">
-                    {[1, 1.25, 1.5].map((speed) => (
-                      <button
-                        key={speed}
-                        onClick={() => setPlaybackSpeed(speed)}
-                        className={cn(
-                          "px-5 py-2 rounded-xl text-xs font-black transition-all",
-                          playbackSpeed === speed ? "bg-white text-slate-900 shadow-xl" : "text-white/60 hover:text-white"
-                        )}
-                      >
-                        {speed}x
-                      </button>
-                    ))}
+                  {/* Volume Control */}
+                  <div className="flex items-center gap-2">
+                    <button onClick={toggleMute} className="text-white hover:text-blue-400 transition-colors">
+                      {isMuted || volume === 0 ? <VolumeX size={24} /> : <Volume2 size={24} />}
+                    </button>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value={volume}
+                      onChange={handleVolumeChange}
+                      className="w-24 h-1 bg-white/30 rounded-full appearance-none cursor-pointer accent-blue-500"
+                    />
                   </div>
-                  <button onClick={toggleFullscreen} className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-xl border-2 border-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-all hover:scale-110">
-                    <Maximize className="w-7 h-7" />
+
+                  {/* Settings */}
+                  <button className="text-white hover:text-blue-400 transition-colors">
+                    <Settings size={24} />
+                  </button>
+
+                  {/* Fullscreen */}
+                  <button onClick={toggleFullScreen} className="text-white hover:text-blue-400 transition-colors">
+                    <Maximize size={24} />
                   </button>
                 </div>
               </div>
