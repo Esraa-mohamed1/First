@@ -39,7 +39,8 @@ export default function CoursesPage() {
           image: c.image || '',
           instructor: c.instructor_name || '',
           category: c.category?.name || 'General',
-          status: (c.progress === 100 ? 'completed' : c.progress > 0 ? 'in-progress' : 'not-started') as any
+          status: (c.progress === 100 ? 'completed' : c.progress > 0 ? 'in-progress' : 'not-started') as any,
+          is_enrolled: c.is_enrolled || false,
         }));
 
         coursesCache.set(cacheKey, mappedCourses);
@@ -115,7 +116,7 @@ export default function CoursesPage() {
                 className="animate-slide-up-fade transition-all duration-500 hover:-translate-y-1"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <CourseCard course={course} isSubscribed={false} />
+                <CourseCard course={course} isSubscribed={course.is_enrolled} />
               </div>
             ))}
           </div>

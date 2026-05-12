@@ -105,10 +105,9 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
             {!isSubscribed ? (
               <Link
                 href={`/user/courses/${course.slug}`}
-                className="w-full flex items-center justify-center gap-2 bg-blue-50 text-blue-600 font-bold py-3 rounded-xl hover:bg-blue-600 hover:text-white transition-all duration-300 border border-blue-100/50"
+                className="w-full flex items-center justify-center gap-2 bg-green-500 text-white font-bold py-3 rounded-xl hover:bg-green-600 transition-all duration-300 shadow-md shadow-green-100"
               >
-                استعراض الدورة
-                <ArrowLeft size={16} className="transform group-hover:-translate-x-1 transition-transform duration-300" />
+                اشترك الآن
               </Link>
             ) : course.progress === 100 ? (
               <Link 

@@ -47,7 +47,7 @@ export const LessonContent: React.FC<LessonContentProps> = ({ lesson }) => {
             {tab.label}
           </button>
         ))}
-      </div>
+
 
       <div className="p-8">
         <AnimatePresence mode="wait">
@@ -65,7 +65,7 @@ export const LessonContent: React.FC<LessonContentProps> = ({ lesson }) => {
                   <p className="text-lg text-slate-600 leading-relaxed">
                     {lesson.description || "في هذا الدرس، سننطلق في رحلة ممتعة لاستكشاف أسرار العلم والمعرفة. استعد جيداً!"}
                   </p>
-                </div>
+          
               </div>
             )}
 
@@ -179,10 +179,8 @@ export const LessonContent: React.FC<LessonContentProps> = ({ lesson }) => {
           </motion.div>
         </AnimatePresence>
       </div>
-      </div>
 
-      {/* Tab Content */}
-      <div className="p-12">
+      // Tab Content
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}

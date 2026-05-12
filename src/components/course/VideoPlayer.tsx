@@ -166,7 +166,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, userEmail }) => {
                   <Settings className="w-7 h-7" />
                 </button>
               </div>
-            </div>
+        
 
               {/* Play/Pause Button */}
               <motion.button
@@ -180,7 +180,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, userEmail }) => {
               </motion.button>
             </div>
 
-            {/* Bottom Controls */}
+            // Bottom Controls
             <div className="space-y-4 p-4">
               {/* Progress Bar */}
               <div

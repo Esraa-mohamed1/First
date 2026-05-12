@@ -3,8 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { CourseCard } from '@/components/Student/Courses/CourseCard';
 import { GraduationCap } from 'lucide-react';
-import { getStudentCourses } from '@/services/student-courses';
-import { Course } from '@/types/student'; // Assuming student Course type is sufficient for display
+import { getMyEnrolledCourses } from '@/services/student-courses';
+import { Course } from '@/types/student';
+
+// Simple in-memory cache
+const coursesCache = new Map<string, any>();
 
 export default function CoursesPage() {
   const [filter, setFilter] = useState<'all' | 'in-progress' | 'completed'>('all');
@@ -16,19 +19,19 @@ export default function CoursesPage() {
     const fetchCourses = async () => {
       try {
         setLoading(true);
-        const fetchedCourses = await getStudentCourses();
-        // Map the fetched courses to the student Course type if necessary
+        const fetchedCourses = await getMyEnrolledCourses();
         const studentCourses: Course[] = fetchedCourses.map(course => ({
-          id: String(course.id), 
+          id: String(course.id),
           title: course.title,
           slug: course.slug,
           description: course.description,
-          progress: 0, // Default progress will be updated by actual student data
-          image: course.image || '', 
-          instructor: course.instructor || 'Unknown', 
-          category: course.category || 'Uncategorized', 
-          status: 'not-started', 
-          price_type: course.price_type || (Number(course.price || 0) > 0 ? 'paid' : 'free'),
+          progress: course.progress,
+          image: course.image || '',
+          instructor: course.instructor || 'Unknown',
+          category: course.category || 'Uncategorized',
+          status: course.status,
+          price_type: course.price_type,
+          is_enrolled: true,
         }));
         setCourses(studentCourses);
       } catch (err) {
@@ -43,9 +46,6 @@ export default function CoursesPage() {
   }, []);
 
   const filteredCourses = courses.filter(course => {
-    // Only show paid courses in student dashboard "My Courses"
-    if (course.price_type !== 'paid') return false;
-    
     if (filter === 'all') return true;
     return course.status === filter;
   });
@@ -133,7 +133,7 @@ export default function CoursesPage() {
               className="animate-slide-up-fade transition-all duration-500 hover:-translate-y-1"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <CourseCard course={course} />
+              <CourseCard course={course} isSubscribed={true} />
             </div>
           ))}
         </div>

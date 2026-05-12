@@ -94,7 +94,7 @@ export default function CourseStudentViewPage() {
           image: data.image,
           units: data.units || (data as any).chapters || [],
           learning_points: learningPoints,
-          is_subscribed: (data as any).is_subscribed || false,
+          is_subscribed: (data as any).is_enrolled || false,
         };
 
         setCourse(mergedCourse);

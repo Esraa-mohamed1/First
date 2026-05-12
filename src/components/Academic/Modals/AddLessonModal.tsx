@@ -212,9 +212,9 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
         video_id: finalVideoId || undefined,
         file_url: finalFileUrl || undefined,
         library_id: libraryId || undefined,
-        video_url: finalVideoId ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/playlist.m3u8` : undefined,
+        video_url: finalVideoId ? `https://iframe.mediadelivery.net/embed/${libraryId}/${finalVideoId}` : undefined,
         thumbnail_url: finalVideoId ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/thumbnail.jpg` : undefined,
-        embed_url: finalVideoId ? `https://iframe.mediadelivery.net/embed/${libraryId}/${finalVideoId}` : undefined,
+        embed_url: finalVideoId ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/playlist.m3u8` : undefined,
         order: 1, // Default order
         file_size_mb: selectedFile ? parseFloat((selectedFile.size / (1024 * 1024)).toFixed(2)) : 0,
         is_free: false, // Default to paid
