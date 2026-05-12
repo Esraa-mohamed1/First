@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye } from 'lucide-react';
-import { getCourse, deleteUnit, deleteLesson, createUnit, updateCourse } from '@/services/courses';
-import { Course, Unit, Lesson } from '@/types/api';
+import { getCourse, deleteUnit, deleteLesson, createUnit, updateCourse, getCategories } from '@/services/courses';
+import { getProfileStatus } from '@/services/auth';
+import { getUsers } from '@/services/users';
+import { Course, Unit, Lesson, User } from '@/types/api';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
 import EditUnitModal from '@/components/Academic/Modals/EditUnitModal';
 import EditLessonModal from '@/components/Academic/Modals/EditLessonModal';
@@ -12,11 +14,17 @@ import toast from 'react-hot-toast';
 import QuillEditor from '@/components/Academic/QuillEditor';
 
 export default function CourseDetailsPage() {
+  const router = useRouter();
   const params = useParams();
   const id = params.id as string;
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedUnits, setExpandedUnits] = useState<number[]>([]);
+  
+  // Global Data
+  const [categories, setCategories] = useState<any[]>([]);
+  const [instructors, setInstructors] = useState<User[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   
   // Inline Add Unit State
   const [isAddingUnit, setIsAddingUnit] = useState(false);
@@ -43,8 +51,19 @@ export default function CourseDetailsPage() {
     title: '',
     description: '',
     target_audience: '',
+    category_id: '',
+    user_id: '',
   });
-  const [learningPoints, setLearningPoints] = useState<string[]>(['']);
+  
+  interface CustomSection {
+    id: string;
+    title: string;
+    items: string[];
+  }
+  const [customSections, setCustomSections] = useState<CustomSection[]>([
+    { id: 'what_you_will_learn', title: 'ماذا ستتعلم؟', items: [''] }
+  ]);
+  
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -58,23 +77,49 @@ export default function CourseDetailsPage() {
 
 
 
-  const handleAddLearningPoint = () => {
-    setLearningPoints([...learningPoints, '']);
+  const handleAddSectionItem = (sectionId: string) => {
+    setCustomSections(prev => prev.map(sec => 
+      sec.id === sectionId ? { ...sec, items: [...sec.items, ''] } : sec
+    ));
   };
 
-  const handleUpdateLearningPoint = (index: number, value: string) => {
-    const updated = [...learningPoints];
-    updated[index] = value;
-    setLearningPoints(updated);
+  const handleUpdateSectionItem = (sectionId: string, itemIndex: number, value: string) => {
+    setCustomSections(prev => prev.map(sec => {
+      if (sec.id === sectionId) {
+        const newItems = [...sec.items];
+        newItems[itemIndex] = value;
+        return { ...sec, items: newItems };
+      }
+      return sec;
+    }));
   };
 
-  const handleRemoveLearningPoint = (index: number) => {
-    if (learningPoints.length > 1) {
-      const updated = learningPoints.filter((_, i) => i !== index);
-      setLearningPoints(updated);
-    } else {
-      setLearningPoints(['']);
+  const handleRemoveSectionItem = (sectionId: string, itemIndex: number) => {
+    setCustomSections(prev => prev.map(sec => {
+      if (sec.id === sectionId) {
+        const newItems = sec.items.filter((_, i) => i !== itemIndex);
+        return { ...sec, items: newItems.length > 0 ? newItems : [''] };
+      }
+      return sec;
+    }));
+  };
+
+  const handleAddCustomSection = () => {
+    const newId = `section_${Date.now()}`;
+    setCustomSections([...customSections, { id: newId, title: 'قسم جديد', items: [''] }]);
+    if (!expandedInfoSections.includes(newId)) {
+        setExpandedInfoSections([...expandedInfoSections, newId]);
     }
+  };
+
+  const handleUpdateSectionTitle = (sectionId: string, newTitle: string) => {
+    setCustomSections(prev => prev.map(sec => 
+      sec.id === sectionId ? { ...sec, title: newTitle } : sec
+    ));
+  };
+
+  const handleRemoveSection = (sectionId: string) => {
+    setCustomSections(prev => prev.filter(sec => sec.id !== sectionId));
   };
 
   const toggleInfoSection = (section: string) => {
@@ -98,6 +143,8 @@ export default function CourseDetailsPage() {
         title: courseInfo.title,
         description: courseInfo.description,
         target_audience: courseInfo.target_audience,
+        category_id: courseInfo.category_id || undefined,
+        user_id: courseInfo.user_id || undefined,
         price: pricingType === 'free' ? 0 : Number(price),
         final_price: pricingType === 'free' ? 0 : Number(price),
         price_type: pricingType,
@@ -105,11 +152,15 @@ export default function CourseDetailsPage() {
       };
 
 
-      // Add learning points as infos[i][key], infos[i][value], infos[i][order]
-      learningPoints.filter(p => p.trim() !== '').forEach((point, index) => {
-        payload[`infos[${index}][key]`] = 'what_you_will_learn';
-        payload[`infos[${index}][value]`] = point;
-        payload[`infos[${index}][order]`] = index + 1;
+      // Add custom sections
+      let infoIndex = 0;
+      customSections.forEach((section) => {
+        section.items.filter(p => p.trim() !== '').forEach((point, pointIndex) => {
+          payload[`infos[${infoIndex}][info_key]`] = section.id === 'what_you_will_learn' ? 'what_you_will_learn' : section.title;
+          payload[`infos[${infoIndex}][info_value]`] = point;
+          payload[`infos[${infoIndex}][order]`] = pointIndex + 1;
+          infoIndex++;
+        });
       });
 
       if (selectedImage) {
@@ -158,21 +209,43 @@ export default function CourseDetailsPage() {
         title: data.title || '',
         description: data.description || '',
         target_audience: (data as any).target_audience || '',
+        category_id: (data as any).category_id?.toString() || '',
+        user_id: (data as any).user_id?.toString() || '',
       });
 
-      // Parse learning points from infos or what_you_will_learn
-      let points: string[] = [];
-      
-      // Try from infos first (new structure)
-      if (data.infos && Array.isArray(data.infos)) {
-        points = data.infos
-          .filter((info: any) => info.key === 'what_you_will_learn')
-          .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
-          .map((info: any) => info.value);
-      }
+      // Parse custom sections from infos
+      let parsedSections: CustomSection[] = [];
+      if (data.infos && Array.isArray(data.infos) && data.infos.length > 0) {
+        const grouped = data.infos.reduce((acc: any, info: any) => {
+           // Using info_key and info_value based on the new API response structure
+           const key = info.info_key || info.key;
+           const value = info.info_value || info.value;
+           
+           if (!key || !value) return acc;
 
-      // Fallback to what_you_will_learn string if infos didn't have any
-      if (points.length === 0) {
+           if (!acc[key]) {
+             acc[key] = {
+                id: key,
+                title: key === 'what_you_will_learn' ? 'ماذا ستتعلم؟' : key,
+                items: []
+             };
+           }
+           acc[key].items.push({ value, order: info.order || 0 });
+           return acc;
+        }, {});
+        
+        parsedSections = Object.values(grouped).map((group: any) => {
+            // Sort items by order
+            const sortedItems = group.items.sort((a: any, b: any) => a.order - b.order).map((i: any) => i.value);
+            return {
+                id: group.id,
+                title: group.title,
+                items: sortedItems.length > 0 ? sortedItems : ['']
+            };
+        });
+      } else {
+        // Fallback to what_you_will_learn string if infos didn't have any
+        let points: string[] = [];
         try {
           if (data.what_you_will_learn) {
             const parsed = JSON.parse(data.what_you_will_learn);
@@ -181,9 +254,10 @@ export default function CourseDetailsPage() {
         } catch (e) {
           if (data.what_you_will_learn) points = [data.what_you_will_learn];
         }
+        parsedSections = [{ id: 'what_you_will_learn', title: 'ماذا ستتعلم؟', items: points.length > 0 ? points : [''] }];
       }
       
-      setLearningPoints(points.length > 0 ? points : ['']);
+      setCustomSections(parsedSections);
 
       if (data.image) {
         setPreviewImage(data.image);
@@ -203,6 +277,27 @@ export default function CourseDetailsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const [cats, profile] = await Promise.all([getCategories(), getProfileStatus()]);
+        setCategories(cats);
+
+        const userData = profile.data || profile;
+        if (userData) {
+          setCurrentUser(userData);
+          if (userData.role === 'admin') {
+            const allUsers = await getUsers();
+            setInstructors(allUsers.filter((user: any) => user.role === 'instructor' || user.role === 'admin'));
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch initial data:', error);
+      }
+    };
+    fetchInitialData();
+  }, []);
 
   useEffect(() => {
     if (id) {
@@ -375,6 +470,44 @@ export default function CourseDetailsPage() {
               />
             </div>
 
+            {/* Category Dropdown */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-1 text-sm font-black text-gray-900">
+                الفئة
+              </label>
+              <select
+                value={courseInfo.category_id}
+                onChange={(e) => setCourseInfo({ ...courseInfo, category_id: e.target.value })}
+                className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all appearance-none text-gray-900"
+              >
+                <option value="">اختر فئة (اختياري)</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Instructor Dropdown (Admin Only) */}
+            {currentUser?.role === 'admin' && (
+              <div className="space-y-2">
+                <label className="flex items-center gap-1 text-sm font-black text-gray-900">المدرب</label>
+                <select
+                  value={courseInfo.user_id}
+                  onChange={(e) => setCourseInfo({ ...courseInfo, user_id: e.target.value })}
+                  className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all appearance-none text-gray-900"
+                >
+                  <option value="">اختر مدرب</option>
+                  {instructors.map((inst) => (
+                    <option key={inst.id} value={inst.id}>
+                      {inst.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* Course Image */}
             <div className="space-y-2">
               <label className="flex items-center gap-1 text-sm font-black text-gray-900">
@@ -409,94 +542,131 @@ export default function CourseDetailsPage() {
               </div>
             </div>
 
-            {/* Description Accordion */}
-            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-              <button 
-                onClick={() => toggleInfoSection('description')}
-                className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
-              >
-                <span className="font-black text-gray-900">وصف الدورة</span>
-                {expandedInfoSections.includes('description') ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
-              </button>
-              {expandedInfoSections.includes('description') && (
-                <div className="p-5 pt-0 border-t border-gray-50">
-                  <QuillEditor
-                    value={courseInfo.description}
-                    onChange={(val) => setCourseInfo({ ...courseInfo, description: val })}
-                    placeholder="ادخل وصف الدورة"
-                  />
-                </div>
-              )}
-            </div>
+            {/* Dynamic Custom Sections Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              {/* Description Accordion (Always present) */}
+              <div className="bg-white border border-gray-200/80 rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col max-h-[500px]">
+                <button 
+                  onClick={() => toggleInfoSection('description')}
+                  className="w-full p-5 flex items-center justify-between bg-gray-50/50 hover:bg-gray-50 transition-colors border-b border-gray-100 shrink-0"
+                >
+                  <span className="font-black text-gray-900">وصف الدورة</span>
+                  {expandedInfoSections.includes('description') ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+                </button>
+                {expandedInfoSections.includes('description') && (
+                  <div className="p-5 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
+                    <QuillEditor
+                      value={courseInfo.description}
+                      onChange={(val) => setCourseInfo({ ...courseInfo, description: val })}
+                      placeholder="ادخل وصف الدورة"
+                    />
+                  </div>
+                )}
+              </div>
 
-            {/* What to learn Accordion */}
-            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-              <button 
-                onClick={() => toggleInfoSection('what_to_learn')}
-                className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 size={18} className="text-blue-600" />
-                  <span className="font-black text-gray-900">ماذا ستتعلم؟</span>
-                </div>
-                {expandedInfoSections.includes('what_to_learn') ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
-              </button>
-              {expandedInfoSections.includes('what_to_learn') && (
-                <div className="p-5 pt-0 border-t border-gray-50 space-y-4">
-                  {learningPoints.map((point, index) => (
-                    <div key={index} className="relative group bg-gray-50 p-4 rounded-2xl border border-gray-100 transition-all hover:border-blue-200">
-                      <div className="flex items-center justify-between mb-4">
-                        <span className="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
-                          النقطة {index + 1}
-                        </span>
+              {/* Target Audience Accordion (Always present) */}
+              <div className="bg-white border border-gray-200/80 rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col max-h-[500px]">
+                <button 
+                  onClick={() => toggleInfoSection('target_audience')}
+                  className="w-full p-5 flex items-center justify-between bg-gray-50/50 hover:bg-gray-50 transition-colors border-b border-gray-100 shrink-0"
+                >
+                  <span className="font-black text-gray-900">لمن هذه الدورة</span>
+                  {expandedInfoSections.includes('target_audience') ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+                </button>
+                {expandedInfoSections.includes('target_audience') && (
+                  <div className="p-5 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
+                    <QuillEditor
+                      value={courseInfo.target_audience}
+                      onChange={(val) => setCourseInfo({ ...courseInfo, target_audience: val })}
+                      placeholder="الفئة المستهدفة من الدورة"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Render all custom sections */}
+              {customSections.map((section) => (
+                <div key={section.id} className="bg-white border border-gray-200/80 rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col max-h-[500px]">
+                  <div className="w-full p-5 flex items-center justify-between bg-gray-50/50 hover:bg-gray-50 transition-colors border-b border-gray-100 shrink-0">
+                    <div className="flex items-center gap-2 flex-1 ml-4">
+                      {section.id === 'what_you_will_learn' ? (
+                        <>
+                          <CheckCircle2 size={18} className="text-blue-600 shrink-0" />
+                          <span className="font-black text-gray-900">{section.title}</span>
+                        </>
+                      ) : (
+                        <input 
+                          type="text"
+                          value={section.title}
+                          onChange={(e) => handleUpdateSectionTitle(section.id, e.target.value)}
+                          className="font-black text-gray-900 bg-transparent border-b border-dashed border-gray-300 focus:border-blue-500 outline-none w-full"
+                          placeholder="اسم القسم (مثال: متطلبات الدورة)"
+                        />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {section.id !== 'what_you_will_learn' && (
                         <button
-                          onClick={() => handleRemoveLearningPoint(index)}
-                          className="text-gray-400 hover:text-red-500 transition-colors p-1.5 hover:bg-red-50 rounded-lg"
+                          onClick={() => handleRemoveSection(section.id)}
+                          className="text-gray-400 hover:text-red-500 transition-colors p-1"
                         >
                           <Trash2 size={16} />
                         </button>
-                      </div>
-                      <input
-                        type="text"
-                        value={point}
-                        onChange={(e) => handleUpdateLearningPoint(index, e.target.value)}
-                        placeholder="ماذا سيتعلم الطالب من هذه النقطة؟"
-                        className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:border-blue-500 outline-none transition-all font-bold text-gray-900"
-                      />
+                      )}
+                      <button onClick={() => toggleInfoSection(section.id)} className="p-1">
+                        {expandedInfoSections.includes(section.id) ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+                      </button>
                     </div>
-                  ))}
-                  <button
-                    onClick={handleAddLearningPoint}
-                    className="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center gap-3 text-gray-500 font-bold hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50/30 transition-all group"
-                  >
-                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                      <Plus size={18} />
+                  </div>
+                  {expandedInfoSections.includes(section.id) && (
+                    <div className="p-5 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300 space-y-4">
+                      {section.items.map((point, index) => (
+                        <div key={index} className="relative group bg-gray-50 p-4 rounded-2xl border border-gray-100 transition-all hover:border-blue-200">
+                          <div className="flex items-center justify-between mb-4">
+                            <span className="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                              عنصر {index + 1}
+                            </span>
+                            <button
+                              onClick={() => handleRemoveSectionItem(section.id, index)}
+                              className="text-gray-400 hover:text-red-500 transition-colors p-1.5 hover:bg-red-50 rounded-lg"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                          <input
+                            type="text"
+                            value={point}
+                            onChange={(e) => handleUpdateSectionItem(section.id, index, e.target.value)}
+                            placeholder="ادخل محتوى العنصر..."
+                            className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:border-blue-500 outline-none transition-all font-bold text-gray-900"
+                          />
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => handleAddSectionItem(section.id)}
+                        className="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center gap-3 text-gray-500 font-bold hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50/30 transition-all group"
+                      >
+                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                          <Plus size={18} />
+                        </div>
+                        <span>إضافة عنصر جديد</span>
+                      </button>
                     </div>
-                    <span>إضافة نقطة تعلم جديدة</span>
-                  </button>
+                  )}
                 </div>
-              )}
+              ))}
             </div>
 
-            {/* Target Audience Accordion */}
-            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-              <button 
-                onClick={() => toggleInfoSection('target_audience')}
-                className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
-              >
-                <span className="font-black text-gray-900">لمن هذه الدورة</span>
-                {expandedInfoSections.includes('target_audience') ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
-              </button>
-              {expandedInfoSections.includes('target_audience') && (
-                <div className="p-5 pt-0 border-t border-gray-50">
-                  <QuillEditor
-                    value={courseInfo.target_audience}
-                    onChange={(val) => setCourseInfo({ ...courseInfo, target_audience: val })}
-                    placeholder="الفئة المستهدفة من الدورة"
-                  />
-                </div>
-              )}
-            </div>
+            {/* Add New Section Button */}
+            <button
+              onClick={handleAddCustomSection}
+              className="w-full py-4 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center gap-3 text-gray-600 font-bold hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50/50 transition-all group"
+            >
+              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                <Plus size={20} className="text-gray-500 group-hover:text-blue-600" />
+              </div>
+              <span>إضافة قسم اختياري جديد</span>
+            </button>
 
             {/* Action Buttons */}
             <div className="flex items-center justify-end gap-4 pt-4">

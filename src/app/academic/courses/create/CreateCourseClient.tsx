@@ -39,7 +39,16 @@ export default function CreateCourseClient() {
   const [category, setCategory] = useState('');
   const [categories, setCategories] = useState<any[]>([]);
   const [description, setDescription] = useState('');
-  const [learningPoints, setLearningPoints] = useState<string[]>(['']);
+  
+  interface CustomSection {
+    id: string;
+    title: string;
+    items: string[];
+  }
+  const [customSections, setCustomSections] = useState<CustomSection[]>([
+    { id: 'what_you_will_learn', title: 'ماذا ستتعلم؟', items: [''] }
+  ]);
+  
   const [whoIsThisFor, setWhoIsThisFor] = useState('');
   const [selectedInstructor, setSelectedInstructor] = useState<number | null>(null);
   const [instructors, setInstructors] = useState<User[]>([]);
@@ -75,23 +84,49 @@ export default function CreateCourseClient() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleAddLearningPoint = () => {
-    setLearningPoints([...learningPoints, '']);
+  const handleAddSectionItem = (sectionId: string) => {
+    setCustomSections(prev => prev.map(sec => 
+      sec.id === sectionId ? { ...sec, items: [...sec.items, ''] } : sec
+    ));
   };
 
-  const handleUpdateLearningPoint = (index: number, value: string) => {
-    const updated = [...learningPoints];
-    updated[index] = value;
-    setLearningPoints(updated);
+  const handleUpdateSectionItem = (sectionId: string, itemIndex: number, value: string) => {
+    setCustomSections(prev => prev.map(sec => {
+      if (sec.id === sectionId) {
+        const newItems = [...sec.items];
+        newItems[itemIndex] = value;
+        return { ...sec, items: newItems };
+      }
+      return sec;
+    }));
   };
 
-  const handleRemoveLearningPoint = (index: number) => {
-    if (learningPoints.length > 1) {
-      const updated = learningPoints.filter((_, i) => i !== index);
-      setLearningPoints(updated);
-    } else {
-      setLearningPoints(['']);
+  const handleRemoveSectionItem = (sectionId: string, itemIndex: number) => {
+    setCustomSections(prev => prev.map(sec => {
+      if (sec.id === sectionId) {
+        const newItems = sec.items.filter((_, i) => i !== itemIndex);
+        return { ...sec, items: newItems.length > 0 ? newItems : [''] };
+      }
+      return sec;
+    }));
+  };
+
+  const handleAddCustomSection = () => {
+    const newId = `section_${Date.now()}`;
+    setCustomSections([...customSections, { id: newId, title: 'قسم جديد', items: [''] }]);
+    if (!openSections[newId]) {
+      setOpenSections(prev => ({ ...prev, [newId]: true }));
     }
+  };
+
+  const handleUpdateSectionTitle = (sectionId: string, newTitle: string) => {
+    setCustomSections(prev => prev.map(sec => 
+      sec.id === sectionId ? { ...sec, title: newTitle } : sec
+    ));
+  };
+
+  const handleRemoveSection = (sectionId: string) => {
+    setCustomSections(prev => prev.filter(sec => sec.id !== sectionId));
   };
 
   const refreshCourseContent = async (id: number) => {
@@ -102,6 +137,36 @@ export default function CreateCourseClient() {
       const nextExpanded: Record<number, boolean> = {};
       for (const u of unitsFromApi) nextExpanded[u.id] = true;
       setExpandedUnits(nextExpanded);
+    }
+    
+    // Parse custom sections from infos if we are refreshing
+    if ((data as any).infos && Array.isArray((data as any).infos) && (data as any).infos.length > 0) {
+      const grouped = (data as any).infos.reduce((acc: any, info: any) => {
+         const key = info.info_key || info.key;
+         const value = info.info_value || info.value;
+         
+         if (!key || !value) return acc;
+
+         if (!acc[key]) {
+           acc[key] = {
+              id: key,
+              title: key === 'what_you_will_learn' ? 'ماذا ستتعلم؟' : key,
+              items: []
+           };
+         }
+         acc[key].items.push({ value, order: info.order || 0 });
+         return acc;
+      }, {});
+      
+      const parsedSections = Object.values(grouped).map((group: any) => {
+          const sortedItems = group.items.sort((a: any, b: any) => a.order - b.order).map((i: any) => i.value);
+          return {
+              id: group.id,
+              title: group.title,
+              items: sortedItems.length > 0 ? sortedItems : ['']
+          };
+      });
+      setCustomSections(parsedSections as CustomSection[]);
     }
   };
 
@@ -134,11 +199,15 @@ export default function CreateCourseClient() {
     };
 
 
-    // Add learning points as infos[i][key], infos[i][value], infos[i][order]
-    learningPoints.filter(p => p.trim() !== '').forEach((point, index) => {
-      payload[`infos[${index}][key]`] = 'what_you_will_learn';
-      payload[`infos[${index}][value]`] = point;
-      payload[`infos[${index}][order]`] = index + 1;
+    // Add custom sections
+    let infoIndex = 0;
+    customSections.forEach((section) => {
+      section.items.filter(p => p.trim() !== '').forEach((point, pointIndex) => {
+        payload[`infos[${infoIndex}][info_key]`] = section.id === 'what_you_will_learn' ? 'what_you_will_learn' : section.title;
+        payload[`infos[${infoIndex}][info_value]`] = point;
+        payload[`infos[${infoIndex}][order]`] = pointIndex + 1;
+        infoIndex++;
+      });
     });
 
     const created = await createCourse(payload);
@@ -305,11 +374,15 @@ export default function CreateCourseClient() {
       };
 
 
-      // Add learning points as infos[i][key], infos[i][value], infos[i][order]
-      learningPoints.filter(p => p.trim() !== '').forEach((point, index) => {
-        payload[`infos[${index}][key]`] = 'what_you_will_learn';
-        payload[`infos[${index}][value]`] = point;
-        payload[`infos[${index}][order]`] = index + 1;
+      // Add custom sections
+      let infoIndex = 0;
+      customSections.forEach((section) => {
+        section.items.filter(p => p.trim() !== '').forEach((point, pointIndex) => {
+          payload[`infos[${infoIndex}][info_key]`] = section.id === 'what_you_will_learn' ? 'what_you_will_learn' : section.title;
+          payload[`infos[${infoIndex}][info_value]`] = point;
+          payload[`infos[${infoIndex}][order]`] = pointIndex + 1;
+          infoIndex++;
+        });
       });
 
       if (courseId) {
@@ -399,14 +472,14 @@ export default function CreateCourseClient() {
               {/* Category Dropdown */}
               <div className="space-y-2">
                 <label className="flex items-center gap-1 text-sm font-black text-gray-900">
-                  الفئة <span className="text-red-500">*</span>
+                  الفئة
                 </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all appearance-none text-gray-900"
                 >
-                  <option value="">اختر فئة</option>
+                  <option value="">اختر فئة (اختياري)</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}
@@ -462,91 +535,130 @@ export default function CreateCourseClient() {
                 </div>
               </div>
 
-              {/* Description Accordion */}
-              <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                <button
-                  onClick={() => toggleSection('description')}
-                  className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
-                >
-                  <span className="font-black text-gray-900">وصف الدورة</span>
-                  {openSections.description ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
-                </button>
-                {openSections.description && (
-                  <div className="p-5 pt-0 border-t border-gray-50">
-                    <QuillEditor
-                      value={description}
-                      onChange={setDescription}
-                      placeholder="ادخل وصف الدورة"
-                    />
-                  </div>
-                )}
-              </div>
+              {/* Dynamic Custom Sections Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                {/* Description Accordion */}
+                <div className="bg-white border border-gray-200/80 rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col max-h-[500px]">
+                  <button
+                    onClick={() => toggleSection('description')}
+                    className="w-full p-5 flex items-center justify-between bg-gray-50/50 hover:bg-gray-50 transition-colors border-b border-gray-100 shrink-0"
+                  >
+                    <span className="font-black text-gray-900">وصف الدورة</span>
+                    {openSections.description ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+                  </button>
+                  {openSections.description && (
+                    <div className="p-5 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
+                      <QuillEditor
+                        value={description}
+                        onChange={setDescription}
+                        placeholder="ادخل وصف الدورة"
+                      />
+                    </div>
+                  )}
+                </div>
 
-              {/* What to learn Accordion */}
-              <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                <button
-                  onClick={() => toggleSection('learning')}
-                  className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
-                >
-                  <span className="font-black text-gray-900">ماذا تتعلم</span>
-                  {openSections.learning ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
-                </button>
-                {openSections.learning && (
-                  <div className="p-5 pt-0 border-t border-gray-50 space-y-4">
-                    {learningPoints.map((point, index) => (
-                      <div key={index} className="relative group bg-gray-50 p-4 rounded-2xl border border-gray-100 transition-all hover:border-blue-200">
-                        <div className="flex items-center justify-between mb-4">
-                          <span className="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
-                            النقطة {index + 1}
-                          </span>
+                {/* Target Audience Accordion */}
+                <div className="bg-white border border-gray-200/80 rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col max-h-[500px]">
+                  <button
+                    onClick={() => toggleSection('audience')}
+                    className="w-full p-5 flex items-center justify-between bg-gray-50/50 hover:bg-gray-50 transition-colors border-b border-gray-100 shrink-0"
+                  >
+                    <span className="font-black text-gray-900">لمن هذه الدورة</span>
+                    {openSections.audience ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+                  </button>
+                  {openSections.audience && (
+                    <div className="p-5 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
+                      <QuillEditor
+                        value={whoIsThisFor}
+                        onChange={setWhoIsThisFor}
+                        placeholder="الفئة المستهدفة من الدورة"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Render all custom sections */}
+                {customSections.map((section) => (
+                  <div key={section.id} className="bg-white border border-gray-200/80 rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col max-h-[500px]">
+                    <div className="w-full p-5 flex items-center justify-between bg-gray-50/50 hover:bg-gray-50 transition-colors border-b border-gray-100 shrink-0">
+                      <div className="flex items-center gap-2 flex-1 ml-4">
+                        {section.id === 'what_you_will_learn' ? (
+                          <>
+                            <span className="font-black text-gray-900">{section.title}</span>
+                          </>
+                        ) : (
+                          <input 
+                            type="text"
+                            value={section.title}
+                            onChange={(e) => handleUpdateSectionTitle(section.id, e.target.value)}
+                            className="font-black text-gray-900 bg-transparent border-b border-dashed border-gray-300 focus:border-blue-500 outline-none w-full"
+                            placeholder="اسم القسم (مثال: متطلبات الدورة)"
+                          />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {section.id !== 'what_you_will_learn' && (
                           <button
-                            onClick={() => handleRemoveLearningPoint(index)}
-                            className="text-gray-400 hover:text-red-500 transition-colors p-1.5 hover:bg-red-50 rounded-lg"
+                            onClick={() => handleRemoveSection(section.id)}
+                            className="text-gray-400 hover:text-red-500 transition-colors p-1"
                           >
                             <Trash2 size={16} />
                           </button>
-                        </div>
-                        <input
-                          type="text"
-                          value={point}
-                          onChange={(e) => handleUpdateLearningPoint(index, e.target.value)}
-                          placeholder="ماذا سيتعلم الطالب من هذه النقطة؟"
-                          className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:border-blue-500 outline-none transition-all font-bold text-gray-900"
-                        />
+                        )}
+                        <button onClick={() => toggleSection(section.id)} className="p-1">
+                          {openSections[section.id] ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+                        </button>
                       </div>
-                    ))}
-                    <button
-                      onClick={handleAddLearningPoint}
-                      className="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center gap-3 text-gray-500 font-bold hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50/30 transition-all group"
-                    >
-                      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                        <Plus size={18} />
+                    </div>
+                    {openSections[section.id] && (
+                      <div className="p-5 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300 space-y-4">
+                        {section.items.map((point, index) => (
+                          <div key={index} className="relative group bg-gray-50 p-4 rounded-2xl border border-gray-100 transition-all hover:border-blue-200">
+                            <div className="flex items-center justify-between mb-4">
+                              <span className="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                                عنصر {index + 1}
+                              </span>
+                              <button
+                                onClick={() => handleRemoveSectionItem(section.id, index)}
+                                className="text-gray-400 hover:text-red-500 transition-colors p-1.5 hover:bg-red-50 rounded-lg"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                            <input
+                              type="text"
+                              value={point}
+                              onChange={(e) => handleUpdateSectionItem(section.id, index, e.target.value)}
+                              placeholder="ادخل محتوى العنصر..."
+                              className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:border-blue-500 outline-none transition-all font-bold text-gray-900"
+                            />
+                          </div>
+                        ))}
+                        <button
+                          onClick={() => handleAddSectionItem(section.id)}
+                          className="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center gap-3 text-gray-500 font-bold hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50/30 transition-all group"
+                        >
+                          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                            <Plus size={18} />
+                          </div>
+                          <span>إضافة عنصر جديد</span>
+                        </button>
                       </div>
-                      <span>إضافة نقطة تعلم جديدة</span>
-                    </button>
+                    )}
                   </div>
-                )}
+                ))}
               </div>
 
-              {/* Target Audience Accordion */}
-              <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                <button
-                  onClick={() => toggleSection('audience')}
-                  className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
-                >
-                  <span className="font-black text-gray-900">لمن هذه الدورة</span>
-                  {openSections.audience ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
-                </button>
-                {openSections.audience && (
-                  <div className="p-5 pt-0 border-t border-gray-50">
-                    <QuillEditor
-                      value={whoIsThisFor}
-                      onChange={setWhoIsThisFor}
-                      placeholder="الفئة المستهدفة من الدورة"
-                    />
-                  </div>
-                )}
-              </div>
+              {/* Add New Section Button */}
+              <button
+                onClick={handleAddCustomSection}
+                className="w-full py-4 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center gap-3 text-gray-600 font-bold hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50/50 transition-all group"
+              >
+                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                  <Plus size={20} className="text-gray-500 group-hover:text-blue-600" />
+                </div>
+                <span>إضافة قسم اختياري جديد</span>
+              </button>
 
               {/* Action Buttons */}
               <div className="flex items-center justify-end gap-4 pt-4">
