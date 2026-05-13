@@ -64,4 +64,119 @@ export const subscribeToCourse = async (courseId: number, price: number): Promis
   }
 };
 
+export const trackLessonProgress = async (courseId: string | number, lessonId: number, seconds: number, events: string[] = ['play', 'pause', 'seek', 'end']): Promise<any> => {
+  try {
+    const response = await studentApi.post(`my-courses/${courseId}/track`, {
+      lesson_id: lessonId,
+      watched_seconds: seconds,
+      events: events
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to track progress:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const addLessonNote = async (lessonId: number | string, body: string, videoTime: number): Promise<any> => {
+  try {
+    const response = await studentApi.post(`lessons/${lessonId}/notes`, {
+      body,
+      video_time: videoTime
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to add note:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const addLessonComment = async (lessonId: number | string, body: string, parentId?: string | number): Promise<any> => {
+  try {
+    const response = await studentApi.post(`lessons/${lessonId}/comments`, {
+      body,
+      parent_id: parentId
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to add comment:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const likeComment = async (lessonId: number | string, commentId: string | number): Promise<any> => {
+  try {
+    const response = await studentApi.post(`lessons/${lessonId}/comments/${commentId}/like`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to like comment:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const updateLessonNote = async (lessonId: number | string, noteId: string | number, body: string, videoTime: number): Promise<any> => {
+  try {
+    const response = await studentApi.put(`lessons/${lessonId}/notes/${noteId}`, {
+      body,
+      video_time: videoTime
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to update note:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const deleteLessonNote = async (lessonId: number | string, noteId: string | number): Promise<any> => {
+  try {
+    const response = await studentApi.delete(`lessons/${lessonId}/notes/${noteId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to delete note:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const updateLessonComment = async (lessonId: number | string, commentId: string | number, body: string): Promise<any> => {
+  try {
+    const response = await studentApi.put(`lessons/${lessonId}/comments/${commentId}`, {
+      body
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to update comment:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const deleteLessonComment = async (lessonId: number | string, commentId: string | number): Promise<any> => {
+  try {
+    const response = await studentApi.delete(`lessons/${lessonId}/comments/${commentId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to delete comment:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const getLessonNotes = async (lessonId: number | string): Promise<any> => {
+  try {
+    const response = await studentApi.get(`lessons/${lessonId}/notes`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to get notes:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const getLessonComments = async (lessonId: number | string): Promise<any> => {
+  try {
+    const response = await studentApi.get(`lessons/${lessonId}/comments`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to get comments:', error);
+    throw error.response?.data || error;
+  }
+};
+
 

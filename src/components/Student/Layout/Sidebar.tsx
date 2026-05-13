@@ -11,7 +11,9 @@ import {
   User,
   GraduationCap,
   LogOut,
-  Library
+  Library,
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
 
 const sidebarGroups = [
@@ -46,6 +48,7 @@ const sidebarGroups = [
 export const StudentSidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
+  const [isCollapsed, setIsCollapsed] = React.useState(true);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -55,17 +58,27 @@ export const StudentSidebar = () => {
   };
 
   return (
-    <aside className="w-72 bg-white border-l border-gray-200/60 flex flex-col h-screen sticky top-0 z-50 overflow-y-auto hidden lg:flex">
+    <aside className={`${isCollapsed ? 'w-24' : 'w-72'} bg-white border-l border-gray-200/60 flex flex-col h-screen sticky top-0 z-50 overflow-y-auto hidden lg:flex transition-all duration-300 relative`}>
+      {/* Collapse Toggle Button */}
+      <button 
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="absolute -left-3 top-10 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm z-[60] hover:bg-gray-50 transition-colors"
+      >
+        {isCollapsed ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+      </button>
+
       {/* Sidebar Header / Logo Area */}
-      <div className="p-8 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
-            <GraduationCap size={32} />
+      <div className={`p-8 flex items-center ${isCollapsed ? 'justify-center' : 'justify-start'}`}>
+        <div className={`flex ${isCollapsed ? 'flex-col' : 'flex-row'} items-center gap-3`}>
+          <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200 shrink-0">
+            <GraduationCap size={28} />
           </div>
-          <div className="text-center">
-            <h2 className="text-xl font-black text-gray-900 tracking-tight">درب <span className="text-blue-600">Darrab</span></h2>
-            <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mt-1">منصة التعلم الذكي</p>
-          </div>
+          {!isCollapsed && (
+            <div className="text-right">
+              <h2 className="text-xl font-black text-gray-900 tracking-tight">درب <span className="text-blue-600">Darrab</span></h2>
+              <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mt-1">منصة التعلم الذكي</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -74,10 +87,10 @@ export const StudentSidebar = () => {
       </div>
 
       {/* Navigation Menu */}
-      <nav className="flex-1 px-4 py-4 space-y-6">
+      <nav className="flex-1 px-4 py-4 space-y-6 overflow-x-hidden">
         {sidebarGroups.map((group) => (
           <div key={group.title} className="space-y-1.5">
-            <p className="text-[10px] font-bold text-gray-400 px-4 mb-3 uppercase tracking-widest">{group.title}</p>
+            {!isCollapsed && <p className="text-[10px] font-bold text-gray-400 px-4 mb-3 uppercase tracking-widest">{group.title}</p>}
             {group.items.map((item) => {
               const isActive = pathname === item.href || (item.href !== '/student' && pathname.startsWith(item.href));
               return (
@@ -87,16 +100,22 @@ export const StudentSidebar = () => {
                   className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 group relative ${isActive
                     ? 'bg-blue-50/50 text-blue-600 font-bold'
                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
+                    } ${isCollapsed ? 'justify-center' : ''}`}
                 >
                   {isActive && (
                     <div className="absolute right-0 top-3 bottom-3 w-1.5 bg-blue-600 rounded-l-full shadow-[0_0_10px_rgba(37,99,235,0.4)]"></div>
                   )}
                   <item.icon
                     size={22}
-                    className={`transition-colors duration-300 ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`}
+                    className={`transition-colors duration-300 shrink-0 ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`}
                   />
-                  <span className="text-sm">{item.name}</span>
+                  {!isCollapsed && <span className="text-sm truncate">{item.name}</span>}
+                  
+                  {isCollapsed && (
+                    <div className="absolute left-full mr-2 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[100]">
+                      {item.name}
+                    </div>
+                  )}
                 </Link>
               );
             })}
@@ -105,27 +124,40 @@ export const StudentSidebar = () => {
       </nav>
 
       {/* Sidebar Footer */}
-      <div className="p-6 mt-auto">
-        <div className="bg-gray-50 rounded-[2rem] p-4 mb-6">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-full bg-white border-2 border-white shadow-sm flex items-center justify-center overflow-hidden">
+      <div className={`p-4 mt-auto ${isCollapsed ? 'items-center' : ''}`}>
+        <div className={`bg-gray-50 rounded-[2rem] ${isCollapsed ? 'p-2' : 'p-4'} mb-6`}>
+          <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : 'mb-3'}`}>
+            <div className="w-10 h-10 rounded-full bg-white border-2 border-white shadow-sm flex items-center justify-center overflow-hidden shrink-0">
               <User size={20} className="text-gray-400" />
             </div>
-            <div>
-              <p className="text-xs font-bold text-gray-800">أحمد محمد</p>
-              <p className="text-[10px] text-gray-500">طالب نشط</p>
-            </div>
+            {!isCollapsed && (
+              <div>
+                <p className="text-xs font-bold text-gray-800">أحمد محمد</p>
+                <p className="text-[10px] text-gray-500">طالب نشط</p>
+              </div>
+            )}
           </div>
-          <button 
-            onClick={handleLogout}
-            className="w-full bg-white border border-gray-100 text-red-500 text-xs font-bold py-2.5 rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all flex items-center justify-center gap-2"
-          >
-            <LogOut size={14} />
-            تسجيل الخروج
-          </button>
+          {!isCollapsed && (
+            <button 
+              onClick={handleLogout}
+              className="w-full bg-white border border-gray-100 text-red-500 text-xs font-bold py-2.5 rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all flex items-center justify-center gap-2"
+            >
+              <LogOut size={14} />
+              تسجيل الخروج
+            </button>
+          )}
+          {isCollapsed && (
+            <button 
+              onClick={handleLogout}
+              className="mt-2 w-10 h-10 bg-white border border-gray-100 text-red-500 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all flex items-center justify-center"
+              title="تسجيل الخروج"
+            >
+              <LogOut size={14} />
+            </button>
+          )}
         </div>
 
-        <p className="text-[10px] text-center text-gray-400 font-medium italic">إصدار 1.2.0 - © 2024</p>
+        {!isCollapsed && <p className="text-[10px] text-center text-gray-400 font-medium italic">إصدار 1.2.0 - © 2024</p>}
       </div>
     </aside>
   );
