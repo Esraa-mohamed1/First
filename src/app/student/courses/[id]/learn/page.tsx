@@ -1,467 +1,579 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { 
-  Play, CheckCircle2, Lock, Clock, 
-  ChevronRight, ListVideo, Search, ChevronDown,
-  PlayCircle, FileText, HelpCircle, MonitorPlay,
-  Menu, X, ArrowRight, ArrowLeft, Trophy, Star,
-  Download, MessageSquare, Info
+  Play, Pause, SkipForward, SkipBack, Settings, Maximize, Minimize, 
+  Volume2, VolumeX, ListVideo, Search, ChevronDown, ChevronUp,
+  PlayCircle, FileText, Menu, X, ArrowRight, ArrowLeft, Trophy, Star,
+  Download, MessageSquare, Info, StickyNote, ThumbsUp, MessageCircle,
+  Clock, CheckCircle2, Lock, AlertCircle
 } from 'lucide-react';
 import { getMyCourseDetails } from '@/services/student-courses';
+import { getLessonVideoSrc } from '@/lib/lesson-video-src';
 import { usePlayerStore } from '@/hooks/usePlayerStore';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import Lottie from 'lottie-react';
+import _ from 'lodash';
+
+// Mock animation - in real app would use a proper completion lottie
+const completionAnimation = {
+  v: "5.5.7", fr: 30, ip: 0, op: 60, w: 100, h: 100, nm: "Success", ddd: 0, assets: [], layers: []
+};
+
+interface Note {
+  id: string;
+  lessonId: number;
+  content: string;
+  timestamp: number;
+  votes: number;
+  userId: string;
+  userName: string;
+  createdAt: string;
+}
+
+interface Comment {
+  id: string;
+  lessonId: number;
+  content: string;
+  userId: string;
+  userName: string;
+  replies: Comment[];
+  createdAt: string;
+}
 
 export default function CoursePlayerPage() {
   const { id } = useParams();
   const router = useRouter();
+  
+  // States
   const [courseData, setCourseData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState<'about' | 'notes' | 'comments'>('about');
   const [expandedChapters, setExpandedChapters] = useState<number[]>([]);
-  const [activeTab, setActiveTab] = useState<'about' | 'comments' | 'reviews'>('about');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [showCompletion, setShowCompletion] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   
-  const { currentLesson, setCurrentLesson } = usePlayerStore();
+  // Note & Comment States
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [newNote, setNewNote] = useState('');
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState('');
 
+  // Video Ref & Player Store
+  const videoRef = useRef<HTMLIFrameElement>(null);
+  const { currentLesson, setCurrentLesson, playbackSpeed, setPlaybackSpeed } = usePlayerStore();
+  const [currentTime, setCurrentTime] = useState(0);
+
+  // Persistence Logic
+  const storageKey = useMemo(() => `tracking_${id}`, [id]);
+
+  // Fetch Course Details
   useEffect(() => {
-    const fetchCourseDetails = async () => {
+    const fetchDetails = async () => {
       try {
         setLoading(true);
         const data = await getMyCourseDetails(id as string);
         setCourseData(data);
-        
-        const course = data.course || data;
-        
-        // Auto-expand first chapter
+
+        const course = data?.course ?? data;
         if (course.chapters?.length > 0) {
           setExpandedChapters([course.chapters[0].id]);
           
-          // Set first lesson as current if none set
-          if (!currentLesson && course.chapters[0].lessons?.length > 0) {
-            setCurrentLesson(course.chapters[0].lessons[0]);
+          const firstLesson = course.chapters[0].lessons?.[0];
+          
+          if (firstLesson) {
+            // Check if current lesson belongs to this course ID
+            // We use the course ID from the URL as a more reliable source
+            const lessonInCourse = currentLesson && course.chapters.some((c: any) => 
+              c.lessons?.some((l: any) => l.id === currentLesson.id)
+            );
+
+            if (!currentLesson || !lessonInCourse) {
+              setCurrentLesson(firstLesson);
+            }
           }
         }
       } catch (err: any) {
-        console.error('Failed to fetch course details:', err);
-        setError('حدث خطأ أثناء تحميل بيانات الدورة.');
+        setError('Failed to load course content.');
       } finally {
         setLoading(false);
       }
     };
-
-    fetchCourseDetails();
+    fetchDetails();
   }, [id]);
 
-  const toggleChapter = (chapterId: number) => {
-    setExpandedChapters(prev => 
-      prev.includes(chapterId) ? prev.filter(cid => cid !== chapterId) : [...prev, chapterId]
-    );
-  };
+  // Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      
+      switch(e.key.toLowerCase()) {
+        case ' ':
+        case 'k':
+          e.preventDefault();
+          // Toggle play logic would go here if using native video
+          break;
+        case 'f':
+          // Toggle fullscreen
+          break;
+        case 'm':
+          // Toggle mute
+          break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-        <p className="text-gray-500 font-bold">جاري تحميل محتوى الدورة...</p>
-      </div>
-    );
-  }
+  // Tracking & Sync Logic
+  const syncProgress = useCallback(_.debounce(async (lessonId: number, seconds: number) => {
+    try {
+      // Persist locally first
+      const localData = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      localData[lessonId] = seconds;
+      localStorage.setItem(storageKey, JSON.stringify(localData));
 
-  if (error || !courseData) {
+      // Batch send to backend via existing my-courses endpoint
+      // Using the JSON key watched_seconds as required
+      await fetch(`/api/student/my-courses/${id}/track`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lesson_id: lessonId,
+          watched_seconds: seconds,
+          events: ['play', 'pause', 'seek', 'end'] // Tracked event types
+        })
+      });
+    } catch (e) {
+      console.error('Sync failed', e);
+    }
+  }, 5000), [id, storageKey]);
+
+  // Handle video events from iframe/player
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // In a real implementation with a library like @vimeo/player or similar
+      // we would listen for specific player events. 
+      // This is a placeholder for the logic required.
+      if (event.data.type === 'video-progress' && currentLesson) {
+        const seconds = Math.floor(event.data.seconds);
+        setCurrentTime(seconds);
+        syncProgress(Number(currentLesson.id), seconds);
+        
+        // Completion logic
+        if (event.data.isEnd) {
+          setShowCompletion(true);
+          // Auto-mark as complete logic here
+        }
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [currentLesson, syncProgress]);
+
+  // Sidebar Auto-scroll logic
+  useEffect(() => {
+    if (currentLesson) {
+      const el = document.getElementById(`lesson-${currentLesson.id}`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [currentLesson]);
+
+  if (loading) return (
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
+      <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      <p className="text-gray-500 font-bold">جاري تحميل تجربة التعلم...</p>
+    </div>
+  );
+
+  if (error) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-6 p-6 text-center">
-        <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center">
-          <X size={40} />
-        </div>
-        <h2 className="text-2xl font-black text-gray-900">{error || 'لم يتم العثور على الدورة'}</h2>
-        <button 
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <AlertCircle className="text-red-500 w-14 h-14" />
+        <p className="text-gray-800 font-bold max-w-md">{error}</p>
+        <button
+          type="button"
           onClick={() => router.push('/student/courses')}
-          className="px-8 py-3 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200"
+          className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm"
         >
-          العودة لدوراتي
+          العودة إلى دوراتي
         </button>
       </div>
     );
   }
 
-  // Handle case where course might be nested or direct
-  const enrollmentId = courseData.id;
-  const courseId = courseData.course_id || courseData.id;
-  const course = courseData.course || courseData;
+  const course = courseData?.course ?? courseData;
   const chapters = course?.chapters || [];
 
-  return (
-    <div className="min-h-screen bg-[#F8FAFF] flex flex-col lg:flex-row-reverse font-sans" dir="rtl">
-      {/* Mobile Header */}
-      <div className="lg:hidden bg-white border-b border-gray-100 p-4 flex items-center justify-between sticky top-0 z-50">
-        <button onClick={() => router.push('/student/courses')} className="p-2 hover:bg-gray-50 rounded-xl">
-          <ArrowRight size={20} className="text-gray-600" />
+  if (!course || (!chapters.length && !course.title)) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <AlertCircle className="text-amber-500 w-14 h-14" />
+        <p className="text-gray-800 font-bold">تعذر عرض هذه الدورة. قد يكون الرابط غير صحيح أو البيانات غير متوفرة.</p>
+        <button
+          type="button"
+          onClick={() => router.push('/student/courses')}
+          className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm"
+        >
+          العودة إلى دوراتي
         </button>
-        <h1 className="font-black text-gray-900 text-sm truncate max-w-[200px]">{course.title}</h1>
-        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-blue-50 text-blue-600 rounded-xl">
-          <ListVideo size={20} />
+      </div>
+    );
+  }
+
+  const activeVideoSrc = currentLesson ? getLessonVideoSrc(currentLesson as Record<string, unknown>) : '';
+
+  return (
+    <div className="min-h-screen bg-[#F0F2F5] flex flex-col font-sans overflow-hidden" dir="rtl">
+      {/* Top Navigation Bar */}
+      <header className="h-16 bg-[#1C1D1F] text-white flex items-center justify-between px-6 z-50 shrink-0">
+        <div className="flex items-center gap-6">
+          <button onClick={() => router.push('/student/courses')} className="hover:text-blue-400 transition-colors">
+            <ArrowRight size={24} />
+          </button>
+          <div className="h-6 w-px bg-gray-700" />
+          <h1 className="font-black text-sm md:text-base truncate max-w-[300px]">{course.title}</h1>
+        </div>
+        
+        <div className="flex items-center gap-6">
+          <div className="hidden md:flex flex-col items-end">
+             <div className="flex items-center gap-2">
+               <Trophy size={16} className="text-yellow-500" />
+               <span className="text-xs font-bold text-gray-300">تقدمك: 45%</span>
+             </div>
+             <div className="w-32 h-1 bg-gray-700 rounded-full mt-1 overflow-hidden">
+               <div className="w-[45%] h-full bg-blue-500" />
+             </div>
+          </div>
+          <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs font-black transition-all">
+            مشاركة الشهادة
+          </button>
+        </div>
+      </header>
+
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Main Content Area */}
+        <main className={cn(
+          "flex-1 flex flex-col bg-white transition-all duration-300 overflow-hidden",
+          isSidebarOpen ? "lg:pl-[350px]" : "pl-0"
+        )}>
+          {/* Video Player Container */}
+          <div className="relative aspect-video bg-black group select-none">
+            {currentLesson ? (
+              activeVideoSrc ? (
+                <iframe
+                  ref={videoRef}
+                  src={activeVideoSrc}
+                  className="w-full h-full"
+                  allowFullScreen
+                  allow="autoplay; encrypted-media; picture-in-picture"
+                  title={currentLesson.title}
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-white gap-3 px-6 text-center">
+                  <AlertCircle size={48} className="text-amber-400" />
+                  <p className="font-bold text-sm max-w-md">
+                    لا يوجد رابط تشغيل صالح لهذا الدرس. تأكد من حقل embed أو video_url في الـ API، أو من إعداد NEXT_PUBLIC_BUNNY_LIBRARY_ID إذا كنت تستخدم video_id فقط.
+                  </p>
+                </div>
+              )
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-white gap-4">
+                <PlayCircle size={80} className="text-blue-500 animate-pulse" />
+                <p className="font-black text-xl">اختر درساً لبدء رحلتك</p>
+              </div>
+            )}
+            
+            {/* Recording Denial Overlay Logic (CSS-based placeholder) */}
+            <div className="absolute inset-0 pointer-events-none opacity-0 select-none user-select-none" style={{ background: 'transparent' }}>
+               {/* Anti-recording dynamic watermark would be rendered here */}
+            </div>
+          </div>
+
+          {/* Player Controls & Info Tabs */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+             {/* Tabs Header */}
+             <div className="flex border-b border-gray-100 px-10 gap-10 shrink-0">
+               {[
+                 { id: 'about', label: 'عن الدرس', icon: Info },
+                 { id: 'notes', label: 'ملاحظاتي', icon: StickyNote },
+                 { id: 'comments', label: 'النقاشات', icon: MessageSquare },
+               ].map(tab => (
+                 <button
+                   key={tab.id}
+                   onClick={() => setActiveTab(tab.id as any)}
+                   className={cn(
+                     "flex items-center gap-2 py-5 font-black text-sm transition-all relative",
+                     activeTab === tab.id ? "text-blue-600" : "text-gray-500 hover:text-gray-800"
+                   )}
+                 >
+                   <tab.icon size={18} />
+                   <span>{tab.label}</span>
+                   {activeTab === tab.id && (
+                     <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
+                   )}
+                 </button>
+               ))}
+             </div>
+
+             {/* Tab Content Area */}
+             <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+                <AnimatePresence mode="wait">
+                  {activeTab === 'about' && (
+                    <motion.div 
+                      key="about" 
+                      initial={{ opacity: 0, y: 10 }} 
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-6"
+                    >
+                      <h2 className="text-2xl font-black text-gray-900">{currentLesson?.title}</h2>
+                      <div className="prose prose-blue max-w-none">
+                        <div 
+                          className="text-gray-600 leading-relaxed ql-editor !p-0"
+                          dangerouslySetInnerHTML={{ __html: currentLesson?.description || course.description }}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {activeTab === 'notes' && (
+                    <motion.div 
+                      key="notes"
+                      initial={{ opacity: 0, y: 10 }} 
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-8"
+                    >
+                      <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 space-y-4">
+                        <textarea
+                          value={newNote}
+                          onChange={(e) => setNewNote(e.target.value)}
+                          placeholder="أضف ملاحظة عند هذه اللحظة..."
+                          className="w-full bg-white border border-gray-200 rounded-2xl p-4 font-bold text-sm outline-none focus:border-blue-400 transition-all min-h-[100px]"
+                        />
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2 text-blue-600 font-black text-sm bg-blue-50 px-3 py-1.5 rounded-xl">
+                            <Clock size={16} />
+                            <span>04:20</span>
+                          </div>
+                          <button className="px-8 py-2.5 bg-blue-600 text-white rounded-xl font-black text-sm shadow-lg shadow-blue-100">
+                            حفظ الملاحظة
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-6">
+                        {notes.length === 0 ? (
+                          <div className="text-center py-20 text-gray-400 font-bold italic">لا توجد ملاحظات بعد.</div>
+                        ) : (
+                          notes.map(note => (
+                            <div key={note.id} className="group border-b border-gray-50 pb-6 last:border-0">
+                               <div className="flex items-start justify-between mb-3">
+                                 <button className="flex items-center gap-2 text-blue-600 font-black text-xs hover:bg-blue-50 px-2 py-1 rounded-lg transition-all">
+                                   <PlayCircle size={14} fill="currentColor" />
+                                   <span>{note.timestamp}</span>
+                                 </button>
+                                 <div className="flex items-center gap-4">
+                                   <button className="flex items-center gap-1.5 text-gray-400 hover:text-blue-600 transition-colors">
+                                     <ThumbsUp size={14} />
+                                     <span className="text-[10px] font-bold">{note.votes}</span>
+                                   </button>
+                                 </div>
+                               </div>
+                               <div className="text-gray-700 font-bold text-sm leading-relaxed">{note.content}</div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {activeTab === 'comments' && (
+                    <motion.div 
+                      key="comments"
+                      initial={{ opacity: 0, y: 10 }} 
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-10"
+                    >
+                       <div className="flex gap-4">
+                         <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-black text-xl shrink-0">أ</div>
+                         <div className="flex-1 space-y-3">
+                           <textarea
+                             value={newComment}
+                             onChange={(e) => setNewComment(e.target.value)}
+                             placeholder="اطرح سؤالاً أو ابدأ نقاشاً (يدعم Markdown)..."
+                             className="w-full bg-gray-50 border border-gray-100 rounded-3xl p-5 font-bold text-sm outline-none focus:border-blue-400 transition-all resize-none min-h-[120px]"
+                           />
+                           <div className="flex justify-end">
+                             <button className="px-10 py-3 bg-blue-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-blue-100 hover:scale-105 transition-all">
+                               نشر التعليق
+                             </button>
+                           </div>
+                         </div>
+                       </div>
+
+                       <div className="space-y-8">
+                         {/* Threaded Comments Rendering Logic */}
+                       </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+             </div>
+          </div>
+        </main>
+
+        {/* Udemy-Style Chapter Sidebar */}
+        <aside className={cn(
+          "fixed top-20 bottom-4 left-4 z-40 w-full lg:w-[350px] bg-white border border-gray-100 flex flex-col transition-transform duration-500 rounded-[32px] shadow-2xl shadow-gray-200/50",
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-[-120%]"
+        )}>
+          {/* Sidebar Header */}
+          <div className="p-6 border-b border-gray-50 bg-gray-50/50">
+             <div className="flex items-center justify-between mb-4">
+               <h3 className="font-black text-gray-900">محتوى الدورة</h3>
+               <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 hover:bg-white rounded-xl shadow-sm">
+                 <X size={20} className="text-gray-400" />
+               </button>
+             </div>
+             <div className="relative">
+               <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+               <input
+                 type="text"
+                 value={searchQuery}
+                 onChange={(e) => setSearchQuery(e.target.value)}
+                 placeholder="ابحث عن درس..."
+                 className="w-full bg-white border border-gray-200 rounded-2xl py-3 pr-10 pl-4 text-xs font-bold outline-none focus:border-blue-300 transition-all"
+               />
+             </div>
+          </div>
+
+          {/* Chapters List */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+             {chapters.map((chapter: any, idx: number) => (
+               <div key={chapter.id} className="border-b border-gray-50 last:border-0">
+                 <button 
+                   onClick={() => setExpandedChapters(prev => prev.includes(chapter.id) ? prev.filter(c => c !== chapter.id) : [...prev, chapter.id])}
+                   className={cn(
+                     "w-full p-5 flex items-center justify-between hover:bg-gray-50 transition-all text-right",
+                     expandedChapters.includes(chapter.id) && "bg-gray-50"
+                   )}
+                 >
+                   <div className="flex-1 min-w-0">
+                     <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">الفصل {idx + 1}</p>
+                     <h4 className="text-sm font-black text-gray-900 truncate">{chapter.title}</h4>
+                   </div>
+                   {expandedChapters.includes(chapter.id) ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+                 </button>
+
+                 <AnimatePresence>
+                   {expandedChapters.includes(chapter.id) && (
+                     <motion.div 
+                       initial={{ height: 0, opacity: 0 }} 
+                       animate={{ height: 'auto', opacity: 1 }}
+                       exit={{ height: 0, opacity: 0 }}
+                       className="overflow-hidden bg-white"
+                     >
+                       {chapter.lessons?.map((lesson: any) => {
+                         const isActive = currentLesson?.id === lesson.id;
+                         return (
+                           <button
+                             id={`lesson-${lesson.id}`}
+                             key={lesson.id}
+                             onClick={() => setCurrentLesson(lesson)}
+                             className={cn(
+                               "w-full p-4 px-6 flex items-start gap-4 transition-all text-right group border-r-4",
+                               isActive ? "bg-blue-50/50 border-blue-600" : "hover:bg-gray-50 border-transparent"
+                             )}
+                           >
+                             <div className={cn(
+                               "mt-1 w-5 h-5 rounded-full flex items-center justify-center shrink-0 border transition-all",
+                               isActive ? "bg-blue-600 border-blue-600 text-white" : "border-gray-200 text-gray-300 group-hover:border-blue-400"
+                             )}>
+                               {isActive ? <Play size={10} fill="currentColor" /> : <Play size={10} />}
+                             </div>
+                             <div className="flex-1 min-w-0">
+                               <h5 className={cn(
+                                 "text-xs font-bold truncate mb-1 transition-colors",
+                                 isActive ? "text-blue-600" : "text-gray-700 group-hover:text-blue-500"
+                               )}>
+                                 {lesson.title}
+                               </h5>
+                               <div className="flex items-center gap-3 text-[10px] font-bold text-gray-400">
+                                 <span className="flex items-center gap-1"><Clock size={10} /> {lesson.duration || '10:00'}</span>
+                                 {lesson.progresses?.[0]?.is_completed && <CheckCircle2 size={12} className="text-green-500" />}
+                               </div>
+                             </div>
+                           </button>
+                         );
+                       })}
+                     </motion.div>
+                   )}
+                 </AnimatePresence>
+               </div>
+             ))}
+          </div>
+        </aside>
+
+        {/* Sidebar Toggle Button (Floating) */}
+        <button 
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className={cn(
+            "fixed bottom-10 left-10 z-[60] w-14 h-14 bg-gray-900 text-white rounded-2xl shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95",
+            isSidebarOpen ? "lg:translate-x-[350px]" : "translate-x-0"
+          )}
+        >
+          {isSidebarOpen ? <X size={24} /> : <ListVideo size={24} />}
         </button>
       </div>
 
-      {/* Main Player Area */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Video Container */}
-        <div className="w-full bg-black aspect-video relative group">
-          {currentLesson ? (
-            <iframe
-              src={currentLesson.video_url}
-              className="w-full h-full"
-              allowFullScreen
-              allow="autoplay; encrypted-media"
-            />
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-white gap-4">
-              <PlayCircle size={64} className="text-gray-600" />
-              <p className="font-bold text-lg text-gray-400">اختر درساً للبدء</p>
-            </div>
-          )}
-        </div>
-
-        {/* Lesson Info */}
-        <div className="flex-1 overflow-y-auto p-6 lg:p-10 space-y-8">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <span className="bg-blue-50 text-blue-600 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
-                  الدرس الحالي
-                </span>
-                <span className="text-gray-400 text-xs font-bold">
-                  {currentLesson?.duration || '10:00'} دقيقة
-                </span>
-              </div>
-              <h1 className="text-2xl lg:text-3xl font-black text-gray-900 leading-tight">
-                {currentLesson?.title || 'مرحباً بك في الدورة'}
-              </h1>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button className="flex-1 lg:flex-none px-6 py-3 bg-white border border-gray-100 rounded-2xl font-bold text-gray-600 hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
-                <Download size={18} />
-                <span>المرفقات</span>
-              </button>
-              <button className="flex-1 lg:flex-none px-6 py-3 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center justify-center gap-2">
-                <CheckCircle2 size={18} />
-                <span>اكتمل الدرس</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="h-px bg-gray-100 w-full" />
-
-          {/* Tabs / Content */}
-          <div className="space-y-8">
-            <div className="flex items-center gap-8 border-b border-gray-100">
-              <button 
-                onClick={() => setActiveTab('about')}
-                className={cn(
-                  "pb-4 border-b-2 font-black text-sm transition-all",
-                  activeTab === 'about' ? "border-blue-600 text-blue-600" : "border-transparent text-gray-400 hover:text-gray-600"
-                )}
-              >
-                عن الدرس
-              </button>
-              <button 
-                onClick={() => setActiveTab('comments')}
-                className={cn(
-                  "pb-4 border-b-2 font-black text-sm transition-all",
-                  activeTab === 'comments' ? "border-blue-600 text-blue-600" : "border-transparent text-gray-400 hover:text-gray-600"
-                )}
-              >
-                التعليقات
-              </button>
-              <button 
-                onClick={() => setActiveTab('reviews')}
-                className={cn(
-                  "pb-4 border-b-2 font-black text-sm transition-all",
-                  activeTab === 'reviews' ? "border-blue-600 text-blue-600" : "border-transparent text-gray-400 hover:text-gray-600"
-                )}
-              >
-                التقييمات
-              </button>
-            </div>
-
-            <div className="animate-in fade-in slide-in-from-top-4 duration-500">
-              {activeTab === 'about' && (
-                <div className="prose prose-slate max-w-none">
-                  <div 
-                    className="text-gray-600 leading-relaxed font-medium ql-editor !p-0"
-                    dangerouslySetInnerHTML={{ __html: currentLesson?.description || course.description }}
-                  />
-                </div>
-              )}
-
-              {activeTab === 'comments' && (
-                <div className="space-y-8">
-                  <div className="flex gap-4">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                      <span className="text-blue-600 font-bold text-sm">أ</span>
-                    </div>
-                    <div className="flex-1 space-y-3">
-                      <textarea 
-                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none focus:border-blue-300 transition-all resize-none"
-                        placeholder="أضف تعليقاً أو استفساراً..."
-                        rows={3}
-                      />
-                      <div className="flex justify-end">
-                        <button className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all">
-                          إرسال التعليق
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-6">
-                    {[1, 2].map((i) => (
-                      <div key={i} className="flex gap-4">
-                        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                          <span className="text-gray-400 font-bold text-sm">م</span>
-                        </div>
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <h5 className="font-black text-gray-900 text-sm">محمد أحمد</h5>
-                            <span className="text-[10px] font-bold text-gray-400">منذ ساعتين</span>
-                          </div>
-                          <p className="text-gray-600 text-sm font-bold leading-relaxed">
-                            هذا الدرس مفيد جداً، شكراً جزيلاً لك على الشرح الواضح والمبسط.
-                          </p>
-                          <button className="text-blue-600 font-bold text-xs mt-2 hover:underline">رد</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'reviews' && (
-                <div className="space-y-10">
-                  <div className="bg-blue-50/50 rounded-3xl p-8 flex flex-col md:flex-row items-center gap-10 border border-blue-100/50">
-                    <div className="text-center space-y-2">
-                      <h4 className="text-5xl font-black text-blue-600">4.8</h4>
-                      <div className="flex text-orange-400">
-                        {[1, 2, 3, 4, 5].map(i => <Star key={i} size={16} fill={i <= 4 ? "currentColor" : "none"} />)}
-                      </div>
-                      <p className="text-xs font-bold text-gray-400">إجمالي 120 تقييم</p>
-                    </div>
-
-                    <div className="flex-1 w-full space-y-3">
-                      {[5, 4, 3, 2, 1].map((star) => (
-                        <div key={star} className="flex items-center gap-4">
-                          <span className="text-xs font-bold text-gray-500 w-4">{star}</span>
-                          <div className="flex-1 h-2 bg-white rounded-full overflow-hidden border border-gray-100">
-                            <div className="h-full bg-orange-400 rounded-full" style={{ width: star === 5 ? '80%' : star === 4 ? '15%' : '5%' }} />
-                          </div>
-                          <span className="text-[10px] font-bold text-gray-400 w-8">{star === 5 ? '80%' : star === 4 ? '15%' : '5%'}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <button className="px-8 py-4 bg-white text-blue-600 border border-blue-100 rounded-2xl font-black text-sm shadow-sm hover:bg-blue-50 transition-all shrink-0">
-                      قيم هذه الدورة
-                    </button>
-                  </div>
-
-                  <div className="space-y-8">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="space-y-4 pb-8 border-b border-gray-50 last:border-0">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gray-100" />
-                            <div>
-                              <h5 className="font-black text-gray-900 text-sm">أحمد علي</h5>
-                              <div className="flex text-orange-400 mt-0.5">
-                                {[1, 2, 3, 4, 5].map(s => <Star key={s} size={10} fill="currentColor" />)}
-                              </div>
-                            </div>
-                          </div>
-                          <span className="text-[10px] font-bold text-gray-400">منذ 3 أيام</span>
-                        </div>
-                        <p className="text-gray-600 text-sm font-bold leading-relaxed">
-                          دورة ممتازة جداً والمحتوى غني بالمعلومات العملية. أنصح بها بشدة لكل من يريد تعلم المجال باحترافية.
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* Sidebar - Course Content */}
-      <aside className={cn(
-        "fixed inset-0 lg:relative lg:inset-auto z-[60] lg:z-10 w-full lg:w-[400px] bg-white border-l border-gray-100 flex flex-col transition-transform duration-300",
-        isSidebarOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0 lg:hidden"
-      )}>
-        {/* Sidebar Header */}
-        <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-white sticky top-0 z-10">
-          <div className="space-y-1">
-            <h2 className="font-black text-gray-900">محتوى الدورة</h2>
-            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-              <span>{chapters.length} فصول</span>
-              <div className="w-1 h-1 rounded-full bg-gray-200" />
-              <span className="text-blue-500">مكتمل 25%</span>
-            </div>
-          </div>
-          <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 hover:bg-gray-50 rounded-xl">
-            <X size={20} className="text-gray-400" />
-          </button>
-        </div>
-
-        {/* Search in Content */}
-        <div className="p-4 border-b border-gray-50">
-          <div className="relative">
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
-            <input 
-              type="text" 
-              placeholder="ابحث عن درس..."
-              className="w-full bg-gray-50 border border-transparent rounded-xl py-3 pr-10 pl-4 text-xs text-gray-900 placeholder:text-gray-300 focus:outline-none focus:bg-white focus:border-blue-100 transition-all font-bold"
-            />
-          </div>
-        </div>
-
-        {/* Chapters & Lessons List */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-          {chapters.map((chapter: any, index: number) => (
-            <div key={chapter.id} className="border-b border-gray-50 last:border-0">
-              <button 
-                onClick={() => toggleChapter(chapter.id)}
-                className={cn(
-                  "w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-all text-right group",
-                  expandedChapters.includes(chapter.id) && "bg-gray-50/50"
-                )}
-              >
-                <div className="flex items-center gap-4">
-                  <div className={cn(
-                    "w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black transition-all",
-                    expandedChapters.includes(chapter.id) 
-                      ? "bg-gray-900 text-white" 
-                      : "bg-gray-100 text-gray-400 group-hover:bg-gray-200"
-                  )}>
-                    {index + 1}
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-black text-gray-900">{chapter.title}</h4>
-                    <span className="text-[10px] font-bold text-gray-400">{chapter.lessons?.length || 0} دروس</span>
-                  </div>
-                </div>
-                <ChevronDown size={16} className={cn("text-gray-300 transition-transform", expandedChapters.includes(chapter.id) ? "rotate-180" : "")} />
-              </button>
-
-              <AnimatePresence>
-                {expandedChapters.includes(chapter.id) && (
-                  <motion.div 
-                    initial={{ height: 0 }}
-                    animate={{ height: 'auto' }}
-                    exit={{ height: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="bg-white py-2">
-                      {chapter.lessons?.map((lesson: any) => {
-                        const isActive = currentLesson?.id === lesson.id;
-                        return (
-                          <button
-                            key={lesson.id}
-                            onClick={() => {
-                              setCurrentLesson(lesson);
-                              if (window.innerWidth < 1024) setIsSidebarOpen(false);
-                            }}
-                            className={cn(
-                              "w-full flex items-start gap-4 p-4 px-6 transition-all text-right group",
-                              isActive 
-                                ? "bg-blue-50/50 border-r-4 border-blue-600" 
-                                : "hover:bg-gray-50 border-r-4 border-transparent"
-                            )}
-                          >
-                            <div className={cn(
-                              "mt-1 w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all",
-                              isActive 
-                                ? "bg-blue-600 text-white" 
-                                : "bg-gray-100 text-gray-300 group-hover:bg-gray-200"
-                            )}>
-                              {isActive ? <Play size={10} fill="currentColor" /> : <Play size={10} />}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h5 className={cn(
-                                "text-xs font-bold truncate mb-1",
-                                isActive ? "text-blue-600" : "text-gray-700"
-                              )}>
-                                {lesson.title}
-                              </h5>
-                              <div className="flex items-center gap-3 text-[10px] text-gray-400 font-bold">
-                                <span className="flex items-center gap-1">
-                                  <Clock size={10} />
-                                  {lesson.duration || '10:00'}
-                                </span>
-                                {lesson.progresses?.[0]?.is_completed && (
-                                  <span className="text-green-500 flex items-center gap-1">
-                                    <CheckCircle2 size={10} />
-                                    مكتمل
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
-        </div>
-
-        {/* Sidebar Footer - Progress */}
-        <div className="p-6 bg-gray-50 border-t border-gray-100">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-black text-gray-900">تقدمك في الدورة</span>
-            <span className="text-xs font-black text-blue-600">25%</span>
-          </div>
-          <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-            <motion.div 
-              initial={{ width: 0 }}
-              animate={{ width: '25%' }}
-              className="h-full bg-blue-600 rounded-full"
-            />
-          </div>
-        </div>
-      </aside>
-
-      {/* Overlay for mobile sidebar */}
+      {/* Completion Overlay */}
       <AnimatePresence>
-        {isSidebarOpen && (
+        {showCompletion && (
           <motion.div 
-            initial={{ opacity: 0 }}
+            initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setIsSidebarOpen(false)}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[55] lg:hidden"
-          />
+            className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-center justify-center p-6"
+          >
+            <div className="bg-white rounded-[40px] p-12 max-w-lg w-full text-center space-y-8 relative overflow-hidden">
+               <div className="absolute top-0 left-0 right-0 h-2 bg-blue-600" />
+               <div className="w-32 h-32 mx-auto">
+                 <Lottie animationData={completionAnimation} loop={false} />
+               </div>
+               <div className="space-y-2">
+                 <h2 className="text-3xl font-black text-gray-900">مبروك! لقد أتممت الدورة</h2>
+                 <p className="text-gray-500 font-bold">لقد أصبحت الآن خبيراً في {course.title}</p>
+               </div>
+               <div className="grid grid-cols-2 gap-4">
+                  <button className="py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-100 hover:brightness-110 transition-all">
+                    عرض الشهادة
+                  </button>
+                  <button onClick={() => setShowCompletion(false)} className="py-4 bg-gray-100 text-gray-600 rounded-2xl font-black hover:bg-gray-200 transition-all">
+                    إغلاق
+                  </button>
+               </div>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
       <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+        
+        /* Recording Denial Placeholder */
+        @media print {
+          body { display: none !important; }
         }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #E5E7EB;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #D1D5DB;
+        
+        ::selection {
+          background: #3B82F6;
+          color: white;
         }
       `}</style>
     </div>

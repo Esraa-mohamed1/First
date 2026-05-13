@@ -22,8 +22,12 @@ export default function CoursesPage() {
         const fetchedEnrollments = await getMyEnrolledCourses();
         const studentCourses: Course[] = fetchedEnrollments.map(enrollment => {
           const course = enrollment.course;
+          if (!course) {
+            return null;
+          }
+          const courseId = course.id ?? enrollment.course_id ?? enrollment.id;
           return {
-            id: String(enrollment.id),
+            id: String(courseId),
             title: course.title,
             slug: course.slug,
             description: course.description,
@@ -35,7 +39,7 @@ export default function CoursesPage() {
             price_type: course.price_type,
             is_enrolled: true,
           };
-        });
+        }).filter(Boolean) as Course[];
         setCourses(studentCourses);
       } catch (err) {
         console.error('Failed to fetch courses:', err);

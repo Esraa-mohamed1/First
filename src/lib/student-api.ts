@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { unwrapEncryptedResponseData } from './decryption';
 
 const studentApi = axios.create({
   baseURL: 'https://api.darab.academy/api/user',
@@ -6,6 +7,16 @@ const studentApi = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+studentApi.interceptors.response.use(
+  (response) => {
+    response.data = unwrapEncryptedResponseData(response.data);
+    return response;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 studentApi.interceptors.request.use(
   (config) => {
