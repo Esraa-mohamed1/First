@@ -22,7 +22,10 @@ import {
 import toast from 'react-hot-toast';
 import { createCourse, getCategories, getCourse, updateCourse } from '@/services/courses';
 import { getProfileStatus, getMyUsageLimit } from '@/services/auth';
+import { getUsers } from '@/services/users';
+import { User } from '@/types/api';
 import QuillEditor from '@/components/Academic/QuillEditor';
+import { SearchableSelect } from '@/components/Academic/Common/SearchableSelect';
 
 interface CreateCourseModalProps {
   isOpen: boolean;
@@ -35,6 +38,9 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
   const router = useRouter();
   const pathname = usePathname();
   const [activeTab, setActiveTab] = useState<'info' | 'content' | 'pricing'>('info');
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [instructors, setInstructors] = useState<User[]>([]);
+  const [selectedInstructor, setSelectedInstructor] = useState<number | null>(null);
   
   // Basic Info States
   const [title, setTitle] = useState('');
@@ -59,7 +65,7 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
   // Pricing Step States
   const [pricingType, setPricingType] = useState<'free' | 'paid'>('paid');
   const [price, setPrice] = useState('');
-  const [currency, setCurrency] = useState<'EGP' | 'SAR'>('SAR');
+  const [currency, setCurrency] = useState<'EGP' | 'SAR' | 'USD'>('SAR');
   const [status, setStatus] = useState<'published' | 'draft'>('draft');
 
 
@@ -67,14 +73,23 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
   const [units, setUnits] = useState<any[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, any>>({});
 
   useEffect(() => {
     if (isOpen) {
       const fetchInitialData = async () => {
         try {
-          const cats = await getCategories();
+          const [cats, profile] = await Promise.all([getCategories(), getProfileStatus()]);
           setCategories(cats);
+
+          const userData = profile.data || profile;
+          if (userData) {
+            setCurrentUser(userData);
+            if (userData.role === 'admin' || userData.role === 'academy') {
+              const allUsers = await getUsers();
+              setInstructors(allUsers.filter((user) => user.role === 'academy'));
+            }
+          }
 
           if (courseId) {
             const course = await getCourse(courseId);
@@ -86,8 +101,9 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
             setPricingType((course as any).price_type || (Number(course.price) === 0 ? 'free' : 'paid'));
             setStatus(course.status || 'draft');
             setPrice(course.price?.toString() || '');
+            setCurrency(course.currency || 'SAR');
+            setSelectedInstructor(course.user_id || null);
             if (course.image) setPreviewUrl(course.image);
-            // In a real app, units would be fetched here
           }
         } catch (error) {
           console.error('Failed to fetch initial data:', error);
@@ -114,11 +130,18 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
 
   const handleSave = async () => {
     setIsSubmitting(true);
+    setErrors({});
     try {
+      let userId = currentUser?.id || 2;
+      if (selectedInstructor) {
+        userId = selectedInstructor;
+      }
+
       const payload: any = {
         title,
         category_id: category,
         description,
+        user_id: userId,
         what_you_will_learn: whatYouWillLearn,
         who_is_this_for: whoIsThisFor,
         price: pricingType === 'free' ? 0 : Number(price),
@@ -130,16 +153,23 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
         image: selectedFile || undefined,
       };
 
-
-
-      if (courseId) {
-        await updateCourse(courseId, payload);
-        toast.success('تم تحديث الدورة بنجاح');
-      } else {
-        await createCourse(payload);
-        toast.success('تم إنشاء الدورة بنجاح');
+      try {
+        if (courseId) {
+          await updateCourse(courseId, payload);
+          toast.success('تم تحديث الدورة بنجاح');
+        } else {
+          await createCourse(payload);
+          toast.success('تم إنشاء الدورة بنجاح');
+        }
+        onClose();
+      } catch (error: any) {
+        if (error?.errors) {
+          setErrors(error.errors);
+          toast.error('يرجى تصحيح الأخطاء أدناه');
+        } else {
+          toast.error(error?.message || 'فشل الحفظ');
+        }
       }
-      onClose();
     } catch (error: any) {
       toast.error(error?.message || 'فشل الحفظ');
     } finally {
@@ -208,8 +238,9 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
                           placeholder="ادخل اسم الدورة"
-                          className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all text-gray-900"
+                          className={`w-full p-4 bg-white border ${errors.title ? 'border-red-500' : 'border-gray-100'} rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all text-gray-900`}
                         />
+                        {errors.title && <p className="text-red-500 text-xs font-bold mt-1">{errors.title}</p>}
                       </div>
 
                       <div className="space-y-2">
@@ -407,20 +438,22 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
                             value={price}
                             onChange={(e) => setPrice(e.target.value)}
                             placeholder="0.00"
-                            className="w-full p-5 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-left transition-all pl-24 text-gray-900 shadow-sm"
+                            className={`w-full p-5 bg-white border ${errors.price ? 'border-red-500' : 'border-gray-100'} rounded-2xl outline-none focus:border-blue-600 font-bold text-left transition-all pl-24 text-gray-900 shadow-sm`}
                           />
                           <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 border-r border-gray-100 pr-4">
                             <select 
                               value={currency}
                               onChange={(e) => setCurrency(e.target.value as any)}
-                              className="bg-transparent font-black text-blue-600 outline-none cursor-pointer text-sm text-gray-900"
+                              className="bg-transparent font-black text-blue-600 outline-none cursor-pointer text-sm text-gray-900 appearance-none hover:text-blue-700 transition-colors"
                             >
                               <option value="SAR" className="text-gray-900">SAR (ر.س)</option>
                               <option value="EGP" className="text-gray-900">EGP (ج.م)</option>
+                              <option value="USD" className="text-gray-900">USD ($)</option>
                             </select>
-
+                            <ChevronDown size={14} className="text-blue-600 pointer-events-none" />
                           </div>
                         </div>
+                        {errors.price && <p className="text-red-500 text-xs font-bold mt-1">{errors.price}</p>}
                      </div>
                    )}
 

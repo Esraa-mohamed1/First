@@ -23,6 +23,7 @@ import { getUsers } from '@/services/users';
 import { User } from '@/types/api';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
 import QuillEditor from '@/components/Academic/QuillEditor';
+import { SearchableSelect } from '@/components/Academic/Common/SearchableSelect';
 
 const MySwal = withReactContent(Swal);
 
@@ -67,7 +68,7 @@ export default function CreateCourseClient() {
   const [pricingType, setPricingType] = useState<'free' | 'paid'>('paid');
   const [status, setStatus] = useState<'published' | 'draft'>('draft');
   const [price, setPrice] = useState('');
-  const [currency, setCurrency] = useState<'EGP' | 'SAR'>('SAR');
+  const [currency, setCurrency] = useState<'EGP' | 'SAR' | 'USD'>('SAR');
 
   // Course Content State
   const [units, setUnits] = useState<any[]>([]);
@@ -82,7 +83,26 @@ export default function CreateCourseClient() {
   const [currentUnitForLesson, setCurrentUnitForLesson] = useState<number | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, any>>({});
+
+  const getInfoError = (sectionId: string, itemIndex: number, type: 'key' | 'value') => {
+    let globalIndex = 0;
+    for (const section of customSections) {
+      const validItems = section.items.map((item, idx) => ({ item, idx }));
+      // The logic in handleSave filters by trim() !== ''
+      const filteredItems = validItems.filter(v => v.item.trim() !== '');
+      
+      const found = filteredItems.find(v => section.id === sectionId && v.idx === itemIndex);
+      if (found) {
+        // Find if there's an error for this globalIndex
+        const actualIndex = globalIndex + filteredItems.indexOf(found);
+        const errorKey = `infos.${actualIndex}.${type}`;
+        return errors[errorKey];
+      }
+      globalIndex += filteredItems.length;
+    }
+    return null;
+  };
 
   const handleAddSectionItem = (sectionId: string) => {
     setCustomSections(prev => prev.map(sec => 
@@ -203,8 +223,8 @@ export default function CreateCourseClient() {
     let infoIndex = 0;
     customSections.forEach((section) => {
       section.items.filter(p => p.trim() !== '').forEach((point, pointIndex) => {
-        payload[`infos[${infoIndex}][info_key]`] = section.id === 'what_you_will_learn' ? 'what_you_will_learn' : section.title;
-        payload[`infos[${infoIndex}][info_value]`] = point;
+        payload[`infos[${infoIndex}][key]`] = section.id === 'what_you_will_learn' ? 'what_you_will_learn' : section.title;
+        payload[`infos[${infoIndex}][value]`] = point;
         payload[`infos[${infoIndex}][order]`] = pointIndex + 1;
         infoIndex++;
       });
@@ -225,9 +245,9 @@ export default function CreateCourseClient() {
         const userData = profile.data || profile;
         if (userData) {
           setCurrentUser(userData);
-          if (userData.role === 'admin') {
+          if (userData.role === 'admin' || userData.role === 'academy') {
             const allUsers = await getUsers();
-            setInstructors(allUsers.filter((user) => user.role === 'instructor' || user.role === 'admin'));
+            setInstructors(allUsers.filter((user) => user.role === 'academy'));
           }
         }
       } catch (error) {
@@ -378,21 +398,30 @@ export default function CreateCourseClient() {
       let infoIndex = 0;
       customSections.forEach((section) => {
         section.items.filter(p => p.trim() !== '').forEach((point, pointIndex) => {
-          payload[`infos[${infoIndex}][info_key]`] = section.id === 'what_you_will_learn' ? 'what_you_will_learn' : section.title;
-          payload[`infos[${infoIndex}][info_value]`] = point;
+          payload[`infos[${infoIndex}][key]`] = section.id === 'what_you_will_learn' ? 'what_you_will_learn' : section.title;
+          payload[`infos[${infoIndex}][value]`] = point;
           payload[`infos[${infoIndex}][order]`] = pointIndex + 1;
           infoIndex++;
         });
       });
 
-      if (courseId) {
-        await updateCourse(courseId, payload);
-        toast.success('تم حفظ الدورة بنجاح');
-        router.push(`/academic/courses/${courseId}`);
-      } else {
-        const created = await createCourse(payload);
-        toast.success('تم إنشاء الدورة بنجاح');
-        router.push(`/academic/courses/${created.id}`);
+      try {
+        if (courseId) {
+          await updateCourse(courseId, payload);
+          toast.success('تم حفظ الدورة بنجاح');
+          router.push(`/academic/courses/${courseId}`);
+        } else {
+          const created = await createCourse(payload);
+          toast.success('تم إنشاء الدورة بنجاح');
+          router.push(`/academic/courses/${created.id}`);
+        }
+      } catch (error: any) {
+        if (error?.errors) {
+          setErrors(error.errors);
+          toast.error('يرجى تصحيح الأخطاء أدناه');
+        } else {
+          toast.error(error?.message || 'فشل الحفظ');
+        }
       }
     } catch (error: any) {
       toast.error(error?.message || 'فشل الحفظ');
@@ -463,48 +492,48 @@ export default function CreateCourseClient() {
                 <input
                   type="text"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    if (errors.title) setErrors(prev => ({ ...prev, title: null }));
+                  }}
                   placeholder="ادخل اسم الدورة"
-                  className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all text-gray-900"
+                  className={`w-full p-4 bg-white border ${errors.title ? 'border-red-500 bg-red-50/30' : 'border-gray-200'} rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all text-gray-900`}
                 />
+                {errors.title && (
+                  <p className="text-red-500 text-xs font-bold mt-1 flex items-center gap-1">
+                    <X size={12} />
+                    {errors.title}
+                  </p>
+                )}
               </div>
 
               {/* Category Dropdown */}
-              <div className="space-y-2">
-                <label className="flex items-center gap-1 text-sm font-black text-gray-900">
-                  الفئة
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all appearance-none text-gray-900"
-                >
-                  <option value="">اختر فئة (اختياري)</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <SearchableSelect
+                label="الفئة"
+                options={categories.map(c => ({ id: c.id, name: c.name }))}
+                value={category}
+                onChange={(val) => {
+                  setCategory(val as string);
+                  if (errors.category_id) setErrors(prev => ({ ...prev, category_id: null }));
+                }}
+                placeholder="اختر فئة (اختياري)"
+                error={errors.category_id}
+              />
 
-              {/* Instructor Dropdown (Admin Only) */}
-              {currentUser?.role === 'admin' && (
-                <div className="space-y-2">
-                  <label className="flex items-center gap-1 text-sm font-black text-gray-900">المدرب</label>
-                  <select
-                    value={selectedInstructor || ''}
-                    onChange={(e) => setSelectedInstructor(Number(e.target.value))}
-                    className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all appearance-none text-gray-900"
-                  >
-                    <option value="">اختر مدرب</option>
-                    {instructors.map((inst) => (
-                      <option key={inst.id} value={inst.id}>
-                        {inst.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {/* Instructor Dropdown (Admin/Academy Only) */}
+              {(currentUser?.role === 'admin' || currentUser?.role === 'academy') && (
+                <SearchableSelect
+                  label="المدرب"
+                  options={instructors.map(i => ({ id: i.id, name: i.name }))}
+                  value={selectedInstructor}
+                  onChange={(val) => {
+                    setSelectedInstructor(val as number);
+                    if (errors.user_id) setErrors(prev => ({ ...prev, user_id: null }));
+                  }}
+                  placeholder="اختر مدرب"
+                  error={errors.user_id}
+                  required
+                />
               )}
 
               {/* Course Image */}
@@ -538,7 +567,7 @@ export default function CreateCourseClient() {
               {/* Dynamic Custom Sections Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 {/* Description Accordion */}
-                <div className="bg-white border border-gray-200/80 rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col max-h-[500px]">
+                <div className={`bg-white border ${errors.description ? 'border-red-500' : 'border-gray-200/80'} rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col max-h-[500px]`}>
                   <button
                     onClick={() => toggleSection('description')}
                     className="w-full p-5 flex items-center justify-between bg-gray-50/50 hover:bg-gray-50 transition-colors border-b border-gray-100 shrink-0"
@@ -553,12 +582,13 @@ export default function CreateCourseClient() {
                         onChange={setDescription}
                         placeholder="ادخل وصف الدورة"
                       />
+                      {errors.description && <p className="text-red-500 text-xs font-bold mt-2">{errors.description}</p>}
                     </div>
                   )}
                 </div>
 
                 {/* Target Audience Accordion */}
-                <div className="bg-white border border-gray-200/80 rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col max-h-[500px]">
+                <div className={`bg-white border ${errors.who_is_this_for ? 'border-red-500' : 'border-gray-200/80'} rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col max-h-[500px]`}>
                   <button
                     onClick={() => toggleSection('audience')}
                     className="w-full p-5 flex items-center justify-between bg-gray-50/50 hover:bg-gray-50 transition-colors border-b border-gray-100 shrink-0"
@@ -573,6 +603,7 @@ export default function CreateCourseClient() {
                         onChange={setWhoIsThisFor}
                         placeholder="الفئة المستهدفة من الدورة"
                       />
+                      {errors.who_is_this_for && <p className="text-red-500 text-xs font-bold mt-2">{errors.who_is_this_for}</p>}
                     </div>
                   )}
                 </div>
@@ -587,13 +618,15 @@ export default function CreateCourseClient() {
                             <span className="font-black text-gray-900">{section.title}</span>
                           </>
                         ) : (
-                          <input 
-                            type="text"
-                            value={section.title}
-                            onChange={(e) => handleUpdateSectionTitle(section.id, e.target.value)}
-                            className="font-black text-gray-900 bg-transparent border-b border-dashed border-gray-300 focus:border-blue-500 outline-none w-full"
-                            placeholder="اسم القسم (مثال: متطلبات الدورة)"
-                          />
+                          <div className="flex-1 space-y-1">
+                            <input 
+                              type="text"
+                              value={section.title}
+                              onChange={(e) => handleUpdateSectionTitle(section.id, e.target.value)}
+                              className="font-black text-gray-900 bg-transparent border-b border-dashed border-gray-300 focus:border-blue-500 outline-none w-full"
+                              placeholder="اسم القسم (مثال: متطلبات الدورة)"
+                            />
+                          </div>
                         )}
                       </div>
                       <div className="flex items-center gap-2">
@@ -612,28 +645,36 @@ export default function CreateCourseClient() {
                     </div>
                     {openSections[section.id] && (
                       <div className="p-5 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300 space-y-4">
-                        {section.items.map((point, index) => (
-                          <div key={index} className="relative group bg-gray-50 p-4 rounded-2xl border border-gray-100 transition-all hover:border-blue-200">
-                            <div className="flex items-center justify-between mb-4">
-                              <span className="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
-                                عنصر {index + 1}
-                              </span>
-                              <button
-                                onClick={() => handleRemoveSectionItem(section.id, index)}
-                                className="text-gray-400 hover:text-red-500 transition-colors p-1.5 hover:bg-red-50 rounded-lg"
-                              >
-                                <Trash2 size={16} />
-                              </button>
+                        {section.items.map((point, index) => {
+                          const valueError = getInfoError(section.id, index, 'value');
+                          const keyError = getInfoError(section.id, index, 'key');
+                          return (
+                            <div key={index} className="space-y-2">
+                              <div className={`relative group bg-gray-50 p-4 rounded-2xl border ${valueError || keyError ? 'border-red-500' : 'border-gray-100'} transition-all hover:border-blue-200`}>
+                                <div className="flex items-center justify-between mb-4">
+                                  <span className="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                                    عنصر {index + 1}
+                                  </span>
+                                  <button
+                                    onClick={() => handleRemoveSectionItem(section.id, index)}
+                                    className="text-gray-400 hover:text-red-500 transition-colors p-1.5 hover:bg-red-50 rounded-lg"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </div>
+                                <input
+                                  type="text"
+                                  value={point}
+                                  onChange={(e) => handleUpdateSectionItem(section.id, index, e.target.value)}
+                                  placeholder="ادخل محتوى العنصر..."
+                                  className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:border-blue-500 outline-none transition-all font-bold text-gray-900"
+                                />
+                              </div>
+                              {keyError && <p className="text-red-500 text-[10px] font-bold px-2">{keyError}</p>}
+                              {valueError && <p className="text-red-500 text-[10px] font-bold px-2">{valueError}</p>}
                             </div>
-                            <input
-                              type="text"
-                              value={point}
-                              onChange={(e) => handleUpdateSectionItem(section.id, index, e.target.value)}
-                              placeholder="ادخل محتوى العنصر..."
-                              className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:border-blue-500 outline-none transition-all font-bold text-gray-900"
-                            />
-                          </div>
-                        ))}
+                          );
+                        })}
                         <button
                           onClick={() => handleAddSectionItem(section.id)}
                           className="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center gap-3 text-gray-500 font-bold hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50/30 transition-all group"
@@ -908,22 +949,32 @@ export default function CreateCourseClient() {
                     <input
                       type="number"
                       value={price}
-                      onChange={(e) => setPrice(e.target.value)}
+                      onChange={(e) => {
+                        setPrice(e.target.value);
+                        if (errors.price) setErrors(prev => ({ ...prev, price: null }));
+                      }}
                       placeholder="0.00"
-                      className="w-full p-5 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-left transition-all pl-24 text-gray-900 shadow-sm"
+                      className={`w-full p-5 bg-white border ${errors.price ? 'border-red-500 bg-red-50/30' : 'border-gray-200'} rounded-2xl outline-none focus:border-blue-600 font-bold text-left transition-all pl-24 text-gray-900 shadow-sm`}
                     />
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 border-r border-gray-100 pr-4">
                       <select 
                         value={currency}
                         onChange={(e) => setCurrency(e.target.value as any)}
-                        className="bg-transparent font-black text-blue-600 outline-none cursor-pointer text-sm text-gray-900"
+                        className="bg-transparent font-black text-blue-600 outline-none cursor-pointer text-sm text-gray-900 appearance-none hover:text-blue-700 transition-colors"
                       >
-                        <option value="SAR" className="text-gray-900">SAR (ر.س)</option>
-                        <option value="EGP" className="text-gray-900">EGP (ج.م)</option>
+                        <option value="SAR" className="text-gray-900">SAR - Saudi Riyal (ر.س)</option>
+                        <option value="EGP" className="text-gray-900">EGP - Egyptian Pound (ج.م)</option>
+                        <option value="USD" className="text-gray-900">USD - United States Dollar ($)</option>
                       </select>
-
+                      <ChevronDown size={14} className="text-blue-600 pointer-events-none" />
                     </div>
                   </div>
+                  {errors.price && (
+                    <p className="text-red-500 text-xs font-bold mt-1 flex items-center gap-1">
+                      <X size={12} />
+                      {errors.price}
+                    </p>
+                  )}
                 </div>
               )}
 
