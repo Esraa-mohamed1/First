@@ -236,12 +236,47 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
                         <input
                           type="text"
                           value={title}
-                          onChange={(e) => setTitle(e.target.value)}
+                          onChange={(e) => {
+                            setTitle(e.target.value);
+                            if (errors.title) setErrors(prev => ({ ...prev, title: null }));
+                          }}
                           placeholder="ادخل اسم الدورة"
-                          className={`w-full p-4 bg-white border ${errors.title ? 'border-red-500' : 'border-gray-100'} rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all text-gray-900`}
+                          className={`w-full p-4 bg-white border ${errors.title ? 'border-red-500 bg-red-50/30' : 'border-gray-100'} rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all text-gray-900`}
                         />
-                        {errors.title && <p className="text-red-500 text-xs font-bold mt-1">{errors.title}</p>}
+                        {errors.title && (
+                          <p className="text-red-500 text-xs font-bold mt-1 flex items-center gap-1">
+                            <X size={12} />
+                            {errors.title}
+                          </p>
+                        )}
                       </div>
+
+                      <SearchableSelect
+                        label="الفئة"
+                        options={categories.map(c => ({ id: c.id, name: c.name }))}
+                        value={category}
+                        onChange={(val) => {
+                          setCategory(val as string);
+                          if (errors.category_id) setErrors(prev => ({ ...prev, category_id: null }));
+                        }}
+                        placeholder="اختر فئة (اختياري)"
+                        error={errors.category_id}
+                      />
+
+                      {(currentUser?.role === 'admin' || currentUser?.role === 'academy') && (
+                        <SearchableSelect
+                          label="المدرب"
+                          options={instructors.map(i => ({ id: i.id, name: i.name }))}
+                          value={selectedInstructor}
+                          onChange={(val) => {
+                            setSelectedInstructor(val as number);
+                            if (errors.user_id) setErrors(prev => ({ ...prev, user_id: null }));
+                          }}
+                          placeholder="اختر مدرب"
+                          error={errors.user_id}
+                          required
+                        />
+                      )}
 
                       <div className="space-y-2">
                         <label className="block text-sm font-black text-gray-900">صورة الدورة <span className="text-red-500">*</span></label>
@@ -436,9 +471,12 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
                           <input
                             type="number"
                             value={price}
-                            onChange={(e) => setPrice(e.target.value)}
+                            onChange={(e) => {
+                              setPrice(e.target.value);
+                              if (errors.price) setErrors(prev => ({ ...prev, price: null }));
+                            }}
                             placeholder="0.00"
-                            className={`w-full p-5 bg-white border ${errors.price ? 'border-red-500' : 'border-gray-100'} rounded-2xl outline-none focus:border-blue-600 font-bold text-left transition-all pl-24 text-gray-900 shadow-sm`}
+                            className={`w-full p-5 bg-white border ${errors.price ? 'border-red-500 bg-red-50/30' : 'border-gray-100'} rounded-2xl outline-none focus:border-blue-600 font-bold text-left transition-all pl-24 text-gray-900 shadow-sm`}
                           />
                           <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 border-r border-gray-100 pr-4">
                             <select 
@@ -446,14 +484,19 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
                               onChange={(e) => setCurrency(e.target.value as any)}
                               className="bg-transparent font-black text-blue-600 outline-none cursor-pointer text-sm text-gray-900 appearance-none hover:text-blue-700 transition-colors"
                             >
-                              <option value="SAR" className="text-gray-900">SAR (ر.س)</option>
-                              <option value="EGP" className="text-gray-900">EGP (ج.م)</option>
-                              <option value="USD" className="text-gray-900">USD ($)</option>
+                              <option value="SAR" className="text-gray-900">SAR - Saudi Riyal (ر.س)</option>
+                              <option value="EGP" className="text-gray-900">EGP - Egyptian Pound (ج.م)</option>
+                              <option value="USD" className="text-gray-900">USD - United States Dollar ($)</option>
                             </select>
                             <ChevronDown size={14} className="text-blue-600 pointer-events-none" />
                           </div>
                         </div>
-                        {errors.price && <p className="text-red-500 text-xs font-bold mt-1">{errors.price}</p>}
+                        {errors.price && (
+                          <p className="text-red-500 text-xs font-bold mt-1 flex items-center gap-1">
+                            <X size={12} />
+                            {errors.price}
+                          </p>
+                        )}
                      </div>
                    )}
 

@@ -22,6 +22,7 @@ export default function CoursePlayerPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [expandedChapters, setExpandedChapters] = useState<number[]>([]);
+  const [activeTab, setActiveTab] = useState<'about' | 'comments' | 'reviews'>('about');
   
   const { currentLesson, setCurrentLesson } = usePlayerStore();
 
@@ -156,18 +157,140 @@ export default function CoursePlayerPage() {
           <div className="h-px bg-gray-100 w-full" />
 
           {/* Tabs / Content */}
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div className="flex items-center gap-8 border-b border-gray-100">
-              <button className="pb-4 border-b-2 border-blue-600 text-blue-600 font-black text-sm">عن الدرس</button>
-              <button className="pb-4 border-b-2 border-transparent text-gray-400 font-bold text-sm hover:text-gray-600 transition-all">التعليقات</button>
-              <button className="pb-4 border-b-2 border-transparent text-gray-400 font-bold text-sm hover:text-gray-600 transition-all">الأسئلة الشائعة</button>
+              <button 
+                onClick={() => setActiveTab('about')}
+                className={cn(
+                  "pb-4 border-b-2 font-black text-sm transition-all",
+                  activeTab === 'about' ? "border-blue-600 text-blue-600" : "border-transparent text-gray-400 hover:text-gray-600"
+                )}
+              >
+                عن الدرس
+              </button>
+              <button 
+                onClick={() => setActiveTab('comments')}
+                className={cn(
+                  "pb-4 border-b-2 font-black text-sm transition-all",
+                  activeTab === 'comments' ? "border-blue-600 text-blue-600" : "border-transparent text-gray-400 hover:text-gray-600"
+                )}
+              >
+                التعليقات
+              </button>
+              <button 
+                onClick={() => setActiveTab('reviews')}
+                className={cn(
+                  "pb-4 border-b-2 font-black text-sm transition-all",
+                  activeTab === 'reviews' ? "border-blue-600 text-blue-600" : "border-transparent text-gray-400 hover:text-gray-600"
+                )}
+              >
+                التقييمات
+              </button>
             </div>
 
-            <div className="prose prose-slate max-w-none">
-              <div 
-                className="text-gray-600 leading-relaxed font-medium ql-editor !p-0"
-                dangerouslySetInnerHTML={{ __html: currentLesson?.description || course.description }}
-              />
+            <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+              {activeTab === 'about' && (
+                <div className="prose prose-slate max-w-none">
+                  <div 
+                    className="text-gray-600 leading-relaxed font-medium ql-editor !p-0"
+                    dangerouslySetInnerHTML={{ __html: currentLesson?.description || course.description }}
+                  />
+                </div>
+              )}
+
+              {activeTab === 'comments' && (
+                <div className="space-y-8">
+                  <div className="flex gap-4">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                      <span className="text-blue-600 font-bold text-sm">أ</span>
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      <textarea 
+                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none focus:border-blue-300 transition-all resize-none"
+                        placeholder="أضف تعليقاً أو استفساراً..."
+                        rows={3}
+                      />
+                      <div className="flex justify-end">
+                        <button className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all">
+                          إرسال التعليق
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    {[1, 2].map((i) => (
+                      <div key={i} className="flex gap-4">
+                        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                          <span className="text-gray-400 font-bold text-sm">م</span>
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <h5 className="font-black text-gray-900 text-sm">محمد أحمد</h5>
+                            <span className="text-[10px] font-bold text-gray-400">منذ ساعتين</span>
+                          </div>
+                          <p className="text-gray-600 text-sm font-bold leading-relaxed">
+                            هذا الدرس مفيد جداً، شكراً جزيلاً لك على الشرح الواضح والمبسط.
+                          </p>
+                          <button className="text-blue-600 font-bold text-xs mt-2 hover:underline">رد</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'reviews' && (
+                <div className="space-y-10">
+                  <div className="bg-blue-50/50 rounded-3xl p-8 flex flex-col md:flex-row items-center gap-10 border border-blue-100/50">
+                    <div className="text-center space-y-2">
+                      <h4 className="text-5xl font-black text-blue-600">4.8</h4>
+                      <div className="flex text-orange-400">
+                        {[1, 2, 3, 4, 5].map(i => <Star key={i} size={16} fill={i <= 4 ? "currentColor" : "none"} />)}
+                      </div>
+                      <p className="text-xs font-bold text-gray-400">إجمالي 120 تقييم</p>
+                    </div>
+
+                    <div className="flex-1 w-full space-y-3">
+                      {[5, 4, 3, 2, 1].map((star) => (
+                        <div key={star} className="flex items-center gap-4">
+                          <span className="text-xs font-bold text-gray-500 w-4">{star}</span>
+                          <div className="flex-1 h-2 bg-white rounded-full overflow-hidden border border-gray-100">
+                            <div className="h-full bg-orange-400 rounded-full" style={{ width: star === 5 ? '80%' : star === 4 ? '15%' : '5%' }} />
+                          </div>
+                          <span className="text-[10px] font-bold text-gray-400 w-8">{star === 5 ? '80%' : star === 4 ? '15%' : '5%'}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button className="px-8 py-4 bg-white text-blue-600 border border-blue-100 rounded-2xl font-black text-sm shadow-sm hover:bg-blue-50 transition-all shrink-0">
+                      قيم هذه الدورة
+                    </button>
+                  </div>
+
+                  <div className="space-y-8">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="space-y-4 pb-8 border-b border-gray-50 last:border-0">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gray-100" />
+                            <div>
+                              <h5 className="font-black text-gray-900 text-sm">أحمد علي</h5>
+                              <div className="flex text-orange-400 mt-0.5">
+                                {[1, 2, 3, 4, 5].map(s => <Star key={s} size={10} fill="currentColor" />)}
+                              </div>
+                            </div>
+                          </div>
+                          <span className="text-[10px] font-bold text-gray-400">منذ 3 أيام</span>
+                        </div>
+                        <p className="text-gray-600 text-sm font-bold leading-relaxed">
+                          دورة ممتازة جداً والمحتوى غني بالمعلومات العملية. أنصح بها بشدة لكل من يريد تعلم المجال باحترافية.
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

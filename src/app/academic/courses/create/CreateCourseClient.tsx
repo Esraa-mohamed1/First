@@ -348,6 +348,19 @@ export default function CreateCourseClient() {
   };
 
   const handleSave = async () => {
+    // Basic client-side validation
+    const newErrors: Record<string, any> = {};
+    if (!title.trim()) newErrors.title = 'عنوان الدورة مطلوب';
+    if (!selectedInstructor && (currentUser?.role === 'admin' || currentUser?.role === 'academy')) {
+      newErrors.user_id = 'يرجى اختيار مدرب';
+    }
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error('يرجى ملء الحقول المطلوبة');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       let userId = currentUser?.id || 2; // Default to 2 if no current user or ID
