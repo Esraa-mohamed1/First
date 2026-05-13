@@ -14,13 +14,33 @@ import {
   Library
 } from 'lucide-react';
 
-const sidebarItems = [
-  { name: 'لوحة التحكم', href: '/student', icon: LayoutDashboard },
-  { name: 'دوراتي', href: '/student/courses', icon: BookOpen },
-  { name: 'دورات الأكاديمية', href: '/user/courses', icon: Library },
-  { name: 'الإنجازات', href: '/student/achievements', icon: Trophy },
-  { name: 'الملف الشخصي', href: '/student/profile', icon: User },
-  { name: 'الإعدادات', href: '/student/settings', icon: Settings },
+const sidebarGroups = [
+  {
+    title: 'القائمة الرئيسية',
+    items: [
+      { name: 'لوحة التحكم', href: '/student', icon: LayoutDashboard },
+    ]
+  },
+  {
+    title: 'التعليم',
+    items: [
+      { name: 'دوراتي', href: '/student/courses', icon: BookOpen },
+      { name: 'دورات الأكاديمية', href: '/user/courses', icon: Library },
+    ]
+  },
+  {
+    title: 'الإنجازات',
+    items: [
+      { name: 'الإنجازات', href: '/student/achievements', icon: Trophy },
+    ]
+  },
+  {
+    title: 'الحساب',
+    items: [
+      { name: 'الملف الشخصي', href: '/student/profile', icon: User },
+      { name: 'الإعدادات', href: '/student/settings', icon: Settings },
+    ]
+  }
 ];
 
 export const StudentSidebar = () => {
@@ -54,30 +74,34 @@ export const StudentSidebar = () => {
       </div>
 
       {/* Navigation Menu */}
-      <nav className="flex-1 px-4 space-y-1.5 py-4">
-        <p className="text-[10px] font-bold text-gray-400 px-4 mb-4 uppercase tracking-widest">القائمة الرئيسية</p>
-        {sidebarItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== '/student' && pathname.startsWith(item.href));
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 group relative ${isActive
-                ? 'bg-blue-50/50 text-blue-600 font-bold'
-                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-            >
-              {isActive && (
-                <div className="absolute right-0 top-3 bottom-3 w-1.5 bg-blue-600 rounded-l-full shadow-[0_0_10px_rgba(37,99,235,0.4)]"></div>
-              )}
-              <item.icon
-                size={22}
-                className={`transition-colors duration-300 ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`}
-              />
-              <span className="text-sm">{item.name}</span>
-            </Link>
-          );
-        })}
+      <nav className="flex-1 px-4 py-4 space-y-6">
+        {sidebarGroups.map((group) => (
+          <div key={group.title} className="space-y-1.5">
+            <p className="text-[10px] font-bold text-gray-400 px-4 mb-3 uppercase tracking-widest">{group.title}</p>
+            {group.items.map((item) => {
+              const isActive = pathname === item.href || (item.href !== '/student' && pathname.startsWith(item.href));
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 group relative ${isActive
+                    ? 'bg-blue-50/50 text-blue-600 font-bold'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                >
+                  {isActive && (
+                    <div className="absolute right-0 top-3 bottom-3 w-1.5 bg-blue-600 rounded-l-full shadow-[0_0_10px_rgba(37,99,235,0.4)]"></div>
+                  )}
+                  <item.icon
+                    size={22}
+                    className={`transition-colors duration-300 ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`}
+                  />
+                  <span className="text-sm">{item.name}</span>
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
       {/* Sidebar Footer */}

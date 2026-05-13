@@ -164,57 +164,55 @@ export default function CourseStudentViewPage() {
 
   return (
     <div className="bg-slate-50/50 pb-20 font-sans" dir="rtl">
-
-      <div className="max-w-[1440px] mx-auto pt-6 pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16">
         <div className="flex flex-col xl:flex-row gap-8 xl:gap-12 items-start">
-
           {/* 1. RIGHT COLUMN: Main Course Content */}
-          <div className="flex-1 space-y-20 w-full">
-
+          <div className="flex-1 space-y-12 lg:space-y-20 w-full order-2 xl:order-1">
             {/* Professional Header Section */}
-            <div className="space-y-8">
+            <div className="space-y-6 lg:space-y-8">
               <div className="flex items-center gap-3">
-                <div className="px-4 py-1.5 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest">الأكثر مبيعاً</div>
+                <div className="px-4 py-1.5 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm shadow-blue-100">الأكثر مبيعاً</div>
               </div>
 
-              <h1 className="text-3xl lg:text-4xl xl:text-5xl font-black text-slate-900 leading-[1.2] tracking-tight break-words">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-slate-900 leading-[1.3] tracking-tight break-words">
                 {course.title}
               </h1>
 
-              <div className="flex flex-wrap items-center gap-6 lg:gap-8 text-sm">
+              <div className="flex flex-wrap items-center gap-4 md:gap-8 text-sm">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-100 relative overflow-hidden border-2 border-white shadow-md">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-blue-100 relative overflow-hidden border-2 border-white shadow-md">
                     <img src="https://i.pravatar.cc/150?u=احمد" alt="Instructor" className="w-full h-full object-cover" />
                   </div>
                   <div className="text-right">
-                    <p className="text-slate-400 font-black text-[10px] uppercase mb-1">المدرب المعتمد</p>
-                    <p className="font-black text-slate-900 text-lg">{course.instructor}</p>
+                    <p className="text-slate-400 font-black text-[9px] md:text-[10px] uppercase mb-0.5 md:mb-1">المدرب المعتمد</p>
+                    <p className="font-black text-slate-900 text-base md:text-lg">{course.instructor}</p>
                   </div>
                 </div>
 
                 <div className="hidden md:block w-[1px] h-10 bg-slate-200" />
 
                 <div className="text-right">
-                  <p className="text-slate-400 font-black text-[10px] uppercase mb-1">تاريخ النشر</p>
-                  <p className="font-black text-slate-900 text-lg">25 أكتوبر 2023</p>
+                  <p className="text-slate-400 font-black text-[9px] md:text-[10px] uppercase mb-0.5 md:mb-1">تاريخ النشر</p>
+                  <p className="font-black text-slate-900 text-base md:text-lg">25 أكتوبر 2023</p>
                 </div>
 
                 <div className="hidden md:block w-[1px] h-10 bg-slate-200" />
 
-                <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-2xl border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-3 bg-white px-4 md:px-6 py-2 md:py-3 rounded-2xl border border-slate-100 shadow-sm">
                   <div className="flex text-orange-400">
-                    {[1, 2, 3, 4, 5].map(i => <Star key={i} size={16} fill="currentColor" />)}
+                    {[1, 2, 3, 4, 5].map(i => <Star key={i} size={14} fill="currentColor" />)}
                   </div>
-                  <span className="font-black text-slate-900 text-lg">4.9</span>
-                  <span className="text-slate-400 font-bold">(1,240 تقييم)</span>
+                  <span className="font-black text-slate-900 text-base md:text-lg">4.9</span>
+                  <span className="text-slate-400 font-bold text-xs md:text-sm">(1,240)</span>
                 </div>
               </div>
             </div>
 
+            {/* Video Player Section */}
             {(() => {
               const videoUrl = course.units?.[0]?.lessons?.[0]?.video_url;
               return (
-                <div className="relative aspect-video rounded-[3rem] overflow-hidden shadow-[0_30px_70px_rgba(15,23,42,0.15)] border-[6px] border-white transition-all hover:scale-[1.01] bg-black">
+                <div className="relative aspect-video rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-[0_20px_50px_rgba(15,23,42,0.1)] border-4 md:border-[6px] border-white transition-all hover:scale-[1.005] bg-black">
                   {videoUrl ? (
                     <video 
                       src={videoUrl} 
@@ -224,23 +222,24 @@ export default function CourseStudentViewPage() {
                     />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-white gap-4 bg-slate-900">
-                      <Video size={48} className="text-slate-500" />
-                      <span className="font-bold text-lg">لا يوجد فيديو متاح حالياً</span>
+                      <Video size="40" className="text-slate-500" />
+                      <span className="font-bold text-base md:text-lg">لا يوجد فيديو متاح حالياً</span>
                     </div>
                   )}
                 </div>
               );
             })()}
 
-            <div className="space-y-10">
+            {/* What you will learn */}
+            <div className="space-y-8 lg:space-y-10">
               <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-black text-slate-900 border-r-[6px] border-blue-600 pr-4 leading-none">ماذا ستتعلم؟</h2>
+                <h2 className="text-2xl md:text-3xl font-black text-slate-900 border-r-[6px] border-blue-600 pr-4 leading-none">ماذا ستتعلم؟</h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {(course.learning_points?.length > 0 ? course.learning_points : [
                   "بناء أنظمة التصميم (Design Systems) القابلة للتوسع بشكل احترافي.",
-                  "فهم سيكولوجية المستخدم وتطبيق مبادئ UX في قراراتك التصميمية.",
+                  "فهم سيكولوجية المستخدم وتطبيق مبادئ UX in قراراتك التصميمية.",
                   "إتقان التصميم المتجاوب للهواتف والويب باستخدام أحدث أدوات Figma.",
                   "تحويل التصاميم إلى بروتوتايب تفاعلي يحاكي الواقع تماماً."
                 ]).map((point: string, i: number) => {
@@ -250,13 +249,13 @@ export default function CourseStudentViewPage() {
                   const color = colors[i % colors.length];
 
                   return (
-                    <div key={i} className="bg-white p-6 rounded-[2rem] border border-slate-100 flex items-center justify-between gap-6 group hover:border-blue-600 transition-all shadow-sm">
+                    <div key={i} className="bg-white p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 flex items-center justify-between gap-4 md:gap-6 group hover:border-blue-600 transition-all shadow-sm">
                       <div 
-                        className="text-slate-700 font-bold leading-relaxed text-right flex-1 ql-editor !p-0"
+                        className="text-slate-700 font-bold leading-relaxed text-sm md:text-base text-right flex-1 ql-editor !p-0"
                         dangerouslySetInnerHTML={{ __html: point }}
                       />
                       <div className={twMerge(
-                        "w-12 h-12 rounded-full shrink-0 flex items-center justify-center",
+                        "w-10 h-10 md:w-12 md:h-12 rounded-full shrink-0 flex items-center justify-center",
                         color === 'blue' ? 'bg-blue-50 text-blue-600' :
                           color === 'orange' ? 'bg-orange-50 text-orange-600' : 
                           color === 'green' ? 'bg-green-50 text-green-600' :
@@ -265,7 +264,7 @@ export default function CourseStudentViewPage() {
                           color === 'indigo' ? 'bg-indigo-50 text-indigo-600' :
                           'bg-slate-100 text-slate-600'
                       )}>
-                        <Icon size={24} />
+                        <Icon size="20" />
                       </div>
                     </div>
                   );
@@ -273,54 +272,55 @@ export default function CourseStudentViewPage() {
               </div>
             </div>
 
-            <div className="space-y-10">
-              <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-black text-slate-900 border-r-[6px] border-blue-600 pr-4 leading-none">محتوى الدورة</h2>
-                <div className="text-slate-400 font-bold text-sm">
-                  12 قسم • 84 درس • 15 ساعة إجمالية
+            {/* Course Content */}
+            <div className="space-y-8 lg:space-y-10">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <h2 className="text-2xl md:text-3xl font-black text-slate-900 border-r-[6px] border-blue-600 pr-4 leading-none">محتوى الدورة</h2>
+                <div className="text-slate-400 font-bold text-xs md:text-sm">
+                  {course.units?.length || 0} أقسام • {course.units?.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0)} درس
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 {course.units?.map((unit: any, index: number) => (
                   <div key={unit.id} className={twMerge(
-                    "rounded-[1.5rem] border overflow-hidden transition-all duration-500",
+                    "rounded-[1.25rem] md:rounded-[1.5rem] border overflow-hidden transition-all duration-500",
                     unit.isLocked ? "bg-slate-50 border-slate-100 opacity-60" : "bg-white border-slate-100 shadow-sm"
                   )}>
                     <button
                       onClick={() => !unit.isLocked && toggleUnit(unit.id)}
                       className={twMerge(
-                        "w-full p-6 flex items-center justify-between text-right transition-colors",
+                        "w-full p-5 md:p-6 flex items-center justify-between text-right transition-colors",
                         expandedUnits.includes(unit.id) ? "bg-slate-50" : "hover:bg-slate-50/50"
                       )}
                       disabled={unit.isLocked}
                     >
                       <div className="flex items-center gap-4">
-                        <ChevronDown size={20} className={twMerge("text-slate-400 transition-transform duration-500", expandedUnits.includes(unit.id) ? "rotate-180" : "rotate-0")} />
-                        <span className="text-slate-400 text-sm font-bold">
-                          {index === 0 ? "4 دروس • 45 دقيقة" : index === 1 ? "8 دروس • 1 ساعة" : "10 دروس • 2 ساعة"}
+                        <ChevronDown size="18" className={twMerge("text-slate-400 transition-transform duration-500", expandedUnits.includes(unit.id) ? "rotate-180" : "rotate-0")} />
+                        <span className="text-slate-400 text-xs md:text-sm font-bold">
+                          {unit.lessons?.length || 0} دروس
                         </span>
                       </div>
                       <div className="flex items-center gap-3">
-                        <h3 className={twMerge("text-lg font-black", unit.isLocked ? "text-slate-400" : "text-slate-900")}>{unit.title}</h3>
-                        {unit.isLocked && <Lock size={18} className="text-slate-400" />}
+                        <h3 className={twMerge("text-base md:text-lg font-black", unit.isLocked ? "text-slate-400" : "text-slate-900")}>{unit.title}</h3>
+                        {unit.isLocked && <Lock size="16" className="text-slate-400" />}
                       </div>
                     </button>
 
                     {!unit.isLocked && expandedUnits.includes(unit.id) && (
                       <div className="border-t border-slate-50 bg-white">
                         {unit.lessons?.map((lesson: any) => (
-                          <div key={lesson.id} className="flex items-center justify-between p-5 px-8 hover:bg-slate-50 transition-all group cursor-pointer border-b border-slate-50 last:border-0">
+                          <div key={lesson.id} className="flex items-center justify-between p-4 md:p-5 px-6 md:px-8 hover:bg-slate-50 transition-all group cursor-pointer border-b border-slate-50 last:border-0">
                             <div className="flex items-center gap-4">
-                              <span className="text-sm font-bold text-slate-400">{lesson.duration || '10:00'}</span>
+                              <span className="text-xs font-bold text-slate-400">{lesson.duration || '10:00'}</span>
                               {lesson.isPreview && (
-                                <span className="text-[10px] bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-black">معاينة مجانية</span>
+                                <span className="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-black">معاينة مجانية</span>
                               )}
                             </div>
-                            <div className="flex items-center gap-4">
-                              <span className="font-bold text-slate-800">{lesson.title}</span>
-                              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center">
-                                <Play size={14} fill="currentColor" className="mr-0.5" />
+                            <div className="flex items-center gap-3 md:gap-4">
+                              <span className="font-bold text-slate-800 text-sm md:text-base">{lesson.title}</span>
+                              <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                                <Play size="12" fill="currentColor" className="mr-0.5" />
                               </div>
                             </div>
                           </div>
@@ -331,101 +331,73 @@ export default function CourseStudentViewPage() {
                 ))}
               </div>
             </div>
-
-            {/* High Contrast About Course */}
-            <div className="space-y-10">
-              <div className="flex items-center gap-6">
-                <h2 className="text-3xl font-black text-slate-900">عن هذه الدورة</h2>
-                <div className="flex-1 h-[2px] bg-slate-100" />
-              </div>
-              <div className="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-sm">
-                <div className="text-slate-700 font-bold leading-[2] text-xl ql-editor" dangerouslySetInnerHTML={{ __html: course.description }} />
-              </div>
-            </div>
           </div>
 
-          <div className="w-full xl:w-[360px] shrink-0 sticky xl:top-8 z-20">
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_15px_50px_rgba(0,0,0,0.05)] border border-slate-100 flex flex-col relative overflow-hidden">
+          {/* 2. LEFT COLUMN: Sticky Purchase Box */}
+          <div className="w-full xl:w-[380px] shrink-0 sticky xl:top-8 z-20 order-1 xl:order-2">
+            <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 shadow-[0_15px_50px_rgba(0,0,0,0.05)] border border-slate-100 flex flex-col relative overflow-hidden">
               {course.is_subscribed ? (
                 <div className="space-y-6">
                   <div className="text-center space-y-3">
-                    <div className="w-20 h-20 bg-green-50 text-green-600 rounded-3xl flex items-center justify-center mx-auto shadow-sm">
-                      <CheckCircle2 size={40} />
+                    <div className="w-16 h-16 md:w-20 md:h-20 bg-green-50 text-green-600 rounded-2xl md:rounded-3xl flex items-center justify-center mx-auto shadow-sm">
+                      <CheckCircle2 size="32" />
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900">أنت مشترك بالفعل</h3>
-                    <p className="text-slate-500 font-bold text-sm">استمتع برحلتك التعليمية وابدأ الآن في مشاهدة الدروس.</p>
+                    <h3 className="text-xl md:text-2xl font-black text-slate-900">أنت مشترك بالفعل</h3>
+                    <p className="text-slate-500 font-bold text-xs md:text-sm">استمتع برحلتك التعليمية وابدأ الآن في مشاهدة الدروس.</p>
                   </div>
                   <button 
-                    onClick={() => router.push(`/student/courses/${course.id}`)}
-                    className="w-full py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-[1.5rem] font-black text-xl shadow-xl shadow-blue-200 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3"
+                    onClick={() => router.push(`/student/courses/${course.id}/learn`)}
+                    className="w-full py-4 md:py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-[1.25rem] md:rounded-[1.5rem] font-black text-lg md:text-xl shadow-xl shadow-blue-200 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3"
                   >
-                    <Play size={20} fill="currentColor" />
-                    ابدأ التعلم الآن
-                  </button>
-                </div>
-              ) : course.is_subscribed ? (
-                <div className="bg-blue-50/50 p-8 rounded-[2rem] border border-blue-100 text-center space-y-6">
-                  <div className="w-20 h-20 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mx-auto">
-                    <GraduationCap size={40} strokeWidth={1.5} />
-                  </div>
-                  <div className="space-y-1">
-                    <h2 className="text-2xl font-black text-blue-950">أهلاً بك في رحلتك التعليمية!</h2>
-                    <p className="text-slate-500 font-bold text-sm">استمتع برحلتك التعليمية وابدأ الآن في مشاهدة الدروس.</p>
-                  </div>
-                  <button 
-                    onClick={() => router.push(`/student/courses/${course.id}`)}
-                    className="w-full py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-[1.5rem] font-black text-xl shadow-xl shadow-blue-200 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3"
-                  >
-                    <Play size={20} fill="currentColor" />
+                    <Play size="18" fill="currentColor" />
                     ابدأ التعلم الآن
                   </button>
                 </div>
               ) : (
                 <>
-                  <div className="text-right mb-2">
-                    <span className="text-slate-400 font-bold text-base">استثمار الدورة</span>
+                  <div className="text-right mb-1 md:mb-2">
+                    <span className="text-slate-400 font-bold text-sm md:text-base">استثمار الدورة</span>
                   </div>
 
-                  {/* Price Section - Right Aligned */}
+                  {/* Price Section */}
                   <div className="flex flex-col items-start mb-6">
-                    <div className="flex items-center gap-3">
-                      <span className="text-5xl font-black text-slate-900 leading-none">{course.final_price || course.price || 299}</span>
-                      <span className="text-xl font-black text-[#006692] mt-3">ريال</span>
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <span className="text-4xl md:text-5xl font-black text-slate-900 leading-none">{course.final_price || course.price || 299}</span>
+                      <span className="text-lg md:text-xl font-black text-[#006692] mt-2 md:mt-3">ريال</span>
                       {course.final_price && course.price && course.final_price !== course.price && (
-                        <span className="text-lg text-slate-300 line-through font-bold mt-3 ml-2">{course.price} ريال</span>
+                        <span className="text-base md:text-lg text-slate-300 line-through font-bold mt-2 md:mt-3 ml-2">{course.price} ريال</span>
                       )}
                     </div>
 
-                    {/* Offer Timer */}
-                    <div className="flex items-center gap-2 text-[#A85E00] font-black text-sm mt-4">
-                      <Clock size={16} />
+                    <div className="flex items-center gap-2 text-[#A85E00] font-black text-[10px] md:text-xs mt-3 md:mt-4">
+                      <Clock size="14" />
                       <span>خصم 50% ينتهي خلال 14 ساعة!</span>
                     </div>
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="space-y-3 mb-8">
+                  <div className="space-y-2 md:space-y-3 mb-6 md:mb-8">
                     <button 
                       onClick={handleSubscribe}
                       disabled={isSubscribing}
-                      className="w-full py-4 bg-[#006692] hover:bg-[#00557a] text-white rounded-[1.2rem] font-black text-lg shadow-lg shadow-[#006692]/10 transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="w-full py-3.5 md:py-4 bg-[#006692] hover:bg-[#00557a] text-white rounded-[1rem] md:rounded-[1.2rem] font-black text-base md:text-lg shadow-lg shadow-[#006692]/10 transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {isSubscribing ? (
-                        <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       ) : 'اشترك الآن'}
                     </button>
-                    <button className="w-full py-4 bg-[#F3F4F6] hover:bg-[#E5E7EB] text-slate-700 rounded-[1.2rem] font-black text-lg transition-all active:scale-95">
+                    <button className="w-full py-3.5 md:py-4 bg-[#F3F4F6] hover:bg-[#E5E7EB] text-slate-700 rounded-[1rem] md:rounded-[1.2rem] font-black text-base md:text-lg transition-all active:scale-95">
                       إضافة للسلة
                     </button>
                   </div>
 
-                  {/* Secure Payment Footer - Right Aligned */}
-                  <div className="mt-8 pt-6 border-t border-slate-50 w-full flex items-center justify-start gap-3">
-                    <span className="text-xs text-slate-400 font-bold">وسائل دفع آمنة</span>
-                    <div className="flex gap-2">
-                      <div className="h-6 w-10 bg-[#F3F4F6] rounded" />
-                      <div className="h-6 w-10 bg-[#F3F4F6] rounded" />
-                      <div className="h-6 w-10 bg-[#F3F4F6] rounded" />
+                  {/* Secure Payment Footer */}
+                  <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-slate-50 w-full flex items-center justify-start gap-3">
+                    <span className="text-[10px] md:text-xs text-slate-400 font-bold">وسائل دفع آمنة</span>
+                    <div className="flex gap-1.5 md:gap-2">
+                      <div className="h-5 w-8 md:h-6 md:w-10 bg-[#F3F4F6] rounded" />
+                      <div className="h-5 w-8 md:h-6 md:w-10 bg-[#F3F4F6] rounded" />
+                      <div className="h-5 w-8 md:h-6 md:w-10 bg-[#F3F4F6] rounded" />
                     </div>
                   </div>
                 </>
@@ -433,17 +405,16 @@ export default function CourseStudentViewPage() {
             </div>
 
             {/* Guarantee Box */}
-            <div className="mt-6 bg-[#F3F4F6] rounded-[2rem] p-6 flex items-center gap-4 border border-slate-100 shadow-sm">
+            <div className="mt-4 md:mt-6 bg-[#F3F4F6] rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 flex items-center gap-3 md:gap-4 border border-slate-100 shadow-sm">
               <div className="flex-1 text-right">
-                <h4 className="font-black text-slate-900 text-base">ضمان استرداد الأموال</h4>
-                <p className="text-[11px] text-slate-500 font-bold mt-1">خلال 30 يوماً إذا لم تناسبك الدورة</p>
+                <h4 className="font-black text-slate-900 text-sm md:text-base">ضمان استرداد الأموال</h4>
+                <p className="text-[9px] md:text-[11px] text-slate-500 font-bold mt-0.5 md:mt-1">خلال 30 يوماً إذا لم تناسبك الدورة</p>
               </div>
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-[#8B4513] shadow-sm shrink-0">
-                <ShieldCheck size={24} />
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-xl md:rounded-2xl flex items-center justify-center text-[#8B4513] shadow-sm shrink-0">
+                <ShieldCheck size="20" />
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>

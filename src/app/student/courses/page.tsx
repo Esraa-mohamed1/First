@@ -19,20 +19,23 @@ export default function CoursesPage() {
     const fetchCourses = async () => {
       try {
         setLoading(true);
-        const fetchedCourses = await getMyEnrolledCourses();
-        const studentCourses: Course[] = fetchedCourses.map(course => ({
-          id: String(course.id),
-          title: course.title,
-          slug: course.slug,
-          description: course.description,
-          progress: course.progress,
-          image: course.image || '',
-          instructor: course.instructor || 'Unknown',
-          category: course.category || 'Uncategorized',
-          status: course.status,
-          price_type: course.price_type,
-          is_enrolled: true,
-        }));
+        const fetchedEnrollments = await getMyEnrolledCourses();
+        const studentCourses: Course[] = fetchedEnrollments.map(enrollment => {
+          const course = enrollment.course;
+          return {
+            id: String(enrollment.id),
+            title: course.title,
+            slug: course.slug,
+            description: course.description,
+            progress: enrollment.progress || 0,
+            image: course.image || '',
+            instructor: course.instructor_name || 'Unknown',
+            category: course.category?.name || 'Uncategorized',
+            status: enrollment.status || 'in-progress',
+            price_type: course.price_type,
+            is_enrolled: true,
+          };
+        });
         setCourses(studentCourses);
       } catch (err) {
         console.error('Failed to fetch courses:', err);

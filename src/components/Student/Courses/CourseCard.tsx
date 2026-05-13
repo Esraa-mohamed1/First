@@ -119,7 +119,7 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
               </Link>
             ) : (
               <Link
-                href={`/user/courses/${course.slug}`}
+                href={`/student/courses/${course.id}/learn`}
                 className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-md shadow-blue-100 group/btn"
               >
                 <span>متابعة التعلم</span>
