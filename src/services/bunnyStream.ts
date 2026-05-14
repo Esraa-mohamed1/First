@@ -1,8 +1,17 @@
 import axios from 'axios';
- let tenantKey = window.location.hostname;
-export const createVideoResource = async (libraryId: string, apiKey: string, title: string, collectionId?: string) => {
 
-  const payload: any = { title,tenantKey };
+const getTenantKey = () => {
+  if (typeof window === 'undefined') return '';
+  let hostname = window.location.hostname;
+  if (hostname.endsWith('.localhost')) {
+    hostname = hostname.replace('.localhost', '');
+  }
+  return hostname === 'localhost' ? '' : hostname;
+};
+
+export const createVideoResource = async (libraryId: string, apiKey: string, title: string, collectionId?: string) => {
+  const tenantKey = getTenantKey();
+  const payload: any = { title, tenantKey };
   if (collectionId) {
     payload.collectionId = collectionId;
   }
