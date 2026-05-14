@@ -566,103 +566,16 @@ export default function CoursePlayerPage() {
   return (
     <div className="flex flex-col font-sans" dir="rtl">
       <div className="flex flex-1 relative min-h-[calc(100vh-80px)]">
-        {/* Sidebar - Lesson Content */}
-        <aside className={cn(
-          "fixed top-20 bottom-0 right-0 z-40 w-full lg:w-[350px] bg-white border-l border-gray-100 flex flex-col transition-transform duration-300 shadow-xl lg:shadow-none",
-          isSidebarOpen ? "translate-x-0" : "translate-x-full"
-        )}>
-          {/* Sidebar Header */}
-          <div className="p-6 border-b border-gray-100">
-             <div className="flex items-center justify-between mb-4">
-               <h3 className="font-black text-gray-900">محتوى الدورة</h3>
-               <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 hover:bg-gray-100 rounded-2xl transition-colors">
-                 <X size={20} className="text-gray-500" />
-               </button>
-             </div>
-             <div className="relative">
-               <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-               <input
-                 type="text"
-                 value={searchQuery}
-                 onChange={(e) => setSearchQuery(e.target.value)}
-                 placeholder="ابحث عن درس..."
-                 className="w-full bg-gray-100/80 border border-gray-200 rounded-[20px] py-3.5 pr-11 pl-4 text-xs font-bold outline-none focus:border-blue-500 focus:bg-white transition-all text-gray-800 placeholder-gray-500"
-               />
-             </div>
-          </div>
-
-          {/* Chapters List */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-             {chapters.map((chapter: any, idx: number) => (
-               <div key={chapter.id} className="border-b border-gray-50 last:border-0">
-                 <button 
-                   onClick={() => setExpandedChapters(prev => prev.includes(chapter.id) ? prev.filter(c => c !== chapter.id) : [...prev, chapter.id])}
-                   className={cn(
-                     "w-full p-5 flex items-center justify-between hover:bg-gray-50 transition-all text-right",
-                     expandedChapters.includes(chapter.id) && "bg-gray-50"
-                   )}
-                 >
-                   <div className="flex-1 min-w-0">
-                     <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">الفصل {idx + 1}</p>
-                     <h4 className="text-sm font-black text-gray-900 truncate">{chapter.title}</h4>
-                   </div>
-                   {expandedChapters.includes(chapter.id) ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
-                 </button>
-
-                 <AnimatePresence>
-                   {expandedChapters.includes(chapter.id) && (
-                     <motion.div 
-                       initial={{ height: 0, opacity: 0 }} 
-                       animate={{ height: 'auto', opacity: 1 }}
-                       exit={{ height: 0, opacity: 0 }}
-                       className="overflow-hidden bg-white"
-                     >
-                       {chapter.lessons?.map((lesson: any) => {
-                         const isActive = currentLesson?.id === lesson.id;
-                         return (
-                           <button
-                             id={`lesson-${lesson.id}`}
-                             key={lesson.id}
-                             onClick={() => setCurrentLesson(lesson)}
-                             className={cn(
-                               "w-full p-4 px-6 flex items-start gap-4 transition-all text-right group border-r-4",
-                               isActive ? "bg-blue-50/50 border-blue-600" : "hover:bg-gray-50 border-transparent"
-                             )}
-                           >
-                             <div className={cn(
-                               "mt-1 w-5 h-5 rounded-full flex items-center justify-center shrink-0 border transition-all",
-                               isActive ? "bg-blue-600 border-blue-600 text-white" : "border-gray-200 text-gray-300 group-hover:border-blue-400"
-                             )}>
-                               {isActive ? <Play size={10} fill="currentColor" /> : <Play size={10} />}
-                             </div>
-                             <div className="flex-1 min-w-0">
-                               <h5 className={cn(
-                                 "text-xs font-bold truncate mb-1 transition-colors",
-                                 isActive ? "text-blue-600" : "text-gray-700 group-hover:text-blue-500"
-                               )}>
-                                 {lesson.title}
-                               </h5>
-                               <div className="flex items-center gap-3 text-[10px] font-bold text-gray-400">
-                                 <span className="flex items-center gap-1"><Clock size={10} /> {lesson.duration || '10:00'}</span>
-                                 {(lesson.is_completed || lesson.progresses?.[0]?.is_completed) && <CheckCircle2 size={12} className="text-green-500" />}
-                               </div>
-                             </div>
-                           </button>
-                         );
-                       })}
-                     </motion.div>
-                   )}
-                 </AnimatePresence>
-               </div>
-             ))}
-          </div>
-        </aside>
-
+        {isSidebarOpen && (
+          <button
+            type="button"
+            aria-label="إغلاق قائمة الدروس"
+            className="fixed inset-0 z-[35] bg-black/45 backdrop-blur-[1px] lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
         {/* Main Content Area */}
-        <main className={cn(
-          "flex-1 flex flex-col bg-[#F8FAFC] transition-all duration-300 overflow-y-auto custom-scrollbar",
-          isSidebarOpen ? "lg:pr-[350px]" : "pr-0"
-        )}>
+        <main className="flex-1 flex flex-col bg-[#F8FAFC] overflow-y-auto custom-scrollbar min-w-0">
           {/* Sub-Header with Progress & Title */}
           <div className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
              <div className="flex items-center gap-6">
@@ -689,7 +602,7 @@ export default function CoursePlayerPage() {
              </div>
           </div>
 
-          <div className="max-w-6xl mx-auto w-full p-6 lg:p-10 space-y-8">
+          <div className="max-w-[min(100%,90rem)] mx-auto w-full p-6 lg:p-10 space-y-8">
             {/* Top Action Buttons & Lesson Header */}
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 bg-white p-8 rounded-[32px] shadow-sm border border-gray-100">
                <div className="space-y-3 flex-1">
@@ -748,8 +661,9 @@ export default function CoursePlayerPage() {
                </div>
             </div>
 
-            {/* Video Player Section - Smaller and Styled */}
-            <div className="bg-white p-4 rounded-[40px] shadow-sm border border-gray-100 overflow-hidden">
+            {/* Video + lesson list: side-by-side on desktop, stacked drawer on mobile */}
+            <div className="flex flex-col lg:flex-row gap-6 lg:items-start">
+              <div className="flex-1 min-w-0 bg-white p-4 rounded-[40px] shadow-sm border border-gray-100 overflow-hidden">
                <div className="relative aspect-video bg-black rounded-[32px] overflow-hidden group select-none shadow-2xl">
                 {currentLesson ? (
                   activeVideoSrc ? (
@@ -774,6 +688,128 @@ export default function CoursePlayerPage() {
                   </div>
                 )}
                </div>
+              </div>
+
+              <aside
+                className={cn(
+                  'flex flex-col bg-white border border-gray-100 rounded-[32px] shadow-sm overflow-hidden shrink-0',
+                  'fixed z-40 w-[min(100%,22rem)] max-h-[min(100dvh-5rem,720px)] top-[4.5rem] bottom-4 right-4 transition-transform duration-300 ease-out shadow-2xl lg:shadow-sm',
+                  isSidebarOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)] lg:translate-x-0',
+                  'lg:static lg:z-0 lg:right-auto lg:top-auto lg:bottom-auto lg:w-[340px] lg:max-h-[min(720px,calc(100dvh-8rem))] lg:sticky lg:top-24'
+                )}
+              >
+                <div className="p-5 border-b border-gray-100 shrink-0">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-black text-gray-900 text-sm">محتوى الدورة</h3>
+                    <button
+                      type="button"
+                      onClick={() => setIsSidebarOpen(false)}
+                      className="lg:hidden p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                      aria-label="إغلاق القائمة"
+                    >
+                      <X size={18} className="text-gray-500" />
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="ابحث عن درس..."
+                      className="w-full bg-gray-100/80 border border-gray-200 rounded-2xl py-2.5 pr-9 pl-3 text-xs font-bold outline-none focus:border-blue-500 focus:bg-white transition-all text-gray-800 placeholder-gray-500"
+                    />
+                  </div>
+                </div>
+                <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+                  {chapters.map((chapter: any, idx: number) => (
+                    <div key={chapter.id} className="border-b border-gray-50 last:border-0">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedChapters((prev) =>
+                            prev.includes(chapter.id) ? prev.filter((c) => c !== chapter.id) : [...prev, chapter.id]
+                          )
+                        }
+                        className={cn(
+                          'w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-all text-right',
+                          expandedChapters.includes(chapter.id) && 'bg-gray-50'
+                        )}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-0.5">
+                            الفصل {idx + 1}
+                          </p>
+                          <h4 className="text-xs font-black text-gray-900 truncate">{chapter.title}</h4>
+                        </div>
+                        {expandedChapters.includes(chapter.id) ? (
+                          <ChevronUp size={14} className="text-gray-400 shrink-0" />
+                        ) : (
+                          <ChevronDown size={14} className="text-gray-400 shrink-0" />
+                        )}
+                      </button>
+                      <AnimatePresence>
+                        {expandedChapters.includes(chapter.id) && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden bg-white"
+                          >
+                            {chapter.lessons?.map((lesson: any) => {
+                              const isActive = currentLesson?.id === lesson.id;
+                              return (
+                                <button
+                                  type="button"
+                                  id={`lesson-${lesson.id}`}
+                                  key={lesson.id}
+                                  onClick={() => {
+                                    setCurrentLesson(lesson);
+                                    setIsSidebarOpen(false);
+                                  }}
+                                  className={cn(
+                                    'w-full p-3 px-4 flex items-start gap-3 transition-all text-right group border-r-4',
+                                    isActive ? 'bg-blue-50/50 border-blue-600' : 'hover:bg-gray-50 border-transparent'
+                                  )}
+                                >
+                                  <div
+                                    className={cn(
+                                      'mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0 border transition-all',
+                                      isActive
+                                        ? 'bg-blue-600 border-blue-600 text-white'
+                                        : 'border-gray-200 text-gray-300 group-hover:border-blue-400'
+                                    )}
+                                  >
+                                    {isActive ? <Play size={9} fill="currentColor" /> : <Play size={9} />}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h5
+                                      className={cn(
+                                        'text-[11px] font-bold truncate mb-0.5 transition-colors',
+                                        isActive ? 'text-blue-600' : 'text-gray-700 group-hover:text-blue-500'
+                                      )}
+                                    >
+                                      {lesson.title}
+                                    </h5>
+                                    <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400">
+                                      <span className="flex items-center gap-1">
+                                        <Clock size={9} /> {lesson.duration || '10:00'}
+                                      </span>
+                                      {(lesson.is_completed || lesson.progresses?.[0]?.is_completed) && (
+                                        <CheckCircle2 size={11} className="text-green-500" />
+                                      )}
+                                    </div>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ))}
+                </div>
+              </aside>
             </div>
 
             {/* Resources Section */}
@@ -810,8 +846,8 @@ export default function CoursePlayerPage() {
             </div>
 
             {/* Interaction Section (Tabs) */}
-            <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden min-h-[500px] flex flex-col">
-               <div className="flex items-center justify-center border-b border-gray-50 px-8 shrink-0">
+            <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden min-h-[500px] flex flex-col">
+               <div className="flex items-center justify-center border-b border-gray-100 px-8 shrink-0">
                   {[
                     { id: 'comments', label: 'نقاش الدرس' },
                     { id: 'notes', label: 'الملاحظات' },
@@ -842,33 +878,33 @@ export default function CoursePlayerPage() {
                         className="space-y-12"
                       >
                          {/* Styled Comment Input */}
-                         <div className="max-w-3xl mx-auto bg-gray-50/50 p-8 rounded-[32px] border border-gray-50 relative">
+                         <div className="max-w-3xl mx-auto bg-gray-100/40 p-8 rounded-[40px] border border-gray-200 relative">
                             {replyingTo && (
-                              <div className="mb-4 flex items-center justify-between bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
-                                <span className="text-xs font-bold text-blue-700">
+                              <div className="mb-4 flex items-center justify-between bg-blue-100/50 px-5 py-3 rounded-[24px] border border-blue-200">
+                                <span className="text-xs font-bold text-blue-800">
                                   أنت تقوم بالرد على <strong>{replyingTo.user?.name}</strong>
                                 </span>
-                                <button onClick={() => setReplyingTo(null)} className="text-blue-600 hover:text-blue-800 p-1">
+                                <button onClick={() => setReplyingTo(null)} className="text-blue-700 hover:text-blue-900 p-1 bg-white/50 rounded-full transition-all">
                                   <X size={14} />
                                 </button>
                               </div>
                             )}
                             <div className="flex gap-5">
-                               <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 font-black text-xl shrink-0 overflow-hidden shadow-inner">
+                               <div className="w-12 h-12 rounded-[18px] bg-blue-600 flex items-center justify-center text-white font-black text-xl shrink-0 overflow-hidden shadow-lg shadow-blue-100">
                                   <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar" />
                                </div>
                                <textarea
                                  value={newComment}
                                  onChange={(e) => setNewComment(e.target.value)}
                                  placeholder={replyingTo ? "اكتب ردك هنا..." : "أضف تعليقاً أو استفساراً..."}
-                                 className="flex-1 bg-transparent border-none text-sm font-bold text-gray-700 placeholder-gray-400 outline-none resize-none min-h-[100px]"
+                                 className="flex-1 bg-transparent border-none text-sm font-bold text-gray-800 placeholder-gray-500 outline-none resize-none min-h-[100px]"
                                />
                             </div>
                             <div className="flex justify-start mt-4 pr-16">
                                <button 
                                  onClick={handleAddComment}
                                  disabled={!newComment.trim()}
-                                 className="px-10 py-3 bg-blue-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-blue-100 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
+                                 className="px-10 py-3.5 bg-blue-600 text-white rounded-[20px] font-black text-sm shadow-xl shadow-blue-200 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
                                >
                                  {replyingTo ? "نشر الرد" : "نشر التعليق"}
                                </button>
@@ -963,22 +999,22 @@ export default function CoursePlayerPage() {
                         animate={{ opacity: 1, y: 0 }}
                         className="max-w-3xl mx-auto space-y-10"
                       >
-                         <div className="bg-blue-50/50 p-8 rounded-[32px] border border-blue-100/50 space-y-4">
+                         <div className="bg-gray-100/40 p-8 rounded-[40px] border border-gray-200 space-y-5">
                            <textarea
                              value={newNote}
                              onChange={(e) => setNewNote(e.target.value)}
                              placeholder="اكتب ملاحظة ذكية عند هذه اللحظة..."
-                             className="w-full bg-white border border-gray-100 rounded-2xl p-5 font-bold text-sm outline-none focus:border-blue-400 transition-all min-h-[120px] shadow-sm"
+                             className="w-full bg-white/80 border border-gray-200 rounded-[24px] p-6 font-bold text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all min-h-[140px] shadow-sm text-gray-800 placeholder-gray-500"
                            />
                            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                             <div className="flex items-center gap-2 text-blue-600 font-black text-sm bg-blue-100/50 px-4 py-2 rounded-2xl w-full sm:w-auto justify-center">
+                             <div className="flex items-center gap-2 text-blue-700 font-black text-sm bg-blue-100/50 px-5 py-2.5 rounded-[18px] w-full sm:w-auto justify-center border border-blue-200">
                                <Clock size={16} />
                                <span>{formatTime(currentTime)}</span>
                              </div>
                              <button 
                                onClick={handleAddNote}
                                disabled={!newNote.trim()}
-                               className="px-10 py-3 bg-blue-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-blue-100 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 w-full sm:w-auto"
+                               className="px-12 py-3.5 bg-blue-600 text-white rounded-[20px] font-black text-sm shadow-xl shadow-blue-200 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 w-full sm:w-auto"
                              >
                                حفظ الملاحظة
                              </button>
@@ -1010,26 +1046,18 @@ export default function CoursePlayerPage() {
           </div>
         </main>
 
-        {/* Floating Sidebar Toggle (Mobile) */}
-        <button 
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        {/* Open lesson list (mobile only — desktop list is beside the video) */}
+        <button
+          type="button"
+          onClick={() => setIsSidebarOpen(true)}
           className={cn(
-            "fixed bottom-8 left-8 z-[60] w-14 h-14 bg-gray-900 text-white rounded-2xl shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 lg:hidden",
-            isSidebarOpen ? "translate-x-0" : "translate-x-0"
+            'fixed bottom-8 left-8 z-[60] w-14 h-14 bg-gray-900 text-white rounded-2xl shadow-2xl items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95',
+            'lg:hidden',
+            isSidebarOpen ? 'hidden' : 'flex'
           )}
+          aria-label="عرض قائمة الدروس"
         >
-          {isSidebarOpen ? <X size={24} /> : <ListVideo size={24} />}
-        </button>
-
-        {/* Floating Desktop Sidebar Toggle */}
-        <button 
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className={cn(
-            "hidden lg:flex fixed bottom-10 left-10 z-[60] w-14 h-14 bg-white text-gray-900 border border-gray-100 rounded-2xl shadow-2xl items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95",
-            isSidebarOpen ? "translate-x-0" : "translate-x-0"
-          )}
-        >
-          {isSidebarOpen ? <ArrowLeft size={24} /> : <ListVideo size={24} />}
+          <ListVideo size={24} />
         </button>
 
         {/* Urgent Help Button (Bottom Left) */}
