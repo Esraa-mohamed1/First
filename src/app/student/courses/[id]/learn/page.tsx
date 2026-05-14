@@ -7,7 +7,7 @@ import {
   Volume2, VolumeX, ListVideo, Search, ChevronDown, ChevronUp,
   PlayCircle, FileText, Menu, X, ArrowRight, ArrowLeft, Trophy, Star,
   Download, MessageSquare, Info, StickyNote, ThumbsUp, MessageCircle,
-  Clock, CheckCircle2, Lock, AlertCircle, Pencil, Trash2
+  Clock, CheckCircle2, Lock, AlertCircle, Pencil, Trash2, Bell
 } from 'lucide-react';
 import { 
   getMyCourseDetails, 
@@ -93,6 +93,28 @@ export default function CoursePlayerPage() {
 
   // Persistence Logic
   const storageKey = useMemo(() => `tracking_${id}`, [id]);
+
+  // Authorization Check
+  useEffect(() => {
+    const cookieToken = document.cookie.split('; ').find(row => row.startsWith('token='));
+    const localToken = localStorage.getItem('token');
+    const token = cookieToken || localToken;
+    const userInfo = localStorage.getItem('user_info');
+    
+    if (!token || !userInfo) {
+      router.push('/auth/login');
+      return;
+    }
+    
+    try {
+      const parsedUser = JSON.parse(userInfo);
+      if (parsedUser.role !== 'student' && parsedUser.role !== 'admin' && parsedUser.role !== 'academy') {
+         router.push('/');
+      }
+    } catch (e) {
+      router.push('/auth/login');
+    }
+  }, [router]);
 
   // Fetch Course Details
   useEffect(() => {
@@ -564,8 +586,43 @@ export default function CoursePlayerPage() {
   }
 
   return (
-    <div className="flex flex-col font-sans" dir="rtl">
-      <div className="flex flex-1 relative min-h-[calc(100vh-80px)]">
+    <div className="flex flex-col font-sans min-h-screen bg-[#F8FAFC]" dir="rtl">
+      {/* Custom Header matching the reference */}
+      <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-sm">
+         <div className="flex items-center gap-6">
+            <button onClick={() => router.push('/student/courses')} className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors font-bold">
+              <X size={20} />
+              <span className="text-sm">خروج</span>
+            </button>
+            <div className="h-6 w-px bg-gray-200" />
+            <div className="text-xl font-black text-blue-600">Darrab</div>
+         </div>
+         
+         <div className="hidden md:flex flex-col items-center flex-1 max-w-md mx-8">
+            <div className="flex items-center justify-between w-full mb-2">
+               <span className="text-sm font-black text-gray-900 truncate">{course.title}</span>
+               <span className="text-xs font-black text-[#0F766E]">65% مكتمل</span>
+            </div>
+            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+               <div className="w-[65%] h-full bg-[#0F766E] rounded-full" />
+            </div>
+         </div>
+
+         <div className="flex items-center gap-4">
+            <button className="relative p-2 text-gray-500 hover:bg-gray-50 rounded-full transition-colors">
+               <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></div>
+               <Bell size={20} />
+            </button>
+            <div className="flex items-center gap-3">
+               <span className="text-sm font-bold text-gray-700 hidden md:block">أحمد العتيبي</span>
+               <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-100">
+                  <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Ahmed" alt="User" className="w-full h-full object-cover" />
+               </div>
+            </div>
+         </div>
+      </header>
+
+      <div className="flex flex-1 relative">
         {isSidebarOpen && (
           <button
             type="button"
@@ -574,156 +631,36 @@ export default function CoursePlayerPage() {
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
-        {/* Main Content Area */}
-        <main className="flex-1 flex flex-col bg-[#F8FAFC] overflow-y-auto custom-scrollbar min-w-0">
-          {/* Sub-Header with Progress & Title */}
-          <div className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
-             <div className="flex items-center gap-6">
-                <button onClick={() => router.push('/student/courses')} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-50 transition-colors text-gray-600">
-                  <ArrowRight size={24} />
-                </button>
-                <div className="h-6 w-px bg-gray-200" />
-                <h1 className="font-black text-sm md:text-base text-gray-900 truncate max-w-[300px]">{course.title}</h1>
-             </div>
-             
-             <div className="flex items-center gap-6">
-                <div className="hidden md:flex flex-col items-end">
-                   <div className="flex items-center gap-2">
-                     <Trophy size={16} className="text-yellow-500" />
-                     <span className="text-xs font-bold text-gray-600">تقدمك: 45%</span>
-                   </div>
-                   <div className="w-32 h-1.5 bg-gray-100 rounded-full mt-1.5 overflow-hidden">
-                     <div className="w-[45%] h-full bg-blue-600 rounded-full" />
-                   </div>
-                </div>
-                <button className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black transition-all shadow-lg shadow-blue-100">
-                  مشاركة الشهادة
-                </button>
-             </div>
-          </div>
-
-          <div className="max-w-[min(100%,90rem)] mx-auto w-full p-6 lg:p-10 space-y-8">
-            {/* Top Action Buttons & Lesson Header */}
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 bg-white p-8 rounded-[32px] shadow-sm border border-gray-100">
-               <div className="space-y-3 flex-1">
-                 <div className="flex items-center gap-3">
-                    <span className="px-3 py-1 bg-red-50 text-red-600 text-[10px] font-black rounded-full">محاضرة مميزة</span>
-                    <span className="text-[10px] font-bold text-gray-400">تم التحديث: {currentLesson?.updated_at ? new Date(currentLesson.updated_at).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }) : '24 أكتوبر 2023'}</span>
-                 </div>
-                 <h2 className="text-2xl lg:text-3xl font-black text-gray-900 leading-tight">
-                    {currentLesson?.title || 'جاري التحميل...'}
-                 </h2>
-                 <div className="text-gray-500 font-bold text-sm leading-relaxed max-w-3xl">
-                    {(() => {
-                      const description = currentLesson?.description 
-                        ? currentLesson.description.replace(/<[^>]*>/g, '')
-                        : (course?.description ? course.description.replace(/<[^>]*>/g, '') : 'في هذا الدرس، سنستكشف كيفية توظيف أدوات الذكاء الاصطناعي في صياغة خطط الدروس، إنشاء الأنشطة التفاعلية، وتصميم اختبارات تقييم مخصصة لمستويات الطلاب المختلفة.');
-                      
-                      const shouldTruncate = description.length > 150;
-                      const displayDescription = (shouldTruncate && !showFullDescription) 
-                        ? description.substring(0, 150) + '...' 
-                        : description;
-
-                      return (
-                        <>
-                          <span>{displayDescription}</span>
-                          {shouldTruncate && (
-                            <button 
-                              onClick={() => setShowFullDescription(!showFullDescription)}
-                              className="text-blue-600 mr-2 hover:underline focus:outline-none"
-                            >
-                              {showFullDescription ? 'عرض أقل' : 'اقرأ المزيد'}
-                            </button>
-                          )}
-                        </>
-                      );
-                    })()}
-                 </div>
-               </div>
-               <div className="flex flex-col gap-3 w-full lg:w-auto shrink-0">
-                  <button 
-                    onClick={handleToggleComplete}
-                    className={cn(
-                      "flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl font-black text-sm transition-all shadow-lg shadow-blue-50",
-                      (currentLesson as any)?.is_completed ? "bg-green-600 text-white" : "bg-blue-600 text-white hover:bg-blue-700"
-                    )}
-                  >
-                    <CheckCircle2 size={18} />
-                    <span>{(currentLesson as any)?.is_completed ? 'تم إكمال الدرس' : 'إكمال الدرس'}</span>
-                  </button>
-                  <button 
-                    onClick={handleNextLesson}
-                    className="flex items-center justify-center gap-2 px-8 py-3.5 bg-[#5EEAD4] hover:bg-[#2DD4BF] text-[#0F766E] rounded-2xl font-black text-sm transition-all shadow-lg shadow-teal-50"
-                  >
-                    <span>الدرس التالي</span>
-                    <ArrowLeft size={18} />
-                  </button>
-               </div>
-            </div>
-
-            {/* Video + lesson list: side-by-side on desktop, stacked drawer on mobile */}
-            <div className="flex flex-col lg:flex-row gap-6 lg:items-start">
-              <div className="flex-1 min-w-0 bg-white p-4 rounded-[40px] shadow-sm border border-gray-100 overflow-hidden">
-               <div className="relative aspect-video bg-black rounded-[32px] overflow-hidden group select-none shadow-2xl">
-                {currentLesson ? (
-                  activeVideoSrc ? (
-                    <iframe
-                      ref={videoRef}
-                      src={activeVideoSrc}
-                      className="w-full h-full"
-                      allowFullScreen
-                      allow="autoplay; encrypted-media; picture-in-picture"
-                      title={currentLesson.title}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-white gap-3 px-6 text-center">
-                      <AlertCircle size={48} className="text-amber-400" />
-                      <p className="font-bold text-sm max-w-md">لا يوجد رابط تشغيل صالح لهذا الدرس.</p>
-                    </div>
-                  )
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-white gap-4">
-                    <PlayCircle size={80} className="text-blue-500 animate-pulse" />
-                    <p className="font-black text-xl">اختر درساً لبدء رحلتك</p>
-                  </div>
-                )}
-               </div>
-              </div>
-
+        
+        <main className="flex-1 flex flex-col overflow-y-auto custom-scrollbar min-w-0">
+          <div className="max-w-[min(100%,100rem)] mx-auto w-full p-4 lg:p-8 space-y-8">
+            
+            <div className="flex flex-col lg:flex-row gap-8 lg:items-start">
+              
+              {/* Right Sidebar - Curriculum (First in DOM for RTL) */}
               <aside
                 className={cn(
-                  'flex flex-col bg-white border border-gray-100 rounded-[32px] shadow-sm overflow-hidden shrink-0',
-                  'fixed z-40 w-[min(100%,22rem)] max-h-[min(100dvh-5rem,720px)] top-[4.5rem] bottom-4 right-4 transition-transform duration-300 ease-out shadow-2xl lg:shadow-sm',
+                  'flex flex-col bg-transparent lg:bg-white lg:rounded-[32px] lg:shadow-sm overflow-hidden shrink-0',
+                  'fixed z-40 w-[min(100%,22rem)] max-h-[min(100dvh-5rem,720px)] top-[4.5rem] bottom-4 right-4 transition-transform duration-300 ease-out shadow-2xl lg:shadow-none',
                   isSidebarOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)] lg:translate-x-0',
-                  'lg:static lg:z-0 lg:right-auto lg:top-auto lg:bottom-auto lg:w-[340px] lg:max-h-[min(720px,calc(100dvh-8rem))] lg:sticky lg:top-24'
+                  'lg:static lg:z-0 lg:right-auto lg:top-auto lg:bottom-auto lg:w-[320px] lg:max-h-[min(800px,calc(100dvh-8rem))] lg:sticky lg:top-24'
                 )}
               >
-                <div className="p-5 border-b border-gray-100 shrink-0">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-black text-gray-900 text-sm">محتوى الدورة</h3>
-                    <button
-                      type="button"
-                      onClick={() => setIsSidebarOpen(false)}
-                      className="lg:hidden p-2 hover:bg-gray-100 rounded-xl transition-colors"
-                      aria-label="إغلاق القائمة"
-                    >
-                      <X size={18} className="text-gray-500" />
-                    </button>
-                  </div>
-                  <div className="relative">
-                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="ابحث عن درس..."
-                      className="w-full bg-gray-100/80 border border-gray-200 rounded-2xl py-2.5 pr-9 pl-3 text-xs font-bold outline-none focus:border-blue-500 focus:bg-white transition-all text-gray-800 placeholder-gray-500"
-                    />
-                  </div>
+                <div className="p-5 lg:px-6 shrink-0 flex items-center gap-3">
+                  <ListVideo size={20} className="text-blue-600" />
+                  <h3 className="font-black text-gray-900 text-sm">منهج الدورة</h3>
+                  <button
+                    type="button"
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="lg:hidden p-2 hover:bg-gray-100 rounded-xl transition-colors mr-auto"
+                    aria-label="إغلاق القائمة"
+                  >
+                    <X size={18} className="text-gray-500" />
+                  </button>
                 </div>
-                <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+                <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar px-2 pb-4">
                   {chapters.map((chapter: any, idx: number) => (
-                    <div key={chapter.id} className="border-b border-gray-50 last:border-0">
+                    <div key={chapter.id} className="mb-2">
                       <button
                         type="button"
                         onClick={() =>
@@ -731,22 +668,16 @@ export default function CoursePlayerPage() {
                             prev.includes(chapter.id) ? prev.filter((c) => c !== chapter.id) : [...prev, chapter.id]
                           )
                         }
-                        className={cn(
-                          'w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-all text-right',
-                          expandedChapters.includes(chapter.id) && 'bg-gray-50'
-                        )}
+                        className="w-full p-3 flex items-center justify-between hover:bg-gray-50 rounded-2xl transition-all text-right group"
                       >
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-0.5">
-                            الفصل {idx + 1}
-                          </p>
-                          <h4 className="text-xs font-black text-gray-900 truncate">{chapter.title}</h4>
+                        <h4 className="text-xs font-black text-gray-800 truncate">{chapter.title}</h4>
+                        <div className="w-6 h-6 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-white transition-colors">
+                          {expandedChapters.includes(chapter.id) ? (
+                            <ChevronUp size={14} className="text-gray-500" />
+                          ) : (
+                            <ChevronDown size={14} className="text-gray-500" />
+                          )}
                         </div>
-                        {expandedChapters.includes(chapter.id) ? (
-                          <ChevronUp size={14} className="text-gray-400 shrink-0" />
-                        ) : (
-                          <ChevronDown size={14} className="text-gray-400 shrink-0" />
-                        )}
                       </button>
                       <AnimatePresence>
                         {expandedChapters.includes(chapter.id) && (
@@ -754,51 +685,46 @@ export default function CoursePlayerPage() {
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: 'auto', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden bg-white"
+                            className="overflow-hidden mt-1 pl-2 pr-4 space-y-1"
                           >
                             {chapter.lessons?.map((lesson: any) => {
                               const isActive = currentLesson?.id === lesson.id;
+                              const isLocked = false; // Add logic if needed
                               return (
                                 <button
                                   type="button"
                                   id={`lesson-${lesson.id}`}
                                   key={lesson.id}
                                   onClick={() => {
-                                    setCurrentLesson(lesson);
-                                    setIsSidebarOpen(false);
+                                    if (!isLocked) {
+                                      setCurrentLesson(lesson);
+                                      setIsSidebarOpen(false);
+                                    }
                                   }}
                                   className={cn(
-                                    'w-full p-3 px-4 flex items-start gap-3 transition-all text-right group border-r-4',
-                                    isActive ? 'bg-blue-50/50 border-blue-600' : 'hover:bg-gray-50 border-transparent'
+                                    'w-full p-3 flex items-center justify-between transition-all text-right rounded-2xl group border border-transparent',
+                                    isActive ? 'bg-blue-50/50 border-blue-100 shadow-sm' : 'hover:bg-white hover:shadow-sm hover:border-gray-100'
                                   )}
                                 >
-                                  <div
-                                    className={cn(
-                                      'mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0 border transition-all',
-                                      isActive
-                                        ? 'bg-blue-600 border-blue-600 text-white'
-                                        : 'border-gray-200 text-gray-300 group-hover:border-blue-400'
-                                    )}
-                                  >
-                                    {isActive ? <Play size={9} fill="currentColor" /> : <Play size={9} />}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <div
+                                      className={cn(
+                                        'w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all',
+                                        isActive
+                                          ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+                                          : 'bg-gray-100 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-500'
+                                      )}
+                                    >
+                                      {isLocked ? <Lock size={12} /> : (lesson.type === 'pdf' ? <FileText size={12} /> : <Play size={12} fill={isActive ? "currentColor" : "none"} />)}
+                                    </div>
                                     <h5
                                       className={cn(
-                                        'text-[11px] font-bold truncate mb-0.5 transition-colors',
-                                        isActive ? 'text-blue-600' : 'text-gray-700 group-hover:text-blue-500'
+                                        'text-xs font-bold truncate transition-colors',
+                                        isActive ? 'text-blue-700 font-black' : 'text-gray-600 group-hover:text-gray-900'
                                       )}
                                     >
                                       {lesson.title}
                                     </h5>
-                                    <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400">
-                                      <span className="flex items-center gap-1">
-                                        <Clock size={9} /> {lesson.duration || '10:00'}
-                                      </span>
-                                      {(lesson.is_completed || lesson.progresses?.[0]?.is_completed) && (
-                                        <CheckCircle2 size={11} className="text-green-500" />
-                                      )}
-                                    </div>
                                   </div>
                                 </button>
                               );
@@ -810,7 +736,93 @@ export default function CoursePlayerPage() {
                   ))}
                 </div>
               </aside>
-            </div>
+
+              {/* Left Content - Video & Details */}
+              <div className="flex-1 min-w-0 space-y-6">
+                
+                {/* Video Player Container */}
+                <div className="bg-black rounded-[32px] md:rounded-[40px] overflow-hidden shadow-2xl relative aspect-video group">
+                  {currentLesson ? (
+                    activeVideoSrc ? (
+                      <iframe
+                        ref={videoRef}
+                        src={activeVideoSrc}
+                        className="w-full h-full border-0"
+                        allowFullScreen
+                        allow="autoplay; encrypted-media; picture-in-picture"
+                        title={currentLesson.title}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-white gap-3 px-6 text-center">
+                        <AlertCircle size={48} className="text-amber-400" />
+                        <p className="font-bold text-sm max-w-md">لا يوجد رابط تشغيل صالح لهذا الدرس.</p>
+                      </div>
+                    )
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-white gap-4">
+                      <PlayCircle size={80} className="text-blue-500 animate-pulse" />
+                      <p className="font-black text-xl">اختر درساً لبدء رحلتك</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Lesson Header & Actions */}
+                <div className="bg-white p-6 md:p-8 rounded-[32px] shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start gap-6">
+                   <div className="space-y-4 flex-1">
+                     <div className="flex items-center gap-3">
+                        <span className="px-3 py-1 bg-red-50 text-red-600 text-[10px] font-black rounded-full">محاضرة مميزة</span>
+                        <span className="text-[10px] font-bold text-gray-400">تم التحديث: {currentLesson?.updated_at ? new Date(currentLesson.updated_at).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }) : '24 أكتوبر 2023'}</span>
+                     </div>
+                     <h2 className="text-xl md:text-2xl font-black text-gray-900 leading-tight">
+                        {currentLesson?.title || 'جاري التحميل...'}
+                     </h2>
+                     <div className="text-gray-500 font-medium text-sm leading-relaxed max-w-3xl">
+                        {(() => {
+                          const description = currentLesson?.description 
+                            ? currentLesson.description.replace(/<[^>]*>/g, '')
+                            : (course?.description ? course.description.replace(/<[^>]*>/g, '') : 'في هذا الدرس، سنستكشف كيفية توظيف أدوات الذكاء الاصطناعي في صياغة خطط الدروس، إنشاء الأنشطة التفاعلية، وتصميم اختبارات تقييم مخصصة لمستويات الطلاب المختلفة.');
+                          
+                          const shouldTruncate = description.length > 150;
+                          const displayDescription = (shouldTruncate && !showFullDescription) 
+                            ? description.substring(0, 150) + '...' 
+                            : description;
+
+                          return (
+                            <>
+                              <span>{displayDescription}</span>
+                              {shouldTruncate && (
+                                <button 
+                                  onClick={() => setShowFullDescription(!showFullDescription)}
+                                  className="text-blue-600 mr-2 hover:underline focus:outline-none font-bold"
+                                >
+                                  {showFullDescription ? 'عرض أقل' : 'اقرأ المزيد'}
+                                </button>
+                              )}
+                            </>
+                          );
+                        })()}
+                     </div>
+                   </div>
+                   <div className="flex flex-row md:flex-col gap-3 w-full md:w-auto shrink-0">
+                      <button 
+                        onClick={handleToggleComplete}
+                        className={cn(
+                          "flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-black text-xs transition-all shadow-md",
+                          (currentLesson as any)?.is_completed ? "bg-blue-800 text-white shadow-blue-900/20" : "bg-blue-700 text-white hover:bg-blue-800 shadow-blue-700/20"
+                        )}
+                      >
+                        <CheckCircle2 size={16} />
+                        <span>{(currentLesson as any)?.is_completed ? 'إلغاء الإكمال' : 'إكمال الدرس'}</span>
+                      </button>
+                      <button 
+                        onClick={handleNextLesson}
+                        className="flex items-center justify-center gap-2 px-6 py-3 bg-[#A7F3D0] hover:bg-[#6EE7B7] text-[#065F46] rounded-2xl font-black text-xs transition-all shadow-md shadow-emerald-100"
+                      >
+                        <span>الدرس التالي</span>
+                        <ArrowLeft size={16} />
+                      </button>
+                   </div>
+                </div>
 
             {/* Resources Section */}
             <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100 space-y-6">
@@ -1042,6 +1054,8 @@ export default function CoursePlayerPage() {
                     )}
                   </AnimatePresence>
                </div>
+            </div>
+            </div>
             </div>
           </div>
         </main>

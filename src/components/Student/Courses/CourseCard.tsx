@@ -42,12 +42,10 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
               {isLoading && (
                 <div className="absolute inset-0 bg-gray-100 animate-pulse z-0" />
               )}
-              <Image 
+              <img 
                 src={course.image}
                 alt={course.title || "Course Image"}
-                fill
-                className={`object-cover transition-transform duration-500 ease-out group-hover:scale-105 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                className={`w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
                 onLoad={() => setIsLoading(false)}
                 onError={() => {
                   setImgError(true);

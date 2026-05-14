@@ -212,4 +212,4 @@ export const updateCourse = async (id: number, payload: any): Promise<Course> =>
     console.error('Failed to update course:', error);
     throw error.response?.data || error;
   }
-};
+};
