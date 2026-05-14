@@ -87,7 +87,7 @@ export default function CourseStudentViewPage() {
           id: data.id,
           title: data.title,
           description: data.description,
-          instructor: data.instructor?.name || 'Unknown Instructor',
+          instructor: typeof data.instructor === 'object' && data.instructor !== null ? (data.instructor as any).name : (data.instructor || 'Unknown Instructor'),
           category: (data as any).category?.name || 'General',
           price: data.price,
           final_price: data.final_price,

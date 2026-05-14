@@ -15,6 +15,8 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
   const [imgError, setImgError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
 
+  const courseImage = course.image || 'https://images.unsplash.com/photo-1586717791821-3f44a563de4c?auto=format&fit=crop&q=80&w=1200';
+
   return (
     <div className="bg-white rounded-[1.5rem] shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 overflow-hidden hover:shadow-[0_12px_40px_rgba(59,130,246,0.08)] transition-all duration-300 group flex flex-col h-full relative">
       {/* Image Section */}
@@ -37,13 +39,13 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
         </div>
         
         <div className="w-full h-full relative overflow-hidden">
-          {course.image && !imgError ? (
+          {!imgError ? (
             <>
               {isLoading && (
                 <div className="absolute inset-0 bg-gray-100 animate-pulse z-0" />
               )}
               <img 
-                src={course.image}
+                src={courseImage}
                 alt={course.title || "Course Image"}
                 className={`w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
                 onLoad={() => setIsLoading(false)}

@@ -32,7 +32,7 @@ export default function CoursesPage() {
             slug: course.slug,
             description: course.description,
             progress: enrollment.progress || 0,
-            image: course.image || '',
+            image: course.image || course.cover_image || course.thumbnail || '',
             instructor: course.instructor_name || 'Unknown',
             category: course.category?.name || 'Uncategorized',
             status: enrollment.status || 'in-progress',

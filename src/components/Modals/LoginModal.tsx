@@ -141,14 +141,15 @@ const LoginModal = () => {
                 : { phone: formData.phone, password: formData.password, country_code: selectedCountry?.isoCode };
                 
             const response = await superAdminLogin(payload);
+            const res = response as any;
 
-            const token = response?.meta?.access_token || response?.token || response?.access_token || response?.data?.token || response?.data?.access_token;
+            const token = res?.meta?.access_token || res?.token || res?.access_token || res?.data?.token || res?.data?.access_token;
 
             if (token) {
                 document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
                 localStorage.setItem('token', token);
                 
-                const user = response?.data?.user || response?.data || response?.user || {};
+                const user = res?.data?.user || res?.data || res?.user || {};
                 
                 localStorage.setItem('user_info', JSON.stringify({
                     name: user.name || 'Admin',

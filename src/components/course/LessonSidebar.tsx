@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 
 interface LessonSidebarProps {
   lessons: Lesson[];
-  currentLessonId: string;
+  currentLessonId: string | number;
 }
 
 export const LessonSidebar: React.FC<LessonSidebarProps> = ({ lessons, currentLessonId }) => {

@@ -96,23 +96,41 @@ export default function CoursePlayerPage() {
 
   // Authorization Check
   useEffect(() => {
-    const cookieToken = document.cookie.split('; ').find(row => row.startsWith('token='));
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get('token');
+    
+    if (urlToken) {
+      localStorage.setItem('token', urlToken);
+      document.cookie = `token=${urlToken}; path=/; max-age=86400; SameSite=Lax`;
+    }
+
+    const cookieToken = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
     const localToken = localStorage.getItem('token');
-    const token = cookieToken || localToken;
+    const token = urlToken || cookieToken || localToken;
     const userInfo = localStorage.getItem('user_info');
     
-    if (!token || !userInfo) {
+    if (!token) {
       router.push('/auth/login');
       return;
     }
+
+    // If we have a token but no userInfo, we might want to fetch the profile instead of redirecting
+    if (!userInfo) {
+      // For now, let's just allow it if there's a token, 
+      // as the API calls will fail anyway if the token is invalid.
+      // Or we could trigger a profile fetch here.
+      console.warn('Token present but user_info missing');
+    }
     
-    try {
-      const parsedUser = JSON.parse(userInfo);
-      if (parsedUser.role !== 'student' && parsedUser.role !== 'admin' && parsedUser.role !== 'academy') {
-         router.push('/');
+    if (userInfo) {
+      try {
+        const parsedUser = JSON.parse(userInfo);
+        if (parsedUser.role !== 'student' && parsedUser.role !== 'admin' && parsedUser.role !== 'academy') {
+           router.push('/');
+        }
+      } catch (e) {
+        console.error('Failed to parse user info', e);
       }
-    } catch (e) {
-      router.push('/auth/login');
     }
   }, [router]);
 
@@ -475,7 +493,7 @@ export default function CoursePlayerPage() {
 
   const activeVideoSrc = useMemo(() => {
     if (!currentLesson) return '';
-    const src = getLessonVideoSrc(currentLesson as Record<string, unknown>);
+    const src = getLessonVideoSrc(currentLesson as any);
     if (!src) return '';
     
     // Append pullData=true to enable message events from Bunny Player
@@ -771,7 +789,21 @@ export default function CoursePlayerPage() {
                    <div className="space-y-4 flex-1">
                      <div className="flex items-center gap-3">
                         <span className="px-3 py-1 bg-red-50 text-red-600 text-[10px] font-black rounded-full">محاضرة مميزة</span>
-                        <span className="text-[10px] font-bold text-gray-400">تم التحديث: {currentLesson?.updated_at ? new Date(currentLesson.updated_at).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }) : '24 أكتوبر 2023'}</span>
+                        <span className="text-[10px] font-bold text-gray-400">
+                          تم التحديث: {(() => {
+                            try {
+                              if (currentLesson?.updated_at) {
+                                const date = new Date(currentLesson.updated_at);
+                                if (!isNaN(date.getTime())) {
+                                  return date.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' });
+                                }
+                              }
+                            } catch (e) {
+                              // Fallback if formatting fails
+                            }
+                            return '24 أكتوبر 2023';
+                          })()}
+                        </span>
                      </div>
                      <h2 className="text-xl md:text-2xl font-black text-gray-900 leading-tight">
                         {currentLesson?.title || 'جاري التحميل...'}
@@ -808,11 +840,11 @@ export default function CoursePlayerPage() {
                         onClick={handleToggleComplete}
                         className={cn(
                           "flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-black text-xs transition-all shadow-md",
-                          (currentLesson as any)?.is_completed ? "bg-blue-800 text-white shadow-blue-900/20" : "bg-blue-700 text-white hover:bg-blue-800 shadow-blue-700/20"
+                          currentLesson?.is_completed ? "bg-blue-800 text-white shadow-blue-900/20" : "bg-blue-700 text-white hover:bg-blue-800 shadow-blue-700/20"
                         )}
                       >
                         <CheckCircle2 size={16} />
-                        <span>{(currentLesson as any)?.is_completed ? 'إلغاء الإكمال' : 'إكمال الدرس'}</span>
+                        <span>{currentLesson?.is_completed ? 'إلغاء الإكمال' : 'إكمال الدرس'}</span>
                       </button>
                       <button 
                         onClick={handleNextLesson}

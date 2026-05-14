@@ -1,6 +1,6 @@
 import studentApi from '@/lib/student-api';
-import { ApiResponse } from '@/types/api';
-import { Course } from '@/types/student';
+import { ApiResponse, Course } from '@/types/api';
+import { Course as StudentCourse } from '@/types/student';
 
 /** Backend may put the course under `data` or `data.course`. */
 function normalizeMyCourseDetailsPayload(data: unknown): unknown {
@@ -11,9 +11,9 @@ function normalizeMyCourseDetailsPayload(data: unknown): unknown {
   return data;
 }
 
-export const getStudentCourses = async (): Promise<Course[]> => {
+export const getStudentCourses = async (): Promise<StudentCourse[]> => {
   try {
-    const response = await studentApi.get<ApiResponse<Course[]>>('courses');
+    const response = await studentApi.get<ApiResponse<StudentCourse[]>>('courses');
     return response.data.data;
   } catch (error: any) {
     console.error('Failed to get student courses:', error);

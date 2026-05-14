@@ -34,6 +34,68 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, userEmail }) => {
     return () => clearInterval(timer);
   }, []);
 
+  const [isMuted, setIsMuted] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value);
+    setVolume(val);
+    if (videoRef.current) {
+      videoRef.current.volume = val;
+      videoRef.current.muted = val === 0;
+      setIsMuted(val === 0);
+    }
+  };
+
+  const handleSeekMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    handleSeekUpdate(e);
+  };
+
+  const handleSeekMouseMove = (e: React.MouseEvent) => {
+    if (isDragging) {
+      handleSeekUpdate(e);
+    }
+  };
+
+  const handleSeekMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleSeekUpdate = (e: React.MouseEvent) => {
+    if (containerRef.current && videoRef.current) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const clickedPos = Math.max(0, Math.min(1, x / rect.width));
+      const time = clickedPos * duration;
+      videoRef.current.currentTime = time;
+      setCurrentTime(time);
+    }
+  };
+
+  const toggleFullScreen = () => {
+    if (containerRef.current) {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        containerRef.current.requestFullscreen();
+      }
+    }
+  };
+
   const { 
     isPlaying, setIsPlaying, 
     playbackSpeed, setPlaybackSpeed,
@@ -61,24 +123,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, userEmail }) => {
     }
   };
 
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const time = (parseFloat(e.target.value) / 100) * duration;
-    if (videoRef.current) {
-      videoRef.current.currentTime = time;
-      setCurrentTime(time);
-    }
-  };
-
   const skip = (amount: number) => {
     if (videoRef.current) {
       videoRef.current.currentTime += amount;
-    }
-  };
-
-  const toggleFullscreen = () => {
-    if (containerRef.current?.requestFullscreen) {
-      if (document.fullscreenElement) document.exitFullscreen();
-      else containerRef.current.requestFullscreen();
     }
   };
 
@@ -180,7 +227,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, userEmail }) => {
               </motion.button>
             </div>
 
-            // Bottom Controls
+            {/* Bottom Controls */}
             <div className="space-y-4 p-4">
               {/* Progress Bar */}
               <div

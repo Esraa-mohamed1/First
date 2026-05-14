@@ -1,4 +1,4 @@
-import { Course, UserProfile } from './index';
+import { Course, UserProfile } from '@/types/student';
 
 export const mockUserProfile: UserProfile = {
   name: 'Ahmed Mohamed Al-Otaibi',

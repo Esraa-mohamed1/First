@@ -1,11 +1,16 @@
 export interface Lesson {
-  id: string;
+  id: string | number;
   title: string;
   description: string;
-  videoUrl: string;
+  videoUrl?: string;
+  video_url?: string;
   duration: string;
-  isCompleted: boolean;
-  isLocked: boolean;
+  isCompleted?: boolean;
+  is_completed?: boolean;
+  isLocked?: boolean;
+  is_locked?: boolean;
+  updated_at?: string;
+  created_at?: string;
   resources?: Resource[];
   notes?: string;
 }

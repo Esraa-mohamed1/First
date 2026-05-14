@@ -101,7 +101,7 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
             setPricingType((course as any).price_type || (Number(course.price) === 0 ? 'free' : 'paid'));
             setStatus(course.status || 'draft');
             setPrice(course.price?.toString() || '');
-            setCurrency(course.currency || 'SAR');
+            setCurrency((course.currency as any) || 'SAR');
             setSelectedInstructor(course.user_id || null);
             if (course.image) setPreviewUrl(course.image);
           }

@@ -89,7 +89,7 @@ export interface Course {
   description: string;
   category?: string; 
   category_id?: number | null;
-  instructor?: string; 
+  instructor?: any; 
   user_id: number;
   price: string | number; 
   final_price: string | number;
@@ -99,6 +99,14 @@ export interface Course {
   status: 'published' | 'draft';
   type: string;
   units?: Unit[];
+  chapters?: Unit[];
+  infos?: any[];
+  what_you_will_learn?: string;
+  what_you_learn?: string;
+  target_audience?: string;
+  currency?: string;
+  instructor_name?: string;
+  is_enrolled?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -158,4 +166,9 @@ export interface ApiResponse<T> {
   success?: boolean;
   message: string;
   data: T;
+  meta?: {
+    access_token?: string;
+    token_type?: string;
+    [key: string]: any;
+  };
 }

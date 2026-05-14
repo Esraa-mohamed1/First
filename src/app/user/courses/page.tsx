@@ -36,7 +36,7 @@ export default function CoursesPage() {
           slug: c.slug || '',
           description: c.description || '',
           progress: c.progress || 0,
-          image: c.image || '',
+          image: c.image || c.cover_image || c.thumbnail || '',
           instructor: c.instructor_name || '',
           category: c.category?.name || 'General',
           status: (c.progress === 100 ? 'completed' : c.progress > 0 ? 'in-progress' : 'not-started') as any,
