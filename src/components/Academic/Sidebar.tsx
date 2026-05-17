@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutGrid, GraduationCap, Users, FileText, Package, TrendingUp, Settings, LogOut, ChevronLeft, X, LayoutDashboard, Plus } from 'lucide-react';
+import { LayoutGrid, GraduationCap, Users, FileText, Package, TrendingUp, Settings, LogOut, ChevronLeft, X, LayoutDashboard, Plus, Wallet, Landmark, ReceiptText, Megaphone, Ticket, Award, Star } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Image from 'next/image';
@@ -48,6 +48,12 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     if (pathname.startsWith('/academic/settings') || pathname === '/academic/domain') {
       setExpandedItems(prev => (prev.includes('الأعدادات') ? prev : [...prev, 'الأعدادات']));
     }
+    if (pathname.startsWith('/academic/finance')) {
+      setExpandedItems(prev => (prev.includes('المالية') ? prev : [...prev, 'المالية']));
+    }
+    if (pathname.startsWith('/academic/marketing') || pathname.startsWith('/academic/coupons')) {
+      setExpandedItems(prev => (prev.includes('التسويق') ? prev : [...prev, 'التسويق']));
+    }
   }, [pathname]);
 
   const menuItems = [
@@ -80,19 +86,41 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       href: '/academic/coaches',
     },
     {
-      label: 'التقارير',
-      icon: FileText,
-      href: '/academic/reports',
+        label: 'المالية',
+        icon: Landmark,
+        href: '/academic/finance/overview',
+        subItems: [
+          { label: 'نظرة عامة', href: '/academic/finance/overview' },
+          { label: 'المحفظة', href: '/academic/finance/wallet' },
+          { label: 'المبيعات', href: '/academic/finance/sales' },
+          { label: 'الفواتير', href: '/academic/finance/invoices' },
+          { label: 'التقارير', href: '/academic/finance/reports' },
+          { label: 'طريقة استلام المدفوعات', href: '/academic/finance/payout-methods' },
+        ]
+      },
+    {
+      label: 'التسويق',
+      icon: Megaphone,
+      href: '/academic/marketing',
+      subItems: [
+        { label: 'الحملات', href: '/academic/marketing' },
+        { label: 'الكوبونات', href: '/academic/coupons' },
+      ]
+    },
+    {
+      label: 'الشهادات',
+      icon: Award,
+      href: '/academic/certificates',
+    },
+    {
+      label: 'التقييمات',
+      icon: Star,
+      href: '/academic/reviews',
     },
     {
       label: 'الباقة والأستخدام',
       icon: Package,
       href: '/academic/packages',
-    },
-    {
-      label: 'المبيعات',
-      icon: TrendingUp,
-      href: '/academic/sales',
     },
     {
       label: 'الأعدادات',

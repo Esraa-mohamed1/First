@@ -89,7 +89,7 @@ export default function AcademicLayout({
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFF] flex relative" dir="rtl">
+    <div className="min-h-screen bg-[#F0F2F5] flex relative" dir="rtl">
 
 
 
