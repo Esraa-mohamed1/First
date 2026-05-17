@@ -2,18 +2,18 @@
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { 
-  Play, Pause, SkipForward, SkipBack, Settings, Maximize, Minimize, 
+import {
+  Play, Pause, SkipForward, SkipBack, Settings, Maximize, Minimize,
   Volume2, VolumeX, ListVideo, Search, ChevronDown, ChevronUp,
   PlayCircle, FileText, Menu, X, ArrowRight, ArrowLeft, Trophy, Star,
   Download, MessageSquare, Info, StickyNote, ThumbsUp, MessageCircle,
   Clock, CheckCircle2, Lock, AlertCircle, Pencil, Trash2, Bell
 } from 'lucide-react';
-import { 
-  getMyCourseDetails, 
-  trackLessonProgress, 
-  addLessonNote, 
-  addLessonComment, 
+import {
+  getMyCourseDetails,
+  trackLessonProgress,
+  addLessonNote,
+  addLessonComment,
   likeComment,
   getLessonNotes,
   getLessonComments,
@@ -22,7 +22,7 @@ import {
   updateLessonComment,
   deleteLessonComment
 } from '@/services/student-courses';
-import { getLessonVideoSrc } from '@/lib/lesson-video-src';
+import { getLessonVideoSrc, getLessonVideoIds } from '@/lib/lesson-video-src';
 import {
   canAccessStudentLearning,
   getStoredAuthToken,
@@ -72,7 +72,7 @@ interface Comment {
 export default function CoursePlayerPage() {
   const { id } = useParams();
   const router = useRouter();
-  
+
   // States
   const [courseData, setCourseData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -83,7 +83,7 @@ export default function CoursePlayerPage() {
   const [showCompletion, setShowCompletion] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFullDescription, setShowFullDescription] = useState(false);
-  
+
   // Note & Comment States
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState('');
@@ -95,6 +95,13 @@ export default function CoursePlayerPage() {
   const videoRef = useRef<HTMLIFrameElement>(null);
   const { currentLesson, setCurrentLesson, playbackSpeed, setPlaybackSpeed } = usePlayerStore();
   const [currentTime, setCurrentTime] = useState(0);
+  const [activeVideoSrc, setActiveVideoSrc] = useState('');
+
+  const videoContext = useMemo(() => {
+    const c = courseData?.course ?? courseData;
+    const libraryId = c?.library_id ?? c?.libraryId;
+    return libraryId ? { libraryId: String(libraryId) } : undefined;
+  }, [courseData]);
 
   // Persistence Logic
   const storageKey = useMemo(() => `tracking_${id}`, [id]);
@@ -140,12 +147,12 @@ export default function CoursePlayerPage() {
         const course = data?.course ?? data;
         if (course.chapters?.length > 0) {
           setExpandedChapters([course.chapters[0].id]);
-          
+
           const firstLesson = course.chapters[0].lessons?.[0];
-          
+
           if (firstLesson) {
-          
-            const lessonInCourse = currentLesson && course.chapters.some((c: any) => 
+
+            const lessonInCourse = currentLesson && course.chapters.some((c: any) =>
               c.lessons?.some((l: any) => l.id === currentLesson.id)
             );
 
@@ -167,8 +174,8 @@ export default function CoursePlayerPage() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      
-      switch(e.key.toLowerCase()) {
+
+      switch (e.key.toLowerCase()) {
         case ' ':
         case 'k':
           e.preventDefault();
@@ -195,7 +202,7 @@ export default function CoursePlayerPage() {
       const localData = JSON.parse(localStorage.getItem(storageKey) || '{}');
       localData[lessonId] = seconds;
       localStorage.setItem(storageKey, JSON.stringify(localData));
-      
+
       await trackLessonProgress(id as string, lessonId, seconds);
     } catch (e) {
       console.error('Sync failed', e);
@@ -220,13 +227,13 @@ export default function CoursePlayerPage() {
           // Not a JSON message or not from Bunny
         }
       }
- 
+
       if (event.data.type === 'video-progress' && currentLesson) {
         const seconds = Math.floor(event.data.seconds);
         if (!isNaN(seconds)) {
           setCurrentTime(seconds);
           syncProgress(Number(currentLesson.id), seconds);
-          
+
           // Completion logic
           if (event.data.isEnd) {
             setShowCompletion(true);
@@ -265,7 +272,7 @@ export default function CoursePlayerPage() {
 
   const handleAddNote = async () => {
     if (!newNote.trim() || !currentLesson) return;
-    
+
     try {
       await addLessonNote(currentLesson.id, newNote, currentTime);
       await fetchInteractions();
@@ -486,29 +493,76 @@ export default function CoursePlayerPage() {
     }
   }, [currentLesson]);
 
-  const activeVideoSrc = useMemo(() => {
-    if (!currentLesson) return '';
-    const src = getLessonVideoSrc(currentLesson as any);
-    if (!src) return '';
-    
-    // Append pullData=true to enable message events from Bunny Player
-    const separator = src.includes('?') ? '&' : '?';
-    return `${src}${separator}pullData=true`;
-  }, [currentLesson]);
+  useEffect(() => {
+    let cancelled = false;
+
+    const appendPullData = (src: string) => {
+      if (!src) return '';
+      const separator = src.includes('?') ? '&' : '?';
+      return `${src}${separator}pullData=true`;
+    };
+
+    const resolveVideoSrc = async () => {
+      if (!currentLesson) {
+        setActiveVideoSrc('');
+        return;
+      }
+
+      const lesson = currentLesson as unknown as Record<string, unknown>;
+      const fallback = getLessonVideoSrc(lesson, videoContext);
+      const ids = getLessonVideoIds(lesson, videoContext);
+
+      if (ids) {
+        try {
+          const params = new URLSearchParams({
+            videoId: ids.videoId,
+            libraryId: ids.libraryId,
+          });
+          const res = await fetch(`/api/video/embed-url?${params.toString()}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (!cancelled && typeof data.src === 'string' && data.src) {
+              let src = data.src;
+              const watched = Number(
+                lesson.watched_seconds ?? lesson.watchedSeconds ?? 0
+              );
+              if (watched > 0) {
+                const timeSep = src.includes('?') ? '&' : '?';
+                src = `${src}${timeSep}t=${watched}`;
+              }
+              setActiveVideoSrc(appendPullData(src));
+              return;
+            }
+          }
+        } catch (err) {
+          console.warn('Could not resolve signed embed URL, using fallback', err);
+        }
+      }
+
+      if (!cancelled) {
+        setActiveVideoSrc(appendPullData(fallback));
+      }
+    };
+
+    void resolveVideoSrc();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentLesson, videoContext]);
 
   const handleNextLesson = async () => {
     if (!currentLesson || !course) return;
-    
+
     try {
       // Re-fetch course details to get latest progress
       const data = await getMyCourseDetails(id as string);
       setCourseData(data);
       const updatedCourse = data?.course ?? data;
       const updatedChapters = updatedCourse?.chapters || [];
-      
+
       const allLessons = updatedChapters.flatMap((c: any) => c.lessons || []);
       const currentIndex = allLessons.findIndex((l: any) => l.id === currentLesson.id);
-      
+
       if (currentIndex !== -1 && currentIndex < allLessons.length - 1) {
         setCurrentLesson(allLessons[currentIndex + 1]);
       } else {
@@ -530,19 +584,19 @@ export default function CoursePlayerPage() {
     if (!currentLesson || !course) return;
     try {
       const isCurrentlyCompleted = (currentLesson as any).is_completed;
-      
+
       // If we are marking as complete, send 'completed' event
       const events = isCurrentlyCompleted ? ['play', 'pause', 'seek', 'end'] : ['play', 'pause', 'seek', 'end', 'completed'];
-      
+
       await trackLessonProgress(id as string, Number(currentLesson.id), isCurrentlyCompleted ? 0 : 999999, events);
-      
+
       // Update local state
       const updatedChapters = chapters.map((c: any) => ({
         ...c,
         lessons: c.lessons?.map((l: any) => l.id === currentLesson.id ? { ...l, is_completed: !isCurrentlyCompleted } : l)
       }));
       setCourseData({ ...courseData, chapters: updatedChapters });
-      
+
       MySwal.fire({
         icon: 'success',
         title: isCurrentlyCompleted ? 'تم إلغاء إكمال الدرس' : 'تم إكمال الدرس بنجاح!',
@@ -602,37 +656,37 @@ export default function CoursePlayerPage() {
     <div className="flex flex-col font-sans min-h-screen bg-[#F8FAFC]" dir="rtl">
       {/* Custom Header matching the reference */}
       <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-sm">
-         <div className="flex items-center gap-6">
-            <button onClick={() => router.push('/student/courses')} className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors font-bold">
-              <X size={20} />
-              <span className="text-sm">خروج</span>
-            </button>
-            <div className="h-6 w-px bg-gray-200" />
-            <div className="text-xl font-black text-blue-600">Darrab</div>
-         </div>
-         
-         <div className="hidden md:flex flex-col items-center flex-1 max-w-md mx-8">
-            <div className="flex items-center justify-between w-full mb-2">
-               <span className="text-sm font-black text-gray-900 truncate">{course.title}</span>
-               <span className="text-xs font-black text-[#0F766E]">65% مكتمل</span>
-            </div>
-            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-               <div className="w-[65%] h-full bg-[#0F766E] rounded-full" />
-            </div>
-         </div>
+        <div className="flex items-center gap-6">
+          <button onClick={() => router.push('/student/courses')} className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors font-bold">
+            <X size={20} />
+            <span className="text-sm">خروج</span>
+          </button>
+          <div className="h-6 w-px bg-gray-200" />
+          <div className="text-xl font-black text-blue-600">Darrab</div>
+        </div>
 
-         <div className="flex items-center gap-4">
-            <button className="relative p-2 text-gray-500 hover:bg-gray-50 rounded-full transition-colors">
-               <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></div>
-               <Bell size={20} />
-            </button>
-            <div className="flex items-center gap-3">
-               <span className="text-sm font-bold text-gray-700 hidden md:block">أحمد العتيبي</span>
-               <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-100">
-                  <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Ahmed" alt="User" className="w-full h-full object-cover" />
-               </div>
+        <div className="hidden md:flex flex-col items-center flex-1 max-w-md mx-8">
+          <div className="flex items-center justify-between w-full mb-2">
+            <span className="text-sm font-black text-gray-900 truncate">{course.title}</span>
+            <span className="text-xs font-black text-[#0F766E]">65% مكتمل</span>
+          </div>
+          <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="w-[65%] h-full bg-[#0F766E] rounded-full" />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <button className="relative p-2 text-gray-500 hover:bg-gray-50 rounded-full transition-colors">
+            <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></div>
+            <Bell size={20} />
+          </button>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-bold text-gray-700 hidden md:block">أحمد العتيبي</span>
+            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-100">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Ahmed" alt="User" className="w-full h-full object-cover" />
             </div>
-         </div>
+          </div>
+        </div>
       </header>
 
       <div className="flex flex-1 relative">
@@ -644,12 +698,12 @@ export default function CoursePlayerPage() {
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
-        
+
         <main className="flex-1 flex flex-col overflow-y-auto custom-scrollbar min-w-0">
           <div className="max-w-[min(100%,100rem)] mx-auto w-full p-4 lg:p-8 space-y-8">
-            
+
             <div className="flex flex-col lg:flex-row gap-8 lg:items-start">
-              
+
               {/* Right Sidebar - Curriculum (First in DOM for RTL) */}
               <aside
                 className={cn(
@@ -752,7 +806,7 @@ export default function CoursePlayerPage() {
 
               {/* Left Content - Video & Details */}
               <div className="flex-1 min-w-0 space-y-6">
-                
+
                 {/* Video Player Container */}
                 <div className="bg-black rounded-[32px] md:rounded-[40px] overflow-hidden shadow-2xl relative aspect-video group">
                   {currentLesson ? (
@@ -763,6 +817,7 @@ export default function CoursePlayerPage() {
                         className="w-full h-full border-0"
                         allowFullScreen
                         allow="autoplay; encrypted-media; picture-in-picture"
+                        referrerPolicy="strict-origin-when-cross-origin"
                         title={currentLesson.title}
                       />
                     ) : (
@@ -781,143 +836,143 @@ export default function CoursePlayerPage() {
 
                 {/* Lesson Header & Actions */}
                 <div className="bg-white p-6 md:p-8 rounded-[32px] shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start gap-6">
-                   <div className="space-y-4 flex-1">
-                     <div className="flex items-center gap-3">
-                        <span className="px-3 py-1 bg-red-50 text-red-600 text-[10px] font-black rounded-full">محاضرة مميزة</span>
-                        <span className="text-[10px] font-bold text-gray-400">
-                          تم التحديث: {(() => {
-                            try {
-                              if (currentLesson?.updated_at) {
-                                const date = new Date(currentLesson.updated_at);
-                                if (!isNaN(date.getTime())) {
-                                  return date.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' });
-                                }
+                  <div className="space-y-4 flex-1">
+                    <div className="flex items-center gap-3">
+                      <span className="px-3 py-1 bg-red-50 text-red-600 text-[10px] font-black rounded-full">محاضرة مميزة</span>
+                      <span className="text-[10px] font-bold text-gray-400">
+                        تم التحديث: {(() => {
+                          try {
+                            if (currentLesson?.updated_at) {
+                              const date = new Date(currentLesson.updated_at);
+                              if (!isNaN(date.getTime())) {
+                                return date.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' });
                               }
-                            } catch (e) {
-                              // Fallback if formatting fails
                             }
-                            return '24 أكتوبر 2023';
-                          })()}
-                        </span>
-                     </div>
-                     <h2 className="text-xl md:text-2xl font-black text-gray-900 leading-tight">
-                        {currentLesson?.title || 'جاري التحميل...'}
-                     </h2>
-                     <div className="text-gray-500 font-medium text-sm leading-relaxed max-w-3xl">
-                        {(() => {
-                          const description = currentLesson?.description 
-                            ? currentLesson.description.replace(/<[^>]*>/g, '')
-                            : (course?.description ? course.description.replace(/<[^>]*>/g, '') : 'في هذا الدرس، سنستكشف كيفية توظيف أدوات الذكاء الاصطناعي في صياغة خطط الدروس، إنشاء الأنشطة التفاعلية، وتصميم اختبارات تقييم مخصصة لمستويات الطلاب المختلفة.');
-                          
-                          const shouldTruncate = description.length > 150;
-                          const displayDescription = (shouldTruncate && !showFullDescription) 
-                            ? description.substring(0, 150) + '...' 
-                            : description;
-
-                          return (
-                            <>
-                              <span>{displayDescription}</span>
-                              {shouldTruncate && (
-                                <button 
-                                  onClick={() => setShowFullDescription(!showFullDescription)}
-                                  className="text-blue-600 mr-2 hover:underline focus:outline-none font-bold"
-                                >
-                                  {showFullDescription ? 'عرض أقل' : 'اقرأ المزيد'}
-                                </button>
-                              )}
-                            </>
-                          );
+                          } catch (e) {
+                            // Fallback if formatting fails
+                          }
+                          return '24 أكتوبر 2023';
                         })()}
-                     </div>
-                   </div>
-                   <div className="flex flex-row md:flex-col gap-3 w-full md:w-auto shrink-0">
-                      <button 
-                        onClick={handleToggleComplete}
-                        className={cn(
-                          "flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-black text-xs transition-all shadow-md",
-                          currentLesson?.is_completed ? "bg-blue-800 text-white shadow-blue-900/20" : "bg-blue-700 text-white hover:bg-blue-800 shadow-blue-700/20"
-                        )}
-                      >
-                        <CheckCircle2 size={16} />
-                        <span>{currentLesson?.is_completed ? 'إلغاء الإكمال' : 'إكمال الدرس'}</span>
-                      </button>
-                      <button 
-                        onClick={handleNextLesson}
-                        className="flex items-center justify-center gap-2 px-6 py-3 bg-[#A7F3D0] hover:bg-[#6EE7B7] text-[#065F46] rounded-2xl font-black text-xs transition-all shadow-md shadow-emerald-100"
-                      >
-                        <span>الدرس التالي</span>
-                        <ArrowLeft size={16} />
-                      </button>
-                   </div>
-                </div>
+                      </span>
+                    </div>
+                    <h2 className="text-xl md:text-2xl font-black text-gray-900 leading-tight">
+                      {currentLesson?.title || 'جاري التحميل...'}
+                    </h2>
+                    <div className="text-gray-500 font-medium text-sm leading-relaxed max-w-3xl">
+                      {(() => {
+                        const description = currentLesson?.description
+                          ? currentLesson.description.replace(/<[^>]*>/g, '')
+                          : (course?.description ? course.description.replace(/<[^>]*>/g, '') : 'في هذا الدرس، سنستكشف كيفية توظيف أدوات الذكاء الاصطناعي في صياغة خطط الدروس، إنشاء الأنشطة التفاعلية، وتصميم اختبارات تقييم مخصصة لمستويات الطلاب المختلفة.');
 
-            {/* Resources Section */}
-            <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100 space-y-6">
-               <div className="flex items-center justify-between">
-                 <div className="flex items-center gap-3 text-gray-900 font-black">
-                    <Download size={20} className="text-teal-600" />
-                    <h3>مصادر تعليمية للتحميل</h3>
-                 </div>
-               </div>
-               
-               {(currentLesson as any)?.attachments && (currentLesson as any).attachments.length > 0 ? (
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {(currentLesson as any).attachments.map((resource: any, i: number) => (
-                      <div key={i} className="flex items-center justify-between p-5 bg-gray-50 rounded-[24px] border border-gray-100 hover:border-blue-200 transition-all cursor-pointer group">
-                         <div className="flex items-center gap-4">
-                            <div className={cn("w-12 h-12 flex items-center justify-center rounded-2xl bg-blue-50 text-blue-600")}>
-                               <FileText size={24} />
-                            </div>
-                            <div className="text-right">
-                               <h4 className="text-sm font-black text-gray-900 mb-1">{resource.title || 'مرفق تعليمي'}</h4>
-                               <p className="text-[10px] font-bold text-gray-400 uppercase">{resource.type || 'FILE'} • {resource.size || '---'}</p>
-                            </div>
-                         </div>
-                      </div>
-                    ))}
-                 </div>
-               ) : (
-                 <div className="flex flex-col items-center justify-center py-10 bg-gray-50/50 rounded-[24px] border border-dashed border-gray-200">
-                    <AlertCircle size={32} className="text-gray-300 mb-3" />
-                    <p className="text-gray-400 font-bold text-sm">لا توجد مرفقات تعليمية متاحة لهذا الدرس حالياً.</p>
-                 </div>
-               )}
-            </div>
+                        const shouldTruncate = description.length > 150;
+                        const displayDescription = (shouldTruncate && !showFullDescription)
+                          ? description.substring(0, 150) + '...'
+                          : description;
 
-            {/* Interaction Section (Tabs) */}
-            <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden min-h-[500px] flex flex-col">
-               <div className="flex items-center justify-center border-b border-gray-100 px-8 shrink-0">
-                  {[
-                    { id: 'comments', label: 'نقاش الدرس' },
-                    { id: 'notes', label: 'الملاحظات' },
-                  ].map(tab => (
+                        return (
+                          <>
+                            <span>{displayDescription}</span>
+                            {shouldTruncate && (
+                              <button
+                                onClick={() => setShowFullDescription(!showFullDescription)}
+                                className="text-blue-600 mr-2 hover:underline focus:outline-none font-bold"
+                              >
+                                {showFullDescription ? 'عرض أقل' : 'اقرأ المزيد'}
+                              </button>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                  <div className="flex flex-row md:flex-col gap-3 w-full md:w-auto shrink-0">
                     <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id as any)}
+                      onClick={handleToggleComplete}
                       className={cn(
-                        "px-10 py-6 font-black text-sm transition-all relative",
-                        activeTab === tab.id ? "text-blue-600" : "text-gray-400 hover:text-gray-600"
+                        "flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-black text-xs transition-all shadow-md",
+                        currentLesson?.is_completed ? "bg-blue-800 text-white shadow-blue-900/20" : "bg-blue-700 text-white hover:bg-blue-800 shadow-blue-700/20"
                       )}
                     >
-                      <span>{tab.label}</span>
-                      {activeTab === tab.id && (
-                        <motion.div layoutId="activeTabUI" className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
-                      )}
+                      <CheckCircle2 size={16} />
+                      <span>{currentLesson?.is_completed ? 'إلغاء الإكمال' : 'إكمال الدرس'}</span>
                     </button>
-                  ))}
-               </div>
+                    <button
+                      onClick={handleNextLesson}
+                      className="flex items-center justify-center gap-2 px-6 py-3 bg-[#A7F3D0] hover:bg-[#6EE7B7] text-[#065F46] rounded-2xl font-black text-xs transition-all shadow-md shadow-emerald-100"
+                    >
+                      <span>الدرس التالي</span>
+                      <ArrowLeft size={16} />
+                    </button>
+                  </div>
+                </div>
 
-               <div className="flex-1 p-8 lg:p-12">
-                  <AnimatePresence mode="wait">
-                    {activeTab === 'comments' && (
-                      <motion.div 
-                        key="comments_ui" 
-                        initial={{ opacity: 0, y: 10 }} 
-                        animate={{ opacity: 1, y: 0 }}
-                        className="space-y-12"
+                {/* Resources Section */}
+                <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-gray-900 font-black">
+                      <Download size={20} className="text-teal-600" />
+                      <h3>مصادر تعليمية للتحميل</h3>
+                    </div>
+                  </div>
+
+                  {(currentLesson as any)?.attachments && (currentLesson as any).attachments.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {(currentLesson as any).attachments.map((resource: any, i: number) => (
+                        <div key={i} className="flex items-center justify-between p-5 bg-gray-50 rounded-[24px] border border-gray-100 hover:border-blue-200 transition-all cursor-pointer group">
+                          <div className="flex items-center gap-4">
+                            <div className={cn("w-12 h-12 flex items-center justify-center rounded-2xl bg-blue-50 text-blue-600")}>
+                              <FileText size={24} />
+                            </div>
+                            <div className="text-right">
+                              <h4 className="text-sm font-black text-gray-900 mb-1">{resource.title || 'مرفق تعليمي'}</h4>
+                              <p className="text-[10px] font-bold text-gray-400 uppercase">{resource.type || 'FILE'} • {resource.size || '---'}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-10 bg-gray-50/50 rounded-[24px] border border-dashed border-gray-200">
+                      <AlertCircle size={32} className="text-gray-300 mb-3" />
+                      <p className="text-gray-400 font-bold text-sm">لا توجد مرفقات تعليمية متاحة لهذا الدرس حالياً.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Interaction Section (Tabs) */}
+                <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden min-h-[500px] flex flex-col">
+                  <div className="flex items-right border-b border-gray-100 px-8 shrink-0">
+                    {[
+                      { id: 'comments', label: 'نقاش الدرس' },
+                      { id: 'notes', label: 'الملاحظات' },
+                    ].map(tab => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as any)}
+                        className={cn(
+                          "px-10 py-6 font-black text-sm transition-all relative",
+                          activeTab === tab.id ? "text-blue-600 bg-blue-50" : "text-[#080616] hover:text-gray-600"
+                        )}
                       >
-                         {/* Styled Comment Input */}
-                         <div className="max-w-3xl mx-auto bg-gray-100/40 p-8 rounded-[40px] border border-gray-200 relative">
+                        <span>{tab.label}</span>
+                        {activeTab === tab.id && (
+                          <motion.div layoutId="activeTabUI" className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex-1 p-8 lg:p-12">
+                    <AnimatePresence mode="wait">
+                      {activeTab === 'comments' && (
+                        <motion.div
+                          key="comments_ui"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="space-y-12"
+                        >
+                          {/* Styled Comment Input */}
+                          <div className="max-w-3xl mx-auto bg-gray-100/40 p-8 rounded-[40px] border border-gray-200 relative">
                             {replyingTo && (
                               <div className="mb-4 flex items-center justify-between bg-blue-100/50 px-5 py-3 rounded-[24px] border border-blue-200">
                                 <span className="text-xs font-bold text-blue-800">
@@ -929,53 +984,53 @@ export default function CoursePlayerPage() {
                               </div>
                             )}
                             <div className="flex gap-5">
-                               <div className="w-12 h-12 rounded-[18px] bg-blue-600 flex items-center justify-center text-white font-black text-xl shrink-0 overflow-hidden shadow-lg shadow-blue-100">
-                                  <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar" />
-                               </div>
-                               <textarea
-                                 value={newComment}
-                                 onChange={(e) => setNewComment(e.target.value)}
-                                 placeholder={replyingTo ? "اكتب ردك هنا..." : "أضف تعليقاً أو استفساراً..."}
-                                 className="flex-1 bg-transparent border-none text-sm font-bold text-gray-800 placeholder-gray-500 outline-none resize-none min-h-[100px]"
-                               />
+                              <div className="w-12 h-12 rounded-[18px] bg-blue-600 flex items-center justify-center text-white font-black text-xl shrink-0 overflow-hidden shadow-lg shadow-blue-100">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar" />
+                              </div>
+                              <textarea
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                placeholder={replyingTo ? "اكتب ردك هنا..." : "أضف تعليقاً أو استفساراً..."}
+                                className="flex-1 bg-transparent border-none text-sm font-bold text-gray-800 placeholder-gray-500 outline-none resize-none min-h-[100px]"
+                              />
                             </div>
                             <div className="flex justify-start mt-4 pr-16">
-                               <button 
-                                 onClick={handleAddComment}
-                                 disabled={!newComment.trim()}
-                                 className="px-10 py-3.5 bg-blue-600 text-white rounded-[20px] font-black text-sm shadow-xl shadow-blue-200 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
-                               >
-                                 {replyingTo ? "نشر الرد" : "نشر التعليق"}
-                               </button>
+                              <button
+                                onClick={handleAddComment}
+                                disabled={!newComment.trim()}
+                                className="px-10 py-3.5 bg-blue-600 text-white rounded-[20px] font-black text-sm shadow-xl shadow-blue-200 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
+                              >
+                                {replyingTo ? "نشر الرد" : "نشر التعليق"}
+                              </button>
                             </div>
-                         </div>
+                          </div>
 
-                         {/* Comments List */}
-                         <div className="max-w-3xl mx-auto space-y-8">
+                          {/* Comments List */}
+                          <div className="max-w-3xl mx-auto space-y-8">
                             <div className="flex items-center justify-between pb-6 border-b border-gray-50">
-                               <h4 className="font-black text-gray-900">آخر التعليقات ({comments.length})</h4>
-                               <button className="text-xs font-black text-blue-600 flex items-center gap-1">
-                                  <span>الأحدث أولاً</span>
-                                  <ChevronDown size={14} />
-                               </button>
+                              <h4 className="font-black text-gray-900">آخر التعليقات ({comments.length})</h4>
+                              <button className="text-xs font-black text-blue-600 flex items-center gap-1">
+                                <span>الأحدث أولاً</span>
+                                <ChevronDown size={14} />
+                              </button>
                             </div>
 
                             <div className="space-y-10">
                               {comments.map(comment => (
                                 <div key={comment.id} className="flex gap-5 group">
                                   <div className="w-12 h-12 rounded-2xl bg-gray-100 overflow-hidden shrink-0 shadow-sm">
-                                     <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.user?.name || 'User'}`} alt="avatar" />
+                                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.user?.name || 'User'}`} alt="avatar" />
                                   </div>
                                   <div className="flex-1 space-y-2">
                                     <div className="flex items-center justify-between">
-                                       <h4 className="font-black text-sm text-gray-900">{comment.user?.name || 'طالب درب'}</h4>
-                                       <span className="text-[10px] font-bold text-gray-400">{new Date(comment.created_at).toLocaleDateString('ar-EG')}</span>
+                                      <h4 className="font-black text-sm text-gray-900">{comment.user?.name || 'طالب درب'}</h4>
+                                      <span className="text-[10px] font-bold text-gray-400">{new Date(comment.created_at).toLocaleDateString('ar-EG')}</span>
                                     </div>
                                     <div className="text-gray-600 text-sm font-bold leading-relaxed">
-                                       <ReactMarkdown>{comment.body}</ReactMarkdown>
+                                      <ReactMarkdown>{comment.body}</ReactMarkdown>
                                     </div>
                                     <div className="flex items-center gap-6 pt-2">
-                                      <button 
+                                      <button
                                         onClick={() => handleLikeComment(String(comment.id))}
                                         className={cn(
                                           "flex items-center gap-1.5 transition-colors",
@@ -985,7 +1040,7 @@ export default function CoursePlayerPage() {
                                         <ThumbsUp size={16} fill={(comment as any).is_liked ? "currentColor" : "none"} />
                                         <span className="text-[10px] font-black">{(comment as any).likes_count || 0} إعجاب</span>
                                       </button>
-                                      <button 
+                                      <button
                                         onClick={() => {
                                           setReplyingTo(comment);
                                           document.querySelector('textarea')?.focus();
@@ -995,74 +1050,74 @@ export default function CoursePlayerPage() {
                                         <ArrowLeft size={16} className="rotate-180" />
                                         <span className="text-[10px] font-black">رد</span>
                                       </button>
-                                      
+
                                       <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity ml-auto">
                                         <button onClick={() => handleEditComment(comment)} className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors"><Pencil size={14} /></button>
                                         <button onClick={() => handleDeleteComment(String(comment.id))} className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"><Trash2 size={14} /></button>
                                       </div>
                                     </div>
-                                    
+
                                     {/* Replies Rendering */}
                                     {comment.replies && comment.replies.length > 0 && (
                                       <div className="mt-6 space-y-6 pr-10 border-r-2 border-gray-50">
-                                         {comment.replies.map(reply => (
-                                           <div key={reply.id} className="flex gap-4 group/reply">
-                                              <div className="w-10 h-10 rounded-xl bg-gray-100 overflow-hidden shrink-0">
-                                                 <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.user?.name || 'User'}`} alt="avatar" />
+                                        {comment.replies.map(reply => (
+                                          <div key={reply.id} className="flex gap-4 group/reply">
+                                            <div className="w-10 h-10 rounded-xl bg-gray-100 overflow-hidden shrink-0">
+                                              <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.user?.name || 'User'}`} alt="avatar" />
+                                            </div>
+                                            <div className="flex-1 space-y-1">
+                                              <div className="flex items-center justify-between">
+                                                <h5 className="font-black text-xs text-gray-900">{reply.user?.name || 'طالب درب'}</h5>
+                                                <span className="text-[9px] font-bold text-gray-400">{new Date(reply.created_at).toLocaleDateString('ar-EG')}</span>
                                               </div>
-                                              <div className="flex-1 space-y-1">
-                                                 <div className="flex items-center justify-between">
-                                                    <h5 className="font-black text-xs text-gray-900">{reply.user?.name || 'طالب درب'}</h5>
-                                                    <span className="text-[9px] font-bold text-gray-400">{new Date(reply.created_at).toLocaleDateString('ar-EG')}</span>
-                                                 </div>
-                                                 <div className="text-gray-600 text-xs font-bold leading-relaxed">
-                                                    {reply.body}
-                                                 </div>
+                                              <div className="text-gray-600 text-xs font-bold leading-relaxed">
+                                                {reply.body}
                                               </div>
-                                           </div>
-                                         ))}
+                                            </div>
+                                          </div>
+                                        ))}
                                       </div>
                                     )}
                                   </div>
                                 </div>
                               ))}
                             </div>
-                         </div>
-                      </motion.div>
-                    )}
+                          </div>
+                        </motion.div>
+                      )}
 
-                    {activeTab === 'notes' && (
-                      <motion.div 
-                        key="notes_ui"
-                        initial={{ opacity: 0, y: 10 }} 
-                        animate={{ opacity: 1, y: 0 }}
-                        className="max-w-3xl mx-auto space-y-10"
-                      >
-                         <div className="bg-gray-100/40 p-8 rounded-[40px] border border-gray-200 space-y-5">
-                           <textarea
-                             value={newNote}
-                             onChange={(e) => setNewNote(e.target.value)}
-                             placeholder="اكتب ملاحظة ذكية عند هذه اللحظة..."
-                             className="w-full bg-white/80 border border-gray-200 rounded-[24px] p-6 font-bold text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all min-h-[140px] shadow-sm text-gray-800 placeholder-gray-500"
-                           />
-                           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                             <div className="flex items-center gap-2 text-blue-700 font-black text-sm bg-blue-100/50 px-5 py-2.5 rounded-[18px] w-full sm:w-auto justify-center border border-blue-200">
-                               <Clock size={16} />
-                               <span>{formatTime(currentTime)}</span>
-                             </div>
-                             <button 
-                               onClick={handleAddNote}
-                               disabled={!newNote.trim()}
-                               className="px-12 py-3.5 bg-blue-600 text-white rounded-[20px] font-black text-sm shadow-xl shadow-blue-200 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 w-full sm:w-auto"
-                             >
-                               حفظ الملاحظة
-                             </button>
-                           </div>
-                         </div>
+                      {activeTab === 'notes' && (
+                        <motion.div
+                          key="notes_ui"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="max-w-3xl mx-auto space-y-10"
+                        >
+                          <div className="bg-gray-100/40 p-8 rounded-[40px] border border-gray-200 space-y-5">
+                            <textarea
+                              value={newNote}
+                              onChange={(e) => setNewNote(e.target.value)}
+                              placeholder="اكتب ملاحظة ذكية عند هذه اللحظة..."
+                              className="w-full bg-white/80 border border-gray-200 rounded-[24px] p-6 font-bold text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all min-h-[140px] shadow-sm text-gray-800 placeholder-gray-500"
+                            />
+                            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                              <div className="flex items-center gap-2 text-blue-700 font-black text-sm bg-blue-100/50 px-5 py-2.5 rounded-[18px] w-full sm:w-auto justify-center border border-blue-200">
+                                <Clock size={16} />
+                                <span>{formatTime(currentTime)}</span>
+                              </div>
+                              <button
+                                onClick={handleAddNote}
+                                disabled={!newNote.trim()}
+                                className="px-12 py-3.5 bg-blue-600 text-white rounded-[20px] font-black text-sm shadow-xl shadow-blue-200 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 w-full sm:w-auto"
+                              >
+                                حفظ الملاحظة
+                              </button>
+                            </div>
+                          </div>
 
-                         <div className="space-y-6">
-                           {notes.map(note => (
-                             <div key={note.id} className="group bg-white p-6 rounded-[24px] border border-gray-50 hover:border-blue-100 transition-all shadow-sm">
+                          <div className="space-y-6">
+                            {notes.map(note => (
+                              <div key={note.id} className="group bg-white p-6 rounded-[24px] border border-gray-50 hover:border-blue-100 transition-all shadow-sm">
                                 <div className="flex items-start justify-between mb-4">
                                   <button className="flex items-center gap-2 text-blue-600 font-black text-xs bg-blue-50 px-3 py-1.5 rounded-xl">
                                     <PlayCircle size={16} fill="currentColor" />
@@ -1074,15 +1129,15 @@ export default function CoursePlayerPage() {
                                   </div>
                                 </div>
                                 <div className="text-gray-700 font-bold text-sm leading-relaxed">{note.body}</div>
-                             </div>
-                           ))}
-                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-               </div>
-            </div>
-            </div>
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </main>
@@ -1103,8 +1158,8 @@ export default function CoursePlayerPage() {
 
         {/* Urgent Help Button (Bottom Left) */}
         <button className="fixed bottom-8 right-8 z-[60] flex items-center gap-3 px-6 py-3 bg-[#065F46] text-white rounded-2xl font-black text-sm shadow-2xl shadow-emerald-900/20 hover:scale-105 transition-all">
-           <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">?</div>
-           <span>مساعدة فورية</span>
+          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">?</div>
+          <span>مساعدة فورية</span>
         </button>
       </div>
 
