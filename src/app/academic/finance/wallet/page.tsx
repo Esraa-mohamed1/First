@@ -1,376 +1,277 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Wallet, 
-  ArrowUpRight, 
-  ArrowDownLeft, 
-  Plus, 
-  CreditCard, 
-  History, 
-  TrendingUp, 
-  Building2,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  MoreVertical,
-  Download,
-  Filter,
-  ChevronLeft,
-  Smartphone,
+  CheckCircle2, 
+  Clock, 
+  Plus,
+  ArrowUpRight,
   ShieldCheck,
-  Search,
-  ArrowRight,
-  Landmark,
-  PiggyBank
+  Building2,
+  Smartphone,
+  Loader2,
+  ChevronLeft
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
+import { getWalletData, WalletData } from '@/services/finance';
 
 const WalletPage = () => {
+  const [walletData, setWalletData] = useState<WalletData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('all');
 
-  const transactions = [
-    { id: 'TXN-9821', title: 'أرباح دورة: تصميم واجهات المستخدم', date: 'اليوم، 10:30 ص', amount: '+450.00', status: 'completed', type: 'earning' },
-    { id: 'TXN-9820', title: 'سحب رصيد - بنك الراجحي', date: 'أمس، 02:15 م', amount: '-2,000.00', status: 'pending', type: 'withdrawal' },
-    { id: 'TXN-9819', title: 'أرباح دورة: تطوير تطبيقات الويب', date: '14 مايو، 09:00 ص', amount: '+320.00', status: 'completed', type: 'earning' },
-    { id: 'TXN-9818', title: 'أرباح دورة: لغة جافاسكريبت', date: '13 مايو، 04:45 م', amount: '+280.00', status: 'completed', type: 'earning' },
-    { id: 'TXN-9817', title: 'سحب رصيد - STC Pay', date: '12 مايو، 11:20 ص', amount: '-1,500.00', status: 'completed', type: 'withdrawal' },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await getWalletData();
+        setWalletData(data);
+      } catch (error) {
+        console.error('Failed to fetch wallet data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const payoutMethods = [
     { id: 1, name: 'مصرف الراجحي', type: 'Bank Account', account: '**** 4567', icon: Building2, isDefault: true, color: 'blue' },
     { id: 2, name: 'STC Pay', type: 'Digital Wallet', account: '054 **** 123', icon: Smartphone, isDefault: false, color: 'purple' },
   ];
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { type: 'spring', stiffness: 100 }
-    }
-  };
+  const pendingBalance = Number(walletData?.balance || 0) - Number(walletData?.available_balance || 0);
 
   return (
-    <div className="space-y-8 pb-12" dir="rtl">
-      {/* Header with Glassmorphism Search */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight">المحفظة المالية</h1>
-          <p className="text-gray-500 mt-2 font-medium">إدارة أرباحك وعمليات السحب والتحويل</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="relative hidden md:block">
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="البحث في المعاملات..."
-              className="pr-12 pl-4 py-3 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:shadow-lg focus:shadow-blue-500/5 transition-all w-64 font-bold text-sm"
-            />
-          </div>
-          <button className="p-3.5 bg-white border border-gray-200 text-gray-500 rounded-2xl hover:bg-gray-50 transition-all shadow-sm">
-            <Download size={20} />
-          </button>
-        </div>
+    <div className="max-w-[1200px] mx-auto space-y-8 pb-12" dir="rtl">
+      {/* Header */}
+      <div className="flex items-center justify-end">
+        <h1 className="text-xl font-black text-gray-900">المحفظة</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Cards & Payouts */}
-        <div className="lg:col-span-4 space-y-8">
-          {/* Main Wallet Card - Premium Design */}
-          <motion.div 
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="relative h-[260px] w-full rounded-[3rem] overflow-hidden group shadow-2xl shadow-blue-500/20"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#020617]" />
-            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/30 rounded-full blur-[100px] -mr-32 -mt-32 animate-pulse" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-600/20 rounded-full blur-[80px] -ml-24 -mb-24" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        {/* Right Side (now on Left in UI): Total Balance Card - Premium Credit Card Style */}
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="bg-gradient-to-br from-[#1e40af] via-[#1e3a8a] to-[#172554] p-12 rounded-[1.5rem] text-white relative overflow-hidden flex flex-col justify-between shadow-2xl"
+        >
+          {/* Credit Card Pattern & Gloss */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 right-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_50%_-20%,#ffffff,transparent)]" />
+            <svg className="w-full h-full opacity-10" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <path d="M0,70 Q25,50 50,70 T100,70 L100,100 L0,100 Z" fill="white" />
+              <path d="M0,80 Q25,60 50,80 T100,80 L100,100 L0,100 Z" fill="white" opacity="0.5" />
+            </svg>
+          </div>
+
+          <div className="relative z-10 flex justify-between items-start">
+             {/* Virtual Chip */}
+             <div className="w-14 h-10 bg-gradient-to-br from-yellow-200 to-yellow-600 rounded-lg relative overflow-hidden shadow-inner opacity-80">
+                <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-px opacity-30">
+                  <div className="border border-black/20"></div>
+                  <div className="border border-black/20"></div>
+                  <div className="border border-black/20"></div>
+                  <div className="border border-black/20"></div>
+                  <div className="border border-black/20"></div>
+                  <div className="border border-black/20"></div>
+                </div>
+             </div>
+             {/* Logo */}
+             <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20">
+                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden">
+                  <div className="w-8 h-8 bg-[#1e40af] rounded-full translate-x-2 translate-y-2 shadow-inner"></div>
+                </div>
+             </div>
+          </div>
+
+          <div className="relative z-10 space-y-8 mt-12">
+            <div className="flex items-end justify-between">
+              <h2 className="text-5xl font-black tracking-tight">
+                {Number(walletData?.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 0 })} <span className="text-2xl font-bold ml-1">$</span>
+              </h2>
+              <h3 className="text-3xl font-black opacity-80">الرصيد الكلي</h3>
+            </div>
             
-            <div className="relative h-full p-10 flex flex-col justify-between z-10">
-              <div className="flex justify-between items-start">
-                <div className="space-y-1">
-                  <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">Current Balance</p>
-                  <div className="flex items-baseline gap-2">
-                    <h2 className="text-4xl font-black text-white tracking-tighter">12,450.00</h2>
-                    <span className="text-white/50 font-bold text-sm">SAR</span>
-                  </div>
-                </div>
-                <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform duration-500">
-                  <Wallet className="text-white" size={28} />
-                </div>
-              </div>
-
-              <div className="flex justify-between items-end">
-                <div className="space-y-4">
-                  <div className="flex -space-x-3 rtl:space-x-reverse">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="w-10 h-10 rounded-full border-2 border-[#0f172a] bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-[10px] font-black text-white shadow-lg">
-                        {i === 3 ? '+5' : 'JD'}
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Active Academic Wallet</p>
-                </div>
-                <button 
-                  onClick={() => setIsWithdrawModalOpen(true)}
-                  className="px-6 py-3 bg-white text-gray-900 font-black rounded-2xl hover:bg-blue-50 transition-all shadow-xl active:scale-95 text-xs"
-                >
-                  سحب الرصيد
-                </button>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Secondary Stats */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white p-6 rounded-[2.5rem] border border-gray-200 shadow-sm group hover:border-amber-300 transition-all">
-              <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Clock size={20} />
-              </div>
-              <p className="text-gray-400 font-bold text-[10px] uppercase tracking-wider mb-1">رصيد معلق</p>
-              <h4 className="text-lg font-black text-gray-900">3,200 <span className="text-[10px] text-gray-400">ر.س</span></h4>
-            </div>
-            <div className="bg-white p-6 rounded-[2.5rem] border border-gray-200 shadow-sm group hover:border-green-300 transition-all">
-              <div className="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <TrendingUp size={20} />
-              </div>
-              <p className="text-gray-400 font-bold text-[10px] uppercase tracking-wider mb-1">إجمالي الأرباح</p>
-              <h4 className="text-lg font-black text-gray-900">45,890 <span className="text-[10px] text-gray-400">ر.س</span></h4>
+            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.3em] opacity-40">
+              <span>Academic Platinum</span>
+              <span dir="ltr">**** **** **** {walletData?.user_id || '0000'}</span>
             </div>
           </div>
+        </motion.div>
 
-          {/* Payout Methods - Figma Style */}
-          <div className="bg-white p-8 rounded-[3rem] border border-gray-200 shadow-sm">
+        {/* Left Side (now on Right in UI): Available and Pending Balance */}
+        <div className="space-y-6 flex flex-col justify-between">
+          {/* Available Balance Card */}
+          <div className="bg-white p-8 rounded-[1rem] border border-gray-200 shadow-sm flex flex-col justify-between h-full relative group transition-all hover:border-emerald-300">
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-xl font-black text-gray-900">وسائل السحب</h3>
-              <button className="w-10 h-10 bg-gray-50 text-gray-400 rounded-xl hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center group">
-                <Plus size={20} className="group-hover:rotate-90 transition-transform duration-300" />
-              </button>
+              <span className="px-5 py-1.5 bg-[#d1fae5] text-[#059669] rounded-full text-sm font-bold">متاح</span>
+              <div className="w-10 h-10 bg-[#10b981] text-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                <CheckCircle2 size={24} />
+              </div>
             </div>
-            <div className="space-y-4">
-              {payoutMethods.map((method) => (
-                <div key={method.id} className={twMerge(
-                  "p-5 rounded-[1.5rem] border transition-all cursor-pointer group",
-                  method.isDefault ? "border-blue-100 bg-blue-50/20" : "border-gray-50 hover:border-gray-200"
-                )}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className={twMerge(
-                        "w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm",
-                        method.isDefault ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-400"
-                      )}>
-                        <method.icon size={22} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-black text-gray-900">{method.name}</p>
-                        <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wider" dir="ltr">{method.account}</p>
-                      </div>
-                    </div>
-                    {method.isDefault && (
-                      <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
-                    )}
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center justify-between">
+              <button 
+                onClick={() => setIsWithdrawModalOpen(true)}
+                className="px-8 py-2 bg-[#10b981] text-white font-bold rounded-full hover:bg-emerald-600 transition-all text-sm shadow-md active:scale-95"
+              >
+                اسحب الآن
+              </button>
+              <div className="text-left">
+                <p className="text-gray-900 font-bold text-sm mb-2">الرصيد المتاح</p>
+                <h3 className="text-3xl font-black text-gray-900 tracking-tight">
+                   {Number(walletData?.available_balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} $
+                </h3>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Right Column: Transactions History */}
-        <div className="lg:col-span-8 space-y-8">
-          <div className="bg-white rounded-[3rem] border border-gray-200 shadow-sm overflow-hidden h-full flex flex-col">
-            <div className="p-10 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-gray-50 text-gray-900 rounded-2xl flex items-center justify-center shadow-inner">
-                  <History size={24} />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-black text-gray-900">سجل العمليات</h3>
-                  <p className="text-gray-400 text-sm font-medium mt-1">تتبع التدفق المالي لمحفظتك الرقمية</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex p-1.5 bg-gray-50 rounded-[1.25rem] border border-gray-100">
-                  {['all', 'earning', 'withdrawal'].map((tab) => (
-                    <button 
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
-                      className={twMerge(
-                        "px-5 py-2.5 rounded-xl text-xs font-black transition-all",
-                        activeTab === tab ? "bg-white text-blue-600 shadow-md" : "text-gray-400 hover:text-gray-600"
-                      )}
-                    >
-                      {tab === 'all' ? 'الكل' : tab === 'earning' ? 'الأرباح' : 'السحوبات'}
-                    </button>
-                  ))}
-                </div>
-                <button className="p-3.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-gray-100 transition-all">
-                  <Filter size={18} />
-                </button>
+          {/* Pending Balance Card */}
+          <div className="bg-white p-8 rounded-[1rem] border border-gray-200 shadow-sm flex flex-col justify-between h-full relative group transition-all hover:border-amber-300">
+            <div className="flex items-center justify-between mb-8">
+              <span className="px-5 py-1.5 bg-[#ffedd5] text-[#d97706] rounded-full text-sm font-bold">معلق</span>
+              <div className="w-10 h-10 bg-[#f97316] text-white rounded-full flex items-center justify-center opacity-80 shadow-lg shadow-orange-500/20">
+                <Clock size={24} />
               </div>
             </div>
-
-            <div className="flex-1 overflow-x-auto">
-              <table className="w-full text-right">
-                <thead>
-                  <tr className="bg-gray-50/50">
-                    <th className="px-10 py-6 text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em]">Transaction</th>
-                    <th className="px-10 py-6 text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] text-center">Amount</th>
-                    <th className="px-10 py-6 text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] text-center">Status</th>
-                    <th className="px-10 py-6 text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em]">Date</th>
-                    <th className="px-10 py-6 text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em]"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {transactions.filter(t => activeTab === 'all' || t.type === activeTab).map((txn) => (
-                    <motion.tr 
-                      key={txn.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="group hover:bg-blue-50/20 transition-all cursor-pointer"
-                    >
-                      <td className="px-10 py-8">
-                        <div className="flex items-center gap-5">
-                          <div className={twMerge(
-                            "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 shadow-sm",
-                            txn.type === 'earning' ? "bg-green-50 text-green-600" : "bg-amber-50 text-amber-600"
-                          )}>
-                            {txn.type === 'earning' ? <ArrowDownLeft size={20} /> : <ArrowUpRight size={20} />}
-                          </div>
-                          <div>
-                            <p className="text-gray-900 font-black text-sm group-hover:text-blue-600 transition-colors">{txn.title}</p>
-                            <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest">ID: {txn.id}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-10 py-8 text-center">
-                        <span className={twMerge(
-                          "text-base font-black tracking-tight",
-                          txn.type === 'earning' ? "text-green-600" : "text-amber-600"
-                        )}>
-                          {txn.amount} <span className="text-[10px] uppercase font-bold">SAR</span>
-                        </span>
-                      </td>
-                      <td className="px-10 py-8">
-                        <div className="flex justify-center">
-                          <span className={twMerge(
-                            "px-4 py-1.5 rounded-full text-[9px] font-black inline-flex items-center gap-2 uppercase tracking-widest border shadow-sm",
-                            txn.status === 'completed' ? "bg-green-50 text-green-600 border-green-100" : "bg-amber-50 text-amber-600 border-amber-100"
-                          )}>
-                            <div className={twMerge("w-1.5 h-1.5 rounded-full", txn.status === 'completed' ? "bg-green-500" : "bg-amber-500 animate-pulse")} />
-                            {txn.status === 'completed' ? 'Success' : 'Pending'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-10 py-8">
-                        <span className="text-xs font-bold text-gray-500">{txn.date}</span>
-                      </td>
-                      <td className="px-10 py-8 text-left">
-                        <button className="p-2 text-gray-300 hover:text-gray-900 transition-colors">
-                          <MoreVertical size={18} />
-                        </button>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="p-8 border-t border-gray-50 flex justify-center bg-gray-50/30">
-              <button className="flex items-center gap-2 text-blue-600 font-black text-xs group uppercase tracking-widest">
-                View Full Transaction History
-                <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-              </button>
+            <div className="text-left">
+              <p className="text-gray-900 font-bold text-sm mb-2">الرصيد المعلق</p>
+              <h3 className="text-3xl font-black text-gray-900 tracking-tight">
+                 {pendingBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })} $
+              </h3>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Withdraw Modal - Premium Style */}
+      {/* Info Notice */}
+      <div className="bg-[#f3f4f6] p-6 rounded-[0.75rem] border border-gray-100 flex items-center gap-4 shadow-sm">
+        <div className="w-6 h-6 bg-[#1e293b] rounded-full flex items-center justify-center shrink-0">
+          <span className="text-white text-xs font-black">!</span>
+        </div>
+        <p className="text-[#4b5563] text-sm font-bold leading-relaxed">
+          يتم تعليق بعض المدفوعات لمدة 5 أيام للتحقق قبل أن تصبح متاحة للسحب. هذا الأجراء يضمن امان معاملاتك البنكية
+        </p>
+      </div>
+
+      {/* Withdraw Modal */}
       <AnimatePresence>
         {isWithdrawModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-6">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsWithdrawModalOpen(false)}
-              className="absolute inset-0 bg-[#020617]/80 backdrop-blur-xl"
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
             <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 30 }}
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 30 }}
-              className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden"
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white w-full max-w-md rounded-[3rem] shadow-[0_32px_64px_-15px_rgba(0,0,0,0.3)] relative z-10 overflow-hidden"
             >
-              <div className="p-10 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/20">
-                    <ArrowUpRight size={28} />
-                  </div>
-                  <h2 className="text-3xl font-black text-gray-900 tracking-tight">سحب الرصيد</h2>
-                </div>
-                <button onClick={() => setIsWithdrawModalOpen(false)} className="p-3 hover:bg-white hover:shadow-md rounded-2xl transition-all text-gray-400">
-                  <Plus size={32} className="rotate-45" />
+              {/* Modal Header */}
+              <div className="px-8 pt-10 pb-2 flex items-center justify-between">
+                <button 
+                  onClick={() => setIsWithdrawModalOpen(false)}
+                  className="w-12 h-12 flex items-center justify-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all"
+                >
+                  <Plus size={28} className="rotate-45" />
                 </button>
+                
+                <div className="flex items-center gap-4">
+                  <h2 className="text-2xl font-black text-[#1e293b]">سحب الرصيد</h2>
+                  <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                    <ArrowUpRight size={24} strokeWidth={3} />
+                  </div>
+                </div>
               </div>
 
-              <div className="p-10 space-y-10">
+              <div className="p-8 space-y-8">
+                {/* Amount Input Section */}
                 <div className="space-y-4">
                   <div className="flex justify-between items-center px-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Amount to Withdraw</label>
-                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Available: 12,450 SAR</span>
+                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full">
+                      $ Available: {Number(walletData?.available_balance || 0).toFixed(2)}
+                    </span>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                      Amount to Withdraw
+                    </label>
                   </div>
-                  <div className="relative">
-                    <input 
-                      type="number" 
-                      placeholder="0.00"
-                      className="w-full p-10 bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-[2.5rem] outline-none font-black text-5xl transition-all text-center tracking-tighter"
-                    />
-                    <div className="absolute left-10 top-1/2 -translate-y-1/2 font-black text-gray-300 text-xl tracking-widest">SAR</div>
+                  
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-[#BFDDF0] rounded-[2.5rem] border-2 border-transparent group-focus-within:border-blue-600 group-focus-within:bg-white transition-all duration-300" />
+                    <div className="relative flex flex-col items-center justify-center px-8 py-10">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl font-black text-blue-600">$</span>
+                        <input 
+                          type="number" 
+                          placeholder="0.00"
+                          className="w-full bg-transparent border-none outline-none text-center font-black text-6xl text-[#1e293b] placeholder:text-gray-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          autoFocus
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-2">Select Payout Method</label>
-                  <div className="grid grid-cols-1 gap-4">
+                {/* Payout Methods Section */}
+                <div className="space-y-5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2 block text-center">
+                    Select Payout Method
+                  </label>
+                  <div className="space-y-3">
                     {payoutMethods.map((method) => (
-                      <label key={method.id} className="flex items-center justify-between p-6 border-2 border-gray-50 rounded-[2rem] cursor-pointer hover:border-blue-100 hover:bg-blue-50/10 transition-all group relative overflow-hidden">
-                        <div className="flex items-center gap-5 relative z-10">
-                          <input type="radio" name="payout" defaultChecked={method.isDefault} className="w-6 h-6 text-blue-600 border-gray-300 focus:ring-blue-500" />
-                          <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm text-gray-400 group-hover:text-blue-600 transition-colors">
-                            <method.icon size={24} />
+                      <label 
+                        key={method.id} 
+                        className="flex items-center justify-between p-5 bg-white border-2 border-gray-50 rounded-[1.5rem] cursor-pointer hover:border-blue-100 hover:bg-blue-50/10 transition-all group relative"
+                      >
+                        <div className="flex items-center gap-4 flex-1 justify-end">
+                          <div className="text-right">
+                            <p className="text-sm font-black text-[#1e293b]">{method.name}</p>
+                            <p className="text-[11px] font-bold text-gray-400 mt-0.5 tracking-tighter" dir="ltr">{method.account}</p>
                           </div>
-                          <div>
-                            <p className="text-base font-black text-gray-900">{method.name}</p>
-                            <p className="text-[10px] font-bold text-gray-400 mt-1 tracking-widest uppercase" dir="ltr">{method.account}</p>
+                          <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-blue-600 group-hover:bg-blue-50 transition-all">
+                            <method.icon size={22} />
                           </div>
                         </div>
-                        <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/5 transition-colors" />
+                        
+                        <div className="relative flex items-center justify-center w-6 h-6 ml-4">
+                          <input 
+                            type="radio" 
+                            name="payout" 
+                            defaultChecked={method.isDefault} 
+                            className="peer appearance-none w-6 h-6 border-2 border-gray-200 rounded-full checked:border-blue-600 transition-all cursor-pointer" 
+                          />
+                          <div className="absolute w-3 h-3 bg-blue-600 rounded-full scale-0 peer-checked:scale-100 transition-transform" />
+                        </div>
                       </label>
                     ))}
                   </div>
                 </div>
 
-                <div className="bg-blue-50/50 p-6 rounded-[2rem] border border-blue-100 flex gap-4">
-                  <ShieldCheck size={24} className="text-blue-600 shrink-0" />
-                  <p className="text-[11px] font-bold text-blue-900 leading-relaxed opacity-80">
+                {/* Info Alert */}
+                <div className="bg-blue-50/50 p-5 rounded-[1.5rem] border border-blue-100 flex items-center gap-4">
+                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm">
+                    <ShieldCheck size={20} className="text-blue-600" />
+                  </div>
+                  <p className="text-[10px] font-bold text-blue-900 leading-relaxed text-center flex-1">
                     سيتم تحويل المبلغ إلى حسابك البنكي خلال 24-48 ساعة عمل. جميع العمليات مشفرة بالكامل لضمان أمان أموالك.
                   </p>
                 </div>
 
-                <button className="w-full py-7 bg-blue-600 text-white font-black text-xl rounded-[2.5rem] shadow-2xl shadow-blue-500/40 hover:bg-blue-700 transition-all active:scale-[0.98] uppercase tracking-widest">
+                {/* Confirm Button */}
+                <button className="w-full py-6 bg-blue-600 text-white font-black text-base rounded-[1.5rem] shadow-xl shadow-blue-500/30 hover:bg-blue-700 transition-all active:scale-[0.98] uppercase tracking-[0.2em]">
                   Confirm Withdrawal
                 </button>
               </div>
@@ -378,6 +279,7 @@ const WalletPage = () => {
           </div>
         )}
       </AnimatePresence>
+
     </div>
   );
 };

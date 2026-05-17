@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Wallet, 
@@ -22,11 +22,31 @@ import {
   Landmark,
   Settings,
   ChevronDown,
-  CheckCircle2
+  CheckCircle2,
+  Loader2
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
+import { getWithdrawalRequests, WithdrawalRequest } from '@/services/finance';
 
 const FinanceOverview = () => {
+  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchWithdrawals = async () => {
+      try {
+        const data = await getWithdrawalRequests();
+        setWithdrawalRequests(data);
+      } catch (error) {
+        console.error('Failed to fetch withdrawal requests:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchWithdrawals();
+  }, []);
+
   const stats = [
     {
       label: 'اجمالي المبيعات',
@@ -70,13 +90,32 @@ const FinanceOverview = () => {
     }
   ];
 
-  const withdrawalRequests = [
-    { id: '#1242', amount: '5,500', date: '22/10/2022', status: 'مرفوض', statusColor: 'bg-gray-100 text-gray-500' },
-    { id: '#3214', amount: '10,200', date: '19/8/2019', status: 'معلق', statusColor: 'bg-amber-100 text-amber-600' },
-    { id: '#5142', amount: '1,500', date: '14/1/2023', status: 'مقبول', statusColor: 'bg-green-100 text-green-600' },
-    { id: '#7412', amount: '6,120', date: '7/1/2018', status: 'مقبول', statusColor: 'bg-green-100 text-green-600' },
-    { id: '#921', amount: '8,410', date: '12/10/2022', status: 'مقبول', statusColor: 'bg-green-100 text-green-600' },
-  ];
+  const getStatusStyle = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'rejected':
+      case 'مرفوض':
+        return 'bg-gray-100 text-gray-500';
+      case 'pending':
+      case 'معلق':
+        return 'bg-amber-100 text-amber-600';
+      case 'completed':
+      case 'approved':
+      case 'مقبول':
+        return 'bg-green-100 text-green-600';
+      default:
+        return 'bg-blue-100 text-blue-600';
+    }
+  };
+
+  const translateStatus = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'rejected': return 'مرفوض';
+      case 'pending': return 'معلق';
+      case 'completed':
+      case 'approved': return 'مقبول';
+      default: return status;
+    }
+  };
 
   return (
     <div className="space-y-8 pb-12" dir="rtl">
@@ -128,7 +167,7 @@ const FinanceOverview = () => {
         <div className="lg:col-span-8 bg-white rounded-[2.5rem] border border-gray-200 shadow-sm overflow-hidden">
           <div className="p-8 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <h2 className="text-xl font-black text-gray-900">آخر طلبات السحب</h2>
-            <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-xl border border-gray-200">
+            <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-xl border border-gray-100">
               <button className="px-6 py-2 text-gray-400 font-bold text-sm">التاريخ</button>
               <div className="px-2 py-2 text-gray-400 border-r border-gray-200">
                 <ChevronDown size={16} />
@@ -136,41 +175,59 @@ const FinanceOverview = () => {
             </div>
           </div>
           
-          <div className="overflow-x-auto">
-            <table className="w-full text-right">
-              <thead>
-                <tr className="bg-gray-50/50">
-                  <th className="px-8 py-4 text-gray-400 font-bold text-sm">رقم السحب</th>
-                  <th className="px-8 py-4 text-gray-400 font-bold text-sm">المبلغ</th>
-                  <th className="px-8 py-4 text-gray-400 font-bold text-sm">تاريخ التسجيل</th>
-                  <th className="px-8 py-4 text-gray-400 font-bold text-sm text-center">حالة طلب السحب</th>
-                  <th className="px-8 py-4 text-gray-400 font-bold text-sm"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {withdrawalRequests.map((req, i) => (
-                  <tr key={i} className="hover:bg-gray-50/50 transition-all">
-                    <td className="px-8 py-5 text-gray-900 font-bold">{req.id}</td>
-                    <td className="px-8 py-5 text-gray-900 font-black">{req.amount}</td>
-                    <td className="px-8 py-5 text-gray-500 font-medium">{req.date}</td>
-                    <td className="px-8 py-5">
-                      <div className="flex justify-center">
-                        <span className={twMerge("px-4 py-1.5 rounded-xl text-xs font-bold", req.statusColor)}>
-                          {req.status}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-5">
-                      <button className="px-4 py-2 border border-gray-100 rounded-xl text-xs font-bold text-gray-400 hover:bg-white hover:shadow-sm transition-all">عرض التفاصيل</button>
-                    </td>
+          <div className="overflow-x-auto min-h-[300px] relative">
+            {isLoading ? (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+              </div>
+            ) : (
+              <table className="w-full text-right">
+                <thead>
+                  <tr className="bg-gray-50/50">
+                    <th className="px-8 py-4 text-gray-400 font-bold text-sm">رقم السحب</th>
+                    <th className="px-8 py-4 text-gray-400 font-bold text-sm">المبلغ</th>
+                    <th className="px-8 py-4 text-gray-400 font-bold text-sm">تاريخ التسجيل</th>
+                    <th className="px-8 py-4 text-gray-400 font-bold text-sm text-center">حالة طلب السحب</th>
+                    <th className="px-8 py-4 text-gray-400 font-bold text-sm"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {withdrawalRequests.length > 0 ? (
+                    withdrawalRequests.slice(0, 5).map((req, i) => (
+                      <tr key={req.id || i} className="hover:bg-gray-50/50 transition-all">
+                        <td className="px-8 py-5 text-gray-900 font-bold">#{req.id}</td>
+                        <td className="px-8 py-5 text-gray-900 font-black">{req.amount}</td>
+                        <td className="px-8 py-5 text-gray-500 font-medium">
+                          {new Date(req.created_at).toLocaleDateString('ar-SA')}
+                        </td>
+                        <td className="px-8 py-5">
+                          <div className="flex justify-center">
+                            <span className={twMerge("px-4 py-1.5 rounded-xl text-xs font-bold", getStatusStyle(req.status))}>
+                              {translateStatus(req.status)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-8 py-5">
+                          <button className="px-4 py-2 border border-gray-100 rounded-xl text-xs font-bold text-gray-400 hover:bg-white hover:shadow-sm transition-all">عرض التفاصيل</button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="px-8 py-10 text-center text-gray-400 font-bold">
+                        لا توجد طلبات سحب حالياً
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
           
           <div className="p-6 border-t border-gray-50 flex items-center justify-between flex-col md:flex-row gap-4">
-            <p className="text-sm font-bold text-gray-400">عرض 1 إلى 5 من أصل 142 طلب</p>
+            <p className="text-sm font-bold text-gray-400">
+              عرض 1 إلى {Math.min(5, withdrawalRequests.length)} من أصل {withdrawalRequests.length} طلب
+            </p>
             <div className="flex items-center gap-2">
               <button className="p-2 border border-gray-100 rounded-lg text-gray-400"><ChevronLeft size={16} className="rotate-180" /></button>
               <button className="w-8 h-8 bg-blue-600 text-white rounded-lg font-bold text-sm">1</button>
