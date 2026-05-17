@@ -23,6 +23,11 @@ import {
   deleteLessonComment
 } from '@/services/student-courses';
 import { getLessonVideoSrc } from '@/lib/lesson-video-src';
+import {
+  canAccessStudentLearning,
+  getStoredAuthToken,
+  persistAuthToken,
+} from '@/lib/auth-storage';
 import { usePlayerStore } from '@/hooks/usePlayerStore';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -98,39 +103,29 @@ export default function CoursePlayerPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const urlToken = params.get('token');
-    
+
     if (urlToken) {
-      localStorage.setItem('token', urlToken);
-      document.cookie = `token=${urlToken}; path=/; max-age=86400; SameSite=Lax`;
+      persistAuthToken(urlToken);
+      const nextUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, nextUrl);
     }
 
-    const cookieToken = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
-    const localToken = localStorage.getItem('token');
-    const token = urlToken || cookieToken || localToken;
-    const userInfo = localStorage.getItem('user_info');
-    
+    const token = getStoredAuthToken(urlToken);
     if (!token) {
       router.push('/auth/login');
       return;
     }
 
-    // If we have a token but no userInfo, we might want to fetch the profile instead of redirecting
-    if (!userInfo) {
-      // For now, let's just allow it if there's a token, 
-      // as the API calls will fail anyway if the token is invalid.
-      // Or we could trigger a profile fetch here.
-      console.warn('Token present but user_info missing');
-    }
-    
-    if (userInfo) {
-      try {
-        const parsedUser = JSON.parse(userInfo);
-        if (parsedUser.role !== 'student' && parsedUser.role !== 'admin' && parsedUser.role !== 'academy') {
-           router.push('/');
-        }
-      } catch (e) {
-        console.error('Failed to parse user info', e);
+    const userInfo = localStorage.getItem('user_info');
+    if (!userInfo) return;
+
+    try {
+      const parsedUser = JSON.parse(userInfo);
+      if (!canAccessStudentLearning(parsedUser.role)) {
+        router.push('/student/courses');
       }
+    } catch (e) {
+      console.error('Failed to parse user info', e);
     }
   }, [router]);
 

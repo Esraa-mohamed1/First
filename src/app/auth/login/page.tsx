@@ -142,7 +142,7 @@ export default function AcademyLoginPage() {
                         name: response.data.name,
                         email: response.data.email,
                         phone: response.data.phone,
-                        role: userRole === 'admin' ? 'الادمن' : 'طالب'
+                        role: userRole,
                     }));
 
                     toast.success('تم تسجيل الدخول بنجاح');
