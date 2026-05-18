@@ -5,7 +5,7 @@ import {
   Play, Pause, Volume2, VolumeX, 
   Settings, Maximize, Shield, Info,
   RotateCcw, FastForward, SkipBack, SkipForward,
-  PlayCircle, MousePointer2, Sparkles, Star
+  PlayCircle, MousePointer2, Sparkles, Star, StickyNote, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '@/hooks/usePlayerStore';
@@ -36,6 +36,47 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, userEmail }) => {
 
   const [isMuted, setIsMuted] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+  const [noteText, setNoteText] = useState('');
+
+  // Intercept track-session to store current time as requested
+  useEffect(() => {
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+      const [resource, config] = args;
+      if (typeof resource === 'string' && resource.includes('.metrics/track-session')) {
+        try {
+          if (config && config.body) {
+            const bodyStr = config.body.toString();
+            const payload = JSON.parse(bodyStr);
+            if (payload && payload.currentTime !== undefined) {
+              localStorage.setItem('bunny_current_time', payload.currentTime.toString());
+              console.log('Intercepted track-session currentTime:', payload.currentTime);
+            }
+          }
+        } catch (e) {
+          // ignore parsing errors
+        }
+      }
+      return originalFetch.apply(window, args);
+    };
+
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, []);
+
+  const handleSaveNote = () => {
+    if (!noteText.trim()) return;
+    const noteTime = localStorage.getItem('bunny_current_time') 
+      ? parseFloat(localStorage.getItem('bunny_current_time')!) 
+      : currentTime;
+      
+    console.log(`Saved note at time ${formatTime(noteTime)}:`, noteText);
+    setNoteText('');
+    setShowNotes(false);
+    if (!isPlaying) togglePlay();
+  };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -177,6 +218,52 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, userEmail }) => {
         playsInline
       />
 
+      {/* Notes Panel Overlay */}
+      <AnimatePresence>
+        {showNotes && (
+          <motion.div 
+            initial={{ x: '100%', opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: '100%', opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="absolute top-0 right-0 h-full w-[300px] bg-slate-900/60 backdrop-blur-md z-40 flex flex-col border-l border-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 flex items-center justify-between border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <StickyNote className="text-blue-400 w-5 h-5" />
+                <h3 className="text-white font-bold text-sm">أضف ملاحظة</h3>
+              </div>
+              <button 
+                onClick={() => setShowNotes(false)}
+                className="text-white/60 hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-4 flex-1 flex flex-col gap-4">
+              <div className="text-xs text-white/60 font-medium">
+                الوقت الحالي: <span className="text-blue-400 font-bold">{formatTime(currentTime)}</span>
+              </div>
+              <textarea 
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                placeholder="اكتب ملاحظتك هنا... (لن تخفي هذه النافذة الفيديو بالكامل)"
+                className="w-full flex-1 bg-white/10 text-white placeholder-white/40 border border-white/20 rounded-xl p-3 text-sm resize-none focus:outline-none focus:border-blue-400 transition-colors"
+                dir="rtl"
+              />
+              <button 
+                onClick={handleSaveNote}
+                disabled={!noteText.trim()}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:hover:bg-blue-600 text-white rounded-xl font-bold transition-colors"
+              >
+                حفظ الملاحظة
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Security Watermarks */}
       <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
         <motion.div 
@@ -275,6 +362,21 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, userEmail }) => {
                       className="w-24 h-1 bg-white/30 rounded-full appearance-none cursor-pointer accent-blue-500"
                     />
                   </div>
+
+                  {/* Notes Toggle */}
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowNotes(!showNotes);
+                      if (isPlaying) togglePlay();
+                    }} 
+                    className={cn(
+                      "transition-colors",
+                      showNotes ? "text-blue-400" : "text-white hover:text-blue-400"
+                    )}
+                  >
+                    <StickyNote size={24} />
+                  </button>
 
                   {/* Settings */}
                   <button className="text-white hover:text-blue-400 transition-colors">

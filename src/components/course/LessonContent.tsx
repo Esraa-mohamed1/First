@@ -162,12 +162,55 @@ export const LessonContent: React.FC<LessonContentProps> = ({ lesson }) => {
                   </div>
                 </div>
 
-                <div className="py-24 flex flex-col items-center justify-center text-center opacity-30">
-                  <div className="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center mb-8">
-                    <MessageSquare className="w-12 h-12" />
+                <div className="space-y-6 mt-12">
+                  <h4 className="text-2xl font-black text-slate-900 mb-8 flex items-center gap-3">
+                    <MessageSquare className="text-purple-500 w-8 h-8" />
+                    أحدث النقاشات
+                  </h4>
+                  
+                  {/* Enhanced Comment Item */}
+                  <div className="bg-white p-8 rounded-[2.5rem] border-2 border-slate-50 shadow-lg shadow-slate-200/10 hover:border-purple-100 transition-all group">
+                    <div className="flex gap-6">
+                      <div className="w-14 h-14 rounded-2xl bg-purple-50 border-2 border-purple-100 flex-shrink-0 overflow-hidden">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah" alt="User" className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h5 className="font-black text-slate-900 text-lg">سارة محمد</h5>
+                            <span className="text-xs font-bold text-slate-400">قبل ساعتين</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <button className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                              <Heart className="w-5 h-5" />
+                            </button>
+                            <button className="p-2 text-slate-400 hover:text-purple-500 hover:bg-purple-50 rounded-xl transition-all">
+                              <MessageCircle className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-slate-600 font-bold leading-relaxed text-lg">
+                          شرح رائع جداً! لكن لدي سؤال بخصوص طريقة ربط المكونات، هل يمكننا استخدام Context API بدلاً من Props Drilling في هذا المثال؟
+                        </p>
+                        
+                        {/* Reply Section */}
+                        <div className="mt-6 bg-slate-50 rounded-2xl p-6 border-r-4 border-purple-400 flex gap-4">
+                           <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex-shrink-0 overflow-hidden">
+                             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher" alt="Instructor" className="w-full h-full object-cover" />
+                           </div>
+                           <div>
+                             <div className="flex items-center gap-2 mb-1">
+                               <h6 className="font-black text-slate-900 text-sm">المدرب أحمد</h6>
+                               <span className="bg-blue-100 text-blue-600 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">مدرب الدورة</span>
+                             </div>
+                             <p className="text-sm font-bold text-slate-600 leading-relaxed">
+                               سؤال ممتاز يا سارة! نعم بالتأكيد يمكننا استخدام Context API، وسنشرح ذلك بالتفصيل في الدرس القادم من هذه الوحدة.
+                             </p>
+                           </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-2xl font-black">كن أول من يبدأ النقاش الممتع</p>
-                  <p className="text-lg font-bold mt-2">اسأل أي سؤال وسنكون سعداء جداً بمساعدتك.</p>
                 </div>
               </div>
             )}

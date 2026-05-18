@@ -96,6 +96,9 @@ export default function CoursePlayerPage() {
   const { currentLesson, setCurrentLesson, playbackSpeed, setPlaybackSpeed } = usePlayerStore();
   const [currentTime, setCurrentTime] = useState(0);
   const [activeVideoSrc, setActiveVideoSrc] = useState('');
+  const [isNotesPanelOpen, setIsNotesPanelOpen] = useState(false);
+  const [panelNoteText, setPanelNoteText] = useState('');
+  const videoDurationRef = useRef(0);
 
   const videoContext = useMemo(() => {
     const c = courseData?.course ?? courseData;
@@ -212,43 +215,97 @@ export default function CoursePlayerPage() {
   // Handle video events from iframe/player
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      // Handle progress from Bunny Stream iframe
-      if (typeof event.data === 'string' && event.data.includes('player:')) {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.event === 'player:timeupdate' && currentLesson) {
-            const seconds = Math.floor(data.data.currentTime);
-            if (!isNaN(seconds)) {
-              setCurrentTime(seconds);
-              syncProgress(Number(currentLesson.id), seconds);
-            }
+      // Debug: log all messages to identify Bunny's format
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Bunny postMessage]', event.origin, event.data);
+      }
+
+      // Normalize: handle string JSON or plain object from Bunny
+      let msg: any = event.data;
+      if (typeof msg === 'string') {
+        try { msg = JSON.parse(msg); } catch (e) { msg = null; }
+      }
+      if (!msg || typeof msg !== 'object') return;
+
+      // Handle duration change (multiple known formats)
+      const duration = msg?.data?.duration ?? msg?.duration;
+      if (duration && !isNaN(Number(duration))) {
+        videoDurationRef.current = Math.floor(Number(duration));
+      }
+
+      // Handle timeupdate (multiple known formats)
+      const eventName = msg?.event ?? msg?.type ?? '';
+      const isTimeUpdate = /timeupdate/i.test(String(eventName));
+      const rawTime = msg?.data?.currentTime ?? msg?.currentTime ?? msg?.time ?? msg?.seconds;
+
+      if (isTimeUpdate && rawTime !== undefined && currentLesson) {
+        const seconds = Math.floor(Number(rawTime));
+        if (!isNaN(seconds)) {
+          setCurrentTime(seconds);
+          localStorage.setItem(`bunny_current_time_${currentLesson.id}`, String(seconds));
+          syncProgress(Number(currentLesson.id), seconds);
+          const dur = videoDurationRef.current;
+          if (dur > 0 && seconds >= dur - 3 && !(currentLesson as any).is_completed) {
+            trackLessonProgress(id as string, Number(currentLesson.id), seconds, ['play', 'pause', 'seek', 'end', 'completed'])
+              .then(() => setCurrentLesson({ ...(currentLesson as any), is_completed: true }))
+              .catch(console.error);
           }
-        } catch (e) {
-          // Not a JSON message or not from Bunny
         }
       }
 
-      if (event.data.type === 'video-progress' && currentLesson) {
-        const seconds = Math.floor(event.data.seconds);
+      // Handle video ended
+      const isEnded = /ended|complete/i.test(String(eventName));
+      if (isEnded && currentLesson && !(currentLesson as any).is_completed) {
+        trackLessonProgress(id as string, Number(currentLesson.id), videoDurationRef.current || 0, ['play', 'pause', 'seek', 'end', 'completed'])
+          .then(() => setCurrentLesson({ ...(currentLesson as any), is_completed: true }))
+          .catch(console.error);
+      }
+
+      // Legacy video-progress postMessage (from custom player wrappers)
+      if (event.data?.type === 'video-progress' && currentLesson) {
+        const seconds = Math.floor(event.data.seconds || 0);
         if (!isNaN(seconds)) {
           setCurrentTime(seconds);
+          localStorage.setItem(`bunny_current_time_${currentLesson.id}`, String(seconds));
           syncProgress(Number(currentLesson.id), seconds);
-
-          // Completion logic
           if (event.data.isEnd) {
             setShowCompletion(true);
+            if (!(currentLesson as any).is_completed) {
+              trackLessonProgress(id as string, Number(currentLesson.id), seconds, ['play', 'pause', 'seek', 'end', 'completed'])
+                .then(() => setCurrentLesson({ ...(currentLesson as any), is_completed: true }))
+                .catch(console.error);
+            }
           }
         }
       }
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [currentLesson, syncProgress]);
+  }, [currentLesson, syncProgress, id]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const pauseIframe = () => {
+    videoRef.current?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'pause' }), '*');
+  };
+
+  const resumeIframe = () => {
+    videoRef.current?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'play' }), '*');
+  };
+
+  const handleOpenNotesPanel = () => {
+    setIsNotesPanelOpen(true);
+    pauseIframe();
+  };
+
+  const handleCloseNotesPanel = () => {
+    setIsNotesPanelOpen(false);
+    setPanelNoteText('');
+    resumeIframe();
   };
 
   const fetchInteractions = useCallback(async () => {
@@ -291,6 +348,21 @@ export default function CoursePlayerPage() {
         icon: 'error',
         title: 'فشل إضافة الملاحظة'
       });
+    }
+  };
+
+  const handleSavePanelNote = async () => {
+    if (!panelNoteText.trim() || !currentLesson) return;
+    try {
+      await addLessonNote(currentLesson.id, panelNoteText, currentTime);
+      await fetchInteractions();
+      setPanelNoteText('');
+      setIsNotesPanelOpen(false);
+      resumeIframe();
+      MySwal.fire({ icon: 'success', title: 'تم حفظ الملاحظة', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+    } catch (err) {
+      console.error('Failed to save panel note:', err);
+      MySwal.fire({ icon: 'error', title: 'فشل حفظ الملاحظة' });
     }
   };
 
@@ -490,6 +562,14 @@ export default function CoursePlayerPage() {
     if (currentLesson) {
       const el = document.getElementById(`lesson-${currentLesson.id}`);
       el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      // Restore last known currentTime from localStorage (mirrors Bunny track-session CurrentTime payload)
+      const stored = localStorage.getItem(`bunny_current_time_${currentLesson.id}`);
+      if (stored) {
+        const t = parseInt(stored, 10);
+        if (!isNaN(t)) setCurrentTime(t);
+      } else {
+        setCurrentTime(0);
+      }
     }
   }, [currentLesson]);
 
@@ -813,32 +893,101 @@ export default function CoursePlayerPage() {
               {/* Left Content - Video & Details */}
               <div className="flex-1 min-w-0 space-y-6">
 
-                {/* Video Player Container */}
-                <div className="bg-black rounded-[32px] md:rounded-[40px] overflow-hidden shadow-2xl relative aspect-video group">
-                  {currentLesson ? (
-                    activeVideoSrc ? (
-                      <iframe
-                        ref={videoRef}
-                        src={activeVideoSrc}
-                        className="w-full h-full border-0"
-                        allowFullScreen
-                        allow="autoplay; encrypted-media; picture-in-picture"
-                        referrerPolicy="strict-origin-when-cross-origin"
-                        title={currentLesson.title}
-                      />
+                {/* Video Area — outer wrapper has no overflow-hidden so notes UI layers above iframe */}
+                <div className="relative shadow-2xl rounded-[32px] md:rounded-[40px] group" style={{ aspectRatio: '16/9' }}>
+
+                  {/* Actual video box — overflow-hidden only here for border-radius */}
+                  <div className="absolute inset-0 bg-black rounded-[32px] md:rounded-[40px] overflow-hidden">
+                    {currentLesson ? (
+                      activeVideoSrc ? (
+                        <iframe
+                          ref={videoRef}
+                          src={activeVideoSrc}
+                          className="w-full h-full border-0"
+                          allowFullScreen
+                          allow="autoplay; encrypted-media; picture-in-picture"
+                          referrerPolicy="strict-origin-when-cross-origin"
+                          title={currentLesson.title}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-white gap-3 px-6 text-center">
+                          <AlertCircle size={48} className="text-amber-400" />
+                          <p className="font-bold text-sm max-w-md">لا يوجد رابط تشغيل صالح لهذا الدرس.</p>
+                        </div>
+                      )
                     ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-white gap-3 px-6 text-center">
-                        <AlertCircle size={48} className="text-amber-400" />
-                        <p className="font-bold text-sm max-w-md">لا يوجد رابط تشغيل صالح لهذا الدرس.</p>
+                      <div className="w-full h-full flex flex-col items-center justify-center text-white gap-4">
+                        <PlayCircle size={80} className="text-blue-500 animate-pulse" />
+                        <p className="font-black text-xl">اختر درساً لبدء رحلتك</p>
                       </div>
-                    )
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-white gap-4">
-                      <PlayCircle size={80} className="text-blue-500 animate-pulse" />
-                      <p className="font-black text-xl">اختر درساً لبدء رحلتك</p>
-                    </div>
+                    )}
+                  </div>
+
+                  {/* Notes toggle button — OUTSIDE overflow-hidden, paints above iframe */}
+                  {currentLesson && activeVideoSrc && (
+                    <button
+                      onClick={isNotesPanelOpen ? handleCloseNotesPanel : handleOpenNotesPanel}
+                      className={cn(
+                        'absolute top-3 right-3 z-30 flex items-center gap-1.5 px-3 py-2 rounded-xl font-black text-xs shadow-2xl transition-all hover:scale-105 active:scale-95',
+                        isNotesPanelOpen
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-black/80 backdrop-blur-sm text-white border border-white/30 hover:bg-black'
+                      )}
+                    >
+                      <StickyNote size={14} />
+                      <span>{isNotesPanelOpen ? 'إغلاق' : 'ملاحظة'}</span>
+                      {!isNotesPanelOpen && (
+                        <span className="bg-blue-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{formatTime(currentTime)}</span>
+                      )}
+                    </button>
                   )}
+
+                  {/* Right-side notes panel — OUTSIDE overflow-hidden, slides from right */}
+                  <AnimatePresence>
+                    {isNotesPanelOpen && (
+                      <motion.div
+                        key="inline-notes-panel"
+                        initial={{ x: '100%' }}
+                        animate={{ x: 0 }}
+                        exit={{ x: '100%' }}
+                        transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+                        className="absolute top-0 right-0 h-full w-[260px] z-20 bg-black/70 backdrop-blur-xl border-l border-white/10 flex flex-col rounded-r-[32px] md:rounded-r-[40px] overflow-hidden"
+                      >
+                        <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-white/10 shrink-0">
+                          <div className="flex items-center gap-1.5 bg-blue-600 text-white text-xs font-black px-2.5 py-1 rounded-full">
+                            <Clock size={11} />
+                            <span>{formatTime(currentTime)}</span>
+                          </div>
+                          <button onClick={handleCloseNotesPanel} className="p-1 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-all">
+                            <X size={14} />
+                          </button>
+                        </div>
+                        <div className="flex-1 px-3 py-2 min-h-0">
+                          <textarea
+                            value={panelNoteText}
+                            onChange={(e) => setPanelNoteText(e.target.value)}
+                            placeholder="اكتب ملاحظتك..."
+                            autoFocus
+                            className="w-full h-full bg-white/10 text-white placeholder-white/40 border border-white/15 rounded-xl p-2.5 font-semibold text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 resize-none transition-all"
+                          />
+                        </div>
+                        <div className="px-3 pb-3 flex flex-col gap-2 shrink-0">
+                          <button
+                            onClick={handleSavePanelNote}
+                            disabled={!panelNoteText.trim()}
+                            className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xs shadow-lg disabled:opacity-40 active:scale-95 transition-all"
+                          >
+                            حفظ واستئناف
+                          </button>
+                          <button onClick={handleCloseNotesPanel} className="w-full py-1.5 text-white/50 font-bold text-xs hover:text-white/80 transition-colors">
+                            إلغاء
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
+
 
                 {/* Lesson Header & Actions */}
                 <div className="bg-white p-6 md:p-8 rounded-[32px] shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start gap-6">
@@ -922,26 +1071,26 @@ export default function CoursePlayerPage() {
                     <h3 className="font-black text-gray-900 text-base">مصادر تعليمية</h3>
                   </div>
                   <div className="bg-white p-6 space-y-4">
-                  {(currentLesson as any)?.attachments && (currentLesson as any).attachments.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {(currentLesson as any).attachments.map((resource: any, i: number) => (
-                        <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-teal-200 hover:bg-teal-50/30 transition-all cursor-pointer group">
-                          <div className="w-11 h-11 flex items-center justify-center rounded-xl bg-teal-50 text-teal-700 shrink-0">
-                            <FileText size={22} />
+                    {(currentLesson as any)?.attachments && (currentLesson as any).attachments.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {(currentLesson as any).attachments.map((resource: any, i: number) => (
+                          <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-teal-200 hover:bg-teal-50/30 transition-all cursor-pointer group">
+                            <div className="w-11 h-11 flex items-center justify-center rounded-xl bg-teal-50 text-teal-700 shrink-0">
+                              <FileText size={22} />
+                            </div>
+                            <div className="text-right min-w-0">
+                              <h4 className="text-sm font-black text-gray-900 truncate">{resource.title || 'مرفق تعليمي'}</h4>
+                              <p className="text-xs font-bold text-gray-500 uppercase mt-0.5">{resource.type || 'FILE'} • {resource.size || '---'}</p>
+                            </div>
                           </div>
-                          <div className="text-right min-w-0">
-                            <h4 className="text-sm font-black text-gray-900 truncate">{resource.title || 'مرفق تعليمي'}</h4>
-                            <p className="text-xs font-bold text-gray-500 uppercase mt-0.5">{resource.type || 'FILE'} • {resource.size || '---'}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                      <Download size={28} className="text-gray-300 mb-2" />
-                      <p className="text-gray-500 font-bold text-sm">لا توجد مرفقات تعليمية لهذا الدرس حالياً.</p>
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                        <Download size={28} className="text-gray-300 mb-2" />
+                        <p className="text-gray-500 font-bold text-sm">لا توجد مرفقات تعليمية لهذا الدرس حالياً.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -981,117 +1130,129 @@ export default function CoursePlayerPage() {
                           animate={{ opacity: 1, y: 0 }}
                           className="space-y-12"
                         >
-                          {/* Styled Comment Input */}
-                          <div className="max-w-3xl mx-auto bg-gray-100/40 p-8 rounded-[40px] border border-gray-200 relative">
+                          {/* Comment Input Card */}
+                          <div className="max-w-3xl mx-auto">
                             {replyingTo && (
-                              <div className="mb-4 flex items-center justify-between bg-blue-100/50 px-5 py-3 rounded-[24px] border border-blue-200">
-                                <span className="text-xs font-bold text-blue-800">
-                                  أنت تقوم بالرد على <strong>{replyingTo.user?.name}</strong>
+                              <div className="mb-3 flex items-center justify-between bg-blue-50 px-4 py-2.5 rounded-xl border border-blue-200">
+                                <span className="text-sm font-bold text-blue-800">
+                                  ردًّا على: <strong>{replyingTo.user?.name}</strong>
                                 </span>
-                                <button onClick={() => setReplyingTo(null)} className="text-blue-700 hover:text-blue-900 p-1 bg-white/50 rounded-full transition-all">
+                                <button onClick={() => setReplyingTo(null)} className="p-1 text-blue-500 hover:text-blue-800 hover:bg-blue-100 rounded-lg transition-all">
                                   <X size={14} />
                                 </button>
                               </div>
                             )}
-                            <div className="flex gap-5">
-                              <div className="w-12 h-12 rounded-[18px] bg-blue-600 flex items-center justify-center text-white font-black text-xl shrink-0 overflow-hidden shadow-lg shadow-blue-100">
-                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar" />
+                            <div className="bg-white border-2 border-gray-200 focus-within:border-blue-500 rounded-2xl p-4 transition-all shadow-sm">
+                              <div className="flex gap-3 items-start">
+                                <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shrink-0 overflow-hidden shadow-md">
+                                  <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar" />
+                                </div>
+                                <textarea
+                                  value={newComment}
+                                  onChange={(e) => setNewComment(e.target.value)}
+                                  placeholder={replyingTo ? "اكتب ردك هنا..." : "شارك سؤالك أو رأيك حول هذا الدرس..."}
+                                  rows={3}
+                                  className="flex-1 bg-transparent text-base font-semibold text-gray-900 placeholder-gray-400 outline-none resize-none leading-relaxed"
+                                />
                               </div>
-                              <textarea
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                                placeholder={replyingTo ? "اكتب ردك هنا..." : "أضف تعليقاً أو استفساراً..."}
-                                className="flex-1 bg-transparent border-none text-sm font-bold text-gray-800 placeholder-gray-500 outline-none resize-none min-h-[100px]"
-                              />
-                            </div>
-                            <div className="flex justify-start mt-4 pr-16">
-                              <button
-                                onClick={handleAddComment}
-                                disabled={!newComment.trim()}
-                                className="px-10 py-3.5 bg-blue-600 text-white rounded-[20px] font-black text-sm shadow-xl shadow-blue-200 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
-                              >
-                                {replyingTo ? "نشر الرد" : "نشر التعليق"}
-                              </button>
+                              <div className="flex justify-end mt-3 pt-3 border-t border-gray-100">
+                                <button
+                                  onClick={handleAddComment}
+                                  disabled={!newComment.trim()}
+                                  className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-sm shadow-lg shadow-blue-200 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  <MessageSquare size={15} />
+                                  {replyingTo ? "نشر الرد" : "نشر التعليق"}
+                                </button>
+                              </div>
                             </div>
                           </div>
 
                           {/* Comments List */}
-                          <div className="max-w-3xl mx-auto space-y-8">
-                            <div className="flex items-center justify-between pb-6 border-b border-gray-50">
-                              <h4 className="font-black text-gray-900">آخر التعليقات ({comments.length})</h4>
-                              <button className="text-xs font-black text-blue-600 flex items-center gap-1">
+                          <div className="max-w-3xl mx-auto space-y-1">
+                            <div className="flex items-center justify-between py-3 px-1">
+                              <h4 className="font-black text-gray-900 text-base">التعليقات <span className="text-blue-600 ml-1">({comments.length})</span></h4>
+                              <button className="text-xs font-black text-gray-500 flex items-center gap-1 hover:text-gray-800 transition-colors">
                                 <span>الأحدث أولاً</span>
                                 <ChevronDown size={14} />
                               </button>
                             </div>
 
-                            <div className="space-y-10">
-                              {comments.map(comment => (
-                                <div key={comment.id} className="flex gap-5 group">
-                                  <div className="w-12 h-12 rounded-2xl bg-gray-100 overflow-hidden shrink-0 shadow-sm">
-                                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.user?.name || 'User'}`} alt="avatar" />
-                                  </div>
-                                  <div className="flex-1 space-y-2">
-                                    <div className="flex items-center justify-between">
-                                      <h4 className="font-black text-sm text-gray-900">{comment.user?.name || 'طالب درب'}</h4>
-                                      <span className="text-[10px] font-bold text-gray-400">{new Date(comment.created_at).toLocaleDateString('ar-EG')}</span>
-                                    </div>
-                                    <div className="text-gray-600 text-sm font-bold leading-relaxed">
-                                      <ReactMarkdown>{comment.body}</ReactMarkdown>
-                                    </div>
-                                    <div className="flex items-center gap-6 pt-2">
-                                      <button
-                                        onClick={() => handleLikeComment(String(comment.id))}
-                                        className={cn(
-                                          "flex items-center gap-1.5 transition-colors",
-                                          (comment as any).is_liked ? "text-blue-600" : "text-gray-400 hover:text-blue-600"
-                                        )}
-                                      >
-                                        <ThumbsUp size={16} fill={(comment as any).is_liked ? "currentColor" : "none"} />
-                                        <span className="text-[10px] font-black">{(comment as any).likes_count || 0} إعجاب</span>
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          setReplyingTo(comment);
-                                          document.querySelector('textarea')?.focus();
-                                        }}
-                                        className="flex items-center gap-1.5 text-gray-400 hover:text-blue-600 transition-colors"
-                                      >
-                                        <ArrowLeft size={16} className="rotate-180" />
-                                        <span className="text-[10px] font-black">رد</span>
-                                      </button>
-
-                                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity ml-auto">
-                                        <button onClick={() => handleEditComment(comment)} className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors"><Pencil size={14} /></button>
-                                        <button onClick={() => handleDeleteComment(String(comment.id))} className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"><Trash2 size={14} /></button>
+                            {comments.length === 0 ? (
+                              <div className="flex flex-col items-center justify-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                <MessageCircle size={40} className="text-gray-300 mb-3" />
+                                <p className="font-black text-gray-500 text-base">كن أول من يعلّق على هذا الدرس!</p>
+                                <p className="text-sm text-gray-400 mt-1">شارك سؤالك أو رأيك أعلاه</p>
+                              </div>
+                            ) : (
+                              <div className="space-y-4">
+                                {comments.map(comment => (
+                                  <div key={comment.id} className="group bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:border-gray-200 hover:shadow-md transition-all">
+                                    <div className="flex gap-4">
+                                      <div className="w-11 h-11 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
+                                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.user?.name || 'User'}`} alt="avatar" className="w-full h-full" />
                                       </div>
-                                    </div>
-
-                                    {/* Replies Rendering */}
-                                    {comment.replies && comment.replies.length > 0 && (
-                                      <div className="mt-6 space-y-6 pr-10 border-r-2 border-gray-50">
-                                        {comment.replies.map(reply => (
-                                          <div key={reply.id} className="flex gap-4 group/reply">
-                                            <div className="w-10 h-10 rounded-xl bg-gray-100 overflow-hidden shrink-0">
-                                              <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.user?.name || 'User'}`} alt="avatar" />
-                                            </div>
-                                            <div className="flex-1 space-y-1">
-                                              <div className="flex items-center justify-between">
-                                                <h5 className="font-black text-xs text-gray-900">{reply.user?.name || 'طالب درب'}</h5>
-                                                <span className="text-[9px] font-bold text-gray-400">{new Date(reply.created_at).toLocaleDateString('ar-EG')}</span>
-                                              </div>
-                                              <div className="text-gray-600 text-xs font-bold leading-relaxed">
-                                                {reply.body}
-                                              </div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between mb-2">
+                                          <div className="flex items-center gap-2">
+                                            <h4 className="font-black text-gray-900 text-sm">{comment.user?.name || 'طالب درب'}</h4>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-xs font-medium text-gray-400">{new Date(comment.created_at).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' })}</span>
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                              <button onClick={() => handleEditComment(comment)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Pencil size={13} /></button>
+                                              <button onClick={() => handleDeleteComment(String(comment.id))} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={13} /></button>
                                             </div>
                                           </div>
-                                        ))}
+                                        </div>
+                                        <div className="text-gray-700 text-sm font-semibold leading-relaxed mb-3">
+                                          <ReactMarkdown>{comment.body}</ReactMarkdown>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                          <button
+                                            onClick={() => handleLikeComment(String(comment.id))}
+                                            className={cn(
+                                              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all",
+                                              (comment as any).is_liked
+                                                ? "bg-blue-100 text-blue-700 border border-blue-200"
+                                                : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                                            )}
+                                          >
+                                            <ThumbsUp size={13} fill={(comment as any).is_liked ? "currentColor" : "none"} />
+                                            <span>{(comment as any).likes_count || 0} إعجاب</span>
+                                          </button>
+                                          <button
+                                            onClick={() => { setReplyingTo(comment); document.querySelector('textarea')?.focus(); }}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-all"
+                                          >
+                                            <MessageCircle size={13} />
+                                            <span>رد</span>
+                                          </button>
+                                        </div>
+                                        {comment.replies && comment.replies.length > 0 && (
+                                          <div className="mt-4 space-y-3 border-r-2 border-blue-100 pr-4">
+                                            {comment.replies.map(reply => (
+                                              <div key={reply.id} className="flex gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
+                                                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.user?.name || "User"}`} alt="avatar" className="w-full h-full" />
+                                                </div>
+                                                <div className="flex-1">
+                                                  <div className="flex items-center gap-2 mb-1">
+                                                    <h5 className="font-black text-xs text-gray-900">{reply.user?.name || "طالب درب"}</h5>
+                                                    <span className="text-[10px] text-gray-400">{new Date(reply.created_at).toLocaleDateString("ar-EG")}</span>
+                                                  </div>
+                                                  <p className="text-gray-600 text-xs font-semibold leading-relaxed">{reply.body}</p>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
                                       </div>
-                                    )}
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
-                            </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </motion.div>
                       )}
@@ -1125,26 +1286,43 @@ export default function CoursePlayerPage() {
                             </div>
                           </div>
 
-                          <div className="space-y-4">
-                            {notes.map(note => (
-                              <div key={note.id} className="group bg-white p-5 rounded-xl border border-gray-200 hover:border-blue-300 transition-all shadow-sm">
-                                <div className="flex items-start justify-between mb-3">
-                                  {/* Timestamp badge — visually prominent, links to video moment */}
-                                  <div className="flex items-center gap-2 bg-blue-600 text-white font-black text-sm px-4 py-1.5 rounded-full shadow-md shadow-blue-200 select-none">
-                                    <Clock size={14} className="shrink-0" />
-                                    <span>{formatTime(note.video_time || 0)}</span>
+                          <div className="space-y-3">
+                            {notes.map((note, idx) => {
+                              const palette = [
+                                { bg: 'bg-amber-50', border: 'border-amber-200', badge: 'bg-amber-500', text: 'text-amber-900', sub: 'text-amber-700/70', actions: 'hover:bg-amber-100' },
+                                { bg: 'bg-blue-50',  border: 'border-blue-200',  badge: 'bg-blue-600',  text: 'text-blue-900',  sub: 'text-blue-700/60',  actions: 'hover:bg-blue-100' },
+                                { bg: 'bg-rose-50',  border: 'border-rose-200',  badge: 'bg-rose-500',  text: 'text-rose-900',  sub: 'text-rose-700/60',  actions: 'hover:bg-rose-100' },
+                                { bg: 'bg-emerald-50', border: 'border-emerald-200', badge: 'bg-emerald-600', text: 'text-emerald-900', sub: 'text-emerald-700/60', actions: 'hover:bg-emerald-100' },
+                                { bg: 'bg-purple-50', border: 'border-purple-200', badge: 'bg-purple-600', text: 'text-purple-900', sub: 'text-purple-700/60', actions: 'hover:bg-purple-100' },
+                              ];
+                              const c = palette[idx % palette.length];
+                              return (
+                                <motion.div
+                                  key={note.id}
+                                  layout
+                                  drag="y"
+                                  dragConstraints={{ top: -20, bottom: 20 }}
+                                  dragElastic={0.15}
+                                  whileDrag={{ scale: 1.02, zIndex: 50, boxShadow: '0 16px 40px rgba(0,0,0,0.15)' }}
+                                  className={`group relative p-5 rounded-2xl border-2 shadow-sm cursor-grab active:cursor-grabbing select-none ${c.bg} ${c.border}`}
+                                >
+                                  <div className="flex items-start justify-between mb-3">
+                                    <div className={`flex items-center gap-2 ${c.badge} text-white font-black text-sm px-3 py-1.5 rounded-full shadow-md`}>
+                                      <Clock size={13} className="shrink-0" />
+                                      <span>{formatTime(note.video_time || 0)}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <button onClick={() => handleEditNote(note)} className={`p-2 rounded-lg transition-colors ${c.text} ${c.actions}`}><Pencil size={14} /></button>
+                                      <button onClick={() => handleDeleteNote(String(note.id))} className="p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"><Trash2 size={14} /></button>
+                                    </div>
                                   </div>
-                                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => handleEditNote(note)} className="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"><Pencil size={15} /></button>
-                                    <button onClick={() => handleDeleteNote(String(note.id))} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={15} /></button>
+                                  <div className={`font-semibold text-base leading-relaxed ${c.text}`}>{note.body}</div>
+                                  <div className={`mt-2 text-xs font-medium ${c.sub}`}>
+                                    {new Date(note.created_at).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' })}
                                   </div>
-                                </div>
-                                <div className="text-gray-800 font-semibold text-base leading-relaxed">{note.body}</div>
-                                <div className="mt-2 text-xs text-gray-400 font-medium">
-                                  {new Date(note.created_at).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                </div>
-                              </div>
-                            ))}
+                                </motion.div>
+                              );
+                            })}
                           </div>
                         </motion.div>
                       )}
@@ -1170,7 +1348,7 @@ export default function CoursePlayerPage() {
           <ListVideo size={24} />
         </button>
 
-        {/* Urgent Help Button (Bottom Left) */}
+        {/* Urgent Help Button (Bottom Right) */}
         <button className="fixed bottom-8 right-8 z-[60] flex items-center gap-3 px-6 py-3 bg-[#065F46] text-white rounded-2xl font-black text-sm shadow-2xl shadow-emerald-900/20 hover:scale-105 transition-all">
           <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">?</div>
           <span>مساعدة فورية</span>
