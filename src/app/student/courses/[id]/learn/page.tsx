@@ -702,20 +702,24 @@ export default function CoursePlayerPage() {
         <main className="flex-1 flex flex-col overflow-y-auto custom-scrollbar min-w-0">
           <div className="max-w-[min(100%,100rem)] mx-auto w-full p-4 lg:p-8 space-y-8">
 
+            {/* RTL layout: sidebar first in DOM = appears on the RIGHT side visually */}
             <div className="flex flex-col lg:flex-row gap-8 lg:items-start">
 
-              {/* Right Sidebar - Curriculum (First in DOM for RTL) */}
+              {/* Curriculum Sidebar — right side in RTL */}
               <aside
                 className={cn(
-                  'flex flex-col bg-transparent lg:bg-white lg:rounded-[32px] lg:shadow-sm overflow-hidden shrink-0',
-                  'fixed z-40 w-[min(100%,22rem)] max-h-[min(100dvh-5rem,720px)] top-[4.5rem] bottom-4 right-4 transition-transform duration-300 ease-out shadow-2xl lg:shadow-none',
+                  'flex flex-col bg-white overflow-hidden shrink-0 border border-gray-200',
+                  'fixed z-40 w-[min(100%,22rem)] max-h-[min(100dvh-5rem,720px)] top-[4.5rem] bottom-4 right-4 transition-transform duration-300 ease-out shadow-2xl rounded-2xl',
                   isSidebarOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)] lg:translate-x-0',
-                  'lg:static lg:z-0 lg:right-auto lg:top-auto lg:bottom-auto lg:w-[320px] lg:max-h-[min(800px,calc(100dvh-8rem))] lg:sticky lg:top-24'
+                  'lg:static lg:z-0 lg:right-auto lg:top-auto lg:bottom-auto lg:w-[340px] lg:max-h-[min(820px,calc(100dvh-8rem))] lg:sticky lg:top-24 lg:shadow-sm lg:rounded-2xl'
                 )}
               >
-                <div className="p-5 lg:px-6 shrink-0 flex items-center gap-3">
-                  <ListVideo size={20} className="text-blue-600" />
-                  <h3 className="font-black text-gray-900 text-sm">منهج الدورة</h3>
+                {/* Sidebar header — shaded */}
+                <div className="bg-gray-50 border-b border-gray-200 px-5 py-4 lg:px-6 shrink-0 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <ListVideo size={16} className="text-blue-700" />
+                  </div>
+                  <h3 className="font-black text-gray-900 text-base">منهج الدورة</h3>
                   <button
                     type="button"
                     onClick={() => setIsSidebarOpen(false)}
@@ -735,14 +739,14 @@ export default function CoursePlayerPage() {
                             prev.includes(chapter.id) ? prev.filter((c) => c !== chapter.id) : [...prev, chapter.id]
                           )
                         }
-                        className="w-full p-3 flex items-center justify-between hover:bg-gray-50 rounded-2xl transition-all text-right group"
+                        className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-blue-50/40 rounded-xl transition-all text-right group"
                       >
-                        <h4 className="text-xs font-black text-gray-800 truncate">{chapter.title}</h4>
-                        <div className="w-6 h-6 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-white transition-colors">
+                        <h4 className="text-sm font-black text-gray-900 truncate">{chapter.title}</h4>
+                        <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                           {expandedChapters.includes(chapter.id) ? (
-                            <ChevronUp size={14} className="text-gray-500" />
+                            <ChevronUp size={14} className="text-gray-700" />
                           ) : (
-                            <ChevronDown size={14} className="text-gray-500" />
+                            <ChevronDown size={14} className="text-gray-700" />
                           )}
                         </div>
                       </button>
@@ -769,8 +773,10 @@ export default function CoursePlayerPage() {
                                     }
                                   }}
                                   className={cn(
-                                    'w-full p-3 flex items-center justify-between transition-all text-right rounded-2xl group border border-transparent',
-                                    isActive ? 'bg-blue-50/50 border-blue-100 shadow-sm' : 'hover:bg-white hover:shadow-sm hover:border-gray-100'
+                                    'w-full px-3 py-3 flex items-center gap-3 transition-all text-right rounded-xl group border',
+                                    isActive
+                                      ? 'bg-blue-600 border-blue-600 shadow-md'
+                                      : 'border-transparent hover:bg-gray-50 hover:border-gray-100'
                                   )}
                                 >
                                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -778,16 +784,16 @@ export default function CoursePlayerPage() {
                                       className={cn(
                                         'w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all',
                                         isActive
-                                          ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-                                          : 'bg-gray-100 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-500'
+                                          ? 'bg-white/20 text-white'
+                                          : 'bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-700'
                                       )}
                                     >
-                                      {isLocked ? <Lock size={12} /> : (lesson.type === 'pdf' ? <FileText size={12} /> : <Play size={12} fill={isActive ? "currentColor" : "none"} />)}
+                                      {isLocked ? <Lock size={13} /> : (lesson.type === 'pdf' ? <FileText size={13} /> : <Play size={13} fill={isActive ? 'currentColor' : 'none'} />)}
                                     </div>
                                     <h5
                                       className={cn(
-                                        'text-xs font-bold truncate transition-colors',
-                                        isActive ? 'text-blue-700 font-black' : 'text-gray-600 group-hover:text-gray-900'
+                                        'text-sm font-bold truncate transition-colors',
+                                        isActive ? 'text-white font-black' : 'text-gray-700 group-hover:text-gray-900'
                                       )}
                                     >
                                       {lesson.title}
@@ -855,10 +861,10 @@ export default function CoursePlayerPage() {
                         })()}
                       </span>
                     </div>
-                    <h2 className="text-xl md:text-2xl font-black text-gray-900 leading-tight">
+                    <h2 className="text-2xl md:text-3xl font-black text-gray-900 leading-tight">
                       {currentLesson?.title || 'جاري التحميل...'}
                     </h2>
-                    <div className="text-gray-500 font-medium text-sm leading-relaxed max-w-3xl">
+                    <div className="text-gray-600 font-medium text-base leading-relaxed max-w-3xl">
                       {(() => {
                         const description = currentLesson?.description
                           ? currentLesson.description.replace(/<[^>]*>/g, '')
@@ -906,57 +912,61 @@ export default function CoursePlayerPage() {
                   </div>
                 </div>
 
-                {/* Resources Section */}
-                <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100 space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-gray-900 font-black">
-                      <Download size={20} className="text-teal-600" />
-                      <h3>مصادر تعليمية للتحميل</h3>
+                {/* Resources Section — standalone bordered card */}
+                <div className="border border-gray-200 rounded-[12px] overflow-hidden shadow-sm">
+                  {/* Shaded header */}
+                  <div className="bg-gray-50 border-b border-gray-200 px-6 py-4 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-teal-100 flex items-center justify-center">
+                      <Download size={18} className="text-teal-700" />
                     </div>
+                    <h3 className="font-black text-gray-900 text-base">مصادر تعليمية</h3>
                   </div>
-
+                  <div className="bg-white p-6 space-y-4">
                   {(currentLesson as any)?.attachments && (currentLesson as any).attachments.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {(currentLesson as any).attachments.map((resource: any, i: number) => (
-                        <div key={i} className="flex items-center justify-between p-5 bg-gray-50 rounded-[24px] border border-gray-100 hover:border-blue-200 transition-all cursor-pointer group">
-                          <div className="flex items-center gap-4">
-                            <div className={cn("w-12 h-12 flex items-center justify-center rounded-2xl bg-blue-50 text-blue-600")}>
-                              <FileText size={24} />
-                            </div>
-                            <div className="text-right">
-                              <h4 className="text-sm font-black text-gray-900 mb-1">{resource.title || 'مرفق تعليمي'}</h4>
-                              <p className="text-[10px] font-bold text-gray-400 uppercase">{resource.type || 'FILE'} • {resource.size || '---'}</p>
-                            </div>
+                        <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-teal-200 hover:bg-teal-50/30 transition-all cursor-pointer group">
+                          <div className="w-11 h-11 flex items-center justify-center rounded-xl bg-teal-50 text-teal-700 shrink-0">
+                            <FileText size={22} />
+                          </div>
+                          <div className="text-right min-w-0">
+                            <h4 className="text-sm font-black text-gray-900 truncate">{resource.title || 'مرفق تعليمي'}</h4>
+                            <p className="text-xs font-bold text-gray-500 uppercase mt-0.5">{resource.type || 'FILE'} • {resource.size || '---'}</p>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center py-10 bg-gray-50/50 rounded-[24px] border border-dashed border-gray-200">
-                      <AlertCircle size={32} className="text-gray-300 mb-3" />
-                      <p className="text-gray-400 font-bold text-sm">لا توجد مرفقات تعليمية متاحة لهذا الدرس حالياً.</p>
+                    <div className="flex flex-col items-center justify-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                      <Download size={28} className="text-gray-300 mb-2" />
+                      <p className="text-gray-500 font-bold text-sm">لا توجد مرفقات تعليمية لهذا الدرس حالياً.</p>
                     </div>
                   )}
+                  </div>
                 </div>
 
-                {/* Interaction Section (Tabs) */}
-                <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden min-h-[500px] flex flex-col">
-                  <div className="flex items-right border-b border-gray-100 px-8 shrink-0">
+                {/* Interaction Section — bordered card with tabs */}
+                <div className="border border-gray-200 rounded-[12px] overflow-hidden shadow-sm min-h-[500px] flex flex-col">
+                  {/* Shaded tab header row */}
+                  <div className="bg-gray-50 border-b border-gray-200 flex items-center gap-1 px-4 shrink-0">
                     {[
-                      { id: 'comments', label: 'نقاش الدرس' },
-                      { id: 'notes', label: 'الملاحظات' },
+                      { id: 'comments', label: 'نقاش الدرس', icon: <MessageSquare size={15} /> },
+                      { id: 'notes', label: 'ملاحظاتي', icon: <StickyNote size={15} /> },
                     ].map(tab => (
                       <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
                         className={cn(
-                          "px-10 py-6 font-black text-sm transition-all relative",
-                          activeTab === tab.id ? "text-blue-600 bg-blue-50" : "text-[#080616] hover:text-gray-600"
+                          "flex items-center gap-2 px-6 py-4 font-black text-sm transition-all relative border-b-2",
+                          activeTab === tab.id
+                            ? "text-blue-700 border-blue-600 bg-blue-50"
+                            : "text-gray-600 border-transparent hover:text-gray-900 hover:bg-white"
                         )}
                       >
+                        {tab.icon}
                         <span>{tab.label}</span>
                         {activeTab === tab.id && (
-                          <motion.div layoutId="activeTabUI" className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
+                          <motion.div layoutId="activeTabUI" className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
                         )}
                       </button>
                     ))}
@@ -1093,42 +1103,46 @@ export default function CoursePlayerPage() {
                           animate={{ opacity: 1, y: 0 }}
                           className="max-w-3xl mx-auto space-y-10"
                         >
-                          <div className="bg-gray-100/40 p-8 rounded-[40px] border border-gray-200 space-y-5">
+                          <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 space-y-4">
                             <textarea
                               value={newNote}
                               onChange={(e) => setNewNote(e.target.value)}
-                              placeholder="اكتب ملاحظة ذكية عند هذه اللحظة..."
-                              className="w-full bg-white/80 border border-gray-200 rounded-[24px] p-6 font-bold text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all min-h-[140px] shadow-sm text-gray-800 placeholder-gray-500"
+                              placeholder="اكتب ملاحظة عند هذه اللحظة من الفيديو..."
+                              className="w-full bg-white border border-gray-200 rounded-xl p-4 font-semibold text-base outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all min-h-[130px] shadow-sm text-gray-900 placeholder-gray-400"
                             />
-                            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                              <div className="flex items-center gap-2 text-blue-700 font-black text-sm bg-blue-100/50 px-5 py-2.5 rounded-[18px] w-full sm:w-auto justify-center border border-blue-200">
-                                <Clock size={16} />
-                                <span>{formatTime(currentTime)}</span>
+                            <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+                              <div className="flex items-center gap-2 text-blue-800 font-black text-sm bg-blue-100 px-4 py-2.5 rounded-lg w-full sm:w-auto justify-center border border-blue-200">
+                                <Clock size={15} />
+                                <span>توقيت الفيديو: {formatTime(currentTime)}</span>
                               </div>
                               <button
                                 onClick={handleAddNote}
                                 disabled={!newNote.trim()}
-                                className="px-12 py-3.5 bg-blue-600 text-white rounded-[20px] font-black text-sm shadow-xl shadow-blue-200 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 w-full sm:w-auto"
+                                className="px-10 py-3 bg-blue-600 text-white rounded-xl font-black text-sm shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50 w-full sm:w-auto"
                               >
                                 حفظ الملاحظة
                               </button>
                             </div>
                           </div>
 
-                          <div className="space-y-6">
+                          <div className="space-y-4">
                             {notes.map(note => (
-                              <div key={note.id} className="group bg-white p-6 rounded-[24px] border border-gray-50 hover:border-blue-100 transition-all shadow-sm">
-                                <div className="flex items-start justify-between mb-4">
-                                  <button className="flex items-center gap-2 text-blue-600 font-black text-xs bg-blue-50 px-3 py-1.5 rounded-xl">
-                                    <PlayCircle size={16} fill="currentColor" />
+                              <div key={note.id} className="group bg-white p-5 rounded-xl border border-gray-200 hover:border-blue-300 transition-all shadow-sm">
+                                <div className="flex items-start justify-between mb-3">
+                                  {/* Timestamp badge — visually prominent, links to video moment */}
+                                  <div className="flex items-center gap-2 bg-blue-600 text-white font-black text-sm px-4 py-1.5 rounded-full shadow-md shadow-blue-200 select-none">
+                                    <Clock size={14} className="shrink-0" />
                                     <span>{formatTime(note.video_time || 0)}</span>
-                                  </button>
-                                  <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => handleEditNote(note)} className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors"><Pencil size={14} /></button>
-                                    <button onClick={() => handleDeleteNote(String(note.id))} className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"><Trash2 size={14} /></button>
+                                  </div>
+                                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => handleEditNote(note)} className="p-2 text-gray-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"><Pencil size={15} /></button>
+                                    <button onClick={() => handleDeleteNote(String(note.id))} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={15} /></button>
                                   </div>
                                 </div>
-                                <div className="text-gray-700 font-bold text-sm leading-relaxed">{note.body}</div>
+                                <div className="text-gray-800 font-semibold text-base leading-relaxed">{note.body}</div>
+                                <div className="mt-2 text-xs text-gray-400 font-medium">
+                                  {new Date(note.created_at).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </div>
                               </div>
                             ))}
                           </div>
