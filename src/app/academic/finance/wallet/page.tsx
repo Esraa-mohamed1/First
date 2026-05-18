@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  CheckCircle2, 
-  Clock, 
+import {
+  CheckCircle2,
+  Clock,
   Plus,
   ArrowUpRight,
   ShieldCheck,
@@ -60,7 +60,7 @@ const WalletPage = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
         {/* Right Side (now on Left in UI): Total Balance Card - Premium Credit Card Style */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           className="bg-gradient-to-br from-[#1e40af] via-[#1e3a8a] to-[#172554] p-12 rounded-[1.5rem] text-white relative overflow-hidden flex flex-col justify-between shadow-2xl"
@@ -75,23 +75,23 @@ const WalletPage = () => {
           </div>
 
           <div className="relative z-10 flex justify-between items-start">
-             {/* Virtual Chip */}
-             <div className="w-14 h-10 bg-gradient-to-br from-yellow-200 to-yellow-600 rounded-lg relative overflow-hidden shadow-inner opacity-80">
-                <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-px opacity-30">
-                  <div className="border border-black/20"></div>
-                  <div className="border border-black/20"></div>
-                  <div className="border border-black/20"></div>
-                  <div className="border border-black/20"></div>
-                  <div className="border border-black/20"></div>
-                  <div className="border border-black/20"></div>
-                </div>
-             </div>
-             {/* Logo */}
-             <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20">
-                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden">
-                  <div className="w-8 h-8 bg-[#1e40af] rounded-full translate-x-2 translate-y-2 shadow-inner"></div>
-                </div>
-             </div>
+            {/* Virtual Chip */}
+            <div className="w-14 h-10 bg-gradient-to-br from-yellow-200 to-yellow-600 rounded-lg relative overflow-hidden shadow-inner opacity-80">
+              <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-px opacity-30">
+                <div className="border border-black/20"></div>
+                <div className="border border-black/20"></div>
+                <div className="border border-black/20"></div>
+                <div className="border border-black/20"></div>
+                <div className="border border-black/20"></div>
+                <div className="border border-black/20"></div>
+              </div>
+            </div>
+            {/* Logo */}
+            <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20">
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden">
+                <div className="w-8 h-8 bg-[#1e40af] rounded-full translate-x-2 translate-y-2 shadow-inner"></div>
+              </div>
+            </div>
           </div>
 
           <div className="relative z-10 space-y-8 mt-12">
@@ -101,7 +101,7 @@ const WalletPage = () => {
               </h2>
               <h3 className="text-3xl font-black opacity-80">الرصيد الكلي</h3>
             </div>
-            
+
             <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.3em] opacity-40">
               <span>Academic Platinum</span>
               <span dir="ltr">**** **** **** {walletData?.user_id || '0000'}</span>
@@ -120,7 +120,7 @@ const WalletPage = () => {
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <button 
+              <button
                 onClick={() => setIsWithdrawModalOpen(true)}
                 className="px-8 py-2 bg-[#10b981] text-white font-bold rounded-full hover:bg-emerald-600 transition-all text-sm shadow-md active:scale-95"
               >
@@ -129,7 +129,7 @@ const WalletPage = () => {
               <div className="text-left">
                 <p className="text-gray-900 font-bold text-sm mb-2">الرصيد المتاح</p>
                 <h3 className="text-3xl font-black text-gray-900 tracking-tight">
-                   {Number(walletData?.available_balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} $
+                  {Number(walletData?.available_balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} $
                 </h3>
               </div>
             </div>
@@ -146,7 +146,7 @@ const WalletPage = () => {
             <div className="text-left">
               <p className="text-gray-900 font-bold text-sm mb-2">الرصيد المعلق</p>
               <h3 className="text-3xl font-black text-gray-900 tracking-tight">
-                 {pendingBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })} $
+                {pendingBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })} $
               </h3>
             </div>
           </div>
@@ -167,14 +167,14 @@ const WalletPage = () => {
       <AnimatePresence>
         {isWithdrawModalOpen && (
           <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-6">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsWithdrawModalOpen(false)}
               className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -182,13 +182,13 @@ const WalletPage = () => {
             >
               {/* Modal Header */}
               <div className="px-8 pt-10 pb-2 flex items-center justify-between">
-                <button 
+                <button
                   onClick={() => setIsWithdrawModalOpen(false)}
                   className="w-12 h-12 flex items-center justify-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all"
                 >
                   <Plus size={28} className="rotate-45" />
                 </button>
-                
+
                 <div className="flex items-center gap-4">
                   <h2 className="text-2xl font-black text-[#1e293b]">سحب الرصيد</h2>
                   <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
@@ -208,14 +208,14 @@ const WalletPage = () => {
                       Amount to Withdraw
                     </label>
                   </div>
-                  
+
                   <div className="relative group">
                     <div className="absolute inset-0 bg-[#BFDDF0] rounded-[2.5rem] border-2 border-transparent group-focus-within:border-blue-600 group-focus-within:bg-white transition-all duration-300" />
                     <div className="relative flex flex-col items-center justify-center px-8 py-10">
                       <div className="flex items-baseline gap-2">
                         <span className="text-2xl font-black text-blue-600">$</span>
-                        <input 
-                          type="number" 
+                        <input
+                          type="number"
                           placeholder="0.00"
                           className="w-full bg-transparent border-none outline-none text-center font-black text-6xl text-[#1e293b] placeholder:text-gray-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           autoFocus
@@ -232,8 +232,8 @@ const WalletPage = () => {
                   </label>
                   <div className="space-y-3">
                     {payoutMethods.map((method) => (
-                      <label 
-                        key={method.id} 
+                      <label
+                        key={method.id}
                         className="flex items-center justify-between p-5 bg-white border-2 border-gray-50 rounded-[1.5rem] cursor-pointer hover:border-blue-100 hover:bg-blue-50/10 transition-all group relative"
                       >
                         <div className="flex items-center gap-4 flex-1 justify-end">
@@ -245,13 +245,13 @@ const WalletPage = () => {
                             <method.icon size={22} />
                           </div>
                         </div>
-                        
+
                         <div className="relative flex items-center justify-center w-6 h-6 ml-4">
-                          <input 
-                            type="radio" 
-                            name="payout" 
-                            defaultChecked={method.isDefault} 
-                            className="peer appearance-none w-6 h-6 border-2 border-gray-200 rounded-full checked:border-blue-600 transition-all cursor-pointer" 
+                          <input
+                            type="radio"
+                            name="payout"
+                            defaultChecked={method.isDefault}
+                            className="peer appearance-none w-6 h-6 border-2 border-gray-200 rounded-full checked:border-blue-600 transition-all cursor-pointer"
                           />
                           <div className="absolute w-3 h-3 bg-blue-600 rounded-full scale-0 peer-checked:scale-100 transition-transform" />
                         </div>
