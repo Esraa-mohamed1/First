@@ -11,7 +11,11 @@ import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
 import EditUnitModal from '@/components/Academic/Modals/EditUnitModal';
 import EditLessonModal from '@/components/Academic/Modals/EditLessonModal';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import QuillEditor from '@/components/Academic/QuillEditor';
+
+const MySwal = withReactContent(Swal);
 
 export default function CourseDetailsPage() {
   const router = useRouter();
@@ -45,6 +49,9 @@ export default function CourseDetailsPage() {
 
   // Tabs State
   const [activeTab, setActiveTab] = useState<'info' | 'content' | 'pricing'>('info');
+
+  // Course Status
+  const [status, setStatus] = useState<'published' | 'draft'>('draft');
 
   // Info Tab Form State
   const [courseInfo, setCourseInfo] = useState({
@@ -269,6 +276,7 @@ export default function CourseDetailsPage() {
 
       setPricingType(data.price_type || (Number(data.price) === 0 ? 'free' : 'paid'));
       setPrice(data.price?.toString() || '');
+      setStatus(data.status || 'draft');
 
     } catch (error) {
       console.error(error);
@@ -399,57 +407,83 @@ export default function CourseDetailsPage() {
 
   return (
     <div className="space-y-6 p-4 md:p-6" dir="rtl">
-      {/* Top Action Bar */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-full font-bold text-sm transition-all shadow-md shadow-green-100">
-            <span>نشر</span>
+      {/* Tabs Header & Action Bar */}
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 border-b border-gray-200 px-2 md:px-4">
+        <div className="flex items-center justify-start gap-8 overflow-x-auto hide-scrollbar">
+          <button
+            onClick={() => setActiveTab('info')}
+            className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
+              activeTab === 'info' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            معلومات الدورة
+            {activeTab === 'info' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />}
           </button>
+          <button
+            onClick={() => setActiveTab('content')}
+            className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
+              activeTab === 'content' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            محتوى الدورة
+            {activeTab === 'content' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />}
+          </button>
+          <button
+            onClick={() => setActiveTab('pricing')}
+            className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
+              activeTab === 'pricing' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            التسعير
+            {activeTab === 'pricing' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />}
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3 w-full lg:w-auto pb-4 lg:pb-3">
           <button 
             onClick={() => router.push(`/academic/courses/${id}/student`)}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-8 py-3 rounded-full font-bold text-sm transition-all shadow-sm"
+            className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-6 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm"
           >
             <Eye size={18} />
             <span>معاينة</span>
           </button>
-        </div>
-      </div>
+          <button
+            onClick={async () => {
+              const isPublished = status === 'published';
+              const actionText = isPublished ? 'تحويل إلى مسودة' : 'نشر الدورة';
+              const confirmText = isPublished ? 'نعم، اجعلها مسودة' : 'نعم، انشرها';
+              
+              const result = await MySwal.fire({
+                title: `هل أنت متأكد من ${actionText}؟`,
+                text: isPublished ? "سيتم إخفاء الدورة عن الطلاب" : "ستصبح الدورة متاحة لجميع الطلاب",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: isPublished ? '#f59e0b' : '#10b981',
+                cancelButtonColor: '#d33',
+                confirmButtonText: confirmText,
+                cancelButtonText: 'إلغاء'
+              });
 
-      {/* Tabs Header */}
-      <div className="flex items-center justify-start gap-8 border-b border-gray-200 px-2 md:px-4 overflow-x-auto hide-scrollbar">
-        <button
-          onClick={() => setActiveTab('info')}
-          className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
-            activeTab === 'info' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          معلومات الدورة
-          {activeTab === 'info' && (
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab('content')}
-          className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
-            activeTab === 'content' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          محتوي الدورة
-          {activeTab === 'content' && (
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab('pricing')}
-          className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
-            activeTab === 'pricing' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          التسعير
-          {activeTab === 'pricing' && (
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
-          )}
-        </button>
+              if (result.isConfirmed) {
+                const newStatus = isPublished ? 'draft' : 'published';
+                try {
+                  await updateCourse(Number(id), { status: newStatus });
+                  setStatus(newStatus);
+                  toast.success(`تم ${isPublished ? 'تحويل الدورة لمسودة' : 'نشر الدورة'} بنجاح`);
+                } catch (err) {
+                  toast.error('فشل تحديث حالة الدورة');
+                }
+              }
+            }}
+            className={`flex-1 lg:flex-none flex items-center justify-center gap-2 px-8 py-2.5 rounded-full font-bold text-sm transition-all shadow-md ${
+              status === 'published' 
+                ? 'bg-green-500 hover:bg-green-600 text-white shadow-green-100' 
+                : 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-100'
+            }`}
+          >
+            <span>{status === 'published' ? 'نشر' : 'مسودة'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Tab Content */}

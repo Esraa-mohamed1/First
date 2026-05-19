@@ -479,12 +479,49 @@ export default function CreateCourseClient() {
           </div>
 
           <div className="flex items-center gap-3 w-full lg:w-auto pb-4 lg:pb-3">
-            <button className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-6 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm">
+            <button 
+              onClick={() => {
+                if (courseId) {
+                  router.push(`/academic/courses/${courseId}/student`);
+                } else {
+                  toast.error('يرجى حفظ الدورة أولاً للمعاينة');
+                }
+              }}
+              className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-6 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm"
+            >
               <Eye size={18} />
               <span>معاينة</span>
             </button>
             <button
-              onClick={() => setStatus(status === 'published' ? 'draft' : 'published')}
+              onClick={async () => {
+                const isPublished = status === 'published';
+                const actionText = isPublished ? 'تحويل إلى مسودة' : 'نشر الدورة';
+                const confirmText = isPublished ? 'نعم، اجعلها مسودة' : 'نعم، انشرها';
+                
+                const result = await MySwal.fire({
+                  title: `هل أنت متأكد من ${actionText}؟`,
+                  text: isPublished ? "سيتم إخفاء الدورة عن الطلاب" : "ستصبح الدورة متاحة لجميع الطلاب",
+                  icon: 'question',
+                  showCancelButton: true,
+                  confirmButtonColor: isPublished ? '#f59e0b' : '#10b981',
+                  cancelButtonColor: '#d33',
+                  confirmButtonText: confirmText,
+                  cancelButtonText: 'إلغاء'
+                });
+
+                if (result.isConfirmed) {
+                  const newStatus = isPublished ? 'draft' : 'published';
+                  setStatus(newStatus);
+                  if (courseId) {
+                    try {
+                      await updateCourse(courseId, { status: newStatus });
+                      toast.success(`تم ${isPublished ? 'تحويل الدورة لمسودة' : 'نشر الدورة'} بنجاح`);
+                    } catch (err) {
+                      toast.error('فشل تحديث حالة الدورة');
+                    }
+                  }
+                }
+              }}
               className={`flex-1 lg:flex-none flex items-center justify-center gap-2 px-8 py-2.5 rounded-full font-bold text-sm transition-all shadow-md ${
                 status === 'published' 
                   ? 'bg-green-500 hover:bg-green-600 text-white shadow-green-100' 

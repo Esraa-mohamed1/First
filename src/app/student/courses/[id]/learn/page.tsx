@@ -769,7 +769,7 @@ export default function CoursePlayerPage() {
         </div>
       </header>
 
-      <div className="flex flex-1 relative">
+      <div className="flex flex-1 relative overflow-hidden">
         {isSidebarOpen && (
           <button
             type="button"
@@ -779,126 +779,12 @@ export default function CoursePlayerPage() {
           />
         )}
 
-        <main className="flex-1 flex flex-col overflow-y-auto custom-scrollbar min-w-0">
-          <div className="max-w-[min(100%,100rem)] mx-auto w-full p-4 lg:p-8 space-y-8">
-
-            {/* RTL layout: sidebar first in DOM = appears on the RIGHT side visually */}
-            <div className="flex flex-col lg:flex-row gap-8 lg:items-start">
-
-              {/* Curriculum Sidebar — right side in RTL */}
-              <aside
-                className={cn(
-                  'flex flex-col bg-[#F8FAFC] overflow-hidden shrink-0',
-                  'fixed z-40 w-[min(100%,22rem)] max-h-[min(100dvh-5rem,720px)] top-[4.5rem] bottom-4 right-4 transition-transform duration-300 ease-out shadow-2xl rounded-2xl',
-                  isSidebarOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)] lg:translate-x-0',
-                  'lg:static lg:z-0 lg:right-auto lg:top-auto lg:bottom-auto lg:w-[340px] lg:max-h-[min(820px,calc(100dvh-8rem))] lg:sticky lg:top-24 lg:shadow-none lg:rounded-none'
-                )}
-              >
-                {/* Sidebar header */}
-                <div className="px-5 py-6 lg:px-6 shrink-0 flex items-center gap-3">
-                  <BookOpen size={20} className="text-blue-600" />
-                  <h3 className="font-black text-blue-600 text-lg">منهج الدورة</h3>
-                  <button
-                    type="button"
-                    onClick={() => setIsSidebarOpen(false)}
-                    className="lg:hidden p-2 hover:bg-gray-200 rounded-xl transition-colors mr-auto"
-                    aria-label="إغلاق القائمة"
-                  >
-                    <X size={18} className="text-gray-500" />
-                  </button>
-                </div>
-                <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar px-4 pb-4">
-                  {chapters.map((chapter: any, idx: number) => {
-                    const ordinals = ['الأولى', 'الثانية', 'الثالثة', 'الرابعة', 'الخامسة', 'السادسة', 'السابعة', 'الثامنة', 'التاسعة', 'العاشرة'];
-                    const unitPrefix = `الوحدة ${ordinals[idx] || (idx + 1)}: `;
-                    return (
-                      <div key={chapter.id} className="mb-4">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setExpandedChapters((prev) =>
-                              prev.includes(chapter.id) ? prev.filter((c) => c !== chapter.id) : [...prev, chapter.id]
-                            )
-                          }
-                          className="w-full flex items-center justify-between transition-all text-right group mb-3"
-                        >
-                          <h4 className="text-[15px] font-black text-gray-800 truncate">
-                            {unitPrefix}{chapter.title}
-                          </h4>
-                          <div className="flex items-center justify-center transition-colors">
-                            {expandedChapters.includes(chapter.id) ? (
-                              <ChevronUp size={16} className="text-gray-500" />
-                            ) : (
-                              <ChevronDown size={16} className="text-gray-500" />
-                            )}
-                          </div>
-                        </button>
-                        <AnimatePresence>
-                          {expandedChapters.includes(chapter.id) && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              className="overflow-hidden space-y-2"
-                            >
-                              {chapter.lessons?.map((lesson: any) => {
-                                const isActive = currentLesson?.id === lesson.id;
-                                const isLocked = false; // Add logic if needed
-                                
-                                if (isActive) {
-                                  return (
-                                    <button
-                                      type="button"
-                                      id={`lesson-${lesson.id}`}
-                                      key={lesson.id}
-                                      onClick={() => setIsSidebarOpen(false)}
-                                      className="w-full bg-white rounded-[24px] p-2 pl-2 pr-4 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-gray-100 transition-all cursor-default"
-                                    >
-                                      <span className="text-blue-600 font-bold text-[13px] truncate ml-2 text-right">
-                                        {lesson.title}
-                                      </span>
-                                      <div className="flex items-center gap-2 shrink-0">
-                                        <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap">
-                                          قيد المشاهدة
-                                        </span>
-                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-md shadow-blue-200">
-                                          <Play fill="white" className="text-white w-3.5 h-3.5 ml-0.5" />
-                                        </div>
-                                      </div>
-                                    </button>
-                                  );
-                                }
-
-                                return (
-                                  <button
-                                    type="button"
-                                    id={`lesson-${lesson.id}`}
-                                    key={lesson.id}
-                                    onClick={() => {
-                                      if (!isLocked) {
-                                        setCurrentLesson(lesson);
-                                        setIsSidebarOpen(false);
-                                      }
-                                    }}
-                                    className="w-full flex items-center justify-between px-2 py-2.5 group hover:bg-gray-100/50 rounded-xl transition-colors"
-                                  >
-                                    <span className="text-gray-500 font-bold text-[13px] group-hover:text-gray-900 transition-colors truncate ml-2 text-right">
-                                      {lesson.title}
-                                    </span>
-                                    <div className="text-gray-400 group-hover:text-gray-600 transition-colors shrink-0">
-                                      {isLocked ? <Lock size={16} /> : (lesson.type === 'pdf' ? <FileText size={16} /> : <PlayCircle size={16} />)}
-                                    </div>
-                                  </button>
-                                );
-                              })}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    );
-                  })}
-                </div>
-              </aside>
+        <div className="flex flex-1 flex-col lg:flex-row min-h-0 w-full">
+          {/* Main Content Area */}
+          <main className="flex-1 overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
+            <div className="max-w-5xl mx-auto p-4 lg:p-10 space-y-10">
+              <div className="flex flex-col gap-8">
+                {/* Video Area wrapper ... */}
 
               {/* Left Content - Video & Details */}
               <div className="flex-1 min-w-0 space-y-6">
@@ -1299,12 +1185,12 @@ export default function CoursePlayerPage() {
                           <div className="space-y-3">
                             {notes.map((note, idx) => {
                               const c = { 
-                                bg: 'bg-sky-50', 
-                                border: 'border-sky-200', 
-                                badge: 'bg-sky-400', 
-                                text: 'text-sky-900', 
-                                sub: 'text-sky-700/70', 
-                                actions: 'hover:bg-sky-100' 
+                                bg: 'bg-[#E0F2FE]', // Baby blue / Sky-100
+                                border: 'border-[#BAE6FD]', // Sky-200
+                                badge: 'bg-[#0EA5E9]', // Sky-500
+                                text: 'text-[#0C4A6E]', // Sky-900
+                                sub: 'text-[#0369A1]', // Sky-700
+                                actions: 'hover:bg-[#F0F9FF]' // Sky-50
                               };
                               return (
                                 <motion.div
@@ -1314,11 +1200,11 @@ export default function CoursePlayerPage() {
                                   dragConstraints={{ top: -20, bottom: 20 }}
                                   dragElastic={0.15}
                                   whileDrag={{ scale: 1.02, zIndex: 50, boxShadow: '0 16px 40px rgba(0,0,0,0.15)' }}
-                                  className={`group relative p-5 rounded-2xl border-2 shadow-sm cursor-grab active:cursor-grabbing select-none ${c.bg} ${c.border}`}
+                                  className={`group relative p-5 rounded-2xl border shadow-sm cursor-grab active:cursor-grabbing select-none ${c.bg} ${c.border}`}
                                 >
                                   <div className="flex items-start justify-between mb-3">
-                                    <div className={`flex items-center gap-2 ${c.badge} text-white font-black text-sm px-3 py-1.5 rounded-full shadow-md`}>
-                                      <Clock size={13} className="shrink-0" />
+                                    <div className={`flex items-center gap-2 ${c.badge} text-white font-black text-[11px] px-3 py-1.5 rounded-full shadow-sm`}>
+                                      <Clock size={12} className="shrink-0" />
                                       <span>{formatTime(note.video_time || 0)}</span>
                                     </div>
                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1326,8 +1212,8 @@ export default function CoursePlayerPage() {
                                       <button onClick={() => handleDeleteNote(String(note.id))} className="p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"><Trash2 size={14} /></button>
                                     </div>
                                   </div>
-                                  <div className={`font-semibold text-base leading-relaxed ${c.text}`}>{note.body}</div>
-                                  <div className={`mt-2 text-xs font-medium ${c.sub}`}>
+                                  <div className={`font-bold text-[15px] leading-relaxed ${c.text}`}>{note.body}</div>
+                                  <div className={`mt-2 text-[10px] font-bold ${c.sub}`}>
                                     {new Date(note.created_at).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' })}
                                   </div>
                                 </motion.div>
@@ -1343,6 +1229,125 @@ export default function CoursePlayerPage() {
             </div>
           </div>
         </main>
+
+        {/* Right Sidebar - Fixed/Sticky on Desktop */}
+        <aside
+          className={cn(
+            'flex flex-col bg-[#F9FAFB] overflow-hidden shrink-0 border-r border-gray-100',
+            'fixed z-40 w-[min(100%,22rem)] h-full top-0 right-0 transition-transform duration-300 ease-out shadow-2xl',
+            isSidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0',
+            'lg:static lg:z-0 lg:w-[360px] lg:h-full lg:shadow-none lg:border-r'
+          )}
+        >
+          {/* Sidebar header */}
+          <div className="px-5 py-6 lg:px-8 shrink-0 flex items-center gap-3 border-b border-gray-100 bg-white">
+            <BookOpen size={20} className="text-blue-900" />
+            <h3 className="font-black text-blue-900 text-[16px]">منهج الدورة</h3>
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(false)}
+              className="lg:hidden p-2 hover:bg-gray-200 rounded-xl transition-colors mr-auto"
+              aria-label="إغلاق القائمة"
+            >
+              <X size={18} className="text-gray-500" />
+            </button>
+          </div>
+          
+          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar px-4 lg:px-6 py-8">
+            {chapters.map((chapter: any, idx: number) => {
+              const ordinals = ['الأولى', 'الثانية', 'الثالثة', 'الرابعة', 'الخامسة', 'السادسة', 'السابعة', 'الثامنة', 'التاسعة', 'العاشرة'];
+              const unitPrefix = `الوحدة ${ordinals[idx] || (idx + 1)}: `;
+              return (
+                <div key={chapter.id} className="mb-6">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedChapters((prev) =>
+                        prev.includes(chapter.id) ? prev.filter((c) => c !== chapter.id) : [...prev, chapter.id]
+                      )
+                    }
+                    className="w-full flex items-center justify-between transition-all text-right group mb-4 px-4"
+                  >
+                    <h4 className="text-[14px] font-black text-gray-900 leading-tight">
+                      {unitPrefix}{chapter.title}
+                    </h4>
+                    <div className="flex items-center justify-center transition-colors">
+                      {expandedChapters.includes(chapter.id) ? (
+                        <ChevronUp size={16} className="text-gray-400" />
+                      ) : (
+                        <ChevronDown size={16} className="text-gray-400" />
+                      )}
+                    </div>
+                  </button>
+                  <AnimatePresence>
+                    {expandedChapters.includes(chapter.id) && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden space-y-3"
+                      >
+                        {chapter.lessons?.map((lesson: any) => {
+                          const isActive = currentLesson?.id === lesson.id;
+                          const isLocked = false; // Add logic if needed
+                          
+                          if (isActive) {
+                            return (
+                              <button
+                                type="button"
+                                id={`lesson-${lesson.id}`}
+                                key={lesson.id}
+                                onClick={() => setIsSidebarOpen(false)}
+                                className="w-full bg-white rounded-[16px] p-3 flex items-center justify-between shadow-[0_8px_20px_rgba(0,0,0,0.06)] border border-blue-50 transition-all cursor-default"
+                              >
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-md shadow-blue-100 shrink-0">
+                                    <Play fill="white" className="text-white w-3.5 h-3.5 ml-0.5" />
+                                  </div>
+                                  <span className="text-blue-700 font-black text-[13px] truncate text-right">
+                                    {lesson.title}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span className="bg-blue-50 text-blue-600 text-[9px] font-black px-3 py-1.5 rounded-full whitespace-nowrap">
+                                    قيد المشاهدة
+                                  </span>
+                                </div>
+                              </button>
+                            );
+                          }
+
+                          return (
+                            <button
+                              type="button"
+                              id={`lesson-${lesson.id}`}
+                              key={lesson.id}
+                              onClick={() => {
+                                if (!isLocked) {
+                                  setCurrentLesson(lesson);
+                                  setIsSidebarOpen(false);
+                                }
+                              }}
+                              className="w-full flex items-center justify-between px-6 py-2 group hover:bg-gray-100/50 rounded-xl transition-colors"
+                            >
+                              <span className="text-gray-500 font-bold text-[13px] group-hover:text-gray-900 transition-colors truncate ml-2 text-right">
+                                {lesson.title}
+                              </span>
+                              <div className="text-gray-300 group-hover:text-gray-500 transition-colors shrink-0">
+                                {isLocked ? <Lock size={15} /> : (lesson.type === 'pdf' ? <FileText size={15} /> : <PlayCircle size={15} />)}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
+          </div>
+        </aside>
+      </div>
 
         {/* Open lesson list (mobile only — desktop list is beside the video) */}
         <button
