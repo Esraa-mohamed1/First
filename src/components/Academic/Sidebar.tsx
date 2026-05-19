@@ -96,6 +96,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           { label: 'الفواتير', href: '/academic/finance/invoices' },
           { label: 'التقارير', href: '/academic/finance/reports' },
           { label: 'طريقة استلام المدفوعات', href: '/academic/finance/payout-methods' },
+          { label: 'إعدادات الدفع (للطلاب)', href: '/academic/finance/payment-settings' },
         ]
       },
     {

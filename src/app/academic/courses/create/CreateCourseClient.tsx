@@ -24,8 +24,20 @@ import { User } from '@/types/api';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
 import QuillEditor from '@/components/Academic/QuillEditor';
 import { SearchableSelect } from '@/components/Academic/Common/SearchableSelect';
+import { CoachField } from '@/components/course/CoachField';
+import { CourseStatusToggle } from '@/components/course/CourseStatusToggle';
+import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdown';
+import { PaymentMethodValueInput } from '@/components/payment/PaymentMethodValueInput';
+import { AcademyPaymentMethod, PaymentMethod } from '@/types/payment';
+import { showAlert } from '@/lib/sweetalert';
 
 const MySwal = withReactContent(Swal);
+
+// Mock active methods for selection
+const activeMethods: PaymentMethod[] = [
+  { id: '1', name: 'Vodafone Cash', type: 'mobile', icon: 'smartphone', isActive: true },
+  { id: '2', name: 'InstaPay', type: 'account_number', icon: 'hash', isActive: true },
+];
 
 export default function CreateCourseClient() {
   const router = useRouter();
@@ -40,6 +52,8 @@ export default function CreateCourseClient() {
   const [category, setCategory] = useState('');
   const [categories, setCategories] = useState<any[]>([]);
   const [description, setDescription] = useState('');
+  const [coachName, setCoachName] = useState('');
+  const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<AcademyPaymentMethod[]>([]);
   
   interface CustomSection {
     id: string;
@@ -211,7 +225,9 @@ export default function CreateCourseClient() {
       who_is_this_for: whoIsThisFor,
       price: pricingType === 'free' ? 0 : Number(price || 0),
       final_price: pricingType === 'free' ? 0 : Number(price || 0),
-      status: 'draft',
+      status,
+      coach: coachName,
+      payment_methods: selectedPaymentMethods,
       type: courseTypeParam || 'recorded',
       price_type: pricingType,
       currency,
@@ -245,9 +261,16 @@ export default function CreateCourseClient() {
         const userData = profile.data || profile;
         if (userData) {
           setCurrentUser(userData);
+          if (userData.role === 'instructor') {
+            setCoachName(userData.name || userData.fullName || '');
+            setSelectedInstructor(userData.id);
+          } else {
+            setCoachName(''); // Clear coach name for admin/academy to select
+            setSelectedInstructor(null);
+          }
           if (userData.role === 'admin' || userData.role === 'academy') {
             const allUsers = await getUsers();
-            setInstructors(allUsers.filter((user) => user.role === 'academy'));
+            setInstructors(allUsers.filter((user) => user.role === 'academy' || user.role === 'instructor'));
           }
         }
       } catch (error) {
@@ -363,9 +386,11 @@ export default function CreateCourseClient() {
 
     setIsSubmitting(true);
     try {
-      let userId = currentUser?.id || 2; // Default to 2 if no current user or ID
-      if (selectedInstructor) {
-        userId = selectedInstructor;
+      let userIdToUse = currentUser?.id;
+      if (currentUser?.role === 'admin' || currentUser?.role === 'academy') {
+        userIdToUse = selectedInstructor || currentUser?.id;
+      } else if (currentUser?.role === 'instructor') {
+        userIdToUse = currentUser?.id;
       }
 
       // Check usage limit for new courses
@@ -395,7 +420,7 @@ export default function CreateCourseClient() {
         title,
         category_id: category ? Number(category) : undefined,
         description,
-        user_id: userId,
+        user_id: userIdToUse,
         who_is_this_for: whoIsThisFor,
         price: pricingType === 'free' ? 0 : Number(price),
         status,
@@ -404,6 +429,8 @@ export default function CreateCourseClient() {
         final_price: pricingType === 'free' ? 0 : Number(price),
         currency,
         image: selectedFile || undefined,
+        coach: coachName,
+        payment_methods: selectedPaymentMethods,
       };
 
 
@@ -573,21 +600,30 @@ export default function CreateCourseClient() {
                 error={errors.category_id}
               />
 
-              {/* Instructor Dropdown (Admin/Academy Only) */}
-              {(currentUser?.role === 'admin' || currentUser?.role === 'academy') && (
-                <SearchableSelect
-                  label="المدرب"
-                  options={instructors.map(i => ({ id: i.id, name: i.name }))}
-                  value={selectedInstructor}
-                  onChange={(val) => {
-                    setSelectedInstructor(val as number);
-                    if (errors.user_id) setErrors(prev => ({ ...prev, user_id: null }));
-                  }}
-                  placeholder="اختر مدرب"
-                  error={errors.user_id}
-                  required
-                />
-              )}
+              {/* Coach & Instructor Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <CoachField value={coachName} onChange={setCoachName} />
+
+                {/* Instructor Dropdown (Admin/Academy Only) */}
+                {(currentUser?.role === 'admin' || currentUser?.role === 'academy') && (
+                  <SearchableSelect
+                    label="اختر المدرب (للمسئولين)"
+                    options={instructors.map(i => ({ id: i.id, name: i.name }))}
+                    value={selectedInstructor}
+                    onChange={(val) => {
+                      setSelectedInstructor(val as number);
+                      const selectedInst = instructors.find(i => i.id === val);
+                      if (selectedInst) {
+                        setCoachName(selectedInst.name || selectedInst.fullName || '');
+                      }
+                      if (errors.user_id) setErrors(prev => ({ ...prev, user_id: null }));
+                    }}
+                    placeholder="اختر مدرب"
+                    error={errors.user_id}
+                    required
+                  />
+                )}
+              </div>
 
               {/* Course Image */}
               <div className="space-y-2">
@@ -996,41 +1032,121 @@ export default function CreateCourseClient() {
               </div>
 
               {pricingType === 'paid' && (
-                <div className="space-y-4 animate-in slide-in-from-top-4 duration-300">
-                  <label className="block text-sm font-black text-gray-900">سعر الدورة</label>
-                  <div className="relative group">
-                    <input
-                      type="number"
-                      value={price}
-                      onChange={(e) => {
-                        setPrice(e.target.value);
-                        if (errors.price) setErrors(prev => ({ ...prev, price: null }));
-                      }}
-                      placeholder="0.00"
-                      className={`w-full p-5 bg-white border ${errors.price ? 'border-red-500 bg-red-50/30' : 'border-gray-200'} rounded-2xl outline-none focus:border-blue-600 font-bold text-left transition-all pl-24 text-gray-900 shadow-sm`}
-                    />
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 border-r border-gray-100 pr-4">
-                      <select 
-                        value={currency}
-                        onChange={(e) => setCurrency(e.target.value as any)}
-                        className="bg-transparent font-black text-blue-600 outline-none cursor-pointer text-sm text-gray-900 appearance-none hover:text-blue-700 transition-colors"
-                      >
-                        <option value="SAR" className="text-gray-900">SAR - Saudi Riyal (ر.س)</option>
-                        <option value="EGP" className="text-gray-900">EGP - Egyptian Pound (ج.م)</option>
-                        <option value="USD" className="text-gray-900">USD - United States Dollar ($)</option>
-                      </select>
-                      <ChevronDown size={14} className="text-blue-600 pointer-events-none" />
+                <div className="space-y-8 animate-in slide-in-from-top-4 duration-300">
+                  <div className="space-y-4">
+                    <label className="block text-sm font-black text-gray-900">سعر الدورة</label>
+                    <div className="relative group">
+                      <input
+                        type="number"
+                        value={price}
+                        onChange={(e) => {
+                          setPrice(e.target.value);
+                          if (errors.price) setErrors(prev => ({ ...prev, price: null }));
+                        }}
+                        placeholder="0.00"
+                        className={`w-full p-5 bg-white border ${errors.price ? 'border-red-500 bg-red-50/30' : 'border-gray-200'} rounded-2xl outline-none focus:border-blue-600 font-bold text-left transition-all pl-24 text-gray-900 shadow-sm`}
+                      />
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 border-r border-gray-100 pr-4">
+                        <select 
+                          value={currency}
+                          onChange={(e) => setCurrency(e.target.value as any)}
+                          className="bg-transparent font-black text-blue-600 outline-none cursor-pointer text-sm text-gray-900 appearance-none hover:text-blue-700 transition-colors"
+                        >
+                          <option value="SAR" className="text-gray-900">SAR - Saudi Riyal (ر.س)</option>
+                          <option value="EGP" className="text-gray-900">EGP - Egyptian Pound (ج.م)</option>
+                          <option value="USD" className="text-gray-900">USD - United States Dollar ($)</option>
+                        </select>
+                        <ChevronDown size={14} className="text-blue-600 pointer-events-none" />
+                      </div>
                     </div>
+                    {errors.price && (
+                      <p className="text-red-500 text-xs font-bold mt-1 flex items-center gap-1">
+                        <X size={12} />
+                        {errors.price}
+                      </p>
+                    )}
                   </div>
-                  {errors.price && (
-                    <p className="text-red-500 text-xs font-bold mt-1 flex items-center gap-1">
-                      <X size={12} />
-                      {errors.price}
-                    </p>
-                  )}
+
+                  {/* Pricing Ways / Payment Methods */}
+                  <div className="space-y-6 pt-6 border-t border-gray-100">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-black text-gray-900">طرق التحصيل (وسائل الدفع)</h3>
+                        <p className="text-xs text-gray-400 font-bold mt-1">اختر وسائل الدفع التي تريد تفعيلها لهذه الدورة</p>
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={() => router.push('/academic/finance/payment-settings')}
+                        className="text-xs font-bold text-blue-600 hover:text-blue-700 underline"
+                      >
+                        إدارة وسائل الدفع
+                      </button>
+                    </div>
+
+                    <PaymentMethodDropdown
+                      options={activeMethods}
+                      selectedValues={selectedPaymentMethods.map(m => m.methodId)}
+                      onChange={(ids) => {
+                        const newMethods = ids.map(id => {
+                          const existing = selectedPaymentMethods.find(m => m.methodId === id);
+                          if (existing) return existing;
+                          const method = activeMethods.find(m => m.id === id);
+                          return {
+                            methodId: method!.id,
+                            methodName: method!.name,
+                            type: method!.type,
+                            value: ''
+                          };
+                        });
+                        setSelectedPaymentMethods(newMethods);
+                      }}
+                      error={errors.paymentMethods}
+                    />
+
+                    {selectedPaymentMethods.length > 0 && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                        {selectedPaymentMethods.map((pm, index) => (
+                          <div key={pm.methodId} className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+                            <PaymentMethodValueInput
+                              type={pm.type}
+                              label={`بيانات ${pm.methodName}`}
+                              value={pm.value}
+                              onChange={(val) => {
+                                const updated = [...selectedPaymentMethods];
+                                updated[index].value = val;
+                                setSelectedPaymentMethods(updated);
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
+              {/* Status Toggle - Always Visible */}
+              <div className="pt-6 border-t border-gray-100">
+                <CourseStatusToggle 
+                  status={status} 
+                  onChange={(newStatus) => {
+                    if (newStatus === 'published') {
+                      const missing = [];
+                      if (!title) missing.push('عنوان الدورة');
+                      if (!description) missing.push('وصف الدورة');
+                      if (pricingType === 'paid' && !price) missing.push('سعر الدورة');
+                      if (pricingType === 'paid' && selectedPaymentMethods.length === 0) missing.push('وسيلة دفع واحدة على الأقل');
+                      if (units.length === 0) missing.push('محتوى الدورة (وحدة واحدة على الأقل)');
+
+                      if (missing.length > 0) {
+                        showAlert.warning('لا يمكن النشر الآن', `يرجى إكمال الحقول التالية أولاً: \n ${missing.join('، ')}`);
+                        return;
+                      }
+                    }
+                    setStatus(newStatus);
+                  }} 
+                />
+              </div>
 
               <div className="flex justify-center pt-10">
                 <button

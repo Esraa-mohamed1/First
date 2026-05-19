@@ -47,6 +47,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       label: 'المدفوعات',
       icon: CreditCard,
       href: '/dashboard/payments',
+      subItems: [
+        { label: 'سجل المدفوعات', href: '/dashboard/payments' },
+        { label: 'طرق الدفع', href: '/dashboard/payment-methods' },
+      ],
     },
     {
       label: 'التقارير',

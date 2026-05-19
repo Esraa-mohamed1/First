@@ -1236,7 +1236,7 @@ export default function CoursePlayerPage() {
             'flex flex-col bg-[#F9FAFB] overflow-hidden shrink-0 border-r border-gray-100',
             'fixed z-40 w-[min(100%,22rem)] h-full top-0 right-0 transition-transform duration-300 ease-out shadow-2xl',
             isSidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0',
-            'lg:static lg:z-0 lg:w-[360px] lg:h-full lg:shadow-none lg:border-r'
+            'lg:static lg:z-0 lg:w-[400px] lg:h-full lg:shadow-none lg:border-r'
           )}
         >
           {/* Sidebar header */}

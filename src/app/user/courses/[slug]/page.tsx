@@ -15,6 +15,10 @@ import toast from 'react-hot-toast';
 import { twMerge } from 'tailwind-merge';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { PaymentMethodCard } from '@/components/payment/PaymentMethodCard';
+import { PaymentMethodModal } from '@/components/payment/PaymentMethodModal';
+import { AcademyPaymentMethod } from '@/types/payment';
+import { showAlert } from '@/lib/sweetalert';
 
 const MySwal = withReactContent(Swal);
 
@@ -49,6 +53,14 @@ export default function CourseStudentViewPage() {
   const [loading, setLoading] = useState(true);
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [expandedUnits, setExpandedUnits] = useState<number[]>([]);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<AcademyPaymentMethod | null>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+  // Mock payment methods for this course
+  const coursePaymentMethods: AcademyPaymentMethod[] = [
+    { methodId: '1', methodName: 'فودافون كاش', type: 'mobile', value: '01012345678' },
+    { methodId: '2', methodName: 'إنستا باي', type: 'account_number', value: 'example@instapay' },
+  ];
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -375,21 +387,53 @@ export default function CourseStudentViewPage() {
                     </div>
                   </div>
 
+                  {/* Payment Method Selection */}
+                  <div className="space-y-4 mb-8">
+                    <div className="text-right">
+                      <span className="text-slate-900 font-black text-sm">اختر وسيلة الدفع</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {coursePaymentMethods.map((pm) => (
+                        <PaymentMethodCard
+                          key={pm.methodId}
+                          id={pm.methodId}
+                          name={pm.methodName}
+                          type={pm.type}
+                          isSelected={selectedPaymentMethod?.methodId === pm.methodId}
+                          onSelect={() => setSelectedPaymentMethod(pm)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Action Buttons */}
                   <div className="space-y-2 md:space-y-3 mb-6 md:mb-8">
                     <button 
-                      onClick={handleSubscribe}
+                      onClick={() => {
+                        if (!selectedPaymentMethod) {
+                          showAlert.warning('تنبيه', 'يرجى اختيار وسيلة دفع أولاً');
+                          return;
+                        }
+                        setIsPaymentModalOpen(true);
+                      }}
                       disabled={isSubscribing}
-                      className="w-full py-3.5 md:py-4 bg-[#006692] hover:bg-[#00557a] text-white rounded-[1rem] md:rounded-[1.2rem] font-black text-base md:text-lg shadow-lg shadow-[#006692]/10 transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="w-full py-3.5 md:py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-[1rem] md:rounded-[1.2rem] font-black text-base md:text-lg shadow-lg shadow-blue-500/10 transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {isSubscribing ? (
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       ) : 'اشترك الآن'}
                     </button>
-                    <button className="w-full py-3.5 md:py-4 bg-[#F3F4F6] hover:bg-[#E5E7EB] text-slate-700 rounded-[1rem] md:rounded-[1.2rem] font-black text-base md:text-lg transition-all active:scale-95">
-                      إضافة للسلة
-                    </button>
                   </div>
+
+                  {/* Payment Modal */}
+                  {selectedPaymentMethod && (
+                    <PaymentMethodModal
+                      isOpen={isPaymentModalOpen}
+                      onClose={() => setIsPaymentModalOpen(false)}
+                      method={selectedPaymentMethod}
+                      courseId={course.id}
+                    />
+                  )}
 
                   {/* Secure Payment Footer */}
                   <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-slate-50 w-full flex items-center justify-start gap-3">

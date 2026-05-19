@@ -7,6 +7,7 @@ import { getCourse, deleteUnit, deleteLesson, createUnit, updateCourse, getCateg
 import { getProfileStatus } from '@/services/auth';
 import { getUsers } from '@/services/users';
 import { Course, Unit, Lesson, User } from '@/types/api';
+import { AcademyPaymentMethod, PaymentMethod } from '@/types/payment';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
 import EditUnitModal from '@/components/Academic/Modals/EditUnitModal';
 import EditLessonModal from '@/components/Academic/Modals/EditLessonModal';
@@ -14,8 +15,19 @@ import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import QuillEditor from '@/components/Academic/QuillEditor';
+import { CoachField } from '@/components/course/CoachField';
+import { CourseStatusToggle } from '@/components/course/CourseStatusToggle';
+import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdown';
+import { PaymentMethodValueInput } from '@/components/payment/PaymentMethodValueInput';
+import { showAlert } from '@/lib/sweetalert';
 
 const MySwal = withReactContent(Swal);
+
+// Mock active methods for selection
+const activeMethods: PaymentMethod[] = [
+  { id: '1', name: 'Vodafone Cash', type: 'mobile', icon: 'smartphone', isActive: true },
+  { id: '2', name: 'InstaPay', type: 'account_number', icon: 'hash', isActive: true },
+];
 
 export default function CourseDetailsPage() {
   const router = useRouter();
@@ -52,6 +64,8 @@ export default function CourseDetailsPage() {
 
   // Course Status
   const [status, setStatus] = useState<'published' | 'draft'>('draft');
+  const [coachName, setCoachName] = useState('');
+  const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<AcademyPaymentMethod[]>([]);
 
   // Info Tab Form State
   const [courseInfo, setCourseInfo] = useState({
@@ -152,6 +166,9 @@ export default function CourseDetailsPage() {
         target_audience: courseInfo.target_audience,
         category_id: courseInfo.category_id || undefined,
         user_id: courseInfo.user_id || undefined,
+        coach: coachName,
+        status: status,
+        payment_methods: selectedPaymentMethods,
         price: pricingType === 'free' ? 0 : Number(price),
         final_price: pricingType === 'free' ? 0 : Number(price),
         price_type: pricingType,
@@ -182,24 +199,42 @@ export default function CourseDetailsPage() {
   };
 
   const handleSavePricing = async () => {
-    setIsSavingPricing(true);
-    try {
-      const payload = {
-        price: pricingType === 'free' ? 0 : Number(price),
-        final_price: pricingType === 'free' ? 0 : Number(price),
-        price_type: pricingType,
-        currency: currency,
+        setIsSavingPricing(true);
+        try {
+          // Validate before saving if publishing
+          if (status === 'published') {
+            const missing = [];
+            if (!courseInfo.title) missing.push('عنوان الدورة');
+            if (!courseInfo.description) missing.push('وصف الدورة');
+            if (pricingType === 'paid' && !price) missing.push('سعر الدورة');
+            if (pricingType === 'paid' && selectedPaymentMethods.length === 0) missing.push('وسيلة دفع واحدة على الأقل');
+            if (course?.units?.length === 0) missing.push('محتوى الدورة (وحدة واحدة على الأقل)');
+  
+            if (missing.length > 0) {
+              showAlert.warning('لا يمكن النشر الآن', `يرجى إكمال الحقول التالية أولاً: \n ${missing.join('، ')}`);
+              setIsSavingPricing(false);
+              return;
+            }
+          }
+  
+          const payload = {
+            price: pricingType === 'free' ? 0 : Number(price),
+            final_price: pricingType === 'free' ? 0 : Number(price),
+            price_type: pricingType,
+            currency: currency,
+            status: status,
+            payment_methods: selectedPaymentMethods,
+          };
+  
+          await updateCourse(Number(id), payload);
+          toast.success('تم حفظ بيانات التسعير بنجاح');
+          fetchCourse();
+        } catch (error) {
+          toast.error('فشل حفظ بيانات التسعير');
+        } finally {
+          setIsSavingPricing(false);
+        }
       };
-
-      await updateCourse(Number(id), payload);
-      toast.success('تم حفظ بيانات التسعير بنجاح');
-      fetchCourse();
-    } catch (error) {
-      toast.error('فشل حفظ بيانات التسعير');
-    } finally {
-      setIsSavingPricing(false);
-    }
-  };
 
 
   const fetchCourse = async () => {
@@ -219,6 +254,8 @@ export default function CourseDetailsPage() {
         category_id: (data as any).category_id?.toString() || '',
         user_id: (data as any).user_id?.toString() || '',
       });
+      setCoachName(data.coach || '');
+      setSelectedPaymentMethods(data.payment_methods || []);
 
       // Parse custom sections from infos
       let parsedSections: CustomSection[] = [];
@@ -295,9 +332,9 @@ export default function CourseDetailsPage() {
         const userData = profile.data || profile;
         if (userData) {
           setCurrentUser(userData);
-          if (userData.role === 'admin') {
+          if (userData.role === 'admin' || userData.role === 'academy') {
             const allUsers = await getUsers();
-            setInstructors(allUsers.filter((user: any) => user.role === 'instructor' || user.role === 'admin'));
+            setInstructors(allUsers.filter((user: any) => user.role === 'instructor' || user.role === 'academy'));
           }
         }
       } catch (error) {
@@ -541,6 +578,9 @@ export default function CourseDetailsPage() {
                 </select>
               </div>
             )}
+
+            {/* Coach Field */}
+            <CoachField value={coachName} onChange={setCoachName} />
 
             {/* Course Image */}
             <div className="space-y-2">
@@ -928,7 +968,7 @@ export default function CourseDetailsPage() {
             </div>
 
             {pricingType === 'paid' && (
-              <div className="space-y-6 animate-in slide-in-from-top-4 duration-300">
+              <div className="space-y-8 animate-in slide-in-from-top-4 duration-300">
                 <div className="space-y-2">
                   <label className="block text-sm font-black text-gray-900">سعر الدورة</label>
                   <div className="relative group">
@@ -948,12 +988,89 @@ export default function CourseDetailsPage() {
                         <option value="SAR" className="text-gray-900">SAR (ر.س)</option>
                         <option value="EGP" className="text-gray-900">EGP (ج.م)</option>
                       </select>
-
                     </div>
                   </div>
                 </div>
+
+                {/* Pricing Ways / Payment Methods */}
+                <div className="space-y-6 pt-6 border-t border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-black text-gray-900">طرق التحصيل (وسائل الدفع)</h3>
+                      <p className="text-xs text-gray-400 font-bold mt-1">اختر وسائل الدفع التي تريد تفعيلها لهذه الدورة</p>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => router.push('/academic/finance/payment-settings')}
+                      className="text-xs font-bold text-blue-600 hover:text-blue-700 underline"
+                    >
+                      إدارة وسائل الدفع
+                    </button>
+                  </div>
+
+                  <PaymentMethodDropdown
+                    options={activeMethods}
+                    selectedValues={selectedPaymentMethods.map(m => m.methodId)}
+                    onChange={(ids) => {
+                      const newMethods = ids.map(id => {
+                        const existing = selectedPaymentMethods.find(m => m.methodId === id);
+                        if (existing) return existing;
+                        const method = activeMethods.find(m => m.id === id);
+                        return {
+                          methodId: method!.id,
+                          methodName: method!.name,
+                          type: method!.type,
+                          value: ''
+                        };
+                      });
+                      setSelectedPaymentMethods(newMethods);
+                    }}
+                  />
+
+                  {selectedPaymentMethods.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                      {selectedPaymentMethods.map((pm, index) => (
+                        <div key={pm.methodId} className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+                          <PaymentMethodValueInput
+                            type={pm.type}
+                            label={`بيانات ${pm.methodName}`}
+                            value={pm.value}
+                            onChange={(val) => {
+                              const updated = [...selectedPaymentMethods];
+                              updated[index].value = val;
+                              setSelectedPaymentMethods(updated);
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
+
+            {/* Status Toggle - Always Visible */}
+            <div className="pt-6 border-t border-gray-100">
+              <CourseStatusToggle 
+                status={status} 
+                onChange={(newStatus) => {
+                  if (newStatus === 'published') {
+                    const missing = [];
+                    if (!courseInfo.title) missing.push('عنوان الدورة');
+                    if (!courseInfo.description) missing.push('وصف الدورة');
+                    if (pricingType === 'paid' && !price) missing.push('سعر الدورة');
+                    if (pricingType === 'paid' && selectedPaymentMethods.length === 0) missing.push('وسيلة دفع واحدة على الأقل');
+                    if (course?.units?.length === 0) missing.push('محتوى الدورة (وحدة واحدة على الأقل)');
+
+                    if (missing.length > 0) {
+                      showAlert.warning('لا يمكن النشر الآن', `يرجى إكمال الحقول التالية أولاً: \n ${missing.join('، ')}`);
+                      return;
+                    }
+                  }
+                  setStatus(newStatus);
+                }} 
+              />
+            </div>
 
 
             <div className="flex justify-center pt-10">

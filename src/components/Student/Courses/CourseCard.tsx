@@ -2,18 +2,25 @@
 
 import React from 'react';
 import { Course } from '@/types/student';
-import { ArrowLeft, BarChart, Image as ImageIcon, User, PlayCircle, Award } from 'lucide-react';
+import { ArrowLeft, BarChart, Image as ImageIcon, User, PlayCircle, Award, CreditCard } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { PaymentMethodBadge } from '@/components/payment/PaymentMethodBadge';
 
 interface CourseCardProps {
-  course: Course;
+  course: Course & { paymentMethods?: any[] };
   isSubscribed?: boolean;
 }
 
 export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => {
   const [imgError, setImgError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
+
+  // Mock payment methods if not provided
+  const paymentMethods = course.paymentMethods || [
+    { type: 'mobile', methodName: 'Vodafone Cash', value: '01012345678' },
+    { type: 'account_number', methodName: 'InstaPay', value: '1234567890' }
+  ];
 
   const courseImage = course.image || 'https://images.unsplash.com/photo-1586717791821-3f44a563de4c?auto=format&fit=crop&q=80&w=1200';
 
@@ -100,16 +107,29 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
               </div>
             </div>
           )}
-          
-          <div className="flex gap-2">
-            {!isSubscribed ? (
-              <Link
-                href={`/user/courses/${course.slug}`}
-                className="w-full flex items-center justify-center gap-2 bg-green-500 text-white font-bold py-3 rounded-xl hover:bg-green-600 transition-all duration-300 shadow-md shadow-green-100"
-              >
-                اشترك الآن
-              </Link>
-            ) : course.progress === 100 ? (
+
+          {/* Payment Methods Section */}
+          {!isSubscribed && paymentMethods.length > 0 && (
+            <div className="mb-4 pt-3 border-t border-gray-50">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                <CreditCard size={10} className="text-blue-400" />
+                وسائل الدفع المتاحة
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {paymentMethods.map((pm, idx) => (
+                  <PaymentMethodBadge 
+                    key={idx} 
+                    type={pm.type} 
+                    name={pm.methodName} 
+                    value={pm.value}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {isSubscribed ? (
+            course.progress === 100 ? (
               <Link 
                 href={`/user/courses/${course.id}/certificate`}
                 className="w-full flex items-center justify-center gap-2 bg-green-50 text-green-600 font-bold py-3 rounded-xl hover:bg-green-500 hover:text-white transition-all duration-300 border border-green-100/50"
@@ -125,8 +145,23 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
                 <span>متابعة التعلم</span>
                 <ArrowLeft size={16} className="transform group-hover/btn:-translate-x-1 transition-transform duration-300" />
               </Link>
-            )}
-          </div>
+            )
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Link 
+                href={`/student/courses/${course.id}`}
+                className="w-full bg-blue-50 text-blue-600 font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-100 transition-all duration-300"
+              >
+                <span>تفاصيل الدورة</span>
+              </Link>
+              <Link
+                href={`/user/courses/${course.slug}`}
+                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-lg shadow-blue-500/20"
+              >
+                اشترك الآن
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>
