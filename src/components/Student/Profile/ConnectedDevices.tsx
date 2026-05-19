@@ -1,49 +1,110 @@
-import React from 'react';
-import { Monitor, Smartphone, LogOut } from 'lucide-react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useDeviceTracker, DeviceInfo } from '@/hooks/useDeviceTracker';
+import { DeviceCard } from './DeviceTracker/DeviceCard';
+import { SessionsTable } from './DeviceTracker/SessionsTable';
+import { ShieldCheck } from 'lucide-react';
+import { getStoredAuthToken } from '@/lib/auth-storage';
 
 export const ConnectedDevices = () => {
+  const { currentDeviceId } = useDeviceTracker();
+  const [devices, setDevices] = useState<DeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // In a real scenario, this would fetch from GET /api/users/[userId]/devices
+    const fetchDevices = async () => {
+      try {
+        const token = getStoredAuthToken();
+        const response = await fetch('/api/users/current/devices', {
+          headers: {
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setDevices(data);
+        } else {
+          throw new Error('Fallback to mock');
+        }
+      } catch (err) {
+        // Fallback to only the currently tracked device
+        const currentMockDevice: DeviceInfo = {
+          id: currentDeviceId || 'current_dev',
+          type: 'desktop',
+          os: 'Windows 11',
+          browser: 'Edge',
+          ip: '192.168.1.100',
+          location: 'الدمام، المملكة العربية السعودية',
+          lastSeen: 'الآن',
+          status: 'online',
+          sessions: [
+            { id: 's5', deviceId: currentDeviceId || 'current_dev', date: new Date().toLocaleString('ar-SA'), ip: '192.168.1.100', location: 'الدمام', pagesVisited: 1, duration: 'الآن' }
+          ]
+        };
+        
+        setDevices([currentMockDevice]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDevices();
+  }, [currentDeviceId]);
+
+  // Set initial selected device
+  useEffect(() => {
+    if (devices.length > 0 && !selectedDeviceId) {
+      // Prioritize current device or first online device
+      const current = devices.find(d => d.id === currentDeviceId) || devices.find(d => d.status === 'online') || devices[0];
+      setSelectedDeviceId(current.id);
+    }
+  }, [devices, currentDeviceId, selectedDeviceId]);
+
+  const selectedDevice = devices.find(d => d.id === selectedDeviceId);
+
   return (
     <div className="bg-transparent mt-8">
-      <div className="flex items-center gap-3 mb-6 px-2">
-        <h2 className="text-lg font-bold text-gray-800">الأجهزة المتصلة</h2>
+      <div className="flex items-center justify-between mb-6 px-2">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="text-blue-500" size={20} />
+          <h2 className="text-lg font-bold text-gray-800">الأجهزة المتصلة</h2>
+        </div>
+        <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+          يتم تتبع نشاط الأجهزة
+        </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Mobile Device */}
-        <div className="bg-white p-5 rounded-3xl flex items-center justify-between border border-gray-200 shadow-md hover:shadow-lg transition-shadow group cursor-pointer">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-500 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-              <Smartphone size={24} />
-            </div>
-            <div className="text-right">
-              <div className="flex items-center gap-2">
-                <h3 className="font-bold text-gray-800 text-sm">iPhone 15</h3>
-                <span className="text-xs text-gray-400">- جدة</span>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">منذ يومين</p>
-            </div>
+      {loading ? (
+        <div className="animate-pulse space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="bg-gray-100 h-32 rounded-3xl"></div>
+            <div className="bg-gray-100 h-32 rounded-3xl"></div>
           </div>
         </div>
-
-        {/* Laptop Device */}
-        <div className="bg-white p-5 rounded-3xl flex items-center justify-between border border-gray-200 shadow-md hover:shadow-lg transition-shadow group cursor-pointer relative overflow-hidden">
-          <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-500 rounded-l-full"></div>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-500 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-              <Monitor size={24} />
-            </div>
-            <div className="text-right">
-              <div className="flex items-center gap-2">
-                <h3 className="font-bold text-gray-800 text-sm">MacBook Pro</h3>
-                <span className="text-xs text-gray-400">- الرياض</span>
-              </div>
-              <p className="text-xs text-green-600 font-bold mt-1">نشط الآن</p>
-            </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {devices.map(device => (
+              <DeviceCard
+                key={device.id}
+                device={device}
+                isActive={selectedDeviceId === device.id}
+                isCurrentDevice={device.id === currentDeviceId}
+                onClick={() => setSelectedDeviceId(device.id)}
+              />
+            ))}
           </div>
-        </div>
-      </div>
 
-
+          {selectedDevice && (
+            <div className="animate-fade-in">
+              <SessionsTable sessions={selectedDevice.sessions} />
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };
