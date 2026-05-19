@@ -233,7 +233,7 @@ export default function SetupPage() {
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      <div className="bg-white rounded-[2rem] p-8 md:p-12 shadow-2xl animate-in slide-in-from-bottom-4 duration-500">
+      <div className="bg-white rounded-[2rem] p-6 sm:p-8 md:p-12 shadow-2xl animate-in slide-in-from-bottom-4 duration-500">
         <div className="text-center mb-12">
           <h1 className="text-3xl font-black mb-4">معلومات الاكاديمية</h1>
           <p className="text-gray-500 text-lg">أدخل معلومات الأكاديمية الخاصة بك</p>
@@ -303,18 +303,18 @@ export default function SetupPage() {
           </div>
 
           {/* Academy Link */}
-          <div className="space-y-2">
+          <div className="space-y-2 w-full">
             <label className="block text-sm font-bold text-gray-700">لينك الاكاديمية</label>
-            <div className="relative flex items-center" dir="ltr">
-              <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
+            <div className={`relative flex items-stretch w-full overflow-hidden rounded-xl border bg-gray-50 focus-within:ring-2 focus-within:ring-blue-500 transition-all ${domainError ? 'border-red-500 focus-within:ring-red-500' : 'border-gray-200'}`} dir="ltr">
+              <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 w-4 h-4 sm:w-5 sm:h-5" />
               <input
                 type="text"
                 value={domainPrefix}
                 onChange={handleDomainChange}
                 placeholder="domain"
-                className={`flex-1 p-4 pl-12 border rounded-l-xl border-r-0 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-left ${domainError ? 'border-red-500 focus:ring-red-500' : ''}`}
+                className="flex-1 w-full min-w-0 py-3 sm:py-4 pl-9 sm:pl-10 pr-2 sm:pr-3 bg-transparent focus:outline-none text-left text-sm sm:text-base"
               />
-              <div className={`p-4 bg-gray-100 border border-l-0 rounded-r-xl text-gray-500 font-medium select-none flex items-center ${domainError ? 'border-red-500' : ''}`}>
+              <div className="px-2 sm:px-4 py-3 sm:py-4 bg-gray-100 border-l border-gray-200 text-gray-500 font-medium select-none flex items-center justify-center whitespace-nowrap text-xs sm:text-sm shrink-0">
                 {domainSuffix}
               </div>
             </div>

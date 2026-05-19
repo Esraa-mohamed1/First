@@ -39,7 +39,7 @@ export default function AcademyLoginPage() {
             try {
                 toast.success('تم تسجيل الدخول بجوجل بنجاح');
                 document.cookie = `token=google_simulated_token; path=/; max-age=86400; SameSite=Lax`;
-                router.push('/academic');
+                window.location.href = '/academic';
             } catch (error) {
                 toast.error('فشل تسجيل الدخول بجوجل');
             } finally {
@@ -148,9 +148,9 @@ export default function AcademyLoginPage() {
                     toast.success('تم تسجيل الدخول بنجاح');
                     
                     if (userRole === 'admin') {
-                        router.push('/academic');
+                        window.location.href = '/academic';
                     } else {
-                        router.push('/student');
+                        window.location.href = '/student';
                     }
                 } else {
                     toast.error('فشل تسجيل الدخول: استجابة غير صالحة');

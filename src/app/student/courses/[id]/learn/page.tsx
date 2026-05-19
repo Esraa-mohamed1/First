@@ -7,7 +7,7 @@ import {
   Volume2, VolumeX, ListVideo, Search, ChevronDown, ChevronUp,
   PlayCircle, FileText, Menu, X, ArrowRight, ArrowLeft, Trophy, Star,
   Download, MessageSquare, Info, StickyNote, ThumbsUp, MessageCircle,
-  Clock, CheckCircle2, Lock, AlertCircle, Pencil, Trash2, Bell
+  Clock, CheckCircle2, Lock, AlertCircle, Pencil, Trash2, Bell, BookOpen
 } from 'lucide-react';
 import {
   getMyCourseDetails,
@@ -788,105 +788,115 @@ export default function CoursePlayerPage() {
               {/* Curriculum Sidebar — right side in RTL */}
               <aside
                 className={cn(
-                  'flex flex-col bg-white overflow-hidden shrink-0 border border-gray-200',
+                  'flex flex-col bg-[#F8FAFC] overflow-hidden shrink-0',
                   'fixed z-40 w-[min(100%,22rem)] max-h-[min(100dvh-5rem,720px)] top-[4.5rem] bottom-4 right-4 transition-transform duration-300 ease-out shadow-2xl rounded-2xl',
                   isSidebarOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)] lg:translate-x-0',
-                  'lg:static lg:z-0 lg:right-auto lg:top-auto lg:bottom-auto lg:w-[340px] lg:max-h-[min(820px,calc(100dvh-8rem))] lg:sticky lg:top-24 lg:shadow-sm lg:rounded-2xl'
+                  'lg:static lg:z-0 lg:right-auto lg:top-auto lg:bottom-auto lg:w-[340px] lg:max-h-[min(820px,calc(100dvh-8rem))] lg:sticky lg:top-24 lg:shadow-none lg:rounded-none'
                 )}
               >
-                {/* Sidebar header — shaded */}
-                <div className="bg-gray-50 border-b border-gray-200 px-5 py-4 lg:px-6 shrink-0 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <ListVideo size={16} className="text-blue-700" />
-                  </div>
-                  <h3 className="font-black text-gray-900 text-base">منهج الدورة</h3>
+                {/* Sidebar header */}
+                <div className="px-5 py-6 lg:px-6 shrink-0 flex items-center gap-3">
+                  <BookOpen size={20} className="text-blue-600" />
+                  <h3 className="font-black text-blue-600 text-lg">منهج الدورة</h3>
                   <button
                     type="button"
                     onClick={() => setIsSidebarOpen(false)}
-                    className="lg:hidden p-2 hover:bg-gray-100 rounded-xl transition-colors mr-auto"
+                    className="lg:hidden p-2 hover:bg-gray-200 rounded-xl transition-colors mr-auto"
                     aria-label="إغلاق القائمة"
                   >
                     <X size={18} className="text-gray-500" />
                   </button>
                 </div>
-                <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar px-2 pb-4">
-                  {chapters.map((chapter: any, idx: number) => (
-                    <div key={chapter.id} className="mb-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setExpandedChapters((prev) =>
-                            prev.includes(chapter.id) ? prev.filter((c) => c !== chapter.id) : [...prev, chapter.id]
-                          )
-                        }
-                        className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-blue-50/40 rounded-xl transition-all text-right group"
-                      >
-                        <h4 className="text-sm font-black text-gray-900 truncate">{chapter.title}</h4>
-                        <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                          {expandedChapters.includes(chapter.id) ? (
-                            <ChevronUp size={14} className="text-gray-700" />
-                          ) : (
-                            <ChevronDown size={14} className="text-gray-700" />
-                          )}
-                        </div>
-                      </button>
-                      <AnimatePresence>
-                        {expandedChapters.includes(chapter.id) && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden mt-1 pl-2 pr-4 space-y-1"
-                          >
-                            {chapter.lessons?.map((lesson: any) => {
-                              const isActive = currentLesson?.id === lesson.id;
-                              const isLocked = false; // Add logic if needed
-                              return (
-                                <button
-                                  type="button"
-                                  id={`lesson-${lesson.id}`}
-                                  key={lesson.id}
-                                  onClick={() => {
-                                    if (!isLocked) {
-                                      setCurrentLesson(lesson);
-                                      setIsSidebarOpen(false);
-                                    }
-                                  }}
-                                  className={cn(
-                                    'w-full px-3 py-3 flex items-center gap-3 transition-all text-right rounded-xl group border',
-                                    isActive
-                                      ? 'bg-blue-600 border-blue-600 shadow-md'
-                                      : 'border-transparent hover:bg-gray-50 hover:border-gray-100'
-                                  )}
-                                >
-                                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                                    <div
-                                      className={cn(
-                                        'w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all',
-                                        isActive
-                                          ? 'bg-white/20 text-white'
-                                          : 'bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-700'
-                                      )}
+                <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar px-4 pb-4">
+                  {chapters.map((chapter: any, idx: number) => {
+                    const ordinals = ['الأولى', 'الثانية', 'الثالثة', 'الرابعة', 'الخامسة', 'السادسة', 'السابعة', 'الثامنة', 'التاسعة', 'العاشرة'];
+                    const unitPrefix = `الوحدة ${ordinals[idx] || (idx + 1)}: `;
+                    return (
+                      <div key={chapter.id} className="mb-4">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedChapters((prev) =>
+                              prev.includes(chapter.id) ? prev.filter((c) => c !== chapter.id) : [...prev, chapter.id]
+                            )
+                          }
+                          className="w-full flex items-center justify-between transition-all text-right group mb-3"
+                        >
+                          <h4 className="text-[15px] font-black text-gray-800 truncate">
+                            {unitPrefix}{chapter.title}
+                          </h4>
+                          <div className="flex items-center justify-center transition-colors">
+                            {expandedChapters.includes(chapter.id) ? (
+                              <ChevronUp size={16} className="text-gray-500" />
+                            ) : (
+                              <ChevronDown size={16} className="text-gray-500" />
+                            )}
+                          </div>
+                        </button>
+                        <AnimatePresence>
+                          {expandedChapters.includes(chapter.id) && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden space-y-2"
+                            >
+                              {chapter.lessons?.map((lesson: any) => {
+                                const isActive = currentLesson?.id === lesson.id;
+                                const isLocked = false; // Add logic if needed
+                                
+                                if (isActive) {
+                                  return (
+                                    <button
+                                      type="button"
+                                      id={`lesson-${lesson.id}`}
+                                      key={lesson.id}
+                                      onClick={() => setIsSidebarOpen(false)}
+                                      className="w-full bg-white rounded-[24px] p-2 pl-2 pr-4 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-gray-100 transition-all cursor-default"
                                     >
-                                      {isLocked ? <Lock size={13} /> : (lesson.type === 'pdf' ? <FileText size={13} /> : <Play size={13} fill={isActive ? 'currentColor' : 'none'} />)}
-                                    </div>
-                                    <h5
-                                      className={cn(
-                                        'text-sm font-bold truncate transition-colors',
-                                        isActive ? 'text-white font-black' : 'text-gray-700 group-hover:text-gray-900'
-                                      )}
-                                    >
+                                      <span className="text-blue-600 font-bold text-[13px] truncate ml-2 text-right">
+                                        {lesson.title}
+                                      </span>
+                                      <div className="flex items-center gap-2 shrink-0">
+                                        <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap">
+                                          قيد المشاهدة
+                                        </span>
+                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-md shadow-blue-200">
+                                          <Play fill="white" className="text-white w-3.5 h-3.5 ml-0.5" />
+                                        </div>
+                                      </div>
+                                    </button>
+                                  );
+                                }
+
+                                return (
+                                  <button
+                                    type="button"
+                                    id={`lesson-${lesson.id}`}
+                                    key={lesson.id}
+                                    onClick={() => {
+                                      if (!isLocked) {
+                                        setCurrentLesson(lesson);
+                                        setIsSidebarOpen(false);
+                                      }
+                                    }}
+                                    className="w-full flex items-center justify-between px-2 py-2.5 group hover:bg-gray-100/50 rounded-xl transition-colors"
+                                  >
+                                    <span className="text-gray-500 font-bold text-[13px] group-hover:text-gray-900 transition-colors truncate ml-2 text-right">
                                       {lesson.title}
-                                    </h5>
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  ))}
+                                    </span>
+                                    <div className="text-gray-400 group-hover:text-gray-600 transition-colors shrink-0">
+                                      {isLocked ? <Lock size={16} /> : (lesson.type === 'pdf' ? <FileText size={16} /> : <PlayCircle size={16} />)}
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  })}
                 </div>
               </aside>
 
@@ -1288,14 +1298,14 @@ export default function CoursePlayerPage() {
 
                           <div className="space-y-3">
                             {notes.map((note, idx) => {
-                              const palette = [
-                                { bg: 'bg-amber-50', border: 'border-amber-200', badge: 'bg-amber-500', text: 'text-amber-900', sub: 'text-amber-700/70', actions: 'hover:bg-amber-100' },
-                                { bg: 'bg-blue-50',  border: 'border-blue-200',  badge: 'bg-blue-600',  text: 'text-blue-900',  sub: 'text-blue-700/60',  actions: 'hover:bg-blue-100' },
-                                { bg: 'bg-rose-50',  border: 'border-rose-200',  badge: 'bg-rose-500',  text: 'text-rose-900',  sub: 'text-rose-700/60',  actions: 'hover:bg-rose-100' },
-                                { bg: 'bg-emerald-50', border: 'border-emerald-200', badge: 'bg-emerald-600', text: 'text-emerald-900', sub: 'text-emerald-700/60', actions: 'hover:bg-emerald-100' },
-                                { bg: 'bg-purple-50', border: 'border-purple-200', badge: 'bg-purple-600', text: 'text-purple-900', sub: 'text-purple-700/60', actions: 'hover:bg-purple-100' },
-                              ];
-                              const c = palette[idx % palette.length];
+                              const c = { 
+                                bg: 'bg-sky-50', 
+                                border: 'border-sky-200', 
+                                badge: 'bg-sky-400', 
+                                text: 'text-sky-900', 
+                                sub: 'text-sky-700/70', 
+                                actions: 'hover:bg-sky-100' 
+                              };
                               return (
                                 <motion.div
                                   key={note.id}

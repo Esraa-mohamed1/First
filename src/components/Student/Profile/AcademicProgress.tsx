@@ -7,7 +7,7 @@ interface AcademicProgressProps {
 
 export const AcademicProgress = ({ progress }: AcademicProgressProps) => {
   return (
-    <div className="bg-[#78C841] rounded-3xl p-8 shadow-md relative overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+    <div className="bg-[#84f5c2] rounded-3xl p-8 shadow-md relative overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
       {/* Background patterns */}
       {/* <div className="absolute -bottom-2 -center-2 text-green-300/30 group-hover:scale-110 transition-transform duration-500">
         <TrendingUp size={80} />
