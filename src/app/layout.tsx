@@ -24,7 +24,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="ar" dir="rtl" className={ibmPlexSansArabic.className}>
+        <html lang="ar" dir="rtl" className={ibmPlexSansArabic.className} suppressHydrationWarning>
             <body suppressHydrationWarning>
                 <Providers>
                     <ModalProvider>
