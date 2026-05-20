@@ -1,5 +1,5 @@
 import academyApi from '@/lib/academy-api';
-import { ApiResponse } from '@/types/api';
+import { ApiResponse, ReceiverAccount } from '@/types/api';
 
 export interface WithdrawalRequest {
   id: number;
@@ -69,3 +69,35 @@ export const getUserPaymentInfos = async (): Promise<UserPaymentInfo[]> => {
     throw error.response?.data || error;
   }
 };
+
+export const getReceiverAccounts = async (): Promise<ReceiverAccount[]> => {
+  try {
+    const response = await academyApi.get<ApiResponse<ReceiverAccount[]>>('receiver_accounts');
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to get receiver accounts:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export interface ConfigureReceiverAccountPayload {
+  receiver_account_id: number;
+  type: 'email' | 'phone';
+  value: string;
+}
+
+export const configureReceiverAccount = async (payload: ConfigureReceiverAccountPayload): Promise<any> => {
+  try {
+    // This is a placeholder. In a real application, you would have a specific endpoint
+    // to configure a user's payment method for a given receiver_account_id.
+    // For example: academyApi.post<ApiResponse<any>>('user_payment_methods', payload);
+    console.log('Simulating API call to configure receiver account:', payload);
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+    return { status: true, message: 'Receiver account configured successfully.' };
+  } catch (error: any) {
+    console.error('Failed to configure receiver account:', error);
+    throw error.response?.data || error;
+  }
+};
+
+

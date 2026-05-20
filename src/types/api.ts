@@ -172,3 +172,15 @@ export interface ApiResponse<T> {
     [key: string]: any;
   };
 }
+
+export interface ReceiverAccount {
+  id: number;
+  name: string;
+  key: string;
+  logo: string;
+  country_code: string;
+  country_name: string;
+  is_active: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+}

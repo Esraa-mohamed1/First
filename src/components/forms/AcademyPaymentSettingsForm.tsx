@@ -9,15 +9,13 @@ import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdow
 import { PaymentMethodValueInput } from '@/components/payment/PaymentMethodValueInput';
 import { showAlert } from '@/lib/sweetalert';
 import { Save, AlertCircle, Loader2 } from 'lucide-react';
-
-// Mock active methods from Super Admin
-const activeMethods: PaymentMethod[] = [
-  { id: '1', name: 'Vodafone Cash', type: 'mobile', icon: 'smartphone', isActive: true },
-  { id: '2', name: 'InstaPay', type: 'account_number', icon: 'hash', isActive: true },
-];
+import { getReceiverAccounts } from '@/services/finance';
+import { ReceiverAccount } from '@/types/api';
 
 export const AcademyPaymentSettingsForm = () => {
   const [loading, setLoading] = useState(false);
+  const [activeMethods, setActiveMethods] = useState<PaymentMethod[]>([]);
+  const [fetching, setFetching] = useState(true);
 
   const {
     control,
@@ -38,6 +36,29 @@ export const AcademyPaymentSettingsForm = () => {
   });
 
   const selectedMethods = watch('selectedMethods');
+
+  useEffect(() => {
+    const fetchMethods = async () => {
+      try {
+        const accounts = await getReceiverAccounts();
+        const mappedMethods: PaymentMethod[] = accounts
+          .filter(acc => acc.is_active)
+          .map(acc => ({
+            id: acc.id.toString(),
+            name: acc.name,
+            type: 'account_number', // Defaulting since ReceiverAccount doesn't specify type. Can be improved.
+            icon: acc.logo || 'hash',
+            isActive: acc.is_active
+          }));
+        setActiveMethods(mappedMethods);
+      } catch (error) {
+        console.error('Failed to fetch receiver accounts:', error);
+      } finally {
+        setFetching(false);
+      }
+    };
+    fetchMethods();
+  }, []);
 
   const handleDropdownChange = (selectedIds: string[]) => {
     // Remove methods that are no longer selected
@@ -76,7 +97,7 @@ export const AcademyPaymentSettingsForm = () => {
 
     setLoading(true);
     try {
-      // Mock API call
+      // Mock API call for configuring receiver accounts
       console.log('Saving academy payment methods:', data);
       await new Promise(resolve => setTimeout(resolve, 1000));
       showAlert.success('تم حفظ إعدادات الدفع بنجاح');
@@ -86,6 +107,14 @@ export const AcademyPaymentSettingsForm = () => {
       setLoading(false);
     }
   };
+
+  if (fetching) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 flex justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden" dir="rtl">
@@ -122,6 +151,7 @@ export const AcademyPaymentSettingsForm = () => {
                   label={`رقم/عنوان ${field.methodName}`}
                   value={selectedMethods[index]?.value || ''}
                   onChange={(val) => setValue(`selectedMethods.${index}.value`, val)}
+                  onTypeChange={(newType) => setValue(`selectedMethods.${index}.type`, newType)}
                 />
               </div>
             ))}

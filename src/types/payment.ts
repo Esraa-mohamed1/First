@@ -1,4 +1,4 @@
-export type PaymentMethodType = "mobile" | "email" | "account_number";
+export type PaymentMethodType = "mobile" | "email" | "account_number" | "password";
 
 export interface PaymentMethod {
   id: string;
