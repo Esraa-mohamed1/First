@@ -61,7 +61,7 @@ export default function OnboardingPage() {
             <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-gray-200 rounded-full z-0" />
             <div 
               className="absolute right-0 top-1/2 -translate-y-1/2 h-1 bg-blue-600 rounded-full z-0 transition-all duration-500 ease-in-out" 
-              style={{ width: \`\${(currentStep / (steps.length - 1)) * 100}%\` }}
+              style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
             />
             
             {steps.map((step, index) => {
@@ -72,15 +72,15 @@ export default function OnboardingPage() {
               return (
                 <div key={step.id} className="relative z-10 flex flex-col items-center group">
                   <div 
-                    className={\`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-sm
-                      \${isActive ? 'bg-blue-600 text-white scale-110 shadow-blue-500/30' : 
+                    className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-sm
+                      ${isActive ? 'bg-blue-600 text-white scale-110 shadow-blue-500/30' : 
                         isCompleted ? 'bg-green-500 text-white' : 'bg-white text-gray-400 border-2 border-gray-100'}
-                    \`}
+                    `}
                   >
                     {isCompleted ? <Check size={24} strokeWidth={3} /> : <Icon size={24} />}
                   </div>
                   <div className="absolute top-16 text-center w-32 hidden md:block">
-                    <p className={\`text-sm font-bold \${isActive || isCompleted ? 'text-gray-900' : 'text-gray-400'}\`}>{step.title}</p>
+                    <p className={`text-sm font-bold ${isActive || isCompleted ? 'text-gray-900' : 'text-gray-400'}`}>{step.title}</p>
                   </div>
                 </div>
               );
@@ -167,7 +167,7 @@ export default function OnboardingPage() {
             <button
               onClick={handlePrev}
               disabled={currentStep === 0 || loading}
-              className={\`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all \${currentStep === 0 ? 'opacity-0 pointer-events-none' : 'text-gray-600 hover:bg-gray-200 bg-gray-100'}\`}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${currentStep === 0 ? 'opacity-0 pointer-events-none' : 'text-gray-600 hover:bg-gray-200 bg-gray-100'}`}
             >
               <ChevronRight size={20} />
               السابق

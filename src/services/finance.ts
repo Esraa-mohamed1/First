@@ -18,6 +18,9 @@ export interface CreateWithdrawalPayload {
 export interface UserPaymentInfo {
   id: number;
   name: string;
+  accountValue: string;
+  account_value?: string;
+  currency: string;
 }
 
 export interface WalletData {
@@ -62,10 +65,58 @@ export const createWithdrawalRequest = async (payload: CreateWithdrawalPayload):
 
 export const getUserPaymentInfos = async (): Promise<UserPaymentInfo[]> => {
   try {
-    const response = await academyApi.get<ApiResponse<UserPaymentInfo[]>>('user-payment-infos');
+    const response = await academyApi.get<ApiResponse<UserPaymentInfo[]>>('receiver_accounts');
+    // Normalize response objects to contain accountValue from account_value if needed
+    const data = response.data.data || [];
+    return data.map(item => ({
+      ...item,
+      accountValue: item.accountValue || item.account_value || '',
+    }));
+  } catch (error: any) {
+    console.error('Failed to get receiver accounts:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const createUserPaymentInfo = async (payload: Omit<UserPaymentInfo, 'id'>): Promise<UserPaymentInfo> => {
+  try {
+    const requestPayload = {
+      name: payload.name,
+      account_value: payload.accountValue,
+      accountValue: payload.accountValue,
+      currency: payload.currency,
+    };
+    const response = await academyApi.post<ApiResponse<UserPaymentInfo>>('receiver_accounts', requestPayload);
     return response.data.data;
   } catch (error: any) {
-    console.error('Failed to get user payment infos:', error);
+    console.error('Failed to create receiver account:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const updateUserPaymentInfo = async (id: number, payload: Partial<UserPaymentInfo>): Promise<UserPaymentInfo> => {
+  try {
+    const requestPayload: any = {};
+    if (payload.name !== undefined) requestPayload.name = payload.name;
+    if (payload.accountValue !== undefined) {
+      requestPayload.account_value = payload.accountValue;
+      requestPayload.accountValue = payload.accountValue;
+    }
+    if (payload.currency !== undefined) requestPayload.currency = payload.currency;
+
+    const response = await academyApi.put<ApiResponse<UserPaymentInfo>>(`receiver_accounts/${id}`, requestPayload);
+    return response.data.data;
+  } catch (error: any) {
+    console.error(`Failed to update receiver account ${id}:`, error);
+    throw error.response?.data || error;
+  }
+};
+
+export const deleteUserPaymentInfo = async (id: number): Promise<void> => {
+  try {
+    await academyApi.delete(`receiver_accounts/${id}`);
+  } catch (error: any) {
+    console.error(`Failed to delete receiver account ${id}:`, error);
     throw error.response?.data || error;
   }
 };

@@ -64,6 +64,28 @@ export const subscribeToCourse = async (courseId: number, price: number): Promis
   }
 };
 
+export const enrollInCourse = async (courseId: number | string, methodId: number | string, receiptFile: File): Promise<any> => {
+  try {
+    const formData = new FormData();
+    formData.append('course_id', String(courseId));
+    formData.append('courseId', String(courseId));
+    formData.append('method_id', String(methodId));
+    formData.append('methodId', String(methodId));
+    formData.append('receipt_file', receiptFile);
+    formData.append('receiptFile', receiptFile);
+
+    const response = await studentApi.post<any>('user-subscribe', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to enroll in course:', error);
+    throw error.response?.data || error;
+  }
+};
+
 export const trackLessonProgress = async (courseId: string | number, lessonId: number, seconds: number, events: string[] = ['play', 'pause', 'seek', 'end']): Promise<any> => {
   try {
     const response = await studentApi.post(`my-courses/${courseId}/track`, {

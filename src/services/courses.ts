@@ -9,6 +9,18 @@ export const createCourse = async (payload: CreateCoursePayload): Promise<Course
       if (value !== undefined && value !== null) {
         if (key === 'image' && value instanceof File) {
           formData.append('image', value);
+        } else if (key === 'receiverAccounts' && Array.isArray(value)) {
+          value.forEach((item, index) => {
+            formData.append(`receiverAccounts[${index}][methodId]`, String(item.methodId));
+            formData.append(`receiverAccounts[${index}][currency]`, String(item.currency));
+            formData.append(`receiver_accounts[${index}][method_id]`, String(item.methodId));
+            formData.append(`receiver_accounts[${index}][currency]`, String(item.currency));
+          });
+        } else if (key === 'receiver_accounts' && Array.isArray(value)) {
+          value.forEach((item, index) => {
+            formData.append(`receiver_accounts[${index}][method_id]`, String(item.method_id));
+            formData.append(`receiver_accounts[${index}][currency]`, String(item.currency));
+          });
         } else {
           formData.append(key, String(value));
         }
@@ -190,6 +202,18 @@ export const updateCourse = async (id: number, payload: any): Promise<Course> =>
         if (payload[key] !== undefined && payload[key] !== null) {
           if (key === 'image') {
             formData.append('image', payload.image);
+          } else if (key === 'receiverAccounts' && Array.isArray(payload[key])) {
+            payload[key].forEach((item: any, index: number) => {
+              formData.append(`receiverAccounts[${index}][methodId]`, String(item.methodId));
+              formData.append(`receiverAccounts[${index}][currency]`, String(item.currency));
+              formData.append(`receiver_accounts[${index}][method_id]`, String(item.methodId));
+              formData.append(`receiver_accounts[${index}][currency]`, String(item.currency));
+            });
+          } else if (key === 'receiver_accounts' && Array.isArray(payload[key])) {
+            payload[key].forEach((item: any, index: number) => {
+              formData.append(`receiver_accounts[${index}][method_id]`, String(item.method_id));
+              formData.append(`receiver_accounts[${index}][currency]`, String(item.currency));
+            });
           } else {
             formData.append(key, String(payload[key]));
           }
@@ -205,8 +229,21 @@ export const updateCourse = async (id: number, payload: any): Promise<Course> =>
       return response.data.data;
     }
 
-    // Otherwise, standard JSON PUT
-    const response = await academyApi.put<ApiResponse<Course>>(`courses/${id}`, payload);
+    // Otherwise, standard JSON PUT. Map both formats of receiver accounts.
+    const jsonPayload = { ...payload };
+    if (payload.receiverAccounts && !payload.receiver_accounts) {
+      jsonPayload.receiver_accounts = payload.receiverAccounts.map((item: any) => ({
+        method_id: item.methodId,
+        currency: item.currency,
+      }));
+    } else if (payload.receiver_accounts && !payload.receiverAccounts) {
+      jsonPayload.receiverAccounts = payload.receiver_accounts.map((item: any) => ({
+        methodId: item.method_id,
+        currency: item.currency,
+      }));
+    }
+
+    const response = await academyApi.put<ApiResponse<Course>>(`courses/${id}`, jsonPayload);
     return response.data.data;
   } catch (error: any) {
     console.error('Failed to update course:', error);

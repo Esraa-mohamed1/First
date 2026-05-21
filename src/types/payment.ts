@@ -13,4 +13,5 @@ export interface AcademyPaymentMethod {
   methodName: string;
   type: PaymentMethodType;
   value: string;
+  currency?: string;
 }

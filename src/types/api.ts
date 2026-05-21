@@ -107,6 +107,10 @@ export interface Course {
   currency?: string;
   instructor_name?: string;
   is_enrolled?: boolean;
+  receiverAccounts?: { methodId: number; currency: string }[];
+  receiver_accounts?: { method_id: number; currency: string }[];
+  coach?: string;
+  payment_methods?: any[];
   created_at?: string;
   updated_at?: string;
 }
@@ -123,7 +127,10 @@ export interface CreateCoursePayload {
   image?: File;
   category_id?: string | number;
   description: string;
-  currency?: 'EGP' | 'SAR';
+  currency?: 'EGP' | 'SAR' | 'USD';
+  receiverAccounts?: { methodId: number; currency: string }[];
+  receiver_accounts?: { method_id: number; currency: string }[];
+  coach?: string;
 }
 
 
@@ -153,6 +160,7 @@ export interface CreateLessonPayload {
 export interface User {
   id: number;
   name: string;
+  fullName?: string;
   email: string;
   phone?: string;
   role?: string;

@@ -30,14 +30,9 @@ import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdow
 import { PaymentMethodValueInput } from '@/components/payment/PaymentMethodValueInput';
 import { AcademyPaymentMethod, PaymentMethod } from '@/types/payment';
 import { showAlert } from '@/lib/sweetalert';
+import { getUserPaymentInfos, UserPaymentInfo } from '@/services/finance';
 
 const MySwal = withReactContent(Swal);
-
-// Mock active methods for selection
-const activeMethods: PaymentMethod[] = [
-  { id: '1', name: 'Vodafone Cash', type: 'mobile', icon: 'smartphone', isActive: true },
-  { id: '2', name: 'InstaPay', type: 'account_number', icon: 'hash', isActive: true },
-];
 
 export default function CreateCourseClient() {
   const router = useRouter();
@@ -46,6 +41,16 @@ export default function CreateCourseClient() {
   const [activeTab, setActiveTab] = useState<'info' | 'content' | 'pricing'>('info');
   const [courseId, setCourseId] = useState<number | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [academyPaymentMethods, setAcademyPaymentMethods] = useState<UserPaymentInfo[]>([]);
+
+  // Compute active methods dynamically from the academy's saved settings
+  const activeMethods: PaymentMethod[] = academyPaymentMethods.map(m => ({
+    id: m.id.toString(),
+    name: `${m.name} (${m.currency})`,
+    type: 'account_number' as const,
+    icon: 'credit-card',
+    isActive: true
+  }));
 
   // Basic Info States
   const [title, setTitle] = useState('');
@@ -255,8 +260,13 @@ export default function CreateCourseClient() {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [cats, profile] = await Promise.all([getCategories(), getProfileStatus()]);
+        const [cats, profile, paymentInfos] = await Promise.all([
+          getCategories(),
+          getProfileStatus(),
+          getUserPaymentInfos()
+        ]);
         setCategories(cats);
+        setAcademyPaymentMethods(paymentInfos || []);
 
         const userData = profile.data || profile;
         if (userData) {
@@ -270,7 +280,11 @@ export default function CreateCourseClient() {
           }
           if (userData.role === 'admin' || userData.role === 'academy') {
             const allUsers = await getUsers();
-            setInstructors(allUsers.filter((user) => user.role === 'academy' || user.role === 'instructor'));
+            if (userData.role === 'admin') {
+              setInstructors(allUsers);
+            } else {
+              setInstructors(allUsers.filter((user) => user.role === 'academy' || user.role === 'instructor'));
+            }
           }
         }
       } catch (error) {
@@ -431,6 +445,14 @@ export default function CreateCourseClient() {
         image: selectedFile || undefined,
         coach: coachName,
         payment_methods: selectedPaymentMethods,
+        receiverAccounts: selectedPaymentMethods.map(m => ({
+          methodId: Number(m.methodId),
+          currency: m.currency || currency
+        })),
+        receiver_accounts: selectedPaymentMethods.map(m => ({
+          method_id: Number(m.methodId),
+          currency: m.currency || currency
+        }))
       };
 
 
@@ -1091,11 +1113,13 @@ export default function CreateCourseClient() {
                           const existing = selectedPaymentMethods.find(m => m.methodId === id);
                           if (existing) return existing;
                           const method = activeMethods.find(m => m.id === id);
+                          const originalInfo = academyPaymentMethods.find(m => m.id.toString() === id);
                           return {
                             methodId: method!.id,
                             methodName: method!.name,
                             type: method!.type,
-                            value: ''
+                            value: originalInfo?.accountValue || originalInfo?.account_value || '',
+                            currency: originalInfo?.currency || 'SAR'
                           };
                         });
                         setSelectedPaymentMethods(newMethods);
@@ -1105,18 +1129,17 @@ export default function CreateCourseClient() {
 
                     {selectedPaymentMethods.length > 0 && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                        {selectedPaymentMethods.map((pm, index) => (
-                          <div key={pm.methodId} className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
-                            <PaymentMethodValueInput
-                              type={pm.type}
-                              label={`بيانات ${pm.methodName}`}
-                              value={pm.value}
-                              onChange={(val) => {
-                                const updated = [...selectedPaymentMethods];
-                                updated[index].value = val;
-                                setSelectedPaymentMethods(updated);
-                              }}
-                            />
+                        {selectedPaymentMethods.map((pm) => (
+                          <div key={pm.methodId} className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 flex flex-col justify-between">
+                            <span className="text-xs text-gray-400 font-bold">الحساب المفعل</span>
+                            <div className="flex items-center justify-between mt-1">
+                              <span className="font-black text-gray-900 text-sm">{pm.methodName}</span>
+                              <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-black">{pm.currency}</span>
+                            </div>
+                            <div className="mt-2 pt-2 border-t border-gray-100/50">
+                              <span className="text-xs text-gray-400 block font-bold">رقم الحساب / المحفظة</span>
+                              <span className="font-mono text-sm text-gray-700 font-bold block mt-0.5 break-all select-all">{pm.value}</span>
+                            </div>
                           </div>
                         ))}
                       </div>

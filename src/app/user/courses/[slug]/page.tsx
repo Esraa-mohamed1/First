@@ -56,12 +56,6 @@ export default function CourseStudentViewPage() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<AcademyPaymentMethod | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
-  // Mock payment methods for this course
-  const coursePaymentMethods: AcademyPaymentMethod[] = [
-    { methodId: '1', methodName: 'فودافون كاش', type: 'mobile', value: '01012345678' },
-    { methodId: '2', methodName: 'إنستا باي', type: 'account_number', value: 'example@instapay' },
-  ];
-
   useEffect(() => {
     const fetchCourse = async () => {
       try {
@@ -95,6 +89,23 @@ export default function CourseStudentViewPage() {
           }
         }
 
+        // Handle possible receiver accounts response keys
+        const paymentMethodsData = data.payment_methods || 
+                                   data.receiverAccounts?.map((item: any) => ({
+                                     methodId: (item.methodId || item.id)?.toString() || '',
+                                     methodName: item.name || item.methodName || '',
+                                     type: 'account_number',
+                                     value: item.accountValue || item.account_value || '',
+                                     currency: item.currency || 'SAR'
+                                   })) || 
+                                   data.receiver_accounts?.map((item: any) => ({
+                                     methodId: (item.method_id || item.id)?.toString() || '',
+                                     methodName: item.name || item.methodName || '',
+                                     type: 'account_number',
+                                     value: item.account_value || item.accountValue || '',
+                                     currency: item.currency || 'SAR'
+                                   })) || [];
+
         const mergedCourse = {
           id: data.id,
           title: data.title,
@@ -103,10 +114,13 @@ export default function CourseStudentViewPage() {
           category: (data as any).category?.name || 'General',
           price: data.price,
           final_price: data.final_price,
+          currency: data.currency || 'SAR',
+          price_type: data.price_type || (Number(data.price || 0) === 0 ? 'free' : 'paid'),
           image: data.image,
           units: data.units || (data as any).chapters || [],
           learning_points: learningPoints,
           is_subscribed: (data as any).is_enrolled || false,
+          payment_methods: paymentMethodsData,
         };
 
         setCourse(mergedCourse);
@@ -115,7 +129,7 @@ export default function CourseStudentViewPage() {
         }
       } catch (error) {
         console.warn('Course not found, showing mock data for preview:', error);
-        setCourse({ ...STATIC_COURSE_FALLBACK, slug: slug });
+        setCourse({ ...STATIC_COURSE_FALLBACK, slug: slug, currency: 'SAR', price_type: 'paid', payment_methods: [] });
         setExpandedUnits([1]);
       } finally {
         setLoading(false);
@@ -373,43 +387,62 @@ export default function CourseStudentViewPage() {
 
                   {/* Price Section */}
                   <div className="flex flex-col items-start mb-6">
-                    <div className="flex items-center gap-2 md:gap-3">
-                      <span className="text-4xl md:text-5xl font-black text-slate-900 leading-none">{course.final_price || course.price || 299}</span>
-                      <span className="text-lg md:text-xl font-black text-[#006692] mt-2 md:mt-3">ريال</span>
-                      {course.final_price && course.price && course.final_price !== course.price && (
-                        <span className="text-base md:text-lg text-slate-300 line-through font-bold mt-2 md:mt-3 ml-2">{course.price} ريال</span>
-                      )}
-                    </div>
+                    {course.price_type === 'free' || Number(course.final_price || course.price || 0) === 0 ? (
+                      <span className="text-3xl md:text-4xl font-black text-green-600 leading-none">مجاني بالكامل</span>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2 md:gap-3">
+                          <span className="text-4xl md:text-5xl font-black text-slate-900 leading-none">{course.final_price || course.price || 299}</span>
+                          <span className="text-lg md:text-xl font-black text-[#006692] mt-2 md:mt-3">{course.currency || 'SAR'}</span>
+                          {course.final_price && course.price && course.final_price !== course.price && (
+                            <span className="text-base md:text-lg text-slate-300 line-through font-bold mt-2 md:mt-3 ml-2">{course.price} {course.currency || 'SAR'}</span>
+                          )}
+                        </div>
 
-                    <div className="flex items-center gap-2 text-[#A85E00] font-black text-[10px] md:text-xs mt-3 md:mt-4">
-                      <Clock size="14" />
-                      <span>خصم 50% ينتهي خلال 14 ساعة!</span>
-                    </div>
+                        <div className="flex items-center gap-2 text-[#A85E00] font-black text-[10px] md:text-xs mt-3 md:mt-4">
+                          <Clock size="14" />
+                          <span>خصم 50% ينتهي خلال 14 ساعة!</span>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Payment Method Selection */}
-                  <div className="space-y-4 mb-8">
-                    <div className="text-right">
-                      <span className="text-slate-900 font-black text-sm">اختر وسيلة الدفع</span>
+                  {!(course.price_type === 'free' || Number(course.final_price || course.price || 0) === 0) && (
+                    <div className="space-y-4 mb-8">
+                      <div className="text-right">
+                        <span className="text-slate-900 font-black text-sm">اختر وسيلة الدفع</span>
+                      </div>
+                      {course.payment_methods && course.payment_methods.length > 0 ? (
+                        <div className="grid grid-cols-2 gap-3">
+                          {course.payment_methods.map((pm: any) => (
+                            <PaymentMethodCard
+                              key={pm.methodId}
+                              id={pm.methodId}
+                              name={pm.methodName}
+                              type={pm.type}
+                              isSelected={selectedPaymentMethod?.methodId === pm.methodId}
+                              onSelect={() => setSelectedPaymentMethod(pm)}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-5 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                          <p className="text-xs text-gray-400 font-bold">لا تتوفر وسائل دفع مفعلة حالياً لهذه الدورة.</p>
+                        </div>
+                      )}
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      {coursePaymentMethods.map((pm) => (
-                        <PaymentMethodCard
-                          key={pm.methodId}
-                          id={pm.methodId}
-                          name={pm.methodName}
-                          type={pm.type}
-                          isSelected={selectedPaymentMethod?.methodId === pm.methodId}
-                          onSelect={() => setSelectedPaymentMethod(pm)}
-                        />
-                      ))}
-                    </div>
-                  </div>
+                  )}
 
                   {/* Action Buttons */}
                   <div className="space-y-2 md:space-y-3 mb-6 md:mb-8">
                     <button 
                       onClick={() => {
+                        const isFree = course.price_type === 'free' || Number(course.final_price || course.price || 0) === 0;
+                        if (isFree) {
+                          handleSubscribe();
+                          return;
+                        }
                         if (!selectedPaymentMethod) {
                           showAlert.warning('تنبيه', 'يرجى اختيار وسيلة دفع أولاً');
                           return;
@@ -421,7 +454,7 @@ export default function CourseStudentViewPage() {
                     >
                       {isSubscribing ? (
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      ) : 'اشترك الآن'}
+                      ) : (course.price_type === 'free' || Number(course.final_price || course.price || 0) === 0) ? 'التحاق مجاني بالدورة' : 'اشترك الآن'}
                     </button>
                   </div>
 
@@ -432,6 +465,8 @@ export default function CourseStudentViewPage() {
                       onClose={() => setIsPaymentModalOpen(false)}
                       method={selectedPaymentMethod}
                       courseId={course.id}
+                      coursePrice={course.final_price || course.price}
+                      courseCurrency={course.currency || 'SAR'}
                     />
                   )}
 
