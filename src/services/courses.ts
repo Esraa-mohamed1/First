@@ -11,15 +11,11 @@ export const createCourse = async (payload: CreateCoursePayload): Promise<Course
           formData.append('image', value);
         } else if (key === 'receiverAccounts' && Array.isArray(value)) {
           value.forEach((item, index) => {
-            formData.append(`receiverAccounts[${index}][methodId]`, String(item.methodId));
-            formData.append(`receiverAccounts[${index}][currency]`, String(item.currency));
-            formData.append(`receiver_accounts[${index}][method_id]`, String(item.methodId));
-            formData.append(`receiver_accounts[${index}][currency]`, String(item.currency));
+            formData.append(`receiver_accounts[${index}]`, String(item.methodId || item));
           });
         } else if (key === 'receiver_accounts' && Array.isArray(value)) {
           value.forEach((item, index) => {
-            formData.append(`receiver_accounts[${index}][method_id]`, String(item.method_id));
-            formData.append(`receiver_accounts[${index}][currency]`, String(item.currency));
+            formData.append(`receiver_accounts[${index}]`, String(item.method_id || item));
           });
         } else {
           formData.append(key, String(value));

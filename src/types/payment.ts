@@ -5,6 +5,7 @@ export interface PaymentMethod {
   name: string;
   type: PaymentMethodType;
   icon: string;
+  logo?: string;
   isActive: boolean;
 }
 
@@ -14,4 +15,5 @@ export interface AcademyPaymentMethod {
   type: PaymentMethodType;
   value: string;
   currency?: string;
+  logo?: string;
 }

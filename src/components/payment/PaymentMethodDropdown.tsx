@@ -29,6 +29,21 @@ export const PaymentMethodDropdown = ({
     onChange(newValue.map((v) => v.value));
   };
 
+  const formatOptionLabel = (option: any) => (
+    <div className="flex items-center gap-2">
+      {option.logo ? (
+        <img src={`https://api.darab.academy/${option.logo}`} alt={option.label} className="w-5 h-5 object-cover rounded shadow-sm" />
+      ) : (
+        <div className="w-5 h-5 bg-blue-50 text-blue-600 rounded flex items-center justify-center">
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+        </div>
+      )}
+      <span>{option.label}</span>
+    </div>
+  );
+
   return (
     <div className="space-y-1">
       <label className="block text-sm font-medium text-gray-700">وسائل الدفع المقبولة</label>
@@ -37,6 +52,7 @@ export const PaymentMethodDropdown = ({
         options={selectOptions}
         value={value}
         onChange={handleChange}
+        formatOptionLabel={formatOptionLabel}
         placeholder="اختر وسائل الدفع..."
         className="react-select-container"
         classNamePrefix="react-select"

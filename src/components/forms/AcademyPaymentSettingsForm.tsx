@@ -37,8 +37,12 @@ const SavedMethodCard = React.memo(({ method, onEdit, onDelete }: SavedMethodCar
             {method.currency}
           </span>
         </div>
-        <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-          <Landmark size={20} />
+        <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center overflow-hidden">
+          {method.logo ? (
+            <img src={`https://api.darab.academy/${method.logo}`} alt={method.name} className="w-full h-full object-cover" />
+          ) : (
+            <Landmark size={20} />
+          )}
         </div>
       </div>
       
@@ -132,11 +136,14 @@ export const AcademyPaymentSettingsForm = () => {
 
     setLoading(true);
     try {
-      const payload = {
+      const payload: any = {
         name,
         accountValue,
         currency,
       };
+      if (selectedReceiverAccountId) {
+        payload.receiver_account_id = parseInt(selectedReceiverAccountId, 10);
+      }
 
       if (editingId) {
         await updateUserPaymentInfo(editingId, payload);

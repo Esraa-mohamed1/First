@@ -21,6 +21,8 @@ export interface UserPaymentInfo {
   accountValue: string;
   account_value?: string;
   currency: string;
+  logo?: string;
+  receiver_account_id?: number;
 }
 
 export interface WalletData {
@@ -65,58 +67,62 @@ export const createWithdrawalRequest = async (payload: CreateWithdrawalPayload):
 
 export const getUserPaymentInfos = async (): Promise<UserPaymentInfo[]> => {
   try {
-    const response = await academyApi.get<ApiResponse<UserPaymentInfo[]>>('receiver_accounts');
+    const response = await academyApi.get<ApiResponse<any[]>>('instructor_receiver_accounts');
     // Normalize response objects to contain accountValue from account_value if needed
     const data = response.data.data || [];
     return data.map(item => ({
       ...item,
+      id: item.id,
+      name: item.receiver_account?.name || item.name || '',
+      logo: item.receiver_account?.logo || '',
       accountValue: item.accountValue || item.account_value || '',
+      receiver_account_id: item.receiver_account_id,
+      currency: item.currency || 'SAR',
     }));
   } catch (error: any) {
-    console.error('Failed to get receiver accounts:', error);
+    console.error('Failed to get instructor receiver accounts:', error);
     throw error.response?.data || error;
   }
 };
 
-export const createUserPaymentInfo = async (payload: Omit<UserPaymentInfo, 'id'>): Promise<UserPaymentInfo> => {
+export const createUserPaymentInfo = async (payload: Omit<UserPaymentInfo, 'id'> & { receiver_account_id?: number }): Promise<UserPaymentInfo> => {
   try {
     const requestPayload = {
-      name: payload.name,
+      receiver_account_id: payload.receiver_account_id,
       account_value: payload.accountValue,
-      accountValue: payload.accountValue,
-      currency: payload.currency,
+      is_active: 1,
     };
-    const response = await academyApi.post<ApiResponse<UserPaymentInfo>>('receiver_accounts', requestPayload);
+    const response = await academyApi.post<ApiResponse<UserPaymentInfo>>('instructor_receiver_accounts', requestPayload);
     return response.data.data;
   } catch (error: any) {
-    console.error('Failed to create receiver account:', error);
+    console.error('Failed to create instructor receiver account:', error);
     throw error.response?.data || error;
   }
 };
 
-export const updateUserPaymentInfo = async (id: number, payload: Partial<UserPaymentInfo>): Promise<UserPaymentInfo> => {
+export const updateUserPaymentInfo = async (id: number, payload: Partial<UserPaymentInfo> & { receiver_account_id?: number }): Promise<UserPaymentInfo> => {
   try {
-    const requestPayload: any = {};
-    if (payload.name !== undefined) requestPayload.name = payload.name;
+    const requestPayload: any = {
+      is_active: 1
+    };
+    if (payload.receiver_account_id !== undefined) requestPayload.receiver_account_id = payload.receiver_account_id;
     if (payload.accountValue !== undefined) {
       requestPayload.account_value = payload.accountValue;
-      requestPayload.accountValue = payload.accountValue;
     }
-    if (payload.currency !== undefined) requestPayload.currency = payload.currency;
 
-    const response = await academyApi.put<ApiResponse<UserPaymentInfo>>(`receiver_accounts/${id}`, requestPayload);
+    const response = await academyApi.put<ApiResponse<UserPaymentInfo>>(`instructor_receiver_accounts/${id}`, requestPayload);
     return response.data.data;
   } catch (error: any) {
-    console.error(`Failed to update receiver account ${id}:`, error);
+    console.error(`Failed to update instructor receiver account ${id}:`, error);
     throw error.response?.data || error;
   }
 };
 
 export const deleteUserPaymentInfo = async (id: number): Promise<void> => {
   try {
-    await academyApi.delete(`receiver_accounts/${id}`);
+    await academyApi.delete(`instructor_receiver_accounts/${id}`);
   } catch (error: any) {
-    console.error(`Failed to delete receiver account ${id}:`, error);
+    console.error(`Failed to delete instructor receiver account ${id}:`, error);
     throw error.response?.data || error;
   }
 };

@@ -1067,7 +1067,8 @@ export default function CourseDetailsPage() {
                           methodName: method!.name,
                           type: method!.type,
                           value: originalInfo?.accountValue || originalInfo?.account_value || '',
-                          currency: originalInfo?.currency || 'SAR'
+                          currency: originalInfo?.currency || 'SAR',
+                          logo: method!.logo || originalInfo?.logo
                         };
                       });
                       setSelectedPaymentMethods(newMethods);
@@ -1080,7 +1081,10 @@ export default function CourseDetailsPage() {
                         <div key={pm.methodId} className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 flex flex-col justify-between">
                           <span className="text-xs text-gray-400 font-bold">الحساب المفعل</span>
                           <div className="flex items-center justify-between mt-1">
-                            <span className="font-black text-gray-900 text-sm">{pm.methodName}</span>
+                            <div className="flex items-center gap-2">
+                              {pm.logo && <img src={`https://api.darab.academy/${pm.logo}`} alt={pm.methodName} className="w-5 h-5 object-cover rounded shadow-sm" />}
+                              <span className="font-black text-gray-900 text-sm">{pm.methodName}</span>
+                            </div>
                             <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-black">{pm.currency}</span>
                           </div>
                           <div className="mt-2 pt-2 border-t border-gray-100/50">

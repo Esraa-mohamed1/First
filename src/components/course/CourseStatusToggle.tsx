@@ -9,7 +9,7 @@ interface CourseStatusToggleProps {
   onChange: (status: 'published' | 'draft') => void;
 }
 
-export const CourseStatusToggle = ({ status, onChange }: CourseStatusToggleProps) => {
+export const CourseStatusToggle = ({ status, onChange }: CourseStatusToggleProps): React.JSX.Element => {
   const isPublished = status === 'published';
 
   return (
