@@ -173,19 +173,11 @@ export default function CourseDetailsPage() {
         user_id: courseInfo.user_id || undefined,
         coach: coachName,
         status: status,
-        payment_methods: selectedPaymentMethods,
         price: pricingType === 'free' ? 0 : Number(price),
         final_price: pricingType === 'free' ? 0 : Number(price),
         price_type: pricingType,
         currency: currency,
-        receiverAccounts: selectedPaymentMethods.map(m => ({
-          methodId: Number(m.methodId),
-          currency: m.currency || currency
-        })),
-        receiver_accounts: selectedPaymentMethods.map(m => ({
-          method_id: Number(m.methodId),
-          currency: m.currency || currency
-        }))
+        receiver_accounts: selectedPaymentMethods.map(m => Number(m.methodId))
       };
 
 
@@ -236,15 +228,7 @@ export default function CourseDetailsPage() {
             price_type: pricingType,
             currency: currency,
             status: status,
-            payment_methods: selectedPaymentMethods,
-            receiverAccounts: selectedPaymentMethods.map(m => ({
-              methodId: Number(m.methodId),
-              currency: m.currency || currency
-            })),
-            receiver_accounts: selectedPaymentMethods.map(m => ({
-              method_id: Number(m.methodId),
-              currency: m.currency || currency
-            }))
+            receiver_accounts: selectedPaymentMethods.map(m => Number(m.methodId))
           };
   
           await updateCourse(Number(id), payload);
@@ -278,14 +262,14 @@ export default function CourseDetailsPage() {
       setCoachName(data.coach || '');
       const returnedPaymentMethods = data.payment_methods || 
                                      data.receiverAccounts?.map((item: any) => ({
-                                       methodId: item.methodId?.toString() || item.method_id?.toString() || '',
+                                       methodId: item.id?.toString() || item.methodId?.toString() || item.method_id?.toString() || '',
                                        methodName: item.name || '',
                                        type: 'account_number',
                                        value: item.accountValue || item.account_value || '',
                                        currency: item.currency || 'SAR'
                                      })) || 
                                      data.receiver_accounts?.map((item: any) => ({
-                                       methodId: item.method_id?.toString() || item.methodId?.toString() || '',
+                                       methodId: item.id?.toString() || item.method_id?.toString() || item.methodId?.toString() || '',
                                        methodName: item.name || '',
                                        type: 'account_number',
                                        value: item.account_value || item.accountValue || '',

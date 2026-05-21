@@ -233,7 +233,7 @@ export default function CreateCourseClient() {
       final_price: pricingType === 'free' ? 0 : Number(price || 0),
       status,
       coach: coachName,
-      payment_methods: selectedPaymentMethods,
+      receiver_accounts: selectedPaymentMethods.map((m: any) => Number(m.methodId)),
       type: courseTypeParam || 'recorded',
       price_type: pricingType,
       currency,
@@ -445,15 +445,7 @@ export default function CreateCourseClient() {
         currency,
         image: selectedFile || undefined,
         coach: coachName,
-        payment_methods: selectedPaymentMethods,
-        receiverAccounts: selectedPaymentMethods.map(m => ({
-          methodId: Number(m.methodId),
-          currency: m.currency || currency
-        })),
-        receiver_accounts: selectedPaymentMethods.map(m => ({
-          method_id: Number(m.methodId),
-          currency: m.currency || currency
-        }))
+        receiver_accounts: selectedPaymentMethods.map(m => Number(m.methodId))
       };
 
 

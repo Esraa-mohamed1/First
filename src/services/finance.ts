@@ -85,14 +85,17 @@ export const getUserPaymentInfos = async (): Promise<UserPaymentInfo[]> => {
   }
 };
 
-export const createUserPaymentInfo = async (payload: Omit<UserPaymentInfo, 'id'> & { receiver_account_id?: number }): Promise<UserPaymentInfo> => {
+export const createUserPaymentInfo = async (payload: Omit<UserPaymentInfo, 'id'> & { receiver_account_id?: number; logo?: File | null }): Promise<UserPaymentInfo> => {
   try {
-    const requestPayload = {
-      receiver_account_id: payload.receiver_account_id,
-      account_value: payload.accountValue,
-      is_active: 1,
-    };
-    const response = await academyApi.post<ApiResponse<UserPaymentInfo>>('instructor_receiver_accounts', requestPayload);
+    const formData = new FormData();
+    if (payload.receiver_account_id) formData.append('receiver_account_id', String(payload.receiver_account_id));
+    if (payload.accountValue) formData.append('account_value', payload.accountValue);
+    if (payload.logo) formData.append('logo', payload.logo);
+    formData.append('is_active', '1');
+
+    const response = await academyApi.post<ApiResponse<UserPaymentInfo>>('instructor_receiver_accounts', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
     return response.data.data;
   } catch (error: any) {
     console.error('Failed to create instructor receiver account:', error);
@@ -100,17 +103,18 @@ export const createUserPaymentInfo = async (payload: Omit<UserPaymentInfo, 'id'>
   }
 };
 
-export const updateUserPaymentInfo = async (id: number, payload: Partial<UserPaymentInfo> & { receiver_account_id?: number }): Promise<UserPaymentInfo> => {
+export const updateUserPaymentInfo = async (id: number, payload: Partial<UserPaymentInfo> & { receiver_account_id?: number; logo?: File | null }): Promise<UserPaymentInfo> => {
   try {
-    const requestPayload: any = {
-      is_active: 1
-    };
-    if (payload.receiver_account_id !== undefined) requestPayload.receiver_account_id = payload.receiver_account_id;
-    if (payload.accountValue !== undefined) {
-      requestPayload.account_value = payload.accountValue;
-    }
+    const formData = new FormData();
+    formData.append('_method', 'PUT');
+    formData.append('is_active', '1');
+    if (payload.receiver_account_id !== undefined) formData.append('receiver_account_id', String(payload.receiver_account_id));
+    if (payload.accountValue !== undefined) formData.append('account_value', payload.accountValue);
+    if (payload.logo) formData.append('logo', payload.logo);
 
-    const response = await academyApi.put<ApiResponse<UserPaymentInfo>>(`instructor_receiver_accounts/${id}`, requestPayload);
+    const response = await academyApi.post<ApiResponse<UserPaymentInfo>>(`instructor_receiver_accounts/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
     return response.data.data;
   } catch (error: any) {
     console.error(`Failed to update instructor receiver account ${id}:`, error);

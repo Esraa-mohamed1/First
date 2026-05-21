@@ -128,7 +128,7 @@ export const PaymentMethodModal = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Receipt is strictly mandatory
     if (!screenshot) {
       showAlert.error('مطلوب إرفاق الإيصال', 'يرجى رفع صورة أو ملف إيصال التحويل البنكي لإتمام الطلب');
@@ -139,9 +139,9 @@ export const PaymentMethodModal = ({
     try {
       // Submit multipart payload to backend via service
       await enrollInCourse(courseId, method.methodId, screenshot);
-      
+
       await showAlert.success(
-        'تم إرسال طلب التسجيل بنجاح ✅', 
+        'تم إرسال طلب التسجيل بنجاح ✅',
         'سيتم مراجعة إيصال التحويل وتفعيل الدورة في حسابك خلال دقائق معدودة.'
       );
       handleCloseModal();
@@ -189,7 +189,7 @@ export const PaymentMethodModal = ({
 
         {/* Content Area */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-6 flex-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full">
-          
+
           {/* Payment Notice Box */}
           <div className="bg-blue-50/70 p-5 rounded-3xl border border-blue-100/50 space-y-4">
             <div className="text-center space-y-1">
@@ -198,7 +198,7 @@ export const PaymentMethodModal = ({
                 {coursePrice} <span className="text-sm font-black">{courseCurrency}</span>
               </p>
             </div>
-            
+
             <div className="space-y-1.5 bg-white p-4 rounded-2xl border border-blue-200/60 shadow-sm">
               <span className="text-[10px] text-gray-400 font-bold block">رقم الحساب / رقم المحفظة للتعبئة</span>
               <div className="flex items-center justify-between gap-4">
@@ -229,7 +229,7 @@ export const PaymentMethodModal = ({
                 <span className="text-red-500 font-black">*</span>
               </label>
 
-              <div 
+              <div
                 onDragEnter={handleDrag}
                 onDragOver={handleDrag}
                 onDragLeave={handleDrag}
@@ -260,7 +260,7 @@ export const PaymentMethodModal = ({
                         <FileText size={28} />
                       </div>
                     )}
-                    
+
                     <div className="text-center space-y-1">
                       <span className="text-sm font-black text-gray-900 block max-w-[260px] truncate">{screenshot.name}</span>
                       <span className="text-[10px] text-gray-400 block font-bold">{(screenshot.size / (1024 * 1024)).toFixed(2)} MB</span>
@@ -295,7 +295,7 @@ export const PaymentMethodModal = ({
             disabled={loading}
             className="w-full py-4.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl shadow-xl shadow-blue-500/10 active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 disabled:opacity-75 disabled:cursor-not-allowed"
           >
-            {loading ? <Loader2 className="animate-spin" size={20} /> : null}
+            {loading ? <Loader2 className="animate-spin" size={24} /> : null}
             <span>{loading ? 'جاري إرسال الإيصال وتأكيد الطلب...' : 'إرسال طلب التسجيل'}</span>
           </button>
         </form>

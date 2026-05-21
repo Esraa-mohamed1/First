@@ -64,15 +64,15 @@ export const subscribeToCourse = async (courseId: number, price: number): Promis
   }
 };
 
-export const enrollInCourse = async (courseId: number | string, methodId: number | string, receiptFile: File): Promise<any> => {
+export const enrollInCourse = async (courseId: number | string, methodId: number | string, receipt: File): Promise<any> => {
   try {
     const formData = new FormData();
     formData.append('course_id', String(courseId));
     formData.append('courseId', String(courseId));
     formData.append('method_id', String(methodId));
     formData.append('methodId', String(methodId));
-    formData.append('receipt_file', receiptFile);
-    formData.append('receiptFile', receiptFile);
+    formData.append('receipt_file', receipt);
+    formData.append('receipt', receipt);
 
     const response = await studentApi.post<any>('user-subscribe', formData, {
       headers: {

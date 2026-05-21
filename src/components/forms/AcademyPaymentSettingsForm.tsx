@@ -89,6 +89,7 @@ export const AcademyPaymentSettingsForm = () => {
   const [accountValue, setAccountValue] = useState('');
   const [currency, setCurrency] = useState('SAR');
   const [selectedReceiverAccountId, setSelectedReceiverAccountId] = useState('');
+  const [logoFile, setLogoFile] = useState<File | null>(null);
 
   // Fetch data
   const loadData = useCallback(async () => {
@@ -119,6 +120,7 @@ export const AcademyPaymentSettingsForm = () => {
     setAccountValue('');
     setCurrency('SAR');
     setSelectedReceiverAccountId('');
+    setLogoFile(null);
   }, []);
 
   // Form submission
@@ -140,6 +142,7 @@ export const AcademyPaymentSettingsForm = () => {
         name,
         accountValue,
         currency,
+        logo: logoFile,
       };
       if (selectedReceiverAccountId) {
         payload.receiver_account_id = parseInt(selectedReceiverAccountId, 10);
@@ -180,7 +183,7 @@ export const AcademyPaymentSettingsForm = () => {
       'هل أنت متأكد؟',
       'سيتم حذف وسيلة الدفع هذه نهائياً ولن تتمكن من استخدامها في تحصيلات الدورات.'
     );
-    if (!confirm) return;
+    if (!confirm.isConfirmed) return;
 
     try {
       await deleteUserPaymentInfo(id);
@@ -282,6 +285,17 @@ export const AcademyPaymentSettingsForm = () => {
                 onChange={handleNameChange}
                 placeholder="مثال: البنك الأهلي، فودافون كاش"
                 className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
+              />
+            </div>
+
+            {/* Logo Upload */}
+            <div className="space-y-2">
+              <label className="block text-xs font-black text-gray-700">شعار الوسيلة (اختياري)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
               />
             </div>
 
