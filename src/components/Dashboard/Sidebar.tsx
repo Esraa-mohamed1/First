@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, CreditCard, FileText, Settings, LogOut, X, Globe } from 'lucide-react';
+import { LayoutDashboard, Package, CreditCard, FileText, Settings, LogOut, X, Globe, User } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -27,6 +27,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       label: 'الرئيسية',
       icon: LayoutDashboard,
       href: '/dashboard',
+    },
+    {
+      label: 'الملف الشخصي',
+      icon: User,
+      href: '/dashboard/profile',
     },
     {
       label: 'ادارة الباقات',
