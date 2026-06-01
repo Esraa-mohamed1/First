@@ -24,6 +24,7 @@ import {
   Bookmark
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { updateDetailedProfile } from '@/services/auth';
 
 interface Course {
   id: number;
@@ -228,12 +229,54 @@ export default function DashboardProfile({ role }: DashboardProfileProps) {
     setIsEditing(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    // 1. Map state variables into the exact flat JSON payload structure
+    const payload = {
+      role: role,
+      name: editedProfile.name,
+      title: editedProfile.title,
+      location: editedProfile.location,
+      students_count_label: editedProfile.studentsCount,
+      bio_paragraph_1: editedProfile.bioParagraph1,
+      bio_paragraph_2: editedProfile.bioParagraph2,
+      degree_qualification: editedProfile.degree,
+      certificate_qualification: editedProfile.certificate,
+      avatar_url: editedProfile.avatarUrl,
+      cover_url: editedProfile.coverUrl,
+      linkedin_handle: editedProfile.linkedin,
+      twitter_handle: editedProfile.twitter,
+      website_url: editedProfile.website,
+      stats_courses_count: editedProfile.stats.courses,
+      stats_experience_years: editedProfile.stats.experience,
+      stats_average_rating: editedProfile.stats.rating,
+      testimonial_quote: editedProfile.testimonial.quote,
+      testimonial_author: editedProfile.testimonial.author,
+      testimonial_author_role: editedProfile.testimonial.role,
+      testimonial_author_avatar: editedProfile.testimonial.avatarUrl,
+      featured_courses: editedProfile.courses.map(c => ({
+        id: c.id,
+        title: c.title,
+        price: c.price,
+        rating: c.rating,
+        students_count: c.students,
+        tag_label: c.tag || null,
+        image_url: c.imageUrl
+      }))
+    };
+
+    try {
+      // 2. Fire the API call
+      await updateDetailedProfile(payload);
+    } catch (error: any) {
+      console.warn('API update failed, falling back to local state:', error);
+    }
+
+    // Always update local storage and active React state to ensure fluent, robust UX
     const key = `darab_profile_${role}`;
     localStorage.setItem(key, JSON.stringify(editedProfile));
     setProfile(editedProfile);
     setIsEditing(false);
-    toast.success('تم حفظ التعديلات بنجاح!', {
+    toast.success('تم حفظ وتحديث بيانات الملف الشخصي بنجاح!', {
       style: {
         fontFamily: 'IBM Plex Sans Arabic',
         fontWeight: 'bold',

@@ -103,3 +103,14 @@ export const getMyPackage = async (): Promise<any> => {
     throw error.response?.data || error;
   }
 };
+
+export const updateDetailedProfile = async (payload: any): Promise<any> => {
+  try {
+    const response = await api.post<any>('https://api.darab.academy/api/academy/profile/update', payload);
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to update detailed profile:', error);
+    throw error.response?.data || error;
+  }
+};
+
