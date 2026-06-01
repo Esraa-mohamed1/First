@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutGrid, GraduationCap, Users, FileText, Package, TrendingUp, Settings, LogOut, ChevronLeft, X, LayoutDashboard, Plus, Wallet, Landmark, ReceiptText, Megaphone, Ticket, Award, Star, User } from 'lucide-react';
+import { LayoutGrid, GraduationCap, Users, FileText, Package, TrendingUp, Settings, LogOut, ChevronLeft, X, LayoutDashboard, Plus, Wallet, Landmark, ReceiptText, Megaphone, Ticket, Award, Star, User, Globe } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Image from 'next/image';
@@ -45,8 +45,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     if (pathname.startsWith('/academic/courses')) {
       setExpandedItems(prev => (prev.includes('الدورات') ? prev : [...prev, 'الدورات']));
     }
-    if (pathname.startsWith('/academic/settings') || pathname === '/academic/domain') {
+    if (pathname.startsWith('/academic/settings')) {
       setExpandedItems(prev => (prev.includes('الأعدادات') ? prev : [...prev, 'الأعدادات']));
+    }
+    if (pathname.startsWith('/academic/templates') || pathname.startsWith('/academic/website') || pathname === '/academic/domain') {
+      setExpandedItems(prev => (prev.includes('الموقع') ? prev : [...prev, 'الموقع']));
     }
     if (pathname.startsWith('/academic/finance')) {
       setExpandedItems(prev => (prev.includes('المالية') ? prev : [...prev, 'المالية']));
@@ -86,43 +89,55 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       href: '/academic/students',
     },
     {
+      label: 'الموقع',
+      icon: Globe,
+      href: '/academic/templates',
+      subItems: [
+        { label: 'اختيار القوالب', href: '/academic/templates' },
+        { label: 'الهوية والألوان', href: '/academic/website/colors' },
+        { label: 'الدومين المخصص', href: '/academic/domain' },
+        { label: 'الصفحات', href: '/academic/website/pages' },
+        { label: 'القوائم', href: '/academic/website/menus' },
+      ]
+    },
+    {
       label: 'المدربين',
       icon: GraduationCap,
       href: '/academic/coaches',
     },
     {
-        label: 'المالية',
-        icon: Landmark,
-        href: '/academic/finance/overview',
-        subItems: [
-          { label: 'نظرة عامة', href: '/academic/finance/overview' },
-          { label: 'المحفظة', href: '/academic/finance/wallet' },
-          { label: 'المبيعات', href: '/academic/finance/sales' },
-          { label: 'الفواتير', href: '/academic/finance/invoices' },
-          { label: 'التقارير', href: '/academic/finance/reports' },
-          { label: 'طريقة استلام المدفوعات', href: '/academic/finance/payout-methods' },
-          { label: 'إعدادات الدفع (للطلاب)', href: '/academic/finance/payment-settings' },
-        ]
-      },
-    {
-      label: 'التسويق',
-      icon: Megaphone,
-      href: '/academic/marketing',
+      label: 'المالية',
+      icon: Landmark,
+      href: '/academic/finance/overview',
       subItems: [
-        { label: 'الحملات', href: '/academic/marketing' },
-        { label: 'الكوبونات', href: '/academic/coupons' },
+        // { label: 'نظرة عامة', href: '/academic/finance/overview' },
+        // { label: 'المحفظة', href: '/academic/finance/wallet' },
+        // { label: 'المبيعات', href: '/academic/finance/sales' },
+        // { label: 'الفواتير', href: '/academic/finance/invoices' },
+        // { label: 'التقارير', href: '/academic/finance/reports' },
+        // { label: 'طريقة استلام المدفوعات', href: '/academic/finance/payout-methods' },
+        { label: 'إعدادات الدفع (للطلاب)', href: '/academic/finance/payment-settings' },
       ]
     },
-    {
-      label: 'الشهادات',
-      icon: Award,
-      href: '/academic/certificates',
-    },
-    {
-      label: 'التقييمات',
-      icon: Star,
-      href: '/academic/reviews',
-    },
+    // {
+    //   label: 'التسويق',
+    //   icon: Megaphone,
+    //   href: '/academic/marketing',
+    //   subItems: [
+    //     { label: 'الحملات', href: '/academic/marketing' },
+    //     { label: 'الكوبونات', href: '/academic/coupons' },
+    //   ]
+    // },
+    // {
+    //   label: 'الشهادات',
+    //   icon: Award,
+    //   href: '/academic/certificates',
+    // },
+    // {
+    //   label: 'التقييمات',
+    //   icon: Star,
+    //   href: '/academic/reviews',
+    // },
     {
       label: 'الباقة والأستخدام',
       icon: Package,
@@ -134,7 +149,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       href: '/academic/settings',
       subItems: [
         { label: 'بيانات الأكاديمية', href: '/academic/settings/academy' },
-        { label: 'الدومين المخصص', href: '/academic/domain' },
       ]
     },
   ];
