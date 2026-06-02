@@ -106,7 +106,7 @@ export const getMyPackage = async (): Promise<any> => {
 
 export const updateDetailedProfile = async (payload: any): Promise<any> => {
   try {
-    const response = await api.post<any>('https://api.darab.academy/api/academy/profile/update', payload);
+    const response = await api.post<any>('https://api.darab.academy/api/academy/organization_profiles', payload);
     return response.data;
   } catch (error: any) {
     console.error('Failed to update detailed profile:', error);

@@ -645,75 +645,111 @@ export default function TemplatesPage() {
                 /* =========================================================
                    TEMPLATE 2: TEAL TURQUOISE MOCKUP (matches input_file_1.png)
                    ========================================================= */
-                <div className="flex-1 overflow-y-auto custom-scrollbar text-slate-800 bg-[#f8fafc] font-['IBM_Plex_Sans_Arabic']" dir="rtl">
+                <div className="flex-1 overflow-y-auto custom-scrollbar text-slate-800 bg-white font-['IBM_Plex_Sans_Arabic']" dir="rtl">
                   
-                  {/* Teal Header */}
+                  {/* Teal Header (matching screenshot) */}
                   <header className="bg-white border-b border-slate-100 py-4 px-6 md:px-12 flex justify-between items-center sticky top-0 z-50">
+                    
+                    {/* Left: Button "سجل الآن" */}
+                    <div className="flex items-center gap-4">
+                      <button className="px-6 py-2.5 rounded-full bg-[#00a896] hover:bg-[#009282] text-white font-black text-xs shadow-md shadow-[#00a896]/15 hover:shadow-lg transition-all duration-200 active:scale-95 shrink-0">
+                        سجل الآن
+                      </button>
+                    </div>
+
+                    {/* Center-Left: Search Input Bar "ماذا تريد أن تتعلم اليوم؟" */}
+                    <div className="hidden md:flex items-center flex-1 max-w-sm mx-4 bg-slate-50 border border-slate-200/80 rounded-full px-4 py-2 relative shadow-inner">
+                      <input 
+                        type="text" 
+                        placeholder="ماذا تريد أن تتعلم اليوم؟" 
+                        className="w-full bg-transparent text-[11px] font-bold text-slate-700 outline-none text-right placeholder-slate-400"
+                        dir="rtl"
+                      />
+                      <Search className="w-3.5 h-3.5 text-slate-400 mr-2 shrink-0" />
+                    </div>
+
+                    {/* Right-Center Navigation & Right Logo */}
                     <div className="flex items-center gap-8">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-[#00a896] flex items-center justify-center text-white shrink-0 font-black text-sm">د</div>
-                        <span className="font-black text-[#00a896] text-lg">درب</span>
-                      </div>
                       {simulatorMode === 'desktop' && (
-                        <nav className="flex items-center gap-6 text-xs font-black text-slate-500">
-                          <span className="text-[#00a896]">الدورات</span>
-                          <span className="hover:text-[#00a896] transition-colors cursor-pointer">المسارات</span>
-                          <span className="hover:text-[#00a896] transition-colors cursor-pointer">المدربون</span>
-                          <span className="hover:text-[#00a896] transition-colors cursor-pointer">عن الأكاديمية</span>
+                        <nav className="flex items-center gap-6 text-xs font-black text-slate-600">
+                          <span className="text-[#00a896] hover:opacity-90 transition-colors cursor-pointer flex items-center gap-1">
+                            الدورات
+                            <svg className="w-2.5 h-2.5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                          </span>
+                          <span className="hover:text-[#00a896] transition-colors cursor-pointer flex items-center gap-1">
+                            التخصصات
+                            <svg className="w-2.5 h-2.5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                          </span>
+                          <span className="hover:text-[#00a896] transition-colors cursor-pointer">الشركاء</span>
                         </nav>
                       )}
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <button className="text-slate-600 hover:text-[#00a896] font-bold text-xs">تسجيل الدخول</button>
-                      <button className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#00a896] to-[#02c39a] text-white font-black text-xs shadow-md shadow-[#00a896]/10">
-                        ابدأ التعلم
-                      </button>
+                      
+                      {/* Logo mimicking "إدراك" */}
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-[#00a896] flex items-center justify-center text-white shrink-0 font-extrabold text-sm shadow-sm shadow-[#00a896]/15">
+                          <Award className="w-4 h-4" />
+                        </div>
+                        <span className="font-black text-[#00a896] text-lg tracking-tight select-none">إدراك</span>
+                      </div>
                     </div>
                   </header>
 
-                  {/* Hero Block with Students circular photo */}
-                  <section className="bg-white py-12 px-6 md:px-12 border-b border-slate-100">
-                    <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
+                  {/* Hero Block with concentric waves background & Students photo */}
+                  <section className="bg-white py-16 px-6 md:px-12 relative overflow-hidden border-b border-slate-100/80">
+                    
+                    {/* Concentric rings mimicking the waves in the screenshot */}
+                    <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[600px] h-[600px] border border-teal-50/60 rounded-full pointer-events-none z-0"></div>
+                    <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[480px] h-[480px] border border-teal-100/40 rounded-full pointer-events-none z-0"></div>
+                    <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[360px] h-[360px] border border-teal-150/30 rounded-full pointer-events-none z-0"></div>
+
+                    <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
                       
-                      {/* Left: circular students layout */}
+                      {/* Left: circular students layout in high premium framing */}
                       <div className="w-full md:w-1/2 flex justify-center relative">
-                        <div className="w-64 h-64 md:w-80 md:h-80 rounded-full overflow-hidden border-8 border-slate-100 bg-[#00a896]/10 flex items-center justify-center relative">
-                          {/* Inner mockup image illustration */}
-                          <div className="absolute inset-0 bg-[#02c39a]/5"></div>
-                          <img 
-                            className="w-full h-full object-cover" 
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM" 
-                            alt="Students Study Group"
-                          />
+                        <div className="relative">
+                          {/* Sleek shadow backdrops */}
+                          <div className="absolute -inset-4 bg-gradient-to-tr from-[#02c39a]/10 to-[#00a896]/15 rounded-[48px] rotate-3 blur-md scale-95"></div>
+                          <div className="absolute -inset-1 bg-gradient-to-tr from-[#02c39a]/20 to-[#00a896]/30 rounded-[52px] -rotate-2 scale-100"></div>
+                          
+                          <div className="w-72 h-72 md:w-[380px] md:h-[380px] rounded-[42px] overflow-hidden border-[6px] border-white bg-slate-50 flex items-center justify-center relative shadow-xl">
+                            <div className="absolute inset-0 bg-teal-900/5 mix-blend-multiply"></div>
+                            <img 
+                              className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-700" 
+                              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM" 
+                              alt="Students studying on laptop"
+                            />
+                          </div>
                         </div>
                       </div>
 
-                      {/* Right: Hero texts */}
-                      <div className="w-full md:w-1/2 space-y-6 text-center md:text-right">
-                        <h2 className="text-3xl md:text-5xl font-black text-slate-800 leading-tight">
-                          تعلم، طبق، وخلك مميز
-                        </h2>
-                        <p className="text-slate-400 text-sm font-semibold leading-relaxed">
-                          دورات تفاعلية، تطبيقية، ومهارات حقيقية تبني مستقبلك العملي والمهني مع باقة من أفضل خبراء التدريب.
-                        </p>
+                      {/* Right: Hero texts & Statistics Cards */}
+                      <div className="w-full md:w-1/2 space-y-8 text-center md:text-right">
+                        <div className="space-y-4">
+                          <h2 className="text-3xl md:text-5xl font-black text-slate-800 leading-tight">
+                            تعلم، طبق، وخلك مميز
+                          </h2>
+                          <p className="text-slate-500 text-sm font-semibold leading-relaxed max-w-lg">
+                            تأهيل كامل لسوق العمل من خلال مسارات تعليمية وتطبيقية متكاملة بأساليب حديثة.
+                          </p>
+                        </div>
                         
-                        <button className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#00a896] to-[#02c39a] text-white font-black text-xs shadow-md hover:opacity-90 active:scale-95 transition-all">
+                        <button className="px-7 py-4 rounded-xl bg-[#00a896] hover:bg-[#009282] text-white font-black text-xs shadow-lg shadow-[#00a896]/20 transition-all hover:shadow-[#00a896]/30 hover:-translate-y-0.5 active:scale-95 duration-200">
                           اكتشف برامجنا التعليمية
                         </button>
 
-                        {/* Numeric metrics */}
-                        <div className="grid grid-cols-3 gap-4 pt-8 border-t border-slate-50 text-center max-w-md">
-                          <div>
-                            <p className="text-lg font-black text-[#00a896]">80</p>
-                            <p className="text-[10px] text-slate-400 font-bold">دورة تدريبية</p>
+                        {/* Custom framed statistics cards */}
+                        <div className="grid grid-cols-3 gap-4 pt-8 border-t border-slate-100 max-w-md">
+                          <div className="bg-white border border-[#00a896]/25 px-2 py-3.5 rounded-2xl shadow-sm text-center transform hover:scale-[1.02] transition-transform">
+                            <p className="text-xl md:text-2xl font-extrabold text-[#00a896]">50+</p>
+                            <p className="text-[9px] text-slate-400 font-bold mt-1.5 leading-tight">تخصص ومسار تعليمي</p>
                           </div>
-                          <div>
-                            <p className="text-lg font-black text-[#00a896]">+500</p>
-                            <p className="text-[10px] text-slate-400 font-bold">مدرب معتمد</p>
+                          <div className="bg-white border border-[#00a896]/25 px-2 py-3.5 rounded-2xl shadow-sm text-center transform hover:scale-[1.02] transition-transform">
+                            <p className="text-xl md:text-2xl font-extrabold text-[#00a896]">500+</p>
+                            <p className="text-[9px] text-slate-400 font-bold mt-1.5 leading-tight">دورة تدريبية</p>
                           </div>
-                          <div>
-                            <p className="text-lg font-black text-[#00a896]">+100</p>
-                            <p className="text-[10px] text-slate-400 font-bold">مشروع تطبيقي</p>
+                          <div className="bg-white border border-[#00a896]/25 px-2 py-3.5 rounded-2xl shadow-sm text-center transform hover:scale-[1.02] transition-transform">
+                            <p className="text-xl md:text-2xl font-extrabold text-[#00a896]">100+</p>
+                            <p className="text-[9px] text-slate-400 font-bold mt-1.5 leading-tight">مشروع تطبيقي وعملي</p>
                           </div>
                         </div>
                       </div>
@@ -721,91 +757,279 @@ export default function TemplatesPage() {
                     </div>
                   </section>
 
-                  {/* Courses Grid Block */}
-                  <section className="py-12 bg-gradient-to-b from-white to-slate-50 px-6 md:px-12">
-                    <div className="max-w-6xl mx-auto space-y-8">
-                      <div className="text-center space-y-2">
-                        <h3 className="text-xl md:text-2xl font-black text-slate-800">ابدأ التعلم مجاناً الآن</h3>
-                        <p className="text-slate-400 text-xs font-semibold">اكتشف مجموعة واسعة من أكثر من 300 دورة، مصممة خصيصاً لتلبية مهاراتكم واهتماماتكم!</p>
-                      </div>
+                  {/* Vibrant Teal Banner Section (ابدأ التعلم مجاناً الآن) */}
+                  <section className="py-12 bg-[#00a896] px-6 md:px-12 text-center text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full blur-2xl"></div>
+                    <div className="max-w-4xl mx-auto space-y-6 relative z-10">
+                      <h3 className="text-xl md:text-2xl font-black text-white">ابدأ التعلم مجاناً الآن</h3>
+                      <p className="text-teal-50 text-xs font-semibold leading-relaxed max-w-xl mx-auto">
+                        اكتشف مجموعة واسعة من أكثر من 300 دورة، مصممة خصيصاً لتلبية مهاراتكم واهتماماتكم!
+                      </p>
 
-                      {/* Course Category Tags */}
-                      <div className="flex flex-wrap justify-center gap-2">
-                        <span className="bg-[#00a896] text-white text-[10px] font-bold px-3 py-1.5 rounded-full cursor-pointer">كل الأقسام</span>
-                        <span className="bg-white border border-slate-200 text-slate-600 text-[10px] font-bold px-3 py-1.5 rounded-full cursor-pointer hover:border-[#00a896]">الرسم والتصميم</span>
-                        <span className="bg-white border border-slate-200 text-slate-600 text-[10px] font-bold px-3 py-1.5 rounded-full cursor-pointer hover:border-[#00a896]">تكنولوجيا المعلومات</span>
-                        <span className="bg-white border border-slate-200 text-slate-600 text-[10px] font-bold px-3 py-1.5 rounded-full cursor-pointer hover:border-[#00a896]">الأعمال</span>
-                        <span className="bg-white border border-slate-200 text-slate-600 text-[10px] font-bold px-3 py-1.5 rounded-full cursor-pointer hover:border-[#00a896]">صناعة المحتوى</span>
-                      </div>
-
-                      {/* Courses cards grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {/* Category pills exactly like the screenshot */}
+                      <div className="flex flex-wrap justify-center gap-2 pt-2">
+                        <span className="bg-[#0b2b2b] text-white text-[10px] font-bold px-4.5 py-2.5 rounded-full cursor-pointer shadow-md transform hover:scale-[1.02] transition-all">
+                          كل الأقسام
+                        </span>
                         {[
-                          { title: 'أساسيات البرمجة بلغة جافاسكريبت', tag: 'الأكثر مبيعاً', price: '499 ر.س' },
-                          { title: 'تصميم واجهات مستخدم متقدم', tag: 'مسار متقدم', price: '650 ر.س' },
-                          { title: 'تحليل البيانات واتخاذ القرار الاستراتيجي', tag: null, price: '399 ر.س' },
-                          { title: 'قيادة الفرق في العصر الرقمي', tag: null, price: '550 ر.س' },
-                          { title: 'استراتيجيات الابتكار وتطوير المنتجات', tag: null, price: '450 ر.س' },
-                          { title: 'التسويق الرقمي وإدارة الحملات الإعلانية', tag: null, price: '350 ر.س' }
+                          'الرسم والتصميم',
+                          'الفنون',
+                          'تكنولوجيا المعلومات',
+                          'الأعمال',
+                          'اللغات',
+                          'صناعة المحتوى',
+                          'التحريك',
+                          'مؤتمرات وبرامج'
+                        ].map((cat, idx) => (
+                          <span 
+                            key={idx} 
+                            className="bg-transparent border border-white/40 hover:border-white text-white text-[10px] font-bold px-4.5 py-2.5 rounded-full cursor-pointer hover:bg-white/5 transform hover:scale-[1.02] transition-all"
+                          >
+                            {cat}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Main Courses Grid Section */}
+                  <section className="py-16 bg-[#f8fafc] px-6 md:px-12">
+                    <div className="max-w-6xl mx-auto space-y-12">
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {[
+                          { title: 'تصميم واجهة المستخدم (UI)', rating: '4.9', duration: '12 ساعة', tag: 'دورة مميزة', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB4iH4QN5hawBNBS5h9s9nS1TEOla1eY5JJBqQOqqjhAcuOlHHEGvnQUIHaXpvbQX9suHmsGlgv0xfg0Us7GtGZPQZLjNjAsSb3srLVJGGI4JhTw1Ox5L1yvBbvfJnp2IzBFGjUi-SISVcwTm1m9E2wpeb0s33mi9i-k6-PXWT7bxjjJfB8-tokQtf0u5nDOyc2UDANLG2c6UALdgFPTLJ5HDo34MDxx0k5foN_8S6R-2hJhXdyF5sEUPHIXe8KarPgOvzf7Tg2VLI' },
+                          { title: 'أساسيات البرمجة بلغة جافاسكريبت', rating: '4.8', duration: '18 ساعة', tag: 'جديد', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM' },
+                          { title: 'تصميم ثلاثي الأبعاد والتحريك المتقدم', rating: '4.7', duration: '20 ساعة', tag: 'دورة مجانية', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDapuZMqMbglOubBSplHYKHbUUEPOVBNZfPBYfEdrnbwVoJA6p_fXveTFrcYVKfSEKsCZOzcikKHpuWVQRu4n8xxKYXhgM_nanjOQ0cdv-kXhVbMcOq5kzHgm5DH5WlDzYGmDh0ROSe4C_qATsLJhy-iZA4oKXn9HQImP6_0u46v5kDYayBS8_wDmyGvixd7EoZGbUePlgROCvJVAy1-l6nThq3n3XvQJDoOFPy76n8F28rsKmL09nMbF_TcgXK5YffQFE2uS-uFwI' },
+                          { title: 'البحث وتحليل البيانات واتخاذ القرار الاستراتيجي', rating: '4.9', duration: '15 ساعة', tag: 'دورة مجانية', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDtqpBVFtjEqV4PVoWYoyU8fcNsGZBndlgPIbkTUs2JhnbX94-veF8_k8_HudB9diVBtjprCKzLuuiObyibFF6J9QbaMi1GcDswO0I4W3wlUhbXjD_j1nPDgegx4guIeTcmiF9PHyt3yU3B-zTYYixNNb5rzSTyXu_dNsQybxKmntcB87QhR6ICgCXRlHXPPaV2v4GrYnnz6NmYa8CQCbDOZw82qqN70CS7UckmVyBWvUnicK0nzC2SZsnW_QwGRn3db9X6vbI-6DE' },
+                          { title: 'إدارة المستودعات وسلاسل الإمداد اللوجستية', rating: '4.6', duration: '10 ساعات', tag: 'دورة مجانية', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB7fji1EMzpBjvIOPzTzKZXMfFMs_z3kV26cI_u4VZySsAciXaJgM3Az6NM1Dv4arh-Prux6XN7GqdYRv9_L_BhcETvxgmkH2Kp9mMzgjM20WJE7jHDI92KCOYa6xe-XZwTN0tfSlUKxH_y6pOE1twvM7NsZtmAJ7xCG0dMyz3ptUE3dE9DxwvuOp1VEeL-6bnYlbgE1DBMdUmQEwlcdIE5qzhXXvAcf--sm_qb604Y61GeGM2PWxgDVqcnyY_7mFtiZsqC_a593Nc' },
+                          { title: 'صناعة المحتوى الرقمي المسموع والمرئي', rating: '4.9', duration: '14 ساعة', tag: 'جديد', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB4iH4QN5hawBNBS5h9s9nS1TEOla1eY5JJBqQOqqjhAcuOlHHEGvnQUIHaXpvbQX9suHmsGlgv0xfg0Us7GtGZPQZLjNjAsSb3srLVJGGI4JhTw1Ox5L1yvBbvfJnp2IzBFGjUi-SISVcwTm1m9E2wpeb0s33mi9i-k6-PXWT7bxjjJfB8-tokQtf0u5nDOyc2UDANLG2c6UALdgFPTLJ5HDo34MDxx0k5foN_8S6R-2hJhXdyF5sEUPHIXe8KarPgOvzf7Tg2VLI' }
                         ].map((course, idx) => (
-                          <div key={idx} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 flex flex-col group hover:-translate-y-1 transition-transform duration-200">
-                            <div className="h-40 bg-slate-200 relative overflow-hidden shrink-0">
-                              <img className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4iH4QN5hawBNBS5h9s9nS1TEOla1eY5JJBqQOqqjhAcuOlHHEGvnQUIHaXpvbQX9suHmsGlgv0xfg0Us7GtGZPQZLjNjAsSb3srLVJGGI4JhTw1Ox5L1yvBbvfJnp2IzBFGjUi-SISVcwTm1m9E2wpeb0s33mi9i-k6-PXWT7bxjjJfB8-tokQtf0u5nDOyc2UDANLG2c6UALdgFPTLJ5HDo34MDxx0k5foN_8S6R-2hJhXdyF5sEUPHIXe8KarPgOvzf7Tg2VLI" alt={course.title} />
-                              {course.tag && (
-                                <span className="absolute top-3 right-3 bg-amber-100 text-amber-800 text-[9px] font-black px-2 py-0.5 rounded-full">
-                                  {course.tag}
-                                </span>
-                              )}
+                          <div key={idx} className="bg-white rounded-3xl overflow-hidden shadow-[0_12px_40px_rgba(25,28,29,0.02)] border border-slate-100 hover:-translate-y-1.5 transition-all duration-300 flex flex-col group">
+                            
+                            {/* Card Image Header */}
+                            <div className="h-44 overflow-hidden relative bg-slate-50 p-3 shrink-0">
+                              <img className="w-full h-full object-cover rounded-2xl transition-transform duration-700 group-hover:scale-105" src={course.img} alt={course.title} />
+                              <span className="absolute top-5 right-5 bg-amber-100 text-amber-800 text-[9px] font-black px-3 py-1 rounded-full shadow-sm">
+                                {course.tag}
+                              </span>
                             </div>
                             
-                            <div className="p-4 flex-1 flex flex-col justify-between space-y-4">
+                            {/* Card Content Details */}
+                            <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                               <div>
                                 <h4 className="text-xs font-black text-slate-800 leading-snug line-clamp-2">{course.title}</h4>
-                                <div className="flex items-center gap-3 text-[10px] text-slate-400 mt-2 font-bold">
-                                  <span className="flex items-center gap-0.5"><Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /> 4.9</span>
-                                  <span className="flex items-center gap-0.5"><Users className="w-3.5 h-3.5" /> 1,200 طالب</span>
+                                <div className="flex items-center gap-1.5 mt-2">
+                                  <div className="flex items-center gap-0.5">
+                                    {[1, 2, 3, 4, 5].map((s) => (
+                                      <Star key={s} className="w-3 h-3 text-amber-500 fill-amber-500" />
+                                    ))}
+                                  </div>
+                                  <span className="text-[10px] text-slate-400 font-bold mt-0.5">({course.rating})</span>
                                 </div>
+                                <p className="text-[10px] text-slate-400 font-bold mt-2">{course.duration}</p>
                               </div>
-                              <div className="flex justify-between items-center pt-3 border-t border-slate-50">
-                                <span className="text-sm font-extrabold text-[#00a896]">{course.price}</span>
-                                <button className="bg-[#00a896] text-white text-[9px] font-black px-3 py-1.5 rounded-lg">انضم الآن</button>
+
+                              {/* Card Action footer (wishlist & purple enroll button) */}
+                              <div className="flex justify-between items-center pt-3 border-t border-slate-150">
+                                <button className="p-2.5 rounded-full border border-slate-100 hover:border-red-150 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
+                                  <Heart className="w-3.5 h-3.5" />
+                                </button>
+                                <button className="bg-[#3b2dcf] hover:bg-[#2b1dcf] text-white text-[9px] font-black px-5 py-2.5 rounded-full transition-all active:scale-95 shadow-md shadow-[#3b2dcf]/15">
+                                  اشترك الآن
+                                </button>
                               </div>
                             </div>
+
                           </div>
                         ))}
                       </div>
+
+                      {/* Browse more teal button */}
+                      <div className="flex justify-center pt-4">
+                        <button className="px-6 py-3 rounded-xl bg-[#00a896] hover:bg-[#009282] text-white font-black text-xs shadow-md transition-all active:scale-95">
+                          تصفح المزيد من الدورات
+                        </button>
+                      </div>
+
                     </div>
                   </section>
 
-                  {/* Specialties Section */}
-                  <section className="py-12 bg-white px-6 md:px-12 border-t border-slate-100">
-                    <div className="max-w-6xl mx-auto space-y-8">
-                      <div className="text-center">
-                        <p className="text-xs text-[#00a896] font-bold">التخصصات والمسارات</p>
-                        <h3 className="text-xl md:text-2xl font-black text-slate-800 mt-1">طور مهاراتك عبر مسارات برامج تعليمية متخصصة</h3>
+                  {/* Specializations Section with grid paper background */}
+                  <section className="py-16 px-6 md:px-12 relative overflow-hidden bg-slate-50/50 border-t border-b border-slate-100" 
+                    style={{
+                      backgroundImage: 'linear-gradient(to right, rgba(0, 168, 150, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 168, 150, 0.05) 1px, transparent 1px)',
+                      backgroundSize: '24px 24px'
+                    }}
+                  >
+                    <div className="max-w-6xl mx-auto space-y-12 relative z-10">
+                      
+                      {/* Subheading */}
+                      <div className="text-center space-y-2">
+                        <span className="text-xs text-[#00a896] font-black uppercase tracking-wider bg-teal-50 px-3 py-1 rounded-full">التخصصات</span>
+                        <h3 className="text-xl md:text-2xl font-black text-slate-800">طور مهاراتك عبر مسارات برامج تعليمية متخصصة</h3>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {[
-                          { title: 'أساسيات تصميم UI/UX', desc: 'كل ما تحتاجه لتصميم تطبيقات ومواقع مذهلة تلبي رغبات المستخدمين.' },
-                          { title: 'إتقان فيجما (Figma)', desc: 'تعلم التحكم الكامل بأقوى برامج تصميم الواجهات وبناء المكونات والمكتبات المشتركة.' },
-                          { title: 'إدارة وتطوير المنتجات الرقمية', desc: 'طرق ريادة الأعمال الحديثة لقيادة وتطوير منتجات قادرة على المنافسة والربح.' }
+                          { title: 'أساسيات تصميم UI/UX', desc: 'كل ما تحتاجه لتصميم تطبيقات ومواقع مذهلة تلبي رغبات المستخدمين وتمنحهم تجربة استخدام لا تُنسى.', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB4iH4QN5hawBNBS5h9s9nS1TEOla1eY5JJBqQOqqjhAcuOlHHEGvnQUIHaXpvbQX9suHmsGlgv0xfg0Us7GtGZPQZLjNjAsSb3srLVJGGI4JhTw1Ox5L1yvBbvfJnp2IzBFGjUi-SISVcwTm1m9E2wpeb0s33mi9i-k6-PXWT7bxjjJfB8-tokQtf0u5nDOyc2UDANLG2c6UALdgFPTLJ5HDo34MDxx0k5foN_8S6R-2hJhXdyF5sEUPHIXe8KarPgOvzf7Tg2VLI' },
+                          { title: 'إتقان فيجما (Figma)', desc: 'تعلم التحكم الكامل بأقوى برامج تصميم الواجهات وبناء المكونات والمكتبات المشتركة باحترافية كاملة.', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB9KcwP0hcNTjqTsP9-zEoZDcp7ymS0jNj6ob0RwCIdKZ108wU5GjjnHQ0Ji6KDK0ow73ll6wBAdPJRnFpak6zMSPeZ4oAs50vCNlTZKzFA-09Anx2ZOEFVdcumpmAMBHwpacUtUq3v8BNDiO8uMUSw84-4TcE5wdXfhHaOF0A9vgFNdp5-eoQ3H2QBP0nj_d2E4mHbznhcP-MK1K3iSrqNQPbcQChXz_3auUIfp_d-OYnMw6Hv-Uca0MdxRgbltFjrZV6VFE9-guA' },
+                          { title: 'إتقان بريمير (Premiere)', desc: 'كن قادراً على تحرير الفيديوهات وإضافة المؤثرات البصرية وتنسيق المقاطع بدقة عالية.', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB7fji1EMzpBjvIOPzTzKZXMfFMs_z3kV26cI_u4VZySsAciXaJgM3Az6NM1Dv4arh-Prux6XN7GqdYRv9_L_BhcETvxgmkH2Kp9mMzgjM20WJE7jHDI92KCOYa6xe-XZwTN0tfSlUKxH_y6pOE1twvM7NsZtmAJ7xCG0dMyz3ptUE3dE9DxwvuOp1VEeL-6bnYlbgE1DBMdUmQEwlcdIE5qzhXXvAcf--sm_qb604Y61GeGM2PWxgDVqcnyY_7mFtiZsqC_a593Nc' }
                         ].map((path, idx) => (
-                          <div key={idx} className="bg-slate-50 border border-slate-100 p-5 rounded-2xl hover:scale-[1.01] transition-transform duration-200 space-y-3">
-                            <div className="w-10 h-10 rounded-xl bg-[#00a896]/10 flex items-center justify-center text-[#00a896] font-bold">
-                              <BookOpen className="w-5 h-5" />
+                          <div key={idx} className="bg-white border border-slate-100 p-5 rounded-3xl shadow-sm hover:scale-[1.01] hover:shadow-md transition-all duration-300 space-y-4">
+                            <div className="h-36 overflow-hidden rounded-2xl relative bg-slate-50">
+                              <img className="w-full h-full object-cover" src={path.img} alt={path.title} />
                             </div>
                             <h4 className="text-sm font-black text-slate-800">{path.title}</h4>
-                            <p className="text-[11px] text-slate-400 font-medium leading-relaxed">{path.desc}</p>
+                            <p className="text-[11px] text-slate-400 font-bold leading-relaxed">{path.desc}</p>
+                            <div className="pt-2">
+                              <span className="flex items-center gap-1 text-[#00a896] text-xs font-black hover:opacity-80 cursor-pointer">
+                                طور تخصصك
+                                <ChevronLeft className="w-3.5 h-3.5" />
+                              </span>
+                            </div>
                           </div>
                         ))}
+                      </div>
+
+                      {/* Browse more teal button */}
+                      <div className="flex justify-center pt-4">
+                        <button className="px-6 py-3 rounded-xl bg-[#00a896] hover:bg-[#009282] text-white font-black text-xs shadow-md transition-all active:scale-95">
+                          تصفح المزيد من الدورات
+                        </button>
+                      </div>
+
+                    </div>
+                  </section>
+
+                  {/* Discovery and Search Box Section */}
+                  <section className="py-16 bg-white px-6 md:px-12 text-center border-b border-slate-100/60">
+                    <div className="max-w-2xl mx-auto space-y-6">
+                      <h3 className="text-base md:text-lg font-black text-slate-800 leading-relaxed">
+                        اكتشف أكثر من 300 دورة تدريبية مجانية على منصة إدراك
+                      </h3>
+                      <div className="relative flex items-center max-w-xl mx-auto border border-slate-200 bg-slate-50/50 rounded-2xl shadow-inner px-4 py-2.5">
+                        <input 
+                          type="text" 
+                          placeholder="ابحث عن دورة أو تخصص..." 
+                          className="w-full bg-transparent text-xs font-bold text-slate-700 outline-none text-right placeholder-slate-400"
+                          dir="rtl"
+                        />
+                        <Search className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
                       </div>
                     </div>
                   </section>
 
-                  {/* Footer Section */}
-                  <footer className="bg-[#0b1b1a] text-slate-400 py-8 px-6 text-center text-xs border-t border-slate-900">
-                    <p className="font-bold">© 2026 درب. جميع الحقوق محفوظة للأكاديمية التعليمية.</p>
+                  {/* Latest Courses Section (أحدث الدورات) */}
+                  <section className="py-16 bg-[#f8fafc] px-6 md:px-12 border-b border-slate-100">
+                    <div className="max-w-6xl mx-auto space-y-12">
+                      
+                      <div className="text-center space-y-2">
+                        <span className="text-xs text-[#00a896] font-black uppercase tracking-wider bg-teal-50 px-3 py-1 rounded-full">أحدث الدورات</span>
+                        <h3 className="text-xl md:text-2xl font-black text-slate-800 leading-tight">
+                          اكتشف أبرز الدورات التي تساهم في تعزيز مهاراتك وتطوير مسيرتك المهنية
+                        </h3>
+                        <p className="text-slate-400 text-xs font-semibold leading-relaxed max-w-xl mx-auto">
+                          مصممة بعناية لتوفير أعلى مستويات الجودة والتأثير في مجالك المهني.
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {[
+                          { title: 'لغة الجسد وفن التأثير والاتصال الإنساني', rating: '4.9', duration: '8 ساعات', tag: 'مجاني', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM' },
+                          { title: 'المحاسبة المالية والحسابات لغير المحاسبين', rating: '4.8', duration: '12 ساعة', tag: 'دورة مميزة', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDapuZMqMbglOubBSplHYKHbUUEPOVBNZfPBYfEdrnbwVoJA6p_fXveTFrcYVKfSEKsCZOzcikKHpuWVQRu4n8xxKYXhgM_nanjOQ0cdv-kXhVbMcOq5kzHgm5DH5WlDzYGmDh0ROSe4C_qATsLJhy-iZA4oKXn9HQImP6_0u46v5kDYayBS8_wDmyGvixd7EoZGbUePlgROCvJVAy1-l6nThq3n3XvQJDoOFPy76n8F28rsKmL09nMbF_TcgXK5YffQFE2uS-uFwI' },
+                          { title: 'تطوير واجهات الويب وتطبيقات الهاتف بالـ React', rating: '4.7', duration: '20 ساعة', tag: 'جديد', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDtqpBVFtjEqV4PVoWYoyU8fcNsGZBndlgPIbkTUs2JhnbX94-veF8_k8_HudB9diVBtjprCKzLuuiObyibFF6J9QbaMi1GcDswO0I4W3wlUhbXjD_j1nPDgegx4guIeTcmiF9PHyt3yU3B-zTYYixNNb5rzSTyXu_dNsQybxKmntcB87QhR6ICgCXRlHXPPaV2v4GrYnnz6NmYa8CQCbDOZw82qqN70CS7UckmVyBWvUnicK0nzC2SZsnW_QwGRn3db9X6vbI-6DE' }
+                        ].map((course, idx) => (
+                          <div key={idx} className="bg-white rounded-3xl overflow-hidden shadow-[0_12px_40px_rgba(25,28,29,0.02)] border border-slate-100 hover:-translate-y-1.5 transition-all duration-300 flex flex-col group">
+                            
+                            {/* Card Image Header */}
+                            <div className="h-44 overflow-hidden relative bg-slate-50 p-3 shrink-0">
+                              <img className="w-full h-full object-cover rounded-2xl transition-transform duration-700 group-hover:scale-105" src={course.img} alt={course.title} />
+                              <span className="absolute top-5 right-5 bg-amber-100 text-amber-800 text-[9px] font-black px-3 py-1 rounded-full shadow-sm">
+                                {course.tag}
+                              </span>
+                            </div>
+                            
+                            {/* Card Content Details */}
+                            <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                              <div>
+                                <h4 className="text-xs font-black text-slate-800 leading-snug line-clamp-2">{course.title}</h4>
+                                <div className="flex items-center gap-1.5 mt-2">
+                                  <div className="flex items-center gap-0.5">
+                                    {[1, 2, 3, 4, 5].map((s) => (
+                                      <Star key={s} className="w-3 h-3 text-amber-500 fill-amber-500" />
+                                    ))}
+                                  </div>
+                                  <span className="text-[10px] text-slate-400 font-bold mt-0.5">({course.rating})</span>
+                                </div>
+                                <p className="text-[10px] text-slate-400 font-bold mt-2">{course.duration}</p>
+                              </div>
+
+                              {/* Card Action footer (wishlist & purple enroll button) */}
+                              <div className="flex justify-between items-center pt-3 border-t border-slate-150">
+                                <button className="p-2.5 rounded-full border border-slate-100 hover:border-red-155 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
+                                  <Heart className="w-3.5 h-3.5" />
+                                </button>
+                                <button className="bg-[#3b2dcf] hover:bg-[#2b1dcf] text-white text-[9px] font-black px-5 py-2.5 rounded-full transition-all active:scale-95 shadow-md shadow-[#3b2dcf]/15">
+                                  اشترك الآن
+                                </button>
+                              </div>
+                            </div>
+
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Browse more teal button */}
+                      <div className="flex justify-center pt-4">
+                        <button className="px-6 py-3 rounded-xl bg-[#00a896] hover:bg-[#009282] text-white font-black text-xs shadow-md transition-all active:scale-95">
+                          تصفح المزيد من الدورات
+                        </button>
+                      </div>
+
+                    </div>
+                  </section>
+
+                  {/* Testimonials Section (آراء المتعلمين) */}
+                  <section className="py-16 bg-white px-6 md:px-12 text-center">
+                    <div className="max-w-5xl mx-auto space-y-12">
+                      
+                      <div className="text-center space-y-2">
+                        <span className="text-xs text-[#00a896] font-black uppercase tracking-wider bg-teal-50 px-3 py-1 rounded-full">آراء المتعلمين</span>
+                        <h3 className="text-xl md:text-2xl font-black text-slate-800">تأثير حقيقي وتجارب ملهمة</h3>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-right">
+                        {[
+                          { text: 'الدورات المقدمة في منتهى الاحترافية والتبسيط الشديد. لقد مكنتني هذه المسارات من ترقية مهاراتي في التصميم والحصول على وظيفة أحلامي كفيلانسر.', name: 'أمجد الكيلاني', role: 'مصمم واجهات مستقل', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDapuZMqMbglOubBSplHYKHbUUEPOVBNZfPBYfEdrnbwVoJA6p_fXveTFrcYVKfSEKsCZOzcikKHpuWVQRu4n8xxKYXhgM_nanjOQ0cdv-kXhVbMcOq5kzHgm5DH5WlDzYGmDh0ROSe4C_qATsLJhy-iZA4oKXn9HQImP6_0u46v5kDYayBS8_wDmyGvixd7EoZGbUePlgROCvJVAy1-l6nThq3n3XvQJDoOFPy76n8F28rsKmL09nMbF_TcgXK5YffQFE2uS-uFwI' },
+                          { text: 'أعتقد أن هذه المنصة هي الأفضل للدراسة عبر الإنترنت في العالم العربي. التدريب العملي والمشاريع تعطي قيمة مضافة عالية جداً وتجعل التعليم حيوياً.', name: 'ريناد الحربي', role: 'محللة بيانات ناشئة', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM' },
+                          { text: 'أشكر القائمين على هذا العمل الرائع. نظام الكورسات والواجهة مريحة وممتعة جداً للدراسة والمراجعة في أي وقت، والشهادات حافز قوي.', name: 'خالد السديري', role: 'مبرمج ويب مبتدئ', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDtqpBVFtjEqV4PVoWYoyU8fcNsGZBndlgPIbkTUs2JhnbX94-veF8_k8_HudB9diVBtjprCKzLuuiObyibFF6J9QbaMi1GcDswO0I4W3wlUhbXjD_j1nPDgegx4guIeTcmiF9PHyt3yU3B-zTYYixNNb5rzSTyXu_dNsQybxKmntcB87QhR6ICgCXRlHXPPaV2v4GrYnnz6NmYa8CQCbDOZw82qqN70CS7UckmVyBWvUnicK0nzC2SZsnW_QwGRn3db9X6vbI-6DE' }
+                        ].map((val, idx) => (
+                          <div key={idx} className="bg-[#e6f4f2]/80 border border-[#00a896]/10 p-6 rounded-3xl shadow-[0_10px_30px_rgba(0,168,150,0.01)] relative flex flex-col justify-between min-h-[200px] hover:scale-[1.01] hover:shadow-md transition-all duration-300">
+                            <span className="text-4xl text-[#00a896] opacity-35 block leading-none font-serif select-none">“</span>
+                            <p className="text-xs font-bold leading-relaxed text-slate-700 mb-6 mt-2">
+                              "{val.text}"
+                            </p>
+                            <div className="flex items-center gap-3 border-t border-[#00a896]/10 pt-4">
+                              <div className="w-8 h-8 rounded-full overflow-hidden border border-[#00a896]/20 bg-slate-100">
+                                <img className="w-full h-full object-cover" src={val.img} alt={val.name} />
+                              </div>
+                              <div>
+                                <p className="font-black text-[10px] text-slate-800">{val.name}</p>
+                                <p className="text-[8px] font-black text-[#00a896]">{val.role}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                    </div>
+                  </section>
+
+                  {/* Sleek Dark Teal Footer Section */}
+                  <footer className="bg-[#081816] text-[#00a896]/55 py-8 px-6 text-center text-[10px] border-t border-[#040e0d] font-bold">
+                    <p className="text-[#00a896]/70 mb-1">© 2026 إدراك. جميع الحقوق محفوظة للأكاديمية التعليمية الشريكة.</p>
+                    <p className="opacity-75">مصمم بأعلى معايير الجودة لتجربة تعليمية فريدة ومستدامة.</p>
                   </footer>
 
                 </div>
