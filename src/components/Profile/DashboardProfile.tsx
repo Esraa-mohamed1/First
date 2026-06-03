@@ -266,23 +266,36 @@ export default function DashboardProfile({ role }: DashboardProfileProps) {
 
     try {
       // 2. Fire the API call
-      await updateDetailedProfile(payload);
-    } catch (error: any) {
-      console.warn('API update failed, falling back to local state:', error);
-    }
-
-    // Always update local storage and active React state to ensure fluent, robust UX
-    const key = `darab_profile_${role}`;
-    localStorage.setItem(key, JSON.stringify(editedProfile));
-    setProfile(editedProfile);
-    setIsEditing(false);
-    toast.success('تم حفظ وتحديث بيانات الملف الشخصي بنجاح!', {
-      style: {
-        fontFamily: 'IBM Plex Sans Arabic',
-        fontWeight: 'bold',
-        direction: 'rtl'
+      const res = await updateDetailedProfile(payload);
+      
+      // Check response structure for internal status/success flags
+      if (res && (res.status === false || res.success === false)) {
+        throw new Error(res.message || 'حدث خطأ أثناء حفظ الملف الشخصي.');
       }
-    });
+      
+      // Update local storage and active React state to ensure fluent, robust UX on success
+      const key = `darab_profile_${role}`;
+      localStorage.setItem(key, JSON.stringify(editedProfile));
+      setProfile(editedProfile);
+      setIsEditing(false);
+      toast.success(res?.message || 'تم حفظ وتحديث بيانات الملف الشخصي بنجاح!', {
+        style: {
+          fontFamily: 'IBM Plex Sans Arabic',
+          fontWeight: 'bold',
+          direction: 'rtl'
+        }
+      });
+    } catch (error: any) {
+      console.error('API update failed:', error);
+      const errorMessage = error?.message || error?.error || error?.response?.data?.message || 'فشل تحديث البيانات، يرجى المحاولة مرة أخرى.';
+      toast.error(errorMessage, {
+        style: {
+          fontFamily: 'IBM Plex Sans Arabic',
+          fontWeight: 'bold',
+          direction: 'rtl'
+        }
+      });
+    }
   };
 
   const handleNewsletterSubmit = (e: React.FormEvent) => {
