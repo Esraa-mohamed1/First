@@ -1,369 +1,663 @@
 'use client';
 
-import { useState } from 'react';
-import { Users, GraduationCap, Video, CreditCard, TrendingUp, Plus, LayoutDashboard, ChevronDown, Download, Search, BookOpen, Lightbulb, ChevronRight, ChevronLeft, Globe, MoreHorizontal, Rocket, Check, GripHorizontal } from 'lucide-react';
-import StatCard from '@/components/Academic/StatsCard';
-import OverviewChart from '@/components/Academic/Charts/OverviewChart';
-import RevenueChart from '@/components/Academic/Charts/RevenueChart';
-import VisitsByDeviceChart from '@/components/Academic/Charts/VisitsByDeviceChart';
-import VisitsByCountryChart from '@/components/Academic/Charts/VisitsByCountryChart';
+import { useState, useEffect } from 'react';
+import { 
+  Users, 
+  GraduationCap, 
+  Eye, 
+  RotateCw, 
+  Wallet, 
+  Plus, 
+  ChevronDown, 
+  ChevronUp, 
+  Search, 
+  BookOpen, 
+  Lightbulb, 
+  ChevronRight, 
+  ChevronLeft, 
+  Rocket, 
+  Check, 
+  GripHorizontal,
+  Cloud,
+  Layers,
+  UserPlus
+} from 'lucide-react';
 import Image from 'next/image';
-import Swal from 'sweetalert2';
-import withReactContent from 'sweetalert2-react-content';
-import { useEffect } from 'react';
-
-const MySwal = withReactContent(Swal);
-
-function clsx(...classes: any[]) {
-    return classes.filter(Boolean).join(' ');
-}
+import { useRouter } from 'next/navigation';
+import StatCard from '@/components/Academic/StatsCard';
+import SelectCourseTypeModal from '@/components/Academic/Modals/SelectCourseTypeModal';
+import AddStudentModal from '@/components/Academic/Modals/AddStudentModal';
+import { getCourses, getStats } from '@/services/courses';
+import { getUsers } from '@/services/users';
 
 export default function AcademicDashboardPage() {
+  const router = useRouter();
+  const [isSelectTypeModalOpen, setIsSelectTypeModalOpen] = useState(false);
+  const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
+  const [isPremiumExpanded, setIsPremiumExpanded] = useState(true);
+  const [carouselIndex, setCarouselIndex] = useState(0);
 
+  // Dynamic API states
+  const [courses, setCourses] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-    const students = [
-        { name: 'أحمد هاني محمد', date: '22/10/2022', status: 'غير مدفوع', course: 'أساسيات برمجة' },
-        { name: 'محمود فتحي', date: '19/8/2019', status: 'انتظار', course: 'تحليل بيانات' },
-        { name: 'كريم رزقي', date: '14/1/2023', status: 'مدفوع', course: 'إدارة الأعمال' },
-        { name: 'خالد سالم', date: '7/7/2018', status: 'مدفوع', course: 'التسويق الرقمي' },
-        { name: 'أحمد عباس', date: '12/10/2022', status: 'مدفوع', course: 'الجرافيك ديزاين' },
+  // Fetch data
+  const fetchData = async () => {
+    try {
+      const [coursesData, studentsData, statsData] = await Promise.all([
+        getCourses(),
+        getUsers('student'),
+        getStats().catch(() => null)
+      ]);
+      setCourses(coursesData || []);
+      setStudents(studentsData || []);
+      setStats(statsData || null);
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Enrich API students with dummy courses and payment statuses for presentation
+  const enrichedStudents = students.map((s, idx) => {
+    const dummyData = [
+      { course: 'أساسيات برمجة', status: 'غير مدفوع', date: '22/10/2022' },
+      { course: 'تحليل بيانات', status: 'انتظار', date: '19/8/2019' },
+      { course: 'إدارة الأعمال', status: 'مدفوع', date: '14/1/2023' },
+      { course: 'التسويق الرقمي', status: 'مدفوع', date: '07/07/2018' },
+      { course: 'الجرافيك ديزاين', status: 'مدفوع', date: '12/10/2022' },
     ];
+    const dummy = dummyData[idx % dummyData.length];
+    
+    let dateStr = dummy.date;
+    if (s.created_at) {
+      try {
+        const d = new Date(s.created_at);
+        dateStr = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+      } catch (e) {}
+    }
+    
+    return {
+      name: s.name,
+      course: dummy.course,
+      date: dateStr,
+      status: dummy.status
+    };
+  });
 
-    return (
-        <div className="space-y-8 pb-20 animate-in fade-in duration-700">
+  // Carousel slides data
+  const carouselSlides = [
+    {
+      title: "عزّز موقعك على محرك Microsoft Bing",
+      description: "توفر أدوات Bing Webmaster بيانات أداء الموقع ورؤى مجانية لتحسين محركات البحث(SEO) لمساعدتك على تحسين ترتيب موقعك في نتائج بحث Bing"
+    },
+    {
+      title: "حلّل أداء طلابك بسهولة",
+      description: "احصل على تقارير تفصيلية حول سلوك الطلاب، وتقدمهم في الدروس، ونسب الإكمال لمساعدتهم على التفوق والنجاح."
+    },
+    {
+      title: "ادعُ مدربين لمساعدتك",
+      description: "يمكنك الآن تفويض المهام وتوزيع الكورسات على مدربين مساعدين، ومراقبة تقارير المبيعات الخاصة بكل منهم بكل سهولة."
+    }
+  ];
 
-            {/* Top Header Section */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                <div className="space-y-1 text-right">
-                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">لوحة التحكم</h2>
-                    <p className="text-gray-400 font-bold text-sm">مرحباً بك مجدداً في لوحة تحكم أكاديميتك</p>
-                </div>
-                <div className="flex items-center gap-4 bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm">
-                    <button className="bg-gray-50 text-gray-400 px-4 py-2 rounded-xl text-xs font-black hover:bg-gray-100 transition-all">اليوم</button>
-                    <button className="text-gray-400 px-4 py-2 rounded-xl text-xs font-black hover:bg-gray-100 transition-all">الأسبوع</button>
-                    <button className="bg-blue-600 text-white px-6 py-2.5 rounded-xl text-xs font-black shadow-lg shadow-blue-100 flex items-center gap-2">
-                        <span>تاريخ</span>
-                        <ChevronDown size={14} />
-                    </button>
-                </div>
-            </div>
+  const handleNextSlide = () => {
+    setCarouselIndex((prev) => (prev + 1) % carouselSlides.length);
+  };
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+  const handlePrevSlide = () => {
+    setCarouselIndex((prev) => (prev - 1 + carouselSlides.length) % carouselSlides.length);
+  };
 
-                {/* MAIN COLUMN (RIGHT in Dashboard logic) */}
-                <div className="lg:col-span-8 xl:col-span-9 space-y-8 order-1">
+  // Dynamic calculations for progress meters
+  const totalStudentsLimit = 5000;
+  const usedStudents = stats?.active_students || students.length || 0;
+  const remainingStudents = Math.max(totalStudentsLimit - usedStudents, 0);
+  const studentProgressPercent = Math.min((usedStudents / totalStudentsLimit) * 100, 100);
 
-                    {/* 1. Stats Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
-                        <StatCard
-                            title="عدد الطلاب النشطة"
-                            value="2,689"
-                            trend={{ value: 8.5, isPositive: true }}
-                            icon={Users}
-                            color="blue"
-                        />
-                        <StatCard
-                            title="عدد الدورات المنشورة"
-                            value="211"
-                            trend={{ value: 1.2, isPositive: false }}
-                            icon={TrendingUp}
-                            color="red"
-                        />
-                        <StatCard
-                            title="عدد المدربين"
-                            value="40,689"
-                            trend={{ value: 2.6, isPositive: true }}
-                            icon={GraduationCap}
-                            color="orange"
-                        />
-                        <StatCard
-                            title="اجمالي الايراد هذا الشهر"
-                            value="40,689"
-                            trend={{ value: 2.6, isPositive: true }}
-                            icon={CreditCard}
-                            color="purple"
-                        />
-                    </div>
+  const totalCoursesLimit = 50;
+  const usedCourses = stats?.published_courses || courses.length || 0;
+  const remainingCourses = Math.max(totalCoursesLimit - usedCourses, 0);
+  const courseProgressPercent = Math.min((usedCourses / totalCoursesLimit) * 100, 100);
 
-                    {/* 2. Primary Charts (Line & Bar) */}
-                    <div className="grid grid-cols-1 gap-8">
-                        <OverviewChart />
-                        <RevenueChart />
-                    </div>
+  // Storage calculation (mocked based on courses presence or real usage)
+  const storagePercent = usedCourses > 0 ? 82 : 0;
 
-                    {/* 3. Secondary Charts (Side by Side) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <VisitsByDeviceChart />
-                        <VisitsByCountryChart />
-                    </div>
-
-                    {/* 4. Table Section */}
-                    <div className="bg-white rounded-[2rem] md:rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-200/20 overflow-hidden p-5 md:p-8 lg:p-10">
-                        <div className="flex flex-col sm:flex-row justify-between items-center mb-10 gap-8">
-                            <div className="space-y-1 text-right">
-                                <h3 className="text-2xl font-black text-gray-900 tracking-tight">اخر الطلاب المسجلين</h3>
-                                <p className="text-gray-400 font-bold text-sm">قائمة بأحدث الطلاب المنضمين لأكاديميتك مؤخراً</p>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto">
-                                <div className="relative flex-1 sm:w-80 group">
-                                    <div className="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none group-focus-within:text-blue-600 transition-colors">
-                                        <Search className="h-5 w-5 text-gray-300" />
-                                    </div>
-                                    <input
-                                        type="text"
-                                        placeholder="البحث عن طالب أو دورة..."
-                                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl pr-14 pl-6 py-4 text-xs font-bold outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-right font-black"
-                                    />
-                                </div>
-                                <button className="flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl text-xs font-black shadow-xl shadow-blue-500/20 transition-all hover:-translate-y-0.5 active:scale-95">
-                                    <Download size={16} strokeWidth={3} />
-                                    <span>تصدير Excel</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="overflow-x-auto min-h-[400px]">
-                            <table className="w-full border-separate border-spacing-y-3">
-                                <thead>
-                                    <tr className="text-right text-gray-400 text-xs font-black uppercase tracking-widest bg-gray-50/50 rounded-2xl">
-                                        <th className="px-8 py-4 first:rounded-r-2xl last:rounded-l-2xl">اسم الطالب</th>
-                                        <th className="px-8 py-4 text-right">الدورة</th>
-                                        <th className="px-8 py-4 text-right">تاريخ التسجيل</th>
-                                        <th className="px-8 py-4 text-right">حالة الدفع</th>
-                                        <th className="px-8 py-4 text-right"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="text-[14px] font-bold">
-                                    {students.map((student, i) => (
-                                        <tr key={i} className="group transition-all hover:translate-x-1 duration-300">
-                                            <td className="py-5 px-8 rounded-r-[1.5rem] bg-[#f8faff] group-hover:bg-blue-50/30 transition-colors text-right">
-                                                <div className="flex items-center gap-3 justify-end whitespace-nowrap">
-                                                    {student.name}
-                                                    <div className="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center text-blue-600 shadow-sm font-black text-xs shrink-0">
-                                                        {student.name.charAt(0)}
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="py-5 px-8 bg-[#f8faff] group-hover:bg-blue-50/30 transition-colors text-gray-500 text-right whitespace-nowrap">{student.course}</td>
-                                            <td className="py-5 px-8 bg-[#f8faff] group-hover:bg-blue-50/30 transition-colors text-gray-500 text-right whitespace-nowrap">{student.date}</td>
-                                            <td className="py-5 px-8 bg-[#f8faff] group-hover:bg-blue-50/30 transition-colors text-right whitespace-nowrap">
-                                                <span className={clsx(
-                                                    "px-6 py-2.5 rounded-2xl text-[11px] font-black inline-block min-w-[110px] text-center shadow-sm",
-                                                    student.status === 'مدفوع' ? 'bg-green-50 text-green-500 border border-green-100' :
-                                                        student.status === 'انتظار' ? 'bg-orange-50 text-orange-500 border border-orange-100' : 'bg-gray-100 text-gray-400 border border-gray-200'
-                                                )}>
-                                                    {student.status}
-                                                </span>
-                                            </td>
-                                            <td className="py-5 px-8 rounded-l-[1.5rem] bg-[#f8faff] group-hover:bg-blue-50/30 transition-colors text-right">
-                                                <button className="p-2 hover:bg-white rounded-lg transition-all text-gray-400 hover:text-blue-600">
-                                                    <MoreHorizontal size={18} />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                        <button className="w-full mt-10 py-5 bg-gray-50 hover:bg-gray-100 rounded-3xl text-gray-400 text-sm font-black transition-all hover:text-gray-600 group">
-                            <span className="flex items-center justify-center gap-2">
-                                عرض جميع الطلاب المسجلين
-                                <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-                            </span>
-                        </button>
-                    </div>
-
-                    {/* 5. Course Library Placeholder */}
-                    <div className="bg-white rounded-[3.5rem] border-2 border-dashed border-gray-100 p-16 text-center flex flex-col items-center gap-8 shadow-sm group hover:border-blue-200 transition-all">
-                        <div className="w-24 h-24 bg-gray-50 rounded-[2rem] flex items-center justify-center text-gray-200 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all group-hover:scale-110 duration-500">
-                            <BookOpen size={56} />
-                        </div>
-                        <div className="space-y-3">
-                            <h3 className="text-3xl font-black text-gray-900 tracking-tight">مكتبة دوراتك تنتظر اول اعمالك</h3>
-                            <p className="text-gray-400 font-bold max-w-md mx-auto leading-relaxed text-lg">قم بانشاء محتوي تعليمي ملهم وابدأ رحلتك التعليمية الأن لجذب طلابك المفضلين</p>
-                        </div>
-                        <button className="group flex items-center gap-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-14 py-5 rounded-[2rem] font-black text-xl shadow-2xl shadow-blue-500/20 transition-all hover:-translate-y-1.5 active:scale-95">
-                            <Plus size={24} strokeWidth={3} className="group-hover:rotate-90 transition-transform duration-500" />
-                            <span>انشاء دورة جديدة</span>
-                        </button>
-                    </div>
-
-                    {/* 6. Premium Package Usage Tracking */}
-                    <div className="bg-white rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-200/10 p-10 space-y-12">
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-                            <div className="flex items-center justify-end gap-5 w-full text-right">
-                                <div className="text-right">
-                                    <h3 className="text-2xl font-black text-gray-900 tracking-tight">استهلاك الباقة البريميوم</h3>
-                                    <p className="text-sm font-bold text-gray-400 mt-1">نظرة عامة دقيقة علي استهلاك الموارد المحددة في باقتك الحالية</p>
-                                </div>
-                                <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-blue-600/30 shrink-0">
-                                    <LayoutDashboard size={32} />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
-                            <div className="space-y-5 bg-gray-50/50 p-6 rounded-3xl border border-gray-50">
-                                <div className="flex justify-between items-center text-xs font-black">
-                                    <div className="flex items-center gap-2">
-                                        <Users size={14} className="text-blue-600" />
-                                        <span className="text-blue-600 text-sm">56/2,689</span>
-                                    </div>
-                                    <span className="text-gray-400">عدد الطلاب</span>
-                                </div>
-                                <div className="h-3 bg-white border border-gray-100 rounded-full overflow-hidden shadow-inner">
-                                    <div className="bg-gradient-to-l from-blue-600 to-blue-400 h-full rounded-full transition-all duration-1000 w-[10%]" />
-                                </div>
-                                <p className="text-[11px] text-gray-400 font-bold text-center">تبقي لديك <span className="text-gray-900">5،312 طالباً</span> إضافياً في باقتك</p>
-                            </div>
-
-                            <div className="space-y-5 bg-gray-50/50 p-6 rounded-3xl border border-gray-50 relative overflow-hidden group text-right">
-                                <div className="flex justify-between items-center text-xs font-black">
-                                    <div className="flex items-center gap-2 text-red-500">
-                                        <TrendingUp size={14} />
-                                        <span className="text-sm tracking-tighter">500GB/1,041</span>
-                                    </div>
-                                    <span className="text-gray-400">مساحة التخزين</span>
-                                </div>
-                                <div className="h-3 bg-white border border-gray-100 rounded-full overflow-hidden shadow-inner">
-                                    <div className="bg-gradient-to-l from-red-600 to-red-400 h-full rounded-full transition-all duration-1000 w-[82%]" />
-                                </div>
-                                <p className="text-[11px] text-red-500 font-black text-center animate-pulse">تنبيه: لقد اوشكت على استنزاف مساحة التخزين الخاصة بك</p>
-                            </div>
-
-                            <div className="space-y-5 bg-gray-50/50 p-6 rounded-3xl border border-gray-50">
-                                <div className="flex justify-between items-center text-xs font-black">
-                                    <div className="flex items-center gap-2">
-                                        <BookOpen size={14} className="text-green-500" />
-                                        <span className="text-green-500 text-sm">56/211</span>
-                                    </div>
-                                    <span className="text-gray-400">عدد الدورات</span>
-                                </div>
-                                <div className="h-3 bg-white border border-gray-100 rounded-full overflow-hidden shadow-inner">
-                                    <div className="bg-gradient-to-l from-green-500 to-green-400 h-full rounded-full transition-all duration-1000 w-[35%]" />
-                                </div>
-                                <p className="text-[11px] text-gray-400 font-bold text-center">يمكنك اضافة <span className="text-gray-900">15 دورة اضافية</span> حالياً</p>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-                {/* SIDEBAR COLUMN (LEFT) */}
-                <div className="lg:col-span-4 xl:col-span-3 space-y-8 lg:sticky lg:top-28 order-2">
-
-                    {/* 7. Checklist Section */}
-                    <div className="bg-white rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-200/10 p-8 space-y-8">
-                        <div className="flex items-center ">
-                            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center shadow-sm">
-                                <Rocket size={32} />
-                            </div>
-                            <h3 className="font-black text-gray-900 text-2xl tracking-tight text-right">خطواتك الأولى</h3>
-                        </div>
-
-                        <div className="space-y-10 pt-4 border-r-2 border-gray-50 pr-6 relative">
-                            {/* Item 1: Completed with Green Checkbox */}
-                            <div className="flex items-start gap-2 group cursor-pointer relative ">  <div className="w-10 h-10 rounded-xl bg-green-600 flex items-center justify-center shrink-0 shadow-lg shadow-green-100">
-                                <Check size={20} className="text-white" strokeWidth={5} />
-                            </div>
-                                <div className="text-right">
-                                    <h4 className="text-xl font-black text-gray-900">1- اعدادات الملف</h4>
-                                    <p className="text-sm text-gray-400 font-bold mt-1 leading-relaxed">اكملت المعلومات الأساسية</p>
-                                </div>
-                                <div className="absolute -right-[30px] top-4 w-2.5 h-2.5 rounded-full bg-green-600 shadow-[0_0_0_4px_rgba(34,197,94,0.1)] shrink-0 z-10" />
-                            </div>
-
-                            {/* Item 2: Active */}
-                            <div className="flex items-start gap-5 group cursor-pointer relative justify-end">
-                                <div className="text-right group">
-                                    <h4 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">2- انشاء دورة</h4>
-                                    <p className="text-sm text-gray-400 font-bold mt-1 leading-relaxed">ابدأ بانشاء دورتك الأولى</p>
-                                    <span className="text-blue-600 underline font-black text-sm block mt-2 hover:bg-blue-50 transition-all w-fit mr-auto">ابدأ الأن</span>
-                                </div>
-                                <div className="w-10 h-10 rounded-2xl border border-gray-200 bg-[#f8faff] flex items-center justify-center shrink-0 text-gray-400 font-black text-lg group-hover:border-blue-600 group-hover:text-blue-600 transition-all shadow-sm">
-                                    2
-                                </div>
-                                <div className="absolute -right-[30px] top-4 w-2.5 h-2.5 rounded-full bg-gray-200 shrink-0 z-10" />
-                            </div>
-
-                            {/* Item 3: Pending */}
-                            <div className="flex items-start gap-5 group cursor-pointer relative justify-end">
-                                <div className="text-right">
-                                    <h4 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">3- اضافة مدربين</h4>
-                                    <p className="text-sm text-gray-400 font-bold mt-1 leading-relaxed">ابدأ بالخطوات لاكمال الفريق</p>
-                                </div>
-                                <div className="w-10 h-10 rounded-2xl border border-gray-200 bg-[#f8faff] flex items-center justify-center shrink-0 text-gray-400 font-black text-lg group-hover:border-blue-200 transition-colors text-center shadow-sm">
-                                    3
-                                </div>
-                                <div className="absolute -right-[30px] top-4 w-2.5 h-2.5 rounded-full bg-gray-200 shrink-0 z-10" />
-                            </div>
-
-                            <div className="bg-[#f8faff] rounded-[2.5rem] p-8 border border-gray-50 flex flex-col items-center gap-4">
-                                <div className="flex flex-row-reverse items-center justify-center gap-4 w-full">
-                                    <div className="text-blue-600 bg-white p-2.5 rounded-2xl shadow-sm">
-                                        <Lightbulb size={24} />
-                                    </div>
-                                    <span className="text-xl font-black text-blue-600">نصيحة اليوم</span>
-                                </div>
-                                <p className="text-gray-400 font-bold leading-relaxed text-center px-2">
-                                    &quot;اضافة فيديوهات تعريفية قصيرة لكل دورة يزيد من معدلات التسجيل&quot;
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* 8. Promotional Carousel Banner */}
-                        <div className="bg-white rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-200/20 overflow-hidden relative group h-[480px]">
-                            <div className="h-full flex flex-col items-center justify-between p-8 text-center bg-white relative">
-
-                                <div className="flex items-center justify-between w-full mb-4">
-                                    <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-300">
-                                        <GripHorizontal size={16} />
-                                    </div>
-                                    <h4 className="text-sm font-black text-gray-900 leading-tight text-right">هل تريد المزيد من المستخدمين على موقعك؟</h4>
-                                </div>
-
-                                <div className="relative h-48 w-full group-hover:scale-105 transition-transform duration-1000">
-                                    <Image
-                                        src="/assets/Ellipse.png"
-                                        alt="Promotional Banner"
-                                        fill
-                                        className="object-contain"
-                                    />
-                                </div>
-
-                                <div className="space-y-4 px-2 text-right">
-                                    <h4 className="text-base font-black text-gray-900 leading-snug">عزّز موقعك على محرك Microsoft Bing</h4>
-                                    <p className="text-[11px] text-gray-400 font-bold leading-relaxed line-clamp-3">توفر أدوات Bing Webmaster بيانات أداء الموقع ورؤى مجانية لتحسين محركات البحث(SEO) لمساعدتك على تحسين ترتيب موقعك في نتائج بحث Bing</p>
-                                </div>
-
-                                <div className="w-full flex items-center gap-4 mt-4">
-                                    <button className="flex-1 py-3.5 bg-white border border-blue-600 text-blue-600 rounded-2xl font-black text-sm hover:bg-blue-600 hover:text-white transition-all active:scale-95">ابدأ الأن</button>
-                                    <button className="text-orange-400 font-black text-sm hover:underline px-4">لا،شكرا</button>
-                                </div>
-
-                                <div className="flex justify-center gap-1.5 pt-4 pb-2">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-200"></div>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-200"></div>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-200"></div>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-200"></div>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-200"></div>
-                                </div>
-                            </div>
-
-                            {/* Arrow Navigation */}
-                            <button className="absolute left-[-15px] top-1/2 -translate-y-1/2 p-2 bg-white shadow-xl border border-gray-50 rounded-full opacity-100 transition-all hover:bg-blue-600 hover:text-white z-10">
-                                <ChevronLeft size={20} />
-                            </button>
-                            <button className="absolute right-[-15px] top-1/2 -translate-y-1/2 p-2 bg-white shadow-xl border border-gray-50 rounded-full opacity-100 transition-all hover:bg-blue-600 hover:text-white z-10">
-                                <ChevronRight size={20} />
-                            </button>
-                        </div>
-
-                    </div>
-
-                </div>
-            </div>
+  return (
+    <div className="space-y-8 pb-20 animate-in fade-in duration-700 text-right" dir="rtl">
+      
+      {/* Top Header Section */}
+      <div className="flex flex-col gap-4 text-right">
+        <h2 className="text-3xl font-black text-gray-900 tracking-tight">لوحة التحكم</h2>
+        <div className="flex justify-start">
+          <button className="flex items-center gap-2 bg-white border border-gray-200 text-gray-600 px-4 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 transition-colors">
+            <ChevronDown size={25} className="text-gray-400" />
+            <span>التاريخ</span>
+          </button>
         </div>
-    );
+      </div>
+
+      {/* 1. Stats Grid (5 Cards) */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-5">
+        <StatCard
+          title="اجمالي المبيعات"
+          value={stats?.total_revenue ? `${stats.total_revenue}$` : "40,689$"}
+          trend={{ value: 8.5, isPositive: true }}
+          icon={Wallet}
+          color="purple"
+        />
+        <StatCard
+          title="عدد الطلاب الجدد"
+          value={stats?.active_students ? String(stats.active_students) : "2,689"}
+          trend={{ value: 10.5, isPositive: true }}
+          icon={Users}
+          color="blue"
+        />
+        <StatCard
+          title="عدد الزيارات"
+          value="205"
+          trend={{ value: 8.5, isPositive: true }}
+          icon={Eye}
+          color="orange"
+        />
+        <StatCard
+          title="عدد الدورات"
+          value={stats?.published_courses ? String(stats.published_courses) : "1,436"}
+          trend={{ value: 2.6, isPositive: true }}
+          icon={RotateCw}
+          color="red"
+        />
+        <StatCard
+          title="الرصيد الحالي"
+          value="20,214"
+          trend={{ value: 2.6, isPositive: true }}
+          icon={Wallet}
+          color="green"
+        />
+      </div>
+
+      {/* Main Two-Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        {/* RIGHT COLUMN (Main widgets) */}
+        <div className="lg:col-span-8 xl:col-span-9 space-y-6 lg:space-y-8 order-1">
+          
+          {/* A. Last Registered Students Card */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-6 md:p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-black text-gray-900">اخر الطلاب المسجلين</h3>
+            </div>
+
+            {enrichedStudents.length === 0 ? (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-right border-collapse">
+                    <thead>
+                      <tr className="border-b border-gray-100 text-gray-400 text-xs font-bold uppercase">
+                        <th className="pb-4 pt-2 font-black">اسم الطالب</th>
+                        <th className="pb-4 pt-2 font-black">الدورة</th>
+                        <th className="pb-4 pt-2 font-black">تاريخ التسجيل</th>
+                        <th className="pb-4 pt-2 font-black text-left">حالة الدفع</th>
+                      </tr>
+                    </thead>
+                  </table>
+                </div>
+                {/* Empty State Table Placeholder */}
+                <div className="flex flex-col items-center justify-center py-12 md:py-16 text-center">
+                  <div className="w-16 h-16 bg-[#F0F5FF] rounded-full flex items-center justify-center text-blue-600 mb-4 shadow-inner">
+                    <UserPlus size={28} />
+                  </div>
+                  <h4 className="text-base font-black text-gray-900 mb-1">لا يوجد طلاب مسجلون بعد</h4>
+                  <p className="text-xs font-bold text-gray-400 max-w-sm leading-relaxed mb-6">
+                    ابدأ الآن بإضافة أول طالب وابدأ في متابعة نمو أكاديميتك بسهولة.
+                  </p>
+                  <button 
+                    onClick={() => setIsAddStudentModalOpen(true)}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-xs font-black shadow-lg shadow-blue-500/10 hover:-translate-y-0.5 active:scale-95 transition-all duration-200"
+                  >
+                    <Plus size={16} strokeWidth={3} />
+                    <span>أضف طالبك الأول</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-4">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-right border-collapse">
+                    <thead>
+                      <tr className="border-b border-gray-100 text-gray-400 text-xs font-bold uppercase">
+                        <th className="pb-4 pt-2 font-black">اسم الطالب</th>
+                        <th className="pb-4 pt-2 font-black">الدورة</th>
+                        <th className="pb-4 pt-2 font-black">تاريخ التسجيل</th>
+                        <th className="pb-4 pt-2 font-black text-left">حالة الدفع</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {enrichedStudents.slice(0, 5).map((student, i) => (
+                        <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="py-4 font-bold text-sm text-gray-900">
+                            <div className="flex items-center gap-3 justify-start">
+                              <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-black text-xs shrink-0">
+                                {student.name ? student.name.charAt(0) : 'ط'}
+                              </div>
+                              <span>{student.name}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 text-xs font-bold text-gray-500">{student.course}</td>
+                          <td className="py-4 text-xs font-bold text-gray-500">{student.date}</td>
+                          <td className="py-4 text-left">
+                            <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black inline-block min-w-[80px] text-center ${
+                              student.status === 'مدفوع' ? 'bg-green-50 text-emerald-600 border border-green-100' :
+                              student.status === 'انتظار' ? 'bg-orange-50 text-orange-500 border border-orange-100' :
+                              'bg-gray-50 text-gray-500 border border-gray-100'
+                            }`}>
+                              {student.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination footer */}
+                <div className="flex flex-col sm:flex-row justify-between items-center mt-6 pt-6 border-t border-gray-100 gap-4">
+                  <span className="text-xs font-bold text-gray-400">
+                    عرض 1 إلى {Math.min(enrichedStudents.length, 5)} من أصل {enrichedStudents.length} طالب
+                  </span>
+                  <div className="flex items-center gap-1.5" dir="ltr">
+                    <button className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:bg-gray-50 transition-colors">
+                      <ChevronLeft size={16} />
+                    </button>
+                    <button className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-black text-xs">
+                      1
+                    </button>
+                    <button className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors font-bold text-xs">
+                      2
+                    </button>
+                    <button className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors font-bold text-xs">
+                      3
+                    </button>
+                    <button className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:bg-gray-50 transition-colors">
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* B. Course Library Card (Dashed Border / Grid Layout if courses exist) */}
+          {courses.length === 0 ? (
+            <div className="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-8 md:p-12 text-center flex flex-col items-center justify-center gap-5 hover:border-blue-200 transition-all duration-300">
+              <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 shadow-sm">
+                <BookOpen size={32} />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-xl font-black text-gray-900">مكتبة دوراتك تنتظر اول اعمالك</h3>
+                <p className="text-xs font-bold text-gray-400 max-w-sm leading-relaxed">
+                  قم بانشاء محتوي تعليمي ملهم وابدأ رحلتك التعليمية الأن
+                </p>
+              </div>
+              <button 
+                onClick={() => setIsSelectTypeModalOpen(true)}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-xs font-black shadow-lg shadow-blue-500/10 hover:-translate-y-0.5 active:scale-95 transition-all duration-200"
+              >
+                <Plus size={16} strokeWidth={3} />
+                <span>انشاء دورة جديدة</span>
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4 text-right">
+              <h3 className="text-lg font-black text-gray-900">أحدث دورة مضافة</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* 1. Latest Course Item Card */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-all duration-300">
+                  <div className="relative h-44 w-full bg-slate-50 border-b border-gray-50">
+                    <Image
+                      src={courses[0].image_url || courses[0].image || "/assets/course3.jpg"}
+                      alt={courses[0].name || courses[0].title || "Course Thumbnail"}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 300px"
+                    />
+                  </div>
+                  <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
+                    <div className="space-y-1">
+                      <h4 className="font-black text-gray-900 text-base">{courses[0].name || courses[0].title}</h4>
+                      <p className="text-xs text-gray-400 font-bold leading-relaxed line-clamp-2">
+                        {courses[0].description || "شرح مبسط يساعدك على فهم أساسيات المادة العلمية خطوة بخطوة."}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 pt-2">
+                      <button 
+                        onClick={() => router.push(`/academic/courses`)}
+                        className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-xs transition-all active:scale-95 text-center shadow-md shadow-blue-600/10"
+                      >
+                        تعديل الدورة
+                      </button>
+                      <button 
+                        onClick={() => router.push(`/academic/courses/stats`)}
+                        className="flex-1 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl font-black text-xs transition-all active:scale-95 text-center"
+                      >
+                        احصائيات الدورة
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Dashed Add Course Card */}
+                <button 
+                  onClick={() => setIsSelectTypeModalOpen(true)}
+                  className="border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center p-8 hover:border-blue-300 hover:bg-blue-50/10 group transition-all duration-300 min-h-[280px]"
+                >
+                  <div className="w-14 h-14 rounded-full bg-gray-50 flex items-center justify-center mb-4 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors shadow-sm">
+                    <Plus size={28} />
+                  </div>
+                  <span className="font-black text-sm text-gray-900">اضافة دورة تدريبية اخرى</span>
+                </button>
+
+              </div>
+            </div>
+          )}
+
+          {/* C. Premium Package Usage Card */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8 space-y-6">
+            
+            {/* Header Block */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-4">
+                {/* Package Icon */}
+                <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20 shrink-0">
+                  <Layers size={24} />
+                </div>
+                {/* Title & Desc */}
+                <div className="text-right space-y-1">
+                  <div className="flex items-center gap-2.5">
+                    <h3 className="text-lg font-black text-gray-900">استهلاك الباقة البريميوم</h3>
+                    <span className="bg-emerald-50 text-emerald-600 text-[10px] font-black px-2.5 py-1 rounded-full border border-emerald-100">
+                      نشط
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold text-gray-400">
+                    نظرة عامة علي الموارد المستخدمة والمتاحة
+                  </p>
+                </div>
+              </div>
+              {/* Collapse/Expand Toggle */}
+              <button 
+                onClick={() => setIsPremiumExpanded(!isPremiumExpanded)}
+                className="p-1.5 hover:bg-gray-50 border border-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-all shrink-0"
+              >
+                {isPremiumExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+              </button>
+            </div>
+
+            {/* Content (Collapsible) */}
+            {isPremiumExpanded && (
+              <div className="space-y-6 pt-5 border-t border-gray-100 animate-in fade-in duration-300">
+                <div className="text-right">
+                  <p className="text-xs font-black text-gray-500">
+                    تاريخ التجديد القادم : <span className="text-gray-900 font-bold">12 يناير 2024</span>
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  
+                  {/* Students Usage */}
+                  <div className="space-y-3 bg-gray-50/50 p-5 rounded-2xl border border-gray-50">
+                    <div className="flex justify-between items-center text-xs font-black">
+                      <span className="text-gray-900">
+                        {totalStudentsLimit.toLocaleString('en-US')}/{usedStudents.toLocaleString('en-US')}
+                      </span>
+                      <div className="flex items-center gap-1.5 text-gray-400">
+                        <Users size={14} className="text-gray-400" />
+                        <span>عدد الطلاب</span>
+                      </div>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-blue-600 h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${studentProgressPercent}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-gray-400 font-bold text-center">
+                      {remainingStudents > 0 ? (
+                        <>تبقي لديك <span className="text-gray-950 font-black">{remainingStudents.toLocaleString('ar-EG')} مقعدا طلابيا</span></>
+                      ) : (
+                        <span className="text-red-500 font-black">لقد استنفدت كامل مقاعد الطلاب</span>
+                      )}
+                    </p>
+                  </div>
+
+                  {/* Storage Space Usage */}
+                  <div className="space-y-3 bg-gray-50/50 p-5 rounded-2xl border border-gray-50">
+                    <div className="flex justify-between items-center text-xs font-black">
+                      <span className={storagePercent > 0 ? "text-red-500" : "text-blue-600"}>
+                        {storagePercent}% مستخدم
+                      </span>
+                      <div className="flex items-center gap-1.5 text-gray-400">
+                        <Cloud size={14} className="text-gray-400" />
+                        <span>مساحة التخزين</span>
+                      </div>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all duration-500 ${storagePercent > 0 ? 'bg-red-500' : 'bg-blue-600'}`} 
+                        style={{ width: `${storagePercent}%` }}
+                      />
+                    </div>
+                    <p className={`text-[10px] font-black text-center ${storagePercent > 0 ? 'text-red-500' : 'text-blue-600'}`}>
+                      {storagePercent > 0 ? 'تحذير : لقد اوشكت على استهلاك مساحة التخزين' : '100% متاح'}
+                    </p>
+                  </div>
+
+                  {/* Courses Usage */}
+                  <div className="space-y-3 bg-gray-50/50 p-5 rounded-2xl border border-gray-50">
+                    <div className="flex justify-between items-center text-xs font-black">
+                      <span className="text-gray-900">{totalCoursesLimit}/{usedCourses}</span>
+                      <div className="flex items-center gap-1.5 text-gray-400">
+                        <Layers size={14} className="text-gray-400" />
+                        <span>عدد الدورات</span>
+                      </div>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-emerald-500 h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${courseProgressPercent}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-gray-400 font-bold text-center">
+                      {usedCourses > 0 ? (
+                        <>يمكنك اضافة <span className="text-gray-950 font-black">{remainingCourses} دورة اضافية</span></>
+                      ) : (
+                        <span>لا يوجد دورات مضافة</span>
+                      )}
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+            )}
+          </div>
+
+        </div>
+
+        {/* LEFT COLUMN (Sidebar widgets) */}
+        <div className="lg:col-span-4 xl:col-span-3 space-y-6 lg:space-y-8 order-2">
+          
+          {/* D. Checklist Section */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shadow-sm">
+                <Rocket size={22} />
+              </div>
+              <h3 className="font-black text-gray-900 text-lg tracking-tight">خطواتك الأولى</h3>
+            </div>
+
+            {/* Steps layout with vertical connector line */}
+            <div className="relative pr-5 border-r border-gray-100 space-y-8 py-2">
+              
+              {/* Step 1: Completed */}
+              <div className="flex items-start gap-4 relative">
+                {/* Step indicator on vertical line */}
+                <div className="absolute -right-[27px] top-1.5 w-3.5 h-3.5 rounded-full bg-green-600 flex items-center justify-center z-10 shadow-sm ring-2 ring-white">
+                  <Check size={9} className="text-white" strokeWidth={5} />
+                </div>
+                <div className="text-right">
+                  <h4 className="text-sm font-black text-gray-900 leading-tight">1- اعدادات الملف</h4>
+                  <p className="text-xs text-gray-400 font-bold mt-1 leading-normal">
+                    اكملت المعلومات الأساسية
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 2: Active */}
+              <div className="flex items-start gap-4 relative">
+                {/* Step indicator on vertical line */}
+                <div className="absolute -right-[27px] top-1.5 w-3.5 h-3.5 rounded-full bg-gray-200 border border-gray-300 flex items-center justify-center z-10 shadow-sm ring-2 ring-white text-[9px] font-black text-gray-500">
+                  2
+                </div>
+                <div className="text-right">
+                  <h4 className="text-sm font-black text-gray-900 leading-tight">2- انشاء دورة</h4>
+                  <p className="text-xs text-gray-400 font-bold mt-1 leading-normal">
+                    ابدأ بانشاء دورتك الأولى
+                  </p>
+                  <button 
+                    onClick={() => setIsSelectTypeModalOpen(true)}
+                    className="text-blue-600 underline font-black text-xs block mt-2 hover:text-blue-700 transition-colors"
+                  >
+                    ابدأ الآن
+                  </button>
+                </div>
+              </div>
+
+              {/* Step 3: Pending */}
+              <div className="flex items-start gap-4 relative">
+                {/* Step indicator on vertical line */}
+                <div className="absolute -right-[27px] top-1.5 w-3.5 h-3.5 rounded-full bg-gray-200 border border-gray-300 flex items-center justify-center z-10 shadow-sm ring-2 ring-white text-[9px] font-black text-gray-500">
+                  3
+                </div>
+                <div className="text-right">
+                  <h4 className="text-sm font-black text-gray-950 leading-tight">3- اضافة مدربين</h4>
+                  <p className="text-xs text-gray-400 font-bold mt-1 leading-normal">
+                    ابدأ بالخطوات لاكمال الفريق
+                  </p>
+                </div>
+              </div>
+
+              {/* E. Tip of the Day Box */}
+              <div className="bg-gray-50/50 rounded-2xl p-5 border border-gray-50 space-y-3 mt-4 mr-1">
+                <div className="flex items-center gap-2 justify-start">
+                  <div className="text-blue-600 bg-white p-2 rounded-xl shadow-sm shrink-0">
+                    <Lightbulb size={18} />
+                  </div>
+                  <span className="text-sm font-black text-blue-600">نصيحة اليوم</span>
+                </div>
+                <p className="text-[11px] text-gray-400 font-bold leading-relaxed text-right">
+                  "اضافة فيديوهات تعريفية قصيرة لكل دورة يزيد من معدلات التسجيل"
+                </p>
+              </div>
+
+            </div>
+          </div>
+
+          {/* F. Promotional Carousel Banner Card */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden relative group min-h-[460px] flex flex-col justify-between p-6">
+            
+            {/* Header Block */}
+            <div className="flex items-center justify-between w-full mb-2">
+              <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
+                <GripHorizontal size={16} />
+              </div>
+              <h4 className="text-xs font-black text-gray-900 leading-tight text-right">
+                هل تريد المزيد من المستخدمين على موقعك؟
+              </h4>
+            </div>
+
+            {/* Illustration Mockup Image */}
+            <div className="relative h-44 w-full my-4 flex items-center justify-center overflow-hidden rounded-xl border border-gray-50">
+              <Image
+                src="/assets/ima.png"
+                alt="Promotional Banner"
+                fill
+                className="object-contain hover:scale-105 transition-transform duration-700"
+                sizes="(max-width: 768px) 100vw, 300px"
+                priority
+              />
+            </div>
+
+            {/* Active Slide Text Content */}
+            <div className="space-y-2 text-right">
+              <h4 className="text-sm font-black text-gray-900 leading-snug">
+                {carouselSlides[carouselIndex].title}
+              </h4>
+              <p className="text-[10px] text-gray-400 font-bold leading-relaxed min-h-[50px] line-clamp-3">
+                {carouselSlides[carouselIndex].description}
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="w-full flex flex-col xs:flex-row lg:flex-col xl:flex-row items-stretch xs:items-center lg:items-stretch xl:items-center gap-3 mt-4">
+              <button className="flex-1 py-2.5 bg-white border border-blue-600 text-blue-600 rounded-xl font-black text-xs hover:bg-blue-600 hover:text-white transition-all duration-200 active:scale-95 text-center">
+                ابدأ الأن
+              </button>
+              <button className="text-orange-400 font-black text-xs hover:underline py-2 text-center whitespace-nowrap">
+                لا، شكراً
+              </button>
+            </div>
+
+            {/* Carousel Index Dots Indicator */}
+            <div className="flex justify-center gap-1.5 mt-5">
+              {carouselSlides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCarouselIndex(i)}
+                  className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${i === carouselIndex ? 'bg-blue-600 w-3' : 'bg-gray-200'
+                    }`}
+                />
+              ))}
+            </div>
+
+            {/* Side Edge Navigation Arrows */}
+            <button 
+              onClick={handlePrevSlide}
+              className="absolute left-1 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 border border-gray-100 rounded-full flex items-center justify-center shadow-md hover:bg-blue-600 hover:text-white text-gray-400 transition-all duration-200 z-10"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button 
+              onClick={handleNextSlide}
+              className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 border border-gray-100 rounded-full flex items-center justify-center shadow-md hover:bg-blue-600 hover:text-white text-gray-400 transition-all duration-200 z-10"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* Modals Hookup */}
+      <SelectCourseTypeModal
+        isOpen={isSelectTypeModalOpen}
+        onClose={() => setIsSelectTypeModalOpen(false)}
+      />
+      
+      <AddStudentModal
+        isOpen={isAddStudentModalOpen}
+        onClose={() => setIsAddStudentModalOpen(false)}
+        onStudentAdded={fetchData}
+      />
+      
+    </div>
+  );
 }
