@@ -1229,6 +1229,7 @@ export default function CreateCourseClient() {
           courseTitle={title}
           instructorName={selectedInstructor ? instructors.find(i => i.id === selectedInstructor)?.name || '' : currentUser?.name || ''}
           onLessonAdded={handleLessonAdded}
+          courseType={mapTypeToBackend(courseTypeParam)}
         />
       </div>
     </>

@@ -1129,6 +1129,7 @@ export default function CourseDetailsPage() {
         courseTitle={course.title}
         instructorName={course.instructor || ''}
         onLessonAdded={fetchCourse}
+        courseType={course.type}
       />
       <EditUnitModal 
         isOpen={isEditUnitOpen}
@@ -1142,6 +1143,7 @@ export default function CourseDetailsPage() {
         onClose={() => setIsEditLessonOpen(false)}
         lesson={editingLesson}
         onLessonUpdated={fetchCourse}
+        courseType={course.type}
       />
     </div>
   );
