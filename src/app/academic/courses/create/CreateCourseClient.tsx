@@ -210,6 +210,15 @@ export default function CreateCourseClient() {
     }
   };
 
+  const mapTypeToBackend = (type: string | null | undefined): string => {
+    if (!type) return 'recorded';
+    const t = type.toLowerCase().trim();
+    if (t === 'live-online' || t === 'online') return 'online';
+    if (t === 'in-person' || t === 'physical' || t === 'offline') return 'physical';
+    if (t === 'registered' || t === 'recorded') return 'recorded';
+    return t;
+  };
+
   const ensureCourseCreated = async () => {
     if (courseId) return courseId;
     if (!title.trim()) {
@@ -234,7 +243,7 @@ export default function CreateCourseClient() {
       status,
       coach: coachName,
       receiver_accounts: selectedPaymentMethods.map((m: any) => Number(m.methodId)),
-      type: courseTypeParam || 'recorded',
+      type: mapTypeToBackend(courseTypeParam),
       price_type: pricingType,
       currency,
       image: selectedFile || undefined,
@@ -252,10 +261,29 @@ export default function CreateCourseClient() {
       });
     });
 
-    const created = await createCourse(payload);
-    setCourseId(created.id);
-    await refreshCourseContent(created.id);
-    return created.id;
+    try {
+      const created = await createCourse(payload);
+      setCourseId(created.id);
+      await refreshCourseContent(created.id);
+      return created.id;
+    } catch (error: any) {
+      if (error?.errors) {
+        setErrors(error.errors);
+        const allMsgs: string[] = [];
+        if (error.message && error.message !== 'Validation errors detected.') {
+          allMsgs.push(error.message);
+        }
+        Object.values(error.errors).forEach((msgs: any) => {
+          const messages = Array.isArray(msgs) ? msgs : [String(msgs)];
+          messages.forEach((msg) => allMsgs.push(msg));
+        });
+        const toastMsg = allMsgs.length > 0 ? allMsgs.join(' | ') : 'يرجى تصحيح الأخطاء أدناه';
+        toast.error(toastMsg);
+      } else {
+        toast.error(error?.message || 'فشل الحفظ');
+      }
+      throw error;
+    }
   };
 
   useEffect(() => {
@@ -322,7 +350,7 @@ export default function CreateCourseClient() {
       setIsAddingUnit(false);
       await refreshCourseContent(id);
     } catch {
-      toast.error('فشل إضافة الوحدة');
+      // Error message is already toasted inside ensureCourseCreated if it fails there
     } finally {
       setIsSubmitting(false);
     }
@@ -439,7 +467,7 @@ export default function CreateCourseClient() {
         who_is_this_for: whoIsThisFor,
         price: pricingType === 'free' ? 0 : Number(price),
         status,
-        type: courseTypeParam || 'recorded',
+        type: mapTypeToBackend(courseTypeParam),
         price_type: pricingType,
         final_price: pricingType === 'free' ? 0 : Number(price),
         currency,
@@ -473,7 +501,17 @@ export default function CreateCourseClient() {
       } catch (error: any) {
         if (error?.errors) {
           setErrors(error.errors);
-          toast.error('يرجى تصحيح الأخطاء أدناه');
+          
+          const allMsgs: string[] = [];
+          if (error.message && error.message !== 'Validation errors detected.') {
+            allMsgs.push(error.message);
+          }
+          Object.values(error.errors).forEach((msgs: any) => {
+            const messages = Array.isArray(msgs) ? msgs : [String(msgs)];
+            messages.forEach((msg) => allMsgs.push(msg));
+          });
+          const toastMsg = allMsgs.length > 0 ? allMsgs.join(' | ') : 'يرجى تصحيح الأخطاء أدناه';
+          toast.error(toastMsg);
         } else {
           toast.error(error?.message || 'فشل الحفظ');
         }
