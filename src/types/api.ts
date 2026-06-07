@@ -71,6 +71,8 @@ export interface Lesson {
   duration?: number;
   is_free: boolean;
   order: number;
+  video_url?: string;
+  embed_url?: string;
 }
 
 export interface Unit {

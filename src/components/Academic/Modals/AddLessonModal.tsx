@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Play, Video, FileText, FilePieChart as FilePowerpoint, Upload, Check, CheckCircle2, Loader2, Link2, Save, CornerUpLeft } from 'lucide-react';
+import { X, Play, Video, FileText, FilePieChart as FilePowerpoint, Upload, Check, CheckCircle2, Loader2, Link2, Save, CornerUpLeft, Calendar, Type } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -11,6 +11,7 @@ import { createVideoResource, uploadVideoFile, waitForVideoReady, fetchCollectio
 import { uploadFile } from '@/services/upload';
 import { getProfileStatus, getMyUsageLimit } from '@/services/auth';
 import VerificationModal from '@/components/Academic/Modals/VerificationModal';
+import LiveLessonForm from './components/LiveLessonForm';
 interface AddLessonModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -37,7 +38,12 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
   const [endDate, setEndDate] = useState('');
   const [uploadFileToggle, setUploadFileToggle] = useState(true);
 
+  // Live online course states
+  const [sessionLink, setSessionLink] = useState('');
+  const [sessionDateTime, setSessionDateTime] = useState('');
+
   const isPhysical = courseType === 'physical' || courseType === 'offline' || courseType === 'in-person';
+  const isLive = courseType === 'online' || courseType === 'live-online';
 
   const detectLessonType = (file: File): 'video' | 'pdf' | 'powerpoint' => {
     const name = file.name.toLowerCase();
@@ -85,6 +91,8 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
     setStartDate('');
     setEndDate('');
     setUploadFileToggle(true);
+    setSessionLink('');
+    setSessionDateTime('');
     onClose();
   };
 
@@ -105,7 +113,59 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
       return;
     }
 
-    const needsFile = !isPhysical || uploadFileToggle;
+    if (isLive) {
+      if (!sessionLink.trim()) {
+        toast.error('ادخل رابط السيشن');
+        return;
+      }
+
+      const isValidUrl = (url: string) => {
+        try {
+          new URL(url);
+          return true;
+        } catch (_) {
+          return false;
+        }
+      };
+
+      if (!isValidUrl(sessionLink)) {
+        toast.error('الرجاء إدخال رابط سيشن صالح (مثال: https://zoom.us/...)');
+        return;
+      }
+
+      if (!sessionDateTime.trim()) {
+        toast.error('اختر تاريخ ووقت السيشن');
+        return;
+      }
+
+      const selectedDate = new Date(sessionDateTime);
+      if (isNaN(selectedDate.getTime())) {
+        toast.error('الرجاء اختيار تاريخ ووقت صالح');
+        return;
+      }
+
+      if (selectedDate < new Date()) {
+        toast.error('تاريخ ووقت السيشن يجب أن يكون في المستقبل');
+        return;
+      }
+    }
+
+    if (isPhysical) {
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+          toast.error('الرجاء اختيار تواريخ صالحة');
+          return;
+        }
+        if (start > end) {
+          toast.error('تاريخ البداية يجب أن يكون قبل تاريخ النهاية');
+          return;
+        }
+      }
+    }
+
+    const needsFile = (!isPhysical || uploadFileToggle) && !isLive;
     if (needsFile && !selectedFile) {
       toast.error('اختر ملف الدرس أولاً');
       return;
@@ -236,7 +296,13 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
       }
 
       // Build description for physical course:
-      const finalDescription = isPhysical
+      const finalDescription = isLive
+        ? `تفاصيل المحاضرة المباشرة:
+🔗 رابط السيشن: ${sessionLink || 'غير محدد'}
+📅 التاريخ والوقت: ${sessionDateTime || 'غير محدد'}
+
+<!--LIVE_METADATA:${JSON.stringify({ sessionLink, dateTime: sessionDateTime })}-->`
+        : isPhysical
         ? `تفاصيل المحاضرة الحضورية:
 📍 الموقع: ${locationLink || 'غير محدد'}
 📅 تاريخ البداية: ${startDate || 'غير محدد'}
@@ -250,13 +316,13 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
         chapter_id: unitId,
         title,
         description: finalDescription,
-        type: activeLessonType,
+        type: isLive ? 'video' : activeLessonType,
         video_id: finalVideoId || undefined,
         file_url: finalFileUrl || undefined,
-        library_id: (activeLessonType === 'video') ? (libraryId || undefined) : undefined,
-        video_url: finalVideoId ? `https://iframe.mediadelivery.net/embed/${libraryId}/${finalVideoId}` : undefined,
-        thumbnail_url: finalVideoId ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/thumbnail.jpg` : undefined,
-        embed_url: locationLink || (finalVideoId ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/playlist.m3u8` : undefined),
+        library_id: (activeLessonType === 'video' && !isLive) ? (libraryId || undefined) : undefined,
+        video_url: isLive ? sessionLink : (finalVideoId ? `https://iframe.mediadelivery.net/embed/${libraryId}/${finalVideoId}` : undefined),
+        thumbnail_url: (finalVideoId && !isLive) ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/thumbnail.jpg` : undefined,
+        embed_url: isLive ? sessionLink : (locationLink || (finalVideoId ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/playlist.m3u8` : undefined)),
         order: 1, // Default order
         file_size_mb: selectedFile ? parseFloat((selectedFile.size / (1024 * 1024)).toFixed(2)) : 0,
         is_free: false, // Default to paid
@@ -283,71 +349,94 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
           <h2 className="text-2xl font-black text-center text-gray-900">اضافة درس جديد</h2>
 
           <div className="space-y-6 max-w-2xl mx-auto">
-            {isPhysical ? (
+            {isLive ? (
+              <LiveLessonForm
+                title={title}
+                onTitleChange={setTitle}
+                sessionLink={sessionLink}
+                onSessionLinkChange={setSessionLink}
+                sessionDateTime={sessionDateTime}
+                onSessionDateTimeChange={setSessionDateTime}
+              />
+            ) : isPhysical ? (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Detailed Title */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-black text-gray-900 text-right">العنوان بالتفصيل</label>
-                    <input
-                      type="text"
-                      value={title}
-                      onChange={(event) => setTitle(event.target.value)}
-                      placeholder="ادخل العنوان بالتفصيل"
-                      className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all text-gray-900 shadow-sm"
-                    />
-                  </div>
+                  {/* Right Column: Title and Dates */}
+                  <div className="space-y-6">
+                    {/* Detailed Title */}
+                    <div className="space-y-2 group">
+                      <label className="block text-sm font-extrabold text-zinc-700 px-1 transition-colors group-focus-within:text-blue-600 text-right">العنوان بالتفصيل</label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={title}
+                          onChange={(event) => setTitle(event.target.value)}
+                          placeholder="ادخل العنوان بالتفصيل"
+                          className="w-full p-4 pl-12 bg-zinc-50/70 border border-zinc-200/80 rounded-2xl outline-none hover:bg-zinc-50 hover:border-zinc-300 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60 font-bold text-right transition-all text-gray-900 shadow-sm"
+                        />
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-blue-500 transition-colors pointer-events-none">
+                          <Type size={18} />
+                        </div>
+                      </div>
+                    </div>
 
-                  {/* Location Link (Optional) */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-black text-gray-900 text-right">رابط الموقع (اختياري)</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={locationLink}
-                        onChange={(event) => setLocationLink(event.target.value)}
-                        placeholder="ادخل رابط الموقع"
-                        className="w-full p-4 pl-12 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all text-gray-900 shadow-sm"
-                      />
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                        <Link2 size={18} />
+                    {/* Dates Sub-grid */}
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Start Date */}
+                      <div className="space-y-2 group">
+                        <label className="block text-sm font-extrabold text-zinc-700 px-1 transition-colors group-focus-within:text-blue-600 text-right">تاريخ البداية</label>
+                        <input
+                          type="date"
+                          value={startDate}
+                          onChange={(event) => setStartDate(event.target.value)}
+                          className="w-full p-4 bg-zinc-50/70 border border-zinc-200/80 rounded-2xl outline-none hover:bg-zinc-50 hover:border-zinc-300 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60 font-bold text-right transition-all text-gray-900 shadow-sm"
+                        />
+                      </div>
+
+                      {/* End Date */}
+                      <div className="space-y-2 group">
+                        <label className="block text-sm font-extrabold text-zinc-700 px-1 transition-colors group-focus-within:text-blue-600 text-right">تاريخ النهاية</label>
+                        <input
+                          type="date"
+                          value={endDate}
+                          onChange={(event) => setEndDate(event.target.value)}
+                          className="w-full p-4 bg-zinc-50/70 border border-zinc-200/80 rounded-2xl outline-none hover:bg-zinc-50 hover:border-zinc-300 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60 font-bold text-right transition-all text-gray-900 shadow-sm"
+                        />
                       </div>
                     </div>
                   </div>
 
-                  {/* Start Date */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-black text-gray-900 text-right">تاريخ البداية</label>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(event) => setStartDate(event.target.value)}
-                      className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all text-gray-900 shadow-sm"
-                    />
-                  </div>
-
-                  {/* End Date */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-black text-gray-900 text-right">تاريخ النهاية</label>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(event) => setEndDate(event.target.value)}
-                      className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all text-gray-900 shadow-sm"
-                    />
+                  {/* Left Column: Location Link */}
+                  <div className="space-y-6">
+                    {/* Location Link (Optional) */}
+                    <div className="space-y-2 group">
+                      <label className="block text-sm font-extrabold text-zinc-700 px-1 transition-colors group-focus-within:text-blue-600 text-right">رابط الموقع (اختياري)</label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={locationLink}
+                          onChange={(event) => setLocationLink(event.target.value)}
+                          placeholder="ادخل رابط الموقع"
+                          className="w-full p-4 pl-12 bg-zinc-50/70 border border-zinc-200/80 rounded-2xl outline-none hover:bg-zinc-50 hover:border-zinc-300 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60 font-bold text-right transition-all text-gray-900 shadow-sm"
+                        />
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-blue-500 transition-colors pointer-events-none">
+                          <Link2 size={18} />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 {/* Upload File Toggle Row */}
                 <div className="space-y-4">
-                  <label className="block text-sm font-black text-gray-900 text-right">محتوي الدورة</label>
-                  <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-2xl shadow-sm">
-                    <span className="font-bold text-gray-700">رفع ملف</span>
+                  <label className="block text-sm font-extrabold text-zinc-700 px-1 text-right">محتوي الدورة</label>
+                  <div className="flex items-center justify-between p-4 bg-zinc-50/40 border border-zinc-200/60 rounded-2xl shadow-sm">
+                    <span className="font-bold text-zinc-700">رفع ملف</span>
                     <button
                       type="button"
                       onClick={() => setUploadFileToggle(!uploadFileToggle)}
                       className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none flex items-center ${
-                        uploadFileToggle ? 'bg-blue-600 justify-start' : 'bg-gray-200 justify-end'
+                        uploadFileToggle ? 'bg-blue-600 justify-start' : 'bg-zinc-200 justify-end'
                       }`}
                     >
                       <div className="w-4 h-4 rounded-full bg-white shadow-md animate-in fade-in duration-200" />
@@ -357,24 +446,29 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
               </>
             ) : (
               <>
-                <div className="space-y-2">
-                  <label className="block text-sm font-black text-gray-900 text-right">عنوان الدرس</label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
-                    placeholder="ادخل عنوان للدرس"
-                    className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all text-gray-900"
-                  />
+                <div className="space-y-2 group">
+                  <label className="block text-sm font-extrabold text-zinc-700 px-1 transition-colors group-focus-within:text-blue-600 text-right">عنوان الدرس</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(event) => setTitle(event.target.value)}
+                      placeholder="ادخل عنوان للدرس"
+                      className="w-full p-4 pl-12 bg-zinc-50/70 border border-zinc-200/80 rounded-2xl outline-none hover:bg-zinc-50 hover:border-zinc-300 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60 font-bold text-right transition-all text-gray-900 shadow-sm"
+                    />
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-blue-500 transition-colors pointer-events-none">
+                      <Type size={18} />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="block text-sm font-black text-gray-900 text-right">اضف وصف مختصر للدرس</label>
+                <div className="space-y-2 group">
+                  <label className="block text-sm font-extrabold text-zinc-700 px-1 transition-colors group-focus-within:text-blue-600 text-right">اضف وصف مختصر للدرس</label>
                   <textarea
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
                     placeholder="ادخل وصف للدرس"
-                    className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold min-h-[120px] text-right transition-all text-gray-900"
+                    className="w-full p-4 bg-zinc-50/70 border border-zinc-200/80 rounded-2xl outline-none hover:bg-zinc-50 hover:border-zinc-300 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60 font-bold min-h-[120px] text-right transition-all text-gray-900 shadow-sm resize-none"
                   ></textarea>
                 </div>
 
@@ -419,7 +513,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
             )}
 
             {/* Drag & Drop File Upload Panel */}
-            {(!isPhysical || uploadFileToggle) && (
+            {(!isPhysical || uploadFileToggle) && !isLive && (
               <div className="space-y-4">
                 <label className="block text-sm font-black text-gray-900 text-right">
                   {isPhysical
@@ -525,7 +619,27 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
           </div>
 
           <div className="flex justify-center gap-4 max-w-2xl mx-auto pt-4">
-            {isPhysical ? (
+            {isLive ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="flex items-center justify-center gap-2 px-12 py-3.5 bg-gray-200/80 hover:bg-gray-200 text-gray-700 font-black rounded-2xl transition-all text-sm"
+                >
+                  <CornerUpLeft size={18} />
+                  <span>عودة</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleUploadLesson}
+                  disabled={isSubmitting}
+                  className="flex items-center justify-center gap-2 px-12 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+                >
+                  <Save size={18} />
+                  <span>{isSubmitting ? 'جاري الحفظ...' : 'حفظ'}</span>
+                </button>
+              </>
+            ) : isPhysical ? (
               <>
                 <button
                   type="button"

@@ -1,5 +1,4 @@
-import api from '@/lib/api';
-import { ApiResponse } from '@/types/api';
+import axios from 'axios';
 
 export const uploadFile = async (
   file: File, 
@@ -9,7 +8,7 @@ export const uploadFile = async (
   formData.append('file', file);
 
   try {
-    const response = await api.post<ApiResponse<{ url: string }>>('/upload', formData, {
+    const response = await axios.post('/api/upload/bunny', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -20,13 +19,14 @@ export const uploadFile = async (
       },
     });
 
-    if (response.data.status && response.data.data?.url) {
-      return response.data.data.url;
+    if (response.data.success && response.data.url) {
+      return response.data.url;
     }
     
-    throw new Error('Upload failed: No URL returned');
+    throw new Error(response.data.error || 'Upload failed: No URL returned');
   } catch (error: any) {
-    console.error('File upload failed:', error);
+    console.error('File upload to Bunny Storage failed:', error);
     throw error.response?.data || error;
   }
 };
+

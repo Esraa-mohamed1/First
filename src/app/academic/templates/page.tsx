@@ -427,7 +427,9 @@ export default function TemplatesPage() {
                 <div className="flex-1 overflow-y-auto custom-scrollbar text-slate-800 bg-[#F3F4F5] font-['IBM_Plex_Sans_Arabic']" dir="rtl">
                   
                   {/* Top Header */}
-                  <header className="bg-white border-b border-slate-100 py-3.5 px-6 md:px-12 flex justify-between items-center sticky top-0 z-50">
+                  <header className={`bg-white border-b border-slate-100 py-3.5 flex justify-between items-center sticky top-0 z-50 ${
+                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
+                  }`}>
                     <div className="flex items-center gap-6">
                       {/* Logo Play */}
                       <div className="flex items-center gap-2">
@@ -453,7 +455,9 @@ export default function TemplatesPage() {
                       </div>
                     )}
 
-                    <div className="flex items-center gap-6 text-xs font-black text-slate-500">
+                    <div className={`flex items-center text-xs font-black text-slate-500 ${
+                      simulatorMode === 'mobile' ? 'gap-2 text-[10px]' : simulatorMode === 'tablet' ? 'gap-4' : 'gap-6'
+                    }`}>
                       <span className="cursor-pointer hover:text-[#2563eb] transition-colors">مسارات التعلم</span>
                       <span className="cursor-pointer hover:text-[#2563eb] transition-colors">حسابي</span>
                       <span className="text-red-500 cursor-pointer hover:text-red-600 transition-colors">تسجيل الخروج</span>
@@ -461,38 +465,58 @@ export default function TemplatesPage() {
                   </header>
 
                   {/* Hero Block */}
-                  <section className="bg-gradient-to-b from-[#e8f1ff] to-white py-16 px-6 md:px-12 text-center relative overflow-hidden">
+                  <section className={`bg-gradient-to-b from-[#e8f1ff] to-white text-center relative overflow-hidden ${
+                    simulatorMode === 'desktop' ? 'py-16 px-12' : simulatorMode === 'tablet' ? 'py-14 px-8' : 'py-10 px-4'
+                  }`}>
                     <div className="max-w-2xl mx-auto space-y-6">
-                      <h2 className="text-3xl md:text-5xl font-black text-slate-800 leading-tight">
+                      <h2 className={`font-black text-slate-800 leading-tight ${
+                        simulatorMode === 'desktop' ? 'text-5xl' : simulatorMode === 'tablet' ? 'text-3xl' : 'text-2xl'
+                      }`}>
                         ابدأ اليوم... وخلّ مستقبلك يتغير.
                       </h2>
-                      <p className="text-slate-500 text-sm md:text-base font-semibold leading-relaxed max-w-lg mx-auto">
+                      <p className={`text-slate-500 font-semibold leading-relaxed max-w-lg mx-auto ${
+                        simulatorMode === 'desktop' ? 'text-base' : 'text-sm'
+                      }`}>
                         محتوى بسيط وعملي يوصلك لنتيجة حقيقية بدون تعقيد.
                       </p>
                       
-                      <div className="flex justify-center gap-4 pt-2">
-                        <button className="px-8 py-3.5 rounded-xl bg-[#2563eb] text-white font-black text-xs shadow-lg shadow-blue-500/20 active:scale-95 transition-all">
+                      <div className={`flex justify-center gap-4 pt-2 ${
+                        simulatorMode === 'mobile' ? 'flex-col items-center gap-2 px-6' : 'flex-row'
+                      }`}>
+                        <button className={`py-3.5 rounded-xl bg-[#2563eb] text-white font-black text-xs shadow-lg shadow-blue-500/20 active:scale-95 transition-all ${
+                          simulatorMode === 'mobile' ? 'w-full' : 'px-8'
+                        }`}>
                           ابدأ الآن
                         </button>
-                        <button className="px-8 py-3.5 rounded-xl bg-slate-800 text-white font-black text-xs active:scale-95 transition-all">
+                        <button className={`py-3.5 rounded-xl bg-slate-800 text-white font-black text-xs active:scale-95 transition-all ${
+                          simulatorMode === 'mobile' ? 'w-full' : 'px-8'
+                        }`}>
                           تصفح الكورسات
                         </button>
                       </div>
 
                       {/* Stat Metrics */}
-                      <div className="grid grid-cols-3 gap-6 pt-10 border-t border-slate-100 max-w-xl mx-auto text-center">
+                      <div className={`grid grid-cols-3 pt-10 border-t border-slate-100 max-w-xl mx-auto text-center ${
+                        simulatorMode === 'desktop' ? 'gap-6' : 'gap-2'
+                      }`}>
                         <div className="relative">
-                          <p className="text-xl md:text-3xl font-black text-slate-800">542,412</p>
+                          <p className={`font-black text-slate-800 ${
+                            simulatorMode === 'desktop' ? 'text-3xl' : simulatorMode === 'tablet' ? 'text-2xl' : 'text-base'
+                          }`}>542,412</p>
                           <p className="text-[10px] text-slate-400 font-bold mt-1">متعلم خريج</p>
                           <div className="absolute left-0 top-1/4 h-1/2 w-[1px] bg-slate-200"></div>
                         </div>
                         <div className="relative">
-                          <p className="text-xl md:text-3xl font-black text-slate-800">412+</p>
+                          <p className={`font-black text-slate-800 ${
+                            simulatorMode === 'desktop' ? 'text-3xl' : simulatorMode === 'tablet' ? 'text-2xl' : 'text-base'
+                          }`}>412+</p>
                           <p className="text-[10px] text-slate-400 font-bold mt-1">فيديو</p>
                           <div className="absolute left-0 top-1/4 h-1/2 w-[1px] bg-slate-200"></div>
                         </div>
                         <div>
-                          <p className="text-xl md:text-3xl font-black text-slate-800">263,124</p>
+                          <p className={`font-black text-slate-800 ${
+                            simulatorMode === 'desktop' ? 'text-3xl' : simulatorMode === 'tablet' ? 'text-2xl' : 'text-base'
+                          }`}>263,124</p>
                           <p className="text-[10px] text-slate-400 font-bold mt-1">شهادة صادرة</p>
                         </div>
                       </div>
@@ -500,8 +524,12 @@ export default function TemplatesPage() {
                   </section>
 
                   {/* Categories Tags Section */}
-                  <section className="py-8 px-6 md:px-12 bg-white text-center">
-                    <h3 className="text-lg md:text-xl font-black text-slate-800 mb-6">الأقسام</h3>
+                  <section className={`py-8 bg-white text-center ${
+                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
+                  }`}>
+                    <h3 className={`font-black text-slate-800 mb-6 ${
+                      simulatorMode === 'desktop' ? 'text-xl' : 'text-base'
+                    }`}>الأقسام</h3>
                     <div className="flex flex-wrap justify-center gap-2 max-w-3xl mx-auto">
                       <span className="bg-[#2563eb] text-white text-[10px] font-bold px-4 py-2 rounded-full cursor-pointer shadow-sm">كل الأقسام</span>
                       <span className="bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-bold px-4 py-2 rounded-full cursor-pointer hover:border-[#2563eb]">الرسم والتصميم</span>
@@ -515,14 +543,20 @@ export default function TemplatesPage() {
                   </section>
 
                   {/* Latest Courses Section */}
-                  <section className="py-12 px-6 md:px-12 bg-white">
+                  <section className={`py-12 bg-white ${
+                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
+                  }`}>
                     <div className="max-w-6xl mx-auto">
-                      <h3 className="text-xl md:text-2xl font-black text-slate-800 mb-8 flex items-center gap-2.5">
+                      <h3 className={`font-black text-slate-800 mb-8 flex items-center gap-2.5 ${
+                        simulatorMode === 'desktop' ? 'text-2xl' : 'text-lg'
+                      }`}>
                         <span className="w-1.5 h-6 bg-[#2563eb] rounded-full"></span>
                         آخر الدورات المسجلة
                       </h3>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      <div className={`grid gap-8 ${
+                        simulatorMode === 'desktop' ? 'grid-cols-3' : simulatorMode === 'tablet' ? 'grid-cols-2' : 'grid-cols-1'
+                      }`}>
                         {[
                           { name: 'MOHAMED ELMUFTY', role: 'PHOTOSHOP FUNDAMENTALS', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM' },
                           { name: 'SOHAIP HASSAN', role: 'MICROSOFT EXCEL', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDapuZMqMbglOubBSplHYKHbUUEPOVBNZfPBYfEdrnbwVoJA6p_fXveTFrcYVKfSEKsCZOzcikKHpuWVQRu4n8xxKYXhgM_nanjOQ0cdv-kXhVbMcOq5kzHgm5DH5WlDzYGmDh0ROSe4C_qATsLJhy-iZA4oKXn9HQImP6_0u46v5kDYayBS8_wDmyGvixd7EoZGbUePlgROCvJVAy1-l6nThq3n3XvQJDoOFPy76n8F28rsKmL09nMbF_TcgXK5YffQFE2uS-uFwI' },
@@ -571,11 +605,17 @@ export default function TemplatesPage() {
                   </section>
 
                   {/* Testimonial slider section */}
-                  <section className="py-12 bg-slate-100/60 px-6 md:px-12 text-center">
+                  <section className={`py-12 bg-slate-100/60 text-center ${
+                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
+                  }`}>
                     <div className="max-w-4xl mx-auto space-y-8">
-                      <h3 className="text-xl md:text-2xl font-black text-slate-800 border-b-2 border-[#2563eb] pb-2 inline-block">ماذا يقول طلابنا</h3>
+                      <h3 className={`font-black text-slate-800 border-b-2 border-[#2563eb] pb-2 inline-block ${
+                        simulatorMode === 'desktop' ? 'text-2xl' : 'text-lg'
+                      }`}>ماذا يقول طلابنا</h3>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-right">
+                      <div className={`grid gap-6 text-right ${
+                        simulatorMode === 'desktop' ? 'grid-cols-3' : simulatorMode === 'tablet' ? 'grid-cols-2' : 'grid-cols-1'
+                      }`}>
                         {[1, 2, 3].map((val) => (
                           <div key={val} className="bg-[#2563eb] text-white p-6 rounded-2xl shadow-md relative flex flex-col justify-between min-h-[160px]">
                             <span className="text-3xl opacity-20 block leading-none font-serif">“</span>
@@ -598,8 +638,12 @@ export default function TemplatesPage() {
                   </section>
 
                   {/* Footer Section */}
-                  <footer className="bg-slate-900 text-slate-400 py-12 px-6 md:px-12 border-t border-slate-800 text-sm">
-                    <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 text-right">
+                  <footer className={`bg-slate-900 text-slate-400 py-12 border-t border-slate-800 text-sm ${
+                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
+                  }`}>
+                    <div className={`max-w-6xl mx-auto grid gap-8 text-right ${
+                      simulatorMode === 'desktop' ? 'grid-cols-4' : simulatorMode === 'tablet' ? 'grid-cols-2' : 'grid-cols-1'
+                    }`}>
                       <div className="space-y-3">
                         <div className="flex items-center gap-2 text-white">
                           <Play className="w-5 h-5 fill-white" />
@@ -648,7 +692,9 @@ export default function TemplatesPage() {
                 <div className="flex-1 overflow-y-auto custom-scrollbar text-slate-800 bg-white font-['IBM_Plex_Sans_Arabic']" dir="rtl">
                   
                   {/* Teal Header (matching screenshot) */}
-                  <header className="bg-white border-b border-slate-100 py-4 px-6 md:px-12 flex justify-between items-center sticky top-0 z-50">
+                  <header className={`bg-white border-b border-slate-100 py-4 flex justify-between items-center sticky top-0 z-50 ${
+                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
+                  }`}>
                     
                     {/* Left: Button "سجل الآن" */}
                     <div className="flex items-center gap-4">
@@ -658,15 +704,17 @@ export default function TemplatesPage() {
                     </div>
 
                     {/* Center-Left: Search Input Bar "ماذا تريد أن تتعلم اليوم؟" */}
-                    <div className="hidden md:flex items-center flex-1 max-w-sm mx-4 bg-slate-50 border border-slate-200/80 rounded-full px-4 py-2 relative shadow-inner">
-                      <input 
-                        type="text" 
-                        placeholder="ماذا تريد أن تتعلم اليوم؟" 
-                        className="w-full bg-transparent text-[11px] font-bold text-slate-700 outline-none text-right placeholder-slate-400"
-                        dir="rtl"
-                      />
-                      <Search className="w-3.5 h-3.5 text-slate-400 mr-2 shrink-0" />
-                    </div>
+                    {simulatorMode === 'desktop' && (
+                      <div className="flex items-center flex-1 max-w-sm mx-4 bg-slate-50 border border-slate-200/80 rounded-full px-4 py-2 relative shadow-inner">
+                        <input 
+                          type="text" 
+                          placeholder="ماذا تريد أن تتعلم اليوم?" 
+                          className="w-full bg-transparent text-[11px] font-bold text-slate-700 outline-none text-right placeholder-slate-400"
+                          dir="rtl"
+                        />
+                        <Search className="w-3.5 h-3.5 text-slate-400 mr-2 shrink-0" />
+                      </div>
+                    )}
 
                     {/* Right-Center Navigation & Right Logo */}
                     <div className="flex items-center gap-8">
@@ -695,23 +743,31 @@ export default function TemplatesPage() {
                   </header>
 
                   {/* Hero Block with concentric waves background & Students photo */}
-                  <section className="bg-white py-16 px-6 md:px-12 relative overflow-hidden border-b border-slate-100/80">
+                  <section className={`bg-white py-16 relative overflow-hidden border-b border-slate-100/80 ${
+                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
+                  }`}>
                     
                     {/* Concentric rings mimicking the waves in the screenshot */}
                     <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[600px] h-[600px] border border-teal-50/60 rounded-full pointer-events-none z-0"></div>
                     <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[480px] h-[480px] border border-teal-100/40 rounded-full pointer-events-none z-0"></div>
                     <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[360px] h-[360px] border border-teal-150/30 rounded-full pointer-events-none z-0"></div>
 
-                    <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
+                    <div className={`max-w-6xl mx-auto flex items-center justify-between gap-12 relative z-10 ${
+                      simulatorMode === 'desktop' ? 'flex-row' : 'flex-col-reverse'
+                    }`}>
                       
                       {/* Left: circular students layout in high premium framing */}
-                      <div className="w-full md:w-1/2 flex justify-center relative">
+                      <div className={`flex justify-center relative ${
+                        simulatorMode === 'desktop' ? 'w-1/2' : 'w-full max-w-sm'
+                      }`}>
                         <div className="relative">
                           {/* Sleek shadow backdrops */}
                           <div className="absolute -inset-4 bg-gradient-to-tr from-[#02c39a]/10 to-[#00a896]/15 rounded-[48px] rotate-3 blur-md scale-95"></div>
                           <div className="absolute -inset-1 bg-gradient-to-tr from-[#02c39a]/20 to-[#00a896]/30 rounded-[52px] -rotate-2 scale-100"></div>
                           
-                          <div className="w-72 h-72 md:w-[380px] md:h-[380px] rounded-[42px] overflow-hidden border-[6px] border-white bg-slate-50 flex items-center justify-center relative shadow-xl">
+                          <div className={`rounded-[42px] overflow-hidden border-[6px] border-white bg-slate-50 flex items-center justify-center relative shadow-xl ${
+                            simulatorMode === 'desktop' ? 'w-[380px] h-[380px]' : 'w-72 h-72'
+                          }`}>
                             <div className="absolute inset-0 bg-teal-900/5 mix-blend-multiply"></div>
                             <img 
                               className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-700" 
@@ -723,9 +779,13 @@ export default function TemplatesPage() {
                       </div>
 
                       {/* Right: Hero texts & Statistics Cards */}
-                      <div className="w-full md:w-1/2 space-y-8 text-center md:text-right">
+                      <div className={`space-y-8 ${
+                        simulatorMode === 'desktop' ? 'w-1/2 text-right' : 'w-full text-center flex flex-col items-center'
+                      }`}>
                         <div className="space-y-4">
-                          <h2 className="text-3xl md:text-5xl font-black text-slate-800 leading-tight">
+                          <h2 className={`font-black text-slate-800 leading-tight ${
+                            simulatorMode === 'desktop' ? 'text-5xl' : simulatorMode === 'tablet' ? 'text-3xl' : 'text-2xl'
+                          }`}>
                             تعلم، طبق، وخلك مميز
                           </h2>
                           <p className="text-slate-500 text-sm font-semibold leading-relaxed max-w-lg">
@@ -738,17 +798,25 @@ export default function TemplatesPage() {
                         </button>
 
                         {/* Custom framed statistics cards */}
-                        <div className="grid grid-cols-3 gap-4 pt-8 border-t border-slate-100 max-w-md">
+                        <div className={`grid grid-cols-3 gap-4 pt-8 border-t border-slate-100 max-w-md ${
+                          simulatorMode === 'desktop' ? '' : 'w-full'
+                        }`}>
                           <div className="bg-white border border-[#00a896]/25 px-2 py-3.5 rounded-2xl shadow-sm text-center transform hover:scale-[1.02] transition-transform">
-                            <p className="text-xl md:text-2xl font-extrabold text-[#00a896]">50+</p>
+                            <p className={`font-extrabold text-[#00a896] ${
+                              simulatorMode === 'desktop' ? 'text-2xl' : 'text-xl'
+                            }`}>50+</p>
                             <p className="text-[9px] text-slate-400 font-bold mt-1.5 leading-tight">تخصص ومسار تعليمي</p>
                           </div>
                           <div className="bg-white border border-[#00a896]/25 px-2 py-3.5 rounded-2xl shadow-sm text-center transform hover:scale-[1.02] transition-transform">
-                            <p className="text-xl md:text-2xl font-extrabold text-[#00a896]">500+</p>
+                            <p className={`font-extrabold text-[#00a896] ${
+                              simulatorMode === 'desktop' ? 'text-2xl' : 'text-xl'
+                            }`}>500+</p>
                             <p className="text-[9px] text-slate-400 font-bold mt-1.5 leading-tight">دورة تدريبية</p>
                           </div>
                           <div className="bg-white border border-[#00a896]/25 px-2 py-3.5 rounded-2xl shadow-sm text-center transform hover:scale-[1.02] transition-transform">
-                            <p className="text-xl md:text-2xl font-extrabold text-[#00a896]">100+</p>
+                            <p className={`font-extrabold text-[#00a896] ${
+                              simulatorMode === 'desktop' ? 'text-2xl' : 'text-xl'
+                            }`}>100+</p>
                             <p className="text-[9px] text-slate-400 font-bold mt-1.5 leading-tight">مشروع تطبيقي وعملي</p>
                           </div>
                         </div>
@@ -758,10 +826,14 @@ export default function TemplatesPage() {
                   </section>
 
                   {/* Vibrant Teal Banner Section (ابدأ التعلم مجاناً الآن) */}
-                  <section className="py-12 bg-[#00a896] px-6 md:px-12 text-center text-white relative overflow-hidden">
+                  <section className={`py-12 bg-[#00a896] text-center text-white relative overflow-hidden ${
+                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
+                  }`}>
                     <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full blur-2xl"></div>
                     <div className="max-w-4xl mx-auto space-y-6 relative z-10">
-                      <h3 className="text-xl md:text-2xl font-black text-white">ابدأ التعلم مجاناً الآن</h3>
+                      <h3 className={`font-black text-white ${
+                        simulatorMode === 'desktop' ? 'text-2xl' : 'text-xl'
+                      }`}>ابدأ التعلم مجاناً الآن</h3>
                       <p className="text-teal-50 text-xs font-semibold leading-relaxed max-w-xl mx-auto">
                         اكتشف مجموعة واسعة من أكثر من 300 دورة، مصممة خصيصاً لتلبية مهاراتكم واهتماماتكم!
                       </p>
@@ -793,10 +865,14 @@ export default function TemplatesPage() {
                   </section>
 
                   {/* Main Courses Grid Section */}
-                  <section className="py-16 bg-[#f8fafc] px-6 md:px-12">
+                  <section className={`py-16 bg-[#f8fafc] ${
+                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
+                  }`}>
                     <div className="max-w-6xl mx-auto space-y-12">
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      <div className={`grid gap-8 ${
+                        simulatorMode === 'desktop' ? 'grid-cols-3' : simulatorMode === 'tablet' ? 'grid-cols-2' : 'grid-cols-1'
+                      }`}>
                         {[
                           { title: 'تصميم واجهة المستخدم (UI)', rating: '4.9', duration: '12 ساعة', tag: 'دورة مميزة', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB4iH4QN5hawBNBS5h9s9nS1TEOla1eY5JJBqQOqqjhAcuOlHHEGvnQUIHaXpvbQX9suHmsGlgv0xfg0Us7GtGZPQZLjNjAsSb3srLVJGGI4JhTw1Ox5L1yvBbvfJnp2IzBFGjUi-SISVcwTm1m9E2wpeb0s33mi9i-k6-PXWT7bxjjJfB8-tokQtf0u5nDOyc2UDANLG2c6UALdgFPTLJ5HDo34MDxx0k5foN_8S6R-2hJhXdyF5sEUPHIXe8KarPgOvzf7Tg2VLI' },
                           { title: 'أساسيات البرمجة بلغة جافاسكريبت', rating: '4.8', duration: '18 ساعة', tag: 'جديد', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM' },
@@ -856,7 +932,9 @@ export default function TemplatesPage() {
                   </section>
 
                   {/* Specializations Section with grid paper background */}
-                  <section className="py-16 px-6 md:px-12 relative overflow-hidden bg-slate-50/50 border-t border-b border-slate-100" 
+                  <section className={`py-16 relative overflow-hidden bg-slate-50/50 border-t border-b border-slate-100 ${
+                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
+                  }`} 
                     style={{
                       backgroundImage: 'linear-gradient(to right, rgba(0, 168, 150, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 168, 150, 0.05) 1px, transparent 1px)',
                       backgroundSize: '24px 24px'
@@ -867,10 +945,14 @@ export default function TemplatesPage() {
                       {/* Subheading */}
                       <div className="text-center space-y-2">
                         <span className="text-xs text-[#00a896] font-black uppercase tracking-wider bg-teal-50 px-3 py-1 rounded-full">التخصصات</span>
-                        <h3 className="text-xl md:text-2xl font-black text-slate-800">طور مهاراتك عبر مسارات برامج تعليمية متخصصة</h3>
+                        <h3 className={`font-black text-slate-800 ${
+                          simulatorMode === 'desktop' ? 'text-2xl' : 'text-xl'
+                        }`}>طور مهاراتك عبر مسارات برامج تعليمية متخصصة</h3>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                      <div className={`grid gap-8 ${
+                        simulatorMode === 'desktop' ? 'grid-cols-3' : simulatorMode === 'tablet' ? 'grid-cols-2' : 'grid-cols-1'
+                      }`}>
                         {[
                           { title: 'أساسيات تصميم UI/UX', desc: 'كل ما تحتاجه لتصميم تطبيقات ومواقع مذهلة تلبي رغبات المستخدمين وتمنحهم تجربة استخدام لا تُنسى.', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB4iH4QN5hawBNBS5h9s9nS1TEOla1eY5JJBqQOqqjhAcuOlHHEGvnQUIHaXpvbQX9suHmsGlgv0xfg0Us7GtGZPQZLjNjAsSb3srLVJGGI4JhTw1Ox5L1yvBbvfJnp2IzBFGjUi-SISVcwTm1m9E2wpeb0s33mi9i-k6-PXWT7bxjjJfB8-tokQtf0u5nDOyc2UDANLG2c6UALdgFPTLJ5HDo34MDxx0k5foN_8S6R-2hJhXdyF5sEUPHIXe8KarPgOvzf7Tg2VLI' },
                           { title: 'إتقان فيجما (Figma)', desc: 'تعلم التحكم الكامل بأقوى برامج تصميم الواجهات وبناء المكونات والمكتبات المشتركة باحترافية كاملة.', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB9KcwP0hcNTjqTsP9-zEoZDcp7ymS0jNj6ob0RwCIdKZ108wU5GjjnHQ0Ji6KDK0ow73ll6wBAdPJRnFpak6zMSPeZ4oAs50vCNlTZKzFA-09Anx2ZOEFVdcumpmAMBHwpacUtUq3v8BNDiO8uMUSw84-4TcE5wdXfhHaOF0A9vgFNdp5-eoQ3H2QBP0nj_d2E4mHbznhcP-MK1K3iSrqNQPbcQChXz_3auUIfp_d-OYnMw6Hv-Uca0MdxRgbltFjrZV6VFE9-guA' },
@@ -903,9 +985,13 @@ export default function TemplatesPage() {
                   </section>
 
                   {/* Discovery and Search Box Section */}
-                  <section className="py-16 bg-white px-6 md:px-12 text-center border-b border-slate-100/60">
+                  <section className={`py-16 bg-white text-center border-b border-slate-100/60 ${
+                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
+                  }`}>
                     <div className="max-w-2xl mx-auto space-y-6">
-                      <h3 className="text-base md:text-lg font-black text-slate-800 leading-relaxed">
+                      <h3 className={`font-black text-slate-800 leading-relaxed ${
+                        simulatorMode === 'desktop' ? 'text-lg' : 'text-base'
+                      }`}>
                         اكتشف أكثر من 300 دورة تدريبية مجانية على منصة إدراك
                       </h3>
                       <div className="relative flex items-center max-w-xl mx-auto border border-slate-200 bg-slate-50/50 rounded-2xl shadow-inner px-4 py-2.5">
@@ -921,12 +1007,16 @@ export default function TemplatesPage() {
                   </section>
 
                   {/* Latest Courses Section (أحدث الدورات) */}
-                  <section className="py-16 bg-[#f8fafc] px-6 md:px-12 border-b border-slate-100">
+                  <section className={`py-16 bg-[#f8fafc] border-b border-slate-100 ${
+                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
+                  }`}>
                     <div className="max-w-6xl mx-auto space-y-12">
                       
                       <div className="text-center space-y-2">
                         <span className="text-xs text-[#00a896] font-black uppercase tracking-wider bg-teal-50 px-3 py-1 rounded-full">أحدث الدورات</span>
-                        <h3 className="text-xl md:text-2xl font-black text-slate-800 leading-tight">
+                        <h3 className={`font-black text-slate-800 leading-tight ${
+                          simulatorMode === 'desktop' ? 'text-2xl' : 'text-xl'
+                        }`}>
                           اكتشف أبرز الدورات التي تساهم في تعزيز مهاراتك وتطوير مسيرتك المهنية
                         </h3>
                         <p className="text-slate-400 text-xs font-semibold leading-relaxed max-w-xl mx-auto">
@@ -934,7 +1024,9 @@ export default function TemplatesPage() {
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                      <div className={`grid gap-8 ${
+                        simulatorMode === 'desktop' ? 'grid-cols-3' : simulatorMode === 'tablet' ? 'grid-cols-2' : 'grid-cols-1'
+                      }`}>
                         {[
                           { title: 'لغة الجسد وفن التأثير والاتصال الإنساني', rating: '4.9', duration: '8 ساعات', tag: 'مجاني', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM' },
                           { title: 'المحاسبة المالية والحسابات لغير المحاسبين', rating: '4.8', duration: '12 ساعة', tag: 'دورة مميزة', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDapuZMqMbglOubBSplHYKHbUUEPOVBNZfPBYfEdrnbwVoJA6p_fXveTFrcYVKfSEKsCZOzcikKHpuWVQRu4n8xxKYXhgM_nanjOQ0cdv-kXhVbMcOq5kzHgm5DH5WlDzYGmDh0ROSe4C_qATsLJhy-iZA4oKXn9HQImP6_0u46v5kDYayBS8_wDmyGvixd7EoZGbUePlgROCvJVAy1-l6nThq3n3XvQJDoOFPy76n8F28rsKmL09nMbF_TcgXK5YffQFE2uS-uFwI' },
@@ -991,15 +1083,21 @@ export default function TemplatesPage() {
                   </section>
 
                   {/* Testimonials Section (آراء المتعلمين) */}
-                  <section className="py-16 bg-white px-6 md:px-12 text-center">
+                  <section className={`py-16 bg-white text-center ${
+                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
+                  }`}>
                     <div className="max-w-5xl mx-auto space-y-12">
                       
                       <div className="text-center space-y-2">
                         <span className="text-xs text-[#00a896] font-black uppercase tracking-wider bg-teal-50 px-3 py-1 rounded-full">آراء المتعلمين</span>
-                        <h3 className="text-xl md:text-2xl font-black text-slate-800">تأثير حقيقي وتجارب ملهمة</h3>
+                        <h3 className={`font-black text-slate-800 ${
+                          simulatorMode === 'desktop' ? 'text-2xl' : 'text-xl'
+                        }`}>تأثير حقيقي وتجارب ملهمة</h3>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-right">
+                      <div className={`grid gap-8 text-right ${
+                        simulatorMode === 'desktop' ? 'grid-cols-3' : simulatorMode === 'tablet' ? 'grid-cols-2' : 'grid-cols-1'
+                      }`}>
                         {[
                           { text: 'الدورات المقدمة في منتهى الاحترافية والتبسيط الشديد. لقد مكنتني هذه المسارات من ترقية مهاراتي في التصميم والحصول على وظيفة أحلامي كفيلانسر.', name: 'أمجد الكيلاني', role: 'مصمم واجهات مستقل', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDapuZMqMbglOubBSplHYKHbUUEPOVBNZfPBYfEdrnbwVoJA6p_fXveTFrcYVKfSEKsCZOzcikKHpuWVQRu4n8xxKYXhgM_nanjOQ0cdv-kXhVbMcOq5kzHgm5DH5WlDzYGmDh0ROSe4C_qATsLJhy-iZA4oKXn9HQImP6_0u46v5kDYayBS8_wDmyGvixd7EoZGbUePlgROCvJVAy1-l6nThq3n3XvQJDoOFPy76n8F28rsKmL09nMbF_TcgXK5YffQFE2uS-uFwI' },
                           { text: 'أعتقد أن هذه المنصة هي الأفضل للدراسة عبر الإنترنت في العالم العربي. التدريب العملي والمشاريع تعطي قيمة مضافة عالية جداً وتجعل التعليم حيوياً.', name: 'ريناد الحربي', role: 'محللة بيانات ناشئة', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM' },

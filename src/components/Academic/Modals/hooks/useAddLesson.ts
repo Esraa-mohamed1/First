@@ -58,6 +58,11 @@ export function useAddLesson({
   const [endDate, setEndDate] = useState('');
   const [uploadFileToggle, setUploadFileToggle] = useState(true);
 
+  // Live online course fields
+  const [sessionLink, setSessionLink] = useState('');
+  const [sessionDateTime, setSessionDateTime] = useState('');
+  const isLive = courseType === 'online' || courseType === 'live-online';
+
   // Upload tracking
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle');
@@ -99,6 +104,8 @@ export function useAddLesson({
     setStartDate('');
     setEndDate('');
     setUploadFileToggle(true);
+    setSessionLink('');
+    setSessionDateTime('');
   };
 
   const handleClose = () => {
@@ -123,7 +130,59 @@ export function useAddLesson({
       return;
     }
 
-    const needsFile = !isPhysical || uploadFileToggle;
+    if (isLive) {
+      if (!sessionLink.trim()) {
+        toast.error('ادخل رابط السيشن');
+        return;
+      }
+
+      const isValidUrl = (url: string) => {
+        try {
+          new URL(url);
+          return true;
+        } catch (_) {
+          return false;
+        }
+      };
+
+      if (!isValidUrl(sessionLink)) {
+        toast.error('الرجاء إدخال رابط سيشن صالح (مثال: https://zoom.us/...)');
+        return;
+      }
+
+      if (!sessionDateTime.trim()) {
+        toast.error('اختر تاريخ ووقت السيشن');
+        return;
+      }
+
+      const selectedDate = new Date(sessionDateTime);
+      if (isNaN(selectedDate.getTime())) {
+        toast.error('الرجاء اختيار تاريخ ووقت صالح');
+        return;
+      }
+
+      if (selectedDate < new Date()) {
+        toast.error('تاريخ ووقت السيشن يجب أن يكون في المستقبل');
+        return;
+      }
+    }
+
+    if (isPhysical) {
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+          toast.error('الرجاء اختيار تواريخ صالحة');
+          return;
+        }
+        if (start > end) {
+          toast.error('تاريخ البداية يجب أن يكون قبل تاريخ النهاية');
+          return;
+        }
+      }
+    }
+
+    const needsFile = (!isPhysical || uploadFileToggle) && !isLive;
     if (needsFile && !selectedFile) {
       toast.error('اختر ملف الدرس أولاً');
       return;
@@ -242,7 +301,13 @@ export function useAddLesson({
         }
       }
 
-      const finalDescription = isPhysical
+      const finalDescription = isLive
+        ? `تفاصيل المحاضرة المباشرة:
+🔗 رابط السيشن: ${sessionLink || 'غير محدد'}
+📅 التاريخ والوقت: ${sessionDateTime || 'غير محدد'}
+
+<!--LIVE_METADATA:${JSON.stringify({ sessionLink, dateTime: sessionDateTime })}-->`
+        : isPhysical
         ? `تفاصيل المحاضرة الحضورية:\n📍 الموقع: ${locationLink || 'غير محدد'}\n📅 تاريخ البداية: ${startDate || 'غير محدد'}\n📅 تاريخ النهاية: ${endDate || 'غير محدد'}\n\n<!--OFFLINE_METADATA:${JSON.stringify({ locationLink, startDate, endDate })}-->`
         : description;
 
@@ -250,21 +315,20 @@ export function useAddLesson({
         chapter_id: unitId,
         title,
         description: finalDescription,
-        type: activeLessonType,
+        type: isLive ? 'video' : activeLessonType,
         video_id: finalVideoId || undefined,
         file_url: finalFileUrl || undefined,
-        library_id: activeLessonType === 'video' ? libraryId || undefined : undefined,
-        video_url: finalVideoId
+        library_id: (activeLessonType === 'video' && !isLive) ? libraryId || undefined : undefined,
+        video_url: isLive ? sessionLink : (finalVideoId
           ? `https://iframe.mediadelivery.net/embed/${libraryId}/${finalVideoId}`
-          : undefined,
-        thumbnail_url: finalVideoId
+          : undefined),
+        thumbnail_url: (finalVideoId && !isLive)
           ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/thumbnail.jpg`
           : undefined,
-        embed_url:
-          locationLink ||
+        embed_url: isLive ? sessionLink : (locationLink ||
           (finalVideoId
             ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/playlist.m3u8`
-            : undefined),
+            : undefined)),
         order: 1,
         file_size_mb: selectedFile
           ? parseFloat((selectedFile.size / (1024 * 1024)).toFixed(2))
@@ -287,6 +351,7 @@ export function useAddLesson({
   return {
     // state
     isPhysical,
+    isLive,
     title,
     setTitle,
     description,
@@ -303,6 +368,10 @@ export function useAddLesson({
     setEndDate,
     uploadFileToggle,
     setUploadFileToggle,
+    sessionLink,
+    setSessionLink,
+    sessionDateTime,
+    setSessionDateTime,
     uploadProgress,
     uploadStatus,
     videoId,

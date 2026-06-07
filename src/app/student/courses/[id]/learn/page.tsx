@@ -7,7 +7,7 @@ import {
   Volume2, VolumeX, ListVideo, Search, ChevronDown, ChevronUp,
   PlayCircle, FileText, Menu, X, ArrowRight, ArrowLeft, Trophy, Star, Rocket,
   Download, MessageSquare, Info, StickyNote, ThumbsUp, MessageCircle,
-  Clock, CheckCircle2, Lock, AlertCircle, Pencil, Trash2, Bell, BookOpen
+  Clock, CheckCircle2, Lock, AlertCircle, Pencil, Trash2, Bell, BookOpen, Video
 } from 'lucide-react';
 import {
   getMyCourseDetails,
@@ -95,6 +95,38 @@ export default function CoursePlayerPage() {
   // Video Ref & Player Store
   const videoRef = useRef<HTMLIFrameElement>(null);
   const { currentLesson, setCurrentLesson, playbackSpeed, setPlaybackSpeed } = usePlayerStore();
+
+  const liveMetadata = useMemo(() => {
+    if (!currentLesson?.description) return null;
+    const match = currentLesson.description.match(/<!--LIVE_METADATA:(.*?)-->/);
+    if (match) {
+      try {
+        return JSON.parse(match[1]);
+      } catch (e) {
+        console.error('Failed to parse live metadata', e);
+      }
+    }
+    return null;
+  }, [currentLesson]);
+
+  const formattedDateTime = useMemo(() => {
+    if (!liveMetadata?.dateTime) return '';
+    try {
+      const d = new Date(liveMetadata.dateTime);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleString('ar-EG', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        });
+      }
+    } catch {}
+    return liveMetadata.dateTime;
+  }, [liveMetadata]);
   const [currentTime, setCurrentTime] = useState(0);
   const [activeVideoSrc, setActiveVideoSrc] = useState('');
   const [isVideoLoading, setIsVideoLoading] = useState(true);
@@ -948,7 +980,51 @@ export default function CoursePlayerPage() {
                     {/* Actual video box — overflow-hidden only here for border-radius */}
                     <div className="absolute inset-0 bg-black rounded-[32px] md:rounded-[40px] overflow-hidden border-2 border-slate-300">
                       {currentLesson ? (
-                        isVideoLoading ? (
+                        course.type === 'online' || liveMetadata ? (
+                          <div className="w-full h-full bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 flex flex-col items-center justify-center p-6 text-white text-center relative overflow-hidden select-text">
+                            {/* Decorative blur elements for premium dark theme */}
+                            <div className="absolute -top-20 -right-20 w-60 h-60 bg-blue-600/20 rounded-full blur-3xl" />
+                            <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-indigo-600/20 rounded-full blur-3xl" />
+                            
+                            <div className="z-10 space-y-6 max-w-lg">
+                              {/* Pulsing Live Badge */}
+                              <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-600/10 border border-red-500/30 text-red-400 rounded-full text-xs font-black shadow-lg">
+                                <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping" />
+                                <span>محاضرة تفاعلية مباشرة</span>
+                              </div>
+
+                              {/* Lesson Title */}
+                              <h2 className="text-xl md:text-3xl font-black leading-tight text-white drop-shadow-sm">
+                                {currentLesson.title}
+                              </h2>
+
+                              {/* Schedule details */}
+                              {formattedDateTime && (
+                                <div className="flex flex-col items-center gap-1 text-slate-300 font-bold bg-white/5 border border-white/10 rounded-2xl p-4 max-w-sm mx-auto shadow-inner backdrop-blur-sm">
+                                  <span className="text-xs text-slate-400">موعد المحاضرة</span>
+                                  <span className="text-sm md:text-base text-blue-300 mt-1">{formattedDateTime}</span>
+                                </div>
+                              )}
+
+                              {/* Join Button */}
+                              {liveMetadata?.sessionLink || currentLesson.video_url || currentLesson.embed_url ? (
+                                <a
+                                  href={liveMetadata?.sessionLink || currentLesson.video_url || currentLesson.embed_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-3 px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl shadow-xl shadow-blue-600/30 hover:scale-[1.02] active:scale-95 transition-all text-sm md:text-base border border-blue-500/50"
+                                >
+                                  <Video size={20} />
+                                  <span>الانضمام للمحاضرة الآن</span>
+                                </a>
+                              ) : (
+                                <div className="text-amber-400 text-sm font-bold bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4">
+                                  سيتوفر رابط الانضمام للمحاضرة المباشرة قبل موعد البدء مباشرة. يرجى المتابعة لاحقاً.
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ) : isVideoLoading ? (
                           <div className="w-full h-full flex flex-col items-center justify-center text-white gap-4">
                             <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
                             <p className="text-gray-400 font-bold text-sm">جاري تحميل الدرس...</p>

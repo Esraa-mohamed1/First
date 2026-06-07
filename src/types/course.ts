@@ -4,6 +4,7 @@ export interface Lesson {
   description: string;
   videoUrl?: string;
   video_url?: string;
+  embed_url?: string;
   duration: string;
   isCompleted?: boolean;
   is_completed?: boolean;
