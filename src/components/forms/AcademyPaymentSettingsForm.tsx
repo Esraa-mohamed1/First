@@ -135,6 +135,10 @@ export const AcademyPaymentSettingsForm = () => {
       showAlert.warning('تنبيه', 'يرجى إدخال رقم الحساب أو القيمة');
       return;
     }
+    if (!editingId && savedMethods.length >= 4) {
+      showAlert.warning('تنبيه', 'الحد الأقصى لوسائل الدفع المفعلة هو 4 وسائل فقط');
+      return;
+    }
 
     setLoading(true);
     try {

@@ -90,21 +90,15 @@ export default function CourseStudentViewPage() {
         }
 
         // Handle possible receiver accounts response keys
-        const paymentMethodsData = data.payment_methods || 
-                                   data.receiverAccounts?.map((item: any) => ({
-                                     methodId: (item.methodId || item.id)?.toString() || '',
-                                     methodName: item.name || item.methodName || '',
-                                     type: 'account_number',
-                                     value: item.accountValue || item.account_value || '',
-                                     currency: item.currency || 'SAR'
-                                   })) || 
-                                   data.receiver_accounts?.map((item: any) => ({
-                                     methodId: (item.method_id || item.id)?.toString() || '',
-                                     methodName: item.name || item.methodName || '',
-                                     type: 'account_number',
-                                     value: item.account_value || item.accountValue || '',
-                                     currency: item.currency || 'SAR'
-                                   })) || [];
+        const rawPaymentMethods = data.payment_methods || data.receiverAccounts || data.receiver_accounts || [];
+        const paymentMethodsData = rawPaymentMethods.map((item: any) => ({
+          methodId: (item.methodId || item.method_id || item.id)?.toString() || '',
+          methodName: item.name || item.methodName || '',
+          type: 'account_number' as const,
+          value: item.value || item.accountValue || item.account_value || '',
+          currency: item.currency || 'SAR',
+          logo: item.logo || undefined
+        }));
 
         const mergedCourse = {
           id: data.id,

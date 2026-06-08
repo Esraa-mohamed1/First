@@ -21,7 +21,11 @@ import {
   X,
   Plus,
   Trash2,
-  Bookmark
+  Bookmark,
+  Facebook,
+  Instagram,
+  Youtube,
+  Send
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { updateDetailedProfile } from '@/services/auth';
@@ -52,6 +56,10 @@ interface ProfileData {
   linkedin: string;
   twitter: string;
   website: string;
+  facebook?: string;
+  instagram?: string;
+  youtube?: string;
+  telegram?: string;
   stats: {
     courses: string;
     experience: string;
@@ -84,6 +92,10 @@ const DEFAULT_ACADEMY_PROFILE: ProfileData = {
   linkedin: "linkedin.com/company/darab",
   twitter: "@darab_edu",
   website: "darab.academy",
+  facebook: "",
+  instagram: "",
+  youtube: "",
+  telegram: "",
   stats: {
     courses: "48+",
     experience: "8",
@@ -135,6 +147,10 @@ const DEFAULT_TEACHER_PROFILE: ProfileData = {
   linkedin: "linkedin.com/in/almansour",
   twitter: "@drahmed_digital",
   website: "almansour.edu.sa",
+  facebook: "",
+  instagram: "",
+  youtube: "",
+  telegram: "",
   stats: {
     courses: "24+",
     experience: "15",
@@ -246,6 +262,10 @@ export default function DashboardProfile({ role }: DashboardProfileProps) {
       linkedin_handle: editedProfile.linkedin,
       twitter_handle: editedProfile.twitter,
       website_url: editedProfile.website,
+      facebook_handle: editedProfile.facebook || '',
+      instagram_handle: editedProfile.instagram || '',
+      youtube_handle: editedProfile.youtube || '',
+      telegram_handle: editedProfile.telegram || '',
       stats_courses_count: editedProfile.stats.courses,
       stats_experience_years: editedProfile.stats.experience,
       stats_average_rating: editedProfile.stats.rating,
@@ -418,6 +438,50 @@ export default function DashboardProfile({ role }: DashboardProfileProps) {
               >
                 <Globe className="w-4 h-4 text-[#005c86]" />
                 <span>{profile.website}</span>
+              </a>
+            )}
+            {profile.facebook && (
+              <a 
+                href={`https://${profile.facebook}`} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 rounded-xl text-slate-600 hover:text-[#005c86] transition-all text-xs font-semibold"
+              >
+                <Facebook className="w-4 h-4 text-[#1877f2]" />
+                <span>{profile.facebook}</span>
+              </a>
+            )}
+            {profile.instagram && (
+              <a 
+                href={`https://${profile.instagram}`} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 rounded-xl text-slate-600 hover:text-[#005c86] transition-all text-xs font-semibold"
+              >
+                <Instagram className="w-4 h-4 text-[#e1306c]" />
+                <span>{profile.instagram}</span>
+              </a>
+            )}
+            {profile.youtube && (
+              <a 
+                href={`https://${profile.youtube}`} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 rounded-xl text-slate-600 hover:text-[#005c86] transition-all text-xs font-semibold"
+              >
+                <Youtube className="w-4 h-4 text-[#ff0000]" />
+                <span>{profile.youtube}</span>
+              </a>
+            )}
+            {profile.telegram && (
+              <a 
+                href={`https://${profile.telegram}`} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 rounded-xl text-slate-600 hover:text-[#005c86] transition-all text-xs font-semibold"
+              >
+                <Send className="w-4 h-4 text-[#0088cc]" />
+                <span>{profile.telegram}</span>
               </a>
             )}
           </div>
@@ -824,6 +888,50 @@ export default function DashboardProfile({ role }: DashboardProfileProps) {
                       onChange={(e) => setEditedProfile({...editedProfile, website: e.target.value})}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl text-sm p-3 focus:ring-2 focus:ring-[#005c86]/20 focus:bg-white transition-all font-medium text-slate-700 outline-none text-left"
                       dir="ltr"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-500">رابط Facebook</label>
+                    <input 
+                      type="text" 
+                      value={editedProfile.facebook || ''}
+                      onChange={(e) => setEditedProfile({...editedProfile, facebook: e.target.value})}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl text-sm p-3 focus:ring-2 focus:ring-[#005c86]/20 focus:bg-white transition-all font-medium text-slate-700 outline-none text-left"
+                      dir="ltr"
+                      placeholder="facebook.com/username"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-500">حساب Instagram</label>
+                    <input 
+                      type="text" 
+                      value={editedProfile.instagram || ''}
+                      onChange={(e) => setEditedProfile({...editedProfile, instagram: e.target.value})}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl text-sm p-3 focus:ring-2 focus:ring-[#005c86]/20 focus:bg-white transition-all font-medium text-slate-700 outline-none text-left"
+                      dir="ltr"
+                      placeholder="instagram.com/username"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-500">قناة YouTube</label>
+                    <input 
+                      type="text" 
+                      value={editedProfile.youtube || ''}
+                      onChange={(e) => setEditedProfile({...editedProfile, youtube: e.target.value})}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl text-sm p-3 focus:ring-2 focus:ring-[#005c86]/20 focus:bg-white transition-all font-medium text-slate-700 outline-none text-left"
+                      dir="ltr"
+                      placeholder="youtube.com/c/channelname"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-500">حساب Telegram</label>
+                    <input 
+                      type="text" 
+                      value={editedProfile.telegram || ''}
+                      onChange={(e) => setEditedProfile({...editedProfile, telegram: e.target.value})}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl text-sm p-3 focus:ring-2 focus:ring-[#005c86]/20 focus:bg-white transition-all font-medium text-slate-700 outline-none text-left"
+                      dir="ltr"
+                      placeholder="t.me/username"
                     />
                   </div>
                 </div>

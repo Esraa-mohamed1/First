@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Course } from '@/types/student';
-import { ArrowLeft, BarChart, Image as ImageIcon, User, PlayCircle, Award, CreditCard } from 'lucide-react';
+import { ArrowLeft, BarChart, Image as ImageIcon, User, PlayCircle, Award, CreditCard, Eye } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { PaymentMethodBadge } from '@/components/payment/PaymentMethodBadge';
@@ -109,21 +109,39 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
 
           {isSubscribed ? (
             course.progress === 100 ? (
-              <Link
-                href={`/user/courses/${course.id}/certificate`}
-                className="w-full flex items-center justify-center gap-2 bg-green-50 text-green-600 font-bold py-3 rounded-xl hover:bg-green-500 hover:text-white transition-all duration-300 border border-green-100/50"
-              >
-                <Award size={16} />
-                تحميل الشهادة
-              </Link>
+              <div className="flex gap-2 w-full">
+                <Link
+                  href={`/user/courses/${course.id}/certificate`}
+                  className="flex-1 flex items-center justify-center gap-2 bg-green-50 text-green-600 font-bold py-3 rounded-xl hover:bg-green-500 hover:text-white transition-all duration-300 border border-green-100/50 text-sm"
+                >
+                  <Award size={16} />
+                  تحميل الشهادة
+                </Link>
+                <Link
+                  href={`/student/courses/${course.id}`}
+                  className="px-4 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold py-3 rounded-xl transition-all duration-300 border border-gray-100"
+                  title="عرض التفاصيل"
+                >
+                  <Eye size={16} />
+                </Link>
+              </div>
             ) : (
-              <Link
-                href={`/student/courses/${course.id}/learn`}
-                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-md shadow-blue-100 group/btn"
-              >
-                <span>متابعة التعلم</span>
-                <ArrowLeft size={16} className="transform group-hover/btn:-translate-x-1 transition-transform duration-300" />
-              </Link>
+              <div className="flex gap-2 w-full">
+                <Link
+                  href={`/student/courses/${course.id}/learn`}
+                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-md shadow-blue-100 group/btn text-sm"
+                >
+                  <span>متابعة التعلم</span>
+                  <ArrowLeft size={16} className="transform group-hover/btn:-translate-x-1 transition-transform duration-300" />
+                </Link>
+                <Link
+                  href={`/student/courses/${course.id}`}
+                  className="px-4 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold py-3 rounded-xl transition-all duration-300 border border-gray-100"
+                  title="عرض التفاصيل"
+                >
+                  <Eye size={16} />
+                </Link>
+              </div>
             )
           ) : (
             <div className="flex flex-col gap-2">

@@ -1140,20 +1140,25 @@ export default function CreateCourseClient() {
                       options={activeMethods}
                       selectedValues={selectedPaymentMethods.map(m => m.methodId)}
                       onChange={(ids) => {
+                        if (ids.length > 3) {
+                          toast.error('الحد الأقصى لوسائل الدفع المحددة للدورة هو 3 وسائل فقط');
+                          return;
+                        }
                         const newMethods = ids.map(id => {
                           const existing = selectedPaymentMethods.find(m => m.methodId === id);
                           if (existing) return existing;
                           const method = activeMethods.find(m => m.id === id);
+                          if (!method) return null;
                           const originalInfo = academyPaymentMethods.find(m => m.id.toString() === id);
                           return {
-                            methodId: method!.id,
-                            methodName: method!.name,
-                            type: method!.type,
+                            methodId: method.id,
+                            methodName: method.name,
+                            type: method.type,
                             value: originalInfo?.accountValue || originalInfo?.account_value || '',
                             currency: originalInfo?.currency || 'SAR',
-                            logo: method!.logo || originalInfo?.logo
+                            logo: method.logo || originalInfo?.logo
                           };
-                        });
+                        }).filter(Boolean) as AcademyPaymentMethod[];
                         setSelectedPaymentMethods(newMethods);
                       }}
                       error={errors.paymentMethods}
@@ -1162,10 +1167,20 @@ export default function CreateCourseClient() {
                     {selectedPaymentMethods.length > 0 && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
                         {selectedPaymentMethods.map((pm) => (
-                          <div key={pm.methodId} className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 flex flex-col justify-between">
+                          <div key={pm.methodId} className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 flex flex-col justify-between relative group/pm">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedPaymentMethods(prev => prev.filter(m => m.methodId !== pm.methodId));
+                              }}
+                              className="absolute top-3 left-3 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              title="إزالة وسيلة الدفع"
+                            >
+                              <Trash2 size={14} />
+                            </button>
                             <span className="text-xs text-gray-400 font-bold">الحساب المفعل</span>
                             <div className="flex items-center justify-between mt-1">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 pl-6">
                                 {pm.logo && <img src={`https://api.darab.academy/${pm.logo}`} alt={pm.methodName} className="w-5 h-5 object-cover rounded shadow-sm" />}
                                 <span className="font-black text-gray-900 text-sm">{pm.methodName}</span>
                               </div>
