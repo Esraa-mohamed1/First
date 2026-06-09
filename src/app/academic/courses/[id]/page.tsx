@@ -21,6 +21,7 @@ import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdow
 import { PaymentMethodValueInput } from '@/components/payment/PaymentMethodValueInput';
 import { showAlert } from '@/lib/sweetalert';
 import { getUserPaymentInfos, UserPaymentInfo } from '@/services/finance';
+import { getLogoUrl } from '@/lib/utils';
 
 const MySwal = withReactContent(Swal);
 
@@ -262,7 +263,7 @@ export default function CourseDetailsPage() {
       setCoachName(data.coach || '');
       const rawPaymentMethods = data.payment_methods || data.receiverAccounts || data.receiver_accounts || [];
       const returnedPaymentMethods = rawPaymentMethods.map((item: any) => {
-        const id = item.methodId || item.method_id || item.receiver_account_id || item.id;
+        const id = item.instructor_receiver_account_id || item.pivot?.instructor_receiver_account_id || item.methodId || item.method_id || item.receiver_account_id || item.id;
         const name = item.methodName || item.name || '';
         const val = item.value || item.accountValue || item.account_value || '';
         return {
@@ -1015,6 +1016,13 @@ export default function CourseDetailsPage() {
                       >
                         <option value="SAR" className="text-gray-900">SAR (ر.س)</option>
                         <option value="EGP" className="text-gray-900">EGP (ج.م)</option>
+                        <option value="AED" className="text-gray-900">AED (د.إ)</option>
+                        <option value="QAR" className="text-gray-900">QAR (ر.ق)</option>
+                        <option value="KWD" className="text-gray-900">KWD (د.ك)</option>
+                        <option value="OMR" className="text-gray-900">OMR (ر.ع)</option>
+                        <option value="BHD" className="text-gray-900">BHD (د.ب)</option>
+                        <option value="JOD" className="text-gray-900">JOD (د.أ)</option>
+                        <option value="USD" className="text-gray-900">USD ($)</option>
                       </select>
                     </div>
                   </div>
@@ -1080,7 +1088,7 @@ export default function CourseDetailsPage() {
                           <span className="text-xs text-gray-400 font-bold">الحساب المفعل</span>
                           <div className="flex items-center justify-between mt-1">
                             <div className="flex items-center gap-2 pl-6">
-                              {pm.logo && <img src={`https://api.darab.academy/${pm.logo}`} alt={pm.methodName} className="w-5 h-5 object-cover rounded shadow-sm" />}
+                              {pm.logo && <img src={getLogoUrl(pm.logo)} alt={pm.methodName} className="w-5 h-5 object-cover rounded shadow-sm" />}
                               <span className="font-black text-gray-900 text-sm">{pm.methodName}</span>
                             </div>
                             <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-black">{pm.currency}</span>

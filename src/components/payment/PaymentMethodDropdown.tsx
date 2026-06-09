@@ -3,6 +3,7 @@
 import React from 'react';
 import Select, { MultiValue } from 'react-select';
 import { PaymentMethod } from '@/types/payment';
+import { getLogoUrl } from '@/lib/utils';
 
 interface PaymentMethodDropdownProps {
   options: PaymentMethod[];
@@ -32,7 +33,7 @@ export const PaymentMethodDropdown = ({
   const formatOptionLabel = (option: any) => (
     <div className="flex items-center gap-2">
       {option.logo ? (
-        <img src={`https://api.darab.academy/${option.logo}`} alt={option.label} className="w-5 h-5 object-cover rounded shadow-sm" />
+        <img src={getLogoUrl(option.logo)} alt={option.label} className="w-5 h-5 object-cover rounded shadow-sm" />
       ) : (
         <div className="w-5 h-5 bg-blue-50 text-blue-600 rounded flex items-center justify-center">
           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">

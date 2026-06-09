@@ -31,6 +31,7 @@ import { PaymentMethodValueInput } from '@/components/payment/PaymentMethodValue
 import { AcademyPaymentMethod, PaymentMethod } from '@/types/payment';
 import { showAlert } from '@/lib/sweetalert';
 import { getUserPaymentInfos, UserPaymentInfo } from '@/services/finance';
+import { getLogoUrl } from '@/lib/utils';
 
 const MySwal = withReactContent(Swal);
 
@@ -1105,9 +1106,15 @@ export default function CreateCourseClient() {
                           onChange={(e) => setCurrency(e.target.value as any)}
                           className="bg-transparent font-black text-blue-600 outline-none cursor-pointer text-sm text-gray-900 appearance-none hover:text-blue-700 transition-colors"
                         >
-                          <option value="SAR" className="text-gray-900">SAR - Saudi Riyal (ر.س)</option>
-                          <option value="EGP" className="text-gray-900">EGP - Egyptian Pound (ج.م)</option>
-                          <option value="USD" className="text-gray-900">USD - United States Dollar ($)</option>
+                          <option value="SAR" className="text-gray-900">SAR (ر.س)</option>
+                          <option value="EGP" className="text-gray-900">EGP (ج.م)</option>
+                          <option value="AED" className="text-gray-900">AED (د.إ)</option>
+                          <option value="QAR" className="text-gray-900">QAR (ر.ق)</option>
+                          <option value="KWD" className="text-gray-900">KWD (د.ك)</option>
+                          <option value="OMR" className="text-gray-900">OMR (ر.ع)</option>
+                          <option value="BHD" className="text-gray-900">BHD (د.ب)</option>
+                          <option value="JOD" className="text-gray-900">JOD (د.أ)</option>
+                          <option value="USD" className="text-gray-900">USD ($)</option>
                         </select>
                         <ChevronDown size={14} className="text-blue-600 pointer-events-none" />
                       </div>
@@ -1181,7 +1188,7 @@ export default function CreateCourseClient() {
                             <span className="text-xs text-gray-400 font-bold">الحساب المفعل</span>
                             <div className="flex items-center justify-between mt-1">
                               <div className="flex items-center gap-2 pl-6">
-                                {pm.logo && <img src={`https://api.darab.academy/${pm.logo}`} alt={pm.methodName} className="w-5 h-5 object-cover rounded shadow-sm" />}
+                                {pm.logo && <img src={getLogoUrl(pm.logo)} alt={pm.methodName} className="w-5 h-5 object-cover rounded shadow-sm" />}
                                 <span className="font-black text-gray-900 text-sm">{pm.methodName}</span>
                               </div>
                               <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-black">{pm.currency}</span>

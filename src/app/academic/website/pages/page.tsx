@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { 
   FileText, 
   Calendar, 
@@ -236,17 +237,26 @@ export default function PagesManagerPage() {
                               </>
                             )}
 
-                            {/* Edit Button */}
-                            <button
-                              onClick={() => {
-                                setCurrentEditPage(page);
-                                setIsCreating(false);
-                              }}
-                              className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-[11px] font-black shadow-sm transition-all flex items-center gap-1"
-                            >
-                              <Edit2 className="w-3 h-3" />
-                              <span>تعديل</span>
-                            </button>
+                             {/* Visual Editor Link */}
+                             <Link
+                               href={`/academic/website/builder?templateId=academy-dashboard&pageId=${page.id}`}
+                               className="px-3.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 text-[11px] font-black shadow-sm transition-all flex items-center gap-1"
+                             >
+                               <Eye className="w-3 h-3" />
+                               <span>تعديل بالباني</span>
+                             </Link>
+
+                             {/* Edit Button */}
+                             <button
+                               onClick={() => {
+                                 setCurrentEditPage(page);
+                                 setIsCreating(false);
+                               }}
+                               className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-[11px] font-black shadow-sm transition-all flex items-center gap-1"
+                             >
+                               <Edit2 className="w-3 h-3" />
+                               <span>الخصائص</span>
+                             </button>
 
                             {/* Delete Button */}
                             <button

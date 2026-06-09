@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getLogoUrl } from '@/lib/utils';
 import {
   Play, FileText, CheckCircle2, Award, Clock,
   ChevronDown, ChevronUp, Edit3, BarChart3, Eye,
@@ -103,7 +104,7 @@ export default function OwnerCourseViewDetailsPage() {
   // Selected payment methods list
   const rawPaymentMethods = course?.payment_methods || course?.receiverAccounts || course?.receiver_accounts || [];
   const paymentMethods = rawPaymentMethods.map((item: any) => ({
-    methodId: (item.methodId || item.method_id || item.id)?.toString() || '',
+    methodId: (item.instructor_receiver_account_id || item.pivot?.instructor_receiver_account_id || item.methodId || item.method_id || item.receiver_account_id || item.id)?.toString() || '',
     methodName: item.methodName || item.name || '',
     value: item.value || item.accountValue || item.account_value || '',
     currency: item.currency || 'SAR',
@@ -327,7 +328,7 @@ export default function OwnerCourseViewDetailsPage() {
                         <div className="flex items-center justify-between text-xs">
                           <div className="flex items-center gap-2">
                             {pm.logo ? (
-                              <img src={`https://api.darab.academy/${pm.logo}`} alt={pm.methodName || pm.name} className="w-5 h-5 object-cover rounded shadow-sm" />
+                              <img src={getLogoUrl(pm.logo)} alt={pm.methodName || pm.name} className="w-5 h-5 object-cover rounded shadow-sm" />
                             ) : (
                               <Landmark size={12} className="text-blue-500" />
                             )}

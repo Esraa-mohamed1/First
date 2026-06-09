@@ -6,6 +6,7 @@ import { Save, AlertCircle, Loader2, Plus, Edit2, Trash2, X, Landmark, RefreshCw
 import { getReceiverAccounts, getUserPaymentInfos, createUserPaymentInfo, updateUserPaymentInfo, deleteUserPaymentInfo } from '@/services/finance';
 import { ReceiverAccount } from '@/types/api';
 import { UserPaymentInfo } from '@/services/finance';
+import { getLogoUrl } from '@/lib/utils';
 
 // ==========================================
 // SUB-COMPONENTS (Defined at Module Scope to Prevent Focus/Render Bugs)
@@ -39,7 +40,7 @@ const SavedMethodCard = React.memo(({ method, onEdit, onDelete }: SavedMethodCar
         </div>
         <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center overflow-hidden">
           {method.logo ? (
-            <img src={`https://api.darab.academy/${method.logo}`} alt={method.name} className="w-full h-full object-cover" />
+            <img src={getLogoUrl(method.logo)} alt={method.name} className="w-full h-full object-cover" />
           ) : (
             <Landmark size={20} />
           )}
@@ -85,6 +86,7 @@ export const AcademyPaymentSettingsForm = () => {
 
   // Form State
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState('SA');
   const [name, setName] = useState('');
   const [accountValue, setAccountValue] = useState('');
   const [currency, setCurrency] = useState('SAR');
@@ -116,6 +118,7 @@ export const AcademyPaymentSettingsForm = () => {
   // Form Reset
   const resetForm = useCallback(() => {
     setEditingId(null);
+    setSelectedCountry('SA');
     setName('');
     setAccountValue('');
     setCurrency('SAR');
@@ -179,6 +182,47 @@ export const AcademyPaymentSettingsForm = () => {
     setName(method.name);
     setAccountValue(method.accountValue);
     setCurrency(method.currency);
+    if (method.currency === 'EGP') {
+      setSelectedCountry('EG');
+    } else if (method.currency === 'AED') {
+      setSelectedCountry('AE');
+    } else if (method.currency === 'QAR') {
+      setSelectedCountry('QA');
+    } else if (method.currency === 'KWD') {
+      setSelectedCountry('KW');
+    } else if (method.currency === 'OMR') {
+      setSelectedCountry('OM');
+    } else if (method.currency === 'BHD') {
+      setSelectedCountry('BH');
+    } else if (method.currency === 'JOD') {
+      setSelectedCountry('JO');
+    } else {
+      setSelectedCountry('SA');
+    }
+  }, []);
+
+  const handleCountryChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const country = e.target.value;
+    setSelectedCountry(country);
+    setSelectedReceiverAccountId('');
+    setName('');
+    if (country === 'EG') {
+      setCurrency('EGP');
+    } else if (country === 'AE') {
+      setCurrency('AED');
+    } else if (country === 'QA') {
+      setCurrency('QAR');
+    } else if (country === 'KW') {
+      setCurrency('KWD');
+    } else if (country === 'OM') {
+      setCurrency('OMR');
+    } else if (country === 'BH') {
+      setCurrency('BHD');
+    } else if (country === 'JO') {
+      setCurrency('JOD');
+    } else {
+      setCurrency('SAR');
+    }
   }, []);
 
   // Delete handler callback
@@ -225,6 +269,43 @@ export const AcademyPaymentSettingsForm = () => {
     setCurrency(e.target.value);
   }, []);
 
+  const getSortedCurrencies = useCallback(() => {
+    const defaultCurrencies = [
+      { value: 'SAR', label: 'ريال سعودي (SAR)' },
+      { value: 'EGP', label: 'جنيه مصري (EGP)' },
+      { value: 'AED', label: 'درهم إماراتي (AED)' },
+      { value: 'QAR', label: 'ريال قطري (QAR)' },
+      { value: 'KWD', label: 'دينار كويتي (KWD)' },
+      { value: 'OMR', label: 'ريال عماني (OMR)' },
+      { value: 'BHD', label: 'دينار بحريني (BHD)' },
+      { value: 'JOD', label: 'دينار أردني (JOD)' },
+      { value: 'USD', label: 'دولار أمريكي (USD)' },
+    ];
+    
+    let countryCurrency = 'SAR';
+    if (selectedCountry === 'EG') {
+      countryCurrency = 'EGP';
+    } else if (selectedCountry === 'AE') {
+      countryCurrency = 'AED';
+    } else if (selectedCountry === 'QA') {
+      countryCurrency = 'QAR';
+    } else if (selectedCountry === 'KW') {
+      countryCurrency = 'KWD';
+    } else if (selectedCountry === 'OM') {
+      countryCurrency = 'OMR';
+    } else if (selectedCountry === 'BH') {
+      countryCurrency = 'BHD';
+    } else if (selectedCountry === 'JO') {
+      countryCurrency = 'JOD';
+    }
+    
+    return [...defaultCurrencies].sort((a, b) => {
+      if (a.value === countryCurrency) return -1;
+      if (b.value === countryCurrency) return 1;
+      return 0;
+    });
+  }, [selectedCountry]);
+
   if (fetching) {
     return (
       <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-16 flex flex-col items-center justify-center gap-4">
@@ -261,6 +342,25 @@ export const AcademyPaymentSettingsForm = () => {
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             
+            {/* Country Selection */}
+            <div className="space-y-2">
+              <label className="block text-xs font-black text-gray-700">الدولة <span className="text-red-500">*</span></label>
+              <select
+                value={selectedCountry}
+                onChange={handleCountryChange}
+                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
+              >
+                <option value="SA">السعودية (Saudi Arabia)</option>
+                <option value="EG">مصر (Egypt)</option>
+                <option value="AE">الإمارات (UAE)</option>
+                <option value="QA">قطر (Qatar)</option>
+                <option value="KW">الكويت (Kuwait)</option>
+                <option value="OM">عمان (Oman)</option>
+                <option value="BH">البحرين (Bahrain)</option>
+                <option value="JO">الأردن (Jordan)</option>
+              </select>
+            </div>
+
             {/* Presets from Receiver Accounts */}
             {!editingId && (
               <div className="space-y-2">
@@ -271,11 +371,13 @@ export const AcademyPaymentSettingsForm = () => {
                   className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
                 >
                   <option value="">-- اختر وسيلة لملء الاسم --</option>
-                  {activeReceiverAccounts.map(acc => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.name} ({acc.country_name})
-                    </option>
-                  ))}
+                  {activeReceiverAccounts
+                    .filter(acc => acc.country_code === selectedCountry)
+                    .map(acc => (
+                      <option key={acc.id} value={acc.id}>
+                        {acc.name}
+                      </option>
+                    ))}
                 </select>
               </div>
             )}
@@ -323,9 +425,11 @@ export const AcademyPaymentSettingsForm = () => {
                 onChange={handleCurrencyChange}
                 className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
               >
-                <option value="SAR">ريال سعودي (SAR)</option>
-                <option value="EGP">جنيه مصري (EGP)</option>
-                <option value="USD">دولار أمريكي (USD)</option>
+                {getSortedCurrencies().map(cur => (
+                  <option key={cur.value} value={cur.value}>
+                    {cur.label}
+                  </option>
+                ))}
               </select>
             </div>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
   Monitor, 
   Tablet, 
@@ -235,7 +236,14 @@ export default function TemplatesPage() {
                     >
                       معاينة القالب
                     </button>
-                    {!isActive && (
+                    {isActive ? (
+                      <Link 
+                        href={`/academic/website/builder?templateId=${tmpl.id}`}
+                        className="flex-1 py-2.5 rounded-xl bg-[#005c86] hover:bg-[#0e76a8] text-white font-bold text-xs transition-colors shadow-sm text-center flex items-center justify-center"
+                      >
+                        تعديل بالباني
+                      </Link>
+                    ) : (
                       <button 
                         onClick={() => handleSelectTemplate(tmpl.id, tmpl.name)}
                         className="flex-1 py-2.5 rounded-xl bg-[#005c86] hover:bg-[#0e76a8] text-white font-bold text-xs transition-colors shadow-sm"
@@ -311,7 +319,14 @@ export default function TemplatesPage() {
                     >
                       معاينة القالب
                     </button>
-                    {!isActive && (
+                    {isActive ? (
+                      <Link 
+                        href={`/academic/website/builder?templateId=${tmpl.id}`}
+                        className="flex-1 py-2.5 rounded-xl bg-[#005c86] hover:bg-[#0e76a8] text-white font-bold text-xs transition-colors shadow-sm text-center flex items-center justify-center"
+                      >
+                        تعديل بالباني
+                      </Link>
+                    ) : (
                       <button 
                         onClick={() => handleSelectTemplate(tmpl.id, tmpl.name)}
                         className="flex-1 py-2.5 rounded-xl bg-[#005c86] hover:bg-[#0e76a8] text-white font-bold text-xs transition-colors shadow-sm"
@@ -380,6 +395,12 @@ export default function TemplatesPage() {
 
             {/* Action buttons */}
             <div className="flex items-center gap-3">
+              <Link
+                href={`/academic/website/builder?templateId=${previewTemplate.id}`}
+                className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 flex items-center justify-center"
+              >
+                تعديل بالباني
+              </Link>
               <button 
                 onClick={handleSelectInsideSimulator}
                 className="px-5 py-2.5 rounded-xl bg-[#005c86] hover:brightness-110 text-white font-bold text-xs shadow-md transition-all active:scale-95"
