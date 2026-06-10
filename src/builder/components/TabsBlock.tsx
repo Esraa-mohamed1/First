@@ -1,0 +1,61 @@
+import React, { useState } from 'react';
+
+interface TabItem {
+  id: string;
+  label: string;
+}
+
+interface TabsBlockProps {
+  tabs?: TabItem[];
+  activeTabColor?: string;
+  alignment?: 'right' | 'center' | 'left';
+}
+
+export default function TabsBlock({
+  tabs = [
+    { id: '1', label: 'الدورات المتاحة' },
+    { id: '2', label: 'مسارات التعلم التفاعلية' },
+    { id: '3', label: 'الشهادات المعتمدة' }
+  ],
+  activeTabColor = '#2563eb',
+  alignment = 'right',
+}: TabsBlockProps) {
+  const [activeId, setActiveId] = useState(tabs[0]?.id || '1');
+
+  const alignClass = 
+    alignment === 'left' ? 'justify-start' : 
+    alignment === 'center' ? 'justify-center' : 'justify-end';
+
+  return (
+    <div className="w-full text-right" dir="rtl">
+      
+      {/* Tab bar header selection */}
+      <div className={`flex border-b border-slate-100 pb-px gap-1 flex-wrap ${alignClass}`}>
+        {tabs.map((tab) => {
+          const isActive = tab.id === activeId;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveId(tab.id)}
+              style={{ 
+                borderColor: isActive ? activeTabColor : 'transparent',
+                color: isActive ? activeTabColor : '#64748b'
+              }}
+              className={`px-5 py-3.5 border-b-2 font-black text-xs transition-all duration-200 outline-none`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tab simulated contents preview */}
+      <div className="py-6 px-4 bg-slate-50/40 border border-t-0 border-slate-100 rounded-b-2xl min-h-[100px] flex items-center justify-center text-center">
+        <p className="text-xs font-semibold text-slate-400 italic">
+          محتوى تفاعلي لعلامة التبويب: "{tabs.find(t => t.id === activeId)?.label}"
+        </p>
+      </div>
+
+    </div>
+  );
+}

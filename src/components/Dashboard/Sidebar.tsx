@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, CreditCard, FileText, Settings, LogOut, X } from 'lucide-react';
+import { LayoutDashboard, Package, CreditCard, FileText, Settings, LogOut, X, Globe, User } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -29,6 +29,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       href: '/dashboard',
     },
     {
+      label: 'الملف الشخصي',
+      icon: User,
+      href: '/dashboard/profile',
+    },
+    {
       label: 'ادارة الباقات',
       icon: Package,
       href: '/dashboard/packages',
@@ -39,9 +44,18 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       ],
     },
     {
+      label: 'ادارة النطاقات',
+      icon: Globe, 
+      href: '/dashboard/domain',
+    },
+    {
       label: 'المدفوعات',
       icon: CreditCard,
       href: '/dashboard/payments',
+      subItems: [
+        { label: 'سجل المدفوعات', href: '/dashboard/payments' },
+        { label: 'طرق الدفع', href: '/dashboard/payment-methods' },
+      ],
     },
     {
       label: 'التقارير',
@@ -155,7 +169,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
       {/* Logout */}
       <div className="p-4 border-t border-gray-50">
-        <button className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-500 hover:bg-red-50 transition-all duration-200">
+        <button 
+          onClick={() => { localStorage.clear(); document.cookie = 'token=; path=/; max-age=0; SameSite=Lax'; window.location.href = '/'; }}
+          className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-500 hover:bg-red-50 transition-all duration-200"
+        >
           <LogOut size={20} />
           <span className="font-bold text-sm">تسجيل خروج</span>
         </button>

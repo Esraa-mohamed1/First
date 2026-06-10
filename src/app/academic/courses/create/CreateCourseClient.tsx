@@ -13,14 +13,27 @@ import {
   FileText,
   Monitor,
   Trash2,
-  Share,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import { createCourse, createUnit, getCategories, getCourse, updateCourse } from '@/services/courses';
 import { getProfileStatus, getMyUsageLimit } from '@/services/auth';
 import { getUsers } from '@/services/users';
 import { User } from '@/types/api';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
+import QuillEditor from '@/components/Academic/QuillEditor';
+import { SearchableSelect } from '@/components/Academic/Common/SearchableSelect';
+import { CoachField } from '@/components/course/CoachField';
+import { CourseStatusToggle } from '@/components/course/CourseStatusToggle';
+import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdown';
+import { PaymentMethodValueInput } from '@/components/payment/PaymentMethodValueInput';
+import { AcademyPaymentMethod, PaymentMethod } from '@/types/payment';
+import { showAlert } from '@/lib/sweetalert';
+import { getUserPaymentInfos, UserPaymentInfo } from '@/services/finance';
+import { getLogoUrl } from '@/lib/utils';
+
+const MySwal = withReactContent(Swal);
 
 export default function CreateCourseClient() {
   const router = useRouter();
@@ -29,13 +42,35 @@ export default function CreateCourseClient() {
   const [activeTab, setActiveTab] = useState<'info' | 'content' | 'pricing'>('info');
   const [courseId, setCourseId] = useState<number | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [academyPaymentMethods, setAcademyPaymentMethods] = useState<UserPaymentInfo[]>([]);
+
+  // Compute active methods dynamically from the academy's saved settings
+  const activeMethods: PaymentMethod[] = academyPaymentMethods.map(m => ({
+    id: m.id.toString(),
+    name: `${m.name} (${m.currency})`,
+    type: 'account_number' as const,
+    icon: 'credit-card',
+    logo: m.logo,
+    isActive: true
+  }));
 
   // Basic Info States
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
   const [categories, setCategories] = useState<any[]>([]);
   const [description, setDescription] = useState('');
-  const [whatYouWillLearn, setWhatYouWillLearn] = useState('');
+  const [coachName, setCoachName] = useState('');
+  const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<AcademyPaymentMethod[]>([]);
+  
+  interface CustomSection {
+    id: string;
+    title: string;
+    items: string[];
+  }
+  const [customSections, setCustomSections] = useState<CustomSection[]>([
+    { id: 'what_you_will_learn', title: 'ماذا ستتعلم؟', items: [''] }
+  ]);
+  
   const [whoIsThisFor, setWhoIsThisFor] = useState('');
   const [selectedInstructor, setSelectedInstructor] = useState<number | null>(null);
   const [instructors, setInstructors] = useState<User[]>([]);
@@ -46,16 +81,15 @@ export default function CreateCourseClient() {
     learning: false,
     audience: false,
   });
-
   // Image Upload State
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   // Pricing Step States
   const [pricingType, setPricingType] = useState<'free' | 'paid'>('paid');
   const [status, setStatus] = useState<'published' | 'draft'>('draft');
   const [price, setPrice] = useState('');
+  const [currency, setCurrency] = useState<'EGP' | 'SAR' | 'USD'>('SAR');
 
   // Course Content State
   const [units, setUnits] = useState<any[]>([]);
@@ -70,7 +104,71 @@ export default function CreateCourseClient() {
   const [currentUnitForLesson, setCurrentUnitForLesson] = useState<number | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, any>>({});
+
+  const getInfoError = (sectionId: string, itemIndex: number, type: 'key' | 'value') => {
+    let globalIndex = 0;
+    for (const section of customSections) {
+      const validItems = section.items.map((item, idx) => ({ item, idx }));
+      // The logic in handleSave filters by trim() !== ''
+      const filteredItems = validItems.filter(v => v.item.trim() !== '');
+      
+      const found = filteredItems.find(v => section.id === sectionId && v.idx === itemIndex);
+      if (found) {
+        // Find if there's an error for this globalIndex
+        const actualIndex = globalIndex + filteredItems.indexOf(found);
+        const errorKey = `infos.${actualIndex}.${type}`;
+        return errors[errorKey];
+      }
+      globalIndex += filteredItems.length;
+    }
+    return null;
+  };
+
+  const handleAddSectionItem = (sectionId: string) => {
+    setCustomSections(prev => prev.map(sec => 
+      sec.id === sectionId ? { ...sec, items: [...sec.items, ''] } : sec
+    ));
+  };
+
+  const handleUpdateSectionItem = (sectionId: string, itemIndex: number, value: string) => {
+    setCustomSections(prev => prev.map(sec => {
+      if (sec.id === sectionId) {
+        const newItems = [...sec.items];
+        newItems[itemIndex] = value;
+        return { ...sec, items: newItems };
+      }
+      return sec;
+    }));
+  };
+
+  const handleRemoveSectionItem = (sectionId: string, itemIndex: number) => {
+    setCustomSections(prev => prev.map(sec => {
+      if (sec.id === sectionId) {
+        const newItems = sec.items.filter((_, i) => i !== itemIndex);
+        return { ...sec, items: newItems.length > 0 ? newItems : [''] };
+      }
+      return sec;
+    }));
+  };
+
+  const handleAddCustomSection = () => {
+    const newId = `section_${Date.now()}`;
+    setCustomSections([...customSections, { id: newId, title: 'قسم جديد', items: [''] }]);
+    if (!openSections[newId]) {
+      setOpenSections(prev => ({ ...prev, [newId]: true }));
+    }
+  };
+
+  const handleUpdateSectionTitle = (sectionId: string, newTitle: string) => {
+    setCustomSections(prev => prev.map(sec => 
+      sec.id === sectionId ? { ...sec, title: newTitle } : sec
+    ));
+  };
+
+  const handleRemoveSection = (sectionId: string) => {
+    setCustomSections(prev => prev.filter(sec => sec.id !== sectionId));
+  };
 
   const refreshCourseContent = async (id: number) => {
     const data = await getCourse(id);
@@ -81,6 +179,45 @@ export default function CreateCourseClient() {
       for (const u of unitsFromApi) nextExpanded[u.id] = true;
       setExpandedUnits(nextExpanded);
     }
+    
+    // Parse custom sections from infos if we are refreshing
+    if ((data as any).infos && Array.isArray((data as any).infos) && (data as any).infos.length > 0) {
+      const grouped = (data as any).infos.reduce((acc: any, info: any) => {
+         const key = info.info_key || info.key;
+         const value = info.info_value || info.value;
+         
+         if (!key || !value) return acc;
+
+         if (!acc[key]) {
+           acc[key] = {
+              id: key,
+              title: key === 'what_you_will_learn' ? 'ماذا ستتعلم؟' : key,
+              items: []
+           };
+         }
+         acc[key].items.push({ value, order: info.order || 0 });
+         return acc;
+      }, {});
+      
+      const parsedSections = Object.values(grouped).map((group: any) => {
+          const sortedItems = group.items.sort((a: any, b: any) => a.order - b.order).map((i: any) => i.value);
+          return {
+              id: group.id,
+              title: group.title,
+              items: sortedItems.length > 0 ? sortedItems : ['']
+          };
+      });
+      setCustomSections(parsedSections as CustomSection[]);
+    }
+  };
+
+  const mapTypeToBackend = (type: string | null | undefined): string => {
+    if (!type) return 'recorded';
+    const t = type.toLowerCase().trim();
+    if (t === 'live-online' || t === 'online') return 'online';
+    if (t === 'in-person' || t === 'physical' || t === 'offline') return 'physical';
+    if (t === 'registered' || t === 'recorded') return 'recorded';
+    return t;
   };
 
   const ensureCourseCreated = async () => {
@@ -101,34 +238,83 @@ export default function CreateCourseClient() {
       category_id: category || undefined,
       description,
       user_id: userId,
-      what_you_will_learn: whatYouWillLearn,
       who_is_this_for: whoIsThisFor,
       price: pricingType === 'free' ? 0 : Number(price || 0),
       final_price: pricingType === 'free' ? 0 : Number(price || 0),
-      status: 'draft',
-      type: courseTypeParam || 'recorded',
+      status,
+      coach: coachName,
+      receiver_accounts: selectedPaymentMethods.map((m: any) => Number(m.methodId)),
+      type: mapTypeToBackend(courseTypeParam),
       price_type: pricingType,
+      currency,
       image: selectedFile || undefined,
     };
 
-    const created = await createCourse(payload);
-    setCourseId(created.id);
-    await refreshCourseContent(created.id);
-    return created.id;
+
+    // Add custom sections
+    let infoIndex = 0;
+    customSections.forEach((section) => {
+      section.items.filter(p => p.trim() !== '').forEach((point, pointIndex) => {
+        payload[`infos[${infoIndex}][key]`] = section.id === 'what_you_will_learn' ? 'what_you_will_learn' : section.title;
+        payload[`infos[${infoIndex}][value]`] = point;
+        payload[`infos[${infoIndex}][order]`] = pointIndex + 1;
+        infoIndex++;
+      });
+    });
+
+    try {
+      const created = await createCourse(payload);
+      setCourseId(created.id);
+      await refreshCourseContent(created.id);
+      return created.id;
+    } catch (error: any) {
+      if (error?.errors) {
+        setErrors(error.errors);
+        const allMsgs: string[] = [];
+        if (error.message && error.message !== 'Validation errors detected.') {
+          allMsgs.push(error.message);
+        }
+        Object.values(error.errors).forEach((msgs: any) => {
+          const messages = Array.isArray(msgs) ? msgs : [String(msgs)];
+          messages.forEach((msg) => allMsgs.push(msg));
+        });
+        const toastMsg = allMsgs.length > 0 ? allMsgs.join(' | ') : 'يرجى تصحيح الأخطاء أدناه';
+        toast.error(toastMsg);
+      } else {
+        toast.error(error?.message || 'فشل الحفظ');
+      }
+      throw error;
+    }
   };
 
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [cats, profile] = await Promise.all([getCategories(), getProfileStatus()]);
+        const [cats, profile, paymentInfos] = await Promise.all([
+          getCategories(),
+          getProfileStatus(),
+          getUserPaymentInfos()
+        ]);
         setCategories(cats);
+        setAcademyPaymentMethods(paymentInfos || []);
 
         const userData = profile.data || profile;
         if (userData) {
           setCurrentUser(userData);
-          if (userData.role === 'admin') {
+          if (userData.role === 'instructor') {
+            setCoachName(userData.name || userData.fullName || '');
+            setSelectedInstructor(userData.id);
+          } else {
+            setCoachName(''); // Clear coach name for admin/academy to select
+            setSelectedInstructor(null);
+          }
+          if (userData.role === 'admin' || userData.role === 'academy') {
             const allUsers = await getUsers();
-            setInstructors(allUsers.filter((user) => user.role === 'instructor' || user.role === 'admin'));
+            if (userData.role === 'admin') {
+              setInstructors(allUsers);
+            } else {
+              setInstructors(allUsers.filter((user) => user.role === 'academy' || user.role === 'instructor'));
+            }
           }
         }
       } catch (error) {
@@ -165,7 +351,7 @@ export default function CreateCourseClient() {
       setIsAddingUnit(false);
       await refreshCourseContent(id);
     } catch {
-      toast.error('فشل إضافة الوحدة');
+      // Error message is already toasted inside ensureCourseCreated if it fails there
     } finally {
       setIsSubmitting(false);
     }
@@ -229,11 +415,26 @@ export default function CreateCourseClient() {
   };
 
   const handleSave = async () => {
+    // Basic client-side validation
+    const newErrors: Record<string, any> = {};
+    if (!title.trim()) newErrors.title = 'عنوان الدورة مطلوب';
+    if (!selectedInstructor && (currentUser?.role === 'admin' || currentUser?.role === 'academy')) {
+      newErrors.user_id = 'يرجى اختيار مدرب';
+    }
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error('يرجى ملء الحقول المطلوبة');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      let userId = currentUser?.id || 2; // Default to 2 if no current user or ID
-      if (selectedInstructor) {
-        userId = selectedInstructor;
+      let userIdToUse = currentUser?.id;
+      if (currentUser?.role === 'admin' || currentUser?.role === 'academy') {
+        userIdToUse = selectedInstructor || currentUser?.id;
+      } else if (currentUser?.role === 'instructor') {
+        userIdToUse = currentUser?.id;
       }
 
       // Check usage limit for new courses
@@ -244,7 +445,13 @@ export default function CreateCourseClient() {
           const used = parseFloat(maxCoursesObj.used_amount || '0');
           const max = parseFloat(maxCoursesObj.total_limit || '0');
           if (used >= max) {
-            toast.error('عفواً، لقد وصلت للحد الأقصى المسموح به لعدد الدورات. يرجى ترقية باقتك.');
+            await MySwal.fire({
+              title: 'وصلت للحد الأقصى',
+              text: 'عفواً، لقد وصلت للحد الأقصى المسموح به لعدد الدورات. يرجى ترقية باقتك.',
+              icon: 'warning',
+              confirmButtonText: 'حسناً',
+              confirmButtonColor: '#2563eb'
+            });
             setIsSubmitting(false);
             return;
           }
@@ -257,25 +464,58 @@ export default function CreateCourseClient() {
         title,
         category_id: category ? Number(category) : undefined,
         description,
-        user_id: userId,
-        what_you_will_learn: whatYouWillLearn,
+        user_id: userIdToUse,
         who_is_this_for: whoIsThisFor,
         price: pricingType === 'free' ? 0 : Number(price),
         status,
-        type: courseTypeParam || 'recorded',
+        type: mapTypeToBackend(courseTypeParam),
         price_type: pricingType,
         final_price: pricingType === 'free' ? 0 : Number(price),
+        currency,
         image: selectedFile || undefined,
+        coach: coachName,
+        receiver_accounts: selectedPaymentMethods.map(m => Number(m.methodId))
       };
 
-      if (courseId) {
-        await updateCourse(courseId, payload);
-        toast.success('تم حفظ الدورة بنجاح');
-        router.push(`/academic/courses/${courseId}`);
-      } else {
-        const created = await createCourse(payload);
-        toast.success('تم إنشاء الدورة بنجاح');
-        router.push(`/academic/courses/${created.id}`);
+
+      // Add custom sections
+      let infoIndex = 0;
+      customSections.forEach((section) => {
+        section.items.filter(p => p.trim() !== '').forEach((point, pointIndex) => {
+          payload[`infos[${infoIndex}][key]`] = section.id === 'what_you_will_learn' ? 'what_you_will_learn' : section.title;
+          payload[`infos[${infoIndex}][value]`] = point;
+          payload[`infos[${infoIndex}][order]`] = pointIndex + 1;
+          infoIndex++;
+        });
+      });
+
+      try {
+        if (courseId) {
+          await updateCourse(courseId, payload);
+          toast.success('تم حفظ الدورة بنجاح');
+          router.push(`/academic/courses/${courseId}`);
+        } else {
+          const created = await createCourse(payload);
+          toast.success('تم إنشاء الدورة بنجاح');
+          router.push(`/academic/courses/${created.id}`);
+        }
+      } catch (error: any) {
+        if (error?.errors) {
+          setErrors(error.errors);
+          
+          const allMsgs: string[] = [];
+          if (error.message && error.message !== 'Validation errors detected.') {
+            allMsgs.push(error.message);
+          }
+          Object.values(error.errors).forEach((msgs: any) => {
+            const messages = Array.isArray(msgs) ? msgs : [String(msgs)];
+            messages.forEach((msg) => allMsgs.push(msg));
+          });
+          const toastMsg = allMsgs.length > 0 ? allMsgs.join(' | ') : 'يرجى تصحيح الأخطاء أدناه';
+          toast.error(toastMsg);
+        } else {
+          toast.error(error?.message || 'فشل الحفظ');
+        }
       }
     } catch (error: any) {
       toast.error(error?.message || 'فشل الحفظ');
@@ -287,52 +527,91 @@ export default function CreateCourseClient() {
   return (
     <>
       <div className="space-y-6 p-4 md:p-6" dir="rtl">
-        {/* Top Action Bar */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3 w-full md:w-auto">
+        {/* Tabs Header & Action Bar */}
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 border-b border-gray-200 px-2 md:px-4">
+          <div className="flex items-center justify-start gap-8 overflow-x-auto hide-scrollbar">
             <button
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-full font-bold text-sm transition-all shadow-md shadow-green-100"
-              onClick={() => setStatus('published')}
+              onClick={() => setActiveTab('info')}
+              className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
+                activeTab === 'info' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+              }`}
             >
-              <Share size={18} />
-              <span>نشر</span>
+              معلومات الدورة
+              {activeTab === 'info' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />}
             </button>
-            <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-8 py-3 rounded-full font-bold text-sm transition-all shadow-sm">
+            <button
+              onClick={() => setActiveTab('content')}
+              className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
+                activeTab === 'content' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              محتوى الدورة
+              {activeTab === 'content' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />}
+            </button>
+            <button
+              onClick={() => setActiveTab('pricing')}
+              className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
+                activeTab === 'pricing' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              التسعير
+              {activeTab === 'pricing' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />}
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3 w-full lg:w-auto pb-4 lg:pb-3">
+            <button 
+              onClick={() => {
+                if (courseId) {
+                  router.push(`/academic/courses/${courseId}/student`);
+                } else {
+                  toast.error('يرجى حفظ الدورة أولاً للمعاينة');
+                }
+              }}
+              className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-6 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm"
+            >
               <Eye size={18} />
               <span>معاينة</span>
             </button>
-          </div>
-        </div>
+            <button
+              onClick={async () => {
+                const isPublished = status === 'published';
+                const actionText = isPublished ? 'تحويل إلى مسودة' : 'نشر الدورة';
+                const confirmText = isPublished ? 'نعم، اجعلها مسودة' : 'نعم، انشرها';
+                
+                const result = await MySwal.fire({
+                  title: `هل أنت متأكد من ${actionText}؟`,
+                  text: isPublished ? "سيتم إخفاء الدورة عن الطلاب" : "ستصبح الدورة متاحة لجميع الطلاب",
+                  icon: 'question',
+                  showCancelButton: true,
+                  confirmButtonColor: isPublished ? '#f59e0b' : '#10b981',
+                  cancelButtonColor: '#d33',
+                  confirmButtonText: confirmText,
+                  cancelButtonText: 'إلغاء'
+                });
 
-        {/* Tabs Header */}
-        <div className="flex items-center justify-start gap-8 border-b border-gray-200 px-2 md:px-4 overflow-x-auto hide-scrollbar">
-          <button
-            onClick={() => setActiveTab('info')}
-            className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
-              activeTab === 'info' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            معلومات الدورة
-            {activeTab === 'info' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />}
-          </button>
-          <button
-            onClick={() => setActiveTab('content')}
-            className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
-              activeTab === 'content' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            محتوي الدورة
-            {activeTab === 'content' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />}
-          </button>
-          <button
-            onClick={() => setActiveTab('pricing')}
-            className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
-              activeTab === 'pricing' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            التسعير
-            {activeTab === 'pricing' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />}
-          </button>
+                if (result.isConfirmed) {
+                  const newStatus = isPublished ? 'draft' : 'published';
+                  setStatus(newStatus);
+                  if (courseId) {
+                    try {
+                      await updateCourse(courseId, { status: newStatus });
+                      toast.success(`تم ${isPublished ? 'تحويل الدورة لمسودة' : 'نشر الدورة'} بنجاح`);
+                    } catch (err) {
+                      toast.error('فشل تحديث حالة الدورة');
+                    }
+                  }
+                }
+              }}
+              className={`flex-1 lg:flex-none flex items-center justify-center gap-2 px-8 py-2.5 rounded-full font-bold text-sm transition-all shadow-md ${
+                status === 'published' 
+                  ? 'bg-green-500 hover:bg-green-600 text-white shadow-green-100' 
+                  : 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-100'
+              }`}
+            >
+              <span>{status === 'published' ? 'نشر' : 'مسودة'}</span>
+            </button>
+          </div>
         </div>
 
         {/* Tab Content */}
@@ -347,49 +626,58 @@ export default function CreateCourseClient() {
                 <input
                   type="text"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    if (errors.title) setErrors(prev => ({ ...prev, title: null }));
+                  }}
                   placeholder="ادخل اسم الدورة"
-                  className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all"
+                  className={`w-full p-4 bg-white border ${errors.title ? 'border-red-500 bg-red-50/30' : 'border-gray-200'} rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all text-gray-900`}
                 />
+                {errors.title && (
+                  <p className="text-red-500 text-xs font-bold mt-1 flex items-center gap-1">
+                    <X size={12} />
+                    {errors.title}
+                  </p>
+                )}
               </div>
 
               {/* Category Dropdown */}
-              <div className="space-y-2">
-                <label className="flex items-center gap-1 text-sm font-black text-gray-900">
-                  الفئة <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all appearance-none"
-                >
-                  <option value="">اختر فئة</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <SearchableSelect
+                label="الفئة"
+                options={categories.map(c => ({ id: c.id, name: c.name }))}
+                value={category}
+                onChange={(val) => {
+                  setCategory(val as string);
+                  if (errors.category_id) setErrors(prev => ({ ...prev, category_id: null }));
+                }}
+                placeholder="اختر فئة (اختياري)"
+                error={errors.category_id}
+              />
 
-              {/* Instructor Dropdown (Admin Only) */}
-              {currentUser?.role === 'admin' && (
-                <div className="space-y-2">
-                  <label className="flex items-center gap-1 text-sm font-black text-gray-900">المدرب</label>
-                  <select
-                    value={selectedInstructor || ''}
-                    onChange={(e) => setSelectedInstructor(Number(e.target.value))}
-                    className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all appearance-none"
-                  >
-                    <option value="">اختر مدرب</option>
-                    {instructors.map((inst) => (
-                      <option key={inst.id} value={inst.id}>
-                        {inst.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              {/* Coach & Instructor Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <CoachField value={coachName} onChange={setCoachName} />
+
+                {/* Instructor Dropdown (Admin/Academy Only) */}
+                {(currentUser?.role === 'admin' || currentUser?.role === 'academy') && (
+                  <SearchableSelect
+                    label="اختر المدرب (للمسئولين)"
+                    options={instructors.map(i => ({ id: i.id, name: i.name }))}
+                    value={selectedInstructor}
+                    onChange={(val) => {
+                      setSelectedInstructor(val as number);
+                      const selectedInst = instructors.find(i => i.id === val);
+                      if (selectedInst) {
+                        setCoachName(selectedInst.name || selectedInst.fullName || '');
+                      }
+                      if (errors.user_id) setErrors(prev => ({ ...prev, user_id: null }));
+                    }}
+                    placeholder="اختر مدرب"
+                    error={errors.user_id}
+                    required
+                  />
+                )}
+              </div>
 
               {/* Course Image */}
               <div className="space-y-2">
@@ -419,68 +707,142 @@ export default function CreateCourseClient() {
                 </div>
               </div>
 
-              {/* Description Accordion */}
-              <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                <button
-                  onClick={() => toggleSection('description')}
-                  className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
-                >
-                  <span className="font-black text-gray-900">وصف الدورة</span>
-                  {openSections.description ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
-                </button>
-                {openSections.description && (
-                  <div className="p-5 pt-0 border-t border-gray-50">
-                    <textarea
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder="ادخل وصف الدورة"
-                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[120px] transition-all"
-                    />
+              {/* Dynamic Custom Sections Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                {/* Description Accordion */}
+                <div className={`bg-white border ${errors.description ? 'border-red-500' : 'border-gray-200/80'} rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col max-h-[500px]`}>
+                  <button
+                    onClick={() => toggleSection('description')}
+                    className="w-full p-5 flex items-center justify-between bg-gray-50/50 hover:bg-gray-50 transition-colors border-b border-gray-100 shrink-0"
+                  >
+                    <span className="font-black text-gray-900">وصف الدورة</span>
+                    {openSections.description ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+                  </button>
+                  {openSections.description && (
+                    <div className="p-5 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
+                      <QuillEditor
+                        value={description}
+                        onChange={setDescription}
+                        placeholder="ادخل وصف الدورة"
+                      />
+                      {errors.description && <p className="text-red-500 text-xs font-bold mt-2">{errors.description}</p>}
+                    </div>
+                  )}
+                </div>
+
+                {/* Target Audience Accordion */}
+                <div className={`bg-white border ${errors.who_is_this_for ? 'border-red-500' : 'border-gray-200/80'} rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col max-h-[500px]`}>
+                  <button
+                    onClick={() => toggleSection('audience')}
+                    className="w-full p-5 flex items-center justify-between bg-gray-50/50 hover:bg-gray-50 transition-colors border-b border-gray-100 shrink-0"
+                  >
+                    <span className="font-black text-gray-900">لمن هذه الدورة</span>
+                    {openSections.audience ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+                  </button>
+                  {openSections.audience && (
+                    <div className="p-5 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
+                      <QuillEditor
+                        value={whoIsThisFor}
+                        onChange={setWhoIsThisFor}
+                        placeholder="الفئة المستهدفة من الدورة"
+                      />
+                      {errors.who_is_this_for && <p className="text-red-500 text-xs font-bold mt-2">{errors.who_is_this_for}</p>}
+                    </div>
+                  )}
+                </div>
+
+                {/* Render all custom sections */}
+                {customSections.map((section) => (
+                  <div key={section.id} className="bg-white border border-gray-200/80 rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col max-h-[500px]">
+                    <div className="w-full p-5 flex items-center justify-between bg-gray-50/50 hover:bg-gray-50 transition-colors border-b border-gray-100 shrink-0">
+                      <div className="flex items-center gap-2 flex-1 ml-4">
+                        {section.id === 'what_you_will_learn' ? (
+                          <>
+                            <span className="font-black text-gray-900">{section.title}</span>
+                          </>
+                        ) : (
+                          <div className="flex-1 space-y-1">
+                            <input 
+                              type="text"
+                              value={section.title}
+                              onChange={(e) => handleUpdateSectionTitle(section.id, e.target.value)}
+                              className="font-black text-gray-900 bg-transparent border-b border-dashed border-gray-300 focus:border-blue-500 outline-none w-full"
+                              placeholder="اسم القسم (مثال: متطلبات الدورة)"
+                            />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {section.id !== 'what_you_will_learn' && (
+                          <button
+                            onClick={() => handleRemoveSection(section.id)}
+                            className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                        <button onClick={() => toggleSection(section.id)} className="p-1">
+                          {openSections[section.id] ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+                        </button>
+                      </div>
+                    </div>
+                    {openSections[section.id] && (
+                      <div className="p-5 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300 space-y-4">
+                        {section.items.map((point, index) => {
+                          const valueError = getInfoError(section.id, index, 'value');
+                          const keyError = getInfoError(section.id, index, 'key');
+                          return (
+                            <div key={index} className="space-y-2">
+                              <div className={`relative group bg-gray-50 p-4 rounded-2xl border ${valueError || keyError ? 'border-red-500' : 'border-gray-100'} transition-all hover:border-blue-200`}>
+                                <div className="flex items-center justify-between mb-4">
+                                  <span className="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                                    عنصر {index + 1}
+                                  </span>
+                                  <button
+                                    onClick={() => handleRemoveSectionItem(section.id, index)}
+                                    className="text-gray-400 hover:text-red-500 transition-colors p-1.5 hover:bg-red-50 rounded-lg"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </div>
+                                <input
+                                  type="text"
+                                  value={point}
+                                  onChange={(e) => handleUpdateSectionItem(section.id, index, e.target.value)}
+                                  placeholder="ادخل محتوى العنصر..."
+                                  className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:border-blue-500 outline-none transition-all font-bold text-gray-900"
+                                />
+                              </div>
+                              {keyError && <p className="text-red-500 text-[10px] font-bold px-2">{keyError}</p>}
+                              {valueError && <p className="text-red-500 text-[10px] font-bold px-2">{valueError}</p>}
+                            </div>
+                          );
+                        })}
+                        <button
+                          onClick={() => handleAddSectionItem(section.id)}
+                          className="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center gap-3 text-gray-500 font-bold hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50/30 transition-all group"
+                        >
+                          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                            <Plus size={18} />
+                          </div>
+                          <span>إضافة عنصر جديد</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
+                ))}
               </div>
 
-              {/* What to learn Accordion */}
-              <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                <button
-                  onClick={() => toggleSection('learning')}
-                  className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
-                >
-                  <span className="font-black text-gray-900">ماذا تتعلم</span>
-                  {openSections.learning ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
-                </button>
-                {openSections.learning && (
-                  <div className="p-5 pt-0 border-t border-gray-50">
-                    <textarea
-                      value={whatYouWillLearn}
-                      onChange={(e) => setWhatYouWillLearn(e.target.value)}
-                      placeholder="ماذا سيتعلم الطالب من هذه الدورة؟"
-                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[120px] transition-all"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Target Audience Accordion */}
-              <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                <button
-                  onClick={() => toggleSection('audience')}
-                  className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
-                >
-                  <span className="font-black text-gray-900">لمن هذه الدورة</span>
-                  {openSections.audience ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
-                </button>
-                {openSections.audience && (
-                  <div className="p-5 pt-0 border-t border-gray-50">
-                    <textarea
-                      value={whoIsThisFor}
-                      onChange={(e) => setWhoIsThisFor(e.target.value)}
-                      placeholder="الفئة المستهدفة من الدورة"
-                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[120px] transition-all"
-                    />
-                  </div>
-                )}
-              </div>
+              {/* Add New Section Button */}
+              <button
+                onClick={handleAddCustomSection}
+                className="w-full py-4 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center gap-3 text-gray-600 font-bold hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50/50 transition-all group"
+              >
+                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                  <Plus size={20} className="text-gray-500 group-hover:text-blue-600" />
+                </div>
+                <span>إضافة قسم اختياري جديد</span>
+              </button>
 
               {/* Action Buttons */}
               <div className="flex items-center justify-end gap-4 pt-4">
@@ -531,7 +893,7 @@ export default function CreateCourseClient() {
                         value={newUnitTitle}
                         onChange={(e) => setNewUnitTitle(e.target.value)}
                         placeholder="ادخل اسم الوحدة"
-                        className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm transition-all"
+                        className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm transition-all text-gray-900"
                       />
                     </div>
                   </div>
@@ -724,20 +1086,147 @@ export default function CreateCourseClient() {
               </div>
 
               {pricingType === 'paid' && (
-                <div className="space-y-4 animate-in slide-in-from-top-4 duration-300">
-                  <label className="block text-sm font-black text-gray-900">سعر الدورة</label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      placeholder="0.00"
-                      className="w-full p-5 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-left transition-all pl-16"
+                <div className="space-y-8 animate-in slide-in-from-top-4 duration-300">
+                  <div className="space-y-4">
+                    <label className="block text-sm font-black text-gray-900">سعر الدورة</label>
+                    <div className="relative group">
+                      <input
+                        type="number"
+                        value={price}
+                        onChange={(e) => {
+                          setPrice(e.target.value);
+                          if (errors.price) setErrors(prev => ({ ...prev, price: null }));
+                        }}
+                        placeholder="0.00"
+                        className={`w-full p-5 bg-white border ${errors.price ? 'border-red-500 bg-red-50/30' : 'border-gray-200'} rounded-2xl outline-none focus:border-blue-600 font-bold text-left transition-all pl-24 text-gray-900 shadow-sm`}
+                      />
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 border-r border-gray-100 pr-4">
+                        <select 
+                          value={currency}
+                          onChange={(e) => setCurrency(e.target.value as any)}
+                          className="bg-transparent font-black text-blue-600 outline-none cursor-pointer text-sm text-gray-900 appearance-none hover:text-blue-700 transition-colors"
+                        >
+                          <option value="SAR" className="text-gray-900">SAR (ر.س)</option>
+                          <option value="EGP" className="text-gray-900">EGP (ج.م)</option>
+                          <option value="AED" className="text-gray-900">AED (د.إ)</option>
+                          <option value="QAR" className="text-gray-900">QAR (ر.ق)</option>
+                          <option value="KWD" className="text-gray-900">KWD (د.ك)</option>
+                          <option value="OMR" className="text-gray-900">OMR (ر.ع)</option>
+                          <option value="BHD" className="text-gray-900">BHD (د.ب)</option>
+                          <option value="JOD" className="text-gray-900">JOD (د.أ)</option>
+                          <option value="USD" className="text-gray-900">USD ($)</option>
+                        </select>
+                        <ChevronDown size={14} className="text-blue-600 pointer-events-none" />
+                      </div>
+                    </div>
+                    {errors.price && (
+                      <p className="text-red-500 text-xs font-bold mt-1 flex items-center gap-1">
+                        <X size={12} />
+                        {errors.price}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Pricing Ways / Payment Methods */}
+                  <div className="space-y-6 pt-6 border-t border-gray-100">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-black text-gray-900">طرق التحصيل (وسائل الدفع)</h3>
+                        <p className="text-xs text-gray-400 font-bold mt-1">اختر وسائل الدفع التي تريد تفعيلها لهذه الدورة</p>
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={() => router.push('/academic/finance/payment-settings')}
+                        className="text-xs font-bold text-blue-600 hover:text-blue-700 underline"
+                      >
+                        إدارة وسائل الدفع
+                      </button>
+                    </div>
+
+                    <PaymentMethodDropdown
+                      options={activeMethods}
+                      selectedValues={selectedPaymentMethods.map(m => m.methodId)}
+                      onChange={(ids) => {
+                        if (ids.length > 3) {
+                          toast.error('الحد الأقصى لوسائل الدفع المحددة للدورة هو 3 وسائل فقط');
+                          return;
+                        }
+                        const newMethods = ids.map(id => {
+                          const existing = selectedPaymentMethods.find(m => m.methodId === id);
+                          if (existing) return existing;
+                          const method = activeMethods.find(m => m.id === id);
+                          if (!method) return null;
+                          const originalInfo = academyPaymentMethods.find(m => m.id.toString() === id);
+                          return {
+                            methodId: method.id,
+                            methodName: method.name,
+                            type: method.type,
+                            value: originalInfo?.accountValue || originalInfo?.account_value || '',
+                            currency: originalInfo?.currency || 'SAR',
+                            logo: method.logo || originalInfo?.logo
+                          };
+                        }).filter(Boolean) as AcademyPaymentMethod[];
+                        setSelectedPaymentMethods(newMethods);
+                      }}
+                      error={errors.paymentMethods}
                     />
-                    <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-gray-400">USD</span>
+
+                    {selectedPaymentMethods.length > 0 && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                        {selectedPaymentMethods.map((pm) => (
+                          <div key={pm.methodId} className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 flex flex-col justify-between relative group/pm">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedPaymentMethods(prev => prev.filter(m => m.methodId !== pm.methodId));
+                              }}
+                              className="absolute top-3 left-3 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              title="إزالة وسيلة الدفع"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                            <span className="text-xs text-gray-400 font-bold">الحساب المفعل</span>
+                            <div className="flex items-center justify-between mt-1">
+                              <div className="flex items-center gap-2 pl-6">
+                                {pm.logo && <img src={getLogoUrl(pm.logo)} alt={pm.methodName} className="w-5 h-5 object-cover rounded shadow-sm" />}
+                                <span className="font-black text-gray-900 text-sm">{pm.methodName}</span>
+                              </div>
+                              <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-black">{pm.currency}</span>
+                            </div>
+                            <div className="mt-2 pt-2 border-t border-gray-100/50">
+                              <span className="text-xs text-gray-400 block font-bold">رقم الحساب / المحفظة</span>
+                              <span className="font-mono text-sm text-gray-700 font-bold block mt-0.5 break-all select-all">{pm.value}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
+
+              {/* Status Toggle - Always Visible */}
+              <div className="pt-6 border-t border-gray-100">
+                <CourseStatusToggle 
+                  status={status} 
+                  onChange={(newStatus) => {
+                    if (newStatus === 'published') {
+                      const missing = [];
+                      if (!title) missing.push('عنوان الدورة');
+                      if (!description) missing.push('وصف الدورة');
+                      if (pricingType === 'paid' && !price) missing.push('سعر الدورة');
+                      if (pricingType === 'paid' && selectedPaymentMethods.length === 0) missing.push('وسيلة دفع واحدة على الأقل');
+                      if (units.length === 0) missing.push('محتوى الدورة (وحدة واحدة على الأقل)');
+
+                      if (missing.length > 0) {
+                        showAlert.warning('لا يمكن النشر الآن', `يرجى إكمال الحقول التالية أولاً: \n ${missing.join('، ')}`);
+                        return;
+                      }
+                    }
+                    setStatus(newStatus);
+                  }} 
+                />
+              </div>
 
               <div className="flex justify-center pt-10">
                 <button
@@ -762,6 +1251,7 @@ export default function CreateCourseClient() {
           courseTitle={title}
           instructorName={selectedInstructor ? instructors.find(i => i.id === selectedInstructor)?.name || '' : currentUser?.name || ''}
           onLessonAdded={handleLessonAdded}
+          courseType={mapTypeToBackend(courseTypeParam)}
         />
       </div>
     </>

@@ -30,10 +30,13 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 const RevenueChart = () => {
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-      <div className="flex items-center justify-between mb-8">
-        <h3 className="text-lg font-black text-gray-900">ايراد الشهر الحالي</h3>
-        <select className="bg-gray-50 border-none text-sm font-bold text-gray-600 rounded-lg px-3 py-2 outline-none">
+    <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 hover:shadow-lg transition-all">
+      <div className="flex items-center justify-between mb-10">
+        <div className="space-y-1">
+            <h3 className="text-2xl font-black text-gray-900 tracking-tight">ايراد الشهر الحالي</h3>
+            <p className="text-sm font-bold text-gray-400">تحليل الإيرادات والمصروفات خلال الشهر</p>
+        </div>
+        <select className="bg-gray-50 border border-gray-100 text-sm font-black text-gray-600 rounded-xl px-5 py-2.5 outline-none hover:bg-gray-100 transition-all">
           <option>أكتوبر</option>
           <option>سبتمبر</option>
         </select>

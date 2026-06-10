@@ -2,6 +2,7 @@
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { CountryProvider } from '@/providers/CountryProvider';
+import QueryProvider from '@/providers/QueryProvider';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
     // Provide a dummy ID if missing to prevent GoogleOAuthProvider from crashing
@@ -10,9 +11,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
     return (
         <GoogleOAuthProvider clientId={clientId}>
-            <CountryProvider>
-                {children}
-            </CountryProvider>
+            <QueryProvider>
+                <CountryProvider>
+                    {children}
+                </CountryProvider>
+            </QueryProvider>
         </GoogleOAuthProvider>
     );
 }
+

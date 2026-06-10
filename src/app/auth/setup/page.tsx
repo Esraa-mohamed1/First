@@ -7,6 +7,7 @@ import { createAccountInfoAcademy, login } from "@/services/auth";
 import toast from "react-hot-toast";
 import { useCountry } from "@/hooks/useCountry";
 import { CountrySelect, PhoneInput } from "@/components/CountrySelector";
+import { triggerPageLoader } from "@/components/PageLoader";
 
 export default function SetupPage() {
   const router = useRouter();
@@ -18,9 +19,10 @@ export default function SetupPage() {
     field: '',
     link: ''
   });
-  
+
   const [domainPrefix, setDomainPrefix] = useState('');
   const [domainError, setDomainError] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const domainSuffix = '.darab.academy'; // Static part
 
   useEffect(() => {
@@ -35,50 +37,54 @@ export default function SetupPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (formErrors[e.target.name]) {
+      setFormErrors({ ...formErrors, [e.target.name]: '' });
+    }
   };
-  
+
   const handleDomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      setDomainPrefix(value);
+    const value = e.target.value;
+    setDomainPrefix(value);
 
-      const fullLink = value + domainSuffix;
-      // Regex updated to allow only alphanumeric characters (no hyphens or underscores in the prefix)
-      // Original regex: /^((?!-))(xn--)?[a-zA-Z0-9][a-zA-Z0-9-_]{0,61}[a-zA-Z0-9]\.(xn--)?([a-zA-Z0-9-]{1,61}|[a-zA-Z]{2,})$/
-      // New logic: Check if the prefix contains ONLY alphanumeric characters
-      const alphanumericRegex = /^[a-zA-Z0-9]+$/;
-      
-      if (!value) {
-        setDomainError(null);
-        return;
-      }
+    const fullLink = value + domainSuffix;
+    // Regex updated to allow only alphanumeric characters (no hyphens or underscores in the prefix)
+    // Original regex: /^((?!-))(xn--)?[a-zA-Z0-9][a-zA-Z0-9-_]{0,61}[a-zA-Z0-9]\.(xn--)?([a-zA-Z0-9-]{1,61}|[a-zA-Z]{2,})$/
+    // New logic: Check if the prefix contains ONLY alphanumeric characters
+    const alphanumericRegex = /^[a-zA-Z0-9]+$/;
 
-      if (!alphanumericRegex.test(value)) {
-         setDomainError('يجب أن يحتوي الرابط على أحرف وأرقام إنجليزية فقط');
-         return;
-      }
+    if (!value) {
+      setDomainError(null);
+      return;
+    }
 
-      // Also validate full structure just in case, but relax the prefix part of the complex regex or just rely on alphanumeric check
-      // The complex regex required 2+ chars and specific structure. Let's simplify since we enforce alphanumeric.
-      if (value.length < 2) {
-         setDomainError('يجب أن يكون الرابط حرفين على الأقل');
-      } else {
-        setDomainError(null);
-      }
+    if (!alphanumericRegex.test(value)) {
+      setDomainError('يجب أن يحتوي الرابط على أحرف وأرقام إنجليزية فقط');
+      return;
+    }
+
+    // Also validate full structure just in case, but relax the prefix part of the complex regex or just rely on alphanumeric check
+    // The complex regex required 2+ chars and specific structure. Let's simplify since we enforce alphanumeric.
+    if (value.length < 2) {
+      setDomainError('يجب أن يكون الرابط حرفين على الأقل');
+    } else {
+      setDomainError(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.academy_name || !formData.phone || !selectedCountry?.isoCode || !formData.field || !domainPrefix) {
       toast.error('يرجى ملء جميع الحقول المطلوبة');
       return;
     }
-    
+
     if (domainError) {
-        toast.error('يرجى تصحيح خطأ الرابط');
-        return;
+      toast.error('يرجى تصحيح خطأ الرابط');
+      return;
     }
 
+    setFormErrors({});
     const fullLink = domainPrefix + domainSuffix;
 
     setLoading(true);
@@ -98,16 +104,16 @@ export default function SetupPage() {
       };
 
       if (cachedEmail) {
-          payload.email = cachedEmail;
+        payload.email = cachedEmail;
       } else if (cachedPhone) {
-          payload.phone = cachedPhone;
+        payload.phone = cachedPhone;
       }
 
       await createAccountInfoAcademy(payload);
-      
+
       // Save academy link name to localStorage for subsequent login header
       localStorage.setItem('academy_link_name', fullLink);
-      
+
       toast.success('تم حفظ معلومات الأكاديمية بنجاح');
 
       // Auto login
@@ -115,36 +121,36 @@ export default function SetupPage() {
       let loginSuccess = false;
 
       if (password && (cachedEmail || cachedPhone)) {
-          console.log('Attempting auto-login...');
-          try {
-              const loginResponse = await login({
-                  email: cachedEmail || undefined,
-                  phone: cachedPhone || undefined,
-                  password: password
-              });
-              console.log('Auto-login successful', loginResponse);
+        console.log('Attempting auto-login...');
+        try {
+          const loginResponse = await login({
+            email: cachedEmail || undefined,
+            phone: cachedPhone || undefined,
+            password: password
+          });
+          console.log('Auto-login successful', loginResponse);
 
-              if (loginResponse.meta && loginResponse.meta.access_token) {
-                  const token = loginResponse.meta.access_token;
-                  document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
-                  localStorage.setItem('token', token);
-                  
-                  if (loginResponse.data) {
-                      localStorage.setItem('user_info', JSON.stringify({
-                          name: loginResponse.data.name,
-                          email: loginResponse.data.email || cachedEmail,
-                          phone: loginResponse.data.phone || cachedPhone,
-                          role: 'الادمن'
-                      }));
-                  }
-                  loginSuccess = true;
-              }
-          } catch (loginError) {
-              console.error('Auto login failed:', loginError);
-              toast.error('فشل تسجيل الدخول التلقائي. يرجى تسجيل الدخول يدوياً.');
+          if (loginResponse.meta && loginResponse.meta.access_token) {
+            const token = loginResponse.meta.access_token;
+            document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+            localStorage.setItem('token', token);
+
+            if (loginResponse.data) {
+              localStorage.setItem('user_info', JSON.stringify({
+                name: loginResponse.data.name,
+                email: loginResponse.data.email || cachedEmail,
+                phone: loginResponse.data.phone || cachedPhone,
+                role: 'الادمن'
+              }));
+            }
+            loginSuccess = true;
           }
+        } catch (loginError) {
+          console.error('Auto login failed:', loginError);
+          toast.error('فشل تسجيل الدخول التلقائي. يرجى تسجيل الدخول يدوياً.');
+        }
       } else {
-          console.log('Skipping auto-login: Missing credentials', { password: !!password, email: !!cachedEmail, phone: !!cachedPhone });
+        console.log('Skipping auto-login: Missing credentials', { password: !!password, email: !!cachedEmail, phone: !!cachedPhone });
       }
 
       // Clear sensitive data
@@ -154,55 +160,69 @@ export default function SetupPage() {
       const defaultSuffix = isLocal ? '.darab.academy.localhost:3000' : '.darab.academy';
 
       if (!loginSuccess) {
-           const tenantSuffix = process.env.NEXT_PUBLIC_TENANT_DOMAIN_SUFFIX || defaultSuffix;
-         const protocol = window.location.protocol; 
-         const tenantUrl = `${protocol}//${domainPrefix}${tenantSuffix}/auth/setup`; 
-         
-         console.log('Auto-login failed. Redirecting to tenant login:', tenantUrl);
-         window.location.href = tenantUrl;
-         return; 
+        const tenantSuffix = process.env.NEXT_PUBLIC_TENANT_DOMAIN_SUFFIX || defaultSuffix;
+        const protocol = window.location.protocol;
+        const tenantUrl = `${protocol}//${domainPrefix}${tenantSuffix}/auth/setup`;
+
+        console.log('Auto-login failed. Redirecting to tenant login:', tenantUrl);
+        triggerPageLoader(true);
+        window.location.href = tenantUrl;
+        return;
       }
 
       // Construct tenant URL
       const tenantSuffix = process.env.NEXT_PUBLIC_TENANT_DOMAIN_SUFFIX || defaultSuffix;
-      const dashboardPath = process.env.NEXT_PUBLIC_TENANT_DASHBOARD_PATH || '/academic/courses/categories';
+      const dashboardPath = process.env.NEXT_PUBLIC_TENANT_DASHBOARD_PATH || '/academic';
       const protocol = window.location.protocol; // http: or https:
-      
+
       // Get the token we just received
       const token = localStorage.getItem('token');
-      
+
       const tenantUrl = `${protocol}//${domainPrefix}${tenantSuffix}${dashboardPath}${token ? `?token=${token}` : ''}`;
-      
+
       console.log('Redirecting to tenant dashboard:', tenantUrl);
 
+      triggerPageLoader(true);
       window.location.href = tenantUrl;
     } catch (error: any) {
       console.error(error);
-      
+
       let handled = false;
 
       // Handle structured validation errors
-      if (error.error && typeof error.error === 'object') {
-        const errors = error.error;
-        
+      const validationErrors = error.errors || error.error;
+      if (validationErrors && typeof validationErrors === 'object') {
+        const newFormErrors: Record<string, string> = {};
+
         // Specifically handle link_academy error
-        if (errors.link_academy) {
-          const msg = Array.isArray(errors.link_academy) ? errors.link_academy[0] : errors.link_academy;
+        if (validationErrors.link_academy) {
+          const msg = Array.isArray(validationErrors.link_academy) ? validationErrors.link_academy[0] : validationErrors.link_academy;
           setDomainError(msg);
-          toast.error(msg);
           handled = true;
         }
-        
+
+        // Map backend fields to form fields
+        const fieldMapping: Record<string, string> = {
+          username: 'academy_name',
+          phone_academy: 'phone',
+          specialties: 'field'
+        };
+
         // Handle other field errors
-        Object.keys(errors).forEach(key => {
+        Object.keys(validationErrors).forEach(key => {
           if (key !== 'link_academy') {
-              const msg = Array.isArray(errors[key]) ? errors[key][0] : errors[key];
-              toast.error(msg);
-              handled = true;
+            const msg = Array.isArray(validationErrors[key]) ? validationErrors[key][0] : validationErrors[key];
+            const formField = fieldMapping[key] || key;
+            newFormErrors[formField] = msg;
+            handled = true;
           }
         });
+
+        if (Object.keys(newFormErrors).length > 0) {
+          setFormErrors(newFormErrors);
+        }
       }
-      
+
       if (!handled) {
         toast.error(error.message || 'حدث خطأ أثناء حفظ المعلومات');
       }
@@ -213,7 +233,7 @@ export default function SetupPage() {
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      <div className="bg-white rounded-[2rem] p-8 md:p-12 shadow-2xl animate-in slide-in-from-bottom-4 duration-500">
+      <div className="bg-white rounded-[2rem] p-6 sm:p-8 md:p-12 shadow-2xl animate-in slide-in-from-bottom-4 duration-500">
         <div className="text-center mb-12">
           <h1 className="text-3xl font-black mb-4">معلومات الاكاديمية</h1>
           <p className="text-gray-500 text-lg">أدخل معلومات الأكاديمية الخاصة بك</p>
@@ -230,8 +250,11 @@ export default function SetupPage() {
                 value={formData.academy_name}
                 onChange={handleChange}
                 placeholder="اسم الاكاديمية"
-                className="w-full p-4 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className={`w-full p-4 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 transition-all ${formErrors.academy_name ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'}`}
               />
+              {formErrors.academy_name && (
+                <p className="text-red-500 text-sm font-bold mt-1 text-right">{formErrors.academy_name}</p>
+              )}
             </div>
 
             {/* Mobile Number */}
@@ -243,8 +266,11 @@ export default function SetupPage() {
                 placeholder="ادخل رقم الجوال"
                 dir="ltr"
                 label="رقم جوال اساسي"
-                className="w-full text-left"
+                className={`w-full text-left ${formErrors.phone ? 'border-red-500' : ''}`}
               />
+              {formErrors.phone && (
+                <p className="text-red-500 text-sm font-bold mt-1 text-right">{formErrors.phone}</p>
+              )}
             </div>
 
             {/* Country */}
@@ -257,11 +283,11 @@ export default function SetupPage() {
             <div className="space-y-2 relative">
               <label className="block text-sm font-bold text-gray-700">المجال</label>
               <div className="relative">
-                <select 
+                <select
                   name="field"
                   value={formData.field}
                   onChange={handleChange}
-                  className="w-full p-4 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-gray-500 cursor-pointer transition-all"
+                  className={`w-full p-4 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 appearance-none text-gray-500 cursor-pointer transition-all ${formErrors.field ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'}`}
                 >
                   <option value="">ادخل مجال الاكاديمية</option>
                   <option value="educational">تعليمي</option>
@@ -270,22 +296,25 @@ export default function SetupPage() {
                 </select>
                 <ChevronDown className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
+              {formErrors.field && (
+                <p className="text-red-500 text-sm font-bold mt-1 text-right">{formErrors.field}</p>
+              )}
             </div>
           </div>
 
           {/* Academy Link */}
-          <div className="space-y-2">
+          <div className="space-y-2 w-full">
             <label className="block text-sm font-bold text-gray-700">لينك الاكاديمية</label>
-            <div className="relative flex items-center" dir="ltr">
-              <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
+            <div className={`relative flex items-stretch w-full overflow-hidden rounded-xl border bg-gray-50 focus-within:ring-2 focus-within:ring-blue-500 transition-all ${domainError ? 'border-red-500 focus-within:ring-red-500' : 'border-gray-200'}`} dir="ltr">
+              <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 w-4 h-4 sm:w-5 sm:h-5" />
               <input
                 type="text"
                 value={domainPrefix}
                 onChange={handleDomainChange}
                 placeholder="domain"
-                className={`flex-1 p-4 pl-12 border rounded-l-xl border-r-0 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-left ${domainError ? 'border-red-500 focus:ring-red-500' : ''}`}
+                className="flex-1 w-full min-w-0 py-3 sm:py-4 pl-9 sm:pl-10 pr-2 sm:pr-3 bg-transparent focus:outline-none text-left text-sm sm:text-base"
               />
-              <div className={`p-4 bg-gray-100 border border-l-0 rounded-r-xl text-gray-500 font-medium select-none flex items-center ${domainError ? 'border-red-500' : ''}`}>
+              <div className="px-2 sm:px-4 py-3 sm:py-4 bg-gray-100 border-l border-gray-200 text-gray-500 font-medium select-none flex items-center justify-center whitespace-nowrap text-xs sm:text-sm shrink-0">
                 {domainSuffix}
               </div>
             </div>

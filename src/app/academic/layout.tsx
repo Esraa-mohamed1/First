@@ -5,7 +5,8 @@ import Sidebar from '@/components/Academic/Sidebar';
 import Header from '@/components/Academic/Header';
 import { getProfileStatus } from '@/services/auth';
 import { AlertCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import { twMerge } from 'tailwind-merge';
 
 export default function AcademicLayout({
   children,
@@ -16,6 +17,7 @@ export default function AcademicLayout({
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
   const [isActive, setIsActive] = useState<boolean | null>(null);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -87,22 +89,28 @@ export default function AcademicLayout({
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFF] flex relative" dir="rtl">
+    <div className="min-h-screen bg-[#F0F2F5] flex relative" dir="rtl">
 
 
 
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-[45] lg:hidden backdrop-blur-sm transition-all"
-          onClick={() => setIsSidebarOpen(false)}
-        />
+      {!pathname.match(/\/courses\/.*\/student/) && (
+        <>
+          {isSidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/50 z-[45] lg:hidden backdrop-blur-sm transition-all"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
+
+          <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        </>
       )}
 
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-
-      <main className="flex-1 lg:mr-72 transition-all duration-300 w-full overflow-x-hidden">
-        <Header onMenuClick={() => setIsSidebarOpen(true)} />
-        <div className="p-8 md:p-12 max-w-[1800px] mx-auto">
+      <main className={twMerge("flex-1 transition-all duration-300 w-full overflow-x-hidden", !pathname.match(/\/courses\/.*\/student/) && "lg:mr-72")}>
+        {!pathname.match(/\/courses\/.*\/student/) && <Header onMenuClick={() => setIsSidebarOpen(true)} />}
+        <div className={twMerge(
+          !pathname.match(/\/courses\/.*\/student/) ? "p-8 md:p-12 max-w-[1800px] mx-auto" : ""
+        )}>
           {children}
         </div>
       </main>

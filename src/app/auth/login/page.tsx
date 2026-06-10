@@ -13,7 +13,7 @@ export default function AcademyLoginPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('phone');
+    const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
     const { selectedCountry } = useCountry();
     const [formData, setFormData] = useState({
         email: '',
@@ -39,7 +39,7 @@ export default function AcademyLoginPage() {
             try {
                 toast.success('تم تسجيل الدخول بجوجل بنجاح');
                 document.cookie = `token=google_simulated_token; path=/; max-age=86400; SameSite=Lax`;
-                router.push('/academic');
+                window.location.href = '/academic';
             } catch (error) {
                 toast.error('فشل تسجيل الدخول بجوجل');
             } finally {
@@ -53,14 +53,14 @@ export default function AcademyLoginPage() {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        
+
         // Sanitize phone input and show error if invalid chars
         if (name === 'phone') {
             const hasNonDigits = /\D/.test(value);
             const sanitizedValue = value.replace(/\D/g, '');
-            
+
             setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
-            
+
             // Handle error logic
             if (hasNonDigits) {
                 setErrors(prev => ({ ...prev, phone: 'يرجى إدخال أرقام فقط' }));
@@ -137,16 +137,24 @@ export default function AcademyLoginPage() {
                 localStorage.setItem('token', token);
 
                 if (response.data) {
+                    const userRole = (response.data as any).role || 'student';
                     localStorage.setItem('user_info', JSON.stringify({
                         name: response.data.name,
                         email: response.data.email,
                         phone: response.data.phone,
-                        role: 'الادمن'
+                        role: userRole,
                     }));
-                }
 
-                toast.success('تم تسجيل الدخول بنجاح');
-                router.push('/academic');
+                    toast.success('تم تسجيل الدخول بنجاح');
+                    
+                    if (userRole === 'admin') {
+                        window.location.href = '/academic';
+                    } else {
+                        window.location.href = '/student';
+                    }
+                } else {
+                    toast.error('فشل تسجيل الدخول: استجابة غير صالحة');
+                }
             } else {
                 toast.error('فشل تسجيل الدخول: استجابة غير صالحة');
             }
@@ -173,7 +181,7 @@ export default function AcademyLoginPage() {
                             <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14v6.5"></path></svg>
                         </div>
                         <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4">مرحبا بعودتك!</h1>
-                        <p className="text-gray-500 text-lg sm:text-xl font-bold">سجل دخولك لمتابعة إدارة أكاديميتك</p>
+                        <p className="text-gray-500 text-lg sm:text-xl font-bold">سجل دخولك لمتابعة رحلتك التعليمية</p>
                     </div>
 
                     <form onSubmit={handleLogin} className="space-y-8">
@@ -196,7 +204,7 @@ export default function AcademyLoginPage() {
                                     </div>
                                     <div className="flex items-center justify-between px-1">
                                         {errors.email ? <p className="text-red-500 text-xs font-bold">{errors.email}</p> : <div></div>}
-                                        <button 
+                                        <button
                                             type="button"
                                             onClick={toggleLoginMethod}
                                             className="text-[11px] font-black text-blue-600 hover:underline flex items-center gap-1 mt-0.5"
@@ -220,7 +228,7 @@ export default function AcademyLoginPage() {
                                     />
                                     <div className="flex items-center justify-between px-1">
                                         {errors.phone ? <p className="text-red-500 text-xs font-bold">{errors.phone}</p> : <div></div>}
-                                        <button 
+                                        <button
                                             type="button"
                                             onClick={toggleLoginMethod}
                                             className="text-[11px] font-black text-blue-600 hover:underline flex items-center gap-1 mt-0.5"
@@ -252,7 +260,7 @@ export default function AcademyLoginPage() {
                                     </button>
                                 </div>
                                 {errors.password && <p className="text-red-500 text-xs font-bold mr-1">{errors.password}</p>}
-                                
+
                                 {formData.password && (
                                     <div className="bg-[#f0f9ff]/50 p-3 rounded-2xl border border-blue-50 mt-3">
                                         <div className="flex flex-wrap gap-4 items-center justify-start" dir="rtl">
@@ -294,13 +302,13 @@ export default function AcademyLoginPage() {
                             >
                                 {isLoading ? (
                                     <>
-                                        <Loader2 className="animate-spin" size={22} />
+                                        <Loader2 className="animate-spin" size={24} />
                                         <span>جاري المعالجة...</span>
                                     </>
                                 ) : (
                                     <>
                                         <span>تسجيل الدخول</span>
-                                        <ArrowRight className="w-5 h-5 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                                        <ArrowRight className="w-5 h-14 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
                                     </>
                                 )}
                             </button>
@@ -317,9 +325,22 @@ export default function AcademyLoginPage() {
                                 </button>
                             )}
                         </div>
+
+                        <div className="text-center pt-4">
+                            <p className="text-gray-500 font-bold">
+                                ليس لديك حساب؟{' '}
+                                <button
+                                    type="button"
+                                    onClick={() => router.push('/auth/register')}
+                                    className="text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+                                >
+                                    أنشئ حساباً جديداً كطالب
+                                </button>
+                            </p>
+                        </div>
                     </form>
 
-               
+
                 </div>
             </div>
         </div>

@@ -18,8 +18,6 @@ function CreatePackageForm() {
 
     const [isLoading, setIsLoading] = useState(false);
     const [isInitialLoading, setIsInitialLoading] = useState(isEditMode);
-    const [isAddingFeature, setIsAddingFeature] = useState(false);
-    const [newFeatureTitle, setNewFeatureTitle] = useState('');
     const [availableFeatures, setAvailableFeatures] = useState<Feature[]>([]);
 
     // Features with values local state
@@ -56,25 +54,28 @@ function CreatePackageForm() {
             const pkg = await getPackageById(id);
             if (pkg) {
                 setFormData({
-                    titile: pkg.titile,
-                    description: pkg.description,
-                    price: pkg.price.toString(),
-                    duration_months: pkg.duration_months,
-                    is_active: pkg.is_active,
-                    max_students: pkg.max_students,
-                    max_instructors: pkg.max_instructors,
-                    max_courses: pkg.max_courses,
-                    custom_domains: pkg.custom_domains,
-                    video_hours: pkg.video_hours,
-                    features: pkg.features || [],
-                    trial_days: pkg.trial_days || 7,
-                    order: pkg.order || 0,
-                    is_popular: pkg.is_popular || false,
+                    titile: pkg.titile || '',
+                    description: pkg.desc || pkg.description || '',
+                    price: pkg.price?.toString() || '',
+                    duration_months: pkg.duration_months || 12,
+                    is_active: pkg.is_active ?? 1,
+                    max_students: pkg.max_students ?? 125,
+                    max_instructors: pkg.max_instructors ?? 25,
+                    max_courses: pkg.max_courses ?? 50,
+                    custom_domains: pkg.custom_domains ?? 35,
+                    video_hours: pkg.video_hours ?? 3,
+                    features: pkg.package_features || pkg.packageFeatures || pkg.features || [],
+                    trial_days: pkg.trial_days ?? 7,
+                    order: pkg.order ?? 2,
+                    is_popular: pkg.recomnd === 1 || pkg.is_popular || false,
                 });
 
-                // Note: If the backend already returns features with values in the package response,
-                // we should map them here. Assuming for now they might not be fully structured.
-                // If pkg.features is just string[], we can't easily get IDs/values without more info.
+                const fetchedFeatures = pkg.package_features || pkg.packageFeatures || pkg.features || [];
+                setSelectedFeatures(fetchedFeatures.map((f: any) => ({
+                    id: f.feature_id || f.id,
+                    title: f.lable || f.title || '',
+                    value: f.value || ''
+                })));
             } else {
                 toast.error('لم يتم العثور على الباقة');
                 router.push('/dashboard/packages');
@@ -114,27 +115,6 @@ function CreatePackageForm() {
         setSelectedFeatures(prev =>
             prev.map(f => f.id === id ? { ...f, value } : f)
         );
-    };
-
-    const handleAddFeature = async () => {
-        if (!newFeatureTitle.trim()) return;
-
-        setIsLoading(true);
-        try {
-            const response = await createFeature(newFeatureTitle);
-            if (response.status) {
-                toast.success('تم إضافة الميزة بنجاح');
-                setNewFeatureTitle('');
-                setIsAddingFeature(false);
-                fetchFeatures();
-            } else {
-                toast.error(response.message || 'حدث خطأ أثناء إضافة الميزة');
-            }
-        } catch (error: any) {
-            toast.error(error.message || 'حدث خطأ أثناء الاتصال بالخادم');
-        } finally {
-            setIsLoading(false);
-        }
     };
 
     const handleSave = async () => {
@@ -223,7 +203,7 @@ function CreatePackageForm() {
                                 <input
                                     type="text"
                                     placeholder="ادخل اسم الباقة"
-                                    value={formData.titile}
+                                    value={formData.titile || ''}
                                     onChange={(e) => handleInputChange('titile', e.target.value)}
                                     className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl p-4 text-right outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium"
                                 />
@@ -235,7 +215,7 @@ function CreatePackageForm() {
                             <textarea
                                 rows={4}
                                 placeholder="ادخل وصف قصير للباقة"
-                                value={formData.description}
+                                value={formData.description || ''}
                                 onChange={(e) => handleInputChange('description', e.target.value)}
                                 className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl p-4 text-right outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium resize-none"
                             ></textarea>
@@ -246,7 +226,7 @@ function CreatePackageForm() {
                                 <label className="block text-sm font-bold text-gray-700">مدة الاشتراك (بالشهور)</label>
                                 <div className="relative">
                                     <select
-                                        value={formData.duration_months}
+                                        value={formData.duration_months || 12}
                                         onChange={(e) => handleInputChange('duration_months', parseInt(e.target.value))}
                                         className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl p-4 text-right outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium appearance-none"
                                     >
@@ -266,7 +246,7 @@ function CreatePackageForm() {
                                 <input
                                     type="number"
                                     placeholder="ادخل سعر الباقة"
-                                    value={formData.price}
+                                    value={formData.price ?? ''}
                                     onChange={(e) => handleInputChange('price', e.target.value)}
                                     className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl p-4 text-right outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium"
                                 />
@@ -303,8 +283,8 @@ function CreatePackageForm() {
                                 <label className="block text-sm  text-gray-700">الحد الاقصي للطلاب النشطين</label>
                                 <input
                                     type="number"
-                                    value={formData.max_students}
-                                    onChange={(e) => handleInputChange('max_students', parseInt(e.target.value))}
+                                    value={formData.max_students ?? ''}
+                                    onChange={(e) => handleInputChange('max_students', e.target.value ? parseInt(e.target.value) : '')}
                                     className="w-full bg-white border border-gray-200 rounded-xl p-3 text-center font-bold outline-none focus:border-blue-500 transition-all"
                                 />
                             </div>
@@ -312,8 +292,8 @@ function CreatePackageForm() {
                                 <label className="block text-sm  text-gray-700">الحد الاقصي للمدربين</label>
                                 <input
                                     type="number"
-                                    value={formData.max_instructors}
-                                    onChange={(e) => handleInputChange('max_instructors', parseInt(e.target.value))}
+                                    value={formData.max_instructors ?? ''}
+                                    onChange={(e) => handleInputChange('max_instructors', e.target.value ? parseInt(e.target.value) : '')}
                                     className="w-full bg-white border border-gray-200 rounded-xl p-3 text-center font-bold outline-none focus:border-blue-500 transition-all"
                                 />
                             </div>
@@ -321,8 +301,8 @@ function CreatePackageForm() {
                                 <label className="block text-sm  text-gray-700">الحد الاقصي للدورات</label>
                                 <input
                                     type="number"
-                                    value={formData.max_courses}
-                                    onChange={(e) => handleInputChange('max_courses', parseInt(e.target.value))}
+                                    value={formData.max_courses ?? ''}
+                                    onChange={(e) => handleInputChange('max_courses', e.target.value ? parseInt(e.target.value) : '')}
                                     className="w-full bg-white border border-gray-200 rounded-xl p-3 text-center font-bold outline-none focus:border-blue-500 transition-all"
                                 />
                             </div>
@@ -333,8 +313,8 @@ function CreatePackageForm() {
                                 <label className="block text-sm text-gray-700">عدد الدومينات المخصصة</label>
                                 <input
                                     type="number"
-                                    value={formData.custom_domains}
-                                    onChange={(e) => handleInputChange('custom_domains', parseInt(e.target.value))}
+                                    value={formData.custom_domains ?? ''}
+                                    onChange={(e) => handleInputChange('custom_domains', e.target.value ? parseInt(e.target.value) : '')}
                                     className="w-full bg-white border border-gray-200 rounded-xl p-3 text-center font-bold outline-none focus:border-blue-500 transition-all"
                                 />
                             </div>
@@ -342,8 +322,8 @@ function CreatePackageForm() {
                                 <label className="block text-sm  text-gray-700">الحد الاقصي لساعات الفيديو</label>
                                 <input
                                     type="number"
-                                    value={formData.video_hours}
-                                    onChange={(e) => handleInputChange('video_hours', parseInt(e.target.value))}
+                                    value={formData.video_hours ?? ''}
+                                    onChange={(e) => handleInputChange('video_hours', e.target.value ? parseInt(e.target.value) : '')}
                                     className="w-full bg-white border border-gray-200 rounded-xl p-3 text-center font-bold outline-none focus:border-blue-500 transition-all"
                                 />
                             </div>
@@ -353,14 +333,7 @@ function CreatePackageForm() {
 
                 {/* Features */}
                 <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100 space-y-8">
-                    <div className="flex items-center justify-between">
-                        <button
-                            onClick={() => setIsAddingFeature(true)}
-                            className="flex items-center gap-2 text-blue-600 font-bold hover:bg-blue-50 px-4 py-2 rounded-xl transition-all"
-                        >
-                            <Plus size={20} />
-                            إضافة ميزة جديدة
-                        </button>
+                    <div className="flex items-center justify-end">
                         <h2 className="block text-lg text-gray-700">مميزات الباقة</h2>
                     </div>
 
@@ -395,7 +368,7 @@ function CreatePackageForm() {
                                             <input
                                                 type="text"
                                                 placeholder="مثال: غير محدود"
-                                                value={selectedFeature.value}
+                                                value={selectedFeature.value || ''}
                                                 onChange={(e) => handleFeatureValueChange(feature.id, e.target.value)}
                                                 className="w-full bg-white border border-blue-100 rounded-xl px-4 py-3 text-right text-sm font-bold outline-none focus:border-blue-500 transition-all placeholder:text-gray-300"
                                             />
@@ -418,8 +391,8 @@ function CreatePackageForm() {
                                 <label className="block text-xs font-bold text-gray-500">عدد أيام التجربة المجانية</label>
                                 <input
                                     type="number"
-                                    value={formData.trial_days}
-                                    onChange={(e) => handleInputChange('trial_days', parseInt(e.target.value))}
+                                    value={formData.trial_days ?? ''}
+                                    onChange={(e) => handleInputChange('trial_days', e.target.value ? parseInt(e.target.value) : '')}
                                     className="w-full bg-white border border-gray-200 rounded-xl p-3 text-center font-bold outline-none focus:border-blue-500 transition-all"
                                 />
                             </div>
@@ -427,8 +400,8 @@ function CreatePackageForm() {
                                 <label className="block text-xs font-bold text-gray-500">ترتيب الباقة</label>
                                 <input
                                     type="number"
-                                    value={formData.order}
-                                    onChange={(e) => handleInputChange('order', parseInt(e.target.value))}
+                                    value={formData.order ?? ''}
+                                    onChange={(e) => handleInputChange('order', e.target.value ? parseInt(e.target.value) : '')}
                                     className="w-full bg-white border border-gray-200 rounded-xl p-3 text-center font-bold outline-none focus:border-blue-500 transition-all"
                                 />
                             </div>
@@ -443,7 +416,7 @@ function CreatePackageForm() {
                                 <input
                                     type="checkbox"
                                     className="sr-only peer"
-                                    checked={formData.is_popular}
+                                    checked={formData.is_popular || false}
                                     onChange={(e) => handleInputChange('is_popular', e.target.checked)}
                                 />
                                 <div className="w-14 h-7 bg-blue-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
@@ -470,43 +443,6 @@ function CreatePackageForm() {
                     </button>
                 </div>
             </div>
-
-            {/* Add Feature Modal */}
-            {isAddingFeature && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsAddingFeature(false)}></div>
-                    <div className="relative w-full max-w-md bg-white rounded-[2rem] p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
-                        <h3 className="text-xl font-bold mb-6 text-right">إضافة ميزة جديدة</h3>
-                        <div className="space-y-4">
-                            <div className="space-y-2 text-right">
-                                <label className="block text-sm font-bold text-gray-700">عنوان الميزة</label>
-                                <input
-                                    type="text"
-                                    placeholder="مثال: تفعيل الدومين الخاص"
-                                    value={newFeatureTitle}
-                                    onChange={(e) => setNewFeatureTitle(e.target.value)}
-                                    className="w-full bg-gray-50 border border-gray-100 rounded-xl p-4 text-right outline-none focus:border-blue-500 transition-all"
-                                />
-                            </div>
-                            <div className="flex gap-4 pt-4">
-                                <button
-                                    onClick={() => setIsAddingFeature(false)}
-                                    className="flex-1 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-all"
-                                >
-                                    إلغاء
-                                </button>
-                                <button
-                                    onClick={handleAddFeature}
-                                    disabled={isLoading || !newFeatureTitle.trim()}
-                                    className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all disabled:opacity-50"
-                                >
-                                    إضافة
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

@@ -1,9 +1,10 @@
 import academyApi from '@/lib/academy-api';
 import { ApiResponse, User } from '@/types/api';
 
-export const getUsers = async (): Promise<User[]> => {
+export const getUsers = async (role?: string): Promise<User[]> => {
   try {
-    const response = await academyApi.get<ApiResponse<User[]>>('users');
+    const url = role ? `users?role=${role}` : 'users';
+    const response = await academyApi.get<ApiResponse<User[]>>(url);
     return response.data.data || [];
   } catch (error: any) {
     console.error('Failed to get users:', error);

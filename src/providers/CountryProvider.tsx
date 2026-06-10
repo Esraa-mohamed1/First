@@ -21,13 +21,11 @@ export const CountryProvider = ({ children }: { children: ReactNode }) => {
   }, [countries]);
 
   useEffect(() => {
-    // Attempt to parse local preference safely to prevent crashes
     try {
       const storedData = localStorage.getItem(STORAGE_KEY);
       if (storedData) {
         const parsedCountry = JSON.parse(storedData) as Country;
 
-        // Verify country still exists in dataset and hydrate with latest updated fields (e.g. Arabic names, flag URLs) to avoid stale cache!
         const exists = countries.find((c) => c.isoCode === parsedCountry.isoCode);
         if (exists) {
           setSelectedCountryState(exists);

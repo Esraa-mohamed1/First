@@ -72,7 +72,7 @@ export default function SettingsCenterPage() {
           title: 'الدومين المخصص', 
           desc: 'ربط نطاقك الخاص بمنصة الأكاديمية', 
           icon: Globe, 
-          href: '#',
+          href: '/academic/domain',
           color: 'indigo'
         },
       ]

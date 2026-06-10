@@ -1,6 +1,6 @@
 'use client';
 
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, TrendingUp, TrendingDown } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
 interface StatCardProps {
@@ -15,6 +15,14 @@ interface StatCardProps {
 }
 
 const colors = {
+  blue: 'text-blue-600',
+  orange: 'text-orange-600',
+  purple: 'text-purple-600',
+  green: 'text-green-600',
+  red: 'text-red-600',
+};
+
+const iconBg = {
   blue: 'bg-blue-50 text-blue-600',
   orange: 'bg-orange-50 text-orange-600',
   purple: 'bg-purple-50 text-purple-600',
@@ -22,35 +30,35 @@ const colors = {
   red: 'bg-red-50 text-red-600',
 };
 
-const iconBg = {
-  blue: 'bg-blue-100',
-  orange: 'bg-orange-100',
-  purple: 'bg-purple-100',
-  green: 'bg-green-100',
-  red: 'bg-red-100',
-};
-
 const StatCard = ({ title, value, trend, icon: Icon, color }: StatCardProps) => {
   return (
-    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between h-full min-h-[160px]">
-      <div className="flex items-center justify-between mb-4">
-        <div className="text-right">
-            <h3 className="text-sm font-bold text-gray-400 mb-1">{title}</h3>
-            <p className="text-2xl font-black text-gray-900 leading-tight">{value}</p>
+    <div className="bg-white p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between h-full min-h-[140px] md:min-h-[155px] relative">
+      <div className="flex items-start justify-between gap-4 mb-3 relative z-10 w-full">
+        {/* Right side: text details (flexible and won't overflow) */}
+        <div className="text-right space-y-1 flex-1 min-w-0">
+          <h3 className="text-xs font-bold text-gray-500 whitespace-normal break-words leading-tight">{title}</h3>
+          <p className="text-xl md:text-2xl font-black text-gray-900 leading-none mt-1">{value}</p>
         </div>
-        <div className={twMerge("w-14 h-14 rounded-2xl flex items-center justify-center transition-all", iconBg[color])}>
-          <Icon size={28} className={colors[color].split(' ')[1]} />
+        {/* Left side: circular icon container (larger size) */}
+        <div className={twMerge("w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shrink-0 shadow-sm transition-all duration-300", iconBg[color])}>
+          <Icon className="w-6 h-6 md:w-7 md:h-7" />
         </div>
       </div>
       
       {trend && (
-        <div className="flex items-center gap-2 mt-auto self-end">
-          <span className={twMerge(
-            "text-xs font-black",
-            trend.isPositive ? "text-green-500" : "text-red-500"
+        <div className="flex items-center gap-1 mt-auto self-start relative z-10">
+          <div className={twMerge(
+            "flex items-center gap-1 font-bold text-[11px] md:text-xs",
+            trend.isPositive ? "text-emerald-500" : "text-rose-500"
           )}>
-            {trend.isPositive ? '↑' : '↓'} {trend.value}% زيادة من أمس
-          </span>
+            {trend.isPositive ? (
+              <TrendingUp className="w-3.5 h-3.5" />
+            ) : (
+              <TrendingDown className="w-3.5 h-3.5" />
+            )}
+            <span>{trend.value}%</span>
+            <span className="text-gray-400 font-medium">زيادة عن أمس</span>
+          </div>
         </div>
       )}
     </div>
@@ -58,3 +66,4 @@ const StatCard = ({ title, value, trend, icon: Icon, color }: StatCardProps) => 
 };
 
 export default StatCard;
+

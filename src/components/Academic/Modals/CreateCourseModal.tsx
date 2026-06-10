@@ -1,27 +1,17 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import React from 'react';
 import { 
   X, 
-  Save, 
-  ArrowRight, 
-  Upload, 
-  Loader2, 
-  ChevronDown, 
-  ChevronUp, 
   Eye, 
   Send,
-  Plus,
-  Video,
-  FileText,
-  Monitor,
-  Trash2,
-  GripVertical
 } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { createCourse, getCategories, getCourse, updateCourse } from '@/services/courses';
-import { getProfileStatus, getMyUsageLimit } from '@/services/auth';
+
+import { useCreateCourseModal } from './hooks/useCreateCourseModal';
+import { CreateCourseModalErrorBanner } from './components/CreateCourseModalErrorBanner';
+import { CreateCourseModalInfoTab } from './components/CreateCourseModalInfoTab';
+import { CreateCourseModalContentTab } from './components/CreateCourseModalContentTab';
+import { CreateCourseModalPricingTab } from './components/CreateCourseModalPricingTab';
 
 interface CreateCourseModalProps {
   isOpen: boolean;
@@ -31,114 +21,46 @@ interface CreateCourseModalProps {
 }
 
 const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: CreateCourseModalProps) => {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [activeTab, setActiveTab] = useState<'info' | 'content' | 'pricing'>('info');
-  
-  // Basic Info States
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('');
-  const [categories, setCategories] = useState<any[]>([]);
-  const [description, setDescription] = useState('');
-  const [whatYouWillLearn, setWhatYouWillLearn] = useState('');
-  const [whoIsThisFor, setWhoIsThisFor] = useState('');
-  
-  // Accordion States
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    description: true,
-    learning: false,
-    audience: false
-  });
-
-  // Image Upload State
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Pricing Step States
-  const [pricingType, setPricingType] = useState<'free' | 'paid'>('paid');
-  const [price, setPrice] = useState('');
-  const [status, setStatus] = useState<'published' | 'draft'>('draft');
-
-  // Course Content State (Mock for now to match UI)
-  const [units, setUnits] = useState<any[]>([]);
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    if (isOpen) {
-      const fetchInitialData = async () => {
-        try {
-          const cats = await getCategories();
-          setCategories(cats);
-
-          if (courseId) {
-            const course = await getCourse(courseId);
-            setTitle(course.title || '');
-            setCategory(course.category_id?.toString() || '');
-            setDescription(course.description || '');
-            setWhatYouWillLearn((course as any).what_to_learn || (course as any).what_you_will_learn || '');
-            setWhoIsThisFor((course as any).target_audience || (course as any).who_is_this_for || '');
-            setPricingType((course as any).price_type || (Number(course.price) === 0 ? 'free' : 'paid'));
-            setStatus(course.status || 'draft');
-            setPrice(course.price?.toString() || '');
-            if (course.image) setPreviewUrl(course.image);
-            // In a real app, units would be fetched here
-          }
-        } catch (error) {
-          console.error('Failed to fetch initial data:', error);
-        }
-      };
-      fetchInitialData();
-    }
-  }, [isOpen, courseId]);
+  const {
+    activeTab,
+    setActiveTab,
+    currentUser,
+    instructors,
+    selectedInstructor,
+    setSelectedInstructor,
+    title,
+    setTitle,
+    category,
+    setCategory,
+    categories,
+    description,
+    setDescription,
+    whatYouWillLearn,
+    setWhatYouWillLearn,
+    whoIsThisFor,
+    setWhoIsThisFor,
+    openSections,
+    toggleSection,
+    previewUrl,
+    fileInputRef,
+    handleFileChange,
+    pricingType,
+    setPricingType,
+    price,
+    setPrice,
+    currency,
+    setCurrency,
+    setStatus,
+    units,
+    isSubmitting,
+    errors,
+    setErrors,
+    apiErrorMessages,
+    setApiErrorMessages,
+    handleSave,
+  } = useCreateCourseModal({ isOpen, onClose, courseId, initialCourseType });
 
   if (!isOpen) return null;
-
-  const toggleSection = (section: string) => {
-    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setSelectedFile(file);
-      const objectUrl = URL.createObjectURL(file);
-      setPreviewUrl(objectUrl);
-    }
-  };
-
-  const handleSave = async () => {
-    setIsSubmitting(true);
-    try {
-      const payload: any = {
-        title,
-        category_id: category,
-        description,
-        what_you_will_learn: whatYouWillLearn,
-        who_is_this_for: whoIsThisFor,
-        price: pricingType === 'free' ? 0 : Number(price),
-        status,
-        type: initialCourseType || 'recorded',
-        price_type: pricingType,
-        image: selectedFile || undefined,
-      };
-
-      if (courseId) {
-        await updateCourse(courseId, payload);
-        toast.success('تم تحديث الدورة بنجاح');
-      } else {
-        await createCourse(payload);
-        toast.success('تم إنشاء الدورة بنجاح');
-      }
-      onClose();
-    } catch (error: any) {
-      toast.error(error?.message || 'فشل الحفظ');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/40 backdrop-blur-sm" dir="rtl">
@@ -187,238 +109,61 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
           </div>
 
           <div className="px-10 pb-10">
+            {/* API Error Alert Banner */}
+            <CreateCourseModalErrorBanner
+              apiErrorMessages={apiErrorMessages}
+              setApiErrorMessages={setApiErrorMessages}
+            />
+
             <div className="bg-white rounded-[24px] p-8 min-h-[600px] shadow-sm border border-gray-50">
-              
               {activeTab === 'info' && (
-                <div className="space-y-8">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                    {/* Right Side: Basic Info */}
-                    <div className="space-y-6">
-                      <div className="space-y-2">
-                        <label className="block text-sm font-black text-gray-900">اسم الدورة <span className="text-red-500">*</span></label>
-                        <input
-                          type="text"
-                          value={title}
-                          onChange={(e) => setTitle(e.target.value)}
-                          placeholder="ادخل اسم الدورة"
-                          className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="block text-sm font-black text-gray-900">صورة الدورة <span className="text-red-500">*</span></label>
-                        <div
-                          className="border-2 border-dashed border-gray-100 rounded-[24px] p-12 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-blue-600 transition-all min-h-[320px] relative overflow-hidden bg-gray-50/30"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-                          {previewUrl ? (
-                            <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
-                          ) : (
-                            <>
-                              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                                <Upload className="text-gray-400 group-hover:text-blue-600" size={32} />
-                              </div>
-                              <div className="text-center">
-                                <p className="font-black text-gray-900">اضف صورة الدورة</p>
-                                <p className="text-xs font-bold text-gray-400 mt-2">صورة غلاف دورة : 1270x820</p>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Left Side: Accordion Sections */}
-                    <div className="space-y-4">
-                      {/* Description Section */}
-                      <div className="border border-gray-100 rounded-[20px] overflow-hidden bg-white shadow-sm">
-                        <button 
-                          onClick={() => toggleSection('description')}
-                          className="w-full p-5 flex items-center justify-between font-black text-gray-900 hover:bg-gray-50/50 transition-all"
-                        >
-                          <span>وصف الدورة</span>
-                          {openSections.description ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                        </button>
-                        {openSections.description && (
-                          <div className="p-5 pt-0">
-                            <textarea
-                              value={description}
-                              onChange={(e) => setDescription(e.target.value)}
-                              placeholder="ادخل وصف الدورة"
-                              className="w-full p-4 bg-[#F8FAFC] border border-gray-50 rounded-xl outline-none focus:border-blue-600 font-bold min-h-[150px] text-right resize-none transition-all"
-                            />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* What You Will Learn Section */}
-                      <div className="border border-gray-100 rounded-[20px] overflow-hidden bg-white shadow-sm">
-                        <button 
-                          onClick={() => toggleSection('learning')}
-                          className="w-full p-5 flex items-center justify-between font-black text-gray-900 hover:bg-gray-50/50 transition-all"
-                        >
-                          <span>ماذا تتعلم</span>
-                          {openSections.learning ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                        </button>
-                        {openSections.learning && (
-                          <div className="p-5 pt-0">
-                            <textarea
-                              value={whatYouWillLearn}
-                              onChange={(e) => setWhatYouWillLearn(e.target.value)}
-                              placeholder="ماذا تتعلم في هذه الدورة ؟"
-                              className="w-full p-4 bg-[#F8FAFC] border border-gray-50 rounded-xl outline-none focus:border-blue-600 font-bold min-h-[150px] text-right resize-none transition-all"
-                            />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Who Is This For Section */}
-                      <div className="border border-gray-100 rounded-[20px] overflow-hidden bg-white shadow-sm">
-                        <button 
-                          onClick={() => toggleSection('audience')}
-                          className="w-full p-5 flex items-center justify-between font-black text-gray-900 hover:bg-gray-50/50 transition-all"
-                        >
-                          <span>لمن هذه الدورة</span>
-                          {openSections.audience ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                        </button>
-                        {openSections.audience && (
-                          <div className="p-5 pt-0">
-                            <textarea
-                              value={whoIsThisFor}
-                              onChange={(e) => setWhoIsThisFor(e.target.value)}
-                              placeholder="اذكر لمن تكون هذه الدورة ؟"
-                              className="w-full p-4 bg-[#F8FAFC] border border-gray-50 rounded-xl outline-none focus:border-blue-600 font-bold min-h-[150px] text-right resize-none transition-all"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Bottom Actions */}
-                  <div className="flex items-center gap-4 pt-10">
-                    <button 
-                      onClick={handleSave}
-                      disabled={isSubmitting}
-                      className="flex-1 max-w-[280px] flex items-center justify-center gap-3 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 hover:brightness-110 active:scale-95 transition-all disabled:opacity-70"
-                    >
-                      {isSubmitting ? <Loader2 className="animate-spin" /> : <Save size={20} />}
-                      حفظ
-                    </button>
-                    <button 
-                      onClick={onClose}
-                      className="flex-1 max-w-[280px] flex items-center justify-center gap-3 py-4 bg-gray-100 text-gray-600 font-black rounded-2xl hover:bg-gray-200 active:scale-95 transition-all"
-                    >
-                      <ArrowRight size={20} className="rotate-180" />
-                      عودة
-                    </button>
-                  </div>
-                </div>
+                <CreateCourseModalInfoTab
+                  title={title}
+                  setTitle={setTitle}
+                  category={category}
+                  setCategory={setCategory}
+                  categories={categories}
+                  errors={errors}
+                  setErrors={setErrors}
+                  currentUser={currentUser}
+                  instructors={instructors}
+                  selectedInstructor={selectedInstructor}
+                  setSelectedInstructor={setSelectedInstructor}
+                  previewUrl={previewUrl}
+                  fileInputRef={fileInputRef}
+                  handleFileChange={handleFileChange}
+                  description={description}
+                  setDescription={setDescription}
+                  whatYouWillLearn={whatYouWillLearn}
+                  setWhatYouWillLearn={setWhatYouWillLearn}
+                  whoIsThisFor={whoIsThisFor}
+                  setWhoIsThisFor={setWhoIsThisFor}
+                  openSections={openSections}
+                  toggleSection={toggleSection}
+                  handleSave={handleSave}
+                  isSubmitting={isSubmitting}
+                  onClose={onClose}
+                />
               )}
 
               {activeTab === 'content' && (
-                <div className="space-y-8">
-                  {/* Title and Summary */}
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-black text-gray-900">أساسيات تصميم تجربة المستخدم (UX/UI)</h2>
-                    <div className="bg-gray-50 px-6 py-3 rounded-xl border border-gray-100 flex items-center gap-8">
-                       <div className="flex items-center gap-2">
-                          <span className="text-gray-400 font-bold text-sm">الاجمالي {units.length} وحدة</span>
-                          <div className="w-[1px] h-4 bg-gray-200"></div>
-                          <span className="text-gray-900 font-black">0 دروس</span>
-                       </div>
-                    </div>
-                  </div>
-
-                  {/* Add Unit Button */}
-                  <button className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-black shadow-lg shadow-blue-500/20 hover:brightness-110 transition-all">
-                    <Plus size={20} />
-                    اضافة وحدة
-                  </button>
-
-                  {/* Units List (Empty State Placeholder matching image) */}
-                  <div className="space-y-4">
-                     <div className="border border-gray-100 rounded-[24px] p-6 bg-white">
-                        <div className="flex items-center justify-between mb-8">
-                           <div className="flex items-center gap-4">
-                              <div className="text-gray-400 cursor-grab"><GripVertical size={20} /></div>
-                              <h3 className="text-lg font-black text-gray-900">الوحدة الأولي : مقدمة في تجربة وواجهة المستخدم</h3>
-                           </div>
-                           <div className="flex items-center gap-2">
-                              <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"><X size={18} className="rotate-45" /></button> {/* Edit icon placeholder */}
-                              <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"><ChevronDown size={20} /></button>
-                           </div>
-                        </div>
-
-                        {/* Add Lesson Placeholder */}
-                        <div className="border-2 border-dashed border-gray-100 rounded-2xl p-6 flex items-center justify-center gap-3 text-gray-400 font-bold cursor-pointer hover:border-blue-600 hover:text-blue-600 transition-all">
-                           <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-50">
-                              <Plus size={18} />
-                           </div>
-                           اضف درس جديد
-                        </div>
-                     </div>
-                  </div>
-                </div>
+                <CreateCourseModalContentTab
+                  units={units}
+                />
               )}
 
               {activeTab === 'pricing' && (
-                <div className="max-w-2xl mx-auto space-y-10 pt-10">
-                   <div className="text-center space-y-2">
-                      <h2 className="text-3xl font-black text-gray-900">تحديد سعر الدورة</h2>
-                      <p className="text-gray-400 font-bold">اختر خطة التسعير المناسبة لدورتك</p>
-                   </div>
-
-                   <div className="grid grid-cols-2 gap-6">
-                      <div 
-                        onClick={() => setPricingType('free')}
-                        className={`p-10 rounded-[32px] border-2 cursor-pointer transition-all text-center space-y-4 ${pricingType === 'free' ? 'border-blue-600 bg-blue-50/30' : 'border-gray-100 bg-white hover:border-blue-200'}`}
-                      >
-                         <div className={`w-16 h-16 rounded-2xl mx-auto flex items-center justify-center ${pricingType === 'free' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600'}`}>
-                            <Monitor size={32} />
-                         </div>
-                         <h3 className="text-xl font-black text-gray-900">مجاني</h3>
-                         <p className="text-sm font-bold text-gray-400">الدورة متاحة للجميع بدون مقابل مادي</p>
-                      </div>
-
-                      <div 
-                        onClick={() => setPricingType('paid')}
-                        className={`p-10 rounded-[32px] border-2 cursor-pointer transition-all text-center space-y-4 ${pricingType === 'paid' ? 'border-blue-600 bg-blue-50/30' : 'border-gray-100 bg-white hover:border-blue-200'}`}
-                      >
-                         <div className={`w-16 h-16 rounded-2xl mx-auto flex items-center justify-center ${pricingType === 'paid' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600'}`}>
-                            <FileText size={32} />
-                         </div>
-                         <h3 className="text-xl font-black text-gray-900">مدفوع</h3>
-                         <p className="text-sm font-bold text-gray-400">حدد سعراً للدورة ليتمكن الطلاب من شرائها</p>
-                      </div>
-                   </div>
-
-                   {pricingType === 'paid' && (
-                     <div className="space-y-4 animate-in slide-in-from-top-4 duration-300">
-                        <label className="block text-sm font-black text-gray-900">سعر الدورة</label>
-                        <div className="relative">
-                          <input
-                            type="number"
-                            value={price}
-                            onChange={(e) => setPrice(e.target.value)}
-                            placeholder="0.00"
-                            className="w-full p-5 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-left transition-all pl-16"
-                          />
-                          <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-gray-400">USD</span>
-                        </div>
-                     </div>
-                   )}
-
-                   <div className="flex justify-center pt-10">
-                      <button 
-                        onClick={handleSave}
-                        className="w-full max-w-[400px] py-5 bg-blue-600 text-white font-black rounded-2xl shadow-2xl shadow-blue-500/20 hover:brightness-110 active:scale-95 transition-all"
-                      >
-                        حفظ بيانات التسعير
-                      </button>
-                   </div>
-                </div>
+                <CreateCourseModalPricingTab
+                  pricingType={pricingType}
+                  setPricingType={setPricingType}
+                  price={price}
+                  setPrice={setPrice}
+                  currency={currency}
+                  setCurrency={setCurrency}
+                  errors={errors}
+                  setErrors={setErrors}
+                  handleSave={handleSave}
+                />
               )}
             </div>
           </div>

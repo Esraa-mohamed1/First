@@ -145,7 +145,7 @@ export default function CategoryCoursesPage({ params }: { params: Promise<{ id: 
             <input
               type="text"
               placeholder="البحث بالأسم"
-              className="w-full bg-white border border-gray-100 rounded-2xl py-3.5 pr-12 pl-4 text-sm font-bold outline-none focus:border-blue-500 shadow-sm transition-all"
+              className="w-full bg-white border border-gray-100 rounded-2xl py-3.5 pr-12 pl-4 text-sm font-bold outline-none focus:border-blue-500 shadow-sm transition-all text-gray-900"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -155,7 +155,7 @@ export default function CategoryCoursesPage({ params }: { params: Promise<{ id: 
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="appearance-none bg-white border border-gray-100 px-8 py-3.5 rounded-2xl text-sm font-black text-gray-500 shadow-sm hover:bg-gray-50 transition-all outline-none"
+              className="appearance-none bg-white border border-gray-100 px-8 py-3.5 rounded-2xl text-sm font-black text-gray-900 shadow-sm hover:bg-gray-50 transition-all outline-none"
             >
               <option value="all">كل الحالات</option>
               <option value="published">منشورة</option>
@@ -168,7 +168,7 @@ export default function CategoryCoursesPage({ params }: { params: Promise<{ id: 
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="appearance-none bg-white border border-gray-100 px-8 py-3.5 rounded-2xl text-sm font-black text-gray-500 shadow-sm hover:bg-gray-50 transition-all outline-none"
+              className="appearance-none bg-white border border-gray-100 px-8 py-3.5 rounded-2xl text-sm font-black text-gray-900 shadow-sm hover:bg-gray-50 transition-all outline-none"
             >
               <option value="all">كل الأنواع</option>
               <option value="recorded">مسجلة</option>

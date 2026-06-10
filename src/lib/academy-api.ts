@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { unwrapEncryptedResponseData } from './decryption';
 
 const academyApi = axios.create({
   baseURL: 'https://api.darab.academy/api/academy/', 
@@ -42,6 +43,8 @@ academyApi.interceptors.request.use(
 
 academyApi.interceptors.response.use(
   (response) => {
+    response.data = unwrapEncryptedResponseData(response.data);
+
     if (response.data && response.data.success === false && response.data.status === 401) {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token');

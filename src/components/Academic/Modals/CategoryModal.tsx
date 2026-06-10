@@ -91,7 +91,7 @@ const CategoryModal = ({ isOpen, onClose, category, onSuccess }: CategoryModalPr
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="مثال: التصوير الفوتوغرافي، البرمجة..."
-              className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-right transition-all"
+              className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-right transition-all text-gray-900"
               autoFocus
             />
           </div>

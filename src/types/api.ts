@@ -28,6 +28,7 @@ export interface Package {
   video_hours: number;
   features: any[];
   package_features?: any[];
+  packageFeatures?: any[];
   trial_days?: number;
   order?: number;
   recomnd?: number; 
@@ -70,6 +71,8 @@ export interface Lesson {
   duration?: number;
   is_free: boolean;
   order: number;
+  video_url?: string;
+  embed_url?: string;
 }
 
 export interface Unit {
@@ -84,10 +87,11 @@ export interface Unit {
 export interface Course {
   id: number;
   title: string;
+  slug?: string;
   description: string;
   category?: string; 
   category_id?: number | null;
-  instructor?: string; 
+  instructor?: any; 
   user_id: number;
   price: string | number; 
   final_price: string | number;
@@ -97,12 +101,25 @@ export interface Course {
   status: 'published' | 'draft';
   type: string;
   units?: Unit[];
+  chapters?: Unit[];
+  infos?: any[];
+  what_you_will_learn?: string;
+  what_you_learn?: string;
+  target_audience?: string;
+  currency?: string;
+  instructor_name?: string;
+  is_enrolled?: boolean;
+  receiverAccounts?: { methodId: number; currency: string }[];
+  receiver_accounts?: { method_id: number; currency: string }[];
+  coach?: string;
+  payment_methods?: any[];
   created_at?: string;
   updated_at?: string;
 }
 
 export interface CreateCoursePayload {
   title: string;
+  slug?: string;
   user_id: string | number;
   type: string;
   price_type: 'free' | 'paid';
@@ -112,7 +129,12 @@ export interface CreateCoursePayload {
   image?: File;
   category_id?: string | number;
   description: string;
+  currency?: 'EGP' | 'SAR' | 'USD';
+  receiverAccounts?: { methodId: number; currency: string }[];
+  receiver_accounts?: { method_id: number; currency: string }[];
+  coach?: string;
 }
+
 
 export interface CreateUnitPayload {
   course_id: number;
@@ -129,6 +151,9 @@ export interface CreateLessonPayload {
   video_id?: string;
   file_url?: string;
   library_id?: string;
+  video_url?: string;
+  thumbnail_url?: string;
+  embed_url?: string;
   order?: number;
   file_size_mb?: number;
   is_free: boolean;
@@ -137,6 +162,7 @@ export interface CreateLessonPayload {
 export interface User {
   id: number;
   name: string;
+  fullName?: string;
   email: string;
   phone?: string;
   role?: string;
@@ -150,4 +176,21 @@ export interface ApiResponse<T> {
   success?: boolean;
   message: string;
   data: T;
+  meta?: {
+    access_token?: string;
+    token_type?: string;
+    [key: string]: any;
+  };
+}
+
+export interface ReceiverAccount {
+  id: number;
+  name: string;
+  key: string;
+  logo: string;
+  country_code: string;
+  country_name: string;
+  is_active: boolean;
+  created_at: string | null;
+  updated_at: string | null;
 }

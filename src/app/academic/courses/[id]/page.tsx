@@ -1,21 +1,52 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'next/navigation';
-import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye, Share } from 'lucide-react';
-import { getCourse, deleteUnit, deleteLesson, createUnit, updateCourse } from '@/services/courses';
-import { Course, Unit, Lesson } from '@/types/api';
+import { useParams, useRouter } from 'next/navigation';
+import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye } from 'lucide-react';
+import { getCourse, deleteUnit, deleteLesson, createUnit, updateCourse, getCategories } from '@/services/courses';
+import { getProfileStatus } from '@/services/auth';
+import { getUsers } from '@/services/users';
+import { Course, Unit, Lesson, User } from '@/types/api';
+import { AcademyPaymentMethod, PaymentMethod } from '@/types/payment';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
 import EditUnitModal from '@/components/Academic/Modals/EditUnitModal';
 import EditLessonModal from '@/components/Academic/Modals/EditLessonModal';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+import QuillEditor from '@/components/Academic/QuillEditor';
+import { CoachField } from '@/components/course/CoachField';
+import { CourseStatusToggle } from '@/components/course/CourseStatusToggle';
+import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdown';
+import { PaymentMethodValueInput } from '@/components/payment/PaymentMethodValueInput';
+import { showAlert } from '@/lib/sweetalert';
+import { getUserPaymentInfos, UserPaymentInfo } from '@/services/finance';
+import { getLogoUrl } from '@/lib/utils';
+
+const MySwal = withReactContent(Swal);
 
 export default function CourseDetailsPage() {
+  const router = useRouter();
   const params = useParams();
   const id = params.id as string;
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedUnits, setExpandedUnits] = useState<number[]>([]);
+  const [academyPaymentMethods, setAcademyPaymentMethods] = useState<UserPaymentInfo[]>([]);
+
+  // Dynamically compute active methods based on saved settings
+  const activeMethods: PaymentMethod[] = academyPaymentMethods.map(m => ({
+    id: m.id.toString(),
+    name: `${m.name} (${m.currency})`,
+    type: 'account_number' as const,
+    icon: 'credit-card',
+    isActive: true
+  }));
+  
+  // Global Data
+  const [categories, setCategories] = useState<any[]>([]);
+  const [instructors, setInstructors] = useState<User[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   
   // Inline Add Unit State
   const [isAddingUnit, setIsAddingUnit] = useState(false);
@@ -37,17 +68,86 @@ export default function CourseDetailsPage() {
   // Tabs State
   const [activeTab, setActiveTab] = useState<'info' | 'content' | 'pricing'>('info');
 
+  // Course Status
+  const [status, setStatus] = useState<'published' | 'draft'>('draft');
+  const [coachName, setCoachName] = useState('');
+  const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<AcademyPaymentMethod[]>([]);
+
   // Info Tab Form State
   const [courseInfo, setCourseInfo] = useState({
     title: '',
     description: '',
-    what_to_learn: '',
     target_audience: '',
+    category_id: '',
+    user_id: '',
   });
+  
+  interface CustomSection {
+    id: string;
+    title: string;
+    items: string[];
+  }
+  const [customSections, setCustomSections] = useState<CustomSection[]>([
+    { id: 'what_you_will_learn', title: 'ماذا ستتعلم؟', items: [''] }
+  ]);
+  
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [expandedInfoSections, setExpandedInfoSections] = useState<string[]>(['description']);
+
+  // Pricing State
+  const [pricingType, setPricingType] = useState<'free' | 'paid'>('paid');
+  const [price, setPrice] = useState('');
+  const [currency, setCurrency] = useState<'EGP' | 'SAR'>('SAR');
+  const [isSavingPricing, setIsSavingPricing] = useState(false);
+
+
+
+  const handleAddSectionItem = (sectionId: string) => {
+    setCustomSections(prev => prev.map(sec => 
+      sec.id === sectionId ? { ...sec, items: [...sec.items, ''] } : sec
+    ));
+  };
+
+  const handleUpdateSectionItem = (sectionId: string, itemIndex: number, value: string) => {
+    setCustomSections(prev => prev.map(sec => {
+      if (sec.id === sectionId) {
+        const newItems = [...sec.items];
+        newItems[itemIndex] = value;
+        return { ...sec, items: newItems };
+      }
+      return sec;
+    }));
+  };
+
+  const handleRemoveSectionItem = (sectionId: string, itemIndex: number) => {
+    setCustomSections(prev => prev.map(sec => {
+      if (sec.id === sectionId) {
+        const newItems = sec.items.filter((_, i) => i !== itemIndex);
+        return { ...sec, items: newItems.length > 0 ? newItems : [''] };
+      }
+      return sec;
+    }));
+  };
+
+  const handleAddCustomSection = () => {
+    const newId = `section_${Date.now()}`;
+    setCustomSections([...customSections, { id: newId, title: 'قسم جديد', items: [''] }]);
+    if (!expandedInfoSections.includes(newId)) {
+        setExpandedInfoSections([...expandedInfoSections, newId]);
+    }
+  };
+
+  const handleUpdateSectionTitle = (sectionId: string, newTitle: string) => {
+    setCustomSections(prev => prev.map(sec => 
+      sec.id === sectionId ? { ...sec, title: newTitle } : sec
+    ));
+  };
+
+  const handleRemoveSection = (sectionId: string) => {
+    setCustomSections(prev => prev.filter(sec => sec.id !== sectionId));
+  };
 
   const toggleInfoSection = (section: string) => {
     setExpandedInfoSections(prev =>
@@ -69,9 +169,30 @@ export default function CourseDetailsPage() {
       const payload: any = {
         title: courseInfo.title,
         description: courseInfo.description,
-        what_to_learn: courseInfo.what_to_learn,
         target_audience: courseInfo.target_audience,
+        category_id: courseInfo.category_id || undefined,
+        user_id: courseInfo.user_id || undefined,
+        coach: coachName,
+        status: status,
+        price: pricingType === 'free' ? 0 : Number(price),
+        final_price: pricingType === 'free' ? 0 : Number(price),
+        price_type: pricingType,
+        currency: currency,
+        receiver_accounts: selectedPaymentMethods.map(m => Number(m.methodId))
       };
+
+
+      // Add custom sections
+      let infoIndex = 0;
+      customSections.forEach((section) => {
+        section.items.filter(p => p.trim() !== '').forEach((point, pointIndex) => {
+          payload[`infos[${infoIndex}][info_key]`] = section.id === 'what_you_will_learn' ? 'what_you_will_learn' : section.title;
+          payload[`infos[${infoIndex}][info_value]`] = point;
+          payload[`infos[${infoIndex}][order]`] = pointIndex + 1;
+          infoIndex++;
+        });
+      });
+
       if (selectedImage) {
         payload.image = selectedImage;
       }
@@ -82,6 +203,45 @@ export default function CourseDetailsPage() {
       toast.error('فشل حفظ بيانات الدورة');
     }
   };
+
+  const handleSavePricing = async () => {
+        setIsSavingPricing(true);
+        try {
+          // Validate before saving if publishing
+          if (status === 'published') {
+            const missing = [];
+            if (!courseInfo.title) missing.push('عنوان الدورة');
+            if (!courseInfo.description) missing.push('وصف الدورة');
+            if (pricingType === 'paid' && !price) missing.push('سعر الدورة');
+            if (pricingType === 'paid' && selectedPaymentMethods.length === 0) missing.push('وسيلة دفع واحدة على الأقل');
+            if (course?.units?.length === 0) missing.push('محتوى الدورة (وحدة واحدة على الأقل)');
+  
+            if (missing.length > 0) {
+              showAlert.warning('لا يمكن النشر الآن', `يرجى إكمال الحقول التالية أولاً: \n ${missing.join('، ')}`);
+              setIsSavingPricing(false);
+              return;
+            }
+          }
+  
+          const payload = {
+            price: pricingType === 'free' ? 0 : Number(price),
+            final_price: pricingType === 'free' ? 0 : Number(price),
+            price_type: pricingType,
+            currency: currency,
+            status: status,
+            receiver_accounts: selectedPaymentMethods.map(m => Number(m.methodId))
+          };
+  
+          await updateCourse(Number(id), payload);
+          toast.success('تم حفظ بيانات التسعير بنجاح');
+          fetchCourse();
+        } catch (error) {
+          toast.error('فشل حفظ بيانات التسعير');
+        } finally {
+          setIsSavingPricing(false);
+        }
+      };
+
 
   const fetchCourse = async () => {
     try {
@@ -96,9 +256,73 @@ export default function CourseDetailsPage() {
       setCourseInfo({
         title: data.title || '',
         description: data.description || '',
-        what_to_learn: (data as any).what_to_learn || '',
         target_audience: (data as any).target_audience || '',
+        category_id: (data as any).category_id?.toString() || '',
+        user_id: (data as any).user_id?.toString() || '',
       });
+      setCoachName(data.coach || '');
+      const rawPaymentMethods = data.payment_methods || data.receiverAccounts || data.receiver_accounts || [];
+      const returnedPaymentMethods = rawPaymentMethods.map((item: any) => {
+        const id = item.instructor_receiver_account_id || item.pivot?.instructor_receiver_account_id || item.methodId || item.method_id || item.receiver_account_id || item.id;
+        const name = item.methodName || item.name || '';
+        const val = item.value || item.accountValue || item.account_value || '';
+        return {
+          methodId: id?.toString() || '',
+          methodName: name,
+          type: 'account_number' as const,
+          value: val,
+          currency: item.currency || 'SAR',
+          logo: item.logo || undefined
+        };
+      });
+      setSelectedPaymentMethods(returnedPaymentMethods);
+
+      // Parse custom sections from infos
+      let parsedSections: CustomSection[] = [];
+      if (data.infos && Array.isArray(data.infos) && data.infos.length > 0) {
+        const grouped = data.infos.reduce((acc: any, info: any) => {
+           // Using info_key and info_value based on the new API response structure
+           const key = info.info_key || info.key;
+           const value = info.info_value || info.value;
+           
+           if (!key || !value) return acc;
+
+           if (!acc[key]) {
+             acc[key] = {
+                id: key,
+                title: key === 'what_you_will_learn' ? 'ماذا ستتعلم؟' : key,
+                items: []
+             };
+           }
+           acc[key].items.push({ value, order: info.order || 0 });
+           return acc;
+        }, {});
+        
+        parsedSections = Object.values(grouped).map((group: any) => {
+            // Sort items by order
+            const sortedItems = group.items.sort((a: any, b: any) => a.order - b.order).map((i: any) => i.value);
+            return {
+                id: group.id,
+                title: group.title,
+                items: sortedItems.length > 0 ? sortedItems : ['']
+            };
+        });
+      } else {
+        // Fallback to what_you_will_learn string if infos didn't have any
+        let points: string[] = [];
+        try {
+          if (data.what_you_will_learn) {
+            const parsed = JSON.parse(data.what_you_will_learn);
+            points = Array.isArray(parsed) ? parsed : [data.what_you_will_learn];
+          }
+        } catch (e) {
+          if (data.what_you_will_learn) points = [data.what_you_will_learn];
+        }
+        parsedSections = [{ id: 'what_you_will_learn', title: 'ماذا ستتعلم؟', items: points.length > 0 ? points : [''] }];
+      }
+      
+      setCustomSections(parsedSections);
+
       if (data.image) {
         setPreviewImage(data.image);
       }
@@ -106,6 +330,11 @@ export default function CourseDetailsPage() {
       if (data.units) {
         setExpandedUnits(data.units.map(u => u.id));
       }
+
+      setPricingType(data.price_type || (Number(data.price) === 0 ? 'free' : 'paid'));
+      setPrice(data.price?.toString() || '');
+      setStatus(data.status || 'draft');
+
     } catch (error) {
       console.error(error);
       toast.error('فشل تحميل بيانات الدورة');
@@ -113,6 +342,36 @@ export default function CourseDetailsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const [cats, profile, paymentInfos] = await Promise.all([
+          getCategories(),
+          getProfileStatus(),
+          getUserPaymentInfos()
+        ]);
+        setCategories(cats);
+        setAcademyPaymentMethods(paymentInfos || []);
+
+        const userData = profile.data || profile;
+        if (userData) {
+          setCurrentUser(userData);
+          if (userData.role === 'admin' || userData.role === 'academy') {
+            const allUsers = await getUsers();
+            if (userData.role === 'admin') {
+              setInstructors(allUsers);
+            } else {
+              setInstructors(allUsers.filter((user: any) => user.role === 'instructor' || user.role === 'academy'));
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch initial data:', error);
+      }
+    };
+    fetchInitialData();
+  }, []);
 
   useEffect(() => {
     if (id) {
@@ -214,55 +473,83 @@ export default function CourseDetailsPage() {
 
   return (
     <div className="space-y-6 p-4 md:p-6" dir="rtl">
-      {/* Top Action Bar */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-full font-bold text-sm transition-all shadow-md shadow-green-100">
-            <Share size={18} />
-            <span>نشر</span>
+      {/* Tabs Header & Action Bar */}
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 border-b border-gray-200 px-2 md:px-4">
+        <div className="flex items-center justify-start gap-8 overflow-x-auto hide-scrollbar">
+          <button
+            onClick={() => setActiveTab('info')}
+            className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
+              activeTab === 'info' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            معلومات الدورة
+            {activeTab === 'info' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />}
           </button>
-          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-8 py-3 rounded-full font-bold text-sm transition-all shadow-sm">
+          <button
+            onClick={() => setActiveTab('content')}
+            className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
+              activeTab === 'content' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            محتوى الدورة
+            {activeTab === 'content' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />}
+          </button>
+          <button
+            onClick={() => setActiveTab('pricing')}
+            className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
+              activeTab === 'pricing' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            التسعير
+            {activeTab === 'pricing' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />}
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3 w-full lg:w-auto pb-4 lg:pb-3">
+          <button 
+            onClick={() => router.push(`/academic/courses/${id}/student`)}
+            className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-6 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm"
+          >
             <Eye size={18} />
             <span>معاينة</span>
           </button>
-        </div>
-      </div>
+          <button
+            onClick={async () => {
+              const isPublished = status === 'published';
+              const actionText = isPublished ? 'تحويل إلى مسودة' : 'نشر الدورة';
+              const confirmText = isPublished ? 'نعم، اجعلها مسودة' : 'نعم، انشرها';
+              
+              const result = await MySwal.fire({
+                title: `هل أنت متأكد من ${actionText}؟`,
+                text: isPublished ? "سيتم إخفاء الدورة عن الطلاب" : "ستصبح الدورة متاحة لجميع الطلاب",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: isPublished ? '#f59e0b' : '#10b981',
+                cancelButtonColor: '#d33',
+                confirmButtonText: confirmText,
+                cancelButtonText: 'إلغاء'
+              });
 
-      {/* Tabs Header */}
-      <div className="flex items-center justify-start gap-8 border-b border-gray-200 px-2 md:px-4 overflow-x-auto hide-scrollbar">
-        <button
-          onClick={() => setActiveTab('info')}
-          className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
-            activeTab === 'info' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          معلومات الدورة
-          {activeTab === 'info' && (
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab('content')}
-          className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
-            activeTab === 'content' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          محتوي الدورة
-          {activeTab === 'content' && (
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab('pricing')}
-          className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
-            activeTab === 'pricing' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          التسعير
-          {activeTab === 'pricing' && (
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
-          )}
-        </button>
+              if (result.isConfirmed) {
+                const newStatus = isPublished ? 'draft' : 'published';
+                try {
+                  await updateCourse(Number(id), { status: newStatus });
+                  setStatus(newStatus);
+                  toast.success(`تم ${isPublished ? 'تحويل الدورة لمسودة' : 'نشر الدورة'} بنجاح`);
+                } catch (err) {
+                  toast.error('فشل تحديث حالة الدورة');
+                }
+              }
+            }}
+            className={`flex-1 lg:flex-none flex items-center justify-center gap-2 px-8 py-2.5 rounded-full font-bold text-sm transition-all shadow-md ${
+              status === 'published' 
+                ? 'bg-green-500 hover:bg-green-600 text-white shadow-green-100' 
+                : 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-100'
+            }`}
+          >
+            <span>{status === 'published' ? 'نشر' : 'مسودة'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Tab Content */}
@@ -279,9 +566,50 @@ export default function CourseDetailsPage() {
                 value={courseInfo.title}
                 onChange={(e) => setCourseInfo({ ...courseInfo, title: e.target.value })}
                 placeholder="ادخل اسم الدورة"
-                className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all"
+                className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all text-gray-900"
               />
             </div>
+
+            {/* Category Dropdown */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-1 text-sm font-black text-gray-900">
+                الفئة
+              </label>
+              <select
+                value={courseInfo.category_id}
+                onChange={(e) => setCourseInfo({ ...courseInfo, category_id: e.target.value })}
+                className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all appearance-none text-gray-900"
+              >
+                <option value="">اختر فئة (اختياري)</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Instructor Dropdown (Admin Only) */}
+            {currentUser?.role === 'admin' && (
+              <div className="space-y-2">
+                <label className="flex items-center gap-1 text-sm font-black text-gray-900">المدرب</label>
+                <select
+                  value={courseInfo.user_id}
+                  onChange={(e) => setCourseInfo({ ...courseInfo, user_id: e.target.value })}
+                  className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all appearance-none text-gray-900"
+                >
+                  <option value="">اختر مدرب</option>
+                  {instructors.map((inst) => (
+                    <option key={inst.id} value={inst.id}>
+                      {inst.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Coach Field */}
+            <CoachField value={coachName} onChange={setCoachName} />
 
             {/* Course Image */}
             <div className="space-y-2">
@@ -317,68 +645,131 @@ export default function CourseDetailsPage() {
               </div>
             </div>
 
-            {/* Description Accordion */}
-            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-              <button 
-                onClick={() => toggleInfoSection('description')}
-                className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
-              >
-                <span className="font-black text-gray-900">وصف الدورة</span>
-                {expandedInfoSections.includes('description') ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
-              </button>
-              {expandedInfoSections.includes('description') && (
-                <div className="p-5 pt-0 border-t border-gray-50">
-                  <textarea
-                    value={courseInfo.description}
-                    onChange={(e) => setCourseInfo({ ...courseInfo, description: e.target.value })}
-                    placeholder="ادخل وصف الدورة"
-                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[120px] transition-all"
-                  />
+            {/* Dynamic Custom Sections Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              {/* Description Accordion (Always present) */}
+              <div className="bg-white border border-gray-200/80 rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col max-h-[500px]">
+                <button 
+                  onClick={() => toggleInfoSection('description')}
+                  className="w-full p-5 flex items-center justify-between bg-gray-50/50 hover:bg-gray-50 transition-colors border-b border-gray-100 shrink-0"
+                >
+                  <span className="font-black text-gray-900">وصف الدورة</span>
+                  {expandedInfoSections.includes('description') ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+                </button>
+                {expandedInfoSections.includes('description') && (
+                  <div className="p-5 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
+                    <QuillEditor
+                      value={courseInfo.description}
+                      onChange={(val) => setCourseInfo({ ...courseInfo, description: val })}
+                      placeholder="ادخل وصف الدورة"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Target Audience Accordion (Always present) */}
+              <div className="bg-white border border-gray-200/80 rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col max-h-[500px]">
+                <button 
+                  onClick={() => toggleInfoSection('target_audience')}
+                  className="w-full p-5 flex items-center justify-between bg-gray-50/50 hover:bg-gray-50 transition-colors border-b border-gray-100 shrink-0"
+                >
+                  <span className="font-black text-gray-900">لمن هذه الدورة</span>
+                  {expandedInfoSections.includes('target_audience') ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+                </button>
+                {expandedInfoSections.includes('target_audience') && (
+                  <div className="p-5 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
+                    <QuillEditor
+                      value={courseInfo.target_audience}
+                      onChange={(val) => setCourseInfo({ ...courseInfo, target_audience: val })}
+                      placeholder="الفئة المستهدفة من الدورة"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Render all custom sections */}
+              {customSections.map((section) => (
+                <div key={section.id} className="bg-white border border-gray-200/80 rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col max-h-[500px]">
+                  <div className="w-full p-5 flex items-center justify-between bg-gray-50/50 hover:bg-gray-50 transition-colors border-b border-gray-100 shrink-0">
+                    <div className="flex items-center gap-2 flex-1 ml-4">
+                      {section.id === 'what_you_will_learn' ? (
+                        <>
+                          <CheckCircle2 size={18} className="text-blue-600 shrink-0" />
+                          <span className="font-black text-gray-900">{section.title}</span>
+                        </>
+                      ) : (
+                        <input 
+                          type="text"
+                          value={section.title}
+                          onChange={(e) => handleUpdateSectionTitle(section.id, e.target.value)}
+                          className="font-black text-gray-900 bg-transparent border-b border-dashed border-gray-300 focus:border-blue-500 outline-none w-full"
+                          placeholder="اسم القسم (مثال: متطلبات الدورة)"
+                        />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {section.id !== 'what_you_will_learn' && (
+                        <button
+                          onClick={() => handleRemoveSection(section.id)}
+                          className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                      <button onClick={() => toggleInfoSection(section.id)} className="p-1">
+                        {expandedInfoSections.includes(section.id) ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+                      </button>
+                    </div>
+                  </div>
+                  {expandedInfoSections.includes(section.id) && (
+                    <div className="p-5 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300 space-y-4">
+                      {section.items.map((point, index) => (
+                        <div key={index} className="relative group bg-gray-50 p-4 rounded-2xl border border-gray-100 transition-all hover:border-blue-200">
+                          <div className="flex items-center justify-between mb-4">
+                            <span className="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                              عنصر {index + 1}
+                            </span>
+                            <button
+                              onClick={() => handleRemoveSectionItem(section.id, index)}
+                              className="text-gray-400 hover:text-red-500 transition-colors p-1.5 hover:bg-red-50 rounded-lg"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                          <input
+                            type="text"
+                            value={point}
+                            onChange={(e) => handleUpdateSectionItem(section.id, index, e.target.value)}
+                            placeholder="ادخل محتوى العنصر..."
+                            className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:border-blue-500 outline-none transition-all font-bold text-gray-900"
+                          />
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => handleAddSectionItem(section.id)}
+                        className="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center gap-3 text-gray-500 font-bold hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50/30 transition-all group"
+                      >
+                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                          <Plus size={18} />
+                        </div>
+                        <span>إضافة عنصر جديد</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
+              ))}
             </div>
 
-            {/* What to learn Accordion */}
-            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-              <button 
-                onClick={() => toggleInfoSection('what_to_learn')}
-                className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
-              >
-                <span className="font-black text-gray-900">ماذا تتعلم</span>
-                {expandedInfoSections.includes('what_to_learn') ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
-              </button>
-              {expandedInfoSections.includes('what_to_learn') && (
-                <div className="p-5 pt-0 border-t border-gray-50">
-                  <textarea
-                    value={courseInfo.what_to_learn}
-                    onChange={(e) => setCourseInfo({ ...courseInfo, what_to_learn: e.target.value })}
-                    placeholder="ماذا سيتعلم الطالب من هذه الدورة؟"
-                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[120px] transition-all"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Target Audience Accordion */}
-            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-              <button 
-                onClick={() => toggleInfoSection('target_audience')}
-                className="w-full p-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
-              >
-                <span className="font-black text-gray-900">لمن هذه الدورة</span>
-                {expandedInfoSections.includes('target_audience') ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
-              </button>
-              {expandedInfoSections.includes('target_audience') && (
-                <div className="p-5 pt-0 border-t border-gray-50">
-                  <textarea
-                    value={courseInfo.target_audience}
-                    onChange={(e) => setCourseInfo({ ...courseInfo, target_audience: e.target.value })}
-                    placeholder="الفئة المستهدفة من الدورة"
-                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[120px] transition-all"
-                  />
-                </div>
-              )}
-            </div>
+            {/* Add New Section Button */}
+            <button
+              onClick={handleAddCustomSection}
+              className="w-full py-4 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center gap-3 text-gray-600 font-bold hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50/50 transition-all group"
+            >
+              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                <Plus size={20} className="text-gray-500 group-hover:text-blue-600" />
+              </div>
+              <span>إضافة قسم اختياري جديد</span>
+            </button>
 
             {/* Action Buttons */}
             <div className="flex items-center justify-end gap-4 pt-4">
@@ -425,7 +816,7 @@ export default function CourseDetailsPage() {
                        value={newUnitTitle}
                        onChange={(e) => setNewUnitTitle(e.target.value)}
                        placeholder="ادخل اسم الوحدة"
-                       className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm transition-all"
+                       className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm transition-all text-gray-900"
                      />
                    </div>
                    <div className="space-y-1.5">
@@ -434,7 +825,7 @@ export default function CourseDetailsPage() {
                        value={newUnitDescription}
                        onChange={(e) => setNewUnitDescription(e.target.value)}
                        placeholder="ادخل وصف للوحدة"
-                       className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[80px] transition-all"
+                       className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 font-bold text-sm min-h-[80px] transition-all text-gray-900"
                      />
                    </div>
                 </div>
@@ -571,13 +962,185 @@ export default function CourseDetailsPage() {
         )}
 
         {activeTab === 'pricing' && (
-          <div className="max-w-4xl space-y-6">
-            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center">
-              <h3 className="text-lg font-black text-gray-900 mb-2">إعدادات التسعير</h3>
-              <p className="text-gray-500 font-bold text-sm">سيتم إضافة إعدادات التسعير قريباً</p>
+          <div className="max-w-2xl mx-auto space-y-10 pt-10">
+            <div className="text-center space-y-2">
+              <h2 className="text-3xl font-black text-gray-900">تحديد سعر الدورة</h2>
+              <p className="text-gray-400 font-bold">اختر خطة التسعير المناسبة لدورتك</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div
+                onClick={() => setPricingType('free')}
+                className={`p-10 rounded-[32px] border-2 cursor-pointer transition-all text-center space-y-4 ${
+                  pricingType === 'free' ? 'border-blue-600 bg-blue-50/30' : 'border-gray-100 bg-white hover:border-blue-200'
+                }`}
+              >
+                <div className={`w-16 h-16 rounded-2xl mx-auto flex items-center justify-center ${pricingType === 'free' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600'}`}>
+                  <Play size={32} />
+                </div>
+                <h3 className="text-xl font-black text-gray-900">مجاني</h3>
+                <p className="text-sm font-bold text-gray-400">الدورة متاحة للجميع بدون مقابل مادي</p>
+              </div>
+
+              <div
+                onClick={() => setPricingType('paid')}
+                className={`p-10 rounded-[32px] border-2 cursor-pointer transition-all text-center space-y-4 ${
+                  pricingType === 'paid' ? 'border-blue-600 bg-blue-50/30' : 'border-gray-100 bg-white hover:border-blue-200'
+                }`}
+              >
+                <div className={`w-16 h-16 rounded-2xl mx-auto flex items-center justify-center ${pricingType === 'paid' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600'}`}>
+                  <FileText size={32} />
+                </div>
+                <h3 className="text-xl font-black text-gray-900">مدفوع</h3>
+                <p className="text-sm font-bold text-gray-400">حدد سعراً للدورة ليتمكن الطلاب من شرائها</p>
+              </div>
+            </div>
+
+            {pricingType === 'paid' && (
+              <div className="space-y-8 animate-in slide-in-from-top-4 duration-300">
+                <div className="space-y-2">
+                  <label className="block text-sm font-black text-gray-900">سعر الدورة</label>
+                  <div className="relative group">
+                    <input
+                      type="number"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full p-5 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-left transition-all pl-24 text-gray-900 shadow-sm group-hover:border-gray-200"
+                    />
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 border-r border-gray-100 pr-4">
+                      <select 
+                        value={currency}
+                        onChange={(e) => setCurrency(e.target.value as any)}
+                        className="bg-transparent font-black text-blue-600 outline-none cursor-pointer text-sm text-gray-900"
+                      >
+                        <option value="SAR" className="text-gray-900">SAR (ر.س)</option>
+                        <option value="EGP" className="text-gray-900">EGP (ج.م)</option>
+                        <option value="AED" className="text-gray-900">AED (د.إ)</option>
+                        <option value="QAR" className="text-gray-900">QAR (ر.ق)</option>
+                        <option value="KWD" className="text-gray-900">KWD (د.ك)</option>
+                        <option value="OMR" className="text-gray-900">OMR (ر.ع)</option>
+                        <option value="BHD" className="text-gray-900">BHD (د.ب)</option>
+                        <option value="JOD" className="text-gray-900">JOD (د.أ)</option>
+                        <option value="USD" className="text-gray-900">USD ($)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pricing Ways / Payment Methods */}
+                <div className="space-y-6 pt-6 border-t border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-black text-gray-900">طرق التحصيل (وسائل الدفع)</h3>
+                      <p className="text-xs text-gray-400 font-bold mt-1">اختر وسائل الدفع التي تريد تفعيلها لهذه الدورة</p>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => router.push('/academic/finance/payment-settings')}
+                      className="text-xs font-bold text-blue-600 hover:text-blue-700 underline"
+                    >
+                      إدارة وسائل الدفع
+                    </button>
+                  </div>
+
+                   <PaymentMethodDropdown
+                    options={activeMethods}
+                    selectedValues={selectedPaymentMethods.map(m => m.methodId)}
+                    onChange={(ids) => {
+                      if (ids.length > 3) {
+                        toast.error('الحد الأقصى لوسائل الدفع المحددة للدورة هو 3 وسائل فقط');
+                        return;
+                      }
+                      const newMethods = ids.map(id => {
+                        const existing = selectedPaymentMethods.find(m => m.methodId === id);
+                        if (existing) return existing;
+                        const method = activeMethods.find(m => m.id === id);
+                        if (!method) return null;
+                        const originalInfo = academyPaymentMethods.find(m => m.id.toString() === id);
+                        return {
+                          methodId: method.id,
+                          methodName: method.name,
+                          type: method.type,
+                          value: originalInfo?.accountValue || originalInfo?.account_value || '',
+                          currency: originalInfo?.currency || 'SAR',
+                          logo: method.logo || originalInfo?.logo
+                        };
+                      }).filter(Boolean) as AcademyPaymentMethod[];
+                      setSelectedPaymentMethods(newMethods);
+                    }}
+                  />
+
+                  {selectedPaymentMethods.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                      {selectedPaymentMethods.map((pm) => (
+                        <div key={pm.methodId} className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 flex flex-col justify-between relative group/pm">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedPaymentMethods(prev => prev.filter(m => m.methodId !== pm.methodId));
+                            }}
+                            className="absolute top-3 left-3 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            title="إزالة وسيلة الدفع"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                          <span className="text-xs text-gray-400 font-bold">الحساب المفعل</span>
+                          <div className="flex items-center justify-between mt-1">
+                            <div className="flex items-center gap-2 pl-6">
+                              {pm.logo && <img src={getLogoUrl(pm.logo)} alt={pm.methodName} className="w-5 h-5 object-cover rounded shadow-sm" />}
+                              <span className="font-black text-gray-900 text-sm">{pm.methodName}</span>
+                            </div>
+                            <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-black">{pm.currency}</span>
+                          </div>
+                          <div className="mt-2 pt-2 border-t border-gray-100/50">
+                            <span className="text-xs text-gray-400 block font-bold">رقم الحساب / المحفظة</span>
+                            <span className="font-mono text-sm text-gray-700 font-bold block mt-0.5 break-all select-all">{pm.value}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Status Toggle - Always Visible */}
+            <div className="pt-6 border-t border-gray-100">
+              <CourseStatusToggle 
+                status={status} 
+                onChange={(newStatus) => {
+                  if (newStatus === 'published') {
+                    const missing = [];
+                    if (!courseInfo.title) missing.push('عنوان الدورة');
+                    if (!courseInfo.description) missing.push('وصف الدورة');
+                    if (pricingType === 'paid' && !price) missing.push('سعر الدورة');
+                    if (pricingType === 'paid' && selectedPaymentMethods.length === 0) missing.push('وسيلة دفع واحدة على الأقل');
+                    if (course?.units?.length === 0) missing.push('محتوى الدورة (وحدة واحدة على الأقل)');
+
+                    if (missing.length > 0) {
+                      showAlert.warning('لا يمكن النشر الآن', `يرجى إكمال الحقول التالية أولاً: \n ${missing.join('، ')}`);
+                      return;
+                    }
+                  }
+                  setStatus(newStatus);
+                }} 
+              />
+            </div>
+
+
+            <div className="flex justify-center pt-10">
+              <button
+                onClick={handleSavePricing}
+                disabled={isSavingPricing}
+                className="w-full max-w-[400px] py-5 bg-blue-600 text-white font-black rounded-2xl shadow-2xl shadow-blue-500/20 hover:brightness-110 active:scale-95 transition-all disabled:opacity-70"
+              >
+                {isSavingPricing ? 'جاري الحفظ...' : 'حفظ بيانات التسعير'}
+              </button>
             </div>
           </div>
         )}
+
       </div>
 
       <AddLessonModal 
@@ -588,6 +1151,7 @@ export default function CourseDetailsPage() {
         courseTitle={course.title}
         instructorName={course.instructor || ''}
         onLessonAdded={fetchCourse}
+        courseType={course.type}
       />
       <EditUnitModal 
         isOpen={isEditUnitOpen}
@@ -601,6 +1165,7 @@ export default function CourseDetailsPage() {
         onClose={() => setIsEditLessonOpen(false)}
         lesson={editingLesson}
         onLessonUpdated={fetchCourse}
+        courseType={course.type}
       />
     </div>
   );

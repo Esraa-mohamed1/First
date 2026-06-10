@@ -61,7 +61,7 @@ const AddUnitModal = ({ isOpen, onClose, courseId, onUnitAdded }: AddUnitModalPr
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="ادخل اسم الوحدة" 
-                className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all" 
+                className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-right transition-all text-gray-900" 
               />
             </div>
 
@@ -71,7 +71,7 @@ const AddUnitModal = ({ isOpen, onClose, courseId, onUnitAdded }: AddUnitModalPr
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="ادخل وصف للوحدة" 
-                className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold min-h-[120px] text-right transition-all"
+                className="w-full p-4 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold min-h-[120px] text-right transition-all text-gray-900"
               ></textarea>
             </div>
           </div>

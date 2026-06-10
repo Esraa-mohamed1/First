@@ -4,23 +4,26 @@ import { ApiResponse, Course, CreateCoursePayload, CreateUnitPayload, CreateLess
 export const createCourse = async (payload: CreateCoursePayload): Promise<Course> => {
   try {
     const formData = new FormData();
-    formData.append('title', payload.title);
-    formData.append('user_id', String(payload.user_id));
-    formData.append('type', payload.type);
-    formData.append('price_type', payload.price_type);
-    formData.append('price', String(payload.price));
-    formData.append('final_price', String(payload.final_price));
-    formData.append('status', payload.status);
-    if (payload.category_id !== undefined && payload.category_id !== null) {
-      formData.append('category_id', String(payload.category_id));
-    }
-    formData.append('description', payload.description);
+    Object.keys(payload).forEach(key => {
+      const value = (payload as any)[key];
+      if (value !== undefined && value !== null) {
+        if (key === 'image' && value instanceof File) {
+          formData.append('image', value);
+        } else if ((key === 'receiverAccounts' || key === 'receiver_accounts') && Array.isArray(value)) {
+          // Backend expects receiver_accounts as flat integers
+          value.forEach((item, index) => {
+            const id = item.methodId || item.method_id || item;
+            formData.append(`receiver_accounts[${index}]`, String(id));
+          });
+        } else if (key === 'payment_methods') {
+          // Skip — backend uses receiver_accounts
+        } else {
+          formData.append(key, String(value));
+        }
+      }
+    });
 
-    if (payload.image) {
-      formData.append('image', payload.image);
-    }
-
-      const response = await academyApi.post<ApiResponse<Course>>('courses', formData, {
+    const response = await academyApi.post<ApiResponse<Course>>('courses', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -32,15 +35,25 @@ export const createCourse = async (payload: CreateCoursePayload): Promise<Course
   }
 };
 
-export const getCourses = async (userId?: number, userRole?: string): Promise<Course[]> => {
+export const getCourses = async (userId?: number, userRole?: string, type?: string): Promise<Course[]> => {
   try {
     let url = 'courses';
+    const params = new URLSearchParams();
+    
     if (userRole === 'academy' && userId) {
-      console.log("ssss",userRole)
-      url = `courses?user_id=${userId}`;
+      params.append('user_id', String(userId));
     }
+    
+    if (type) {
+      params.append('type', type);
+    }
+    
+    const queryString = params.toString();
+    if (queryString) {
+      url += `?${queryString}`;
+    }
+    
     const response = await academyApi.get<ApiResponse<Course[]>>(url);
-  
     return response.data.data;
   } catch (error: any) {
     console.error('Failed to get courses:', error);
@@ -177,7 +190,53 @@ export const deleteCourse = async (id: number): Promise<void> => {
 
 export const updateCourse = async (id: number, payload: any): Promise<Course> => {
   try {
-    const response = await academyApi.put<ApiResponse<Course>>(`courses/${id}`, payload);
+    // If payload contains a file (image), we must use FormData
+    // and often backends (like Laravel) require POST with _method=PUT for multipart/form-data
+    if (payload.image instanceof File) {
+      const formData = new FormData();
+      Object.keys(payload).forEach(key => {
+        if (payload[key] !== undefined && payload[key] !== null) {
+          if (key === 'image') {
+            formData.append('image', payload.image);
+          } else if ((key === 'receiverAccounts' || key === 'receiver_accounts') && Array.isArray(payload[key])) {
+            // Backend expects receiver_accounts as flat integers
+            payload[key].forEach((item: any, index: number) => {
+              const id = item.methodId || item.method_id || item;
+              formData.append(`receiver_accounts[${index}]`, String(id));
+            });
+          } else if (key === 'payment_methods') {
+            // Skip payment_methods — backend uses receiver_accounts
+          } else {
+            formData.append(key, String(payload[key]));
+          }
+        }
+      });
+      formData.append('_method', 'PUT');
+      
+      const response = await academyApi.post<ApiResponse<Course>>(`courses/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data.data;
+    }
+
+    // Otherwise, standard JSON PUT. Flatten receiver_accounts to integers.
+    const jsonPayload = { ...payload };
+    if (payload.receiverAccounts && Array.isArray(payload.receiverAccounts)) {
+      jsonPayload.receiver_accounts = payload.receiverAccounts.map((item: any) =>
+        Number(item.methodId || item.method_id || item)
+      );
+      delete jsonPayload.receiverAccounts;
+    }
+    if (jsonPayload.receiver_accounts && Array.isArray(jsonPayload.receiver_accounts)) {
+      jsonPayload.receiver_accounts = jsonPayload.receiver_accounts.map((item: any) =>
+        typeof item === 'object' ? Number(item.methodId || item.method_id || item) : Number(item)
+      );
+    }
+    delete jsonPayload.payment_methods;
+
+    const response = await academyApi.put<ApiResponse<Course>>(`courses/${id}`, jsonPayload);
     return response.data.data;
   } catch (error: any) {
     console.error('Failed to update course:', error);

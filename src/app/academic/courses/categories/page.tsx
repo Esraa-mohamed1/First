@@ -111,7 +111,7 @@ export default function CategoriesPage() {
           <input
             type="text"
             placeholder="البحث عن فئة..."
-            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-12 py-3 text-sm outline-none focus:border-blue-600 font-bold transition-all"
+            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-12 py-3 text-sm outline-none focus:border-blue-600 font-bold transition-all text-gray-900"
           />
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
         </div>

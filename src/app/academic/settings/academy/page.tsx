@@ -74,7 +74,7 @@ export default function AcademyDataPage() {
                 value={formData.academyName}
                 onChange={handleChange}
                 placeholder="ادخل اسم الاكاديمية"
-                className="w-full p-4 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-gray-300"
+                className="w-full p-4 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-gray-300 text-gray-900"
               />
             </div>
 
@@ -86,7 +86,7 @@ export default function AcademyDataPage() {
                 onChange={handleChange}
                 placeholder="ادخل وصف مختصر"
                 rows={5}
-                className="w-full p-4 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none placeholder:text-gray-300"
+                className="w-full p-4 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none placeholder:text-gray-300 text-gray-900"
               />
             </div>
 
@@ -98,7 +98,7 @@ export default function AcademyDataPage() {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="ادخل رقم الهاتف"
-                className="w-full p-4 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-gray-300"
+                className="w-full p-4 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-gray-300 text-gray-900"
               />
             </div>
 
@@ -110,7 +110,7 @@ export default function AcademyDataPage() {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="ادخل البريد الالكتروني"
-                className="w-full p-4 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-gray-300"
+                className="w-full p-4 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-gray-300 text-gray-900"
               />
             </div>
 
@@ -122,7 +122,7 @@ export default function AcademyDataPage() {
                     name="country"
                     value={formData.country}
                     onChange={handleChange}
-                    className="w-full p-4 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-gray-500 cursor-pointer transition-all"
+                    className="w-full p-4 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-gray-900 cursor-pointer transition-all"
                   >
                     <option value="">الدولة</option>
                     <option value="saudi">السعودية</option>
@@ -140,7 +140,7 @@ export default function AcademyDataPage() {
                     name="field"
                     value={formData.field}
                     onChange={handleChange}
-                    className="w-full p-4 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-gray-500 cursor-pointer transition-all"
+                    className="w-full p-4 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-gray-900 cursor-pointer transition-all"
                   >
                     <option value="">المجال</option>
                     <option value="educational">تعليمي</option>
@@ -160,7 +160,7 @@ export default function AcademyDataPage() {
                 value={formData.address}
                 onChange={handleChange}
                 placeholder="ادخل عنوان الاكاديمية"
-                className="w-full p-4 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-gray-300"
+                className="w-full p-4 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-gray-300 text-gray-900"
               />
             </div>
 

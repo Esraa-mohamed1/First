@@ -26,9 +26,7 @@ export default function StudentsPage() {
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      // The endpoint /users fetches all users, we might need to filter by role if needed.
-      // But based on instruction: "using endpoint /users"
-      const data = await getUsers();
+      const data = await getUsers('student');
       setStudents(data || []);
     } catch (error) {
       console.error(error);
@@ -88,7 +86,7 @@ export default function StudentsPage() {
             <input
               type="text"
               placeholder="البحث بالأسم أو البريد"
-              className="w-full bg-white border border-gray-100 rounded-2xl py-3.5 pr-12 pl-4 text-sm font-bold outline-none focus:border-blue-500 shadow-sm transition-all"
+              className="w-full bg-white border border-gray-100 rounded-2xl py-3.5 pr-12 pl-4 text-sm font-bold outline-none focus:border-blue-500 shadow-sm transition-all text-gray-900"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
