@@ -1,11 +1,13 @@
 import React from 'react';
 import { Search, Mail, Calendar, BookOpen } from 'lucide-react';
+import { getTypographyStyle } from '../utils/typography';
 
 interface TableBlockProps {
   title?: string;
   showSearch?: boolean;
   rowsLimit?: number;
   headerBg?: string;
+  [key: string]: any;
 }
 
 const MOCK_ROWS = [
@@ -17,19 +19,30 @@ const MOCK_ROWS = [
   { id: '6', name: 'هند محمد الدوسري', email: 'hind.dos@email.com', course: 'Photoshop Fundamentals', price: '250 ريال', date: '2026/06/03' },
 ];
 
-export default function TableBlock({
-  title = 'آخر المسجلين بالدورات',
-  showSearch = true,
-  rowsLimit = 5,
-  headerBg = '#f8fafc',
-}: TableBlockProps) {
+export default function TableBlock(props: TableBlockProps) {
+  const {
+    title = 'آخر المسجلين بالدورات',
+    showSearch = true,
+    rowsLimit = 5,
+    headerBg = '#f8fafc',
+  } = props;
   const visibleRows = MOCK_ROWS.slice(0, rowsLimit);
+
+  const titleTypography = getTypographyStyle(props, 'title', {
+    font: 'IBM Plex Sans Arabic',
+    size: 'text-base',
+    weight: 'font-black',
+    color: '#1f2937'
+  });
 
   return (
     <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-[0_12px_40px_rgba(25,28,29,0.02)] space-y-5 text-right" dir="rtl">
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h3 className="text-base font-black text-slate-800 font-['IBM_Plex_Sans_Arabic']">
+        <h3 
+          style={titleTypography.style}
+          className={`${titleTypography.className}`}
+        >
           {title}
         </h3>
         

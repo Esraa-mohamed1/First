@@ -28,6 +28,7 @@ const sidebarGroups = [
     items: [
       { name: 'دوراتي', href: '/student/courses', icon: BookOpen },
       { name: 'دورات الأكاديمية', href: '/user/courses', icon: Library },
+      { name: 'طلبات الشراء والاشتراك', href: '/student/requests', icon: Trophy },
     ]
   },
   {

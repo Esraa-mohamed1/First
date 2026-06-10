@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search, Bell, User, HelpCircle } from 'lucide-react';
+import { getTypographyStyle } from '../utils/typography';
 
 interface NavbarBlockProps {
   title?: string;
@@ -7,15 +8,25 @@ interface NavbarBlockProps {
   showProfile?: boolean;
   bgColor?: string;
   borderColor?: string;
+  [key: string]: any;
 }
 
-export default function NavbarBlock({
-  title = 'بوابة التعلم',
-  showSearch = true,
-  showProfile = true,
-  bgColor = '#ffffff',
-  borderColor = '#e2e8f0',
-}: NavbarBlockProps) {
+export default function NavbarBlock(props: NavbarBlockProps) {
+  const {
+    title = 'بوابة التعلم',
+    showSearch = true,
+    showProfile = true,
+    bgColor = '#ffffff',
+    borderColor = '#e2e8f0',
+  } = props;
+
+  const titleTypography = getTypographyStyle(props, 'title', {
+    font: 'IBM Plex Sans Arabic',
+    size: 'text-sm',
+    weight: 'font-black',
+    color: '#1f2937'
+  });
+
   return (
     <header 
       style={{ backgroundColor: bgColor, borderColor: borderColor }}
@@ -27,7 +38,12 @@ export default function NavbarBlock({
         <div className="w-8 h-8 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600 shrink-0 font-extrabold text-sm">
           د
         </div>
-        <span className="font-black text-slate-800 text-sm tracking-tight">{title}</span>
+        <span 
+          style={titleTypography.style}
+          className={`${titleTypography.className}`}
+        >
+          {title}
+        </span>
       </div>
 
       {/* Middle search input box */}

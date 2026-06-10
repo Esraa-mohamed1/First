@@ -111,12 +111,8 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       icon: Landmark,
       href: '/academic/finance/overview',
       subItems: [
-        // { label: 'نظرة عامة', href: '/academic/finance/overview' },
-        // { label: 'المحفظة', href: '/academic/finance/wallet' },
-        // { label: 'المبيعات', href: '/academic/finance/sales' },
-        // { label: 'الفواتير', href: '/academic/finance/invoices' },
-        // { label: 'التقارير', href: '/academic/finance/reports' },
-        // { label: 'طريقة استلام المدفوعات', href: '/academic/finance/payout-methods' },
+        { label: 'نظرة عامة', href: '/academic/finance/overview' },
+        { label: 'طلبات الاشتراك والشراء', href: '/academic/finance/requests' },
         { label: 'إعدادات الدفع (للطلاب)', href: '/academic/finance/payment-settings' },
       ]
     },

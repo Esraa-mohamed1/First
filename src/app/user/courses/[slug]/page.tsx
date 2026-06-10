@@ -7,7 +7,7 @@ import {
   ChevronRight, Star, Users, Calendar,
   ChevronDown, ChevronUp, Download, ShieldCheck,
   Video, Monitor, DownloadCloud, Headset, Lock,
-  Layout, MousePointer2, Smartphone, PenTool
+  Layout, MousePointer2, Smartphone, PenTool, X
 } from 'lucide-react';
 import { getStudentCourse, subscribeToCourse } from '@/services/student-courses';
 import { Course, Unit } from '@/types/api';
@@ -55,6 +55,7 @@ export default function CourseStudentViewPage() {
   const [expandedUnits, setExpandedUnits] = useState<number[]>([]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<AcademyPaymentMethod | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [showFloatingWidget, setShowFloatingWidget] = useState(true);
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -187,7 +188,7 @@ export default function CourseStudentViewPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16">
         <div className="flex flex-col xl:flex-row gap-8 xl:gap-12 items-start">
           {/* 1. RIGHT COLUMN: Main Course Content */}
-          <div className="flex-1 space-y-12 lg:space-y-20 w-full order-2 xl:order-1">
+          <div className="flex-1 space-y-12 lg:space-y-20 w-full">
             {/* Professional Header Section */}
             <div className="space-y-6 lg:space-y-8">
               <div className="flex items-center gap-3">
@@ -354,20 +355,20 @@ export default function CourseStudentViewPage() {
           </div>
 
           {/* 2. LEFT COLUMN: Sticky Purchase Box */}
-          <div className="w-full xl:w-[380px] shrink-0 sticky xl:top-8 z-20 order-1 xl:order-2">
-            <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 shadow-[0_15px_50px_rgba(0,0,0,0.05)] border border-slate-100 flex flex-col relative overflow-hidden">
+          <div id="payment-section" className="w-full xl:w-[380px] shrink-0 sticky xl:top-8 z-20">
+            <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 shadow-[0_15px_50px_rgba(0,0,0,0.05)] border border-slate-100 flex flex-col relative overflow-hidden">
               {course.is_subscribed ? (
-                <div className="space-y-6">
-                  <div className="text-center space-y-3">
-                    <div className="w-16 h-16 md:w-20 md:h-20 bg-green-50 text-green-600 rounded-2xl md:rounded-3xl flex items-center justify-center mx-auto shadow-sm">
-                      <CheckCircle2 size="32" />
+                <div className="space-y-4">
+                  <div className="text-center space-y-2">
+                    <div className="w-12 h-12 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+                      <CheckCircle2 size="24" />
                     </div>
-                    <h3 className="text-xl md:text-2xl font-black text-slate-900">أنت مشترك بالفعل</h3>
-                    <p className="text-slate-500 font-bold text-xs md:text-sm">استمتع برحلتك التعليمية وابدأ الآن في مشاهدة الدروس.</p>
+                    <h3 className="text-lg font-black text-slate-900">أنت مشترك بالفعل</h3>
+                    <p className="text-slate-500 font-bold text-[10px] md:text-xs">استمتع برحلتك التعليمية وابدأ الآن في مشاهدة الدروس.</p>
                   </div>
                   <button 
                     onClick={() => router.push(`/student/courses/${course.id}/learn`)}
-                    className="w-full py-4 md:py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-[1.25rem] md:rounded-[1.5rem] font-black text-lg md:text-xl shadow-xl shadow-blue-200 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3"
+                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-sm shadow-md shadow-blue-200 transition-all hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2"
                   >
                     <Play size="18" fill="currentColor" />
                     ابدأ التعلم الآن
@@ -375,26 +376,26 @@ export default function CourseStudentViewPage() {
                 </div>
               ) : (
                 <>
-                  <div className="text-right mb-1 md:mb-2">
-                    <span className="text-slate-400 font-bold text-sm md:text-base">استثمار الدورة</span>
+                  <div className="text-right mb-1">
+                    <span className="text-slate-400 font-bold text-xs md:text-sm">استثمار الدورة</span>
                   </div>
 
                   {/* Price Section */}
-                  <div className="flex flex-col items-start mb-6">
+                  <div className="flex flex-col items-start mb-4">
                     {course.price_type === 'free' || Number(course.final_price || course.price || 0) === 0 ? (
-                      <span className="text-3xl md:text-4xl font-black text-green-600 leading-none">مجاني بالكامل</span>
+                      <span className="text-2xl md:text-3xl font-black text-green-600 leading-none">مجاني بالكامل</span>
                     ) : (
                       <>
-                        <div className="flex items-center gap-2 md:gap-3">
-                          <span className="text-4xl md:text-5xl font-black text-slate-900 leading-none">{course.final_price || course.price || 299}</span>
-                          <span className="text-lg md:text-xl font-black text-[#006692] mt-2 md:mt-3">{course.currency || 'SAR'}</span>
+                        <div className="flex items-center gap-1.5 md:gap-2">
+                          <span className="text-2xl md:text-3xl font-black text-slate-900 leading-none">{course.final_price || course.price || 299}</span>
+                          <span className="text-sm md:text-base font-black text-[#006692] mt-1 md:mt-1.5">{course.currency || 'SAR'}</span>
                           {course.final_price && course.price && course.final_price !== course.price && (
-                            <span className="text-base md:text-lg text-slate-300 line-through font-bold mt-2 md:mt-3 ml-2">{course.price} {course.currency || 'SAR'}</span>
+                            <span className="text-xs md:text-sm text-slate-300 line-through font-bold mt-1 md:mt-1.5 ml-2">{course.price} {course.currency || 'SAR'}</span>
                           )}
                         </div>
 
-                        <div className="flex items-center gap-2 text-[#A85E00] font-black text-[10px] md:text-xs mt-3 md:mt-4">
-                          <Clock size="14" />
+                        <div className="flex items-center gap-1.5 text-[#A85E00] font-black text-[9px] md:text-[10px] mt-2">
+                          <Clock size={12} />
                           <span>خصم 50% ينتهي خلال 14 ساعة!</span>
                         </div>
                       </>
@@ -403,12 +404,12 @@ export default function CourseStudentViewPage() {
 
                   {/* Payment Method Selection */}
                   {!(course.price_type === 'free' || Number(course.final_price || course.price || 0) === 0) && (
-                    <div className="space-y-4 mb-8">
+                    <div className="space-y-2 mb-4">
                       <div className="text-right">
-                        <span className="text-slate-900 font-black text-sm">اختر وسيلة الدفع</span>
+                        <span className="text-slate-900 font-black text-xs">اختر وسيلة الدفع</span>
                       </div>
                       {course.payment_methods && course.payment_methods.length > 0 ? (
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-2">
                           {course.payment_methods.map((pm: any) => (
                             <PaymentMethodCard
                               key={pm.methodId}
@@ -421,15 +422,15 @@ export default function CourseStudentViewPage() {
                           ))}
                         </div>
                       ) : (
-                        <div className="text-center py-5 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                          <p className="text-xs text-gray-400 font-bold">لا تتوفر وسائل دفع مفعلة حالياً لهذه الدورة.</p>
+                        <div className="text-center py-4 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                          <p className="text-[10px] text-gray-400 font-black">لا تتوفر وسائل دفع مفعلة حالياً لهذه الدورة.</p>
                         </div>
                       )}
                     </div>
                   )}
 
                   {/* Action Buttons */}
-                  <div className="space-y-2 md:space-y-3 mb-6 md:mb-8">
+                  <div className="space-y-2 mb-4">
                     <button 
                       onClick={() => {
                         const isFree = course.price_type === 'free' || Number(course.final_price || course.price || 0) === 0;
@@ -444,10 +445,10 @@ export default function CourseStudentViewPage() {
                         setIsPaymentModalOpen(true);
                       }}
                       disabled={isSubscribing}
-                      className="w-full py-3.5 md:py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-[1rem] md:rounded-[1.2rem] font-black text-base md:text-lg shadow-lg shadow-blue-500/10 transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-sm shadow-md shadow-blue-500/10 transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {isSubscribing ? (
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       ) : (course.price_type === 'free' || Number(course.final_price || course.price || 0) === 0) ? 'التحاق مجاني بالدورة' : 'اشترك الآن'}
                     </button>
                   </div>
@@ -465,12 +466,12 @@ export default function CourseStudentViewPage() {
                   )}
 
                   {/* Secure Payment Footer */}
-                  <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-slate-50 w-full flex items-center justify-start gap-3">
-                    <span className="text-[10px] md:text-xs text-slate-400 font-bold">وسائل دفع آمنة</span>
-                    <div className="flex gap-1.5 md:gap-2">
-                      <div className="h-5 w-8 md:h-6 md:w-10 bg-[#F3F4F6] rounded" />
-                      <div className="h-5 w-8 md:h-6 md:w-10 bg-[#F3F4F6] rounded" />
-                      <div className="h-5 w-8 md:h-6 md:w-10 bg-[#F3F4F6] rounded" />
+                  <div className="mt-4 pt-4 border-t border-slate-50 w-full flex items-center justify-start gap-2">
+                    <span className="text-[9px] md:text-[10px] text-slate-400 font-bold">وسائل دفع آمنة</span>
+                    <div className="flex gap-1.5">
+                      <div className="h-4 w-8 bg-[#F3F4F6] rounded" />
+                      <div className="h-4 w-8 bg-[#F3F4F6] rounded" />
+                      <div className="h-4 w-8 bg-[#F3F4F6] rounded" />
                     </div>
                   </div>
                 </>
@@ -478,18 +479,50 @@ export default function CourseStudentViewPage() {
             </div>
 
             {/* Guarantee Box */}
-            <div className="mt-4 md:mt-6 bg-[#F3F4F6] rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 flex items-center gap-3 md:gap-4 border border-slate-100 shadow-sm">
+            <div className="mt-3 bg-[#F3F4F6] rounded-2xl p-4 flex items-center gap-3 border border-slate-100 shadow-sm">
               <div className="flex-1 text-right">
-                <h4 className="font-black text-slate-900 text-sm md:text-base">ضمان استرداد الأموال</h4>
-                <p className="text-[9px] md:text-[11px] text-slate-500 font-bold mt-0.5 md:mt-1">خلال 30 يوماً إذا لم تناسبك الدورة</p>
+                <h4 className="font-black text-slate-900 text-xs md:text-sm">ضمان استرداد الأموال</h4>
+                <p className="text-[9px] md:text-[10px] text-slate-500 font-bold mt-0.5">خلال 30 يوماً إذا لم تناسبك الدورة</p>
               </div>
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-xl md:rounded-2xl flex items-center justify-center text-[#8B4513] shadow-sm shrink-0">
-                <ShieldCheck size="20" />
+              <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center text-[#8B4513] shadow-sm shrink-0">
+                <ShieldCheck size="18" />
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Floating Sticky Purchase Widget (left side, can be closed) */}
+      {showFloatingWidget && !course.is_subscribed && (
+        <div className="fixed bottom-6 left-6 z-50 bg-white rounded-3xl shadow-[0_10px_35px_rgba(0,0,0,0.12)] border border-slate-150 p-4 w-[280px] flex items-center justify-between gap-4 animate-in slide-in-from-bottom-5 duration-300">
+          <button 
+            onClick={() => setShowFloatingWidget(false)}
+            className="absolute -top-2.5 -right-2.5 w-6 h-6 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-md hover:bg-slate-800 transition-colors border border-white"
+            aria-label="Close"
+          >
+            <X size={12} />
+          </button>
+          
+          <div className="text-right">
+            <p className="text-[10px] text-slate-400 font-black">سعر الدورة</p>
+            <p className="font-black text-slate-900 text-lg leading-tight mt-0.5">
+              {course.final_price || course.price} <span className="text-[10px] font-black text-blue-600">{course.currency || 'SAR'}</span>
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              const element = document.getElementById('payment-section');
+              if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-95 whitespace-nowrap"
+          >
+            اشترك الآن
+          </button>
+        </div>
+      )}
     </div>
   );
 }

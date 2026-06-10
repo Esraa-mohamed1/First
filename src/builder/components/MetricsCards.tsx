@@ -1,19 +1,22 @@
 import React from 'react';
-import { Award, BookOpen, Star, Sparkles } from 'lucide-react';
-
+import { BookOpen, Star, Sparkles } from 'lucide-react';
 import { useBuilderStore } from '../store/builderStore';
+import { getTypographyStyle } from '../utils/typography';
 
 interface MetricsCardsProps {
   title?: string;
   layout?: 'grid' | 'list';
   cardBg?: string;
+  [key: string]: any;
 }
 
-export default function MetricsCards({
-  title = 'معدل التقدم العام',
-  layout = 'grid',
-  cardBg = '#ffffff',
-}: MetricsCardsProps) {
+export default function MetricsCards(props: MetricsCardsProps) {
+  const {
+    title = 'معدل التقدم العام',
+    layout = 'grid',
+    cardBg = '#ffffff',
+  } = props;
+
   // Read deviceMode with a fail-safe fallback
   let deviceMode = 'desktop';
   try {
@@ -33,9 +36,19 @@ export default function MetricsCards({
     { label: 'تقييمات الطلاب ورضاهم', value: '4.9/5', desc: 'بناء على 1,420 تقييماً حقيقياً', icon: Star, color: '#10b981' }
   ];
 
+  const titleTypography = getTypographyStyle(props, 'title', {
+    font: 'IBM Plex Sans Arabic',
+    size: 'text-base',
+    weight: 'font-black',
+    color: '#1f2937'
+  });
+
   return (
     <div className="space-y-4 text-right" dir="rtl">
-      <h3 className="text-base font-black text-slate-800 font-['IBM_Plex_Sans_Arabic'] mb-2">
+      <h3 
+        style={titleTypography.style}
+        className={`mb-2 ${titleTypography.className}`}
+      >
         {title}
       </h3>
 

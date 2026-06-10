@@ -14,6 +14,7 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
+import { getTypographyStyle } from '../utils/typography';
 
 interface ChartsBlockProps {
   title?: string;
@@ -22,6 +23,7 @@ interface ChartsBlockProps {
   secondaryColor?: string;
   height?: number;
   showGrid?: boolean;
+  [key: string]: any;
 }
 
 const MOCK_DATA = [
@@ -33,14 +35,15 @@ const MOCK_DATA = [
   { name: 'يونيو', students: 1480, revenue: 9200 },
 ];
 
-export default function ChartsBlock({
-  title = 'إحصائيات التسجيل الشهري',
-  chartType = 'area',
-  primaryColor = '#2563eb',
-  secondaryColor = '#fbbf24',
-  height = 300,
-  showGrid = true,
-}: ChartsBlockProps) {
+export default function ChartsBlock(props: ChartsBlockProps) {
+  const {
+    title = 'إحصائيات التسجيل الشهري',
+    chartType = 'area',
+    primaryColor = '#2563eb',
+    secondaryColor = '#fbbf24',
+    height = 300,
+    showGrid = true,
+  } = props;
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -48,7 +51,6 @@ export default function ChartsBlock({
   }, []);
 
   if (!mounted) {
-    // Return placeholder of same height during SSR
     return (
       <div 
         style={{ height }}
@@ -109,10 +111,20 @@ export default function ChartsBlock({
     }
   };
 
+  const titleTypography = getTypographyStyle(props, 'title', {
+    font: 'IBM Plex Sans Arabic',
+    size: 'text-base',
+    weight: 'font-black',
+    color: '#1f2937'
+  });
+
   return (
     <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-[0_12px_40px_rgba(25,28,29,0.02)] flex flex-col space-y-4 text-right" dir="rtl">
       <div className="flex justify-between items-center pb-2 border-b border-slate-50">
-        <h3 className="text-base font-black text-slate-800 font-['IBM_Plex_Sans_Arabic']">
+        <h3 
+          style={titleTypography.style}
+          className={`${titleTypography.className}`}
+        >
           {title}
         </h3>
         

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Clock, Users, BookOpen } from 'lucide-react';
-
 import { useBuilderStore } from '../store/builderStore';
+import { getTypographyStyle } from '../utils/typography';
 
 interface CourseCardsProps {
   title?: string;
@@ -9,6 +9,7 @@ interface CourseCardsProps {
   showPrice?: boolean;
   showStudentsCount?: boolean;
   buttonBg?: string;
+  [key: string]: any;
 }
 
 const MOCK_COURSES = [
@@ -18,13 +19,15 @@ const MOCK_COURSES = [
   { id: '4', title: 'اللغة الإنجليزية التفاعلية - المستوى 1', instructor: 'أ. مصطفى عبد الصبور', price: '250 ريال', students: '312 طالب', duration: '15 ساعة', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM' }
 ];
 
-export default function CourseCards({
-  title = 'أحدث الدورات المسجلة',
-  gridCols = '3',
-  showPrice = true,
-  showStudentsCount = true,
-  buttonBg = '#2563eb',
-}: CourseCardsProps) {
+export default function CourseCards(props: CourseCardsProps) {
+  const {
+    title = 'أحدث الدورات المسجلة',
+    gridCols = '3',
+    showPrice = true,
+    showStudentsCount = true,
+    buttonBg = '#2563eb',
+  } = props;
+
   // Read deviceMode with a fail-safe fallback
   let deviceMode = 'desktop';
   try {
@@ -48,11 +51,21 @@ export default function CourseCards({
   // Limit course display for grid mapping
   const coursesToRender = gridCols === '4' ? MOCK_COURSES : MOCK_COURSES.slice(0, 3);
 
+  const titleTypography = getTypographyStyle(props, 'title', {
+    font: 'IBM Plex Sans Arabic',
+    size: 'text-base md:text-lg',
+    weight: 'font-black',
+    color: '#1f2937'
+  });
+
   return (
     <div className="space-y-6 text-right" dir="rtl">
       
       <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-        <h3 className="text-base md:text-lg font-black text-slate-800 flex items-center gap-2.5 font-['IBM_Plex_Sans_Arabic']">
+        <h3 
+          style={titleTypography.style}
+          className={`flex items-center gap-2.5 ${titleTypography.className}`}
+        >
           <span className="w-1.5 h-6 rounded-full" style={{ backgroundColor: buttonBg }}></span>
           {title}
         </h3>

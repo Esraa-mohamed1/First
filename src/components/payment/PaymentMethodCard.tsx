@@ -38,14 +38,14 @@ export const PaymentMethodCard = React.memo(({
       aria-selected={isSelected}
       onClick={onSelect}
       className={clsx(
-        "relative p-6 rounded-2xl border-2 cursor-pointer transition-all duration-300 flex flex-col items-center gap-4 text-center",
+        "relative p-4 rounded-2xl border-2 cursor-pointer transition-all duration-300 flex flex-col items-center gap-2.5 text-center",
         isSelected 
           ? "border-blue-600 bg-blue-50 shadow-lg shadow-blue-500/10 scale-[1.02]" 
           : "border-gray-100 bg-white hover:border-blue-200 hover:bg-gray-50/50"
       )}
     >
       <div className={clsx(
-        "w-14 h-14 rounded-xl flex items-center justify-center transition-colors",
+        "w-11 h-11 rounded-xl flex items-center justify-center transition-colors shrink-0",
         isSelected ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-600"
       )}>
         {getIcon()}
@@ -53,12 +53,12 @@ export const PaymentMethodCard = React.memo(({
       
       <div>
         <h3 className={clsx(
-          "font-bold transition-colors",
+          "font-bold text-sm transition-colors",
           isSelected ? "text-blue-900" : "text-gray-900"
         )}>
           {name}
         </h3>
-        <p className="text-xs text-gray-400 mt-1 font-medium">
+        <p className="text-[10px] text-gray-400 mt-0.5 font-semibold">
           {type === 'mobile' ? 'محفظة إلكترونية' : type === 'email' ? 'حساب إلكتروني' : 'تحويل بنكي'}
         </p>
       </div>
@@ -68,15 +68,15 @@ export const PaymentMethodCard = React.memo(({
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 500, damping: 30 }}
-          className="absolute top-3 right-3 text-blue-600"
+          className="absolute top-2 right-2 text-blue-600"
         >
-          <CheckCircle2 size={20} fill="currentColor" className="text-white fill-blue-600" />
+          <CheckCircle2 size={16} fill="currentColor" className="text-white fill-blue-600" />
         </motion.div>
       )}
 
       <button
         className={clsx(
-          "w-full py-2 rounded-xl text-xs font-bold transition-all",
+          "w-full py-1.5 rounded-xl text-[10px] font-black transition-all",
           isSelected ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600"
         )}
       >

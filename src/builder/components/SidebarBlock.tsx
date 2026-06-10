@@ -6,25 +6,26 @@ import {
   Globe, 
   Settings, 
   LogOut, 
-  BookOpen,
   Plus
 } from 'lucide-react';
-
 import { useBuilderStore } from '../store/builderStore';
+import { getTypographyStyle } from '../utils/typography';
 
 interface SidebarBlockProps {
   title?: string;
   logoText?: string;
   theme?: 'light' | 'dark';
   accentColor?: string;
+  [key: string]: any;
 }
 
-export default function SidebarBlock({
-  title = 'أكاديمية درب الذكية',
-  logoText = 'د',
-  theme = 'light',
-  accentColor = '#2563eb',
-}: SidebarBlockProps) {
+export default function SidebarBlock(props: SidebarBlockProps) {
+  const {
+    title = 'أكاديمية درب الذكية',
+    logoText = 'د',
+    theme = 'light',
+    accentColor = '#2563eb',
+  } = props;
   const isDark = theme === 'dark';
 
   // Read deviceMode with a fail-safe fallback
@@ -43,6 +44,20 @@ export default function SidebarBlock({
     { label: 'الإعدادات العامة', icon: Settings },
   ];
 
+  const titleTypography = getTypographyStyle(props, 'title', {
+    font: 'IBM Plex Sans Arabic',
+    size: 'text-base',
+    weight: 'font-black',
+    color: isDark ? '#ffffff' : '#1f2937'
+  });
+
+  const logoTextTypography = getTypographyStyle(props, 'logoText', {
+    font: 'IBM Plex Sans Arabic',
+    size: 'text-lg',
+    weight: 'font-black',
+    color: '#ffffff'
+  });
+
   // Mobile layout morphing
   if (deviceMode === 'mobile') {
     return (
@@ -55,12 +70,15 @@ export default function SidebarBlock({
       >
         <div className="flex items-center gap-2.5">
           <div 
-            style={{ backgroundColor: accentColor }}
-            className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-black text-xs shrink-0"
+            style={{ ...logoTextTypography.style, backgroundColor: accentColor }}
+            className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${logoTextTypography.className}`}
           >
             {logoText}
           </div>
-          <span className={`text-xs font-black truncate max-w-[120px] ${isDark ? 'text-white' : 'text-slate-800'}`}>
+          <span 
+            style={titleTypography.style}
+            className={`text-xs truncate max-w-[120px] ${titleTypography.className}`}
+          >
             {title}
           </span>
         </div>
@@ -95,12 +113,15 @@ export default function SidebarBlock({
         {/* Branding header */}
         <div className="flex items-center gap-3">
           <div 
-            style={{ backgroundColor: accentColor }}
-            className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-sm"
+            style={{ ...logoTextTypography.style, backgroundColor: accentColor }}
+            className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${logoTextTypography.className}`}
           >
             {logoText}
           </div>
-          <span className={`text-base font-black truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
+          <span 
+            style={titleTypography.style}
+            className={`truncate ${titleTypography.className}`}
+          >
             {title}
           </span>
         </div>

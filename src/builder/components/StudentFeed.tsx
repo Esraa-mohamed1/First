@@ -1,10 +1,12 @@
 import React from 'react';
 import { User, CheckCircle2, Award, MessageSquare, BookOpen } from 'lucide-react';
+import { getTypographyStyle } from '../utils/typography';
 
 interface StudentFeedProps {
   title?: string;
   limit?: number;
   showStatusBadges?: boolean;
+  [key: string]: any;
 }
 
 const MOCK_ACTIVITIES = [
@@ -55,11 +57,12 @@ const MOCK_ACTIVITIES = [
   }
 ];
 
-export default function StudentFeed({
-  title = 'تحديثات نشاط المتعلمين',
-  limit = 4,
-  showStatusBadges = true,
-}: StudentFeedProps) {
+export default function StudentFeed(props: StudentFeedProps) {
+  const {
+    title = 'تحديثات نشاط المتعلمين',
+    limit = 4,
+    showStatusBadges = true,
+  } = props;
   const visibleFeed = MOCK_ACTIVITIES.slice(0, limit);
 
   const getIcon = (type: string) => {
@@ -78,10 +81,20 @@ export default function StudentFeed({
     }
   };
 
+  const titleTypography = getTypographyStyle(props, 'title', {
+    font: 'IBM Plex Sans Arabic',
+    size: 'text-base',
+    weight: 'font-black',
+    color: '#1f2937'
+  });
+
   return (
     <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-[0_12px_40px_rgba(25,28,29,0.02)] space-y-6 text-right" dir="rtl">
       
-      <h3 className="text-base font-black text-slate-800 border-b border-slate-50 pb-3 font-['IBM_Plex_Sans_Arabic']">
+      <h3 
+        style={titleTypography.style}
+        className={`border-b border-slate-50 pb-3 ${titleTypography.className}`}
+      >
         {title}
       </h3>
 
