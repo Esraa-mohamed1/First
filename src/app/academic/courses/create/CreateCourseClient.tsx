@@ -1148,9 +1148,56 @@ export default function CreateCourseClient() {
                       selectedValues={selectedPaymentMethods.map(m => m.methodId)}
                       onChange={(ids) => {
                         if (ids.length > 3) {
-                          toast.error('الحد الأقصى لوسائل الدفع المحددة للدورة هو 3 وسائل فقط');
+                          const newlyAddedId = ids.find(id => !selectedPaymentMethods.some(m => m.methodId === id));
+                          if (!newlyAddedId) return;
+
+                          const newMethodInfo = activeMethods.find(m => m.id === newlyAddedId);
+                          const newMethodName = newMethodInfo ? newMethodInfo.name : '';
+
+                          const inputOptions: Record<string, string> = {};
+                          selectedPaymentMethods.forEach(m => {
+                            inputOptions[m.methodId] = m.methodName;
+                          });
+
+                          MySwal.fire({
+                            title: 'الحد الأقصى لوسائل الدفع',
+                            text: `لقد حددت وسيلة دفع رابعة. يرجى اختيار وسيلة الدفع التي ترغب في إزالتها واستبدالها بـ (${newMethodName}):`,
+                            input: 'radio',
+                            inputOptions: inputOptions,
+                            inputValidator: (value) => {
+                              if (!value) {
+                                return 'يجب اختيار وسيلة دفع لاستبدالها!';
+                              }
+                            },
+                            showCancelButton: true,
+                            confirmButtonText: 'استبدال',
+                            cancelButtonText: 'إلغاء',
+                            confirmButtonColor: '#2563eb',
+                          }).then((result) => {
+                            if (result.isConfirmed && result.value) {
+                              const idToRemove = result.value;
+                              const updatedIds = ids.filter(id => id !== idToRemove);
+                              const newMethods = updatedIds.map(id => {
+                                const existing = selectedPaymentMethods.find(m => m.methodId === id);
+                                if (existing) return existing;
+                                const method = activeMethods.find(m => m.id === id);
+                                if (!method) return null;
+                                const originalInfo = academyPaymentMethods.find(m => m.id.toString() === id);
+                                return {
+                                  methodId: method.id,
+                                  methodName: method.name,
+                                  type: method.type,
+                                  value: originalInfo?.accountValue || originalInfo?.account_value || '',
+                                  currency: originalInfo?.currency || 'SAR',
+                                  logo: method.logo || originalInfo?.logo
+                                };
+                              }).filter(Boolean) as AcademyPaymentMethod[];
+                              setSelectedPaymentMethods(newMethods);
+                            }
+                          });
                           return;
                         }
+
                         const newMethods = ids.map(id => {
                           const existing = selectedPaymentMethods.find(m => m.methodId === id);
                           if (existing) return existing;

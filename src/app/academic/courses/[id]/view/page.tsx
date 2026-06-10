@@ -10,6 +10,7 @@ import {
   BookOpen, User, CreditCard, ArrowRight, Video, Landmark
 } from 'lucide-react';
 import { getCourse } from '@/services/courses';
+import { getUserPaymentInfos, UserPaymentInfo } from '@/services/finance';
 import toast from 'react-hot-toast';
 import { twMerge } from 'tailwind-merge';
 
@@ -21,12 +22,18 @@ export default function OwnerCourseViewDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedUnits, setExpandedUnits] = useState<number[]>([]);
+  const [academyPaymentMethods, setAcademyPaymentMethods] = useState<UserPaymentInfo[]>([]);
 
   useEffect(() => {
     const fetchCourse = async () => {
       try {
         setLoading(true);
-        const data = await getCourse(id);
+        const [data, paymentInfos] = await Promise.all([
+          getCourse(id),
+          getUserPaymentInfos()
+        ]);
+        
+        setAcademyPaymentMethods(paymentInfos || []);
         
         // Normalize chapters vs units
         const normalizedCourse = {
@@ -103,13 +110,32 @@ export default function OwnerCourseViewDetailsPage() {
 
   // Selected payment methods list
   const rawPaymentMethods = course?.payment_methods || course?.receiverAccounts || course?.receiver_accounts || [];
-  const paymentMethods = rawPaymentMethods.map((item: any) => ({
-    methodId: (item.instructor_receiver_account_id || item.pivot?.instructor_receiver_account_id || item.methodId || item.method_id || item.receiver_account_id || item.id)?.toString() || '',
-    methodName: item.methodName || item.name || '',
-    value: item.value || item.accountValue || item.account_value || '',
-    currency: item.currency || 'SAR',
-    logo: item.logo || undefined
-  }));
+  const paymentMethods = rawPaymentMethods.map((item: any) => {
+    const val = item.value || item.accountValue || item.account_value || '';
+    const name = item.methodName || item.name || '';
+    const currency = item.currency || 'SAR';
+
+    const matchedMethod = academyPaymentMethods?.find((m: any) => 
+      (m.accountValue && val && m.accountValue.toString().trim() === val.toString().trim()) ||
+      (m.account_value && val && m.account_value.toString().trim() === val.toString().trim())
+    );
+
+    const methodId = matchedMethod?.id || 
+                     item.instructor_receiver_account_id || 
+                     item.pivot?.instructor_receiver_account_id || 
+                     item.id || 
+                     item.methodId || 
+                     item.method_id || 
+                     item.receiver_account_id;
+
+    return {
+      methodId: methodId?.toString() || '',
+      methodName: name,
+      value: val,
+      currency: currency,
+      logo: item.logo || matchedMethod?.logo || undefined
+    };
+  });
 
   return (
     <div className="space-y-8 animate-fade-in font-sans" dir="rtl">

@@ -113,16 +113,6 @@ export default function CourseStudentViewPage() {
                   <p className="text-slate-400 font-black text-[10px] uppercase mb-1">تاريخ النشر</p>
                   <p className="font-black text-slate-900 text-lg">25 أكتوبر 2023</p>
                 </div>
-
-                <div className="hidden md:block w-[1px] h-10 bg-slate-200" />
-
-                <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-2xl border border-slate-100 shadow-sm">
-                  <div className="flex text-orange-400">
-                    {[1, 2, 3, 4, 5].map(i => <Star key={i} size={16} fill="currentColor" />)}
-                  </div>
-                  <span className="font-black text-slate-900 text-lg">4.9</span>
-                  <span className="text-slate-400 font-bold">(1,240 تقييم)</span>
-                </div>
               </div>
             </div>
 

@@ -245,7 +245,10 @@ export default function CourseDetailsPage() {
 
   const fetchCourse = async () => {
     try {
-      const data = await getCourse(id);
+      const [data, paymentInfos] = await Promise.all([
+        getCourse(id),
+        getUserPaymentInfos()
+      ]);
       
       // Map 'chapters' to 'units' if needed
       if ((data as any).chapters) {
@@ -253,6 +256,7 @@ export default function CourseDetailsPage() {
       }
       
       setCourse(data);
+      setAcademyPaymentMethods(paymentInfos || []);
       setCourseInfo({
         title: data.title || '',
         description: data.description || '',
@@ -263,16 +267,31 @@ export default function CourseDetailsPage() {
       setCoachName(data.coach || '');
       const rawPaymentMethods = data.payment_methods || data.receiverAccounts || data.receiver_accounts || [];
       const returnedPaymentMethods = rawPaymentMethods.map((item: any) => {
-        const id = item.instructor_receiver_account_id || item.pivot?.instructor_receiver_account_id || item.methodId || item.method_id || item.receiver_account_id || item.id;
-        const name = item.methodName || item.name || '';
         const val = item.value || item.accountValue || item.account_value || '';
+        const name = item.methodName || item.name || '';
+        const currency = item.currency || 'SAR';
+
+        // Robust matching against instructor's configured accounts by value/number
+        const matchedMethod = paymentInfos?.find((m: any) => 
+          (m.accountValue && val && m.accountValue.toString().trim() === val.toString().trim()) ||
+          (m.account_value && val && m.account_value.toString().trim() === val.toString().trim())
+        );
+
+        const resolvedId = matchedMethod?.id || 
+                           item.instructor_receiver_account_id || 
+                           item.pivot?.instructor_receiver_account_id || 
+                           item.id || 
+                           item.methodId || 
+                           item.method_id || 
+                           item.receiver_account_id;
+
         return {
-          methodId: id?.toString() || '',
+          methodId: resolvedId?.toString() || '',
           methodName: name,
           type: 'account_number' as const,
           value: val,
-          currency: item.currency || 'SAR',
-          logo: item.logo || undefined
+          currency: currency,
+          logo: item.logo || matchedMethod?.logo || undefined
         };
       });
       setSelectedPaymentMethods(returnedPaymentMethods);
@@ -1049,9 +1068,56 @@ export default function CourseDetailsPage() {
                     selectedValues={selectedPaymentMethods.map(m => m.methodId)}
                     onChange={(ids) => {
                       if (ids.length > 3) {
-                        toast.error('الحد الأقصى لوسائل الدفع المحددة للدورة هو 3 وسائل فقط');
+                        const newlyAddedId = ids.find(id => !selectedPaymentMethods.some(m => m.methodId === id));
+                        if (!newlyAddedId) return;
+
+                        const newMethodInfo = activeMethods.find(m => m.id === newlyAddedId);
+                        const newMethodName = newMethodInfo ? newMethodInfo.name : '';
+
+                        const inputOptions: Record<string, string> = {};
+                        selectedPaymentMethods.forEach(m => {
+                          inputOptions[m.methodId] = m.methodName;
+                        });
+
+                        MySwal.fire({
+                          title: 'الحد الأقصى لوسائل الدفع',
+                          text: `لقد حددت وسيلة دفع رابعة. يرجى اختيار وسيلة الدفع التي ترغب في إزالتها واستبدالها بـ (${newMethodName}):`,
+                          input: 'radio',
+                          inputOptions: inputOptions,
+                          inputValidator: (value) => {
+                            if (!value) {
+                              return 'يجب اختيار وسيلة دفع لاستبدالها!';
+                            }
+                          },
+                          showCancelButton: true,
+                          confirmButtonText: 'استبدال',
+                          cancelButtonText: 'إلغاء',
+                          confirmButtonColor: '#2563eb',
+                        }).then((result) => {
+                          if (result.isConfirmed && result.value) {
+                            const idToRemove = result.value;
+                            const updatedIds = ids.filter(id => id !== idToRemove);
+                            const newMethods = updatedIds.map(id => {
+                              const existing = selectedPaymentMethods.find(m => m.methodId === id);
+                              if (existing) return existing;
+                              const method = activeMethods.find(m => m.id === id);
+                              if (!method) return null;
+                              const originalInfo = academyPaymentMethods.find(m => m.id.toString() === id);
+                              return {
+                                methodId: method.id,
+                                methodName: method.name,
+                                type: method.type,
+                                value: originalInfo?.accountValue || originalInfo?.account_value || '',
+                                currency: originalInfo?.currency || 'SAR',
+                                logo: method.logo || originalInfo?.logo
+                              };
+                            }).filter(Boolean) as AcademyPaymentMethod[];
+                            setSelectedPaymentMethods(newMethods);
+                          }
+                        });
                         return;
                       }
+
                       const newMethods = ids.map(id => {
                         const existing = selectedPaymentMethods.find(m => m.methodId === id);
                         if (existing) return existing;
