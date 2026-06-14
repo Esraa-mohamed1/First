@@ -6,10 +6,11 @@ interface StudentFeedProps {
   title?: string;
   limit?: number;
   showStatusBadges?: boolean;
+  activities?: any[];
   [key: string]: any;
 }
 
-const MOCK_ACTIVITIES = [
+export const MOCK_ACTIVITIES = [
   {
     id: '1',
     user: 'محمد عبد العزيز',
@@ -62,8 +63,9 @@ export default function StudentFeed(props: StudentFeedProps) {
     title = 'تحديثات نشاط المتعلمين',
     limit = 4,
     showStatusBadges = true,
+    activities = MOCK_ACTIVITIES,
   } = props;
-  const visibleFeed = MOCK_ACTIVITIES.slice(0, limit);
+  const visibleFeed = activities.slice(0, limit);
 
   const getIcon = (type: string) => {
     switch (type) {

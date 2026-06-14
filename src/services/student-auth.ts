@@ -20,3 +20,23 @@ export const getStudentProfileStatus = async (): Promise<any> => {
     throw error.response?.data || error;
   }
 };
+
+export const getStudentProfile = async (): Promise<any> => {
+  try {
+    const response = await studentApi.get<ApiResponse<any>>('profile');
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to get student profile:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const updateStudentProfile = async (payload: any): Promise<any> => {
+  try {
+    const response = await studentApi.post<ApiResponse<any>>('profile', payload);
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to update student profile:', error);
+    throw error.response?.data || error;
+  }
+};

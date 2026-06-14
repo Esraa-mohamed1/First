@@ -11,16 +11,20 @@ interface TabsBlockProps {
   alignment?: 'right' | 'center' | 'left';
 }
 
+export const MOCK_TABS = [
+  { id: '1', label: 'الدورات المتاحة' },
+  { id: '2', label: 'مسارات التعلم التفاعلية' },
+  { id: '3', label: 'الشهادات المعتمدة' }
+];
+
 export default function TabsBlock({
-  tabs = [
-    { id: '1', label: 'الدورات المتاحة' },
-    { id: '2', label: 'مسارات التعلم التفاعلية' },
-    { id: '3', label: 'الشهادات المعتمدة' }
-  ],
+  tabs = MOCK_TABS,
   activeTabColor = '#2563eb',
   alignment = 'right',
 }: TabsBlockProps) {
-  const [activeId, setActiveId] = useState(tabs[0]?.id || '1');
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const currentActiveId = activeId && tabs.some(t => t.id === activeId) ? activeId : (tabs[0]?.id || null);
 
   const alignClass = 
     alignment === 'left' ? 'justify-start' : 
@@ -32,7 +36,7 @@ export default function TabsBlock({
       {/* Tab bar header selection */}
       <div className={`flex border-b border-slate-100 pb-px gap-1 flex-wrap ${alignClass}`}>
         {tabs.map((tab) => {
-          const isActive = tab.id === activeId;
+          const isActive = tab.id === currentActiveId;
           return (
             <button
               key={tab.id}
@@ -52,7 +56,7 @@ export default function TabsBlock({
       {/* Tab simulated contents preview */}
       <div className="py-6 px-4 bg-slate-50/40 border border-t-0 border-slate-100 rounded-b-2xl min-h-[100px] flex items-center justify-center text-center">
         <p className="text-xs font-semibold text-slate-400 italic">
-          محتوى تفاعلي لعلامة التبويب: "{tabs.find(t => t.id === activeId)?.label}"
+          محتوى تفاعلي لعلامة التبويب: "{tabs.find(t => t.id === currentActiveId)?.label || 'لا يوجد تبويب محدد'}"
         </p>
       </div>
 

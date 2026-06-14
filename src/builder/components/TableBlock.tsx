@@ -7,10 +7,11 @@ interface TableBlockProps {
   showSearch?: boolean;
   rowsLimit?: number;
   headerBg?: string;
+  rows?: any[];
   [key: string]: any;
 }
 
-const MOCK_ROWS = [
+export const MOCK_ROWS = [
   { id: '1', name: 'أحمد محمد الجابر', email: 'ahmed.jaber@email.com', course: 'Photoshop Fundamentals', price: '250 ريال', date: '2026/06/07' },
   { id: '2', name: 'سارة عبد الله العتيبي', email: 'sara.otb@email.com', course: 'Microsoft Excel Advanced', price: '190 ريال', date: '2026/06/07' },
   { id: '3', name: 'خالد وليد الشمري', email: 'khaled.shm@email.com', course: 'Beginner to Marketing Pro', price: '320 ريال', date: '2026/06/06' },
@@ -25,8 +26,9 @@ export default function TableBlock(props: TableBlockProps) {
     showSearch = true,
     rowsLimit = 5,
     headerBg = '#f8fafc',
+    rows = MOCK_ROWS,
   } = props;
-  const visibleRows = MOCK_ROWS.slice(0, rowsLimit);
+  const visibleRows = rows.slice(0, rowsLimit);
 
   const titleTypography = getTypographyStyle(props, 'title', {
     font: 'IBM Plex Sans Arabic',
