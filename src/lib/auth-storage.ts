@@ -1,4 +1,4 @@
-const LEARNER_ROLES = new Set(['student', 'طالب', 'admin', 'الادمن', 'academy']);
+const LEARNER_ROLES = new Set(['student', 'طالب', 'admin', 'الادمن', 'academy', 'coach', 'instructor', 'teacher']);
 
 export function getCookieToken(): string | null {
   if (typeof document === 'undefined') return null;

@@ -31,6 +31,16 @@ export const getMyEnrolledCourses = async (): Promise<any[]> => {
   }
 };
 
+export const getMySubscriptions = async (): Promise<any[]> => {
+  try {
+    const response = await studentApi.get<ApiResponse<any[]>>('user-subscribe');
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to get subscriptions:', error);
+    return [];
+  }
+};
+
 export const getMyCourseDetails = async (id: number | string): Promise<any> => {
   try {
     const response = await studentApi.get<ApiResponse<any>>(`my-courses/${id}`);

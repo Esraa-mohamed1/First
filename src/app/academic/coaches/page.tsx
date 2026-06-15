@@ -33,7 +33,7 @@ export default function CoachesPage() {
   const fetchCoaches = async () => {
     setLoading(true);
     try {
-      const data = await getUsers('coach');
+      const data = await getUsers('academy');
       setCoaches(data || []);
     } catch (error) {
       console.error(error);
@@ -76,9 +76,8 @@ export default function CoachesPage() {
     }
   };
 
-  // Filter out the logged-in coach
+  // Filter out the logged-in coach (removed to show all retrieved admin users as coaches)
   const filteredCoaches = coaches
-    .filter(coach => coach.id !== currentUser?.id)
     .filter(coach =>
       coach.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       coach.email?.toLowerCase().includes(searchTerm.toLowerCase())

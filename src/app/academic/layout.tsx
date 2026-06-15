@@ -49,6 +49,11 @@ export default function AcademicLayout({
         const userData = response.data || response;
         if (userData) {
           localStorage.setItem('user_info', JSON.stringify(userData));
+          
+          if (userData.role === 'coach' || userData.role === 'instructor' || userData.role === 'teacher') {
+            router.push('/student');
+            return;
+          }
         }
 
         setIsVerified(!!userData.email_verified_at);

@@ -147,7 +147,7 @@ export default function AcademyLoginPage() {
 
                     toast.success('تم تسجيل الدخول بنجاح');
                     
-                    if (userRole === 'admin') {
+                    if (userRole === 'admin' || userRole === 'academy') {
                         window.location.href = '/academic';
                     } else {
                         window.location.href = '/student';
