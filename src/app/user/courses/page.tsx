@@ -3,11 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { CourseCard } from '@/components/Student/Courses/CourseCard';
 import { GraduationCap, Loader2 } from 'lucide-react';
-import { getStudentCourses } from '@/services/student-courses';
+import { getStudentCourses, getMySubscriptions } from '@/services/student-courses';
 import { Course } from '@/types/student';
-
-// Simple in-memory cache
-const coursesCache = new Map<string, any>();
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -20,30 +17,29 @@ export default function CoursesPage() {
         setIsLoading(true);
         setError(null);
 
-        // Check cache first
-        const cacheKey = 'tenant_courses';
-        if (coursesCache.has(cacheKey)) {
-          setCourses(coursesCache.get(cacheKey));
-          setIsLoading(false);
-          return;
-        }
+        // Fetch courses and subscriptions in parallel
+        const [response, subscriptions] = await Promise.all([
+          getStudentCourses(),
+          getMySubscriptions().catch(() => []),
+        ]);
 
-        // Fetch courses (tenant name is handled inside studentApi interceptors)
-        const response = await getStudentCourses();
-        const mappedCourses: Course[] = response.map((c: any) => ({
-          id: c.id?.toString() || '',
-          title: c.title || '',
-          slug: c.slug || '',
-          description: c.description || '',
-          progress: c.progress || 0,
-          image: c.image || c.cover_image || c.thumbnail || '',
-          instructor: c.instructor_name || '',
-          category: c.category?.name || 'General',
-          status: (c.progress === 100 ? 'completed' : c.progress > 0 ? 'in-progress' : 'not-started') as any,
-          is_enrolled: c.is_enrolled || false,
-        }));
+        const mappedCourses: Course[] = response.map((c: any) => {
+          const sub = subscriptions.find((s: any) => String(s.course_id) === String(c.id));
+          return {
+            id: c.id?.toString() || '',
+            title: c.title || '',
+            slug: c.slug || '',
+            description: c.description || '',
+            progress: c.progress || 0,
+            image: c.image || c.cover_image || c.thumbnail || '',
+            instructor: c.instructor_name || '',
+            category: c.category?.name || 'General',
+            status: (c.progress === 100 ? 'completed' : c.progress > 0 ? 'in-progress' : 'not-started') as any,
+            is_enrolled: c.is_enrolled || false,
+            subscription_status: sub ? sub.status : null,
+          };
+        });
 
-        coursesCache.set(cacheKey, mappedCourses);
         setCourses(mappedCourses);
       } catch (err: any) {
         console.error('Failed to load courses:', err);

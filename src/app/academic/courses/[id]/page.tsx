@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye, Landmark } from 'lucide-react';
 import { getCourse, deleteUnit, deleteLesson, createUnit, updateCourse, getCategories } from '@/services/courses';
 import { getProfileStatus } from '@/services/auth';
 import { getUsers } from '@/services/users';
@@ -40,7 +40,9 @@ export default function CourseDetailsPage() {
     name: `${m.name} (${m.currency})`,
     type: 'account_number' as const,
     icon: 'credit-card',
-    isActive: true
+    logo: m.logo,
+    isActive: true,
+    currency: m.currency
   }));
   
   // Global Data
@@ -199,6 +201,7 @@ export default function CourseDetailsPage() {
       // Assuming updateCourse takes ID and payload
       await updateCourse(Number(id), payload);
       toast.success('تم حفظ بيانات الدورة بنجاح');
+      setActiveTab('content');
     } catch (error) {
       toast.error('فشل حفظ بيانات الدورة');
     }
@@ -796,10 +799,11 @@ export default function CourseDetailsPage() {
                 عودة
               </button>
               <button 
+                type="button"
                 onClick={handleSaveCourseInfo}
                 className="px-12 py-3 bg-blue-600 text-white font-black rounded-full shadow-lg shadow-blue-100 hover:brightness-110 transition-all text-sm"
               >
-                حفظ
+                التالي
               </button>
             </div>
           </div>
@@ -977,6 +981,24 @@ export default function CourseDetailsPage() {
                 )
               )}
             </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-4 pt-6 border-t border-gray-100 mt-6">
+              <button
+                type="button"
+                onClick={() => setActiveTab('info')}
+                className="px-10 py-3 bg-gray-100 text-gray-600 font-black rounded-full hover:bg-gray-200 transition-all text-sm"
+              >
+                السابق
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('pricing')}
+                className="px-12 py-3 bg-blue-600 text-white font-black rounded-full shadow-lg shadow-blue-100 hover:brightness-110 transition-all text-sm"
+              >
+                التالي
+              </button>
+            </div>
           </div>
         )}
 
@@ -1068,52 +1090,12 @@ export default function CourseDetailsPage() {
                     selectedValues={selectedPaymentMethods.map(m => m.methodId)}
                     onChange={(ids) => {
                       if (ids.length > 3) {
-                        const newlyAddedId = ids.find(id => !selectedPaymentMethods.some(m => m.methodId === id));
-                        if (!newlyAddedId) return;
-
-                        const newMethodInfo = activeMethods.find(m => m.id === newlyAddedId);
-                        const newMethodName = newMethodInfo ? newMethodInfo.name : '';
-
-                        const inputOptions: Record<string, string> = {};
-                        selectedPaymentMethods.forEach(m => {
-                          inputOptions[m.methodId] = m.methodName;
-                        });
-
                         MySwal.fire({
                           title: 'الحد الأقصى لوسائل الدفع',
-                          text: `لقد حددت وسيلة دفع رابعة. يرجى اختيار وسيلة الدفع التي ترغب في إزالتها واستبدالها بـ (${newMethodName}):`,
-                          input: 'radio',
-                          inputOptions: inputOptions,
-                          inputValidator: (value) => {
-                            if (!value) {
-                              return 'يجب اختيار وسيلة دفع لاستبدالها!';
-                            }
-                          },
-                          showCancelButton: true,
-                          confirmButtonText: 'استبدال',
-                          cancelButtonText: 'إلغاء',
+                          text: 'يمكنك تحديد 3 وسائل دفع كحد أقصى لهذه الدورة.',
+                          icon: 'warning',
+                          confirmButtonText: 'حسناً',
                           confirmButtonColor: '#2563eb',
-                        }).then((result) => {
-                          if (result.isConfirmed && result.value) {
-                            const idToRemove = result.value;
-                            const updatedIds = ids.filter(id => id !== idToRemove);
-                            const newMethods = updatedIds.map(id => {
-                              const existing = selectedPaymentMethods.find(m => m.methodId === id);
-                              if (existing) return existing;
-                              const method = activeMethods.find(m => m.id === id);
-                              if (!method) return null;
-                              const originalInfo = academyPaymentMethods.find(m => m.id.toString() === id);
-                              return {
-                                methodId: method.id,
-                                methodName: method.name,
-                                type: method.type,
-                                value: originalInfo?.accountValue || originalInfo?.account_value || '',
-                                currency: originalInfo?.currency || 'SAR',
-                                logo: method.logo || originalInfo?.logo
-                              };
-                            }).filter(Boolean) as AcademyPaymentMethod[];
-                            setSelectedPaymentMethods(newMethods);
-                          }
                         });
                         return;
                       }
@@ -1138,30 +1120,40 @@ export default function CourseDetailsPage() {
                   />
 
                   {selectedPaymentMethods.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-top-2 duration-300">
                       {selectedPaymentMethods.map((pm) => (
-                        <div key={pm.methodId} className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 flex flex-col justify-between relative group/pm">
+                        <div key={pm.methodId} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:border-blue-500/30 hover:shadow-lg transition-all duration-300 flex flex-col justify-between relative group/pm">
                           <button
                             type="button"
                             onClick={() => {
                               setSelectedPaymentMethods(prev => prev.filter(m => m.methodId !== pm.methodId));
                             }}
-                            className="absolute top-3 left-3 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            className="absolute top-4 left-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors shadow-sm bg-white border border-slate-100"
                             title="إزالة وسيلة الدفع"
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={13} />
                           </button>
-                          <span className="text-xs text-gray-400 font-bold">الحساب المفعل</span>
-                          <div className="flex items-center justify-between mt-1">
-                            <div className="flex items-center gap-2 pl-6">
-                              {pm.logo && <img src={getLogoUrl(pm.logo)} alt={pm.methodName} className="w-5 h-5 object-cover rounded shadow-sm" />}
-                              <span className="font-black text-gray-900 text-sm">{pm.methodName}</span>
+                          
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100/80 overflow-hidden shrink-0">
+                              {pm.logo ? (
+                                <img src={getLogoUrl(pm.logo)} alt={pm.methodName} className="w-full h-full object-cover" />
+                              ) : (
+                                <Landmark size={18} className="text-blue-600" />
+                              )}
                             </div>
-                            <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-black">{pm.currency}</span>
+                            <div className="text-right">
+                              <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">الحساب المفعل</span>
+                              <span className="font-black text-slate-900 text-sm mt-0.5">{pm.methodName}</span>
+                            </div>
                           </div>
-                          <div className="mt-2 pt-2 border-t border-gray-100/50">
-                            <span className="text-xs text-gray-400 block font-bold">رقم الحساب / المحفظة</span>
-                            <span className="font-mono text-sm text-gray-700 font-bold block mt-0.5 break-all select-all">{pm.value}</span>
+
+                          <div className="mt-4 pt-3 border-t border-slate-50 flex flex-col gap-1 text-right">
+                            <span className="text-[10px] text-slate-400 font-bold block">رقم الحساب / المحفظة</span>
+                            <div className="flex items-center justify-between gap-3 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100/50 mt-1">
+                              <span className="font-mono text-xs text-slate-700 font-bold break-all select-all">{pm.value}</span>
+                              <span className="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-black tracking-wider uppercase">{pm.currency}</span>
+                            </div>
                           </div>
                         </div>
                       ))}

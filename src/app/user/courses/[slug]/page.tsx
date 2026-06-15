@@ -9,7 +9,7 @@ import {
   Video, Monitor, DownloadCloud, Headset, Lock,
   Layout, MousePointer2, Smartphone, PenTool, X
 } from 'lucide-react';
-import { getStudentCourse, subscribeToCourse } from '@/services/student-courses';
+import { getStudentCourse, subscribeToCourse, getMySubscriptions } from '@/services/student-courses';
 import { Course, Unit } from '@/types/api';
 import toast from 'react-hot-toast';
 import { twMerge } from 'tailwind-merge';
@@ -60,7 +60,13 @@ export default function CourseStudentViewPage() {
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const data = await getStudentCourse(slug);
+        const [data, subscriptions] = await Promise.all([
+          getStudentCourse(slug),
+          getMySubscriptions().catch(() => []),
+        ]);
+
+        const courseSubscription = subscriptions.find((sub: any) => String(sub.course_id) === String(data.id));
+        const subStatus = courseSubscription ? courseSubscription.status : null;
         
         // Use real API data with fallback to static if missing
         let learningPoints: string[] = [];
@@ -68,9 +74,9 @@ export default function CourseStudentViewPage() {
         // Try from infos first (new structure)
         if (data.infos && Array.isArray(data.infos)) {
           learningPoints = data.infos
-            .filter((info: any) => info.key === 'what_you_will_learn' || info.key === 'what_you_learn')
+            .filter((info: any) => info.key === 'what_you_will_learn' || info.key === 'what_you_learn' || info.info_key === 'what_you_will_learn' || info.info_key === 'what_you_learn')
             .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
-            .map((info: any) => info.value);
+            .map((info: any) => info.value || info.info_value);
         }
 
         // Fallback to what_you_will_learn string if infos didn't have any
@@ -87,6 +93,41 @@ export default function CourseStudentViewPage() {
             console.error('Failed to parse what_you_will_learn', e);
             if (data.what_you_will_learn) learningPoints = [data.what_you_will_learn];
             else if (data.what_you_learn) learningPoints = [data.what_you_learn];
+          }
+        }
+
+        // Parse custom sections from infos dynamically
+        let infoSections: { id: string; title: string; items: string[] }[] = [];
+        if (data.infos && Array.isArray(data.infos) && data.infos.length > 0) {
+          const grouped = data.infos.reduce((acc: any, info: any) => {
+            const key = info.info_key || info.key;
+            const value = info.info_value || info.value;
+            
+            if (!key || !value) return acc;
+
+            if (!acc[key]) {
+              acc[key] = {
+                id: key,
+                title: key === 'what_you_will_learn' || key === 'what_you_learn' ? 'ماذا ستتعلم؟' : key,
+                items: []
+              };
+            }
+            acc[key].items.push({ value, order: info.order || 0 });
+            return acc;
+          }, {});
+          
+          infoSections = Object.values(grouped).map((group: any) => {
+            const sortedItems = group.items.sort((a: any, b: any) => a.order - b.order).map((i: any) => i.value);
+            return {
+              id: group.id,
+              title: group.title,
+              items: sortedItems
+            };
+          });
+        } else {
+          // Fallback to learningPoints (what_you_will_learn)
+          if (learningPoints.length > 0) {
+            infoSections = [{ id: 'what_you_will_learn', title: 'ماذا ستتعلم؟', items: learningPoints }];
           }
         }
 
@@ -114,7 +155,9 @@ export default function CourseStudentViewPage() {
           image: data.image,
           units: data.units || (data as any).chapters || [],
           learning_points: learningPoints,
+          info_sections: infoSections,
           is_subscribed: (data as any).is_enrolled || false,
+          subscription_status: subStatus,
           payment_methods: paymentMethodsData,
         };
 
@@ -124,7 +167,20 @@ export default function CourseStudentViewPage() {
         }
       } catch (error) {
         console.warn('Course not found, showing mock data for preview:', error);
-        setCourse({ ...STATIC_COURSE_FALLBACK, slug: slug, currency: 'SAR', price_type: 'paid', payment_methods: [] });
+        setCourse({ 
+          ...STATIC_COURSE_FALLBACK, 
+          slug: slug, 
+          currency: 'SAR', 
+          price_type: 'paid', 
+          payment_methods: [],
+          subscription_status: null,
+          info_sections: [{ id: 'what_you_will_learn', title: 'ماذا ستتعلم؟', items: [
+            "بناء أنظمة التصميم (Design Systems) القابلة للتوسع بشكل احترافي.",
+            "فهم سيكولوجية المستخدم وتطبيق مبادئ UX in قراراتك التصميمية.",
+            "إتقان التصميم المتجاوب للهواتف والويب باستخدام أحدث أدوات Figma.",
+            "تحويل التصاميم إلى بروتوتايب تفاعلي يحاكي الواقع تماماً."
+          ] }]
+        });
         setExpandedUnits([1]);
       } finally {
         setLoading(false);
@@ -241,47 +297,55 @@ export default function CourseStudentViewPage() {
               );
             })()}
 
-            {/* What you will learn */}
-            <div className="space-y-8 lg:space-y-10">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl md:text-3xl font-black text-slate-900 border-r-[6px] border-blue-600 pr-4 leading-none">ماذا ستتعلم؟</h2>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                {(course.learning_points?.length > 0 ? course.learning_points : [
+            {/* Dynamic Info Sections */}
+            {(course.info_sections && course.info_sections.length > 0 ? course.info_sections : [
+              {
+                id: 'what_you_will_learn',
+                title: 'ماذا ستتعلم؟',
+                items: course.learning_points?.length > 0 ? course.learning_points : [
                   "بناء أنظمة التصميم (Design Systems) القابلة للتوسع بشكل احترافي.",
                   "فهم سيكولوجية المستخدم وتطبيق مبادئ UX in قراراتك التصميمية.",
                   "إتقان التصميم المتجاوب للهواتف والويب باستخدام أحدث أدوات Figma.",
                   "تحويل التصاميم إلى بروتوتايب تفاعلي يحاكي الواقع تماماً."
-                ]).map((point: string, i: number) => {
-                  const icons = [Layout, MousePointer2, Smartphone, PenTool, Globe, Award, ShieldCheck, Video];
-                  const colors = ['blue', 'blue', 'orange', 'slate', 'green', 'purple', 'red', 'indigo'];
-                  const Icon = icons[i % icons.length];
-                  const color = colors[i % colors.length];
+                ]
+              }
+            ]).map((section: any, sectionIdx: number) => (
+              <div key={section.id || sectionIdx} className="space-y-8 lg:space-y-10">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl md:text-3xl font-black text-slate-900 border-r-[6px] border-blue-600 pr-4 leading-none">{section.title}</h2>
+                </div>
 
-                  return (
-                    <div key={i} className="bg-white p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 flex items-center justify-between gap-4 md:gap-6 group hover:border-blue-600 transition-all shadow-sm">
-                      <div 
-                        className="text-slate-700 font-bold leading-relaxed text-sm md:text-base text-right flex-1 ql-editor !p-0"
-                        dangerouslySetInnerHTML={{ __html: point }}
-                      />
-                      <div className={twMerge(
-                        "w-10 h-10 md:w-12 md:h-12 rounded-full shrink-0 flex items-center justify-center",
-                        color === 'blue' ? 'bg-blue-50 text-blue-600' :
-                          color === 'orange' ? 'bg-orange-50 text-orange-600' : 
-                          color === 'green' ? 'bg-green-50 text-green-600' :
-                          color === 'purple' ? 'bg-purple-50 text-purple-600' :
-                          color === 'red' ? 'bg-red-50 text-red-600' :
-                          color === 'indigo' ? 'bg-indigo-50 text-indigo-600' :
-                          'bg-slate-100 text-slate-600'
-                      )}>
-                        <Icon size="20" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                  {section.items.map((point: string, i: number) => {
+                    const icons = [Layout, MousePointer2, Smartphone, PenTool, Globe, Award, ShieldCheck, Video];
+                    const colors = ['blue', 'blue', 'orange', 'slate', 'green', 'purple', 'red', 'indigo'];
+                    const Icon = icons[i % icons.length];
+                    const color = colors[i % colors.length];
+
+                    return (
+                      <div key={i} className="bg-white p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 flex items-center justify-between gap-4 md:gap-6 group hover:border-blue-600 transition-all shadow-sm">
+                        <div 
+                          className="text-slate-700 font-bold leading-relaxed text-sm md:text-base text-right flex-1 ql-editor !p-0"
+                          dangerouslySetInnerHTML={{ __html: point }}
+                        />
+                        <div className={twMerge(
+                          "w-10 h-10 md:w-12 md:h-12 rounded-full shrink-0 flex items-center justify-center",
+                          color === 'blue' ? 'bg-blue-50 text-blue-600' :
+                            color === 'orange' ? 'bg-orange-50 text-orange-600' : 
+                            color === 'green' ? 'bg-green-50 text-green-600' :
+                            color === 'purple' ? 'bg-purple-50 text-purple-600' :
+                            color === 'red' ? 'bg-red-50 text-red-600' :
+                            color === 'indigo' ? 'bg-indigo-50 text-indigo-600' :
+                            'bg-slate-100 text-slate-600'
+                        )}>
+                          <Icon size="20" />
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            ))}
 
             {/* Course Content */}
             <div className="space-y-8 lg:space-y-10">
@@ -362,6 +426,23 @@ export default function CourseStudentViewPage() {
                   >
                     <Play size="18" fill="currentColor" />
                     ابدأ التعلم الآن
+                  </button>
+                </div>
+              ) : (course.subscription_status === 'pending' || course.subscription_status === 'penidng') ? (
+                <div className="space-y-4">
+                  <div className="text-center space-y-2">
+                    <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+                      <Clock size="24" />
+                    </div>
+                    <h3 className="text-lg font-black text-slate-900">طلب الاشتراك قيد المراجعة</h3>
+                    <p className="text-slate-500 font-bold text-[10px] md:text-xs">لقد قمت بتقديم طلب اشتراك لهذه الدورة. طلبك قيد المراجعة حالياً من قبل الإدارة وسنقوم بتفعيله قريباً.</p>
+                  </div>
+                  <button 
+                    onClick={() => alert('طلب الاشتراك الخاص بك قيد المراجعة حالياً.')}
+                    className="w-full py-3 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 cursor-pointer animate-pulse"
+                    style={{ backgroundColor: '#8b5cf6', boxShadow: '0 10px 15px -3px rgba(139, 92, 246, 0.3)' }}
+                  >
+                    قيد الانتظار (المراجعة)
                   </button>
                 </div>
               ) : (
@@ -500,17 +581,27 @@ export default function CourseStudentViewPage() {
             </p>
           </div>
 
-          <button
-            onClick={() => {
-              const element = document.getElementById('payment-section');
-              if (element) {
-                element.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-95 whitespace-nowrap"
-          >
-            اشترك الآن
-          </button>
+          {course.subscription_status === 'pending' || course.subscription_status === 'penidng' ? (
+            <button
+              onClick={() => alert('طلب الاشتراك الخاص بك قيد المراجعة حالياً.')}
+              className="px-4 py-2 text-white font-black text-xs rounded-xl shadow-md cursor-pointer whitespace-nowrap"
+              style={{ backgroundColor: '#8b5cf6' }}
+            >
+              قيد الانتظار
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                const element = document.getElementById('payment-section');
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-95 whitespace-nowrap"
+            >
+              اشترك الآن
+            </button>
+          )}
         </div>
       )}
     </div>

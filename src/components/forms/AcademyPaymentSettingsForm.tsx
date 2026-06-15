@@ -423,7 +423,8 @@ export const AcademyPaymentSettingsForm = () => {
               <select
                 value={currency}
                 onChange={handleCurrencyChange}
-                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
+                disabled={true}
+                className="w-full p-4 bg-gray-200 border border-gray-200 rounded-2xl outline-none font-bold text-sm text-gray-400 cursor-not-allowed"
               >
                 {getSortedCurrencies().map(cur => (
                   <option key={cur.value} value={cur.value}>

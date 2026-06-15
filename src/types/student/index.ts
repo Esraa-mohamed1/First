@@ -10,6 +10,7 @@ export interface Course {
   status: 'in-progress' | 'completed' | 'not-started';
   price_type?: 'free' | 'paid';
   is_enrolled?: boolean;
+  subscription_status?: string | null;
 }
 
 export interface UserProfile {

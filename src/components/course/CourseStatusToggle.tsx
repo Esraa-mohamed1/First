@@ -13,21 +13,21 @@ export const CourseStatusToggle = ({ status, onChange }: CourseStatusToggleProps
   const isPublished = status === 'published';
 
   return (
-    <div className="flex flex-col space-y-3" dir="rtl">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col space-y-4 text-right" dir="rtl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
         <div>
-          <h4 className="text-sm font-black text-gray-900">حالة نشر الدورة</h4>
-          <p className="text-xs text-gray-400 font-bold mt-0.5">حدد ما إذا كانت الدورة مرئية للطلاب أم مسودة للعمل عليها</p>
+          <h4 className="text-sm font-black text-slate-900">حالة نشر الدورة</h4>
+          <p className="text-[11px] text-slate-400 font-bold mt-1">حدد ما إذا كانت الدورة مرئية للطلاب أم مسودة للعمل عليها</p>
         </div>
-        <div className="flex items-center bg-gray-100 p-1 rounded-2xl border border-gray-200/50">
+        <div className="flex items-center bg-white p-1 rounded-xl border border-slate-200/80 shadow-sm w-fit self-end sm:self-auto">
           <button
             type="button"
             onClick={() => onChange('draft')}
             className={clsx(
-              "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all",
+              "flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-black transition-all duration-300",
               !isPublished 
-                ? "bg-white text-gray-900 shadow-sm border border-gray-200/20" 
-                : "text-gray-400 hover:text-gray-700"
+                ? "bg-slate-900 text-white shadow-md shadow-slate-900/10" 
+                : "text-slate-400 hover:text-slate-700"
             )}
           >
             <FileEdit size={14} />
@@ -37,10 +37,10 @@ export const CourseStatusToggle = ({ status, onChange }: CourseStatusToggleProps
             type="button"
             onClick={() => onChange('published')}
             className={clsx(
-              "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all",
+              "flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-black transition-all duration-300",
               isPublished 
-                ? "bg-green-600 text-white shadow-lg shadow-green-500/20" 
-                : "text-gray-400 hover:text-gray-700"
+                ? "bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/20" 
+                : "text-slate-400 hover:text-slate-700"
             )}
           >
             <Eye size={14} />
@@ -50,13 +50,17 @@ export const CourseStatusToggle = ({ status, onChange }: CourseStatusToggleProps
       </div>
       
       {isPublished ? (
-        <div className="flex items-start gap-2 p-3 bg-green-50/50 rounded-xl border border-green-100 text-green-700 text-xs">
-          <Info size={14} className="mt-0.5 shrink-0" />
+        <div className="flex items-start gap-3 p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 text-emerald-800 text-xs shadow-sm animate-in fade-in duration-300">
+          <div className="p-1 bg-emerald-100 rounded-lg text-emerald-700 shrink-0 mt-0.5">
+            <Info size={14} />
+          </div>
           <p className="font-bold leading-relaxed">الدورة منشورة حالياً وتظهر للطلاب المشتركين والزوار في المتجر.</p>
         </div>
       ) : (
-        <div className="flex items-start gap-2 p-3 bg-amber-50/50 rounded-xl border border-amber-100 text-amber-700 text-xs">
-          <Info size={14} className="mt-0.5 shrink-0" />
+        <div className="flex items-start gap-3 p-4 bg-amber-50/50 rounded-2xl border border-amber-100 text-amber-800 text-xs shadow-sm animate-in fade-in duration-300">
+          <div className="p-1 bg-amber-100 rounded-lg text-amber-700 shrink-0 mt-0.5">
+            <Info size={14} />
+          </div>
           <p className="font-bold leading-relaxed">الدورة في وضع المسودة ولا يمكن للطلاب الوصول إليها أو الاشتراك بها حالياً.</p>
         </div>
       )}

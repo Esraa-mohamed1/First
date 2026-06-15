@@ -7,6 +7,7 @@ export interface PaymentMethod {
   icon: string;
   logo?: string;
   isActive: boolean;
+  currency?: string;
 }
 
 export interface AcademyPaymentMethod {
