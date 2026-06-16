@@ -44,7 +44,7 @@ export interface TemplateFormProps {
   selectedPresetId: string;
   loadingTemplate: boolean;
   receiverTemplates: ReceiverAccount[];
-  logoFileInputRef: React.RefObject<HTMLInputElement>;
+  logoFileInputRef: React.RefObject<HTMLInputElement | null>;
   // Handlers
   onSubmit: (e: React.FormEvent) => void;
   onCountryChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;

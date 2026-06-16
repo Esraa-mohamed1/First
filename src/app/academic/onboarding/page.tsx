@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ChevronRight, ChevronLeft, Building2, CreditCard, Globe, Rocket, Loader2 } from 'lucide-react';
-import { AcademyPaymentSettingsForm } from '@/components/forms/AcademyPaymentSettingsForm';
+import { TemplateForm, ActiveAccountForm } from '@/components/forms/AcademyPaymentSettingsForm';
 import { useRouter } from 'next/navigation';
 import { showAlert } from '@/lib/sweetalert';
 
@@ -124,7 +124,9 @@ export default function OnboardingPage() {
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">{steps[1].title}</h2>
                     <p className="text-gray-500">{steps[1].description}</p>
                   </div>
-                  <AcademyPaymentSettingsForm />
+                  <p className="text-sm text-gray-400 text-center font-medium">
+                    يمكنك إعداد طرق الدفع من لوحة التحكم ← المالية ← إعدادات الدفع بعد الإطلاق
+                  </p>
                 </div>
               )}
 

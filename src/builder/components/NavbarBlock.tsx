@@ -1,6 +1,6 @@
 import React from 'react';
 import { Search, Bell, User, HelpCircle } from 'lucide-react';
-import { getTypographyStyle } from '../utils/typography';
+import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
 
 interface NavbarBlockProps {
   title?: string;
@@ -27,12 +27,18 @@ export default function NavbarBlock(props: NavbarBlockProps) {
     color: '#1f2937'
   });
 
+  const isTransparentBg = hasSectionBackground(props);
+
   return (
     <header 
-      style={{ backgroundColor: bgColor, borderColor: borderColor }}
-      className="w-full rounded-2xl border px-6 py-4 flex justify-between items-center shadow-sm select-none"
+      style={{ 
+        backgroundColor: isTransparentBg ? 'rgba(255, 255, 255, 0.7)' : bgColor, 
+        borderColor: isTransparentBg ? 'rgba(255, 255, 255, 0.4)' : borderColor 
+      }}
+      className={`w-full rounded-2xl border px-6 py-4 flex justify-between items-center ${isTransparentBg ? 'backdrop-blur-md shadow-md' : 'shadow-sm'} select-none`}
       dir="rtl"
     >
+
       {/* Brand logo details */}
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600 shrink-0 font-extrabold text-sm">
@@ -48,7 +54,8 @@ export default function NavbarBlock(props: NavbarBlockProps) {
 
       {/* Middle search input box */}
       {showSearch && (
-        <div className="hidden md:flex items-center flex-1 max-w-sm mx-8 bg-slate-50 border border-slate-200/60 rounded-xl px-3.5 py-1.5 relative shadow-inner">
+        <div className={`hidden md:flex items-center flex-1 max-w-sm mx-8 ${isTransparentBg ? 'bg-white/30 border-white/20' : 'bg-slate-50 border-slate-200/60'} rounded-xl px-3.5 py-1.5 relative shadow-inner`}>
+
           <input 
             type="text" 
             placeholder="البحث عن دروس أو معلمين..." 

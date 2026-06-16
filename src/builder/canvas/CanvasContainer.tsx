@@ -50,17 +50,11 @@ export default function CanvasContainer() {
           <div className="w-8"></div>
         </div>
 
-        {/* Workspace Canvas Frame */}
+        {/* Workspace Canvas Frame — DnD always active */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10 bg-[#F3F4F6]">
-          {isEditing ? (
-            // Wrap in Drag & Drop context during editing
-            <DndWrapper>
-              <RecursiveRenderer nodes={currentTemplate.sections} />
-            </DndWrapper>
-          ) : (
-            // Plain visual renderer for clean preview
+          <DndWrapper>
             <RecursiveRenderer nodes={currentTemplate.sections} />
-          )}
+          </DndWrapper>
         </div>
 
       </div>

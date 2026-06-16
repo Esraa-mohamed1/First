@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { DeviceMode, TemplateSchema, BuilderNode } from '../types';
+import { DeviceMode, TemplateSchema, BuilderNode } from '../interfaces';
 
 interface BuilderState {
   currentTemplate: TemplateSchema | null;

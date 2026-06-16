@@ -1,7 +1,8 @@
 import React from 'react';
 import { useBuilderStore } from '../store/builderStore';
-import { BuilderNode } from '../types';
+import { BuilderNode } from '../interfaces';
 import HeroBanner from '../components/HeroBanner';
+import HeroSlider from '../components/HeroSlider';
 import KpiCards from '../components/KpiCards';
 import ChartsBlock from '../components/ChartsBlock';
 import TableBlock from '../components/TableBlock';
@@ -11,8 +12,63 @@ import SidebarBlock from '../components/SidebarBlock';
 import NavbarBlock from '../components/NavbarBlock';
 import TabsBlock from '../components/TabsBlock';
 import MetricsCards from '../components/MetricsCards';
+import SectionShapeOverlay from '../components/SectionShapeOverlay';
 import SortableSection from '@/builder/dnd/SortableSection';
 import SortableWidget from '@/builder/dnd/SortableWidget';
+
+// ─── Section Background Wrapper ───────────────────────────────────────────────
+
+function SectionBackground({ node, children }: { node: BuilderNode; children: React.ReactNode }) {
+  const p = node.props || {};
+  const bgType = p.sectionBgType || 'solid';
+
+  let style: React.CSSProperties = {};
+  let extraClass = '';
+
+  if (bgType === 'solid' && p.sectionBg) {
+    style.backgroundColor = p.sectionBg;
+  } else if (bgType === 'gradient' && p.sectionGradientFrom && p.sectionGradientTo) {
+    const dirMap: Record<string, string> = {
+      'to-r': 'to right',
+      'to-l': 'to left',
+      'to-b': 'to bottom',
+      'to-t': 'to top',
+      'to-br': '135deg',
+      'to-tr': '45deg',
+    };
+    const direction = dirMap[p.sectionGradientDir || 'to-br'] || '135deg';
+    style.backgroundImage = `linear-gradient(${direction}, ${p.sectionGradientFrom}, ${p.sectionGradientTo})`;
+  } else if (bgType === 'image' && p.sectionBgImage) {
+    style.backgroundImage = `url(${p.sectionBgImage})`;
+    style.backgroundSize = 'cover';
+    style.backgroundPosition = 'center';
+  }
+
+  const hasBackground = bgType === 'solid' ? !!p.sectionBg : bgType === 'gradient' ? !!(p.sectionGradientFrom && p.sectionGradientTo) : !!p.sectionBgImage;
+
+  if (!hasBackground && !(p.sectionShape && p.sectionShape !== 'none')) {
+    return <>{children}</>;
+  }
+
+  return (
+    <div className="relative overflow-hidden rounded-[inherit]" style={style}>
+      {/* Image overlay */}
+      {bgType === 'image' && p.sectionBgImage && (
+        <div
+          className="absolute inset-0 bg-slate-900"
+          style={{ opacity: (p.sectionBgOverlay ?? 40) / 100 }}
+        />
+      )}
+      {/* Decorative shape */}
+      <SectionShapeOverlay
+        shapeType={p.sectionShape}
+        shapeColor={p.sectionShapeColor}
+        shapeOpacity={p.sectionShapeOpacity}
+      />
+      <div className="relative z-10">{children}</div>
+    </div>
+  );
+}
 
 
 interface RecursiveRendererProps {
@@ -21,11 +77,11 @@ interface RecursiveRendererProps {
 }
 
 export default function RecursiveRenderer({ nodes, isNested = false }: RecursiveRendererProps) {
-  const { 
-    isEditing, 
-    selectedNodeId, 
-    hoveredNodeId, 
-    setSelectedNodeId, 
+  const {
+    isEditing,
+    selectedNodeId,
+    hoveredNodeId,
+    setSelectedNodeId,
     setHoveredNodeId,
     deleteNode,
     duplicateNode,
@@ -45,10 +101,12 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
 
   const renderComponent = (node: BuilderNode) => {
     const props = node.props || {};
-    
+
     switch (node.type) {
       case 'hero':
         return <HeroBanner {...props} />;
+      case 'hero-slider':
+        return <HeroSlider {...props} />;
       case 'kpi-cards':
         return <KpiCards {...props} />;
       case 'charts':
@@ -89,15 +147,12 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
       {nodes.map((node) => {
         const isSelected = selectedNodeId === node.id;
         const isHovered = hoveredNodeId === node.id;
-        const hasChildren = node.children && node.children.length > 0;
 
-        // In active visual edit mode, wrap them with sortable frames and click/hover events
         if (isEditing) {
           if (!isNested) {
-            // Root elements behave as sections
             return (
               <SortableSection key={node.id} id={node.id}>
-                <div 
+                <div
                   onClick={(e) => {
                     e.stopPropagation();
                     setSelectedNodeId(node.id);
@@ -108,54 +163,34 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
                   }}
                   onMouseLeave={() => setHoveredNodeId(null)}
                   className={`relative rounded-3xl transition-all duration-200 ${
-                    isSelected 
-                      ? 'ring-2 ring-blue-500 ring-offset-4' 
-                      : isHovered 
-                        ? 'ring-2 ring-blue-300 ring-offset-2' 
+                    isSelected
+                      ? 'ring-2 ring-blue-500 ring-offset-4'
+                      : isHovered
+                        ? 'ring-2 ring-blue-300 ring-offset-2'
                         : ''
                   }`}
                 >
-                  {/* Floating edit actions block */}
+                  {/* Floating edit actions */}
                   {isSelected && (
                     <div className="absolute -top-3.5 left-4 z-40 flex items-center gap-1 bg-blue-600 text-white rounded-lg px-2.5 py-1 text-[9px] font-black shadow-md border border-blue-500 select-none animate-fade-in" dir="rtl">
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); moveNodeUp(node.id); }}
-                        className="hover:bg-blue-700 px-1.5 py-0.5 rounded transition-colors text-white"
-                        title="تحريك لأعلى"
-                      >
-                        أعلى ↑
-                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); moveNodeUp(node.id); }} className="hover:bg-blue-700 px-1.5 py-0.5 rounded transition-colors" title="تحريك لأعلى">أعلى ↑</button>
                       <span className="opacity-50">|</span>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); moveNodeDown(node.id); }}
-                        className="hover:bg-blue-700 px-1.5 py-0.5 rounded transition-colors text-white"
-                        title="تحريك لأسفل"
-                      >
-                        أسفل ↓
-                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); moveNodeDown(node.id); }} className="hover:bg-blue-700 px-1.5 py-0.5 rounded transition-colors" title="تحريك لأسفل">أسفل ↓</button>
                       <span className="opacity-50">|</span>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); duplicateNode(node.id); }}
-                        className="hover:bg-blue-700 px-1.5 py-0.5 rounded transition-colors"
-                      >
-                        تكرار
-                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); duplicateNode(node.id); }} className="hover:bg-blue-700 px-1.5 py-0.5 rounded transition-colors">تكرار</button>
                       <span className="opacity-50">|</span>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); deleteNode(node.id); }}
-                        className="hover:bg-rose-600 px-1.5 py-0.5 rounded transition-colors text-rose-100"
-                      >
-                        حذف
-                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); deleteNode(node.id); }} className="hover:bg-rose-600 px-1.5 py-0.5 rounded transition-colors text-rose-100">حذف</button>
                     </div>
                   )}
 
-                  {/* Component View */}
+                  {/* Component with optional section background/shape wrapper */}
                   <div className="pointer-events-none select-none">
-                    {renderComponent(node)}
+                    <SectionBackground node={node}>
+                      {renderComponent(node)}
+                    </SectionBackground>
                   </div>
 
-                  {/* If section supports nested widgets, show drop area */}
+                  {/* Nested tabs children */}
                   {node.type === 'tabs' && (
                     <div className="mt-4 p-4 border border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
                       <p className="text-[10px] text-slate-400 font-bold mb-3">عناصر التبويب الفرعية (Widgets)</p>
@@ -166,40 +201,29 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
               </SortableSection>
             );
           } else {
-            // Nested children behave as widgets
             return (
               <SortableWidget key={node.id} id={node.id}>
-                <div 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedNodeId(node.id);
-                  }}
-                  onMouseEnter={(e) => {
-                    e.stopPropagation();
-                    setHoveredNodeId(node.id);
-                  }}
+                <div
+                  onClick={(e) => { e.stopPropagation(); setSelectedNodeId(node.id); }}
+                  onMouseEnter={(e) => { e.stopPropagation(); setHoveredNodeId(node.id); }}
                   onMouseLeave={() => setHoveredNodeId(null)}
                   className={`relative rounded-2xl transition-all duration-200 ${
-                    isSelected 
-                      ? 'ring-2 ring-blue-500 ring-offset-2' 
-                      : isHovered 
-                        ? 'ring-2 ring-blue-300 ring-offset-1' 
+                    isSelected
+                      ? 'ring-2 ring-blue-500 ring-offset-2'
+                      : isHovered
+                        ? 'ring-2 ring-blue-300 ring-offset-1'
                         : ''
                   }`}
                 >
                   {isSelected && (
                     <div className="absolute -top-3 left-3 z-40 flex items-center gap-1 bg-blue-600 text-white rounded px-2 py-0.5 text-[8px] font-black shadow select-none" dir="rtl">
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); deleteNode(node.id); }}
-                        className="hover:bg-rose-600 px-1 py-0.5 rounded text-rose-100"
-                      >
-                        حذف
-                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); deleteNode(node.id); }} className="hover:bg-rose-600 px-1 py-0.5 rounded text-rose-100">حذف</button>
                     </div>
                   )}
-                  
                   <div className="pointer-events-none select-none">
-                    {renderComponent(node)}
+                    <SectionBackground node={node}>
+                      {renderComponent(node)}
+                    </SectionBackground>
                   </div>
                 </div>
               </SortableWidget>
@@ -207,10 +231,12 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
           }
         }
 
-        // Live preview / Simulator render - no highlighting or edit borders
+        // Live preview — no editing overlays
         return (
           <div key={node.id}>
-            {renderComponent(node)}
+            <SectionBackground node={node}>
+              {renderComponent(node)}
+            </SectionBackground>
             {node.type === 'tabs' && node.children && node.children.length > 0 && (
               <div className="mt-4">
                 <RecursiveRenderer nodes={node.children} isNested={true} />

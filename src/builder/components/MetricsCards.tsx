@@ -1,7 +1,8 @@
 import React from 'react';
 import { getIconComponent } from '../utils/icons';
 import { useBuilderStore } from '../store/builderStore';
-import { getTypographyStyle } from '../utils/typography';
+import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
+
 
 interface MetricsCardsProps {
   title?: string;
@@ -45,6 +46,8 @@ export default function MetricsCards(props: MetricsCardsProps) {
     color: '#1f2937'
   });
 
+  const isTransparentBg = hasSectionBackground(props);
+
   return (
     <div className="space-y-4 text-right" dir="rtl">
       <h3 
@@ -60,8 +63,8 @@ export default function MetricsCards(props: MetricsCardsProps) {
           return (
             <div 
               key={index}
-              style={{ backgroundColor: cardBg }}
-              className="p-5 rounded-2xl border border-slate-100/80 shadow-[0_12px_30px_rgba(25,28,29,0.015)] flex items-start gap-4 hover:shadow-md transition-shadow"
+              style={{ backgroundColor: isTransparentBg ? 'rgba(255, 255, 255, 0.7)' : cardBg }}
+              className={`p-5 rounded-2xl border ${isTransparentBg ? 'border-white/40 backdrop-blur-md shadow-md' : 'border-slate-100/80 shadow-[0_12px_30px_rgba(25,28,29,0.015)]'} flex items-start gap-4 hover:shadow-md transition-shadow`}
             >
               <div 
                 style={{ backgroundColor: `${metric.color}10`, color: metric.color }}

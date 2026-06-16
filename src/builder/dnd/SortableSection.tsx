@@ -21,21 +21,24 @@ export default function SortableSection({ id, children }: SortableSectionProps) 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.35 : 1,
   };
 
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
+    <div
+      ref={setNodeRef}
+      style={style}
       id={`node-container-${id}`}
-      className="relative group/section pl-10"
+      className={`relative group/section pl-10 ${
+        isDragging
+          ? 'opacity-40 ring-2 ring-blue-400 ring-dashed rounded-3xl bg-blue-50/30 z-50'
+          : ''
+      }`}
     >
-      {/* Drag handle dots */}
-      <div 
-        {...attributes} 
+      {/* Drag handle — always visible as a faint icon, bright on hover */}
+      <div
+        {...attributes}
         {...listeners}
-        className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/section:opacity-100 p-2 cursor-grab active:cursor-grabbing hover:bg-slate-100 rounded-xl transition-all z-30 text-slate-400 hover:text-slate-600 hidden sm:block"
+        className="absolute left-1 top-1/2 -translate-y-1/2 p-2 cursor-grab active:cursor-grabbing hover:bg-slate-100 rounded-xl transition-all z-30 text-slate-300 hover:text-slate-600 group-hover/section:text-slate-400"
         title="اسحب لإعادة الترتيب"
       >
         <GripVertical className="w-5 h-5 stroke-[2.5px]" />

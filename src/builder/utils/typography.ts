@@ -67,5 +67,16 @@ export const AVAILABLE_WEIGHTS = [
   { value: 'font-semibold', label: 'شبه عريض' },
   { value: 'font-bold', label: 'عريض' },
   { value: 'font-extrabold', label: 'عريض جداً' },
-  { value: 'font-black', label: 'داكن / عريض للغاية' }
+  { value: 'font-black', label: 'العنوان الأخير / عريض للغاية' }
 ];
+
+/**
+ * Checks if a block node has a custom section background or shape decoration.
+ */
+export function hasSectionBackground(props: Record<string, any>): boolean {
+  const bgType = props.sectionBgType || 'solid';
+  const hasBg = bgType === 'solid' ? !!props.sectionBg : bgType === 'gradient' ? !!(props.sectionGradientFrom && props.sectionGradientTo) : !!props.sectionBgImage;
+  const hasShape = !!(props.sectionShape && props.sectionShape !== 'none');
+  return hasBg || hasShape;
+}
+

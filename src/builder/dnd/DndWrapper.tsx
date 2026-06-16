@@ -16,7 +16,7 @@ import {
 } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers';
 import { useBuilderStore } from '../store/builderStore';
-import { BuilderNode } from '../types';
+import { BuilderNode } from '../interfaces';
 
 interface DndWrapperProps {
   children: React.ReactNode;

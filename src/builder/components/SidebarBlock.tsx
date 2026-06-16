@@ -9,7 +9,7 @@ import {
   Plus
 } from 'lucide-react';
 import { useBuilderStore } from '../store/builderStore';
-import { getTypographyStyle } from '../utils/typography';
+import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
 
 interface SidebarBlockProps {
   title?: string;
@@ -58,16 +58,21 @@ export default function SidebarBlock(props: SidebarBlockProps) {
     color: '#ffffff'
   });
 
+  const isTransparentBg = hasSectionBackground(props);
+
   // Mobile layout morphing
   if (deviceMode === 'mobile') {
     return (
       <div 
-        style={{ borderColor: isDark ? '#1e293b' : '#f1f5f9' }}
+        style={{ borderColor: isTransparentBg ? 'rgba(255,255,255,0.4)' : (isDark ? '#1e293b' : '#f1f5f9') }}
         className={`w-full rounded-2xl border p-4 flex items-center justify-between shadow-sm transition-colors ${
-          isDark ? 'bg-slate-900 text-slate-400' : 'bg-white text-slate-500'
+          isTransparentBg
+            ? 'bg-white/70 text-slate-700 backdrop-blur-md'
+            : (isDark ? 'bg-slate-900 text-slate-400' : 'bg-white text-slate-500')
         }`}
         dir="rtl"
       >
+
         <div className="flex items-center gap-2.5">
           <div 
             style={{ ...logoTextTypography.style, backgroundColor: accentColor }}
@@ -103,12 +108,13 @@ export default function SidebarBlock(props: SidebarBlockProps) {
   return (
     <div 
       className={`w-full md:max-w-[280px] h-[450px] rounded-3xl border flex flex-col justify-between p-6 text-right select-none shadow-sm transition-colors ${
-        isDark 
-          ? 'bg-slate-900 border-slate-800 text-slate-400' 
-          : 'bg-white border-slate-100 text-slate-500'
+        isTransparentBg
+          ? 'bg-white/70 border-white/40 text-slate-700 backdrop-blur-md'
+          : (isDark ? 'bg-slate-900 border-slate-800 text-slate-400' : 'bg-white border-slate-100 text-slate-500')
       }`}
       dir="rtl"
     >
+
       <div className="space-y-8">
         {/* Branding header */}
         <div className="flex items-center gap-3">

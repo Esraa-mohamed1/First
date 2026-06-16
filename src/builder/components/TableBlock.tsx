@@ -1,6 +1,6 @@
 import React from 'react';
 import { Search, Mail, Calendar, BookOpen } from 'lucide-react';
-import { getTypographyStyle } from '../utils/typography';
+import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
 
 interface TableBlockProps {
   title?: string;
@@ -37,8 +37,12 @@ export default function TableBlock(props: TableBlockProps) {
     color: '#1f2937'
   });
 
+  const isTransparentBg = hasSectionBackground(props);
+  const actualHeaderBg = isTransparentBg && headerBg === '#f8fafc' ? 'rgba(248, 250, 252, 0.4)' : headerBg;
+
   return (
-    <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-[0_12px_40px_rgba(25,28,29,0.02)] space-y-5 text-right" dir="rtl">
+    <div className={`${isTransparentBg ? 'bg-white/70 border-white/40 shadow-lg shadow-slate-900/5 backdrop-blur-md' : 'bg-white border-slate-100 shadow-[0_12px_40px_rgba(25,28,29,0.02)]'} rounded-3xl p-6 space-y-5 text-right`} dir="rtl">
+
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h3 
@@ -49,7 +53,8 @@ export default function TableBlock(props: TableBlockProps) {
         </h3>
         
         {showSearch && (
-          <div className="relative bg-slate-50 border border-slate-200/80 rounded-xl px-3.5 py-1.5 w-full sm:max-w-xs flex items-center shadow-inner">
+          <div className={`relative ${isTransparentBg ? 'bg-white/30 border-white/20' : 'bg-slate-50/80 border-slate-200/80'} rounded-xl px-3.5 py-1.5 w-full sm:max-w-xs flex items-center shadow-inner`}>
+
             <input 
               type="text" 
               placeholder="البحث في الجدول..." 
@@ -65,7 +70,7 @@ export default function TableBlock(props: TableBlockProps) {
           <table className="w-full text-right border-collapse">
             <thead>
               <tr 
-                style={{ backgroundColor: headerBg }}
+                style={{ backgroundColor: actualHeaderBg }}
                 className="border-b border-slate-100"
               >
                 <th className="py-4 px-6 text-xs font-black text-slate-400">الطالب</th>

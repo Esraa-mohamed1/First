@@ -1,7 +1,8 @@
 import React from 'react';
 import { getIconComponent } from '../utils/icons';
-
 import { useBuilderStore } from '../store/builderStore';
+import { hasSectionBackground } from '../utils/typography';
+
 
 interface KpiCardItem {
   id: string;
@@ -18,10 +19,11 @@ interface KpiCardsProps {
   gridCols?: '1' | '2' | '3' | '4' | '5' | '6';
 }
 
-export default function KpiCards({
-  cards = [],
-  gridCols = '4',
-}: KpiCardsProps) {
+export default function KpiCards(props: KpiCardsProps) {
+  const {
+    cards = [],
+    gridCols = '4',
+  } = props;
   // Read deviceMode with a fail-safe fallback
   let deviceMode = 'desktop';
   try {
@@ -43,6 +45,8 @@ export default function KpiCards({
 
   const gridClass = getGridClass();
 
+  const isTransparentBg = hasSectionBackground(props);
+
   return (
     <div className={`grid gap-6 ${gridClass} text-right`} dir="rtl">
       {cards.map((card) => {
@@ -50,8 +54,9 @@ export default function KpiCards({
         return (
           <div 
             key={card.id}
-            className="bg-white rounded-3xl p-6 border border-slate-100/80 shadow-[0_12px_40px_rgba(25,28,29,0.02)] flex flex-col justify-between space-y-4 hover:-translate-y-1 transition-all duration-300 group"
+            className={`${isTransparentBg ? 'bg-white/70 border-white/40 shadow-lg shadow-slate-900/5 backdrop-blur-md' : 'bg-white border-slate-100/80 shadow-[0_12px_40px_rgba(25,28,29,0.02)]'} rounded-3xl p-6 flex flex-col justify-between space-y-4 hover:-translate-y-1 transition-all duration-300 group`}
           >
+
             <div className="flex justify-between items-start">
               <div 
                 style={{ backgroundColor: `${card.color}15`, color: card.color }}
