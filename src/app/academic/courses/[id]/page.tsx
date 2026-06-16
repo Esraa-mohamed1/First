@@ -271,30 +271,31 @@ export default function CourseDetailsPage() {
       const rawPaymentMethods = data.payment_methods || data.receiverAccounts || data.receiver_accounts || [];
       const returnedPaymentMethods = rawPaymentMethods.map((item: any) => {
         const val = item.value || item.accountValue || item.account_value || '';
-        const name = item.methodName || item.name || '';
+        const name = item.name || item.receiver_account?.name || item.methodName || '';
         const currency = item.currency || 'SAR';
 
-        // Robust matching against instructor's configured accounts by value/number
-        const matchedMethod = paymentInfos?.find((m: any) => 
-          (m.accountValue && val && m.accountValue.toString().trim() === val.toString().trim()) ||
-          (m.account_value && val && m.account_value.toString().trim() === val.toString().trim())
-        );
-
-        const resolvedId = matchedMethod?.id || 
-                           item.instructor_receiver_account_id || 
+        // Robust matching against instructor's configured accounts
+        const resolvedId = item.instructor_receiver_account_id || 
                            item.pivot?.instructor_receiver_account_id || 
+                           item.pivot?.receiver_account_id ||
                            item.id || 
                            item.methodId || 
                            item.method_id || 
                            item.receiver_account_id;
 
+        const matchedMethod = paymentInfos?.find((m: any) => 
+          m.id.toString() === resolvedId?.toString() ||
+          (m.accountValue && val && m.accountValue.toString().trim() === val.toString().trim()) ||
+          (m.account_value && val && m.account_value.toString().trim() === val.toString().trim())
+        );
+
         return {
-          methodId: resolvedId?.toString() || '',
-          methodName: name,
+          methodId: (matchedMethod?.id || resolvedId)?.toString() || '',
+          methodName: matchedMethod?.name || name,
           type: 'account_number' as const,
-          value: val,
-          currency: currency,
-          logo: item.logo || matchedMethod?.logo || undefined
+          value: matchedMethod?.accountValue || matchedMethod?.account_value || val,
+          currency: matchedMethod?.currency || currency,
+          logo: matchedMethod?.logo || item.logo || item.receiver_account?.logo || undefined
         };
       });
       setSelectedPaymentMethods(returnedPaymentMethods);

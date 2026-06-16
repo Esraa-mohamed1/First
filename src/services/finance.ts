@@ -67,10 +67,33 @@ export const createWithdrawalRequest = async (payload: CreateWithdrawalPayload):
 
 export const getUserPaymentInfos = async (): Promise<UserPaymentInfo[]> => {
   try {
-    const response = await academyApi.get<ApiResponse<any[]>>('instructor_receiver_accounts');
-    // Normalize response objects to contain accountValue from account_value if needed
-    const data = response.data.data || [];
-    return data.map(item => ({
+    const response = await academyApi.get<ApiResponse<any>>('instructor_receiver_accounts');
+    let rawData = response.data.data;
+    let items: any[] = [];
+
+    if (Array.isArray(rawData)) {
+      items = rawData;
+    } else if (rawData && Array.isArray(rawData.data)) {
+      items = [...rawData.data];
+      const lastPage = rawData.last_page;
+      const currentPage = rawData.current_page || 1;
+
+      if (lastPage && lastPage > currentPage) {
+        const fetchPromises = [];
+        for (let page = currentPage + 1; page <= lastPage; page++) {
+          fetchPromises.push(academyApi.get<ApiResponse<any>>(`instructor_receiver_accounts?page=${page}`));
+        }
+        const pagesResponses = await Promise.all(fetchPromises);
+        pagesResponses.forEach(pageRes => {
+          const pageData = pageRes.data?.data?.data || pageRes.data?.data;
+          if (Array.isArray(pageData)) {
+            items = items.concat(pageData);
+          }
+        });
+      }
+    }
+
+    return items.map(item => ({
       ...item,
       id: item.id,
       name: item.receiver_account?.name || item.name || '',
@@ -131,10 +154,88 @@ export const deleteUserPaymentInfo = async (id: number): Promise<void> => {
   }
 };
 
+export const createAcademyReceiverAccount = async (payload: { name: string; key: string; country_code?: string; logo?: File | null }): Promise<ReceiverAccount> => {
+  try {
+    const formData = new FormData();
+    formData.append('name', payload.name);
+    formData.append('key', payload.key);
+    formData.append('is_active', '1');
+    if (payload.country_code) formData.append('country_code', payload.country_code);
+    if (payload.logo) formData.append('logo', payload.logo);
+
+    const response = await academyApi.post<ApiResponse<ReceiverAccount>>('receiver_accounts', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to create academy receiver account:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const updateAcademyReceiverAccount = async (id: number, payload: { name: string; key: string; country_code?: string; logo?: File | null }): Promise<ReceiverAccount> => {
+  try {
+    const formData = new FormData();
+    formData.append('name', payload.name);
+    formData.append('key', payload.key);
+    formData.append('is_active', '1');
+    if (payload.country_code) formData.append('country_code', payload.country_code);
+    if (payload.logo) formData.append('logo', payload.logo);
+    formData.append('_method', 'PUT');
+
+    const response = await academyApi.post<ApiResponse<ReceiverAccount>>(`receiver_accounts/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data.data;
+  } catch (error: any) {
+    console.error(`Failed to update academy receiver account ${id}:`, error);
+    throw error.response?.data || error;
+  }
+};
+
+export const deleteAcademyReceiverAccount = async (id: number): Promise<void> => {
+  try {
+    await academyApi.delete(`receiver_accounts/${id}`);
+  } catch (error: any) {
+    console.error(`Failed to delete academy receiver account ${id}:`, error);
+    throw error.response?.data || error;
+  }
+};
+
 export const getReceiverAccounts = async (): Promise<ReceiverAccount[]> => {
   try {
-    const response = await academyApi.get<ApiResponse<ReceiverAccount[]>>('receiver_accounts');
-    return response.data.data;
+    const response = await academyApi.get<ApiResponse<any>>('receiver_accounts');
+    const resData = response.data.data;
+
+    // Check if it's a flat array
+    if (Array.isArray(resData)) {
+      return resData;
+    }
+
+    // Check if it's paginated (i.e. has nested data array)
+    if (resData && Array.isArray(resData.data)) {
+      let allItems = [...resData.data];
+      const lastPage = resData.last_page;
+      const currentPage = resData.current_page || 1;
+
+      // Fetch subsequent pages if any
+      if (lastPage && lastPage > currentPage) {
+        const fetchPromises = [];
+        for (let page = currentPage + 1; page <= lastPage; page++) {
+          fetchPromises.push(academyApi.get<ApiResponse<any>>(`receiver_accounts?page=${page}`));
+        }
+        const pagesResponses = await Promise.all(fetchPromises);
+        pagesResponses.forEach(pageRes => {
+          const pageData = pageRes.data?.data?.data || pageRes.data?.data;
+          if (Array.isArray(pageData)) {
+            allItems = allItems.concat(pageData);
+          }
+        });
+      }
+      return allItems;
+    }
+
+    return [];
   } catch (error: any) {
     console.error('Failed to get receiver accounts:', error);
     throw error.response?.data || error;

@@ -1,6 +1,26 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+
+const SafeLogo = ({ src, alt, isSelected }: { src: string; alt: string; isSelected: boolean }) => {
+  const [error, setError] = useState(false);
+  useEffect(() => {
+    setError(false);
+  }, [src]);
+
+  if (error) {
+    return <Landmark size={18} className={isSelected ? 'text-blue-600' : 'text-slate-400'} />;
+  }
+
+  return (
+    <img
+      src={getLogoUrl(src)}
+      alt={alt}
+      className="w-full h-full object-cover"
+      onError={() => setError(true)}
+    />
+  );
+};
 import { PaymentMethod } from '@/types/payment';
 import { getLogoUrl } from '@/lib/utils';
 import { Check, Landmark } from 'lucide-react';
@@ -77,7 +97,7 @@ export const PaymentMethodDropdown = ({
                   isSelected ? 'bg-white border-blue-200 shadow-sm' : 'bg-slate-50 border-slate-200'
                 }`}>
                   {option.logo ? (
-                    <img src={getLogoUrl(option.logo)} alt={option.name} className="w-full h-full object-cover" />
+                    <SafeLogo src={option.logo} alt={option.name} isSelected={isSelected} />
                   ) : (
                     <Landmark size={18} className={isSelected ? 'text-blue-600' : 'text-slate-400'} />
                   )}

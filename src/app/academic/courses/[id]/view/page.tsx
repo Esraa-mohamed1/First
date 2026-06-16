@@ -112,28 +112,29 @@ export default function OwnerCourseViewDetailsPage() {
   const rawPaymentMethods = course?.payment_methods || course?.receiverAccounts || course?.receiver_accounts || [];
   const paymentMethods = rawPaymentMethods.map((item: any) => {
     const val = item.value || item.accountValue || item.account_value || '';
-    const name = item.methodName || item.name || '';
+    const name = item.name || item.receiver_account?.name || item.methodName || '';
     const currency = item.currency || 'SAR';
 
+    const resolvedId = item.instructor_receiver_account_id || 
+                       item.pivot?.instructor_receiver_account_id || 
+                       item.pivot?.receiver_account_id ||
+                       item.id || 
+                       item.methodId || 
+                       item.method_id || 
+                       item.receiver_account_id;
+
     const matchedMethod = academyPaymentMethods?.find((m: any) => 
+      m.id.toString() === resolvedId?.toString() ||
       (m.accountValue && val && m.accountValue.toString().trim() === val.toString().trim()) ||
       (m.account_value && val && m.account_value.toString().trim() === val.toString().trim())
     );
 
-    const methodId = matchedMethod?.id || 
-                     item.instructor_receiver_account_id || 
-                     item.pivot?.instructor_receiver_account_id || 
-                     item.id || 
-                     item.methodId || 
-                     item.method_id || 
-                     item.receiver_account_id;
-
     return {
-      methodId: methodId?.toString() || '',
-      methodName: name,
-      value: val,
-      currency: currency,
-      logo: item.logo || matchedMethod?.logo || undefined
+      methodId: (matchedMethod?.id || resolvedId)?.toString() || '',
+      methodName: matchedMethod?.name || name,
+      value: matchedMethod?.accountValue || matchedMethod?.account_value || val,
+      currency: matchedMethod?.currency || currency,
+      logo: matchedMethod?.logo || item.logo || item.receiver_account?.logo || undefined
     };
   });
 
