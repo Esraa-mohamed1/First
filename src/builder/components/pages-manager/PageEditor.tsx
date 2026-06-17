@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { ArrowRight, Upload, X, CheckCircle } from 'lucide-react';
-import { PageEditorProps } from './types';
+import { PageEditorProps } from '../../interfaces';
 import { usePageEditor } from './usePageEditor';
 
 export default function PageEditor(props: PageEditorProps) {

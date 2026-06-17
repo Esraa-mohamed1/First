@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { CreatePagePayload } from '@/services/pages';
-import { AcademyPage, PageEditorProps } from './types';
+import { AcademyPage, PageEditorProps } from '../../interfaces';
 
 export function usePageEditor({ page, isCreating, onSave }: PageEditorProps) {
   const [pageName, setPageName] = useState('');

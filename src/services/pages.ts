@@ -8,6 +8,7 @@ export interface CreatePagePayload {
   title: string;
   slug: string;
   status: string;
+  template?: string;
 }
 
 export interface CreatedPageResponse {
@@ -32,7 +33,16 @@ const academyApi = axios.create({
 academyApi.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('token');
-    const tenantKey = localStorage.getItem('academy_link_name');
+    let tenantKey = localStorage.getItem('academy_link_name');
+    if (!tenantKey) {
+      let hostname = window.location.hostname;
+      if (hostname.endsWith('.localhost')) {
+        hostname = hostname.replace('.localhost', '');
+      }
+      if (hostname && hostname !== 'localhost') {
+        tenantKey = hostname;
+      }
+    }
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -60,6 +70,10 @@ export const createPage = async (
   formData.append('title', payload.title);
   formData.append('slug', payload.slug);
   formData.append('status', payload.status);
+  if (payload.template) {
+    formData.append('template', payload.template);
+    formData.append('template_id', payload.template);
+  }
 
   const response = await academyApi.post<any>('/pages', formData);
 

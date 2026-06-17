@@ -41,3 +41,5 @@ export interface ComponentRegistryEntry {
   fields: ComponentFieldConfig[];
   defaultProps: Record<string, any>;
 }
+
+export * from './pages';
