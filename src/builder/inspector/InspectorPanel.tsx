@@ -25,10 +25,25 @@ import TableBlockEditor from './components/TableBlockEditor';
 import MetricsCardsEditor from './components/MetricsCardsEditor';
 import TabsBlockEditor from './components/TabsBlockEditor';
 import HeroSliderEditor from './components/HeroSliderEditor';
+import ImageUploader from './components/ImageUploader';
 
 export default function InspectorPanel() {
   const { selectedNodeId, currentTemplate, updateNodeProps, setSelectedNodeId } = useBuilderStore();
   const [activeTab, setActiveTab] = useState<'content' | 'style' | 'spacing'>('content');
+  const [isSimpleMode, setIsSimpleMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('darab_builder_simple_mode');
+      return saved !== 'false';
+    }
+    return true;
+  });
+
+  const toggleSimpleMode = (val: boolean) => {
+    setIsSimpleMode(val);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('darab_builder_simple_mode', String(val));
+    }
+  };
   const [iconSearch, setIconSearch] = useState('');
   const [showIconDropdown, setShowIconDropdown] = useState<string | null>(null);
   const [expandedLine, setExpandedLine] = useState<string | null>(null);
@@ -38,6 +53,12 @@ export default function InspectorPanel() {
     setActiveTab('content');
     setExpandedLine(null);
   }, [selectedNodeId]);
+
+  useEffect(() => {
+    if (isSimpleMode && activeTab === 'spacing') {
+      setActiveTab('content');
+    }
+  }, [isSimpleMode, activeTab]);
 
   if (!selectedNodeId || !currentTemplate) {
     return (
@@ -101,6 +122,35 @@ export default function InspectorPanel() {
         </button>
       </div>
 
+      {/* Simple/Advanced Toggle Switch */}
+      <div className="px-5 py-2.5 bg-slate-50/60 border-b border-slate-100 flex items-center justify-between">
+        <span className="text-[10px] font-black text-slate-500">مستوى لوحة التحكم:</span>
+        <div className="flex bg-slate-200/60 rounded-xl p-0.5 border border-slate-200/50 select-none">
+          <button
+            type="button"
+            onClick={() => toggleSimpleMode(true)}
+            className={`px-3 py-1 rounded-lg text-[9px] font-black transition-all ${
+              isSimpleMode 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            سهل ✨
+          </button>
+          <button
+            type="button"
+            onClick={() => toggleSimpleMode(false)}
+            className={`px-3 py-1 rounded-lg text-[9px] font-black transition-all ${
+              !isSimpleMode 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            متقدم 🛠️
+          </button>
+        </div>
+      </div>
+
       {/* Selector Tabs */}
       <div className="flex border-b border-slate-100">
         <button
@@ -121,15 +171,17 @@ export default function InspectorPanel() {
           <Paintbrush className="w-3.5 h-3.5" />
           التنسيق
         </button>
-        <button
-          onClick={() => setActiveTab('spacing')}
-          className={`flex-1 py-3 text-[11px] font-black border-b-2 flex items-center justify-center gap-1.5 ${
-            activeTab === 'spacing' ? 'border-blue-500 text-blue-600 bg-blue-50/10' : 'border-transparent text-slate-400 hover:text-slate-600'
-          }`}
-        >
-          <Settings className="w-3.5 h-3.5" />
-          الهوامش
-        </button>
+        {!isSimpleMode && (
+          <button
+            onClick={() => setActiveTab('spacing')}
+            className={`flex-1 py-3 text-[11px] font-black border-b-2 flex items-center justify-center gap-1.5 ${
+              activeTab === 'spacing' ? 'border-blue-500 text-blue-600 bg-blue-50/10' : 'border-transparent text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            <Settings className="w-3.5 h-3.5" />
+            الهوامش
+          </button>
+        )}
       </div>
 
       {/* Editor Content Area */}
@@ -144,12 +196,20 @@ export default function InspectorPanel() {
                 </label>
 
                 {field.type === 'text' && (
-                  <input 
-                    type="text" 
-                    value={props[field.name] ?? ''} 
-                    onChange={(e) => handlePropChange(field.name, e.target.value)}
-                    className="w-full p-3.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-2xl text-xs font-bold text-slate-700 outline-none transition-all"
-                  />
+                  (field.name.toLowerCase().includes('image') || field.name.toLowerCase().includes('img') || field.name.toLowerCase().includes('logo')) ? (
+                    <ImageUploader
+                      value={props[field.name] ?? ''}
+                      onChange={(val) => handlePropChange(field.name, val)}
+                      label={field.label}
+                    />
+                  ) : (
+                    <input 
+                      type="text" 
+                      value={props[field.name] ?? ''} 
+                      onChange={(e) => handlePropChange(field.name, e.target.value)}
+                      className="w-full p-3.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-2xl text-xs font-bold text-slate-700 outline-none transition-all"
+                    />
+                  )
                 )}
 
                 {field.type === 'textarea' && (
@@ -268,21 +328,27 @@ export default function InspectorPanel() {
                 </label>
 
                 {field.type === 'color' && (
-                  <div className="flex items-center gap-3">
-                    <input 
-                      type="color" 
-                      value={props[field.name] ?? field.defaultValue} 
-                      onChange={(e) => handlePropChange(field.name, e.target.value)}
-                      className="w-10 h-10 p-0 rounded-xl border border-slate-200 cursor-pointer overflow-hidden outline-none bg-transparent"
-                    />
-                    
-                    <input 
-                      type="text" 
-                      value={props[field.name] ?? field.defaultValue} 
-                      onChange={(e) => handlePropChange(field.name, e.target.value)}
-                      className="flex-1 p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs font-mono font-bold text-slate-600 outline-none text-left"
-                      dir="ltr"
-                    />
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                      <input 
+                        type="color" 
+                        value={props[field.name] ?? field.defaultValue} 
+                        onChange={(e) => handlePropChange(field.name, e.target.value)}
+                        className="w-10 h-10 p-0 rounded-xl border border-slate-200 cursor-pointer overflow-hidden outline-none bg-transparent"
+                      />
+                      
+                      {!isSimpleMode ? (
+                        <input 
+                          type="text" 
+                          value={props[field.name] ?? field.defaultValue} 
+                          onChange={(e) => handlePropChange(field.name, e.target.value)}
+                          className="flex-1 p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs font-mono font-bold text-slate-600 outline-none text-left"
+                          dir="ltr"
+                        />
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-500">اضغط لاختيار لون {field.label}</span>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -303,16 +369,16 @@ export default function InspectorPanel() {
               </div>
             ))}
 
-            {/* Align text blocks */}
+             {/* Align text blocks */}
             {registryConfig.fields.some(f => f.name === 'align') && (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 pr-1 block">محاذاة النص والكتلة</label>
                 <div className="flex bg-slate-50 border border-slate-100 rounded-2xl p-1 items-center">
                   <button
                     type="button"
                     onClick={() => handlePropChange('align', 'right')}
                     className={`flex-1 py-2 rounded-xl flex items-center justify-center transition-all ${
-                      props.align === 'right' || !props.align ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                      props.align === 'right' || !props.align ? 'bg-white text-blue-600 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'
                     }`}
                   >
                     <AlignRight className="w-4 h-4" />
@@ -321,7 +387,7 @@ export default function InspectorPanel() {
                     type="button"
                     onClick={() => handlePropChange('align', 'center')}
                     className={`flex-1 py-2 rounded-xl flex items-center justify-center transition-all ${
-                      props.align === 'center' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                      props.align === 'center' ? 'bg-white text-blue-600 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'
                     }`}
                   >
                     <AlignCenter className="w-4 h-4" />
@@ -330,17 +396,20 @@ export default function InspectorPanel() {
                     type="button"
                     onClick={() => handlePropChange('align', 'left')}
                     className={`flex-1 py-2 rounded-xl flex items-center justify-center transition-all ${
-                      props.align === 'left' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                      props.align === 'left' ? 'bg-white text-blue-600 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'
                     }`}
                   >
                     <AlignLeft className="w-4 h-4" />
                   </button>
                 </div>
+                <span className="text-[9px] font-bold text-slate-400 block mt-1 pr-1 leading-normal">
+                  💡 اختر اتجاه محاذاة نصوص ومحتويات هذا القسم (ليمين أو لوسط أو ليسار الصفحة).
+                </span>
               </div>
             )}
 
             {/* Elementor-style Line Typography Accordion */}
-            {EDITABLE_LINES[selectedNode.type] && (
+            {!isSimpleMode && EDITABLE_LINES[selectedNode.type] && (
               <TypographyCustomizer 
                 selectedNodeType={selectedNode.type}
                 props={props}
@@ -354,6 +423,7 @@ export default function InspectorPanel() {
             <SectionBackgroundControls 
               props={props}
               handlePropChange={handlePropChange}
+              isSimpleMode={isSimpleMode}
             />
           </div>
         )}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Trash2, Plus } from 'lucide-react';
 import { MOCK_COURSES } from '../../components/CourseCards';
+import ImageUploader from './ImageUploader';
 
 interface CourseCardsEditorProps {
   props: Record<string, any>;
@@ -76,7 +77,7 @@ export default function CourseCardsEditor({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2.5">
             <input 
               type="text"
               placeholder="المدة الزمنية (مثال: 12 ساعة)"
@@ -87,15 +88,13 @@ export default function CourseCardsEditor({
               }}
               className="w-full p-2.5 bg-white border border-slate-100 rounded-xl text-xs font-bold outline-none"
             />
-            <input 
-              type="text"
-              placeholder="رابط الصورة (URL)"
-              value={course.image}
-              onChange={(e) => {
-                const updated = courses.map((c: any) => c.id === course.id ? { ...c, image: e.target.value } : c);
+            <ImageUploader
+              value={course.image || ''}
+              onChange={(val) => {
+                const updated = courses.map((c: any) => c.id === course.id ? { ...c, image: val } : c);
                 handlePropChange('courses', updated);
               }}
-              className="w-full p-2.5 bg-white border border-slate-100 rounded-xl text-xs font-bold outline-none"
+              label="صورة الدورة"
             />
           </div>
         </div>

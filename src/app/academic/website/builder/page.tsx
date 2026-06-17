@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useBuilderStore } from '@/builder/store/builderStore';
 import { getTemplateById } from '@/builder/utils/templates';
@@ -29,6 +29,90 @@ export default function PageBuilderPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const templateId = searchParams.get('templateId') || '';
+
+  const [tourStep, setTourStep] = useState<number>(-1);
+
+  const tourSteps = [
+    {
+      title: 'أهلاً بك في أكاديمية درب! 🤖🚀',
+      badge: 'مستكشف مبتدئ 🏅',
+      text: 'مرحباً بك في مغامرة التصميم الشيقة! سنأخذك في جولة سريعة وممتعة لتعلم كيفية التحكم في صفحات أكاديميتك وتعديلها بسهولة تامة وبكبسة زر واحدة.',
+      target: 'welcome',
+    },
+    {
+      title: 'دليل العناصر والمكونات 🎨',
+      badge: 'جامع المكونات 🧩',
+      text: 'هنا تجد جميع العناصر الجاهزة. فقط اضغط على أي مكون (مثل السلايدر، الإحصائيات، الكورسات) ليتم إضافته فورياً إلى صفحتك وتنسيقه تلقائياً!',
+      target: 'aside-widgets',
+    },
+    {
+      title: 'مساحة العمل والتصميم المباشر 💻',
+      badge: 'مهندس البناء 🏗️',
+      text: 'في المنتصف، ترى موقعك كما يراه الطلاب تماماً! يمكنك الضغط على أي جزء لتعديله، وسحب وإفلات العناصر لإعادة ترتيبها بطريقة سهلة وسلسة.',
+      target: 'canvas-workspace',
+    },
+    {
+      title: 'محرر تفاصيل العنصر المحدد ⚙️✨',
+      badge: 'سيد التفاصيل 🔍',
+      text: 'عند اختيار أي عنصر، تظهر خصائصه في لوحة التعديل الجانبية. لتسهيل الأمر عليك، قمنا بتفعيل "الوضع السهل ✨" افتراضياً ليخفي التفاصيل المعقدة ويظهر لك فقط ما تحتاجه لتغيير النصوص والصور بسهولة!',
+      target: 'inspector-panel',
+    },
+    {
+      title: 'أزرار الحفظ والنشر والتراجع 💾🌍',
+      badge: 'ناشر المعرفة 🚀',
+      text: 'هنا يمكنك التراجع عن أي خطأ، أو معاينة موقعك على الجوال، وحفظ مسودتك محلياً. وعندما تكون جاهزاً، اضغط على "نشر الآن" ليصبح موقعك متاحاً لجميع طلابك بالخارج!',
+      target: 'top-header',
+    },
+    {
+      title: 'تهانينا! لقد أكملت التدريب بنجاح! 🎉🏆',
+      badge: 'مصمم أسطوري 👑',
+      text: 'أنت الآن جاهز بالكامل لتصميم وإطلاق موقع أكاديميتك الخاصة. لقد تم منحك شارة "بطل التصميم" لبدء العمل بذكاء وسرعة!',
+      target: 'success',
+    }
+  ];
+
+  const getDialogPositionClass = (target: string) => {
+    switch (target) {
+      case 'welcome':
+      case 'success':
+        return 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px]';
+      case 'aside-widgets':
+        return 'fixed top-[150px] right-[300px] w-[380px]';
+      case 'canvas-workspace':
+        return 'fixed bottom-10 left-1/2 -translate-x-1/2 w-[400px]';
+      case 'inspector-panel':
+        return 'fixed top-[150px] left-[360px] w-[380px]';
+      case 'top-header':
+        return 'fixed top-[90px] left-1/2 -translate-x-1/2 w-[400px]';
+      default:
+        return 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px]';
+    }
+  };
+
+  const getHighlightStyles = (target: string): React.CSSProperties | null => {
+    switch (target) {
+      case 'top-header':
+        return { top: 0, right: 0, left: 0, height: '72px' };
+      case 'aside-widgets':
+        return { top: '72px', right: 0, bottom: 0, width: '280px' };
+      case 'canvas-workspace':
+        return { top: '72px', right: '280px', bottom: 0, left: '340px' };
+      case 'inspector-panel':
+        return { top: '72px', left: 0, bottom: 0, width: '340px' };
+      default:
+        return null;
+    }
+  };
+
+  // Start tour invitation automatically on first load
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const completed = localStorage.getItem('darab_builder_tour_completed');
+      if (!completed) {
+        setTourStep(-2); // -2 represents the optional invitation modal
+      }
+    }
+  }, []);
 
   const {
     currentTemplate,
@@ -218,6 +302,15 @@ export default function PageBuilderPage() {
         {/* Editor VS Preview & Publish actions */}
         <div className="flex items-center gap-3">
           <button
+            type="button"
+            onClick={() => setTourStep(0)}
+            className="px-4 py-2 rounded-xl text-xs font-black text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 active:scale-95 transition-all flex items-center gap-1.5"
+            title="بدء الجولة التعليمية"
+          >
+            <span>جولة تعليمية 🎮</span>
+          </button>
+
+          <button
             onClick={() => setIsEditing(!isEditing)}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
               !isEditing 
@@ -373,6 +466,145 @@ export default function PageBuilderPage() {
         {isEditing && <InspectorPanel />}
 
       </div>
+
+      {/* Onboarding Tour Overlay */}
+      {tourStep >= 0 && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none select-none">
+          {/* Dark overlay backdrop */}
+          <div className="absolute inset-0 bg-slate-950/70 pointer-events-auto" />
+          
+          {/* Highlight element border */}
+          {getHighlightStyles(tourSteps[tourStep]?.target) && (
+            <div 
+              style={getHighlightStyles(tourSteps[tourStep]?.target)!}
+              className="fixed border-4 border-amber-400 rounded-3xl shadow-[0_0_40px_rgba(251,191,36,0.6)] z-[110] transition-all duration-500 pointer-events-none animate-pulse"
+            />
+          )}
+
+          {/* Dialog Mascot box */}
+          <div className={`${getDialogPositionClass(tourSteps[tourStep]?.target)} bg-slate-900/95 backdrop-blur-2xl border border-slate-800 rounded-3xl p-6 shadow-2xl z-[120] pointer-events-auto text-right font-['IBM_Plex_Sans_Arabic'] flex flex-col gap-4 text-white relative`}>
+            
+            {/* Mascot header */}
+            <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-400/10 flex items-center justify-center border border-amber-400/20 text-2xl animate-bounce">
+                🤖
+              </div>
+              <div className="flex-1 leading-tight">
+                <span className="text-[9px] font-black text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-full inline-block mb-1">
+                  {tourSteps[tourStep]?.badge}
+                </span>
+                <h3 className="text-xs font-black text-slate-100">{tourSteps[tourStep]?.title}</h3>
+              </div>
+              <button 
+                onClick={() => {
+                  setTourStep(-1);
+                  localStorage.setItem('darab_builder_tour_completed', 'true');
+                }}
+                className="text-slate-500 hover:text-slate-300 text-[10px] font-bold"
+              >
+                تخطي ×
+              </button>
+            </div>
+
+            {/* Content text */}
+            <p className="text-xs font-bold leading-relaxed text-slate-300 font-['IBM_Plex_Sans_Arabic']">
+              {tourSteps[tourStep]?.text}
+            </p>
+
+            {/* Stepper progress dots & buttons */}
+            <div className="flex items-center justify-between mt-2 pt-3 border-t border-slate-800">
+              
+              {/* Stepper dots */}
+              <div className="flex gap-1.5">
+                {tourSteps.map((_, idx) => (
+                  <div 
+                    key={idx}
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      idx === tourStep ? 'w-6 bg-amber-400' : 'w-2 bg-slate-800'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-2">
+                {tourStep > 0 && tourStep < tourSteps.length - 1 && (
+                  <button
+                    onClick={() => setTourStep(tourStep - 1)}
+                    className="px-3.5 py-1.5 rounded-xl border border-slate-800 text-[10px] font-bold text-slate-300 hover:bg-slate-800 transition-colors"
+                  >
+                    السابق
+                  </button>
+                )}
+                
+                <button
+                  onClick={() => {
+                    if (tourStep === tourSteps.length - 1) {
+                      setTourStep(-1);
+                      localStorage.setItem('darab_builder_tour_completed', 'true');
+                    } else {
+                      setTourStep(tourStep + 1);
+                    }
+                  }}
+                  className="px-5 py-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-[10px] shadow-lg shadow-amber-500/10 active:scale-95 transition-all"
+                >
+                  {tourStep === 0 ? 'ابدأ الرحلة 🎮' : tourStep === tourSteps.length - 1 ? 'هيا بنا! 🚀' : 'التالي'}
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding Tour Invite Modal */}
+      {tourStep === -2 && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none select-none">
+          {/* Dark overlay backdrop */}
+          <div className="absolute inset-0 bg-slate-950/75 pointer-events-auto" />
+
+          {/* Invitation modal dialog box */}
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] bg-slate-900/95 backdrop-blur-2xl border border-slate-800 rounded-3xl p-6 shadow-2xl z-[120] pointer-events-auto text-right font-['IBM_Plex_Sans_Arabic'] flex flex-col gap-4 text-white relative">
+            <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-400/10 flex items-center justify-center border border-amber-400/20 text-2xl animate-bounce">
+                🤖
+              </div>
+              <div className="flex-1 leading-tight">
+                <span className="text-[9px] font-black text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-full inline-block mb-1">
+                  المرشد الذكي 💡
+                </span>
+                <h3 className="text-sm font-black text-slate-100">مرحباً بك في باني صفحات الأكاديمية!</h3>
+              </div>
+            </div>
+
+            <p className="text-xs font-bold leading-relaxed text-slate-300">
+              أهلاً بك! هل ترغب في بدء جولة تعليمية تفاعلية سريعة (مثل الألعاب) للتعرف على كيفية سحب المكونات وتعديل نصوصها وصورها بكل سهولة؟ 🎮✨
+            </p>
+
+            <div className="flex items-center justify-end gap-3 mt-3 pt-3 border-t border-slate-800">
+              <button
+                onClick={() => {
+                  setTourStep(-1);
+                  localStorage.setItem('darab_builder_tour_completed', 'true');
+                }}
+                className="px-4 py-2.5 rounded-xl border border-slate-800 text-[10px] font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+              >
+                تخطي للبدء بالتصميم مباشرة ⚙️
+              </button>
+              
+              <button
+                onClick={() => {
+                  setTourStep(0);
+                }}
+                className="px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-[10px] shadow-lg shadow-amber-500/10 active:scale-95 transition-all"
+              >
+                نعم، ابدأ الجولة 🚀
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Trash2, Plus, ChevronDown } from 'lucide-react';
+import ImageUploader from './ImageUploader';
 
 interface HeroSliderEditorProps {
   props: Record<string, any>;
@@ -11,9 +12,42 @@ export default function HeroSliderEditor({
   handlePropChange,
 }: HeroSliderEditorProps) {
   const slides = props.slides || [];
+  const autoPlay = props.autoPlay ?? true;
+  const interval = props.interval ?? 4000;
 
   return (
     <div className="space-y-4 pt-4 border-t border-slate-100">
+      {/* Autoplay & Timing controls */}
+      <div className="p-3.5 bg-slate-50 border border-slate-100 rounded-2xl space-y-3">
+        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={autoPlay}
+            onChange={(e) => handlePropChange('autoPlay', e.target.checked)}
+            className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+          />
+          <span className="text-xs font-black text-slate-700">تشغيل الحركة تلقائياً (Auto Play)</span>
+        </label>
+        
+        {autoPlay && (
+          <div className="space-y-1">
+            <div className="flex justify-between text-[9px] font-bold text-slate-500 px-0.5">
+              <span>سرعة الانتقال بين الشرائح</span>
+              <span>{interval / 1000} ثانية</span>
+            </div>
+            <input
+              type="range"
+              min="2"
+              max="10"
+              step="1"
+              value={interval / 1000}
+              onChange={(e) => handlePropChange('interval', Number(e.target.value) * 1000)}
+              className="w-full accent-blue-600 cursor-pointer"
+            />
+          </div>
+        )}
+      </div>
+
       <label className="text-[10px] font-black text-slate-400 pr-1 block">تعديل شرائح السلايدر</label>
       {slides.map((slide: any, idx: number) => (
         <div key={slide.id} className="p-3.5 bg-slate-50 border border-slate-100 rounded-2xl space-y-3 relative group">
@@ -42,18 +76,17 @@ export default function HeroSliderEditor({
             onChange={(e) => { const u = slides.map((s: any) => s.id === slide.id ? { ...s, subtitle: e.target.value } : s); handlePropChange('slides', u); }}
             className="w-full p-2.5 bg-white border border-slate-100 rounded-xl text-xs font-bold outline-none"
           />
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2.5">
             <input
               type="text" placeholder="نص الزر"
               value={slide.buttonText}
               onChange={(e) => { const u = slides.map((s: any) => s.id === slide.id ? { ...s, buttonText: e.target.value } : s); handlePropChange('slides', u); }}
               className="w-full p-2.5 bg-white border border-slate-100 rounded-xl text-xs font-bold outline-none"
             />
-            <input
-              type="text" placeholder="رابط الصورة (URL)"
-              value={slide.bgImage}
-              onChange={(e) => { const u = slides.map((s: any) => s.id === slide.id ? { ...s, bgImage: e.target.value } : s); handlePropChange('slides', u); }}
-              className="w-full p-2.5 bg-white border border-slate-100 rounded-xl text-xs font-bold outline-none"
+            <ImageUploader
+              value={slide.bgImage || ''}
+              onChange={(val) => { const u = slides.map((s: any) => s.id === slide.id ? { ...s, bgImage: val } : s); handlePropChange('slides', u); }}
+              label="صورة الشريحة"
             />
           </div>
           <div className="flex items-center justify-between bg-white border border-slate-100 rounded-xl p-2.5">
