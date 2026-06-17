@@ -14,7 +14,7 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
-import { getTypographyStyle } from '../utils/typography';
+import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
 
 interface ChartsBlockProps {
   title?: string;
@@ -51,11 +51,13 @@ export default function ChartsBlock(props: ChartsBlockProps) {
   }, []);
 
   if (!mounted) {
+    const isTransparentBg = hasSectionBackground(props);
     return (
       <div 
         style={{ height }}
-        className="w-full bg-white rounded-3xl border border-slate-100 p-6 flex flex-col justify-between shadow-[0_12px_40px_rgba(25,28,29,0.02)] animate-pulse"
+        className={`w-full ${isTransparentBg ? 'bg-white/50 border-white/30 backdrop-blur-md shadow-sm' : 'bg-white border-slate-100 shadow-[0_12px_40px_rgba(25,28,29,0.02)]'} rounded-3xl p-6 flex flex-col justify-between animate-pulse`}
       >
+
         <div className="h-6 w-48 bg-slate-100 rounded-md"></div>
         <div className="flex-1 bg-slate-50/50 rounded-xl mt-4"></div>
       </div>
@@ -118,8 +120,11 @@ export default function ChartsBlock(props: ChartsBlockProps) {
     color: '#1f2937'
   });
 
+  const isTransparentBg = hasSectionBackground(props);
+
   return (
-    <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-[0_12px_40px_rgba(25,28,29,0.02)] flex flex-col space-y-4 text-right" dir="rtl">
+    <div className={`${isTransparentBg ? 'bg-white/70 border-white/40 shadow-lg shadow-slate-900/5 backdrop-blur-md' : 'bg-white border-slate-100 shadow-[0_12px_40px_rgba(25,28,29,0.02)]'} rounded-3xl p-6 flex flex-col space-y-4 text-right`} dir="rtl">
+
       <div className="flex justify-between items-center pb-2 border-b border-slate-50">
         <h3 
           style={titleTypography.style}

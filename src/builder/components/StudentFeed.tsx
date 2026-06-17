@@ -1,15 +1,16 @@
 import React from 'react';
 import { User, CheckCircle2, Award, MessageSquare, BookOpen } from 'lucide-react';
-import { getTypographyStyle } from '../utils/typography';
+import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
 
 interface StudentFeedProps {
   title?: string;
   limit?: number;
   showStatusBadges?: boolean;
+  activities?: any[];
   [key: string]: any;
 }
 
-const MOCK_ACTIVITIES = [
+export const MOCK_ACTIVITIES = [
   {
     id: '1',
     user: 'محمد عبد العزيز',
@@ -62,8 +63,9 @@ export default function StudentFeed(props: StudentFeedProps) {
     title = 'تحديثات نشاط المتعلمين',
     limit = 4,
     showStatusBadges = true,
+    activities = MOCK_ACTIVITIES,
   } = props;
-  const visibleFeed = MOCK_ACTIVITIES.slice(0, limit);
+  const visibleFeed = activities.slice(0, limit);
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -88,8 +90,11 @@ export default function StudentFeed(props: StudentFeedProps) {
     color: '#1f2937'
   });
 
+  const isTransparentBg = hasSectionBackground(props);
+
   return (
-    <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-[0_12px_40px_rgba(25,28,29,0.02)] space-y-6 text-right" dir="rtl">
+    <div className={`${isTransparentBg ? 'bg-white/70 border-white/40 shadow-lg shadow-slate-900/5 backdrop-blur-md' : 'bg-white border-slate-100 shadow-[0_12px_40px_rgba(25,28,29,0.02)]'} rounded-3xl p-6 space-y-6 text-right`} dir="rtl">
+
       
       <h3 
         style={titleTypography.style}
@@ -111,7 +116,8 @@ export default function StudentFeed(props: StudentFeedProps) {
             </div>
 
             {/* Content info */}
-            <div className="flex-1 min-w-0 bg-slate-50/50 rounded-2xl p-4 border border-slate-100/20 group-hover:bg-slate-50 transition-colors">
+            <div className={`flex-1 min-w-0 ${isTransparentBg ? 'bg-white/30 border-white/10 group-hover:bg-white/40' : 'bg-slate-50/50 border-slate-100/20 group-hover:bg-slate-50'} rounded-2xl p-4 border transition-colors`}>
+
               <div className="flex justify-between items-center gap-2 mb-1.5">
                 <span className="text-xs font-black text-slate-800 truncate">
                   {item.user}

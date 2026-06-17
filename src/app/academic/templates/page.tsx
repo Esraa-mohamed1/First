@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+import { createPage } from '@/services/pages';
+
 // -------------------------------------------------------------
 // Interfaces and Type Definitions
 // -------------------------------------------------------------
@@ -45,27 +47,63 @@ interface Template {
 
 export default function TemplatesPage() {
   const [activeTemplateId, setActiveTemplateId] = useState<string>('template_1');
+  const [activePageId, setActivePageId] = useState<string | null>(null);
+  const [activatingId, setActivatingId] = useState<string | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const [simulatorMode, setSimulatorMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
-  // Load selected template from localStorage
+  // Load selected template and page ID from localStorage
   useEffect(() => {
-    const cached = localStorage.getItem('darab_active_template');
-    if (cached) {
-      setActiveTemplateId(cached);
+    const cachedTemplate = localStorage.getItem('darab_active_template');
+    if (cachedTemplate) {
+      setActiveTemplateId(cachedTemplate);
+    }
+    const cachedPageId = localStorage.getItem('darab_active_page_id');
+    if (cachedPageId) {
+      setActivePageId(cachedPageId);
     }
   }, []);
 
-  const handleSelectTemplate = (id: string, name: string) => {
-    localStorage.setItem('darab_active_template', id);
-    setActiveTemplateId(id);
-    toast.success(`تم اختيار ${name} كقالب نشط لموقعك بنجاح!`, {
-      style: {
-        fontFamily: 'IBM Plex Sans Arabic',
-        fontWeight: 'bold',
-        direction: 'rtl'
-      }
-    });
+  const handleSelectTemplate = async (id: string, name: string) => {
+    if (activatingId) return;
+    setActivatingId(id);
+
+    try {
+      const payload = {
+        title: 'الرئيسية',
+        slug: 'home',
+        status: 'published',
+        template: id
+      };
+      
+      const created = await createPage(payload);
+      const pageId = String(created.id);
+
+      localStorage.setItem('darab_active_template', id);
+      localStorage.setItem('darab_active_page_id', pageId);
+      
+      setActiveTemplateId(id);
+      setActivePageId(pageId);
+
+      toast.success(`تم اختيار ${name} كقالب نشط لموقعك بنجاح!`, {
+        style: {
+          fontFamily: 'IBM Plex Sans Arabic',
+          fontWeight: 'bold',
+          direction: 'rtl'
+        }
+      });
+    } catch (err: any) {
+      console.error('Failed to activate template:', err);
+      toast.error('فشل تفعيل القالب. يرجى المحاولة مجدداً.', {
+        style: {
+          fontFamily: 'IBM Plex Sans Arabic',
+          fontWeight: 'bold',
+          direction: 'rtl'
+        }
+      });
+    } finally {
+      setActivatingId(null);
+    }
   };
 
   const handleOpenPreview = (template: Template) => {
@@ -73,10 +111,12 @@ export default function TemplatesPage() {
     setSimulatorMode('desktop');
   };
 
-  const handleSelectInsideSimulator = () => {
+  const handleSelectInsideSimulator = async () => {
     if (previewTemplate) {
-      handleSelectTemplate(previewTemplate.id, previewTemplate.name);
+      const targetId = previewTemplate.id;
+      const targetName = previewTemplate.name;
       setPreviewTemplate(null);
+      await handleSelectTemplate(targetId, targetName);
     }
   };
 
@@ -238,7 +278,7 @@ export default function TemplatesPage() {
                     </button>
                     {isActive ? (
                       <Link 
-                        href={`/academic/website/builder?templateId=${tmpl.id}`}
+                        href={`/academic/website/builder?templateId=${tmpl.id}${activePageId ? `&pageId=${activePageId}` : ''}`}
                         className="flex-1 py-2.5 rounded-xl bg-[#005c86] hover:bg-[#0e76a8] text-white font-bold text-xs transition-colors shadow-sm text-center flex items-center justify-center"
                       >
                         تعديل بالباني
@@ -246,9 +286,17 @@ export default function TemplatesPage() {
                     ) : (
                       <button 
                         onClick={() => handleSelectTemplate(tmpl.id, tmpl.name)}
-                        className="flex-1 py-2.5 rounded-xl bg-[#005c86] hover:bg-[#0e76a8] text-white font-bold text-xs transition-colors shadow-sm"
+                        disabled={!!activatingId}
+                        className="flex-1 py-2.5 rounded-xl bg-[#005c86] hover:bg-[#0e76a8] text-white font-bold text-xs transition-colors shadow-sm flex items-center justify-center gap-1.5"
                       >
-                        اختيار القالب
+                        {activatingId === tmpl.id ? (
+                          <>
+                            <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                            <span>جاري التفعيل...</span>
+                          </>
+                        ) : (
+                          <span>اختيار القالب</span>
+                        )}
                       </button>
                     )}
                   </div>
@@ -321,7 +369,7 @@ export default function TemplatesPage() {
                     </button>
                     {isActive ? (
                       <Link 
-                        href={`/academic/website/builder?templateId=${tmpl.id}`}
+                        href={`/academic/website/builder?templateId=${tmpl.id}${activePageId ? `&pageId=${activePageId}` : ''}`}
                         className="flex-1 py-2.5 rounded-xl bg-[#005c86] hover:bg-[#0e76a8] text-white font-bold text-xs transition-colors shadow-sm text-center flex items-center justify-center"
                       >
                         تعديل بالباني
@@ -329,9 +377,17 @@ export default function TemplatesPage() {
                     ) : (
                       <button 
                         onClick={() => handleSelectTemplate(tmpl.id, tmpl.name)}
-                        className="flex-1 py-2.5 rounded-xl bg-[#005c86] hover:bg-[#0e76a8] text-white font-bold text-xs transition-colors shadow-sm"
+                        disabled={!!activatingId}
+                        className="flex-1 py-2.5 rounded-xl bg-[#005c86] hover:bg-[#0e76a8] text-white font-bold text-xs transition-colors shadow-sm flex items-center justify-center gap-1.5"
                       >
-                        اختيار القالب
+                        {activatingId === tmpl.id ? (
+                          <>
+                            <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                            <span>جاري التفعيل...</span>
+                          </>
+                        ) : (
+                          <span>اختيار القالب</span>
+                        )}
                       </button>
                     )}
                   </div>
@@ -395,18 +451,29 @@ export default function TemplatesPage() {
 
             {/* Action buttons */}
             <div className="flex items-center gap-3">
-              <Link
-                href={`/academic/website/builder?templateId=${previewTemplate.id}`}
-                className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 flex items-center justify-center"
-              >
-                تعديل بالباني
-              </Link>
-              <button 
-                onClick={handleSelectInsideSimulator}
-                className="px-5 py-2.5 rounded-xl bg-[#005c86] hover:brightness-110 text-white font-bold text-xs shadow-md transition-all active:scale-95"
-              >
-                تفعيل القالب
-              </button>
+              {previewTemplate.id === activeTemplateId ? (
+                <Link
+                  href={`/academic/website/builder?templateId=${previewTemplate.id}${activePageId ? `&pageId=${activePageId}` : ''}`}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 flex items-center justify-center"
+                >
+                  تعديل بالباني
+                </Link>
+              ) : (
+                <button 
+                  onClick={handleSelectInsideSimulator}
+                  disabled={!!activatingId}
+                  className="px-5 py-2.5 rounded-xl bg-[#005c86] hover:brightness-110 text-white font-bold text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                >
+                  {activatingId === previewTemplate.id ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      <span>جاري التفعيل...</span>
+                    </>
+                  ) : (
+                    <span>تفعيل القالب</span>
+                  )}
+                </button>
+              )}
               <button 
                 onClick={() => setPreviewTemplate(null)}
                 className="p-2.5 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-200 transition-colors border border-slate-800"

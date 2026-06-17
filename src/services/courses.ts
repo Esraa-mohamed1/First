@@ -10,10 +10,17 @@ export const createCourse = async (payload: CreateCoursePayload): Promise<Course
         if (key === 'image' && value instanceof File) {
           formData.append('image', value);
         } else if ((key === 'receiverAccounts' || key === 'receiver_accounts') && Array.isArray(value)) {
-          // Backend expects receiver_accounts as flat integers
           value.forEach((item, index) => {
-            const id = item.methodId || item.method_id || item;
-            formData.append(`receiver_accounts[${index}]`, String(id));
+            if (typeof item === 'object' && item !== null) {
+              const id = item.methodId || item.method_id || item.id;
+              const val = item.value || item.accountValue || item.account_value || '';
+              formData.append(`receiver_accounts[${index}][receiver_account_id]`, String(id));
+              formData.append(`receiver_accounts[${index}][value]`, String(val));
+              formData.append(`receiver_accounts[${index}][id]`, String(id));
+              formData.append(`receiver_accounts[${index}][account_value]`, String(val));
+            } else {
+              formData.append(`receiver_accounts[${index}]`, String(item));
+            }
           });
         } else if (key === 'payment_methods') {
           // Skip — backend uses receiver_accounts
@@ -199,10 +206,17 @@ export const updateCourse = async (id: number, payload: any): Promise<Course> =>
           if (key === 'image') {
             formData.append('image', payload.image);
           } else if ((key === 'receiverAccounts' || key === 'receiver_accounts') && Array.isArray(payload[key])) {
-            // Backend expects receiver_accounts as flat integers
             payload[key].forEach((item: any, index: number) => {
-              const id = item.methodId || item.method_id || item;
-              formData.append(`receiver_accounts[${index}]`, String(id));
+              if (typeof item === 'object' && item !== null) {
+                const id = item.methodId || item.method_id || item.id;
+                const val = item.value || item.accountValue || item.account_value || '';
+                formData.append(`receiver_accounts[${index}][receiver_account_id]`, String(id));
+                formData.append(`receiver_accounts[${index}][value]`, String(val));
+                formData.append(`receiver_accounts[${index}][id]`, String(id));
+                formData.append(`receiver_accounts[${index}][account_value]`, String(val));
+              } else {
+                formData.append(`receiver_accounts[${index}]`, String(item));
+              }
             });
           } else if (key === 'payment_methods') {
             // Skip payment_methods — backend uses receiver_accounts
@@ -221,17 +235,32 @@ export const updateCourse = async (id: number, payload: any): Promise<Course> =>
       return response.data.data;
     }
 
-    // Otherwise, standard JSON PUT. Flatten receiver_accounts to integers.
+    // Otherwise, standard JSON PUT.
     const jsonPayload = { ...payload };
     if (payload.receiverAccounts && Array.isArray(payload.receiverAccounts)) {
-      jsonPayload.receiver_accounts = payload.receiverAccounts.map((item: any) =>
-        Number(item.methodId || item.method_id || item)
-      );
+      jsonPayload.receiver_accounts = payload.receiverAccounts.map((item: any) => ({
+        receiver_account_id: Number(item.methodId || item.method_id || item.id || item),
+        id: Number(item.methodId || item.method_id || item.id || item),
+        value: item.value || '',
+        account_value: item.value || ''
+      }));
       delete jsonPayload.receiverAccounts;
     }
     if (jsonPayload.receiver_accounts && Array.isArray(jsonPayload.receiver_accounts)) {
       jsonPayload.receiver_accounts = jsonPayload.receiver_accounts.map((item: any) =>
-        typeof item === 'object' ? Number(item.methodId || item.method_id || item) : Number(item)
+        typeof item === 'object'
+          ? {
+              receiver_account_id: Number(item.receiver_account_id || item.methodId || item.method_id || item.id),
+              id: Number(item.receiver_account_id || item.methodId || item.method_id || item.id),
+              value: item.value || item.accountValue || item.account_value || '',
+              account_value: item.value || item.accountValue || item.account_value || ''
+            }
+          : {
+              receiver_account_id: Number(item),
+              id: Number(item),
+              value: '',
+              account_value: ''
+            }
       );
     }
     delete jsonPayload.payment_methods;

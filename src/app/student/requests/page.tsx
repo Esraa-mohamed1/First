@@ -14,8 +14,9 @@ import {
   ChevronRight, 
   Loader2 
 } from 'lucide-react';
-import { getStudentCourses } from '@/services/student-courses';
+import { getStudentCourses, getMySubscriptions, enrollInCourse } from '@/services/student-courses';
 import { Course } from '@/types/student';
+import { getLogoUrl } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -86,6 +87,58 @@ export default function StudentRequestsPage() {
       setSelectedPaymentMethodId('');
     }
   }, [selectedCourseId, currentCoursePaymentMethods, selectedCourse]);
+
+  const loadRequests = async () => {
+    setLoading(true);
+    try {
+      const backendRequests = await getMySubscriptions();
+      
+      // Retrieve student info from localStorage if exists
+      let sName = 'أحمد محمد';
+      let sEmail = 'student@darab.academy';
+      const userInfoStr = localStorage.getItem('user_info');
+      if (userInfoStr) {
+        try {
+          const parsed = JSON.parse(userInfoStr);
+          sName = parsed.name || sName;
+          sEmail = parsed.email || sEmail;
+        } catch (e) {}
+      }
+
+      const mapped: PurchaseRequest[] = (backendRequests || []).map((req: any) => {
+        let resolvedStatus: PurchaseRequest['status'] = 'pending';
+        if (req.status === 'accepted') resolvedStatus = 'accepted';
+        else if (req.status === 'rejected') resolvedStatus = 'rejected';
+        else if (req.status === 'penidng' || req.status === 'pending') resolvedStatus = 'pending';
+
+        const courseTitle = req.course?.title || 'دورة تعليمية';
+        const courseImage = req.course?.image ? getLogoUrl(req.course.image) : '';
+        const finalPrice = req.course?.final_price || req.course?.price || '';
+        const currency = req.course?.currency || 'SAR';
+        const formattedAmount = finalPrice ? `${finalPrice} ${currency}` : '';
+
+        return {
+          id: req.transaction_id || `REQ-${req.id}`,
+          studentName: sName,
+          studentEmail: sEmail,
+          courseId: String(req.course_id || req.course?.id || ''),
+          courseTitle,
+          courseImage,
+          amount: formattedAmount,
+          paymentMethod: req.payment_method || 'تحويل بنكي',
+          receiptImage: getLogoUrl(req.receipt),
+          status: resolvedStatus,
+          date: req.created_at ? new Date(req.created_at).toLocaleDateString('ar-EG') : new Date().toLocaleDateString('ar-EG')
+        };
+      });
+      setRequests(mapped);
+    } catch (err) {
+      console.error('Failed to load subscription requests:', err);
+      toast.error('فشل في تحميل سجل طلبات الاشتراك');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     // 1. Fetch available courses
@@ -167,39 +220,6 @@ export default function StudentRequestsPage() {
         ]);
       }
     };
-
-    // 2. Fetch submitted requests from localStorage
-    const loadRequests = () => {
-      const stored = localStorage.getItem('darab_course_requests');
-      if (stored) {
-        try {
-          setRequests(JSON.parse(stored));
-        } catch (e) {
-          console.error(e);
-        }
-      } else {
-        // Seed default dummy request
-        const seedRequests: PurchaseRequest[] = [
-          {
-            id: 'REQ-9041',
-            studentName: 'أحمد محمد',
-            studentEmail: 'student@darab.academy',
-            courseId: '1',
-            courseTitle: 'دورة أدوبي فوتوشوب للمبتدئين',
-            courseImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM',
-            amount: '250 ريال',
-            paymentMethod: 'Vodafone Cash',
-            receiptImage: 'https://api.darab.academy/receiver-account-logos/vodafone-cash.png',
-            status: 'pending',
-            date: new Date().toLocaleDateString('ar-EG')
-          }
-        ];
-        localStorage.setItem('darab_course_requests', JSON.stringify(seedRequests));
-        setRequests(seedRequests);
-      }
-      setLoading(false);
-    };
-
     fetchCourses();
     loadRequests();
   }, []);
@@ -227,45 +247,9 @@ export default function StudentRequestsPage() {
 
     setSubmitting(true);
     
-    // Find course details
-    const selectedCourse = courses.find(c => String(c.id) === selectedCourseId);
-    const courseTitle = selectedCourse?.title || 'دورة تعليمية';
-    const courseImage = selectedCourse?.image || (selectedCourse as any)?.cover_image || '';
-
-    // Retrieve student info from localStorage if exists
-    let sName = 'أحمد محمد';
-    let sEmail = 'student@darab.academy';
-    const userInfoStr = localStorage.getItem('user_info');
-    if (userInfoStr) {
-      try {
-        const parsed = JSON.parse(userInfoStr);
-        sName = parsed.name || sName;
-        sEmail = parsed.email || sEmail;
-      } catch (e) {}
-    }
-
-    const selectedPM = currentCoursePaymentMethods.find((pm: any) => pm.methodId === selectedPaymentMethodId);
-    const paymentMethodName = selectedPM ? selectedPM.methodName : 'تحويل بنكي';
-
-    const newRequest: PurchaseRequest = {
-      id: `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
-      studentName: sName,
-      studentEmail: sEmail,
-      courseId: selectedCourseId,
-      courseTitle,
-      courseImage,
-      amount: `${amount} ${(selectedCourse as any)?.currency || 'SAR'}`,
-      paymentMethod: paymentMethodName,
-      receiptImage: receiptBase64,
-      status: 'pending',
-      date: new Date().toLocaleDateString('ar-EG')
-    };
-
-    setTimeout(() => {
-      const updated = [newRequest, ...requests];
-      localStorage.setItem('darab_course_requests', JSON.stringify(updated));
-      setRequests(updated);
-
+    try {
+      await enrollInCourse(selectedCourseId, selectedPaymentMethodId, receiptFile);
+      
       setSubmitting(false);
       setShowAddForm(false);
 
@@ -284,30 +268,37 @@ export default function StudentRequestsPage() {
         confirmButtonText: 'حسناً',
         confirmButtonColor: '#2563eb'
       });
-    }, 1200);
+
+      // Refresh list
+      loadRequests();
+    } catch (error: any) {
+      setSubmitting(false);
+      const errMsg = error?.message || 'حدث خطأ أثناء إرسال طلب الاشتراك، يرجى المحاولة مرة أخرى.';
+      toast.error(errMsg);
+    }
   };
 
   const getStatusBadge = (status: PurchaseRequest['status']) => {
     switch (status) {
       case 'accepted':
         return (
-          <span className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black bg-emerald-50 text-emerald-600 border border-emerald-100/60 shadow-sm">
-            <CheckCircle2 className="w-3.5 h-3.5" />
+          <span className="flex items-center gap-1.5 px-5 py-3 rounded-xl text-xs font-black bg-emerald-50 text-emerald-600 border border-emerald-100/60 shadow-sm">
+            <CheckCircle2 className="w-4 h-4" />
             <span>تم القبول والاشتراك</span>
           </span>
         );
       case 'rejected':
         return (
-          <span className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black bg-rose-50 text-rose-600 border border-rose-100/60 shadow-sm">
-            <XCircle className="w-3.5 h-3.5" />
+          <span className="flex items-center gap-1.5 px-5 py-3 rounded-xl text-xs font-black bg-rose-50 text-rose-600 border border-rose-100/60 shadow-sm">
+            <XCircle className="w-4 h-4" />
             <span>مرفوض</span>
           </span>
         );
       case 'pending':
       default:
         return (
-          <span className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black bg-amber-50 text-amber-600 border border-amber-100/60 shadow-sm">
-            <Clock className="w-3.5 h-3.5 animate-pulse" />
+          <span className="flex items-center gap-1.5 px-5 py-3 rounded-xl text-xs font-black bg-amber-50 text-amber-600 border border-amber-100/60 shadow-sm">
+            <Clock className="w-4 h-4 animate-pulse" />
             <span>قيد المراجعة</span>
           </span>
         );
@@ -507,28 +498,26 @@ export default function StudentRequestsPage() {
               {requests.map((req) => (
                 <div
                   key={req.id}
-                  className="p-5 border border-gray-100 hover:border-blue-100 rounded-3xl bg-slate-50/20 hover:bg-blue-50/5 flex flex-col md:flex-row md:items-center justify-between gap-5 transition-all group"
+                  className="p-8 border border-gray-100 hover:border-blue-100 rounded-[2rem] bg-slate-50/20 hover:bg-blue-50/5 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all group"
                 >
-                  <div className="flex items-center gap-4 text-right">
+                  <div className="flex items-center gap-6 text-right">
                     {/* Course cover */}
-                    <div className="w-16 h-16 rounded-2xl bg-[#0a192f] overflow-hidden flex items-center justify-center shrink-0 border border-gray-100">
+                    <div className="w-24 h-24 rounded-2xl bg-[#0a192f] overflow-hidden flex items-center justify-center shrink-0 border border-gray-100">
                       {req.courseImage ? (
                         <img src={req.courseImage} alt={req.courseTitle} className="w-full h-full object-cover" />
                       ) : (
-                        <GraduationCap className="w-6 h-6 text-blue-500" />
+                        <GraduationCap className="w-8 h-8 text-blue-500" />
                       )}
                     </div>
                     
                     {/* Details */}
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">{req.id}</span>
-                        <span className="text-[10px] text-gray-400 font-bold">{req.date}</span>
+                        <span className="text-xs font-black text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">المعاملة: {req.id}</span>
+                        <span className="text-xs text-gray-400 font-bold">{req.date}</span>
                       </div>
-                      <h3 className="text-xs font-black text-gray-800 leading-snug group-hover:text-blue-600 transition-colors">{req.courseTitle}</h3>
-                      <div className="flex items-center gap-4 text-[10px] text-gray-500 font-semibold">
-                        <span>طريقة الدفع: {req.paymentMethod}</span>
-                        <span>•</span>
+                      <h3 className="text-sm md:text-base font-black text-gray-800 leading-snug group-hover:text-blue-600 transition-colors">{req.courseTitle}</h3>
+                      <div className="flex items-center gap-4 text-xs text-gray-500 font-semibold">
                         <span className="font-black text-gray-700">{req.amount}</span>
                       </div>
                     </div>
@@ -538,9 +527,9 @@ export default function StudentRequestsPage() {
                   <div className="flex items-center justify-end gap-4">
                     <button
                       onClick={() => handleShowReceipt(req.receiptImage)}
-                      className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-xl border border-gray-200 text-gray-500 hover:bg-white hover:text-blue-600 hover:border-blue-200 text-xs font-black transition-all bg-slate-50/50"
+                      className="flex items-center gap-1.5 px-6 py-3 rounded-xl border border-gray-200 text-gray-500 hover:bg-white hover:text-blue-600 hover:border-blue-200 text-xs font-black transition-all bg-slate-50/50"
                     >
-                      <FileText className="w-3.5 h-3.5" />
+                      <FileText className="w-4 h-4" />
                       <span>عرض الإيصال</span>
                     </button>
                     {getStatusBadge(req.status)}

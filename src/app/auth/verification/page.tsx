@@ -96,17 +96,23 @@ function VerificationContent() {
 
                 // Update user info in local storage if needed
                 const userStr = localStorage.getItem('user_info');
+                let userRole = '';
                 if (userStr) {
                     try {
                         const user = JSON.parse(userStr);
                         user.email_verified_at = new Date().toISOString(); // Simulate update
                         localStorage.setItem('user_info', JSON.stringify(user));
+                        userRole = user.role;
                     } catch (e) {
                         console.error('Failed to update local user info');
                     }
                 }
 
-                router.push('/academic');
+                if (userRole === 'admin' || userRole === 'academy') {
+                    router.push('/academic');
+                } else {
+                    router.push('/student');
+                }
             } else {
                 toast.error(response.message || 'رمز التحقق غير صحيح');
             }

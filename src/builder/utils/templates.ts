@@ -1,4 +1,4 @@
-import { TemplateSchema } from '../types';
+import { TemplateSchema } from '../interfaces';
 
 export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
   'academy-dashboard': {

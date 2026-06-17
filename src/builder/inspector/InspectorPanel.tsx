@@ -3,60 +3,132 @@
 import React, { useState, useEffect } from 'react';
 import { useBuilderStore } from '../store/builderStore';
 import { COMPONENT_REGISTRY } from '../registry/componentRegistry';
-import { AVAILABLE_ICONS } from '../utils/icons';
-import { 
-  AVAILABLE_FONTS, 
-  AVAILABLE_SIZES, 
-  AVAILABLE_WEIGHTS 
-} from '../utils/typography';
 import { 
   X, 
   Settings, 
   Paintbrush, 
   FileText, 
-  Plus, 
-  Trash2, 
   ChevronDown, 
   AlignRight, 
   AlignCenter, 
   AlignLeft,
-  ChevronLeft
+  ChevronLeft,
+  Plus,
+  Trash2
 } from 'lucide-react';
 
-const EDITABLE_LINES: Record<string, { key: string; label: string; type: 'text' | 'textarea' }[]> = {
-  'hero': [
-    { key: 'badgeText', label: 'شارة الترويسة العليا (Badge)', type: 'text' },
-    { key: 'title', label: 'العنوان الرئيسي (Title)', type: 'text' },
-    { key: 'subtitle', label: 'العنوان الفرعي (Subtitle)', type: 'textarea' },
-    { key: 'buttonText', label: 'نص الزر الأساسي (Button)', type: 'text' },
-  ],
-  'charts': [
-    { key: 'title', label: 'عنوان الرسم البياني (Title)', type: 'text' }
-  ],
-  'tables': [
-    { key: 'title', label: 'عنوان جدول البيانات (Title)', type: 'text' }
-  ],
-  'student-feed': [
-    { key: 'title', label: 'عنوان الأنشطة (Title)', type: 'text' }
-  ],
-  'course-cards': [
-    { key: 'title', label: 'عنوان قسم الكورسات (Title)', type: 'text' }
-  ],
-  'sidebar': [
-    { key: 'title', label: 'اسم الأكاديمية (Title)', type: 'text' },
-    { key: 'logoText', label: 'حرف الشعار (Logo Text)', type: 'text' }
-  ],
-  'navbar': [
-    { key: 'title', label: 'عنوان الترويسة (Title)', type: 'text' }
-  ],
-  'metrics': [
-    { key: 'title', label: 'عنوان قسم المؤشرات (Title)', type: 'text' }
-  ],
-};
+// Subcomponents
+import SectionBackgroundControls from './components/SectionBackgroundControls';
+import TypographyCustomizer, { EDITABLE_LINES } from './components/TypographyCustomizer';
+import KpiCardsEditor from './components/KpiCardsEditor';
+import CourseCardsEditor from './components/CourseCardsEditor';
+import StudentFeedEditor from './components/StudentFeedEditor';
+import TableBlockEditor from './components/TableBlockEditor';
+import MetricsCardsEditor from './components/MetricsCardsEditor';
+import TabsBlockEditor from './components/TabsBlockEditor';
+import HeroSliderEditor from './components/HeroSliderEditor';
+import ImageUploader from './components/ImageUploader';
+import ItemImageUploader from './components/ImageUploader';
+import { AVAILABLE_ICONS, getIconComponent } from '../utils/icons';
+
+function ItemIconPicker({ 
+  value, 
+  onChange, 
+  label 
+}: { 
+  value: string; 
+  onChange: (val: string) => void; 
+  label?: string; 
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  
+  const IconComp = getIconComponent(value || 'HelpCircle');
+
+  const filteredIcons = AVAILABLE_ICONS.filter(icon => 
+    icon.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="relative w-full">
+      {label && <label className="block text-[10px] font-black text-slate-400 mb-1.5">{label}</label>}
+      
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full p-2.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none flex justify-between items-center transition-all"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-blue-600 bg-blue-50 p-1 rounded-lg">
+            <IconComp className="w-4 h-4" />
+          </span>
+          <span>{value || 'اختر أيقونة'}</span>
+        </div>
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-100 rounded-xl shadow-xl p-3 z-50 max-h-[240px] overflow-y-auto">
+            <input 
+              type="text"
+              placeholder="ابحث عن أيقونة..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full p-2 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-bold outline-none mb-2 text-right"
+              dir="rtl"
+            />
+            <div className="grid grid-cols-4 gap-1.5">
+              {filteredIcons.map((icon) => {
+                const CurrentIcon = getIconComponent(icon);
+                const isSelected = value === icon;
+                return (
+                  <button
+                    type="button"
+                    key={icon}
+                    title={icon}
+                    onClick={() => {
+                      onChange(icon);
+                      setIsOpen(false);
+                      setSearch('');
+                    }}
+                    className={`p-2 border rounded-xl flex flex-col items-center justify-center gap-1 transition-all ${
+                      isSelected 
+                        ? 'bg-blue-50 border-blue-200 text-blue-600' 
+                        : 'border-slate-50 hover:bg-slate-50 text-slate-600'
+                    }`}
+                  >
+                    <CurrentIcon className="w-4 h-4 shrink-0" />
+                    <span className="text-[8px] truncate max-w-full font-bold">{icon}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function InspectorPanel() {
   const { selectedNodeId, currentTemplate, updateNodeProps, setSelectedNodeId } = useBuilderStore();
   const [activeTab, setActiveTab] = useState<'content' | 'style' | 'spacing'>('content');
+  const [isSimpleMode, setIsSimpleMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('darab_builder_simple_mode');
+      return saved !== 'false';
+    }
+    return true;
+  });
+
+  const toggleSimpleMode = (val: boolean) => {
+    setIsSimpleMode(val);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('darab_builder_simple_mode', String(val));
+    }
+  };
   const [iconSearch, setIconSearch] = useState('');
   const [showIconDropdown, setShowIconDropdown] = useState<string | null>(null);
   const [expandedLine, setExpandedLine] = useState<string | null>(null);
@@ -66,6 +138,12 @@ export default function InspectorPanel() {
     setActiveTab('content');
     setExpandedLine(null);
   }, [selectedNodeId]);
+
+  useEffect(() => {
+    if (isSimpleMode && activeTab === 'spacing') {
+      setActiveTab('content');
+    }
+  }, [isSimpleMode, activeTab]);
 
   if (!selectedNodeId || !currentTemplate) {
     return (
@@ -105,11 +183,11 @@ export default function InspectorPanel() {
 
   // Group fields into Content vs styling parameters
   const contentFields = registryConfig.fields.filter(
-    (f) => !['color', 'buttonColor', 'buttonTextColor', 'backgroundColor', 'titleColor', 'subtitleColor', 'headerBg', 'activeTabColor', 'accentColor', 'theme'].includes(f.type) && f.name !== 'align'
+    (f) => !f.name.startsWith('section') && !['color', 'buttonColor', 'buttonTextColor', 'backgroundColor', 'titleColor', 'subtitleColor', 'headerBg', 'activeTabColor', 'accentColor', 'theme'].includes(f.type) && f.name !== 'align'
   );
   
   const stylingFields = registryConfig.fields.filter(
-    (f) => ['color', 'buttonColor', 'buttonTextColor', 'backgroundColor', 'titleColor', 'subtitleColor', 'headerBg', 'activeTabColor', 'accentColor', 'theme'].includes(f.type) || f.name === 'align'
+    (f) => !f.name.startsWith('section') && (['color', 'buttonColor', 'buttonTextColor', 'backgroundColor', 'titleColor', 'subtitleColor', 'headerBg', 'activeTabColor', 'accentColor', 'theme'].includes(f.type) || f.name === 'align')
   );
 
   return (
@@ -127,6 +205,35 @@ export default function InspectorPanel() {
         >
           <X className="w-4 h-4" />
         </button>
+      </div>
+
+      {/* Simple/Advanced Toggle Switch */}
+      <div className="px-5 py-2.5 bg-slate-50/60 border-b border-slate-100 flex items-center justify-between">
+        <span className="text-[10px] font-black text-slate-500">مستوى لوحة التحكم:</span>
+        <div className="flex bg-slate-200/60 rounded-xl p-0.5 border border-slate-200/50 select-none">
+          <button
+            type="button"
+            onClick={() => toggleSimpleMode(true)}
+            className={`px-3 py-1 rounded-lg text-[9px] font-black transition-all ${
+              isSimpleMode 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            سهل ✨
+          </button>
+          <button
+            type="button"
+            onClick={() => toggleSimpleMode(false)}
+            className={`px-3 py-1 rounded-lg text-[9px] font-black transition-all ${
+              !isSimpleMode 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            متقدم 🛠️
+          </button>
+        </div>
       </div>
 
       {/* Selector Tabs */}
@@ -149,15 +256,17 @@ export default function InspectorPanel() {
           <Paintbrush className="w-3.5 h-3.5" />
           التنسيق
         </button>
-        <button
-          onClick={() => setActiveTab('spacing')}
-          className={`flex-1 py-3 text-[11px] font-black border-b-2 flex items-center justify-center gap-1.5 ${
-            activeTab === 'spacing' ? 'border-blue-500 text-blue-600 bg-blue-50/10' : 'border-transparent text-slate-400 hover:text-slate-600'
-          }`}
-        >
-          <Settings className="w-3.5 h-3.5" />
-          الهوامش
-        </button>
+        {!isSimpleMode && (
+          <button
+            onClick={() => setActiveTab('spacing')}
+            className={`flex-1 py-3 text-[11px] font-black border-b-2 flex items-center justify-center gap-1.5 ${
+              activeTab === 'spacing' ? 'border-blue-500 text-blue-600 bg-blue-50/10' : 'border-transparent text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            <Settings className="w-3.5 h-3.5" />
+            الهوامش
+          </button>
+        )}
       </div>
 
       {/* Editor Content Area */}
@@ -172,12 +281,20 @@ export default function InspectorPanel() {
                 </label>
 
                 {field.type === 'text' && (
-                  <input 
-                    type="text" 
-                    value={props[field.name] ?? ''} 
-                    onChange={(e) => handlePropChange(field.name, e.target.value)}
-                    className="w-full p-3.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-2xl text-xs font-bold text-slate-700 outline-none transition-all"
-                  />
+                  (field.name.toLowerCase().includes('image') || field.name.toLowerCase().includes('img') || field.name.toLowerCase().includes('logo')) ? (
+                    <ImageUploader
+                      value={props[field.name] ?? ''}
+                      onChange={(val) => handlePropChange(field.name, val)}
+                      label={field.label}
+                    />
+                  ) : (
+                    <input 
+                      type="text" 
+                      value={props[field.name] ?? ''} 
+                      onChange={(e) => handlePropChange(field.name, e.target.value)}
+                      className="w-full p-3.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-2xl text-xs font-bold text-slate-700 outline-none transition-all"
+                    />
+                  )
                 )}
 
                 {field.type === 'textarea' && (
@@ -224,113 +341,82 @@ export default function InspectorPanel() {
                     <ChevronDown className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
                 )}
+
+                {field.type === 'icon' && (
+                  <ItemIconPicker
+                    value={props[field.name] ?? field.defaultValue}
+                    onChange={(val) => handlePropChange(field.name, val)}
+                  />
+                )}
               </div>
             ))}
 
-            {/* Special Editor for KPI Cards lists */}
+            {/* Custom List Editors */}
             {selectedNode.type === 'kpi-cards' && (
-              <div className="space-y-4 pt-4 border-t border-slate-100">
-                <label className="text-[10px] font-black text-slate-400 pr-1 block">تعديل بطاقات المؤشرات</label>
-                {(props.cards || []).map((card: any, idx: number) => (
-                  <div key={card.id} className="p-3.5 bg-slate-50 border border-slate-100 rounded-2xl space-y-3 relative group">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-black text-slate-400">بطاقة #{idx + 1}</span>
-                      <button 
-                        onClick={() => {
-                          const updatedCards = props.cards.filter((c: any) => c.id !== card.id);
-                          handlePropChange('cards', updatedCards);
-                        }}
-                        className="text-rose-500 hover:text-rose-600 transition-colors p-1"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+              <KpiCardsEditor 
+                props={props} 
+                handlePropChange={handlePropChange}
+                showIconDropdown={showIconDropdown}
+                setShowIconDropdown={setShowIconDropdown}
+                iconSearch={iconSearch}
+                setIconSearch={setIconSearch}
+              />
+            )}
 
-                    <input 
-                      type="text"
-                      placeholder="العنوان"
-                      value={card.title}
-                      onChange={(e) => {
-                        const updated = props.cards.map((c: any) => c.id === card.id ? { ...c, title: e.target.value } : c);
-                        handlePropChange('cards', updated);
-                      }}
-                      className="w-full p-2.5 bg-white border border-slate-100 rounded-xl text-xs font-bold outline-none"
-                    />
-                    
-                    <input 
-                      type="text"
-                      placeholder="القيمة"
-                      value={card.value}
-                      onChange={(e) => {
-                        const updated = props.cards.map((c: any) => c.id === card.id ? { ...c, value: e.target.value } : c);
-                        handlePropChange('cards', updated);
-                      }}
-                      className="w-full p-2.5 bg-white border border-slate-100 rounded-xl text-xs font-bold outline-none"
-                    />
+            {selectedNode.type === 'course-cards' && (
+              <CourseCardsEditor 
+                props={props} 
+                handlePropChange={handlePropChange}
+              />
+            )}
 
-                    {/* Icon Selection Dropdown */}
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setShowIconDropdown(showIconDropdown === card.id ? null : card.id)}
-                        className="w-full p-2.5 bg-white border border-slate-100 rounded-xl text-xs font-bold text-slate-600 text-right flex justify-between items-center"
-                      >
-                        <span>أيقونة: {card.icon}</span>
-                        <ChevronDown className="w-3.5 h-3.5" />
-                      </button>
+            {selectedNode.type === 'student-feed' && (
+              <StudentFeedEditor 
+                props={props} 
+                handlePropChange={handlePropChange}
+              />
+            )}
 
-                      {showIconDropdown === card.id && (
-                        <div className="absolute top-full right-0 left-0 mt-1 bg-white border border-slate-100 rounded-xl shadow-lg p-2.5 z-50 max-h-[160px] overflow-y-auto">
-                          <input 
-                            type="text"
-                            placeholder="ابحث عن أيقونة..."
-                            value={iconSearch}
-                            onChange={(e) => setIconSearch(e.target.value)}
-                            className="w-full p-2 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-bold outline-none mb-2"
-                          />
-                          <div className="grid grid-cols-4 gap-1.5">
-                            {AVAILABLE_ICONS.filter(icon => icon.toLowerCase().includes(iconSearch.toLowerCase())).map((icon) => (
-                              <button
-                                type="button"
-                                key={icon}
-                                onClick={() => {
-                                  const updated = props.cards.map((c: any) => c.id === card.id ? { ...c, icon: icon } : c);
-                                  handlePropChange('cards', updated);
-                                  setShowIconDropdown(null);
-                                  setIconSearch('');
-                                }}
-                                className="p-1.5 hover:bg-slate-50 border border-slate-50 rounded text-center text-xs font-semibold text-slate-600"
-                              >
-                                {icon.substr(0, 4)}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newCard = {
-                      id: String(Date.now()),
-                      title: 'مؤشر جديد',
-                      value: '0',
-                      change: '0%',
-                      isPositive: true,
-                      icon: 'Sparkles',
-                      color: '#2563eb'
-                    };
-                    handlePropChange('cards', [...(props.cards || []), newCard]);
-                  }}
-                  className="w-full py-3 border border-dashed border-slate-200 hover:border-blue-500 rounded-2xl flex items-center justify-center gap-1.5 text-slate-500 hover:text-blue-500 text-xs font-black transition-all bg-slate-50/20"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>إضافة بطاقة جديدة</span>
-                </button>
-              </div>
+            {selectedNode.type === 'tables' && (
+              <TableBlockEditor 
+                props={props} 
+                handlePropChange={handlePropChange}
+              />
+            )}
+
+            {selectedNode.type === 'metrics' && (
+              <MetricsCardsEditor 
+                props={props} 
+                handlePropChange={handlePropChange}
+                showIconDropdown={showIconDropdown}
+                setShowIconDropdown={setShowIconDropdown}
+                iconSearch={iconSearch}
+                setIconSearch={setIconSearch}
+              />
+            )}
+
+            {selectedNode.type === 'tabs' && (
+              <TabsBlockEditor 
+                props={props} 
+                handlePropChange={handlePropChange}
+              />
+            )}
+
+            {selectedNode.type === 'hero-slider' && (
+              <HeroSliderEditor 
+                props={props} 
+                handlePropChange={handlePropChange}
+              />
+            )}
+
+            {/* Dynamic Item List Editor */}
+            {registryConfig.itemFields && (
+              <DynamicListEditor
+                items={props.items || []}
+                fields={registryConfig.itemFields}
+                itemLabel={registryConfig.itemLabel || 'عنصر'}
+                onChange={(newItems) => handlePropChange('items', newItems)}
+              />
             )}
           </div>
         )}
@@ -344,21 +430,27 @@ export default function InspectorPanel() {
                 </label>
 
                 {field.type === 'color' && (
-                  <div className="flex items-center gap-3">
-                    <input 
-                      type="color" 
-                      value={props[field.name] ?? field.defaultValue} 
-                      onChange={(e) => handlePropChange(field.name, e.target.value)}
-                      className="w-10 h-10 p-0 rounded-xl border border-slate-200 cursor-pointer overflow-hidden outline-none bg-transparent"
-                    />
-                    
-                    <input 
-                      type="text" 
-                      value={props[field.name] ?? field.defaultValue} 
-                      onChange={(e) => handlePropChange(field.name, e.target.value)}
-                      className="flex-1 p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs font-mono font-bold text-slate-600 outline-none text-left"
-                      dir="ltr"
-                    />
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                      <input 
+                        type="color" 
+                        value={props[field.name] ?? field.defaultValue} 
+                        onChange={(e) => handlePropChange(field.name, e.target.value)}
+                        className="w-10 h-10 p-0 rounded-xl border border-slate-200 cursor-pointer overflow-hidden outline-none bg-transparent"
+                      />
+                      
+                      {!isSimpleMode ? (
+                        <input 
+                          type="text" 
+                          value={props[field.name] ?? field.defaultValue} 
+                          onChange={(e) => handlePropChange(field.name, e.target.value)}
+                          className="flex-1 p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs font-mono font-bold text-slate-600 outline-none text-left"
+                          dir="ltr"
+                        />
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-500">اضغط لاختيار لون {field.label}</span>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -379,16 +471,16 @@ export default function InspectorPanel() {
               </div>
             ))}
 
-            {/* Align text blocks */}
+             {/* Align text blocks */}
             {registryConfig.fields.some(f => f.name === 'align') && (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 pr-1 block">محاذاة النص والكتلة</label>
                 <div className="flex bg-slate-50 border border-slate-100 rounded-2xl p-1 items-center">
                   <button
                     type="button"
                     onClick={() => handlePropChange('align', 'right')}
                     className={`flex-1 py-2 rounded-xl flex items-center justify-center transition-all ${
-                      props.align === 'right' || !props.align ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                      props.align === 'right' || !props.align ? 'bg-white text-blue-600 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'
                     }`}
                   >
                     <AlignRight className="w-4 h-4" />
@@ -397,7 +489,7 @@ export default function InspectorPanel() {
                     type="button"
                     onClick={() => handlePropChange('align', 'center')}
                     className={`flex-1 py-2 rounded-xl flex items-center justify-center transition-all ${
-                      props.align === 'center' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                      props.align === 'center' ? 'bg-white text-blue-600 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'
                     }`}
                   >
                     <AlignCenter className="w-4 h-4" />
@@ -406,146 +498,35 @@ export default function InspectorPanel() {
                     type="button"
                     onClick={() => handlePropChange('align', 'left')}
                     className={`flex-1 py-2 rounded-xl flex items-center justify-center transition-all ${
-                      props.align === 'left' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                      props.align === 'left' ? 'bg-white text-blue-600 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'
                     }`}
                   >
                     <AlignLeft className="w-4 h-4" />
                   </button>
                 </div>
+                <span className="text-[9px] font-bold text-slate-400 block mt-1 pr-1 leading-normal">
+                  💡 اختر اتجاه محاذاة نصوص ومحتويات هذا القسم (ليمين أو لوسط أو ليسار الصفحة).
+                </span>
               </div>
             )}
 
             {/* Elementor-style Line Typography Accordion */}
-            {EDITABLE_LINES[selectedNode.type] && (
-              <div className="space-y-3 pt-4 border-t border-slate-100">
-                <span className="text-[10px] font-black text-slate-400 pr-1 block">
-                  تنسيق وتخصيص أسطر النصوص (طراز المنتور)
-                </span>
-                
-                <div className="space-y-2">
-                  {EDITABLE_LINES[selectedNode.type].map((line) => {
-                    const isExpanded = expandedLine === line.key;
-                    
-                    const textValue = props[line.key] ?? '';
-                    const fontFamily = props[`${line.key}FontFamily`] ?? 'IBM Plex Sans Arabic';
-                    const fontSize = props[`${line.key}FontSize`] ?? '';
-                    const fontWeight = props[`${line.key}FontWeight`] ?? '';
-                    const fontColor = props[`${line.key}Color`] ?? '';
-
-                    return (
-                      <div key={line.key} className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/40">
-                        <button
-                          type="button"
-                          onClick={() => setExpandedLine(isExpanded ? null : line.key)}
-                          className="w-full p-3.5 flex justify-between items-center bg-white hover:bg-slate-50 transition-colors text-right"
-                        >
-                          <span className="text-[11px] font-black text-slate-700">{line.label}</span>
-                          <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                        </button>
-
-                        {isExpanded && (
-                          <div className="p-4 space-y-4 border-t border-slate-100 bg-white">
-                            {/* Text Input */}
-                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-black text-slate-400 block">محتوى النص</label>
-                              {line.type === 'textarea' ? (
-                                <textarea
-                                  rows={2}
-                                  value={textValue}
-                                  onChange={(e) => handlePropChange(line.key, e.target.value)}
-                                  className="w-full p-2.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-xs font-bold text-slate-700 outline-none transition-all resize-none"
-                                />
-                              ) : (
-                                <input
-                                  type="text"
-                                  value={textValue}
-                                  onChange={(e) => handlePropChange(line.key, e.target.value)}
-                                  className="w-full p-2.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-xs font-bold text-slate-700 outline-none transition-all"
-                                />
-                              )}
-                            </div>
-
-                            {/* Font Family */}
-                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-black text-slate-400 block">نوع الخط (Font Family)</label>
-                              <div className="relative">
-                                <select
-                                  value={fontFamily}
-                                  onChange={(e) => handlePropChange(`${line.key}FontFamily`, e.target.value)}
-                                  className="w-full p-2.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-xs font-bold text-slate-700 outline-none appearance-none"
-                                >
-                                  {AVAILABLE_FONTS.map(font => (
-                                    <option key={font.value} value={font.value}>{font.label}</option>
-                                  ))}
-                                </select>
-                                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                              </div>
-                            </div>
-
-                            {/* Font Size */}
-                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-black text-slate-400 block">حجم الخط (Size)</label>
-                              <div className="relative">
-                                <select
-                                  value={fontSize}
-                                  onChange={(e) => handlePropChange(`${line.key}FontSize`, e.target.value)}
-                                  className="w-full p-2.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-xs font-bold text-slate-700 outline-none appearance-none"
-                                >
-                                  <option value="">تلقائي (حسب التصميم)</option>
-                                  {AVAILABLE_SIZES.map(sz => (
-                                    <option key={sz.value} value={sz.value}>{sz.label}</option>
-                                  ))}
-                                </select>
-                                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                              </div>
-                            </div>
-
-                            {/* Font Weight */}
-                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-black text-slate-400 block">وزن الخط (Weight)</label>
-                              <div className="relative">
-                                <select
-                                  value={fontWeight}
-                                  onChange={(e) => handlePropChange(`${line.key}FontWeight`, e.target.value)}
-                                  className="w-full p-2.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-xs font-bold text-slate-700 outline-none appearance-none"
-                                >
-                                  <option value="">تلقائي</option>
-                                  {AVAILABLE_WEIGHTS.map(w => (
-                                    <option key={w.value} value={w.value}>{w.label}</option>
-                                  ))}
-                                </select>
-                                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                              </div>
-                            </div>
-
-                            {/* Font Color */}
-                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-black text-slate-400 block">لون النص (Color)</label>
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="color"
-                                  value={fontColor || '#1f2937'}
-                                  onChange={(e) => handlePropChange(`${line.key}Color`, e.target.value)}
-                                  className="w-8 h-8 rounded-lg border border-slate-200 cursor-pointer overflow-hidden outline-none bg-transparent shrink-0"
-                                />
-                                <input
-                                  type="text"
-                                  value={fontColor}
-                                  placeholder="تلقائي"
-                                  onChange={(e) => handlePropChange(`${line.key}Color`, e.target.value)}
-                                  className="flex-1 p-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-mono text-left"
-                                  dir="ltr"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+            {!isSimpleMode && EDITABLE_LINES[selectedNode.type] && (
+              <TypographyCustomizer 
+                selectedNodeType={selectedNode.type}
+                props={props}
+                handlePropChange={handlePropChange}
+                expandedLine={expandedLine}
+                setExpandedLine={setExpandedLine}
+              />
             )}
+
+            {/* Section Background & Decorative Shapes */}
+            <SectionBackgroundControls 
+              props={props}
+              handlePropChange={handlePropChange}
+              isSimpleMode={isSimpleMode}
+            />
           </div>
         )}
 
@@ -597,6 +578,197 @@ export default function InspectorPanel() {
         </span>
       </div>
 
+    </div>
+  );
+}
+
+// ─── Dynamic List Editor Component ───────────────────────────────────────────
+
+interface DynamicListEditorProps {
+  items: any[];
+  fields: any[];
+  itemLabel: string;
+  onChange: (newItems: any[]) => void;
+}
+
+function DynamicListEditor({ items = [], fields = [], itemLabel = 'عنصر', onChange }: DynamicListEditorProps) {
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+
+  const handleAddItem = () => {
+    const newItemProps: Record<string, any> = {};
+    fields.forEach(f => {
+      newItemProps[f.name] = f.defaultValue;
+    });
+    const newItem = {
+      order: items.length + 1,
+      props: newItemProps
+    };
+    onChange([...items, newItem]);
+    setEditingIndex(items.length);
+  };
+
+  const handleUpdateItemProp = (index: number, key: string, val: any) => {
+    const updated = items.map((item, idx) => {
+      if (idx === index) {
+        return {
+          ...item,
+          props: { ...item.props, [key]: val }
+        };
+      }
+      return item;
+    });
+    onChange(updated);
+  };
+
+  const handleDeleteItem = (index: number) => {
+    const filtered = items.filter((_, idx) => idx !== index)
+      .map((item, idx) => ({ ...item, order: idx + 1 }));
+    onChange(filtered);
+    setEditingIndex(null);
+  };
+
+  return (
+    <div className="space-y-4 border-t border-slate-100 pt-4" dir="rtl">
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-[10px] font-black text-slate-400">قائمة العناصر ({itemLabel})</span>
+        <button
+          type="button"
+          onClick={handleAddItem}
+          className="px-2.5 py-1 bg-blue-550/10 text-blue-600 rounded-lg text-[9px] font-black hover:bg-blue-100 transition-all flex items-center gap-1 border border-blue-200"
+        >
+          <Plus className="w-3 h-3" />
+          <span>إضافة {itemLabel} +</span>
+        </button>
+      </div>
+
+      <div className="space-y-2">
+        {items.map((item, idx) => {
+          const itemProps = item.props || {};
+          const labelText = itemProps.title || itemProps.question || itemProps.plan_name || itemProps.quote || itemProps.caption || `${itemLabel} ${idx + 1}`;
+          const isEditing = editingIndex === idx;
+
+          return (
+            <div key={idx} className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/30">
+              <div
+                onClick={() => setEditingIndex(isEditing ? null : idx)}
+                className="p-3 bg-slate-50/50 hover:bg-slate-50 flex justify-between items-center cursor-pointer transition-colors"
+              >
+                <span className="text-xs font-bold text-slate-700 truncate max-w-[180px]">{labelText}</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteItem(idx);
+                    }}
+                    className="text-[9px] font-black text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-1.5 rounded-lg transition-all"
+                    title="حذف"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                  <span className="text-[9px] text-slate-400 font-bold">{isEditing ? 'إغلاق ▲' : 'تعديل ▼'}</span>
+                </div>
+              </div>
+
+              {isEditing && (
+                <div className="p-4 bg-white border-t border-slate-100 space-y-4">
+                  {fields.map(f => (
+                    <div key={f.name} className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 pr-1 block">
+                        {f.label}
+                      </label>
+                      
+                      {f.type === 'text' && (
+                        <input
+                          type="text"
+                          value={itemProps[f.name] ?? ''}
+                          onChange={(e) => handleUpdateItemProp(idx, f.name, e.target.value)}
+                          className="w-full p-3 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-xs font-bold text-slate-700 outline-none transition-all"
+                        />
+                      )}
+                      
+                      {f.type === 'textarea' && (
+                        <textarea
+                          rows={3}
+                          value={itemProps[f.name] ?? ''}
+                          onChange={(e) => handleUpdateItemProp(idx, f.name, e.target.value)}
+                          className="w-full p-3 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-xs font-bold text-slate-700 outline-none transition-all resize-none"
+                        />
+                      )}
+                      
+                      {f.type === 'number' && (
+                        <input
+                          type="number"
+                          value={itemProps[f.name] ?? f.defaultValue}
+                          onChange={(e) => handleUpdateItemProp(idx, f.name, Number(e.target.value))}
+                          className="w-full p-3 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-xs font-bold text-slate-700 outline-none transition-all"
+                        />
+                      )}
+                      
+                      {f.type === 'boolean' && (
+                        <label className="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-100 rounded-xl cursor-pointer hover:bg-slate-100/40 select-none">
+                          <input
+                            type="checkbox"
+                            checked={itemProps[f.name] ?? f.defaultValue}
+                            onChange={(e) => handleUpdateItemProp(idx, f.name, e.target.checked)}
+                            className="w-3.5 h-3.5 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                          />
+                          <span className="text-[10px] font-bold text-slate-600">تفعيل هذا الخيار</span>
+                        </label>
+                      )}
+                      
+                      {f.type === 'color' && (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={itemProps[f.name] ?? f.defaultValue}
+                            onChange={(e) => handleUpdateItemProp(idx, f.name, e.target.value)}
+                            className="w-8 h-8 p-0 rounded-lg border border-slate-200 cursor-pointer overflow-hidden outline-none bg-transparent"
+                          />
+                          <input
+                            type="text"
+                            value={itemProps[f.name] ?? f.defaultValue}
+                            onChange={(e) => handleUpdateItemProp(idx, f.name, e.target.value)}
+                            className="flex-1 p-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-mono font-bold text-slate-600 outline-none text-left"
+                            dir="ltr"
+                          />
+                        </div>
+                      )}
+                      
+                      {f.type === 'image' && (
+                        <ItemImageUploader
+                          value={itemProps[f.name] ?? ''}
+                          onChange={(val) => handleUpdateItemProp(idx, f.name, val)}
+                          label={f.label}
+                        />
+                      )}
+                      
+                      {f.type === 'select' && (
+                        <select
+                          value={itemProps[f.name] ?? f.defaultValue}
+                          onChange={(e) => handleUpdateItemProp(idx, f.name, e.target.value)}
+                          className="w-full p-2.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-xs font-bold text-slate-700 outline-none transition-all"
+                        >
+                          {f.options?.map((opt: any) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      )}
+
+                      {f.type === 'icon' && (
+                        <ItemIconPicker
+                          value={itemProps[f.name] ?? f.defaultValue}
+                          onChange={(val) => handleUpdateItemProp(idx, f.name, val)}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

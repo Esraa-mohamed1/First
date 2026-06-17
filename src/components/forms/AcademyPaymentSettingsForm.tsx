@@ -1,490 +1,383 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { showAlert } from '@/lib/sweetalert';
-import { Save, AlertCircle, Loader2, Plus, Edit2, Trash2, X, Landmark, RefreshCw } from 'lucide-react';
-import { getReceiverAccounts, getUserPaymentInfos, createUserPaymentInfo, updateUserPaymentInfo, deleteUserPaymentInfo } from '@/services/finance';
+import React from 'react';
+import { Save, AlertCircle, Loader2, Plus, X, CheckCircle2 } from 'lucide-react';
 import { ReceiverAccount } from '@/types/api';
 import { UserPaymentInfo } from '@/services/finance';
-import { getLogoUrl } from '@/lib/utils';
+import { ActiveAccountCard } from '@/components/payment/ActiveAccountCard';
 
-// ==========================================
-// SUB-COMPONENTS (Defined at Module Scope to Prevent Focus/Render Bugs)
-// ==========================================
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-interface SavedMethodCardProps {
-  method: UserPaymentInfo;
-  onEdit: (method: UserPaymentInfo) => void;
-  onDelete: (id: number) => void;
+export const MAX_ACTIVE_ACCOUNTS = 4;
+
+export const COUNTRY_OPTIONS = [
+  { value: 'SA', label: 'السعودية (Saudi Arabia)' },
+  { value: 'EG', label: 'مصر (Egypt)' },
+  { value: 'AE', label: 'الإمارات (UAE)' },
+  { value: 'QA', label: 'قطر (Qatar)' },
+  { value: 'KW', label: 'الكويت (Kuwait)' },
+  { value: 'OM', label: 'عمان (Oman)' },
+  { value: 'BH', label: 'البحرين (Bahrain)' },
+  { value: 'JO', label: 'الأردن (Jordan)' },
+];
+
+export const CURRENCY_OPTIONS = [
+  { value: 'SAR', label: 'ريال سعودي (SAR)' },
+  { value: 'EGP', label: 'جنيه مصري (EGP)' },
+  { value: 'AED', label: 'درهم إماراتي (AED)' },
+  { value: 'QAR', label: 'ريال قطري (QAR)' },
+  { value: 'KWD', label: 'دينار كويتي (KWD)' },
+  { value: 'OMR', label: 'ريال عماني (OMR)' },
+  { value: 'BHD', label: 'دينار بحريني (BHD)' },
+  { value: 'JOD', label: 'دينار أردني (JOD)' },
+  { value: 'USD', label: 'دولار أمريكي (USD)' },
+];
+
+// ─── Section 1: Template Form Props ───────────────────────────────────────────
+
+export interface TemplateFormProps {
+  // State
+  editingTemplateId: number | null;
+  templateCountry: string;
+  templateName: string;
+  templateLogoFile: File | null;
+  selectedPresetId: string;
+  loadingTemplate: boolean;
+  receiverTemplates: ReceiverAccount[];
+  logoFileInputRef: React.RefObject<HTMLInputElement | null>;
+  // Handlers
+  onSubmit: (e: React.FormEvent) => void;
+  onCountryChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  onPresetChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  onNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onLogoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onClearLogo: () => void;
+  onCancelEdit: () => void;
 }
 
-const SavedMethodCard = React.memo(({ method, onEdit, onDelete }: SavedMethodCardProps) => {
-  const handleEdit = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    onEdit(method);
-  }, [method, onEdit]);
-
-  const handleDelete = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    onDelete(method.id);
-  }, [method.id, onDelete]);
-
+export function TemplateForm({
+  editingTemplateId,
+  templateCountry,
+  templateName,
+  templateLogoFile,
+  selectedPresetId,
+  loadingTemplate,
+  receiverTemplates,
+  logoFileInputRef,
+  onSubmit,
+  onCountryChange,
+  onPresetChange,
+  onNameChange,
+  onLogoChange,
+  onClearLogo,
+  onCancelEdit,
+}: TemplateFormProps) {
   return (
-    <div className="p-6 rounded-2xl border border-gray-100 bg-white hover:border-blue-100 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300 flex flex-col justify-between space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h4 className="font-black text-gray-900 text-base">{method.name}</h4>
-          <span className="inline-block text-[10px] bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg font-extrabold uppercase tracking-wide">
-            {method.currency}
-          </span>
-        </div>
-        <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center overflow-hidden">
-          {method.logo ? (
-            <img src={getLogoUrl(method.logo)} alt={method.name} className="w-full h-full object-cover" />
-          ) : (
-            <Landmark size={20} />
-          )}
-        </div>
-      </div>
-      
-      <div className="space-y-1 pt-2">
-        <span className="text-xs text-gray-400 font-bold block">القيمة / رقم الحساب</span>
-        <span className="font-mono text-sm text-gray-700 font-bold break-all select-all block bg-gray-50 p-2.5 rounded-xl border border-gray-100/50">
-          {method.accountValue}
-        </span>
+    <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="p-5 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+        <h3 className="text-sm font-black text-gray-800">
+          {editingTemplateId ? 'تعديل قالب وسيلة دفع' : 'إضافة قالب وسيلة دفع جديدة'}
+        </h3>
+        {editingTemplateId && (
+          <button
+            type="button"
+            onClick={onCancelEdit}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-black rounded-lg transition-all"
+          >
+            <X size={12} />
+            <span>إلغاء التعديل</span>
+          </button>
+        )}
       </div>
 
-      <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-50 shrink-0">
-        <button
-          type="button"
-          onClick={handleEdit}
-          className="flex items-center gap-1 text-xs font-black text-blue-600 hover:text-blue-700 hover:bg-blue-50/50 px-3 py-1.5 rounded-lg transition-colors"
-        >
-          <Edit2 size={12} />
-          <span>تعديل</span>
-        </button>
-        <button
-          type="button"
-          onClick={handleDelete}
-          className="flex items-center gap-1 text-xs font-black text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors"
-        >
-          <Trash2 size={12} />
-          <span>حذف</span>
-        </button>
-      </div>
-    </div>
-  );
-});
+      {/* Form */}
+      <form onSubmit={onSubmit} className="p-6 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
-SavedMethodCard.displayName = 'SavedMethodCard';
-
-export const AcademyPaymentSettingsForm = () => {
-  const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
-  const [activeReceiverAccounts, setActiveReceiverAccounts] = useState<ReceiverAccount[]>([]);
-  const [savedMethods, setSavedMethods] = useState<UserPaymentInfo[]>([]);
-
-  // Form State
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [selectedCountry, setSelectedCountry] = useState('SA');
-  const [name, setName] = useState('');
-  const [accountValue, setAccountValue] = useState('');
-  const [currency, setCurrency] = useState('SAR');
-  const [selectedReceiverAccountId, setSelectedReceiverAccountId] = useState('');
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-
-  // Fetch data
-  const loadData = useCallback(async () => {
-    setFetching(true);
-    try {
-      const [accounts, configs] = await Promise.all([
-        getReceiverAccounts(),
-        getUserPaymentInfos()
-      ]);
-      setActiveReceiverAccounts(accounts.filter(acc => acc.is_active));
-      setSavedMethods(configs);
-    } catch (error) {
-      console.error('Failed to fetch payment settings:', error);
-      showAlert.error('خطأ', 'فشل تحميل بيانات وسائل الدفع');
-    } finally {
-      setFetching(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  // Form Reset
-  const resetForm = useCallback(() => {
-    setEditingId(null);
-    setSelectedCountry('SA');
-    setName('');
-    setAccountValue('');
-    setCurrency('SAR');
-    setSelectedReceiverAccountId('');
-    setLogoFile(null);
-  }, []);
-
-  // Form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!name.trim()) {
-      showAlert.warning('تنبيه', 'يرجى إدخال اسم وسيلة الدفع');
-      return;
-    }
-    if (!accountValue.trim()) {
-      showAlert.warning('تنبيه', 'يرجى إدخال رقم الحساب أو القيمة');
-      return;
-    }
-    if (!editingId && savedMethods.length >= 4) {
-      showAlert.warning('تنبيه', 'الحد الأقصى لوسائل الدفع المفعلة هو 4 وسائل فقط');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const payload: any = {
-        name,
-        accountValue,
-        currency,
-        logo: logoFile,
-      };
-      if (selectedReceiverAccountId) {
-        payload.receiver_account_id = parseInt(selectedReceiverAccountId, 10);
-      }
-
-      if (editingId) {
-        await updateUserPaymentInfo(editingId, payload);
-        showAlert.success('تم التحديث بنجاح', 'تم تحديث وسيلة الدفع بنجاح');
-      } else {
-        const result = await createUserPaymentInfo(payload);
-        // Add new method with returned ID
-        setSavedMethods(prev => [...prev, result]);
-        showAlert.success('تمت الإضافة بنجاح', 'تم حفظ وسيلة الدفع الجديدة');
-      }
-
-      resetForm();
-      // Reload from endpoint to keep UI perfectly synchronized
-      const configs = await getUserPaymentInfos();
-      setSavedMethods(configs);
-    } catch (error: any) {
-      showAlert.error('خطأ أثناء الحفظ', error?.message || 'حدث خطأ غير متوقع');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Edit handler callback
-  const handleEdit = useCallback((method: UserPaymentInfo) => {
-    setEditingId(method.id);
-    setName(method.name);
-    setAccountValue(method.accountValue);
-    setCurrency(method.currency);
-    if (method.currency === 'EGP') {
-      setSelectedCountry('EG');
-    } else if (method.currency === 'AED') {
-      setSelectedCountry('AE');
-    } else if (method.currency === 'QAR') {
-      setSelectedCountry('QA');
-    } else if (method.currency === 'KWD') {
-      setSelectedCountry('KW');
-    } else if (method.currency === 'OMR') {
-      setSelectedCountry('OM');
-    } else if (method.currency === 'BHD') {
-      setSelectedCountry('BH');
-    } else if (method.currency === 'JOD') {
-      setSelectedCountry('JO');
-    } else {
-      setSelectedCountry('SA');
-    }
-  }, []);
-
-  const handleCountryChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    const country = e.target.value;
-    setSelectedCountry(country);
-    setSelectedReceiverAccountId('');
-    setName('');
-    if (country === 'EG') {
-      setCurrency('EGP');
-    } else if (country === 'AE') {
-      setCurrency('AED');
-    } else if (country === 'QA') {
-      setCurrency('QAR');
-    } else if (country === 'KW') {
-      setCurrency('KWD');
-    } else if (country === 'OM') {
-      setCurrency('OMR');
-    } else if (country === 'BH') {
-      setCurrency('BHD');
-    } else if (country === 'JO') {
-      setCurrency('JOD');
-    } else {
-      setCurrency('SAR');
-    }
-  }, []);
-
-  // Delete handler callback
-  const handleDelete = useCallback(async (id: number) => {
-    const confirm = await showAlert.confirm(
-      'هل أنت متأكد؟',
-      'سيتم حذف وسيلة الدفع هذه نهائياً ولن تتمكن من استخدامها في تحصيلات الدورات.'
-    );
-    if (!confirm.isConfirmed) return;
-
-    try {
-      await deleteUserPaymentInfo(id);
-      setSavedMethods(prev => prev.filter(m => m.id !== id));
-      showAlert.success('تم الحذف', 'تم حذف وسيلة الدفع بنجاح');
-      if (editingId === id) {
-        resetForm();
-      }
-    } catch (error: any) {
-      showAlert.error('فشل الحذف', error?.message || 'تعذر حذف وسيلة الدفع حالياً');
-    }
-  }, [editingId, resetForm]);
-
-  // Handle preset selection change
-  const handleReceiverAccountChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    setSelectedReceiverAccountId(val);
-    if (val) {
-      const selected = activeReceiverAccounts.find(acc => acc.id.toString() === val);
-      if (selected) {
-        setName(selected.name);
-      }
-    }
-  }, [activeReceiverAccounts]);
-
-  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
-  }, []);
-
-  const handleAccountValueChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setAccountValue(e.target.value);
-  }, []);
-
-  const handleCurrencyChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    setCurrency(e.target.value);
-  }, []);
-
-  const getSortedCurrencies = useCallback(() => {
-    const defaultCurrencies = [
-      { value: 'SAR', label: 'ريال سعودي (SAR)' },
-      { value: 'EGP', label: 'جنيه مصري (EGP)' },
-      { value: 'AED', label: 'درهم إماراتي (AED)' },
-      { value: 'QAR', label: 'ريال قطري (QAR)' },
-      { value: 'KWD', label: 'دينار كويتي (KWD)' },
-      { value: 'OMR', label: 'ريال عماني (OMR)' },
-      { value: 'BHD', label: 'دينار بحريني (BHD)' },
-      { value: 'JOD', label: 'دينار أردني (JOD)' },
-      { value: 'USD', label: 'دولار أمريكي (USD)' },
-    ];
-    
-    let countryCurrency = 'SAR';
-    if (selectedCountry === 'EG') {
-      countryCurrency = 'EGP';
-    } else if (selectedCountry === 'AE') {
-      countryCurrency = 'AED';
-    } else if (selectedCountry === 'QA') {
-      countryCurrency = 'QAR';
-    } else if (selectedCountry === 'KW') {
-      countryCurrency = 'KWD';
-    } else if (selectedCountry === 'OM') {
-      countryCurrency = 'OMR';
-    } else if (selectedCountry === 'BH') {
-      countryCurrency = 'BHD';
-    } else if (selectedCountry === 'JO') {
-      countryCurrency = 'JOD';
-    }
-    
-    return [...defaultCurrencies].sort((a, b) => {
-      if (a.value === countryCurrency) return -1;
-      if (b.value === countryCurrency) return 1;
-      return 0;
-    });
-  }, [selectedCountry]);
-
-  if (fetching) {
-    return (
-      <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-16 flex flex-col items-center justify-center gap-4">
-        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-        <span className="text-gray-500 font-bold text-sm">جاري تحميل إعدادات الدفع...</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-8" dir="rtl">
-      {/* 1. Add/Edit Payment Method Form Card */}
-      <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-black text-gray-900">
-              {editingId ? 'تعديل وسيلة الدفع' : 'إضافة وسيلة دفع جديدة'}
-            </h2>
-            <p className="text-gray-500 text-xs mt-1">
-              {editingId ? 'قم بتحديث بيانات وسيلة الدفع الحالية وحفظ التعديلات' : 'قم بإدخال بيانات وسيلة دفع جديدة لتفعيلها بالدورات'}
-            </p>
-          </div>
-          {editingId && (
-            <button
-              onClick={resetForm}
-              className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-black rounded-xl transition-all"
+          {/* Country */}
+          <div className="space-y-2">
+            <label className="block text-xs font-black text-gray-700">
+              الدولة <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={templateCountry}
+              onChange={onCountryChange}
+              className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
             >
-              <X size={14} />
-              <span>إلغاء التعديل</span>
-            </button>
-          )}
-        </div>
+              {COUNTRY_OPTIONS.map(({ value, label }) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+          </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            
-            {/* Country Selection */}
+          {/* Preset autofill (add mode only) */}
+          {!editingTemplateId && (
             <div className="space-y-2">
-              <label className="block text-xs font-black text-gray-700">الدولة <span className="text-red-500">*</span></label>
+              <label className="block text-xs font-black text-gray-700">تعبئة تلقائية من القوالب</label>
               <select
-                value={selectedCountry}
-                onChange={handleCountryChange}
+                value={selectedPresetId}
+                onChange={onPresetChange}
                 className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
               >
-                <option value="SA">السعودية (Saudi Arabia)</option>
-                <option value="EG">مصر (Egypt)</option>
-                <option value="AE">الإمارات (UAE)</option>
-                <option value="QA">قطر (Qatar)</option>
-                <option value="KW">الكويت (Kuwait)</option>
-                <option value="OM">عمان (Oman)</option>
-                <option value="BH">البحرين (Bahrain)</option>
-                <option value="JO">الأردن (Jordan)</option>
+                <option value="">-- اختر وسيلة لملء الاسم --</option>
+                {receiverTemplates
+                  .filter(acc => acc.country_code === templateCountry)
+                  .map(acc => (
+                    <option key={acc.id} value={acc.id}>{acc.name}</option>
+                  ))}
               </select>
             </div>
+          )}
 
-            {/* Presets from Receiver Accounts */}
-            {!editingId && (
+          {/* Name */}
+          <div className={`space-y-2 ${editingTemplateId ? 'lg:col-span-2' : ''}`}>
+            <label className="block text-xs font-black text-gray-700">
+              اسم وسيلة الدفع <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={templateName}
+              onChange={onNameChange}
+              placeholder="مثال: Vodafone Cash، InstaPay"
+              className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
+            />
+          </div>
+
+          {/* Logo */}
+          <div className="space-y-2">
+            <label className="block text-xs font-black text-gray-700">شعار وسيلة الدفع (اختياري)</label>
+            <div className="flex items-center gap-2">
+              <input
+                ref={logoFileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={onLogoChange}
+                className="flex-1 p-2 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-xs transition-all text-gray-900 cursor-pointer file:border-0 file:bg-blue-50 file:text-blue-700 file:rounded-xl file:px-3 file:py-2 file:font-black file:text-[11px] file:ml-3 file:cursor-pointer hover:file:bg-blue-100"
+              />
+              {templateLogoFile && (
+                <button
+                  type="button"
+                  onClick={onClearLogo}
+                  title="إلغاء الصورة"
+                  className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-600 border border-red-100 transition-all"
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Footer */}
+        <div className="pt-4 border-t border-gray-100 flex justify-end">
+          <button
+            type="submit"
+            disabled={loadingTemplate}
+            className="bg-blue-600 text-white px-8 py-3.5 rounded-2xl font-black hover:bg-blue-700 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/10 active:scale-[0.98]"
+          >
+            {loadingTemplate ? <Loader2 className="animate-spin" size={18} /> : editingTemplateId ? <Save size={18} /> : <Plus size={18} />}
+            <span>{editingTemplateId ? 'حفظ قالب وسيلة الدفع' : 'إضافة وسيلة دفع'}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// ─── Section 2: Active Account Form Props ─────────────────────────────────────
+
+export interface ActiveAccountFormProps {
+  // State
+  editingAccountId: number | null;
+  activeAccounts: UserPaymentInfo[];
+  selectedTemplateId: string;
+  accountValue: string;
+  accountCurrency: string;
+  accountFilterCountry: string;
+  loadingAccount: boolean;
+  receiverTemplates: ReceiverAccount[];
+  // Handlers
+  onSubmit: (e: React.FormEvent) => void;
+  onFilterCountryChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  onTemplateChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  onAccountValueChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onCancelEdit: () => void;
+  onEditAccount: (method: UserPaymentInfo) => void;
+  onDeleteAccount: (id: number) => void;
+}
+
+export function ActiveAccountForm({
+  editingAccountId,
+  activeAccounts,
+  selectedTemplateId,
+  accountValue,
+  accountCurrency,
+  accountFilterCountry,
+  loadingAccount,
+  receiverTemplates,
+  onSubmit,
+  onFilterCountryChange,
+  onTemplateChange,
+  onAccountValueChange,
+  onCancelEdit,
+  onEditAccount,
+  onDeleteAccount,
+}: ActiveAccountFormProps) {
+  const atLimit = !editingAccountId && activeAccounts.length >= MAX_ACTIVE_ACCOUNTS;
+
+  const badgeClass = activeAccounts.length >= MAX_ACTIVE_ACCOUNTS
+    ? 'bg-amber-100 text-amber-800 border-amber-200'
+    : activeAccounts.length > 0
+      ? 'bg-blue-50 text-blue-700 border-blue-200'
+      : 'bg-gray-100 text-gray-500 border-gray-200';
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
+
+        {/* Header */}
+        <div className="p-5 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+          <h3 className="text-sm font-black text-gray-800">
+            {editingAccountId ? 'تعديل بيانات الحساب المفعل' : 'تنشيط وتفعيل حساب دفع جديد'}
+          </h3>
+          <div className="flex items-center gap-3">
+            <span className={`text-[11px] px-3 py-1 rounded-full font-black border transition-all ${badgeClass}`}>
+              {activeAccounts.length} / {MAX_ACTIVE_ACCOUNTS} وسائل مفعلة
+            </span>
+            {editingAccountId && (
+              <button
+                type="button"
+                onClick={onCancelEdit}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-black rounded-lg transition-all"
+              >
+                <X size={12} />
+                <span>إلغاء التعديل</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Body: limit reached banner OR form */}
+        {atLimit ? (
+          <div className="p-8 flex flex-col items-center justify-center gap-3 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center">
+              <AlertCircle size={28} className="text-amber-500" />
+            </div>
+            <div>
+              <p className="font-black text-gray-800 text-sm">تم الوصول إلى الحد الأقصى</p>
+              <p className="text-xs text-gray-400 font-bold mt-1">
+                لقد فعّلت {MAX_ACTIVE_ACCOUNTS} وسائل دفع. احذف إحداها لإضافة وسيلة جديدة.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={onSubmit} className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+
+              {/* Country filter */}
               <div className="space-y-2">
-                <label className="block text-xs font-black text-gray-700">تعبئة تلقائية من القوالب</label>
+                <label className="block text-xs font-black text-gray-700">تصفية حسب الدولة</label>
                 <select
-                  value={selectedReceiverAccountId}
-                  onChange={handleReceiverAccountChange}
+                  value={accountFilterCountry}
+                  onChange={onFilterCountryChange}
                   className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
                 >
-                  <option value="">-- اختر وسيلة لملء الاسم --</option>
-                  {activeReceiverAccounts
-                    .filter(acc => acc.country_code === selectedCountry)
-                    .map(acc => (
-                      <option key={acc.id} value={acc.id}>
-                        {acc.name}
+                  <option value="">-- كل الدول --</option>
+                  {COUNTRY_OPTIONS.map(({ value, label }) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Template picker */}
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-gray-700">
+                  وسيلة الدفع (اختر من القوالب) <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedTemplateId}
+                  onChange={onTemplateChange}
+                  className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
+                >
+                  <option value="">-- اختر وسيلة تفعيل --</option>
+                  {receiverTemplates
+                    .filter(t => !accountFilterCountry || t.country_code === accountFilterCountry)
+                    .map(t => (
+                      <option key={t.id} value={t.id}>
+                        {t.name} ({t.country_code || 'SA'})
                       </option>
                     ))}
                 </select>
               </div>
-            )}
 
-            {/* Custom/Preset Name */}
-            <div className={`space-y-2 ${editingId ? 'lg:col-span-2' : ''}`}>
-              <label className="block text-xs font-black text-gray-700">اسم وسيلة الدفع <span className="text-red-500">*</span></label>
-              <input
-                type="text"
-                value={name}
-                onChange={handleNameChange}
-                placeholder="مثال: البنك الأهلي، فودافون كاش"
-                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
-              />
+              {/* Account number */}
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-gray-700">
+                  رقم الحساب أو رقم الهاتف المربوط <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={accountValue}
+                  onChange={onAccountValueChange}
+                  placeholder="أدخل رقم الحساب أو الرقم الهاتفي للتحويل"
+                  className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900 text-left"
+                />
+              </div>
+
+              {/* Currency (read-only) */}
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-gray-700">العملة المقبولة</label>
+                <select
+                  value={accountCurrency}
+                  disabled
+                  className="w-full p-4 bg-gray-200 border border-gray-200 rounded-2xl outline-none font-bold text-sm text-gray-400 cursor-not-allowed"
+                >
+                  {CURRENCY_OPTIONS.map(({ value, label }) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </div>
+
             </div>
 
-            {/* Logo Upload */}
-            <div className="space-y-2">
-              <label className="block text-xs font-black text-gray-700">شعار الوسيلة (اختياري)</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
-                className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
-              />
-            </div>
-
-            {/* Account Value / Details */}
-            <div className="space-y-2">
-              <label className="block text-xs font-black text-gray-700">رقم الحساب / رقم الهاتف <span className="text-red-500">*</span></label>
-              <input
-                type="text"
-                value={accountValue}
-                onChange={handleAccountValueChange}
-                placeholder="أدخل رقم الحساب أو الرقم الهاتفي"
-                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900 text-left"
-              />
-            </div>
-
-            {/* Currency selection */}
-            <div className="space-y-2">
-              <label className="block text-xs font-black text-gray-700">العملة المقبولة</label>
-              <select
-                value={currency}
-                onChange={handleCurrencyChange}
-                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
+            {/* Footer */}
+            <div className="pt-4 border-t border-gray-100 flex justify-end">
+              <button
+                type="submit"
+                disabled={loadingAccount}
+                className="bg-blue-600 text-white px-8 py-3.5 rounded-2xl font-black hover:bg-blue-700 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/10 active:scale-[0.98]"
               >
-                {getSortedCurrencies().map(cur => (
-                  <option key={cur.value} value={cur.value}>
-                    {cur.label}
-                  </option>
-                ))}
-              </select>
+                {loadingAccount ? <Loader2 className="animate-spin" size={18} /> : editingAccountId ? <Save size={18} /> : <CheckCircle2 size={18} />}
+                <span>{editingAccountId ? 'حفظ تعديلات الحساب' : 'تفعيل وسيلة التحصيل'}</span>
+              </button>
             </div>
-
-          </div>
-
-          <div className="pt-4 border-t border-gray-100 flex justify-end">
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-blue-600 text-white px-8 py-3.5 rounded-2xl font-black hover:bg-blue-700 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/10 active:scale-[0.98]"
-            >
-              {loading ? <Loader2 className="animate-spin" size={18} /> : editingId ? <Save size={18} /> : <Plus size={18} />}
-              <span>{editingId ? 'حفظ التعديلات' : 'إضافة وسيلة دفع'}</span>
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* 2. Saved Methods List Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-black text-gray-900">وسائل الدفع المفعلة بالأكاديمية</h3>
-            <p className="text-gray-400 text-xs font-bold">قائمة الحسابات التي يمكن لطلابك التحويل إليها لشراء دوراتك</p>
-          </div>
-          <button
-            onClick={loadData}
-            className="p-2 hover:bg-gray-100 rounded-xl transition-all text-gray-400 hover:text-gray-900 flex items-center gap-1.5 text-xs font-bold border border-gray-200 bg-white"
-          >
-            <RefreshCw size={14} />
-            تحديث
-          </button>
-        </div>
-
-        {savedMethods.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {savedMethods.map((method) => (
-              <SavedMethodCard
-                key={method.id}
-                method={method}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="py-16 flex flex-col items-center justify-center text-gray-400 bg-gray-50/50 rounded-[2rem] border-2 border-dashed border-gray-100">
-            <AlertCircle size={48} className="mb-3 opacity-20 text-blue-600" />
-            <h4 className="font-black text-gray-900 mb-1">لا توجد وسائل دفع حتى الآن</h4>
-            <p className="text-xs font-bold max-w-xs text-center leading-relaxed">
-              قم بإضافة أول حساب بنكي أو محفظة جوال لتتمكن من بيع دوراتك واستقبال المدفوعات من الطلاب.
-            </p>
-          </div>
+          </form>
         )}
       </div>
+
+      {/* Active accounts grid */}
+      {activeAccounts.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {activeAccounts.map(method => (
+            <ActiveAccountCard
+              key={method.id}
+              method={method}
+              onEdit={onEditAccount}
+              onDelete={onDeleteAccount}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="py-16 flex flex-col items-center justify-center text-gray-400 bg-gray-50/50 rounded-[2rem] border-2 border-dashed border-gray-100">
+          <AlertCircle size={48} className="mb-3 opacity-20 text-blue-600" />
+          <h4 className="font-black text-gray-900 mb-1">لا توجد حسابات مفعلة حتى الآن</h4>
+          <p className="text-xs font-bold max-w-xs text-center leading-relaxed">
+            اختر وسيلة دفع من القوالب أعلاه، وأدخل بيانات التحويل الخاصة بك لتظهر لطلابك عند التسجيل بالدورات.
+          </p>
+        </div>
+      )}
     </div>
   );
-};
+}

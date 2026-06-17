@@ -89,6 +89,151 @@ export const MetricsCardsSchema = z.object({
   cardBg: z.string().default('#ffffff'),
 });
 
+export const HeroSectionSchema = z.object({
+  title: z.string().default('Welcome'),
+  subtitle: z.string().optional(),
+  background_color: z.string().default('#ffffff'),
+  text_color: z.string().default('#1f2937'),
+  font_size: z.union([z.string(), z.number()]).default(48),
+  font_weight: z.number().default(700),
+  padding_top: z.number().default(60),
+  padding_bottom: z.number().default(60),
+  border_radius: z.number().default(12),
+  button_color: z.string().default('#2563eb'),
+  show_button: z.boolean().default(true),
+  button_text: z.string().default('Get Started'),
+  button_link: z.string().default('#'),
+  align: z.enum(['right', 'center', 'left']).default('center'),
+  slider_speed: z.number().default(4),
+  show_arrows: z.boolean().default(true),
+  items: z.array(z.object({
+    order: z.number(),
+    props: z.object({
+      title: z.string(),
+      subtitle: z.string().optional(),
+      button_text: z.string().optional(),
+      button_link: z.string().optional(),
+      bg_image: z.string().optional(),
+      background_color: z.string().default('#1e40af'),
+      button_color: z.string().default('#ffffff'),
+      align: z.enum(['right', 'center', 'left']).default('right')
+    })
+  })).default([])
+});
+
+export const FeaturesSectionSchema = z.object({
+  title: z.string().default('Our Features'),
+  subtitle: z.string().optional(),
+  background_color: z.string().default('#f8fafc'),
+  text_color: z.string().default('#1f2937'),
+  padding_top: z.number().default(60),
+  padding_bottom: z.number().default(60),
+  grid_cols: z.number().default(3),
+  items: z.array(z.object({
+    order: z.number(),
+    props: z.object({
+      title: z.string(),
+      description: z.string().optional(),
+      icon: z.string().default('Star'),
+      icon_color: z.string().default('#2563eb'),
+    })
+  })).default([]),
+});
+
+export const FaqSectionSchema = z.object({
+  title: z.string().default('Frequently Asked Questions'),
+  subtitle: z.string().optional(),
+  background_color: z.string().default('#ffffff'),
+  text_color: z.string().default('#1f2937'),
+  padding_top: z.number().default(60),
+  padding_bottom: z.number().default(60),
+  items: z.array(z.object({
+    order: z.number(),
+    props: z.object({
+      question: z.string(),
+      answer: z.string(),
+    })
+  })).default([]),
+});
+
+export const TestimonialsSectionSchema = z.object({
+  title: z.string().default('Testimonials'),
+  subtitle: z.string().optional(),
+  background_color: z.string().default('#f8fafc'),
+  text_color: z.string().default('#1f2937'),
+  padding_top: z.number().default(60),
+  padding_bottom: z.number().default(60),
+  items: z.array(z.object({
+    order: z.number(),
+    props: z.object({
+      quote: z.string(),
+      author: z.string(),
+      role: z.string().optional(),
+      rating: z.number().default(5),
+      avatar: z.string().optional(),
+    })
+  })).default([]),
+});
+
+export const GallerySectionSchema = z.object({
+  title: z.string().default('Gallery'),
+  subtitle: z.string().optional(),
+  background_color: z.string().default('#ffffff'),
+  text_color: z.string().default('#1f2937'),
+  padding_top: z.number().default(60),
+  padding_bottom: z.number().default(60),
+  grid_cols: z.number().default(4),
+  items: z.array(z.object({
+    order: z.number(),
+    props: z.object({
+      image_url: z.string(),
+      caption: z.string().optional(),
+    })
+  })).default([]),
+});
+
+export const PricingSectionSchema = z.object({
+  title: z.string().default('Pricing Plans'),
+  subtitle: z.string().optional(),
+  background_color: z.string().default('#ffffff'),
+  text_color: z.string().default('#1f2937'),
+  padding_top: z.number().default(60),
+  padding_bottom: z.number().default(60),
+  items: z.array(z.object({
+    order: z.number(),
+    props: z.object({
+      plan_name: z.string(),
+      price: z.string(),
+      period: z.string().default('month'),
+      button_text: z.string().default('Choose Plan'),
+      button_link: z.string().default('#'),
+      features_list: z.string().optional(),
+      is_popular: z.boolean().default(false),
+    })
+  })).default([]),
+});
+
+export const CategoriesSectionSchema = z.object({
+  title: z.string().default('تصفح التصنيفات'),
+  subtitle: z.string().optional(),
+  background_color: z.string().default('#f8fafc'),
+  text_color: z.string().default('#1f2937'),
+  padding_top: z.number().default(60),
+  padding_bottom: z.number().default(60),
+  grid_cols: z.number().default(4),
+  card_shape: z.string().default('classic'),
+  items: z.array(z.object({
+    order: z.number(),
+    props: z.object({
+      name: z.string(),
+      icon: z.string().optional(),
+      image_url: z.string().optional(),
+      count: z.string().optional(),
+      description: z.string().optional(),
+    })
+  })).default([]),
+});
+
 // Main map linking node type to its corresponding schema validator
 export const componentSchemas: Record<string, z.ZodTypeAny> = {
   'hero': HeroBannerSchema,
@@ -101,6 +246,14 @@ export const componentSchemas: Record<string, z.ZodTypeAny> = {
   'navbar': NavbarBlockSchema,
   'tabs': TabsBlockSchema,
   'metrics': MetricsCardsSchema,
+  // Dynamic backend-linked sections
+  'hero_section': HeroSectionSchema,
+  'features_section': FeaturesSectionSchema,
+  'faq_section': FaqSectionSchema,
+  'testimonials_section': TestimonialsSectionSchema,
+  'gallery_section': GallerySectionSchema,
+  'pricing_section': PricingSectionSchema,
+  'categories_section': CategoriesSectionSchema,
 };
 
 export function validateNodeProps(type: string, props: Record<string, any>) {

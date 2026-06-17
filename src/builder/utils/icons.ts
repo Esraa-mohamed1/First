@@ -11,6 +11,11 @@ export function getIconComponent(iconName: string): React.ComponentType<any> {
 }
 
 export const AVAILABLE_ICONS = [
+  'Folder',
+  'Code',
+  'Palette',
+  'Briefcase',
+  'Cpu',
   'Sparkles',
   'TrendingUp',
   'Users',

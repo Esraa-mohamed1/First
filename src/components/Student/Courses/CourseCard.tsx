@@ -29,10 +29,15 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
       {/* Image Section */}
       <div className="relative h-48 w-full overflow-hidden bg-gray-50">
         {/* Category Badge */}
-        <div className="absolute top-4 left-4 z-20">
+        <div className="absolute top-4 left-4 z-20 flex gap-2">
           <span className="bg-blue-50 text-blue-600 text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-lg border border-blue-100/50">
             {course.category}
           </span>
+          {(course.subscription_status === 'pending' || course.subscription_status === 'penidng') && (
+            <span className="text-white text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-lg shadow-sm animate-pulse" style={{ backgroundColor: '#f6c05cff' }}>
+              قيد الانتظار
+            </span>
+          )}
         </div>
 
         {/* Instructor Badge */}
@@ -145,13 +150,34 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
             )
           ) : (
             <div className="flex flex-col gap-2">
-
-              <Link
-                href={`/user/courses/${course.slug}`}
-                className="w-full flex items-center justify-center gap-2 bg-[#FFC94D] text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-lg shadow-blue-500/20"
-              >
-                اشترك الآن
-              </Link>
+              {course.subscription_status === 'pending' || course.subscription_status === 'penidng' ? (
+                <div className="flex gap-2 w-full">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      alert('طلب الاشتراك الخاص بك قيد المراجعة حالياً.');
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 text-white font-bold py-3 rounded-xl shadow-lg cursor-pointer text-sm"
+                    style={{ backgroundColor: '#f6c05cff', boxShadow: '0 10px 15px -3px rgba(139, 92, 246, 0.3)' }}
+                  >
+                    قيد الانتظار
+                  </button>
+                  <Link
+                    href={`/user/courses/${course.slug}`}
+                    className="px-4 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold py-3 rounded-xl transition-all duration-300 border border-gray-100"
+                    title="عرض التفاصيل"
+                  >
+                    <Eye size={16} />
+                  </Link>
+                </div>
+              ) : (
+                <Link
+                  href={`/user/courses/${course.slug}`}
+                  className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-lg shadow-blue-500/20"
+                >
+                  اشترك الآن
+                </Link>
+              )}
             </div>
           )}
         </div>

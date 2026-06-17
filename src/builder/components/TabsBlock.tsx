@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { hasSectionBackground } from '../utils/typography';
+
 
 interface TabItem {
   id: string;
@@ -11,16 +13,23 @@ interface TabsBlockProps {
   alignment?: 'right' | 'center' | 'left';
 }
 
-export default function TabsBlock({
-  tabs = [
-    { id: '1', label: 'الدورات المتاحة' },
-    { id: '2', label: 'مسارات التعلم التفاعلية' },
-    { id: '3', label: 'الشهادات المعتمدة' }
-  ],
-  activeTabColor = '#2563eb',
-  alignment = 'right',
-}: TabsBlockProps) {
-  const [activeId, setActiveId] = useState(tabs[0]?.id || '1');
+export const MOCK_TABS = [
+  { id: '1', label: 'الدورات المتاحة' },
+  { id: '2', label: 'مسارات التعلم التفاعلية' },
+  { id: '3', label: 'الشهادات المعتمدة' }
+];
+
+export default function TabsBlock(props: TabsBlockProps) {
+  const {
+    tabs = MOCK_TABS,
+    activeTabColor = '#2563eb',
+    alignment = 'right',
+  } = props;
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const isTransparentBg = hasSectionBackground(props);
+
+  const currentActiveId = activeId && tabs.some(t => t.id === activeId) ? activeId : (tabs[0]?.id || null);
 
   const alignClass = 
     alignment === 'left' ? 'justify-start' : 
@@ -32,7 +41,7 @@ export default function TabsBlock({
       {/* Tab bar header selection */}
       <div className={`flex border-b border-slate-100 pb-px gap-1 flex-wrap ${alignClass}`}>
         {tabs.map((tab) => {
-          const isActive = tab.id === activeId;
+          const isActive = tab.id === currentActiveId;
           return (
             <button
               key={tab.id}
@@ -50,11 +59,12 @@ export default function TabsBlock({
       </div>
 
       {/* Tab simulated contents preview */}
-      <div className="py-6 px-4 bg-slate-50/40 border border-t-0 border-slate-100 rounded-b-2xl min-h-[100px] flex items-center justify-center text-center">
-        <p className="text-xs font-semibold text-slate-400 italic">
-          محتوى تفاعلي لعلامة التبويب: "{tabs.find(t => t.id === activeId)?.label}"
+      <div className={`py-6 px-4 ${isTransparentBg ? 'bg-white/30 border-white/10' : 'bg-slate-50/40 border-slate-100'} border border-t-0 rounded-b-2xl min-h-[100px] flex items-center justify-center text-center`}>
+        <p className={`text-xs font-semibold ${isTransparentBg ? 'text-slate-500' : 'text-slate-400'} italic`}>
+          محتوى تفاعلي لعلامة التبويب: "{tabs.find(t => t.id === currentActiveId)?.label || 'لا يوجد تبويب محدد'}"
         </p>
       </div>
+
 
     </div>
   );

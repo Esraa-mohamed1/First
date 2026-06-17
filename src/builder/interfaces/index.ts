@@ -27,7 +27,7 @@ export interface TemplateSchema {
 export interface ComponentFieldConfig {
   name: string;
   label: string;
-  type: 'text' | 'textarea' | 'color' | 'select' | 'number' | 'boolean' | 'spacing' | 'typography' | 'icon';
+  type: 'text' | 'textarea' | 'color' | 'select' | 'number' | 'boolean' | 'spacing' | 'typography' | 'icon' | 'image';
   defaultValue: any;
   options?: { label: string; value: string }[]; // For select dropdowns
   responsive?: boolean; // Can be defined per device mode
@@ -40,4 +40,26 @@ export interface ComponentRegistryEntry {
   icon: string;
   fields: ComponentFieldConfig[];
   defaultProps: Record<string, any>;
+  itemFields?: ComponentFieldConfig[]; // Dynamic item fields configuration
+  itemLabel?: string;                  // Label for list items, e.g. "ميزة", "سؤال"
 }
+
+export interface SectionItem {
+  order: number;
+  props: Record<string, any>;
+}
+
+export interface PageSection {
+  id?: number | string;
+  pages_id: number | string;
+  type: string;
+  order: number;
+  props: Record<string, any>;
+  items?: SectionItem[];
+}
+
+export type SectionProps = Record<string, any>;
+export type StyleProps = Record<string, any>;
+export type ContentProps = Record<string, any>;
+
+export * from './pages';

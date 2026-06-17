@@ -1,7 +1,8 @@
 import React from 'react';
 import { Clock, Users, BookOpen } from 'lucide-react';
 import { useBuilderStore } from '../store/builderStore';
-import { getTypographyStyle } from '../utils/typography';
+import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
+
 
 interface CourseCardsProps {
   title?: string;
@@ -9,10 +10,11 @@ interface CourseCardsProps {
   showPrice?: boolean;
   showStudentsCount?: boolean;
   buttonBg?: string;
+  courses?: any[];
   [key: string]: any;
 }
 
-const MOCK_COURSES = [
+export const MOCK_COURSES = [
   { id: '1', title: 'دورة أدوبي فوتوشوب للمبتدئين', instructor: 'م. محمد المفتي', price: '250 ريال', students: '109 طالب', duration: '6 ساعات', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM' },
   { id: '2', title: 'ميكروسوفت إكسيل من الصفر للاحتراف', instructor: 'أ. صهيب حسن', price: '190 ريال', students: '243 طالب', duration: '12 ساعة', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDapuZMqMbglOubBSplHYKHbUUEPOVBNZfPBYfEdrnbwVoJA6p_fXveTFrcYVKfSEKsCZOzcikKHpuWVQRu4n8xxKYXhgM_nanjOQ0cdv-kXhVbMcOq5kzHgm5DH5WlDzYGmDh0ROSe4C_qATsLJhy-iZA4oKXn9HQImP6_0u46v5kDYayBS8_wDmyGvixd7EoZGbUePlgROCvJVAy1-l6nThq3n3XvQJDoOFPy76n8F28rsKmL09nMbF_TcgXK5YffQFE2uS-uFwI' },
   { id: '3', title: 'أساسيات صناعة المحتوى والأفلام', instructor: 'م. عمرو البرلسي', price: '400 ريال', students: '87 طالب', duration: '8 ساعات', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDapuZMqMbglOubBSplHYKHbUUEPOVBNZfPBYfEdrnbwVoJA6p_fXveTFrcYVKfSEKsCZOzcikKHpuWVQRu4n8xxKYXhgM_nanjOQ0cdv-kXhVbMcOq5kzHgm5DH5WlDzYGmDh0ROSe4C_qATsLJhy-iZA4oKXn9HQImP6_0u46v5kDYayBS8_wDmyGvixd7EoZGbUePlgROCvJVAy1-l6nThq3n3XvQJDoOFPy76n8F28rsKmL09nMbF_TcgXK5YffQFE2uS-uFwI' },
@@ -26,6 +28,7 @@ export default function CourseCards(props: CourseCardsProps) {
     showPrice = true,
     showStudentsCount = true,
     buttonBg = '#2563eb',
+    courses = MOCK_COURSES,
   } = props;
 
   // Read deviceMode with a fail-safe fallback
@@ -49,7 +52,7 @@ export default function CourseCards(props: CourseCardsProps) {
   const gridClass = getGridClass();
 
   // Limit course display for grid mapping
-  const coursesToRender = gridCols === '4' ? MOCK_COURSES : MOCK_COURSES.slice(0, 3);
+  const coursesToRender = courses;
 
   const titleTypography = getTypographyStyle(props, 'title', {
     font: 'IBM Plex Sans Arabic',
@@ -57,6 +60,8 @@ export default function CourseCards(props: CourseCardsProps) {
     weight: 'font-black',
     color: '#1f2937'
   });
+
+  const isTransparentBg = hasSectionBackground(props);
 
   return (
     <div className="space-y-6 text-right" dir="rtl">
@@ -79,8 +84,9 @@ export default function CourseCards(props: CourseCardsProps) {
         {coursesToRender.map((course) => (
           <div 
             key={course.id} 
-            className="bg-white rounded-3xl overflow-hidden shadow-[0_12px_30px_rgba(25,28,29,0.02)] border border-slate-100/80 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group"
+            className={`${isTransparentBg ? 'bg-white/70 border-white/40 shadow-lg shadow-slate-900/5 backdrop-blur-md' : 'bg-white border-slate-100/80 shadow-[0_12px_30px_rgba(25,28,29,0.02)]'} rounded-3xl overflow-hidden hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group`}
           >
+
             {/* Image Header with styled avatar overlay */}
             <div className="h-40 relative overflow-hidden bg-[#0a192f] flex items-center justify-center p-4">
               <img 
