@@ -213,6 +213,25 @@ export const PricingSectionSchema = z.object({
   })).default([]),
 });
 
+export const CategoriesSectionSchema = z.object({
+  title: z.string().default('تصفح التصنيفات'),
+  subtitle: z.string().optional(),
+  background_color: z.string().default('#f8fafc'),
+  text_color: z.string().default('#1f2937'),
+  padding_top: z.number().default(60),
+  padding_bottom: z.number().default(60),
+  grid_cols: z.number().default(4),
+  items: z.array(z.object({
+    order: z.number(),
+    props: z.object({
+      name: z.string(),
+      image_url: z.string().optional(),
+      count: z.string().optional(),
+      description: z.string().optional(),
+    })
+  })).default([]),
+});
+
 // Main map linking node type to its corresponding schema validator
 export const componentSchemas: Record<string, z.ZodTypeAny> = {
   'hero': HeroBannerSchema,
@@ -232,6 +251,7 @@ export const componentSchemas: Record<string, z.ZodTypeAny> = {
   'testimonials_section': TestimonialsSectionSchema,
   'gallery_section': GallerySectionSchema,
   'pricing_section': PricingSectionSchema,
+  'categories_section': CategoriesSectionSchema,
 };
 
 export function validateNodeProps(type: string, props: Record<string, any>) {

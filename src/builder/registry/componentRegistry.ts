@@ -2,6 +2,7 @@ import React from 'react';
 import * as LucideIcons from 'lucide-react';
 import { ComponentRegistryEntry } from '../interfaces';
 import { buildStyles, extractContentProps, extractStyleProps } from '../utils/typography';
+import { useDeviceMode } from '../context/DeviceModeContext';
 
 // Import existing blocks
 import HeroBanner from '../components/HeroBanner';
@@ -29,6 +30,11 @@ export const HeroSection = React.memo((props: any) => {
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
+  const deviceMode = useDeviceMode();
+  const isMobile = deviceMode === 'mobile';
+  const isTablet = deviceMode === 'tablet';
+  const px = isMobile ? 'px-4' : isTablet ? 'px-8' : 'px-16';
+  const py = isMobile ? 'py-10' : 'py-16';
   
   const [current, setCurrent] = React.useState(0);
   const [transitioning, setTransitioning] = React.useState(false);
@@ -56,7 +62,6 @@ export const HeroSection = React.memo((props: any) => {
   }, [next, items.length, props.slider_speed]);
 
   if (items.length > 0) {
-    // Render Carousel
     const slide = items[current] || {};
     const slideProps = slide.props || {};
     const slideAlign = slideProps.align || 'center';
@@ -72,74 +77,61 @@ export const HeroSection = React.memo((props: any) => {
 
     return React.createElement(
       'div',
-      { className: "relative overflow-hidden rounded-3xl select-none w-full", style: { minHeight: '280px' } },
+      { className: 'relative overflow-hidden w-full select-none', style: { minHeight: isMobile ? '220px' : '280px' } },
       React.createElement(
         'section',
         {
           style: { ...styles, ...slideStyle },
-          className: `relative w-full py-16 px-10 md:px-16 flex flex-col justify-center ${alignClass} ${transitioning ? 'opacity-0' : 'opacity-100'}`
+          className: `relative w-full ${py} ${px} flex flex-col justify-center ${alignClass} ${transitioning ? 'opacity-0' : 'opacity-100'}`
         },
-        slideProps.bg_image ? React.createElement('div', { className: "absolute inset-0 bg-slate-900/40" }) : null,
+        slideProps.bg_image ? React.createElement('div', { className: 'absolute inset-0 bg-slate-900/40' }) : null,
         React.createElement(
           'div',
-          { className: `relative z-10 max-w-2xl flex flex-col gap-4 ${alignClass}` },
-          slideProps.title ? React.createElement('h1', { className: "text-3xl md:text-5xl font-black mb-2 leading-tight text-white" }, slideProps.title) : null,
-          slideProps.subtitle ? React.createElement('p', { className: "text-base opacity-90 mb-4 max-w-2xl leading-relaxed text-slate-100" }, slideProps.subtitle) : null,
+          { className: `relative z-10 w-full flex flex-col gap-3 ${alignClass}` },
+          slideProps.title ? React.createElement('h1', { className: `font-black mb-2 leading-tight text-white ${isMobile ? 'text-2xl' : 'text-3xl md:text-5xl'}` }, slideProps.title) : null,
+          slideProps.subtitle ? React.createElement('p', { className: `opacity-90 mb-4 leading-relaxed text-slate-100 ${isMobile ? 'text-xs' : 'text-base'}` }, slideProps.subtitle) : null,
           slideProps.button_text
             ? React.createElement(
                 'a',
                 {
                   href: slideProps.button_link || '#',
                   style: { backgroundColor: slideProps.button_color || '#ffffff', color: '#1e40af' },
-                  className: "px-6 py-2.5 rounded-xl font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md inline-block w-fit"
+                  className: 'px-5 py-2 rounded-xl font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md inline-block w-fit'
                 },
                 slideProps.button_text
               )
             : null
         )
       ),
-      // Left and Right Navigation Arrows
       props.show_arrows !== false && items.length > 1
         ? React.createElement(
             'button',
             {
-              onClick: (e: any) => {
-                e.stopPropagation();
-                if (transitioning) return;
-                goTo((current - 1 + items.length) % items.length);
-              },
-              className: "absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-slate-950/40 hover:bg-slate-950/60 text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 pointer-events-auto"
+              onClick: (e: any) => { e.stopPropagation(); if (transitioning) return; goTo((current - 1 + items.length) % items.length); },
+              className: 'absolute right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-slate-950/40 hover:bg-slate-950/60 text-white flex items-center justify-center transition-all pointer-events-auto'
             },
-            React.createElement(LucideIcons.ChevronRight, { className: "w-5 h-5" })
+            React.createElement(LucideIcons.ChevronRight, { className: 'w-4 h-4' })
           )
         : null,
       props.show_arrows !== false && items.length > 1
         ? React.createElement(
             'button',
             {
-              onClick: (e: any) => {
-                e.stopPropagation();
-                if (transitioning) return;
-                goTo((current + 1) % items.length);
-              },
-              className: "absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-slate-950/40 hover:bg-slate-950/60 text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 pointer-events-auto"
+              onClick: (e: any) => { e.stopPropagation(); if (transitioning) return; goTo((current + 1) % items.length); },
+              className: 'absolute left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-slate-950/40 hover:bg-slate-950/60 text-white flex items-center justify-center transition-all pointer-events-auto'
             },
-            React.createElement(LucideIcons.ChevronLeft, { className: "w-5 h-5" })
+            React.createElement(LucideIcons.ChevronLeft, { className: 'w-4 h-4' })
           )
         : null,
-      // Dots navigation
       items.length > 1
         ? React.createElement(
             'div',
-            { className: "absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2" },
+            { className: 'absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-2' },
             items.map((_: any, i: number) =>
               React.createElement('button', {
                 key: i,
-                onClick: (e: any) => {
-                  e.stopPropagation();
-                  goTo(i);
-                },
-                className: `rounded-full transition-all duration-300 pointer-events-auto ${i === current ? 'bg-white w-6 h-2.5' : 'bg-white/40 hover:bg-white/70 w-2.5 h-2.5'}`
+                onClick: (e: any) => { e.stopPropagation(); goTo(i); },
+                className: `rounded-full transition-all duration-300 pointer-events-auto ${i === current ? 'bg-white w-5 h-2' : 'bg-white/40 hover:bg-white/70 w-2 h-2'}`
               })
             )
           )
@@ -147,21 +139,20 @@ export const HeroSection = React.memo((props: any) => {
     );
   }
 
-  // Single Banner Fallback (default when no items exist)
   const align = props.align || 'center';
   const alignClass = align === 'left' ? 'text-left items-start' : align === 'center' ? 'text-center items-center' : 'text-right items-end';
   return React.createElement(
     'section',
-    { style: styles, className: `py-16 px-8 rounded-3xl w-full flex flex-col justify-center ${alignClass} transition-all duration-300 shadow-sm hover:shadow-md` },
-    content.title ? React.createElement('h1', { className: 'text-4xl md:text-5xl font-black mb-4 leading-tight' }, content.title) : null,
-    content.subtitle ? React.createElement('p', { className: 'text-lg opacity-85 mb-8 max-w-2xl leading-relaxed' }, content.subtitle) : null,
+    { style: styles, className: `${py} ${px} w-full flex flex-col justify-center ${alignClass} transition-all duration-300 shadow-sm` },
+    content.title ? React.createElement('h1', { className: `font-black mb-4 leading-tight ${isMobile ? 'text-2xl' : 'text-4xl'}` }, content.title) : null,
+    content.subtitle ? React.createElement('p', { className: `opacity-85 mb-8 leading-relaxed ${isMobile ? 'text-xs max-w-full' : 'text-lg max-w-2xl'}` }, content.subtitle) : null,
     props.show_button && content.button_text
       ? React.createElement(
           'a',
           {
             href: content.button_link || '#',
             style: { backgroundColor: props.button_color || '#2563eb', color: '#ffffff' },
-            className: 'px-8 py-3.5 rounded-xl font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md inline-block'
+            className: 'px-6 py-3 rounded-xl font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md inline-block'
           },
           content.button_text
         )
@@ -174,41 +165,48 @@ export const FeaturesSection = React.memo((props: any) => {
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
+  const deviceMode = useDeviceMode();
+  const isMobile = deviceMode === 'mobile';
+  const isTablet = deviceMode === 'tablet';
+  const px = isMobile ? 'px-4' : isTablet ? 'px-6' : 'px-8';
+  const py = isMobile ? 'py-8' : 'py-16';
   const cols = props.grid_cols || 3;
-  const gridClass = cols === 1 ? 'grid-cols-1' : cols === 2 ? 'grid-cols-1 md:grid-cols-2' : cols === 3 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4';
+  // Force single column on mobile, respect cols on tablet+
+  const gridCols = isMobile ? 1 : isTablet ? Math.min(cols, 2) : cols;
+  const gridClass = gridCols === 1 ? 'grid-cols-1' : gridCols === 2 ? 'grid-cols-2' : gridCols === 3 ? 'grid-cols-3' : 'grid-cols-4';
 
   return React.createElement(
     'section',
-    { style: styles, className: 'py-16 px-8 rounded-3xl w-full transition-all duration-300' },
+    { style: styles, className: `${py} ${px} w-full transition-all duration-300` },
     React.createElement(
       'div',
-      { className: 'text-center mb-12' },
-      content.title ? React.createElement('h2', { className: 'text-3xl font-black mb-3' }, content.title) : null,
+      { className: 'text-center mb-8' },
+      content.title ? React.createElement('h2', { className: `font-black mb-3 ${isMobile ? 'text-xl' : 'text-3xl'}` }, content.title) : null,
       content.subtitle ? React.createElement('p', { className: 'text-sm opacity-75 max-w-xl mx-auto' }, content.subtitle) : null
     ),
     React.createElement(
       'div',
-      { className: `grid gap-6 ${gridClass}` },
+      { className: `grid gap-4 ${gridClass}` },
       items.map((item: any, idx: number) => {
         const itemProps = item.props || {};
         return React.createElement(
           'div',
-          { key: idx, className: 'p-6 bg-white/60 backdrop-blur-sm border border-slate-100 hover:border-slate-200 rounded-2xl flex flex-col items-start gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-md' },
+          { key: idx, className: 'p-4 bg-white/60 backdrop-blur-sm border border-slate-100 hover:border-slate-200 rounded-2xl flex flex-col items-start gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-md' },
           itemProps.icon
             ? React.createElement(
                 'div',
                 {
                   style: { backgroundColor: `${itemProps.icon_color || '#2563eb'}15`, color: itemProps.icon_color || '#2563eb' },
-                  className: 'w-10 h-10 rounded-xl flex items-center justify-center'
+                  className: 'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0'
                 },
-                React.createElement(DynamicIcon, { name: itemProps.icon, className: 'w-5 h-5' })
+                React.createElement(DynamicIcon, { name: itemProps.icon, className: 'w-4 h-4' })
               )
             : null,
           React.createElement(
             'div',
-            { className: 'space-y-1 text-right w-full' },
-            React.createElement('h3', { className: 'text-sm font-black text-slate-800' }, itemProps.title || `ميزة ${idx + 1}`),
-            itemProps.description ? React.createElement('p', { className: 'text-xs text-slate-500 font-bold leading-relaxed' }, itemProps.description) : null
+            { className: 'space-y-1 text-right w-full min-w-0' },
+            React.createElement('h3', { className: 'text-sm font-black text-slate-800 break-words' }, itemProps.title || `ميزة ${idx + 1}`),
+            itemProps.description ? React.createElement('p', { className: 'text-xs text-slate-500 font-bold leading-relaxed break-words' }, itemProps.description) : null
           )
         );
       })
@@ -222,19 +220,23 @@ export const FaqSection = React.memo((props: any) => {
   const content = extractContentProps(props);
   const items = props.items || [];
   const [openIdx, setOpenIdx] = React.useState<number | null>(null);
+  const deviceMode = useDeviceMode();
+  const isMobile = deviceMode === 'mobile';
+  const px = isMobile ? 'px-4' : 'px-8';
+  const py = isMobile ? 'py-8' : 'py-16';
 
   return React.createElement(
     'section',
-    { style: styles, className: 'py-16 px-8 rounded-3xl w-full transition-all duration-300' },
+    { style: styles, className: `${py} ${px} w-full transition-all duration-300` },
     React.createElement(
       'div',
-      { className: 'text-center mb-12' },
-      content.title ? React.createElement('h2', { className: 'text-3xl font-black mb-3' }, content.title) : null,
+      { className: 'text-center mb-8' },
+      content.title ? React.createElement('h2', { className: `font-black mb-3 ${isMobile ? 'text-xl' : 'text-3xl'}` }, content.title) : null,
       content.subtitle ? React.createElement('p', { className: 'text-sm opacity-75 max-w-xl mx-auto' }, content.subtitle) : null
     ),
     React.createElement(
       'div',
-      { className: 'max-w-3xl mx-auto space-y-3' },
+      { className: 'w-full space-y-3' },
       items.map((item: any, idx: number) => {
         const itemProps = item.props || {};
         const isOpen = openIdx === idx;
@@ -246,10 +248,10 @@ export const FaqSection = React.memo((props: any) => {
             {
               type: 'button',
               onClick: () => setOpenIdx(isOpen ? null : idx),
-              className: 'w-full p-4 flex justify-between items-center text-right hover:bg-slate-50/50 transition-colors'
+              className: 'w-full p-4 flex justify-between items-center text-right hover:bg-slate-50/50 transition-colors gap-3'
             },
-            React.createElement('span', { className: 'text-xs font-black text-slate-800' }, itemProps.question || `سؤال ${idx + 1}`),
-            React.createElement(LucideIcons.ChevronDown, { className: `w-4 h-4 text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}` })
+            React.createElement('span', { className: 'text-xs font-black text-slate-800 break-words text-right flex-1' }, itemProps.question || `سؤال ${idx + 1}`),
+            React.createElement(LucideIcons.ChevronDown, { className: `w-4 h-4 text-slate-400 flex-shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}` })
           ),
           React.createElement(
             'div',
@@ -258,7 +260,7 @@ export const FaqSection = React.memo((props: any) => {
                 isOpen ? 'max-h-[300px] border-t border-slate-100 p-4 bg-white/30' : 'max-h-0'
               }`
             },
-            React.createElement('p', { className: 'text-xs text-slate-500 font-bold leading-relaxed' }, itemProps.answer)
+            React.createElement('p', { className: 'text-xs text-slate-500 font-bold leading-relaxed break-words' }, itemProps.answer)
           )
         );
       })
@@ -271,27 +273,31 @@ export const TestimonialsSection = React.memo((props: any) => {
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
+  const deviceMode = useDeviceMode();
+  const isMobile = deviceMode === 'mobile';
+  const px = isMobile ? 'px-4' : 'px-8';
+  const py = isMobile ? 'py-8' : 'py-16';
 
   return React.createElement(
     'section',
-    { style: styles, className: 'py-16 px-8 rounded-3xl w-full transition-all duration-300' },
+    { style: styles, className: `${py} ${px} w-full transition-all duration-300` },
     React.createElement(
       'div',
-      { className: 'text-center mb-12' },
-      content.title ? React.createElement('h2', { className: 'text-3xl font-black mb-3' }, content.title) : null,
+      { className: 'text-center mb-8' },
+      content.title ? React.createElement('h2', { className: `font-black mb-3 ${isMobile ? 'text-xl' : 'text-3xl'}` }, content.title) : null,
       content.subtitle ? React.createElement('p', { className: 'text-sm opacity-75 max-w-xl mx-auto' }, content.subtitle) : null
     ),
     React.createElement(
       'div',
-      { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' },
+      { className: `grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}` },
       items.map((item: any, idx: number) => {
         const itemProps = item.props || {};
         return React.createElement(
           'div',
-          { key: idx, className: 'p-6 bg-white border border-slate-100 rounded-2xl flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300' },
+          { key: idx, className: 'p-5 bg-white border border-slate-100 rounded-2xl flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300' },
           React.createElement(
             'div',
-            { className: 'space-y-4' },
+            { className: 'space-y-3' },
             React.createElement(
               'div',
               { className: 'flex gap-1 text-amber-400' },
@@ -299,22 +305,22 @@ export const TestimonialsSection = React.memo((props: any) => {
                 React.createElement(LucideIcons.Star, { key: i, className: 'w-3.5 h-3.5 fill-current' })
               )
             ),
-            React.createElement('p', { className: 'text-xs text-slate-600 font-bold italic leading-relaxed' }, `"${itemProps.quote || 'تعليق متميز للعميل'}"`)
+            React.createElement('p', { className: 'text-xs text-slate-600 font-bold italic leading-relaxed break-words' }, `"${itemProps.quote || 'تعليق متميز للعميل'}"`)
           ),
           React.createElement(
             'div',
-            { className: 'flex items-center gap-3 mt-6 pt-4 border-t border-slate-50' },
+            { className: 'flex items-center gap-3 mt-5 pt-4 border-t border-slate-50' },
             React.createElement(
               'div',
-              { className: 'w-9 h-9 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center text-xs font-black text-slate-400' },
+              { className: 'w-9 h-9 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center text-xs font-black text-slate-400 flex-shrink-0' },
               itemProps.avatar
                 ? React.createElement('img', { src: itemProps.avatar, alt: itemProps.author, className: 'w-full h-full object-cover' })
                 : itemProps.author?.[0] || 'U'
             ),
             React.createElement(
               'div',
-              { className: 'text-right' },
-              React.createElement('h4', { className: 'text-[11px] font-black text-slate-800' }, itemProps.author || 'اسم العميل'),
+              { className: 'text-right min-w-0' },
+              React.createElement('h4', { className: 'text-[11px] font-black text-slate-800 truncate' }, itemProps.author || 'اسم العميل'),
               itemProps.role ? React.createElement('p', { className: 'text-[9px] text-slate-400 font-bold' }, itemProps.role) : null
             )
           )
@@ -329,26 +335,31 @@ export const GallerySection = React.memo((props: any) => {
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
+  const deviceMode = useDeviceMode();
+  const isMobile = deviceMode === 'mobile';
+  const px = isMobile ? 'px-3' : 'px-8';
+  const py = isMobile ? 'py-8' : 'py-16';
   const cols = props.grid_cols || 4;
-  const gridClass = cols === 1 ? 'grid-cols-1' : cols === 2 ? 'grid-cols-2' : cols === 3 ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4';
+  const gridCols = isMobile ? Math.min(cols, 2) : cols;
+  const gridClass = gridCols === 1 ? 'grid-cols-1' : gridCols === 2 ? 'grid-cols-2' : gridCols === 3 ? 'grid-cols-3' : 'grid-cols-4';
 
   return React.createElement(
     'section',
-    { style: styles, className: 'py-16 px-8 rounded-3xl w-full transition-all duration-300' },
+    { style: styles, className: `${py} ${px} w-full transition-all duration-300` },
     React.createElement(
       'div',
-      { className: 'text-center mb-12' },
-      content.title ? React.createElement('h2', { className: 'text-3xl font-black mb-3' }, content.title) : null,
+      { className: 'text-center mb-8' },
+      content.title ? React.createElement('h2', { className: `font-black mb-3 ${isMobile ? 'text-xl' : 'text-3xl'}` }, content.title) : null,
       content.subtitle ? React.createElement('p', { className: 'text-sm opacity-75 max-w-xl mx-auto' }, content.subtitle) : null
     ),
     React.createElement(
       'div',
-      { className: `grid gap-4 ${gridClass}` },
+      { className: `grid gap-3 ${gridClass}` },
       items.map((item: any, idx: number) => {
         const itemProps = item.props || {};
         return React.createElement(
           'div',
-          { key: idx, className: 'relative aspect-video rounded-2xl overflow-hidden group border border-slate-100/40 shadow-sm bg-slate-100' },
+          { key: idx, className: 'relative aspect-video rounded-xl overflow-hidden group border border-slate-100/40 shadow-sm bg-slate-100' },
           React.createElement('img', {
             src: itemProps.image_url || 'https://images.unsplash.com/photo-1498050108023-c5249f4df085',
             alt: itemProps.caption || '',
@@ -357,7 +368,7 @@ export const GallerySection = React.memo((props: any) => {
           itemProps.caption
             ? React.createElement(
                 'div',
-                { className: 'absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4' },
+                { className: 'absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3' },
                 React.createElement('p', { className: 'text-[10px] font-black text-white' }, itemProps.caption)
               )
             : null
@@ -372,19 +383,23 @@ export const PricingSection = React.memo((props: any) => {
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
+  const deviceMode = useDeviceMode();
+  const isMobile = deviceMode === 'mobile';
+  const px = isMobile ? 'px-4' : 'px-8';
+  const py = isMobile ? 'py-8' : 'py-16';
 
   return React.createElement(
     'section',
-    { style: styles, className: 'py-16 px-8 rounded-3xl w-full transition-all duration-300' },
+    { style: styles, className: `${py} ${px} w-full transition-all duration-300` },
     React.createElement(
       'div',
-      { className: 'text-center mb-12' },
-      content.title ? React.createElement('h2', { className: 'text-3xl font-black mb-3' }, content.title) : null,
+      { className: 'text-center mb-8' },
+      content.title ? React.createElement('h2', { className: `font-black mb-3 ${isMobile ? 'text-xl' : 'text-3xl'}` }, content.title) : null,
       content.subtitle ? React.createElement('p', { className: 'text-sm opacity-75 max-w-xl mx-auto' }, content.subtitle) : null
     ),
     React.createElement(
       'div',
-      { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch pt-6' },
+      { className: `grid gap-5 items-stretch pt-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}` },
       items.map((item: any, idx: number) => {
         const itemProps = item.props || {};
         const isPopular = itemProps.is_popular;
@@ -396,21 +411,21 @@ export const PricingSection = React.memo((props: any) => {
             key: idx,
             className: `flex flex-col bg-white border ${
               isPopular
-                ? 'border-2 border-yellow-400 relative transform lg:scale-105 shadow-xl z-10'
+                ? 'border-2 border-yellow-400 relative shadow-xl z-10'
                 : 'border-slate-100 shadow-sm hover:shadow-md'
-            } rounded-3xl p-6 transition-all duration-300`
+            } rounded-3xl p-5 transition-all duration-300`
           },
           isPopular
             ? React.createElement(
                 'div',
-                { className: 'absolute -top-4 left-1/2 -translate-x-1/2 bg-yellow-400 text-slate-900 px-4 py-1 rounded-full font-black text-[9px] shadow-sm uppercase' },
+                { className: 'absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-slate-900 px-3 py-0.5 rounded-full font-black text-[9px] shadow-sm uppercase' },
                 'الاكثر شعبية'
               )
             : null,
           React.createElement(
             'div',
-            { className: 'mb-6 text-right' },
-            React.createElement('h3', { className: 'text-base font-black text-slate-800' }, itemProps.plan_name || 'اسم الخطة'),
+            { className: 'mb-5 text-right' },
+            React.createElement('h3', { className: 'text-sm font-black text-slate-800' }, itemProps.plan_name || 'اسم الخطة'),
             React.createElement(
               'div',
               { className: 'flex items-baseline justify-start gap-1 mt-2 text-blue-600' },
@@ -420,13 +435,13 @@ export const PricingSection = React.memo((props: any) => {
           ),
           React.createElement(
             'ul',
-            { className: 'space-y-3 mb-8 flex-grow text-right' },
+            { className: 'space-y-2 mb-6 flex-grow text-right' },
             features.map((feature: string, fIdx: number) =>
               React.createElement(
                 'li',
-                { key: fIdx, className: 'flex items-start gap-2.5 text-xs font-bold text-slate-600' },
+                { key: fIdx, className: 'flex items-start gap-2 text-xs font-bold text-slate-600' },
                 React.createElement(LucideIcons.Check, { className: 'w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5' }),
-                React.createElement('span', null, feature)
+                React.createElement('span', { className: 'break-words' }, feature)
               )
             )
           ),
@@ -434,7 +449,7 @@ export const PricingSection = React.memo((props: any) => {
             'a',
             {
               href: itemProps.button_link || '#',
-              className: 'w-full py-3 text-center text-white font-black text-xs rounded-xl hover:brightness-110 transition-all block mt-auto',
+              className: 'w-full py-2.5 text-center text-white font-black text-xs rounded-xl hover:brightness-110 transition-all block mt-auto',
               style: { backgroundColor: isPopular ? '#f59e0b' : '#2563eb' }
             },
             itemProps.button_text || 'اشترك الآن'
@@ -446,7 +461,93 @@ export const PricingSection = React.memo((props: any) => {
 });
 PricingSection.displayName = 'PricingSection';
 
-// ─── Component Registry Mapper ───────────────────────────────────────────────
+// ─── Categories Section ───────────────────────────────────────────────────────
+
+export const CategoriesSection = React.memo((props: any) => {
+  const styles = buildStyles(props);
+  const content = extractContentProps(props);
+  const items = props.items || [];
+  const deviceMode = useDeviceMode();
+  const isMobile = deviceMode === 'mobile';
+  const isTablet = deviceMode === 'tablet';
+  const px = isMobile ? 'px-4' : isTablet ? 'px-6' : 'px-8';
+  const py = isMobile ? 'py-8' : 'py-16';
+  const cols = props.grid_cols || 4;
+  const gridCols = isMobile ? 2 : isTablet ? Math.min(cols, 3) : cols;
+  const gridClass = gridCols === 1 ? 'grid-cols-1' : gridCols === 2 ? 'grid-cols-2' : gridCols === 3 ? 'grid-cols-3' : 'grid-cols-4';
+
+  return React.createElement(
+    'section',
+    { style: styles, className: `${py} ${px} w-full transition-all duration-300` },
+    React.createElement(
+      'div',
+      { className: 'text-center mb-8' },
+      content.title ? React.createElement('h2', { className: `font-black mb-2 ${isMobile ? 'text-xl' : 'text-3xl'}` }, content.title) : null,
+      content.subtitle ? React.createElement('p', { className: 'text-sm opacity-70 max-w-xl mx-auto' }, content.subtitle) : null
+    ),
+    React.createElement(
+      'div',
+      { className: `grid gap-4 ${gridClass}` },
+      items.map((item: any, idx: number) => {
+        const p = item.props || {};
+        const hasImage = !!p.image_url;
+        return React.createElement(
+          'div',
+          {
+            key: idx,
+            className: 'group relative overflow-hidden rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer bg-white flex flex-col items-center text-center'
+          },
+          // Image area
+          React.createElement(
+            'div',
+            { className: 'w-full aspect-square overflow-hidden bg-slate-100 relative' },
+            hasImage
+              ? React.createElement('img', {
+                  src: p.image_url,
+                  alt: p.name || '',
+                  className: 'w-full h-full object-cover transition-transform duration-500 group-hover:scale-110'
+                })
+              : React.createElement(
+                  'div',
+                  { className: 'w-full h-full flex items-center justify-center' },
+                  React.createElement(LucideIcons.Image, { className: 'w-10 h-10 text-slate-300' })
+                ),
+            // Overlay with category count
+            React.createElement(
+              'div',
+              { className: 'absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300' }
+            )
+          ),
+          // Text content
+          React.createElement(
+            'div',
+            { className: 'p-3 w-full' },
+            React.createElement(
+              'h3',
+              { className: `font-black text-slate-800 break-words ${isMobile ? 'text-xs' : 'text-sm'}` },
+              p.name || `فئة ${idx + 1}`
+            ),
+            p.count !== undefined && p.count !== ''
+              ? React.createElement(
+                  'p',
+                  { className: 'text-[10px] text-slate-400 font-bold mt-0.5' },
+                  `${p.count} دورة`
+                )
+              : null,
+            p.description
+              ? React.createElement(
+                  'p',
+                  { className: 'text-[10px] text-slate-500 font-medium mt-1 break-words leading-relaxed' },
+                  p.description
+                )
+              : null
+          )
+        );
+      })
+    )
+  );
+});
+CategoriesSection.displayName = 'CategoriesSection';
 
 export const componentRegistry = {
   hero_section: HeroSection,
@@ -455,6 +556,7 @@ export const componentRegistry = {
   testimonials_section: TestimonialsSection,
   gallery_section: GallerySection,
   pricing_section: PricingSection,
+  categories_section: CategoriesSection,
   // Existing static blocks
   hero: HeroBanner,
   'hero-slider': HeroSlider,
@@ -677,35 +779,33 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
 
   'gallery_section': {
     type: 'gallery_section',
-    name: 'معرض الصور (Gallery Section)',
+    name: 'معرض الصور',
     category: 'content',
     icon: 'Image',
     fields: [
-      { name: 'title', label: 'العنوان الرئيسي', type: 'text', defaultValue: 'Gallery' },
-      { name: 'subtitle', label: 'العنوان الفرعي', type: 'textarea', defaultValue: 'View our workspace' },
+      { name: 'title', label: 'عنوان معرض الصور', type: 'text', defaultValue: 'معرض الصور' },
+      { name: 'subtitle', label: 'وصف المعرض', type: 'textarea', defaultValue: 'استعرض أعمالنا ومحطاتنا المميزة' },
       { name: 'background_color', label: 'لون الخلفية', type: 'color', defaultValue: '#ffffff' },
       { name: 'text_color', label: 'لون النص', type: 'color', defaultValue: '#1f2937' },
-      { name: 'grid_cols', label: 'عدد الأعمدة', type: 'number', defaultValue: 4 },
+      { name: 'grid_cols', label: 'عدد الأعمدة', type: 'number', defaultValue: 3 },
       { name: 'padding_top', label: 'تباعد علوي (px)', type: 'number', defaultValue: 60 },
       { name: 'padding_bottom', label: 'تباعد سفلي (px)', type: 'number', defaultValue: 60 },
       ...SECTION_STYLE_FIELDS
     ],
     itemLabel: 'صورة',
     itemFields: [
-      { name: 'image_url', label: 'رابط الصورة (URL)', type: 'text', defaultValue: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085' },
-      { name: 'caption', label: 'الوصف التوضيحي', type: 'text', defaultValue: 'Workspace' }
+      { name: 'image_url', label: '📷 رفع الصورة', type: 'image', defaultValue: '' },
+      { name: 'caption', label: 'وصف الصورة', type: 'text', defaultValue: '' }
     ],
     defaultProps: {
-      title: 'Gallery',
-      subtitle: 'View our workspace',
+      title: 'معرض الصور',
+      subtitle: 'استعرض أعمالنا ومحطاتنا المميزة',
       background_color: '#ffffff',
       text_color: '#1f2937',
-      grid_cols: 4,
+      grid_cols: 3,
       padding_top: 60,
       padding_bottom: 60,
-      items: [
-        { order: 1, props: { image_url: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085', caption: 'Workspace' } }
-      ]
+      items: []
     }
   },
 
@@ -743,6 +843,40 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       items: [
         { order: 1, props: { plan_name: 'Basic', price: '99', period: 'month', button_text: 'Choose Plan', button_link: '#', features_list: 'Feature 1\nFeature 2', is_popular: false } }
       ]
+    }
+  },
+
+  'categories_section': {
+    type: 'categories_section',
+    name: 'قسم التصنيفات',
+    category: 'content',
+    icon: 'LayoutGrid',
+    fields: [
+      { name: 'title', label: 'عنوان قسم التصنيفات', type: 'text', defaultValue: 'تصفح التصنيفات' },
+      { name: 'subtitle', label: 'وصف القسم', type: 'textarea', defaultValue: 'اختر المجال الذي يناسبك وابدأ رحلتك التعليمية' },
+      { name: 'background_color', label: 'لون الخلفية', type: 'color', defaultValue: '#f8fafc' },
+      { name: 'text_color', label: 'لون النص', type: 'color', defaultValue: '#1f2937' },
+      { name: 'grid_cols', label: 'عدد الأعمدة', type: 'number', defaultValue: 4 },
+      { name: 'padding_top', label: 'تباعد علوي (px)', type: 'number', defaultValue: 60 },
+      { name: 'padding_bottom', label: 'تباعد سفلي (px)', type: 'number', defaultValue: 60 },
+      ...SECTION_STYLE_FIELDS
+    ],
+    itemLabel: 'تصنيف',
+    itemFields: [
+      { name: 'name', label: 'اسم التصنيف', type: 'text', defaultValue: 'تصنيف جديد' },
+      { name: 'image_url', label: '📷 صورة التصنيف', type: 'image', defaultValue: '' },
+      { name: 'count', label: 'عدد الدورات', type: 'text', defaultValue: '' },
+      { name: 'description', label: 'وصف التصنيف', type: 'textarea', defaultValue: '' },
+    ],
+    defaultProps: {
+      title: 'تصفح التصنيفات',
+      subtitle: 'اختر المجال الذي يناسبك وابدأ رحلتك التعليمية',
+      background_color: '#f8fafc',
+      text_color: '#1f2937',
+      grid_cols: 4,
+      padding_top: 60,
+      padding_bottom: 60,
+      items: []
     }
   },
 

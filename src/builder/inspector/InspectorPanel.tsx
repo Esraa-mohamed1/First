@@ -28,6 +28,7 @@ import MetricsCardsEditor from './components/MetricsCardsEditor';
 import TabsBlockEditor from './components/TabsBlockEditor';
 import HeroSliderEditor from './components/HeroSliderEditor';
 import ImageUploader from './components/ImageUploader';
+import ItemImageUploader from './components/ImageUploader';
 
 export default function InspectorPanel() {
   const { selectedNodeId, currentTemplate, updateNodeProps, setSelectedNodeId } = useBuilderStore();
@@ -643,6 +644,14 @@ function DynamicListEditor({ items = [], fields = [], itemLabel = 'عنصر', on
                             dir="ltr"
                           />
                         </div>
+                      )}
+                      
+                      {f.type === 'image' && (
+                        <ItemImageUploader
+                          value={itemProps[f.name] ?? ''}
+                          onChange={(val) => handleUpdateItemProp(idx, f.name, val)}
+                          label={f.label}
+                        />
                       )}
                       
                       {f.type === 'select' && (

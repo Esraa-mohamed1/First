@@ -123,20 +123,27 @@ export const getSections = async (
 
 /**
  * Save dynamic sections for a specific page.
- * The API accepts one section at a time as a flat JSON object:
- * POST /sections  →  { pages_id, type, order, props, items }
- * So we iterate and POST each section individually.
+ * The API accepts one section per request as a flat JSON object:
+ * POST /sections  →  { pages_id, type, order, props, items? }
+ * We loop and POST each section individually.
  */
 export const saveSections = async (
   pageId: string | number,
   sections: ApiSection[]
 ): Promise<any[]> => {
+  const numericPageId = isNaN(Number(pageId)) ? pageId : Number(pageId);
   const results: any[] = [];
 
   for (const section of sections) {
+    const { pages_id: _pid, ...rest } = section;
+    const payload = {
+      pages_id: numericPageId,
+      ...rest,
+    };
+
     const response = await academyApi.post<any>(
       '/sections',
-      section,
+      payload,
       { headers: { 'Content-Type': 'application/json' } }
     );
     results.push(response.data?.data ?? response.data);

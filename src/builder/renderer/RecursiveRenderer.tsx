@@ -27,6 +27,7 @@ const FaqSection = dynamic(() => import('../registry/componentRegistry').then(m 
 const TestimonialsSection = dynamic(() => import('../registry/componentRegistry').then(m => m.TestimonialsSection), { ssr: false });
 const GallerySection = dynamic(() => import('../registry/componentRegistry').then(m => m.GallerySection), { ssr: false });
 const PricingSection = dynamic(() => import('../registry/componentRegistry').then(m => m.PricingSection), { ssr: false });
+const CategoriesSection = dynamic(() => import('../registry/componentRegistry').then(m => m.CategoriesSection), { ssr: false });
 
 // Component Rendering Map
 const rendererRegistry: Record<string, React.ComponentType<any>> = {
@@ -37,6 +38,7 @@ const rendererRegistry: Record<string, React.ComponentType<any>> = {
   testimonials_section: TestimonialsSection,
   gallery_section: GallerySection,
   pricing_section: PricingSection,
+  categories_section: CategoriesSection,
   // Existing static blocks
   hero: HeroBanner,
   'hero-slider': HeroSlider,
@@ -203,9 +205,11 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
                   )}
 
                   {/* Component with optional section background/shape wrapper */}
-                  <div className={`${isSelected ? '' : 'pointer-events-none'} select-none`}>
+                  <div className="select-none">
                     <SectionBackground node={node}>
-                      {renderComponent(node)}
+                      <div className={isSelected ? '' : 'pointer-events-none'}>
+                        {renderComponent(node)}
+                      </div>
                     </SectionBackground>
                   </div>
 
@@ -239,9 +243,11 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
                       <button onClick={(e) => { e.stopPropagation(); deleteNode(node.id); }} className="hover:bg-rose-600 px-1 py-0.5 rounded text-rose-100">حذف</button>
                     </div>
                   )}
-                  <div className={`${isSelected ? '' : 'pointer-events-none'} select-none`}>
+                  <div className="select-none">
                     <SectionBackground node={node}>
-                      {renderComponent(node)}
+                      <div className={isSelected ? '' : 'pointer-events-none'}>
+                        {renderComponent(node)}
+                      </div>
                     </SectionBackground>
                   </div>
                 </div>

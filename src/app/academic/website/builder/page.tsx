@@ -439,12 +439,13 @@ export default function PageBuilderPage() {
                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-wide block">عناصر المحتوى</span>
                   <div className="grid grid-cols-1 gap-2">
                     {[
-                      { type: 'hero_section', name: 'هيرو ديناميكي / سلايدر', desc: 'بانر هيرو أو سلايدر متحرك' },
-                      { type: 'features_section', name: 'الميزات ديناميكي', desc: 'بطاقات المميزات والخصائص' },
-                      { type: 'faq_section', name: 'الأسئلة الشائعة ديناميكي', desc: 'قائمة الأسئلة الشائعة المنبثقة' },
-                      { type: 'testimonials_section', name: 'آراء العملاء ديناميكي', desc: 'توصيات وآراء المشتركين' },
-                      { type: 'gallery_section', name: 'معرض الصور ديناميكي', desc: 'شبكة صور تفاعلية وحديثة' },
-                      { type: 'pricing_section', name: 'خطط الأسعار ديناميكي', desc: 'بطاقات خطط التسعير والاشتراك' },
+                      { type: 'hero_section', name: 'قسم الهيرو / السلايدر', desc: 'بانر هيرو أو سلايدر متحرك' },
+                      { type: 'features_section', name: 'قسم الميزات', desc: 'بطاقات المميزات والخصائص' },
+                      { type: 'categories_section', name: 'قسم التصنيفات', desc: 'شبكة تصنيفات مع صور قابلة للرفع' },
+                      { type: 'gallery_section', name: 'معرض الصور', desc: 'شبكة صور — رفع ملفات مباشرة' },
+                      { type: 'faq_section', name: 'الأسئلة الشائعة', desc: 'قائمة الأسئلة الشائعة المنبثقة' },
+                      { type: 'testimonials_section', name: 'آراء العملاء', desc: 'توصيات وآراء المشتركين' },
+                      { type: 'pricing_section', name: 'خطط الأسعار', desc: 'بطاقات خطط التسعير والاشتراك' },
                       { type: 'hero', name: 'بانر هيرو (قديم)', desc: 'عنوان و كبسة استدعاء' },
                       { type: 'course-cards', name: 'بطاقات الكورسات', desc: 'شبكة عرض الدورات الكلية' },
                       { type: 'student-feed', name: 'أحدث أنشطة المتعلمين', desc: 'تحديثات الأنشطة المباشرة' }
