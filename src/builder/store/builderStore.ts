@@ -7,6 +7,9 @@ interface BuilderState {
   hoveredNodeId: string | null;
   deviceMode: DeviceMode;
   isEditing: boolean;
+
+  // API-linked page ID (returned from POST /academy/pages)
+  pageId: string | null;
   
   // History for Undo/Redo
   historyPast: BuilderNode[][];
@@ -18,6 +21,7 @@ interface BuilderState {
   setHoveredNodeId: (id: string | null) => void;
   setDeviceMode: (mode: DeviceMode) => void;
   setIsEditing: (isEditing: boolean) => void;
+  setPageId: (id: string | null) => void;
   
   // Node Mutators
   updateNodeProps: (id: string, props: Record<string, any>) => void;
@@ -97,6 +101,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   hoveredNodeId: null,
   deviceMode: 'desktop',
   isEditing: true,
+  pageId: null,
   historyPast: [],
   historyFuture: [],
 
@@ -115,6 +120,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   setHoveredNodeId: (id) => set({ hoveredNodeId: id }),
   setDeviceMode: (mode) => set({ deviceMode: mode }),
   setIsEditing: (isEditing) => set({ isEditing }),
+  setPageId: (id) => set({ pageId: id }),
 
   updateNodeProps: (id, props) => {
     const { currentTemplate, historyPast } = get();

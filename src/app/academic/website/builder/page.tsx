@@ -29,6 +29,7 @@ export default function PageBuilderPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const templateId = searchParams.get('templateId') || '';
+  const pageId = searchParams.get('pageId') || null;
 
   const [tourStep, setTourStep] = useState<number>(-1);
 
@@ -127,7 +128,8 @@ export default function PageBuilderPage() {
     undo,
     redo,
     saveDraft,
-    publishTemplate
+    publishTemplate,
+    setPageId
   } = useBuilderStore();
 
   // Load selected template configuration
@@ -142,16 +144,22 @@ export default function PageBuilderPage() {
     if (cached) {
       try {
         loadTemplate(JSON.parse(cached));
-        return;
       } catch (e) {
         console.error('Failed to load cached template, falling back to static config:', e);
+        const templateConfig = getTemplateById(activeId);
+        loadTemplate(templateConfig);
       }
+    } else {
+      // Fallback to initial config
+      const templateConfig = getTemplateById(activeId);
+      loadTemplate(templateConfig);
     }
 
-    // Fallback to initial config
-    const templateConfig = getTemplateById(activeId);
-    loadTemplate(templateConfig);
-  }, [templateId, loadTemplate]);
+    // Store the API page ID so publish/save actions can reference it
+    if (pageId) {
+      setPageId(pageId);
+    }
+  }, [templateId, pageId, loadTemplate, setPageId]);
 
   const handleAddWidget = (type: string) => {
     const config = COMPONENT_REGISTRY[type];
