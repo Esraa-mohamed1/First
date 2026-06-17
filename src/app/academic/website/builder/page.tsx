@@ -24,6 +24,7 @@ import {
   LayoutGrid
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getSections, saveSections, apiToEditor, editorToApi } from '@/services/pages';
 
 export default function PageBuilderPage() {
   const router = useRouter();
@@ -132,33 +133,53 @@ export default function PageBuilderPage() {
     setPageId
   } = useBuilderStore();
 
-  // Load selected template configuration
+  // Load selected template configuration or page sections from API
   useEffect(() => {
-    let activeId = templateId;
-    if (!activeId && typeof window !== 'undefined') {
-      activeId = localStorage.getItem('darab_active_template') || 'academy-dashboard';
-    }
+    const fetchPageSections = async () => {
+      let activeId = templateId;
+      if (!activeId && typeof window !== 'undefined') {
+        activeId = localStorage.getItem('darab_active_template') || 'academy-dashboard';
+      }
 
-    // Attempt to load previously edited version from storage first
-    const cached = localStorage.getItem(`darab_builder_template_${activeId}`);
-    if (cached) {
-      try {
-        loadTemplate(JSON.parse(cached));
-      } catch (e) {
-        console.error('Failed to load cached template, falling back to static config:', e);
+      if (pageId) {
+        setPageId(pageId);
+        try {
+          const apiSections = await getSections(pageId);
+          if (apiSections && apiSections.length > 0) {
+            const editorNodes = apiToEditor(apiSections);
+            loadTemplate({
+              id: activeId || 'dynamic-page',
+              name: 'صفحة ديناميكية من السيرفر',
+              status: 'published',
+              version: '1.0',
+              updatedAt: new Date().toISOString(),
+              sections: editorNodes
+            });
+            return;
+          }
+        } catch (err) {
+          console.error('Failed to load sections from backend:', err);
+          toast.error('فشل تحميل البيانات من السيرفر، تم التحميل محلياً.');
+        }
+      }
+
+      // Fallback: load from local storage or static templates
+      const cached = localStorage.getItem(`darab_builder_template_${activeId}`);
+      if (cached) {
+        try {
+          loadTemplate(JSON.parse(cached));
+        } catch (e) {
+          console.error('Failed to load cached template, falling back to static config:', e);
+          const templateConfig = getTemplateById(activeId);
+          loadTemplate(templateConfig);
+        }
+      } else {
         const templateConfig = getTemplateById(activeId);
         loadTemplate(templateConfig);
       }
-    } else {
-      // Fallback to initial config
-      const templateConfig = getTemplateById(activeId);
-      loadTemplate(templateConfig);
-    }
+    };
 
-    // Store the API page ID so publish/save actions can reference it
-    if (pageId) {
-      setPageId(pageId);
-    }
+    fetchPageSections();
   }, [templateId, pageId, loadTemplate, setPageId]);
 
   const handleAddWidget = (type: string) => {
@@ -183,28 +204,64 @@ export default function PageBuilderPage() {
     });
   };
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     saveDraft();
-    toast.success('تم حفظ مسودة تعديلاتك محلياً بنجاح.', {
-      style: {
-        fontFamily: 'IBM Plex Sans Arabic',
-        fontSize: '11px',
-        fontWeight: 'bold',
-        direction: 'rtl'
+    if (pageId && currentTemplate) {
+      try {
+        const apiSections = editorToApi(currentTemplate.sections, pageId);
+        await saveSections(pageId, apiSections);
+        toast.success('تم حفظ مسودة تعديلاتك على السيرفر بنجاح.', {
+          style: {
+            fontFamily: 'IBM Plex Sans Arabic',
+            fontSize: '11px',
+            fontWeight: 'bold',
+            direction: 'rtl'
+          }
+        });
+      } catch (err) {
+        console.error('Failed to save draft to server:', err);
+        toast.error('حدث خطأ أثناء حفظ المسودة على السيرفر.');
       }
-    });
+    } else {
+      toast.success('تم حفظ مسودة تعديلاتك محلياً بنجاح.', {
+        style: {
+          fontFamily: 'IBM Plex Sans Arabic',
+          fontSize: '11px',
+          fontWeight: 'bold',
+          direction: 'rtl'
+        }
+      });
+    }
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     publishTemplate();
-    toast.success('تهانينا! تم نشر تعديلات القالب وتحديث موجه موقعك بنجاح.', {
-      style: {
-        fontFamily: 'IBM Plex Sans Arabic',
-        fontSize: '11px',
-        fontWeight: 'bold',
-        direction: 'rtl'
+    if (pageId && currentTemplate) {
+      try {
+        const apiSections = editorToApi(currentTemplate.sections, pageId);
+        await saveSections(pageId, apiSections);
+        toast.success('تهانينا! تم نشر تعديلات القالب وتحديث الصفحة على السيرفر بنجاح.', {
+          style: {
+            fontFamily: 'IBM Plex Sans Arabic',
+            fontSize: '11px',
+            fontWeight: 'bold',
+            direction: 'rtl'
+          }
+        });
+      } catch (err) {
+        console.error('Failed to publish to server:', err);
+        toast.error('حدث خطأ أثناء النشر على السيرفر.');
       }
-    });
+    } else {
+      toast.success('تهانينا! تم نشر تعديلات القالب وتحديث موجه موقعك بنجاح.', {
+        style: {
+          fontFamily: 'IBM Plex Sans Arabic',
+          fontSize: '11px',
+          fontWeight: 'bold',
+          direction: 'rtl'
+        }
+      });
+    }
   };
 
   const handleGoBack = () => {
@@ -382,7 +439,13 @@ export default function PageBuilderPage() {
                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-wide block">عناصر المحتوى</span>
                   <div className="grid grid-cols-1 gap-2">
                     {[
-                      { type: 'hero', name: 'بانر هيرو', desc: 'عنوان و كبسة استدعاء' },
+                      { type: 'hero_section', name: 'هيرو ديناميكي / سلايدر', desc: 'بانر هيرو أو سلايدر متحرك' },
+                      { type: 'features_section', name: 'الميزات ديناميكي', desc: 'بطاقات المميزات والخصائص' },
+                      { type: 'faq_section', name: 'الأسئلة الشائعة ديناميكي', desc: 'قائمة الأسئلة الشائعة المنبثقة' },
+                      { type: 'testimonials_section', name: 'آراء العملاء ديناميكي', desc: 'توصيات وآراء المشتركين' },
+                      { type: 'gallery_section', name: 'معرض الصور ديناميكي', desc: 'شبكة صور تفاعلية وحديثة' },
+                      { type: 'pricing_section', name: 'خطط الأسعار ديناميكي', desc: 'بطاقات خطط التسعير والاشتراك' },
+                      { type: 'hero', name: 'بانر هيرو (قديم)', desc: 'عنوان و كبسة استدعاء' },
                       { type: 'course-cards', name: 'بطاقات الكورسات', desc: 'شبكة عرض الدورات الكلية' },
                       { type: 'student-feed', name: 'أحدث أنشطة المتعلمين', desc: 'تحديثات الأنشطة المباشرة' }
                     ].map((item) => (

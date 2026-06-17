@@ -1,29 +1,63 @@
-import React from 'react';
+import React, { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { useBuilderStore } from '../store/builderStore';
 import { BuilderNode } from '../interfaces';
-import HeroBanner from '../components/HeroBanner';
-import HeroSlider from '../components/HeroSlider';
-import KpiCards from '../components/KpiCards';
-import ChartsBlock from '../components/ChartsBlock';
-import TableBlock from '../components/TableBlock';
-import StudentFeed from '../components/StudentFeed';
-import CourseCards from '../components/CourseCards';
-import SidebarBlock from '../components/SidebarBlock';
-import NavbarBlock from '../components/NavbarBlock';
-import TabsBlock from '../components/TabsBlock';
-import MetricsCards from '../components/MetricsCards';
 import SectionShapeOverlay from '../components/SectionShapeOverlay';
 import SortableSection from '@/builder/dnd/SortableSection';
 import SortableWidget from '@/builder/dnd/SortableWidget';
 
+// ─── Dynamic Imports & Lazy Loading for all blocks ───────────────────────────
+
+const HeroBanner = dynamic(() => import('../components/HeroBanner'), { ssr: false });
+const HeroSlider = dynamic(() => import('../components/HeroSlider'), { ssr: false });
+const KpiCards = dynamic(() => import('../components/KpiCards'), { ssr: false });
+const ChartsBlock = dynamic(() => import('../components/ChartsBlock'), { ssr: false });
+const TableBlock = dynamic(() => import('../components/TableBlock'), { ssr: false });
+const StudentFeed = dynamic(() => import('../components/StudentFeed'), { ssr: false });
+const CourseCards = dynamic(() => import('../components/CourseCards'), { ssr: false });
+const SidebarBlock = dynamic(() => import('../components/SidebarBlock'), { ssr: false });
+const NavbarBlock = dynamic(() => import('../components/NavbarBlock'), { ssr: false });
+const TabsBlock = dynamic(() => import('../components/TabsBlock'), { ssr: false });
+const MetricsCards = dynamic(() => import('../components/MetricsCards'), { ssr: false });
+
+// Lazy load the dynamic backend sections from componentRegistry
+const HeroSection = dynamic(() => import('../registry/componentRegistry').then(m => m.HeroSection), { ssr: false });
+const FeaturesSection = dynamic(() => import('../registry/componentRegistry').then(m => m.FeaturesSection), { ssr: false });
+const FaqSection = dynamic(() => import('../registry/componentRegistry').then(m => m.FaqSection), { ssr: false });
+const TestimonialsSection = dynamic(() => import('../registry/componentRegistry').then(m => m.TestimonialsSection), { ssr: false });
+const GallerySection = dynamic(() => import('../registry/componentRegistry').then(m => m.GallerySection), { ssr: false });
+const PricingSection = dynamic(() => import('../registry/componentRegistry').then(m => m.PricingSection), { ssr: false });
+
+// Component Rendering Map
+const rendererRegistry: Record<string, React.ComponentType<any>> = {
+  // Dynamic backend-linked sections
+  hero_section: HeroSection,
+  features_section: FeaturesSection,
+  faq_section: FaqSection,
+  testimonials_section: TestimonialsSection,
+  gallery_section: GallerySection,
+  pricing_section: PricingSection,
+  // Existing static blocks
+  hero: HeroBanner,
+  'hero-slider': HeroSlider,
+  'kpi-cards': KpiCards,
+  charts: ChartsBlock,
+  tables: TableBlock,
+  'student-feed': StudentFeed,
+  'course-cards': CourseCards,
+  sidebar: SidebarBlock,
+  navbar: NavbarBlock,
+  tabs: TabsBlock,
+  metrics: MetricsCards,
+};
+
 // ─── Section Background Wrapper ───────────────────────────────────────────────
 
-function SectionBackground({ node, children }: { node: BuilderNode; children: React.ReactNode }) {
+const SectionBackground = React.memo(({ node, children }: { node: BuilderNode; children: React.ReactNode }) => {
   const p = node.props || {};
   const bgType = p.sectionBgType || 'solid';
 
   let style: React.CSSProperties = {};
-  let extraClass = '';
 
   if (bgType === 'solid' && p.sectionBg) {
     style.backgroundColor = p.sectionBg;
@@ -68,7 +102,8 @@ function SectionBackground({ node, children }: { node: BuilderNode; children: Re
       <div className="relative z-10">{children}</div>
     </div>
   );
-}
+});
+SectionBackground.displayName = 'SectionBackground';
 
 
 interface RecursiveRendererProps {
@@ -99,40 +134,24 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
     }
   }, [selectedNodeId]);
 
-  const renderComponent = (node: BuilderNode) => {
+  const renderComponent = React.useCallback((node: BuilderNode) => {
     const props = node.props || {};
+    const Component = rendererRegistry[node.type];
 
-    switch (node.type) {
-      case 'hero':
-        return <HeroBanner {...props} />;
-      case 'hero-slider':
-        return <HeroSlider {...props} />;
-      case 'kpi-cards':
-        return <KpiCards {...props} />;
-      case 'charts':
-        return <ChartsBlock {...props} />;
-      case 'tables':
-        return <TableBlock {...props} />;
-      case 'student-feed':
-        return <StudentFeed {...props} />;
-      case 'course-cards':
-        return <CourseCards {...props} />;
-      case 'sidebar':
-        return <SidebarBlock {...props} />;
-      case 'navbar':
-        return <NavbarBlock {...props} />;
-      case 'tabs':
-        return <TabsBlock {...props} />;
-      case 'metrics':
-        return <MetricsCards {...props} />;
-      default:
-        return (
-          <div className="p-4 border border-dashed border-red-200 text-center text-xs text-red-500 font-bold bg-red-50/50 rounded-xl">
-            نوع مكون غير معروف: {node.type}
-          </div>
-        );
+    if (!Component) {
+      return (
+        <div className="p-4 border border-dashed border-red-200 text-center text-xs text-red-500 font-bold bg-red-50/50 rounded-xl">
+          نوع مكون غير معروف: {node.type}
+        </div>
+      );
     }
-  };
+
+    return (
+      <Suspense fallback={<div className="p-4 text-center text-xs text-slate-400 font-bold animate-pulse">جاري تحميل المكون...</div>}>
+        <Component {...props} />
+      </Suspense>
+    );
+  }, []);
 
   if (nodes.length === 0) {
     return (
@@ -184,7 +203,7 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
                   )}
 
                   {/* Component with optional section background/shape wrapper */}
-                  <div className="pointer-events-none select-none">
+                  <div className={`${isSelected ? '' : 'pointer-events-none'} select-none`}>
                     <SectionBackground node={node}>
                       {renderComponent(node)}
                     </SectionBackground>
@@ -220,7 +239,7 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
                       <button onClick={(e) => { e.stopPropagation(); deleteNode(node.id); }} className="hover:bg-rose-600 px-1 py-0.5 rounded text-rose-100">حذف</button>
                     </div>
                   )}
-                  <div className="pointer-events-none select-none">
+                  <div className={`${isSelected ? '' : 'pointer-events-none'} select-none`}>
                     <SectionBackground node={node}>
                       {renderComponent(node)}
                     </SectionBackground>

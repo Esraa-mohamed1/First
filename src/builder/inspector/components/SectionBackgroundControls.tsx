@@ -14,11 +14,11 @@ export default function SectionBackgroundControls({
   isSimpleMode = false,
 }: SectionBackgroundControlsProps) {
   const bgTypes = isSimpleMode 
-    ? (['solid', 'image'] as const)
-    : (['solid', 'gradient', 'image'] as const);
+    ? (['solid'] as const)
+    : (['solid', 'gradient'] as const);
 
   const currentBgType = props.sectionBgType || 'solid';
-  const activeBgType = (isSimpleMode && currentBgType === 'gradient') ? 'solid' : currentBgType;
+  const activeBgType = bgTypes.includes(currentBgType as any) ? currentBgType : 'solid';
 
   return (
     <>
@@ -113,35 +113,6 @@ export default function SectionBackgroundControls({
                 backgroundImage: `linear-gradient(135deg, ${props.sectionGradientFrom || '#2563eb'}, ${props.sectionGradientTo || '#7c3aed'})`
               }}
             />
-          </div>
-        )}
-
-        {/* Image */}
-        {activeBgType === 'image' && (
-          <div className="space-y-2.5">
-            <ImageUploader 
-              value={props.sectionBgImage || ''} 
-              onChange={(val) => handlePropChange('sectionBgImage', val)} 
-              label="تحميل صورة خلفية القسم" 
-            />
-            <span className="text-[9px] font-bold text-slate-400 block mt-1 leading-normal">
-              💡 اسحب صورة لخلفية القسم لتعبئته، أو اضغط داخل الصندوق لاختيار ملف صورة من جهازك.
-            </span>
-            
-            {!isSimpleMode && (
-              <div className="space-y-1 pt-1.5 border-t border-slate-100">
-                <div className="flex justify-between text-[9px] font-bold text-slate-500">
-                  <span>شفافية التغطية الداكنة</span>
-                  <span>{props.sectionBgOverlay ?? 40}%</span>
-                </div>
-                <input
-                  type="range" min="0" max="90" step="5"
-                  value={props.sectionBgOverlay ?? 40}
-                  onChange={(e) => handlePropChange('sectionBgOverlay', Number(e.target.value))}
-                  className="w-full accent-blue-600 cursor-pointer"
-                />
-              </div>
-            )}
           </div>
         )}
       </div>
