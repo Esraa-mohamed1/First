@@ -35,7 +35,7 @@ export const HeroSection = React.memo((props: any) => {
   const isTablet = deviceMode === 'tablet';
   const px = isMobile ? 'px-4' : isTablet ? 'px-8' : 'px-16';
   const py = isMobile ? 'py-10' : 'py-16';
-  
+
   const [current, setCurrent] = React.useState(0);
   const [transitioning, setTransitioning] = React.useState(false);
 
@@ -92,49 +92,49 @@ export const HeroSection = React.memo((props: any) => {
           slideProps.subtitle ? React.createElement('p', { className: `opacity-90 mb-4 leading-relaxed text-slate-100 ${isMobile ? 'text-xs' : 'text-base'}` }, slideProps.subtitle) : null,
           slideProps.button_text
             ? React.createElement(
-                'a',
-                {
-                  href: slideProps.button_link || '#',
-                  style: { backgroundColor: slideProps.button_color || '#ffffff', color: '#1e40af' },
-                  className: 'px-5 py-2 rounded-xl font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md inline-block w-fit'
-                },
-                slideProps.button_text
-              )
+              'a',
+              {
+                href: slideProps.button_link || '#',
+                style: { backgroundColor: slideProps.button_color || '#ffffff', color: '#1e40af' },
+                className: 'px-5 py-2 rounded-xl font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md inline-block w-fit'
+              },
+              slideProps.button_text
+            )
             : null
         )
       ),
       props.show_arrows !== false && items.length > 1
         ? React.createElement(
-            'button',
-            {
-              onClick: (e: any) => { e.stopPropagation(); if (transitioning) return; goTo((current - 1 + items.length) % items.length); },
-              className: 'absolute right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-slate-950/40 hover:bg-slate-950/60 text-white flex items-center justify-center transition-all pointer-events-auto'
-            },
-            React.createElement(LucideIcons.ChevronRight, { className: 'w-4 h-4' })
-          )
+          'button',
+          {
+            onClick: (e: any) => { e.stopPropagation(); if (transitioning) return; goTo((current - 1 + items.length) % items.length); },
+            className: 'absolute right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-slate-950/40 hover:bg-slate-950/60 text-white flex items-center justify-center transition-all pointer-events-auto'
+          },
+          React.createElement(LucideIcons.ChevronRight, { className: 'w-4 h-4' })
+        )
         : null,
       props.show_arrows !== false && items.length > 1
         ? React.createElement(
-            'button',
-            {
-              onClick: (e: any) => { e.stopPropagation(); if (transitioning) return; goTo((current + 1) % items.length); },
-              className: 'absolute left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-slate-950/40 hover:bg-slate-950/60 text-white flex items-center justify-center transition-all pointer-events-auto'
-            },
-            React.createElement(LucideIcons.ChevronLeft, { className: 'w-4 h-4' })
-          )
+          'button',
+          {
+            onClick: (e: any) => { e.stopPropagation(); if (transitioning) return; goTo((current + 1) % items.length); },
+            className: 'absolute left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-slate-950/40 hover:bg-slate-950/60 text-white flex items-center justify-center transition-all pointer-events-auto'
+          },
+          React.createElement(LucideIcons.ChevronLeft, { className: 'w-4 h-4' })
+        )
         : null,
       items.length > 1
         ? React.createElement(
-            'div',
-            { className: 'absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-2' },
-            items.map((_: any, i: number) =>
-              React.createElement('button', {
-                key: i,
-                onClick: (e: any) => { e.stopPropagation(); goTo(i); },
-                className: `rounded-full transition-all duration-300 pointer-events-auto ${i === current ? 'bg-white w-5 h-2' : 'bg-white/40 hover:bg-white/70 w-2 h-2'}`
-              })
-            )
+          'div',
+          { className: 'absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-2' },
+          items.map((_: any, i: number) =>
+            React.createElement('button', {
+              key: i,
+              onClick: (e: any) => { e.stopPropagation(); goTo(i); },
+              className: `rounded-full transition-all duration-300 pointer-events-auto ${i === current ? 'bg-white w-5 h-2' : 'bg-white/40 hover:bg-white/70 w-2 h-2'}`
+            })
           )
+        )
         : null
     );
   }
@@ -148,14 +148,14 @@ export const HeroSection = React.memo((props: any) => {
     content.subtitle ? React.createElement('p', { className: `opacity-85 mb-8 leading-relaxed ${isMobile ? 'text-xs max-w-full' : 'text-lg max-w-2xl'}` }, content.subtitle) : null,
     props.show_button && content.button_text
       ? React.createElement(
-          'a',
-          {
-            href: content.button_link || '#',
-            style: { backgroundColor: props.button_color || '#2563eb', color: '#ffffff' },
-            className: 'px-6 py-3 rounded-xl font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md inline-block'
-          },
-          content.button_text
-        )
+        'a',
+        {
+          href: content.button_link || '#',
+          style: { backgroundColor: props.button_color || '#2563eb', color: '#ffffff' },
+          className: 'px-6 py-3 rounded-xl font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md inline-block'
+        },
+        content.button_text
+      )
       : null
   );
 });
@@ -194,13 +194,13 @@ export const FeaturesSection = React.memo((props: any) => {
           { key: idx, className: 'p-4 bg-white/60 backdrop-blur-sm border border-slate-100 hover:border-slate-200 rounded-2xl flex flex-col items-start gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-md' },
           itemProps.icon
             ? React.createElement(
-                'div',
-                {
-                  style: { backgroundColor: `${itemProps.icon_color || '#2563eb'}15`, color: itemProps.icon_color || '#2563eb' },
-                  className: 'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0'
-                },
-                React.createElement(DynamicIcon, { name: itemProps.icon, className: 'w-4 h-4' })
-              )
+              'div',
+              {
+                style: { backgroundColor: `${itemProps.icon_color || '#2563eb'}15`, color: itemProps.icon_color || '#2563eb' },
+                className: 'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0'
+              },
+              React.createElement(DynamicIcon, { name: itemProps.icon, className: 'w-4 h-4' })
+            )
             : null,
           React.createElement(
             'div',
@@ -256,9 +256,8 @@ export const FaqSection = React.memo((props: any) => {
           React.createElement(
             'div',
             {
-              className: `transition-all duration-300 ease-in-out overflow-hidden ${
-                isOpen ? 'max-h-[300px] border-t border-slate-100 p-4 bg-white/30' : 'max-h-0'
-              }`
+              className: `transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-[300px] border-t border-slate-100 p-4 bg-white/30' : 'max-h-0'
+                }`
             },
             React.createElement('p', { className: 'text-xs text-slate-500 font-bold leading-relaxed break-words' }, itemProps.answer)
           )
@@ -367,10 +366,10 @@ export const GallerySection = React.memo((props: any) => {
           }),
           itemProps.caption
             ? React.createElement(
-                'div',
-                { className: 'absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3' },
-                React.createElement('p', { className: 'text-[10px] font-black text-white' }, itemProps.caption)
-              )
+              'div',
+              { className: 'absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3' },
+              React.createElement('p', { className: 'text-[10px] font-black text-white' }, itemProps.caption)
+            )
             : null
         );
       })
@@ -409,18 +408,17 @@ export const PricingSection = React.memo((props: any) => {
           'div',
           {
             key: idx,
-            className: `flex flex-col bg-white border ${
-              isPopular
-                ? 'border-2 border-yellow-400 relative shadow-xl z-10'
-                : 'border-slate-100 shadow-sm hover:shadow-md'
-            } rounded-3xl p-5 transition-all duration-300`
+            className: `flex flex-col bg-white border ${isPopular
+              ? 'border-2 border-yellow-400 relative shadow-xl z-10'
+              : 'border-slate-100 shadow-sm hover:shadow-md'
+              } rounded-3xl p-5 transition-all duration-300`
           },
           isPopular
             ? React.createElement(
-                'div',
-                { className: 'absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-slate-900 px-3 py-0.5 rounded-full font-black text-[9px] shadow-sm uppercase' },
-                'الاكثر شعبية'
-              )
+              'div',
+              { className: 'absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-slate-900 px-3 py-0.5 rounded-full font-black text-[9px] shadow-sm uppercase' },
+              'الاكثر شعبية'
+            )
             : null,
           React.createElement(
             'div',
@@ -490,38 +488,32 @@ export const CategoriesSection = React.memo((props: any) => {
       { className: `grid gap-4 ${gridClass}` },
       items.map((item: any, idx: number) => {
         const p = item.props || {};
-        const hasImage = !!p.image_url;
+        const shape = props.card_shape || 'classic';
+        let shapeClass = 'rounded-2xl';
+        if (shape === 'circle') {
+          shapeClass = 'rounded-full aspect-square flex flex-col justify-center items-center';
+        } else if (shape === 'leaf') {
+          shapeClass = 'rounded-3xl rounded-tr-none rounded-bl-none';
+        } else if (shape === 'square') {
+          shapeClass = 'rounded-none';
+        }
+
         return React.createElement(
           'div',
           {
             key: idx,
-            className: 'group relative overflow-hidden rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer bg-white flex flex-col items-center text-center'
+            className: `group relative overflow-hidden border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer bg-white flex flex-col items-center justify-center text-center p-6 ${shapeClass}`
           },
-          // Image area
-          React.createElement(
-            'div',
-            { className: 'w-full aspect-square overflow-hidden bg-slate-100 relative' },
-            hasImage
-              ? React.createElement('img', {
-                  src: p.image_url,
-                  alt: p.name || '',
-                  className: 'w-full h-full object-cover transition-transform duration-500 group-hover:scale-110'
-                })
-              : React.createElement(
-                  'div',
-                  { className: 'w-full h-full flex items-center justify-center' },
-                  React.createElement(LucideIcons.Image, { className: 'w-10 h-10 text-slate-300' })
-                ),
-            // Overlay with category count
-            React.createElement(
+          p.icon
+            ? React.createElement(
               'div',
-              { className: 'absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300' }
+              { className: 'w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3 transition-all duration-300 group-hover:bg-blue-600 group-hover:text-white' },
+              React.createElement(DynamicIcon, { name: p.icon, className: 'w-6 h-6' })
             )
-          ),
-          // Text content
+            : null,
           React.createElement(
             'div',
-            { className: 'p-3 w-full' },
+            { className: 'w-full flex flex-col items-center' },
             React.createElement(
               'h3',
               { className: `font-black text-slate-800 break-words ${isMobile ? 'text-xs' : 'text-sm'}` },
@@ -529,17 +521,17 @@ export const CategoriesSection = React.memo((props: any) => {
             ),
             p.count !== undefined && p.count !== ''
               ? React.createElement(
-                  'p',
-                  { className: 'text-[10px] text-slate-400 font-bold mt-0.5' },
-                  `${p.count} دورة`
-                )
+                'span',
+                { className: 'inline-block text-[10px] text-blue-500 bg-blue-50 px-2.5 py-0.5 rounded-full font-bold mt-1.5' },
+                `${p.count} دورة`
+              )
               : null,
             p.description
               ? React.createElement(
-                  'p',
-                  { className: 'text-[10px] text-slate-500 font-medium mt-1 break-words leading-relaxed' },
-                  p.description
-                )
+                'p',
+                { className: 'text-[10px] text-slate-500 font-medium mt-2 break-words leading-relaxed' },
+                p.description
+              )
               : null
           )
         );
@@ -629,11 +621,13 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       { name: 'padding_top', label: 'تباعد علوي (px)', type: 'number', defaultValue: 60 },
       { name: 'padding_bottom', label: 'تباعد سفلي (px)', type: 'number', defaultValue: 60 },
       { name: 'border_radius', label: 'زاوية الحواف (px)', type: 'number', defaultValue: 12 },
-      { name: 'align', label: 'المحاذاة', type: 'select', defaultValue: 'center', options: [
-        { label: 'وسط', value: 'center' },
-        { label: 'يمين', value: 'right' },
-        { label: 'يسار', value: 'left' }
-      ]},
+      {
+        name: 'align', label: 'المحاذاة', type: 'select', defaultValue: 'center', options: [
+          { label: 'وسط', value: 'center' },
+          { label: 'يمين', value: 'right' },
+          { label: 'يسار', value: 'left' }
+        ]
+      },
       { name: 'slider_speed', label: 'سرعة انتقال السلايدر (بالثواني)', type: 'number', defaultValue: 4 },
       { name: 'show_arrows', label: 'عرض أسهم التنقل', type: 'boolean', defaultValue: true },
       ...SECTION_STYLE_FIELDS
@@ -647,11 +641,13 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       { name: 'bg_image', label: 'صورة الخلفية (URL)', type: 'text', defaultValue: '' },
       { name: 'background_color', label: 'لون الخلفية', type: 'color', defaultValue: '#1e40af' },
       { name: 'button_color', label: 'لون الزر', type: 'color', defaultValue: '#ffffff' },
-      { name: 'align', label: 'محاذاة النص', type: 'select', defaultValue: 'right', options: [
-        { label: 'يمين', value: 'right' },
-        { label: 'وسط', value: 'center' },
-        { label: 'يسار', value: 'left' }
-      ]}
+      {
+        name: 'align', label: 'محاذاة النص', type: 'select', defaultValue: 'right', options: [
+          { label: 'يمين', value: 'right' },
+          { label: 'وسط', value: 'center' },
+          { label: 'يسار', value: 'left' }
+        ]
+      }
     ],
     defaultProps: {
       title: 'Welcome',
@@ -857,6 +853,18 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       { name: 'background_color', label: 'لون الخلفية', type: 'color', defaultValue: '#f8fafc' },
       { name: 'text_color', label: 'لون النص', type: 'color', defaultValue: '#1f2937' },
       { name: 'grid_cols', label: 'عدد الأعمدة', type: 'number', defaultValue: 4 },
+      {
+        name: 'card_shape',
+        label: 'شكل بطاقة التصنيف',
+        type: 'select',
+        defaultValue: 'classic',
+        options: [
+          { label: 'بطاقة مستديرة (Classic)', value: 'classic' },
+          { label: 'شكل دائري (Circle)', value: 'circle' },
+          { label: 'شكل بيضاوي', value: 'oval' },
+          { label: 'شكل مربع (Square)', value: 'square' },
+        ]
+      },
       { name: 'padding_top', label: 'تباعد علوي (px)', type: 'number', defaultValue: 60 },
       { name: 'padding_bottom', label: 'تباعد سفلي (px)', type: 'number', defaultValue: 60 },
       ...SECTION_STYLE_FIELDS
@@ -864,7 +872,7 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
     itemLabel: 'تصنيف',
     itemFields: [
       { name: 'name', label: 'اسم التصنيف', type: 'text', defaultValue: 'تصنيف جديد' },
-      { name: 'image_url', label: '📷 صورة التصنيف', type: 'image', defaultValue: '' },
+      { name: 'icon', label: 'اختر الأيقونة', type: 'icon', defaultValue: 'Folder' },
       { name: 'count', label: 'عدد الدورات', type: 'text', defaultValue: '' },
       { name: 'description', label: 'وصف التصنيف', type: 'textarea', defaultValue: '' },
     ],
@@ -874,9 +882,15 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       background_color: '#f8fafc',
       text_color: '#1f2937',
       grid_cols: 4,
+      card_shape: 'classic',
       padding_top: 60,
       padding_bottom: 60,
-      items: []
+      items: [
+        { order: 1, props: { name: 'البرمجة والتطوير', icon: 'Code', count: '12', description: 'تعلم لغات البرمجة المختلفة وتطوير الويب' } },
+        { order: 2, props: { name: 'التصميم الإبداعي', icon: 'Palette', count: '8', description: 'تصميم الواجهات والجرافيك وتجربة المستخدم' } },
+        { order: 3, props: { name: 'إدارة الأعمال', icon: 'Briefcase', count: '15', description: 'مهارات الريادة، الإدارة والتسويق الرقمي' } },
+        { order: 4, props: { name: 'الذكاء الاصطناعي', icon: 'Cpu', count: '6', description: 'تعلم الآلة، البيانات والشبكات العصبية' } }
+      ]
     }
   },
 
@@ -892,16 +906,20 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       { name: 'badgeText', label: 'شارة الترويسة (Badge)', type: 'text', defaultValue: 'تعلّم بذكاء' },
       { name: 'buttonText', label: 'نص الزر الأساسي', type: 'text', defaultValue: 'ابدأ الآن' },
       { name: 'buttonLink', label: 'رابط الزر', type: 'text', defaultValue: '#' },
-      { name: 'align', label: 'محاذاة النص', type: 'select', defaultValue: 'right', options: [
-        { label: 'يمين', value: 'right' },
-        { label: 'وسط', value: 'center' },
-        { label: 'يسار', value: 'left' }
-      ] },
+      {
+        name: 'align', label: 'محاذاة النص', type: 'select', defaultValue: 'right', options: [
+          { label: 'يمين', value: 'right' },
+          { label: 'وسط', value: 'center' },
+          { label: 'يسار', value: 'left' }
+        ]
+      },
       { name: 'heroImage', label: 'صورة جانبية في الهيرو (URL)', type: 'text', defaultValue: '' },
-      { name: 'heroImagePosition', label: 'موقع الصورة الجانبية', type: 'select', defaultValue: 'left', options: [
-        { label: 'يسار النص', value: 'left' },
-        { label: 'يمين النص', value: 'right' },
-      ] },
+      {
+        name: 'heroImagePosition', label: 'موقع الصورة الجانبية', type: 'select', defaultValue: 'left', options: [
+          { label: 'يسار النص', value: 'left' },
+          { label: 'يمين النص', value: 'right' },
+        ]
+      },
       { name: 'showSecondButton', label: 'إظهار زر ثانوي إضافي', type: 'boolean', defaultValue: false },
       { name: 'secondButtonText', label: 'نص الزر الثانوي', type: 'text', defaultValue: 'اعرف أكثر' },
       { name: 'titleColor', label: 'لون العنوان', type: 'color', defaultValue: '#1f2937' },
@@ -966,14 +984,16 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
     category: 'data',
     icon: 'TrendingUp',
     fields: [
-      { name: 'gridCols', label: 'عدد الأعمدة', type: 'select', defaultValue: '4', options: [
-        { label: 'عمود واحد', value: '1' },
-        { label: 'عمودين', value: '2' },
-        { label: '3 أعمدة', value: '3' },
-        { label: '4 أعمدة', value: '4' },
-        { label: '5 أعمدة', value: '5' },
-        { label: '6 أعمدة', value: '6' }
-      ] },
+      {
+        name: 'gridCols', label: 'عدد الأعمدة', type: 'select', defaultValue: '4', options: [
+          { label: 'عمود واحد', value: '1' },
+          { label: 'عمودين', value: '2' },
+          { label: '3 أعمدة', value: '3' },
+          { label: '4 أعمدة', value: '4' },
+          { label: '5 أعمدة', value: '5' },
+          { label: '6 أعمدة', value: '6' }
+        ]
+      },
       { name: 'cardBg', label: 'لون خلفية البطاقة', type: 'color', defaultValue: '#ffffff' },
       { name: 'cardBorder', label: 'لون حد البطاقة', type: 'color', defaultValue: '#f1f5f9' },
       { name: 'titleColor', label: 'لون عنوان البطاقة', type: 'color', defaultValue: '#374151' },
@@ -1000,11 +1020,13 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
     icon: 'LayoutGrid',
     fields: [
       { name: 'title', label: 'عنوان الرسم البياني', type: 'text', defaultValue: 'إحصائيات التسجيل الشهري' },
-      { name: 'chartType', label: 'نوع المخطط', type: 'select', defaultValue: 'area', options: [
-        { label: 'مخطط مساحي (Area)', value: 'area' },
-        { label: 'مخطط أعمدة (Bar)', value: 'bar' },
-        { label: 'مخطط خطي (Line)', value: 'line' }
-      ] },
+      {
+        name: 'chartType', label: 'نوع المخطط', type: 'select', defaultValue: 'area', options: [
+          { label: 'مخطط مساحي (Area)', value: 'area' },
+          { label: 'مخطط أعمدة (Bar)', value: 'bar' },
+          { label: 'مخطط خطي (Line)', value: 'line' }
+        ]
+      },
       { name: 'primaryColor', label: 'اللون الأساسي', type: 'color', defaultValue: '#2563eb' },
       { name: 'secondaryColor', label: 'اللون الفرعي', type: 'color', defaultValue: '#fbbf24' },
       { name: 'height', label: 'ارتفاع المخطط (بكسل)', type: 'number', defaultValue: 300 },
@@ -1074,13 +1096,15 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
     icon: 'GraduationCap',
     fields: [
       { name: 'title', label: 'العنوان الجانبي للقسم', type: 'text', defaultValue: 'تصفح كورس جديد الآن' },
-      { name: 'gridCols', label: 'تخطيط شبكة العرض (أعمدة)', type: 'select', defaultValue: '3', options: [
-        { label: 'عمودين', value: '2' },
-        { label: '3 أعمدة', value: '3' },
-        { label: '4 أعمدة', value: '4' },
-        { label: '5 أعمدة', value: '5' },
-        { label: '6 أعمدة', value: '6' }
-      ] },
+      {
+        name: 'gridCols', label: 'تخطيط شبكة العرض (أعمدة)', type: 'select', defaultValue: '3', options: [
+          { label: 'عمودين', value: '2' },
+          { label: '3 أعمدة', value: '3' },
+          { label: '4 أعمدة', value: '4' },
+          { label: '5 أعمدة', value: '5' },
+          { label: '6 أعمدة', value: '6' }
+        ]
+      },
       { name: 'showPrice', label: 'عرض تسعير الكورسات', type: 'boolean', defaultValue: true },
       { name: 'showStudentsCount', label: 'عرض عدد الطلاب المقيدين', type: 'boolean', defaultValue: true },
       { name: 'buttonBg', label: 'لون زر التسجيل بالدورة', type: 'color', defaultValue: '#2563eb' },
@@ -1107,10 +1131,12 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
     fields: [
       { name: 'title', label: 'اسم الأكاديمية بالبار', type: 'text', defaultValue: 'أكاديمية درب الذكية' },
       { name: 'logoText', label: 'حرف الشعار', type: 'text', defaultValue: 'د' },
-      { name: 'theme', label: 'نمط المظهر الجانبي', type: 'select', defaultValue: 'light', options: [
-        { label: 'فاتح (Light)', value: 'light' },
-        { label: 'داكن (Dark)', value: 'dark' }
-      ] },
+      {
+        name: 'theme', label: 'نمط المظهر الجانبي', type: 'select', defaultValue: 'light', options: [
+          { label: 'فاتح (Light)', value: 'light' },
+          { label: 'داكن (Dark)', value: 'dark' }
+        ]
+      },
       { name: 'accentColor', label: 'اللون التنشيطي (Accent)', type: 'color', defaultValue: '#2563eb' },
       { name: 'bgColor', label: 'لون خلفية الشريط الجانبي', type: 'color', defaultValue: '#ffffff' },
       { name: 'textColor', label: 'لون نص القائمة', type: 'color', defaultValue: '#374151' },
@@ -1161,11 +1187,13 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       { name: 'activeTabColor', label: 'لون التبويب المفعل', type: 'color', defaultValue: '#2563eb' },
       { name: 'tabBg', label: 'لون خلفية التبويبات', type: 'color', defaultValue: '#f8fafc' },
       { name: 'tabTextColor', label: 'لون نص التبويبات', type: 'color', defaultValue: '#6b7280' },
-      { name: 'alignment', label: 'المحاذاة الأفقية للتبويبات', type: 'select', defaultValue: 'right', options: [
-        { label: 'يمين', value: 'right' },
-        { label: 'وسط', value: 'center' },
-        { label: 'يسار', value: 'left' }
-      ] },
+      {
+        name: 'alignment', label: 'المحاذاة الأفقية للتبويبات', type: 'select', defaultValue: 'right', options: [
+          { label: 'يمين', value: 'right' },
+          { label: 'وسط', value: 'center' },
+          { label: 'يسار', value: 'left' }
+        ]
+      },
       ...SECTION_STYLE_FIELDS,
     ],
     defaultProps: {
@@ -1188,10 +1216,12 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
     icon: 'TrendingUp',
     fields: [
       { name: 'title', label: 'العنوان الجانبي للبطاقات', type: 'text', defaultValue: 'معدل التقدم العام' },
-      { name: 'layout', label: 'شكل التخطيط', type: 'select', defaultValue: 'grid', options: [
-        { label: 'شبكة (Grid)', value: 'grid' },
-        { label: 'قائمة رأسية (List)', value: 'list' }
-      ] },
+      {
+        name: 'layout', label: 'شكل التخطيط', type: 'select', defaultValue: 'grid', options: [
+          { label: 'شبكة (Grid)', value: 'grid' },
+          { label: 'قائمة رأسية (List)', value: 'list' }
+        ]
+      },
       { name: 'cardBg', label: 'لون خلفية البطاقة', type: 'color', defaultValue: '#ffffff' },
       { name: 'labelColor', label: 'لون تسمية المؤشر', type: 'color', defaultValue: '#6b7280' },
       { name: 'valueColor', label: 'لون قيمة المؤشر', type: 'color', defaultValue: '#111827' },

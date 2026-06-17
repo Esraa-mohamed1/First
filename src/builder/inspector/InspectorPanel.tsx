@@ -29,6 +29,88 @@ import TabsBlockEditor from './components/TabsBlockEditor';
 import HeroSliderEditor from './components/HeroSliderEditor';
 import ImageUploader from './components/ImageUploader';
 import ItemImageUploader from './components/ImageUploader';
+import { AVAILABLE_ICONS, getIconComponent } from '../utils/icons';
+
+function ItemIconPicker({ 
+  value, 
+  onChange, 
+  label 
+}: { 
+  value: string; 
+  onChange: (val: string) => void; 
+  label?: string; 
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  
+  const IconComp = getIconComponent(value || 'HelpCircle');
+
+  const filteredIcons = AVAILABLE_ICONS.filter(icon => 
+    icon.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="relative w-full">
+      {label && <label className="block text-[10px] font-black text-slate-400 mb-1.5">{label}</label>}
+      
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full p-2.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 rounded-xl text-xs font-bold text-slate-700 outline-none flex justify-between items-center transition-all"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-blue-600 bg-blue-50 p-1 rounded-lg">
+            <IconComp className="w-4 h-4" />
+          </span>
+          <span>{value || 'اختر أيقونة'}</span>
+        </div>
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-100 rounded-xl shadow-xl p-3 z-50 max-h-[240px] overflow-y-auto">
+            <input 
+              type="text"
+              placeholder="ابحث عن أيقونة..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full p-2 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-bold outline-none mb-2 text-right"
+              dir="rtl"
+            />
+            <div className="grid grid-cols-4 gap-1.5">
+              {filteredIcons.map((icon) => {
+                const CurrentIcon = getIconComponent(icon);
+                const isSelected = value === icon;
+                return (
+                  <button
+                    type="button"
+                    key={icon}
+                    title={icon}
+                    onClick={() => {
+                      onChange(icon);
+                      setIsOpen(false);
+                      setSearch('');
+                    }}
+                    className={`p-2 border rounded-xl flex flex-col items-center justify-center gap-1 transition-all ${
+                      isSelected 
+                        ? 'bg-blue-50 border-blue-200 text-blue-600' 
+                        : 'border-slate-50 hover:bg-slate-50 text-slate-600'
+                    }`}
+                  >
+                    <CurrentIcon className="w-4 h-4 shrink-0" />
+                    <span className="text-[8px] truncate max-w-full font-bold">{icon}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function InspectorPanel() {
   const { selectedNodeId, currentTemplate, updateNodeProps, setSelectedNodeId } = useBuilderStore();
@@ -258,6 +340,13 @@ export default function InspectorPanel() {
                     </select>
                     <ChevronDown className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
+                )}
+
+                {field.type === 'icon' && (
+                  <ItemIconPicker
+                    value={props[field.name] ?? field.defaultValue}
+                    onChange={(val) => handlePropChange(field.name, val)}
+                  />
                 )}
               </div>
             ))}
@@ -664,6 +753,13 @@ function DynamicListEditor({ items = [], fields = [], itemLabel = 'عنصر', on
                             <option key={opt.value} value={opt.value}>{opt.label}</option>
                           ))}
                         </select>
+                      )}
+
+                      {f.type === 'icon' && (
+                        <ItemIconPicker
+                          value={itemProps[f.name] ?? f.defaultValue}
+                          onChange={(val) => handleUpdateItemProp(idx, f.name, val)}
+                        />
                       )}
                     </div>
                   ))}

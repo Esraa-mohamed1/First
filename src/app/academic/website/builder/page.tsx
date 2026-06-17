@@ -441,7 +441,7 @@ export default function PageBuilderPage() {
                     {[
                       { type: 'hero_section', name: 'قسم الهيرو / السلايدر', desc: 'بانر هيرو أو سلايدر متحرك' },
                       { type: 'features_section', name: 'قسم الميزات', desc: 'بطاقات المميزات والخصائص' },
-                      { type: 'categories_section', name: 'قسم التصنيفات', desc: 'شبكة تصنيفات مع صور قابلة للرفع' },
+                      { type: 'categories_section', name: 'قسم التصنيفات', desc: 'شبكة تصنيفات بأيقونات و4 أشكال مختلفة' },
                       { type: 'gallery_section', name: 'معرض الصور', desc: 'شبكة صور — رفع ملفات مباشرة' },
                       { type: 'faq_section', name: 'الأسئلة الشائعة', desc: 'قائمة الأسئلة الشائعة المنبثقة' },
                       { type: 'testimonials_section', name: 'آراء العملاء', desc: 'توصيات وآراء المشتركين' },

@@ -27,7 +27,7 @@ export interface TemplateSchema {
 export interface ComponentFieldConfig {
   name: string;
   label: string;
-  type: 'text' | 'textarea' | 'color' | 'select' | 'number' | 'boolean' | 'spacing' | 'typography' | 'icon';
+  type: 'text' | 'textarea' | 'color' | 'select' | 'number' | 'boolean' | 'spacing' | 'typography' | 'icon' | 'image';
   defaultValue: any;
   options?: { label: string; value: string }[]; // For select dropdowns
   responsive?: boolean; // Can be defined per device mode

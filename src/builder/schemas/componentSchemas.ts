@@ -221,10 +221,12 @@ export const CategoriesSectionSchema = z.object({
   padding_top: z.number().default(60),
   padding_bottom: z.number().default(60),
   grid_cols: z.number().default(4),
+  card_shape: z.string().default('classic'),
   items: z.array(z.object({
     order: z.number(),
     props: z.object({
       name: z.string(),
+      icon: z.string().optional(),
       image_url: z.string().optional(),
       count: z.string().optional(),
       description: z.string().optional(),
