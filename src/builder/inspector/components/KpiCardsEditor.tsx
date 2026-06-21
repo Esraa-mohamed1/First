@@ -140,10 +140,9 @@ export default function KpiCardsEditor({
                             setShowIconDropdown(null);
                             setIconSearch('');
                           }}
-                          className="p-1.5 hover:bg-blue-50 border border-slate-100 hover:border-blue-200 rounded flex flex-col items-center justify-center gap-1 text-slate-600 hover:text-blue-600 transition-all"
+                          className="p-2 hover:bg-blue-50 border border-slate-100 hover:border-blue-200 rounded flex items-center justify-center text-slate-600 hover:text-blue-600 transition-all"
                         >
                           <IconComp className="w-4 h-4 shrink-0" />
-                          <span className="text-[8px] truncate max-w-full font-bold">{icon.substr(0, 5)}</span>
                         </button>
                       );
                     })}

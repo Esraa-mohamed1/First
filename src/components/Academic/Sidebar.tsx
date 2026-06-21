@@ -94,7 +94,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       href: '/academic/templates',
       subItems: [
         { label: 'اختيار القوالب', href: '/academic/templates' },
-        { label: 'باني الصفحات', href: '/academic/website/builder' },
+        { label: 'باني الصفحات', href: '/academic/website/builder?templateId=academy-dashboard&pageId=1' },
         { label: 'الهوية والألوان', href: '/academic/website/colors' },
         { label: 'الدومين المخصص', href: '/academic/domain' },
         { label: 'الصفحات', href: '/academic/website/pages' },

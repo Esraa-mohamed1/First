@@ -132,8 +132,36 @@ export const saveSections = async (
   sections: ApiSection[]
 ): Promise<any[]> => {
   const numericPageId = isNaN(Number(pageId)) ? pageId : Number(pageId);
-  const results: any[] = [];
 
+  // 1. Fetch current sections from database to find deletions
+  try {
+    const existing = await getSections(numericPageId);
+    if (Array.isArray(existing) && existing.length > 0) {
+      // Find server-side IDs currently being saved
+      const savedIds = new Set(
+        sections
+          .map((s) => s.id)
+          .filter((id) => id !== undefined && !id.toString().includes('-') && !isNaN(Number(id)))
+          .map((id) => Number(id))
+      );
+
+      // Delete sections that exist in DB but not in the saved list
+      for (const ext of existing) {
+        if (ext.id && !savedIds.has(Number(ext.id))) {
+          try {
+            await academyApi.delete(`/sections/${ext.id}`);
+          } catch (delErr) {
+            console.error(`Failed to delete section ${ext.id}:`, delErr);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to sync deletions with server:', err);
+  }
+
+  // 2. Save remaining sections (creates or updates them)
+  const results: any[] = [];
   for (const section of sections) {
     const { pages_id: _pid, ...rest } = section;
     const payload = {
@@ -189,6 +217,21 @@ function keysToCamel(obj: any): any {
   return res;
 }
 
+function keysToCamelForNewTypes(obj: any): any {
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(keysToCamelForNewTypes);
+  
+  const res: Record<string, any> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (k.startsWith('section_')) {
+      res[toCamelCase(k)] = keysToCamelForNewTypes(v);
+    } else {
+      res[k] = keysToCamelForNewTypes(v);
+    }
+  }
+  return res;
+}
+
 /**
  * Transforms backend API sections into Editor-compatible BuilderNode list.
  */
@@ -200,14 +243,44 @@ export function apiToEditor(sections: ApiSection[]): BuilderNode[] {
 
   return sorted.map((sec) => {
     const isLegacy = LEGACY_TYPES.includes(sec.type);
-    const rawProps = sec.props || {};
-    const props = isLegacy ? keysToCamel(rawProps) : rawProps;
+    
+    // Parse sec.props safely if it is a JSON string or object
+    let rawProps: Record<string, any> = {};
+    if (sec.props) {
+      if (typeof sec.props === 'string') {
+        try {
+          rawProps = JSON.parse(sec.props);
+        } catch (e) {
+          console.error('Failed to parse sec.props JSON string:', e);
+        }
+      } else if (typeof sec.props === 'object') {
+        rawProps = sec.props;
+      }
+    }
+    
+    const props = isLegacy ? keysToCamel(rawProps) : keysToCamelForNewTypes(rawProps);
 
     let editorItems = undefined;
     if (sec.items) {
       const sortedItems = [...sec.items].sort((a, b) => (a.order || 0) - (b.order || 0));
       editorItems = sortedItems.map((item) => {
-        const itemProps = item.props || {};
+        let itemProps: Record<string, any> = {};
+        if (item.props) {
+          if (typeof item.props === 'string') {
+            try {
+              itemProps = JSON.parse(item.props);
+            } catch (e) {
+              console.error('Failed to parse item.props JSON string:', e);
+            }
+          } else if (typeof item.props === 'object') {
+            itemProps = item.props;
+          }
+        } else {
+          // If properties are flat on the item, extract non-metadata keys
+          const { id, order, pages_id, sections_id, created_at, updated_at, props: _p, ...rest } = item as any;
+          itemProps = rest;
+        }
+        
         return {
           id: item.id?.toString() || `${sec.type}-item-${Math.random().toString(36).substr(2, 9)}`,
           order: item.order,
@@ -246,17 +319,16 @@ export function editorToApi(nodes: BuilderNode[], pageId: string | number): ApiS
   return nodes.map((node, index) => {
     // Separate items from the rest of the props
     const { items, ...propsWithoutItems } = node.props || {};
-    const isLegacy = LEGACY_TYPES.includes(node.type);
 
-    // Legacy blocks store camelCase props — convert to snake_case for the API
-    const apiProps = isLegacy ? keysToSnake(propsWithoutItems) : propsWithoutItems;
+    // Convert camelCase props (style parameters etc.) to snake_case for the API
+    const apiProps = keysToSnake(propsWithoutItems);
 
     // Build items array — only included when the section actually has items
     let apiItems: ApiSectionItem[] | undefined = undefined;
     if (Array.isArray(items) && items.length > 0) {
       apiItems = items.map((item, itemIdx) => {
         const rawProps = item.props || item;
-        const itemProps = isLegacy ? keysToSnake(rawProps) : rawProps;
+        const itemProps = keysToSnake(rawProps);
         // Only include a numeric id if the item came from the server (no dashes)
         const itemId = item.id && !item.id.toString().includes('-')
           ? Number(item.id)

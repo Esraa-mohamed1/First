@@ -7,18 +7,18 @@ import { getTemplateById } from '@/builder/utils/templates';
 import CanvasContainer from '@/builder/canvas/CanvasContainer';
 import InspectorPanel from '@/builder/inspector/InspectorPanel';
 import { COMPONENT_REGISTRY } from '@/builder/registry/componentRegistry';
-import { 
-  Monitor, 
-  Tablet, 
-  Smartphone, 
-  Undo2, 
-  Redo2, 
-  Eye, 
-  EyeOff, 
-  ArrowRight, 
-  Sparkles, 
-  Check, 
-  Save, 
+import {
+  Monitor,
+  Tablet,
+  Smartphone,
+  Undo2,
+  Redo2,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Sparkles,
+  Check,
+  Save,
   Globe,
   Plus,
   LayoutGrid
@@ -29,8 +29,8 @@ import { getSections, saveSections, apiToEditor, editorToApi } from '@/services/
 export default function PageBuilderPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const templateId = searchParams.get('templateId') || '';
-  const pageId = searchParams.get('pageId') || null;
+  const templateId = searchParams.get('templateId') || 'academy-dashboard';
+  const pageId = searchParams.get('pageId') || '1';
 
   const [tourStep, setTourStep] = useState<number>(-1);
 
@@ -279,26 +279,25 @@ export default function PageBuilderPage() {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-slate-950 font-['IBM_Plex_Sans_Arabic']" dir="rtl">
-      
+
       {/* 1. TOP CONTROL BAR MENU */}
       <header className="bg-slate-900 border-b border-slate-800 px-6 py-3.5 flex flex-row items-center justify-between z-50 shadow-md">
-        
+
         {/* Navigation title details */}
         <div className="flex items-center gap-4">
-          <button 
+          <button
             onClick={handleGoBack}
             className="p-2.5 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-colors border border-slate-800"
             title="رجوع للقوالب"
           >
             <ArrowRight className="w-4 h-4" />
           </button>
-          
+
           <div className="leading-tight text-right">
             <div className="flex items-center gap-2">
               <h1 className="text-xs font-black text-white">{currentTemplate.name}</h1>
-              <span className={`px-2 py-0.5 rounded text-[8px] font-black ${
-                currentTemplate.status === 'published' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-              }`}>
+              <span className={`px-2 py-0.5 rounded text-[8px] font-black ${currentTemplate.status === 'published' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                }`}>
                 {currentTemplate.status === 'published' ? 'منشور' : 'مسودة'}
               </span>
             </div>
@@ -308,31 +307,28 @@ export default function PageBuilderPage() {
 
         {/* Responsive device modes simulator */}
         <div className="flex bg-slate-800/80 rounded-xl p-1 items-center border border-slate-700/40 select-none">
-          <button 
+          <button
             onClick={() => setDeviceMode('desktop')}
-            className={`p-2 rounded-lg text-xs font-bold transition-all ${
-              deviceMode === 'desktop' ? 'bg-[#2563eb] text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`p-2 rounded-lg text-xs font-bold transition-all ${deviceMode === 'desktop' ? 'bg-[#2563eb] text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+              }`}
             title="شاشة كمبيوتر"
           >
             <Monitor className="w-4 h-4" />
           </button>
 
-          <button 
+          <button
             onClick={() => setDeviceMode('tablet')}
-            className={`p-2 rounded-lg text-xs font-bold transition-all ${
-              deviceMode === 'tablet' ? 'bg-[#2563eb] text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`p-2 rounded-lg text-xs font-bold transition-all ${deviceMode === 'tablet' ? 'bg-[#2563eb] text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+              }`}
             title="شاشة تابلت"
           >
             <Tablet className="w-4 h-4" />
           </button>
 
-          <button 
+          <button
             onClick={() => setDeviceMode('mobile')}
-            className={`p-2 rounded-lg text-xs font-bold transition-all ${
-              deviceMode === 'mobile' ? 'bg-[#2563eb] text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`p-2 rounded-lg text-xs font-bold transition-all ${deviceMode === 'mobile' ? 'bg-[#2563eb] text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+              }`}
             title="شاشة جوال"
           >
             <Smartphone className="w-4 h-4" />
@@ -344,20 +340,18 @@ export default function PageBuilderPage() {
           <button
             onClick={undo}
             disabled={historyPast.length === 0}
-            className={`p-2 rounded-lg transition-colors ${
-              historyPast.length > 0 ? 'text-slate-200 hover:bg-slate-800' : 'text-slate-600 cursor-not-allowed'
-            }`}
+            className={`p-2 rounded-lg transition-colors ${historyPast.length > 0 ? 'text-slate-200 hover:bg-slate-800' : 'text-slate-600 cursor-not-allowed'
+              }`}
             title="تراجع"
           >
             <Undo2 className="w-4 h-4" />
           </button>
-          
+
           <button
             onClick={redo}
             disabled={historyFuture.length === 0}
-            className={`p-2 rounded-lg transition-colors ${
-              historyFuture.length > 0 ? 'text-slate-200 hover:bg-slate-800' : 'text-slate-600 cursor-not-allowed'
-            }`}
+            className={`p-2 rounded-lg transition-colors ${historyFuture.length > 0 ? 'text-slate-200 hover:bg-slate-800' : 'text-slate-600 cursor-not-allowed'
+              }`}
             title="إعادة تطبيق"
           >
             <Redo2 className="w-4 h-4" />
@@ -372,16 +366,15 @@ export default function PageBuilderPage() {
             className="px-4 py-2 rounded-xl text-xs font-black text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 active:scale-95 transition-all flex items-center gap-1.5"
             title="بدء الجولة التعليمية"
           >
-            <span>جولة تعليمية 🎮</span>
+            <span>جولة تعليمية 🔍</span>
           </button>
 
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
-              !isEditing 
-                ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' 
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${!isEditing
+                ? 'bg-blue-600/10 text-blue-400 border-blue-500/20'
                 : 'bg-slate-800 text-slate-300 border-slate-700/60 hover:text-slate-100'
-            }`}
+              }`}
           >
             {isEditing ? (
               <>
@@ -417,12 +410,12 @@ export default function PageBuilderPage() {
 
       {/* 2. BODY LAYOUT PANELS */}
       <div className="flex-1 flex flex-row overflow-hidden relative">
-        
+
         {/* Left Side: Widgets list (only visible in edit mode) */}
         {isEditing && (
           <aside className="w-[280px] bg-slate-900 border-l border-slate-800 flex flex-col justify-between overflow-y-auto z-30 select-none">
             <div className="p-5 space-y-6">
-              
+
               <div className="space-y-1">
                 <h2 className="text-xs font-black text-white flex items-center gap-2">
                   <LayoutGrid className="w-4 h-4 text-blue-500" />
@@ -433,7 +426,7 @@ export default function PageBuilderPage() {
 
               {/* Categorized blocks directory */}
               <div className="space-y-4">
-                
+
                 {/* Content Category */}
                 <div className="space-y-2">
                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-wide block">عناصر المحتوى</span>
@@ -490,29 +483,7 @@ export default function PageBuilderPage() {
                   </div>
                 </div>
 
-                {/* Navigation Category */}
-                <div className="space-y-2 pt-2">
-                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-wide block">أشرطة التنقل والتبويبات</span>
-                  <div className="grid grid-cols-1 gap-2">
-                    {[
-                      { type: 'navbar', name: 'ترويسة الموقع العلوي', desc: 'شريط تصفح علوي و بروفايل' },
-                      { type: 'sidebar', name: 'شريط القائمة الجانبية', desc: 'قائمة لوحة التحكم الرئيسية' },
-                      { type: 'tabs', name: 'أزرار التبويبات والفرز', desc: 'مفاتيح التنقل وتصفح الأقسام' }
-                    ].map((item) => (
-                      <button
-                        key={item.type}
-                        onClick={() => handleAddWidget(item.type)}
-                        className="w-full text-right p-3.5 bg-slate-800/40 hover:bg-slate-800 border border-slate-800 hover:border-slate-700/60 rounded-2xl flex flex-col justify-center space-y-1.5 transition-all group"
-                      >
-                        <span className="text-[11px] font-black text-slate-200 group-hover:text-blue-400 transition-colors flex items-center gap-1.5">
-                          <Plus className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500" />
-                          {item.name}
-                        </span>
-                        <span className="text-[8px] text-slate-400 font-medium">{item.desc}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+
 
               </div>
 
@@ -544,10 +515,10 @@ export default function PageBuilderPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none select-none">
           {/* Dark overlay backdrop */}
           <div className="absolute inset-0 bg-slate-950/70 pointer-events-auto" />
-          
+
           {/* Highlight element border */}
           {getHighlightStyles(tourSteps[tourStep]?.target) && (
-            <div 
+            <div
               style={getHighlightStyles(tourSteps[tourStep]?.target)!}
               className="fixed border-4 border-amber-400 rounded-3xl shadow-[0_0_40px_rgba(251,191,36,0.6)] z-[110] transition-all duration-500 pointer-events-none animate-pulse"
             />
@@ -555,7 +526,7 @@ export default function PageBuilderPage() {
 
           {/* Dialog Mascot box */}
           <div className={`${getDialogPositionClass(tourSteps[tourStep]?.target)} bg-slate-900/95 backdrop-blur-2xl border border-slate-800 rounded-3xl p-6 shadow-2xl z-[120] pointer-events-auto text-right font-['IBM_Plex_Sans_Arabic'] flex flex-col gap-4 text-white relative`}>
-            
+
             {/* Mascot header */}
             <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
               <div className="w-12 h-12 rounded-2xl bg-amber-400/10 flex items-center justify-center border border-amber-400/20 text-2xl animate-bounce">
@@ -567,7 +538,7 @@ export default function PageBuilderPage() {
                 </span>
                 <h3 className="text-xs font-black text-slate-100">{tourSteps[tourStep]?.title}</h3>
               </div>
-              <button 
+              <button
                 onClick={() => {
                   setTourStep(-1);
                   localStorage.setItem('darab_builder_tour_completed', 'true');
@@ -585,15 +556,14 @@ export default function PageBuilderPage() {
 
             {/* Stepper progress dots & buttons */}
             <div className="flex items-center justify-between mt-2 pt-3 border-t border-slate-800">
-              
+
               {/* Stepper dots */}
               <div className="flex gap-1.5">
                 {tourSteps.map((_, idx) => (
-                  <div 
+                  <div
                     key={idx}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      idx === tourStep ? 'w-6 bg-amber-400' : 'w-2 bg-slate-800'
-                    }`}
+                    className={`h-2 rounded-full transition-all duration-300 ${idx === tourStep ? 'w-6 bg-amber-400' : 'w-2 bg-slate-800'
+                      }`}
                   />
                 ))}
               </div>
@@ -608,7 +578,7 @@ export default function PageBuilderPage() {
                     السابق
                   </button>
                 )}
-                
+
                 <button
                   onClick={() => {
                     if (tourStep === tourSteps.length - 1) {
@@ -664,7 +634,7 @@ export default function PageBuilderPage() {
               >
                 تخطي للبدء بالتصميم مباشرة ⚙️
               </button>
-              
+
               <button
                 onClick={() => {
                   setTourStep(0);

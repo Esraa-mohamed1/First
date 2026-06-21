@@ -93,14 +93,13 @@ function ItemIconPicker({
                       setIsOpen(false);
                       setSearch('');
                     }}
-                    className={`p-2 border rounded-xl flex flex-col items-center justify-center gap-1 transition-all ${
+                    className={`p-2.5 border rounded-xl flex items-center justify-center transition-all ${
                       isSelected 
                         ? 'bg-blue-50 border-blue-200 text-blue-600' 
                         : 'border-slate-50 hover:bg-slate-50 text-slate-600'
                     }`}
                   >
                     <CurrentIcon className="w-4 h-4 shrink-0" />
-                    <span className="text-[8px] truncate max-w-full font-bold">{icon}</span>
                   </button>
                 );
               })}
