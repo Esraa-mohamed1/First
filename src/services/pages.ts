@@ -21,7 +21,7 @@ export interface CreatedPageResponse {
 }
 
 // -----------------------------------------------------------------------
-// Axios instance (auth token + tenant key from localStorage)
+// Axios instance
 // -----------------------------------------------------------------------
 
 const academyApi = axios.create({
@@ -44,26 +44,16 @@ academyApi.interceptors.request.use((config) => {
         tenantKey = hostname;
       }
     }
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    if (tenantKey) {
-      config.headers['X-Tenant-Key'] = tenantKey;
-    }
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    if (tenantKey) config.headers['X-Tenant-Key'] = tenantKey;
   }
   return config;
 });
 
 // -----------------------------------------------------------------------
-// createPage — POST /pages
+// createPage
 // -----------------------------------------------------------------------
 
-/**
- * Creates a new academy page via the API.
- * The endpoint expects x-www-form-urlencoded body with: title, slug, status.
- * Returns the created page object which includes the server-assigned `id`.
- */
 export const createPage = async (
   payload: CreatePagePayload
 ): Promise<CreatedPageResponse> => {
@@ -77,19 +67,13 @@ export const createPage = async (
   }
 
   const response = await academyApi.post<any>('/pages', formData);
-
-  // Handle both { id, ... } and { data: { id, ... } } response shapes
   const data = response.data?.data ?? response.data;
-
-  if (!data) {
-    throw new Error('No data returned from pages API');
-  }
-
+  if (!data) throw new Error('No data returned from pages API');
   return data as CreatedPageResponse;
 };
 
 // -----------------------------------------------------------------------
-// Dynamic Page Sections API Methods & Transformation Layer
+// Types
 // -----------------------------------------------------------------------
 
 export interface ApiSectionItem {
@@ -107,98 +91,81 @@ export interface ApiSection {
   items?: ApiSectionItem[];
 }
 
-/**
- * Fetch dynamic sections for a specific page.
- */
+// -----------------------------------------------------------------------
+// getSections
+// -----------------------------------------------------------------------
+
 export const getSections = async (
   pageId: string | number
 ): Promise<ApiSection[]> => {
   const response = await academyApi.get<any>(`/sections`, {
-    params: { page_id: pageId, pages_id: pageId }
+    params: { page_id: pageId, pages_id: pageId },
   });
-
   const data = response.data?.data ?? response.data;
   return (Array.isArray(data) ? data : []) as ApiSection[];
 };
 
-/**
- * Save dynamic sections for a specific page.
- * The API accepts one section per request as a flat JSON object:
- * POST /sections  →  { pages_id, type, order, props, items? }
- * We loop and POST each section individually.
- */
+// -----------------------------------------------------------------------
+// saveSections — single bulk POST
+// -----------------------------------------------------------------------
+
 export const saveSections = async (
   pageId: string | number,
   sections: ApiSection[]
-): Promise<any[]> => {
+): Promise<any> => {
   const numericPageId = isNaN(Number(pageId)) ? pageId : Number(pageId);
 
-  // 1. Fetch current sections from database to find deletions
-  try {
-    const existing = await getSections(numericPageId);
-    if (Array.isArray(existing) && existing.length > 0) {
-      // Find server-side IDs currently being saved
-      const savedIds = new Set(
-        sections
-          .map((s) => s.id)
-          .filter((id) => id !== undefined && !id.toString().includes('-') && !isNaN(Number(id)))
-          .map((id) => Number(id))
-      );
+  const payload = {
+    pages_id: numericPageId,
+    sections: sections.map((section, index) => {
+      const { pages_id: _pid, id: _id, ...rest } = section;
+      return {
+        ...(!section.id || section.id.toString().includes('-')
+          ? {}
+          : { id: Number(section.id) }),
+        type: rest.type,
+        order: rest.order ?? index + 1,
+        props: rest.props,
+        items: (rest.items ?? []).map((item, itemIdx) => ({
+          ...(!item.id || item.id.toString().includes('-')
+            ? {}
+            : { id: Number(item.id) }),
+          order: item.order ?? itemIdx + 1,
+          props: item.props,
+        })),
+      };
+    }),
+  };
 
-      // Delete sections that exist in DB but not in the saved list
-      for (const ext of existing) {
-        if (ext.id && !savedIds.has(Number(ext.id))) {
-          try {
-            await academyApi.delete(`/sections/${ext.id}`);
-          } catch (delErr) {
-            console.error(`Failed to delete section ${ext.id}:`, delErr);
-          }
-        }
-      }
-    }
-  } catch (err) {
-    console.error('Failed to sync deletions with server:', err);
-  }
+  const response = await academyApi.post<any>('/sections', payload, {
+    headers: { 'Content-Type': 'application/json' },
+  });
 
-  // 2. Save remaining sections (creates or updates them)
-  const results: any[] = [];
-  for (const section of sections) {
-    const { pages_id: _pid, ...rest } = section;
-    const payload = {
-      pages_id: numericPageId,
-      ...rest,
-    };
-
-    const response = await academyApi.post<any>(
-      '/sections',
-      payload,
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-    results.push(response.data?.data ?? response.data);
-  }
-
-  return results;
+  return response.data?.data ?? response.data;
 };
 
+// -----------------------------------------------------------------------
+// Utilities
+// -----------------------------------------------------------------------
+
 const LEGACY_TYPES = [
-  'hero', 'hero-slider', 'kpi-cards', 'charts', 'tables', 
-  'student-feed', 'course-cards', 'sidebar', 'navbar', 'tabs', 'metrics'
+  'hero', 'hero-slider', 'kpi-cards', 'charts', 'tables',
+  'student-feed', 'course-cards', 'sidebar', 'navbar', 'tabs', 'metrics',
 ];
 
 function toSnakeCase(str: string): string {
-  return str.replace(/([A-Z])/g, "_$1").toLowerCase();
+  return str.replace(/([A-Z])/g, '_$1').toLowerCase();
 }
 
 function toCamelCase(str: string): string {
-  return str.replace(/([-_][a-z])/gi, ($1) => {
-    return $1.toUpperCase().replace('-', '').replace('_', '');
-  });
+  return str.replace(/([-_][a-z])/gi, ($1) =>
+    $1.toUpperCase().replace('-', '').replace('_', '')
+  );
 }
 
 function keysToSnake(obj: any): any {
   if (obj === null || typeof obj !== 'object') return obj;
   if (Array.isArray(obj)) return obj.map(keysToSnake);
-  
   const res: Record<string, any> = {};
   for (const [k, v] of Object.entries(obj)) {
     res[toSnakeCase(k)] = keysToSnake(v);
@@ -209,7 +176,6 @@ function keysToSnake(obj: any): any {
 function keysToCamel(obj: any): any {
   if (obj === null || typeof obj !== 'object') return obj;
   if (Array.isArray(obj)) return obj.map(keysToCamel);
-  
   const res: Record<string, any> = {};
   for (const [k, v] of Object.entries(obj)) {
     res[toCamelCase(k)] = keysToCamel(v);
@@ -220,7 +186,6 @@ function keysToCamel(obj: any): any {
 function keysToCamelForNewTypes(obj: any): any {
   if (obj === null || typeof obj !== 'object') return obj;
   if (Array.isArray(obj)) return obj.map(keysToCamelForNewTypes);
-  
   const res: Record<string, any> = {};
   for (const [k, v] of Object.entries(obj)) {
     if (k.startsWith('section_')) {
@@ -232,32 +197,68 @@ function keysToCamelForNewTypes(obj: any): any {
   return res;
 }
 
-/**
- * Transforms backend API sections into Editor-compatible BuilderNode list.
- */
+// -----------------------------------------------------------------------
+// safeParseProps — يحل مشكلة الـ props اللي بتيجي string أو char-indexed
+// -----------------------------------------------------------------------
+
+function safeParseProps(raw: any): Record<string, any> {
+  // object عادي — نتحقق إنه مش char-indexed
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    const keys = Object.keys(raw);
+    const isCharIndexed =
+      keys.length > 0 && keys.every((k) => !isNaN(Number(k)));
+
+    if (isCharIndexed) {
+      // نرجع الـ string من الـ characters ونعمل parse
+      const str = keys
+        .sort((a, b) => Number(a) - Number(b))
+        .map((k) => raw[k] ?? '')
+        .join('');
+      try {
+        return JSON.parse(str);
+      } catch (e) {
+        console.error('Failed to parse char-indexed props:', str, e);
+        return {};
+      }
+    }
+
+    return raw;
+  }
+
+  // string — نعمل parse
+  if (typeof raw === 'string') {
+    let parsed: any = raw;
+    let attempts = 0;
+    while (typeof parsed === 'string' && attempts < 5) {
+      try {
+        parsed = JSON.parse(parsed);
+      } catch (e) {
+        console.error('Failed to parse props string:', e);
+        break;
+      }
+      attempts++;
+    }
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed;
+    }
+  }
+
+  return {};
+}
+
+// -----------------------------------------------------------------------
+// apiToEditor
+// -----------------------------------------------------------------------
+
 export function apiToEditor(sections: ApiSection[]): BuilderNode[] {
   if (!Array.isArray(sections)) return [];
 
-  // Sort sections by order
   const sorted = [...sections].sort((a, b) => (a.order || 0) - (b.order || 0));
 
   return sorted.map((sec) => {
     const isLegacy = LEGACY_TYPES.includes(sec.type);
-    
-    // Parse sec.props safely if it is a JSON string or object
-    let rawProps: Record<string, any> = {};
-    if (sec.props) {
-      if (typeof sec.props === 'string') {
-        try {
-          rawProps = JSON.parse(sec.props);
-        } catch (e) {
-          console.error('Failed to parse sec.props JSON string:', e);
-        }
-      } else if (typeof sec.props === 'object') {
-        rawProps = sec.props;
-      }
-    }
-    
+
+    const rawProps = safeParseProps(sec.props);
     const props = isLegacy ? keysToCamel(rawProps) : keysToCamelForNewTypes(rawProps);
 
     let editorItems = undefined;
@@ -266,25 +267,16 @@ export function apiToEditor(sections: ApiSection[]): BuilderNode[] {
       editorItems = sortedItems.map((item) => {
         let itemProps: Record<string, any> = {};
         if (item.props) {
-          if (typeof item.props === 'string') {
-            try {
-              itemProps = JSON.parse(item.props);
-            } catch (e) {
-              console.error('Failed to parse item.props JSON string:', e);
-            }
-          } else if (typeof item.props === 'object') {
-            itemProps = item.props;
-          }
+          itemProps = safeParseProps(item.props);
         } else {
-          // If properties are flat on the item, extract non-metadata keys
           const { id, order, pages_id, sections_id, created_at, updated_at, props: _p, ...rest } = item as any;
           itemProps = rest;
         }
-        
+
         return {
           id: item.id?.toString() || `${sec.type}-item-${Math.random().toString(36).substr(2, 9)}`,
           order: item.order,
-          props: isLegacy ? keysToCamel(itemProps) : itemProps
+          props: isLegacy ? keysToCamel(itemProps) : itemProps,
         };
       });
     }
@@ -294,57 +286,48 @@ export function apiToEditor(sections: ApiSection[]): BuilderNode[] {
       type: sec.type,
       props: {
         ...props,
-        items: editorItems
-      }
+        items: editorItems,
+      },
     };
   });
 }
 
-/**
- * Transforms Editor BuilderNode list back into backend-compatible ApiSection list.
- * Output shape per section:
- * {
- *   pages_id: number,
- *   type: string,
- *   order: number,
- *   props: { ...content and style props (no items key) },
- *   items: [ { order, props }, ... ]   // only if section has items
- * }
- */
+// -----------------------------------------------------------------------
+// editorToApi
+// -----------------------------------------------------------------------
+
 export function editorToApi(nodes: BuilderNode[], pageId: string | number): ApiSection[] {
   if (!Array.isArray(nodes)) return [];
 
   const numericPageId = isNaN(Number(pageId)) ? pageId : Number(pageId);
 
   return nodes.map((node, index) => {
-    // Separate items from the rest of the props
-    const { items, ...propsWithoutItems } = node.props || {};
+    const rawNodeProps = safeParseProps(node.props);
+    const { items, ...propsWithoutItems } = rawNodeProps;
 
-    // Convert camelCase props (style parameters etc.) to snake_case for the API
     const apiProps = keysToSnake(propsWithoutItems);
 
-    // Build items array — only included when the section actually has items
     let apiItems: ApiSectionItem[] | undefined = undefined;
     if (Array.isArray(items) && items.length > 0) {
       apiItems = items.map((item, itemIdx) => {
-        const rawProps = item.props || item;
-        const itemProps = keysToSnake(rawProps);
-        // Only include a numeric id if the item came from the server (no dashes)
-        const itemId = item.id && !item.id.toString().includes('-')
-          ? Number(item.id)
-          : undefined;
+        const rawItemProps = safeParseProps(item.props || item);
+        const itemProps = keysToSnake(rawItemProps);
+        const itemId =
+          item.id && !item.id.toString().includes('-')
+            ? Number(item.id)
+            : undefined;
         return {
           ...(itemId !== undefined ? { id: itemId } : {}),
-          order: item.order || (itemIdx + 1),
-          props: itemProps
+          order: item.order || itemIdx + 1,
+          props: itemProps,
         };
       });
     }
 
-    // Determine whether this section has a real server-side numeric id
-    const sectionId = node.id && !node.id.includes('-') && !isNaN(Number(node.id))
-      ? Number(node.id)
-      : undefined;
+    const sectionId =
+      node.id && !node.id.includes('-') && !isNaN(Number(node.id))
+        ? Number(node.id)
+        : undefined;
 
     const section: ApiSection = {
       ...(sectionId !== undefined ? { id: sectionId } : {}),
@@ -354,7 +337,6 @@ export function editorToApi(nodes: BuilderNode[], pageId: string | number): ApiS
       props: apiProps,
     };
 
-    // Only attach items key when there are actual items
     if (apiItems !== undefined) {
       section.items = apiItems;
     }
