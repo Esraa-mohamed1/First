@@ -19,7 +19,65 @@ export interface CreatedPageResponse {
   status: string;
   [key: string]: any;
 }
-
+const SECTION_DEFAULT_PROPS: Record<string, Record<string, any>> = {
+  'hero': {
+    title: '',
+    subtitle: '',
+    button_text: '',
+    button_link: '#',
+    background_color: '#ffffff',
+    text_color: '#1f2937',
+    padding_top: 80,
+    padding_bottom: 80,
+  },
+  'pricing_section': {
+    title: '',
+    subtitle: '',
+    background_color: '#ffffff',
+    text_color: '#1f2937',
+    padding_top: 60,
+    padding_bottom: 60,
+  },
+  'course-cards': {
+    title: '',
+    subtitle: '',
+    background_color: '#ffffff',
+    text_color: '#1f2937',
+    padding_top: 60,
+    padding_bottom: 60,
+  },
+  'student-feed': {
+    title: '',
+    subtitle: '',
+    background_color: '#ffffff',
+    text_color: '#1f2937',
+    padding_top: 60,
+    padding_bottom: 60,
+  },
+  'features_section': {
+    title: '',
+    subtitle: '',
+    background_color: '#ffffff',
+    text_color: '#1f2937',
+    padding_top: 60,
+    padding_bottom: 60,
+  },
+  'faq_section': {
+    title: '',
+    subtitle: '',
+    background_color: '#ffffff',
+    text_color: '#1f2937',
+    padding_top: 60,
+    padding_bottom: 60,
+  },
+  'kpi-cards': {
+    title: '',
+    background_color: '#ffffff',
+    text_color: '#1f2937',
+    padding_top: 60,
+    padding_bottom: 60,
+  },
+};
 // -----------------------------------------------------------------------
 // Axios instance
 // -----------------------------------------------------------------------
@@ -73,7 +131,7 @@ export const createPage = async (
 };
 
 // -----------------------------------------------------------------------
-// Types
+// Section Types
 // -----------------------------------------------------------------------
 
 export interface ApiSectionItem {
@@ -119,13 +177,20 @@ export const saveSections = async (
     pages_id: numericPageId,
     sections: sections.map((section, index) => {
       const { pages_id: _pid, id: _id, ...rest } = section;
+
+      // ✅ لو props فاضية نحط placeholder عشان الـ API ميرفضش
+      const safeProps =
+        rest.props && Object.keys(rest.props).length > 0
+          ? rest.props
+          : { _initialized: true };
+
       return {
         ...(!section.id || section.id.toString().includes('-')
           ? {}
           : { id: Number(section.id) }),
         type: rest.type,
         order: rest.order ?? index + 1,
-        props: rest.props,
+        props: safeProps,
         items: (rest.items ?? []).map((item, itemIdx) => ({
           ...(!item.id || item.id.toString().includes('-')
             ? {}
@@ -198,34 +263,42 @@ function keysToCamelForNewTypes(obj: any): any {
 }
 
 // -----------------------------------------------------------------------
-// safeParseProps — يحل مشكلة الـ props اللي بتيجي string أو char-indexed
+// safeParseProps
 // -----------------------------------------------------------------------
 
 function safeParseProps(raw: any): Record<string, any> {
-  // object عادي — نتحقق إنه مش char-indexed
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
     const keys = Object.keys(raw);
-    const isCharIndexed =
-      keys.length > 0 && keys.every((k) => !isNaN(Number(k)));
 
-    if (isCharIndexed) {
-      // نرجع الـ string من الـ characters ونعمل parse
-      const str = keys
+    // افصل الـ numeric keys عن الـ non-numeric keys
+    const numericKeys = keys.filter((k) => !isNaN(Number(k)));
+    const normalKeys = keys.filter((k) => isNaN(Number(k)));
+
+    let parsedFromChars: Record<string, any> = {};
+
+    if (numericKeys.length > 0) {
+      // ارجع الـ string من الـ char-indexed keys
+      const str = numericKeys
         .sort((a, b) => Number(a) - Number(b))
         .map((k) => raw[k] ?? '')
         .join('');
       try {
-        return JSON.parse(str);
+        parsedFromChars = JSON.parse(str);
       } catch (e) {
         console.error('Failed to parse char-indexed props:', str, e);
-        return {};
       }
     }
 
-    return raw;
+    // الـ normal keys (section_bg, background_color, etc.)
+    const normalProps: Record<string, any> = {};
+    for (const k of normalKeys) {
+      normalProps[k] = raw[k];
+    }
+
+    // الـ normal keys تـ override الـ parsed chars لو في تعارض
+    return { ...parsedFromChars, ...normalProps };
   }
 
-  // string — نعمل parse
   if (typeof raw === 'string') {
     let parsed: any = raw;
     let attempts = 0;
@@ -259,6 +332,9 @@ export function apiToEditor(sections: ApiSection[]): BuilderNode[] {
     const isLegacy = LEGACY_TYPES.includes(sec.type);
 
     const rawProps = safeParseProps(sec.props);
+
+    console.log(`=== apiToEditor: section ${sec.type} rawProps ===`, JSON.stringify(rawProps, null, 2));
+
     const props = isLegacy ? keysToCamel(rawProps) : keysToCamelForNewTypes(rawProps);
 
     let editorItems = undefined;
@@ -305,7 +381,18 @@ export function editorToApi(nodes: BuilderNode[], pageId: string | number): ApiS
     const rawNodeProps = safeParseProps(node.props);
     const { items, ...propsWithoutItems } = rawNodeProps;
 
-    const apiProps = keysToSnake(propsWithoutItems);
+    // ✅ لو props فاضية أو مفيش غير items، نجيب الـ defaults
+    const hasRealProps = Object.keys(propsWithoutItems).length > 0;
+    const defaults = SECTION_DEFAULT_PROPS[node.type] ?? {};
+    const mergedProps = hasRealProps
+      ? { ...defaults, ...propsWithoutItems }
+      : defaults;
+
+    const apiProps = keysToSnake(mergedProps);
+
+    // ✅ لو apiProps لسه فاضي نحط placeholder عشان الـ API ميرفضش
+    const finalProps =
+      Object.keys(apiProps).length > 0 ? apiProps : { initialized: true };
 
     let apiItems: ApiSectionItem[] | undefined = undefined;
     if (Array.isArray(items) && items.length > 0) {
@@ -334,7 +421,7 @@ export function editorToApi(nodes: BuilderNode[], pageId: string | number): ApiS
       pages_id: numericPageId as number,
       type: node.type,
       order: index + 1,
-      props: apiProps,
+      props: finalProps,
     };
 
     if (apiItems !== undefined) {
