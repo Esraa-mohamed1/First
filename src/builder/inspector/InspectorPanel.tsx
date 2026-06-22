@@ -112,7 +112,14 @@ function ItemIconPicker({
 }
 
 export default function InspectorPanel() {
-  const { selectedNodeId, currentTemplate, updateNodeProps, setSelectedNodeId } = useBuilderStore();
+  const { 
+    selectedNodeId, 
+    currentTemplate, 
+    updateNodeProps, 
+    setSelectedNodeId,
+    selectedItemIndex,
+    setSelectedItemIndex
+  } = useBuilderStore();
   const [activeTab, setActiveTab] = useState<'content' | 'style' | 'spacing'>('content');
   const [isSimpleMode, setIsSimpleMode] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -591,7 +598,16 @@ interface DynamicListEditorProps {
 }
 
 function DynamicListEditor({ items = [], fields = [], itemLabel = 'عنصر', onChange }: DynamicListEditorProps) {
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const { selectedItemIndex, setSelectedItemIndex } = useBuilderStore();
+
+  useEffect(() => {
+    if (selectedItemIndex !== null) {
+      const element = document.getElementById(`item-editor-${selectedItemIndex}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [selectedItemIndex]);
 
   const handleAddItem = () => {
     const newItemProps: Record<string, any> = {};
@@ -603,7 +619,7 @@ function DynamicListEditor({ items = [], fields = [], itemLabel = 'عنصر', on
       props: newItemProps
     };
     onChange([...items, newItem]);
-    setEditingIndex(items.length);
+    setSelectedItemIndex(items.length);
   };
 
   const handleUpdateItemProp = (index: number, key: string, val: any) => {
@@ -623,7 +639,7 @@ function DynamicListEditor({ items = [], fields = [], itemLabel = 'عنصر', on
     const filtered = items.filter((_, idx) => idx !== index)
       .map((item, idx) => ({ ...item, order: idx + 1 }));
     onChange(filtered);
-    setEditingIndex(null);
+    setSelectedItemIndex(null);
   };
 
   return (
@@ -644,12 +660,12 @@ function DynamicListEditor({ items = [], fields = [], itemLabel = 'عنصر', on
         {items.map((item, idx) => {
           const itemProps = item.props || {};
           const labelText = itemProps.title || itemProps.question || itemProps.plan_name || itemProps.quote || itemProps.caption || `${itemLabel} ${idx + 1}`;
-          const isEditing = editingIndex === idx;
+          const isEditing = selectedItemIndex === idx;
 
           return (
-            <div key={idx} className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/30">
+            <div key={idx} id={`item-editor-${idx}`} className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/30">
               <div
-                onClick={() => setEditingIndex(isEditing ? null : idx)}
+                onClick={() => setSelectedItemIndex(isEditing ? null : idx)}
                 className="p-3 bg-slate-50/50 hover:bg-slate-50 flex justify-between items-center cursor-pointer transition-colors"
               >
                 <span className="text-xs font-bold text-slate-700 truncate max-w-[180px]">{labelText}</span>

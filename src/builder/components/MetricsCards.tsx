@@ -5,6 +5,7 @@ import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
 
 
 interface MetricsCardsProps {
+  id?: string;
   title?: string;
   layout?: 'grid' | 'list';
   cardBg?: string;
@@ -20,11 +21,22 @@ export const MOCK_METRICS = [
 
 export default function MetricsCards(props: MetricsCardsProps) {
   const {
+    id: sectionId,
     title = 'معدل التقدم العام',
     layout = 'grid',
     cardBg = '#ffffff',
     metrics = MOCK_METRICS,
   } = props;
+
+  const { 
+    isEditing, 
+    selectedNodeId, 
+    setSelectedNodeId, 
+    selectedItemIndex, 
+    setSelectedItemIndex, 
+    hoveredItemIndex, 
+    setHoveredItemIndex 
+  } = useBuilderStore();
 
   // Read deviceMode with a fail-safe fallback
   let deviceMode = 'desktop';
@@ -60,11 +72,25 @@ export default function MetricsCards(props: MetricsCardsProps) {
       <div className={containerClass}>
         {metrics.map((metric, index) => {
           const IconComponent = getIconComponent(metric.icon);
+          const isSelected = isEditing && selectedNodeId === sectionId && selectedItemIndex === index;
+          const isHovered = isEditing && hoveredItemIndex === index;
+
           return (
             <div 
               key={index}
+              onClick={(e) => {
+                if (isEditing && sectionId) {
+                  e.stopPropagation();
+                  setSelectedNodeId(sectionId);
+                  setSelectedItemIndex(index);
+                }
+              }}
+              onMouseEnter={() => isEditing && setHoveredItemIndex(index)}
+              onMouseLeave={() => isEditing && setHoveredItemIndex(null)}
               style={{ backgroundColor: isTransparentBg ? 'rgba(255, 255, 255, 0.7)' : cardBg }}
-              className={`p-5 rounded-2xl border ${isTransparentBg ? 'border-white/40 backdrop-blur-md shadow-md' : 'border-slate-100/80 shadow-[0_12px_30px_rgba(25,28,29,0.015)]'} flex items-start gap-4 hover:shadow-md transition-shadow`}
+              className={`p-5 rounded-2xl border cursor-pointer transition-all duration-300 ${
+                isSelected ? 'ring-4 ring-blue-500 ring-offset-2' : isHovered ? 'ring-4 ring-blue-300 ring-offset-1' : (isTransparentBg ? 'border-white/40 backdrop-blur-md shadow-md' : 'border-slate-100/80 shadow-[0_12px_30px_rgba(25,28,29,0.015)]')
+              } flex items-start gap-4 hover:shadow-md transition-shadow`}
             >
               <div 
                 style={{ backgroundColor: `${metric.color}10`, color: metric.color }}

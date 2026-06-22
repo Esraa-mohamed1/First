@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Trash2, ChevronDown, Plus } from 'lucide-react';
 import { MOCK_ACTIVITIES } from '../../components/StudentFeed';
+import { useBuilderStore } from '../../store/builderStore';
 
 interface StudentFeedEditorProps {
   props: Record<string, any>;
@@ -12,12 +13,28 @@ export default function StudentFeedEditor({
   handlePropChange,
 }: StudentFeedEditorProps) {
   const activities = props.activities || MOCK_ACTIVITIES;
+  const { selectedItemIndex } = useBuilderStore();
+
+  useEffect(() => {
+    if (selectedItemIndex !== null) {
+      const element = document.getElementById(`item-editor-${selectedItemIndex}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [selectedItemIndex]);
 
   return (
     <div className="space-y-4 pt-4 border-t border-slate-100">
       <label className="text-[10px] font-black text-slate-400 pr-1 block">تعديل أنشطة الطلاب</label>
       {activities.map((activity: any, idx: number) => (
-        <div key={activity.id} className="p-3.5 bg-slate-50 border border-slate-100 rounded-2xl space-y-3 relative group">
+        <div 
+          key={activity.id} 
+          id={`item-editor-${idx}`}
+          className={`p-3.5 bg-slate-50 border rounded-2xl space-y-3 relative group transition-all duration-300 ${
+            selectedItemIndex === idx ? 'border-blue-500 shadow-md bg-blue-50/10 ring-2 ring-blue-500/20' : 'border-slate-100'
+          }`}
+        >
           <div className="flex justify-between items-center">
             <span className="text-[10px] font-black text-slate-400">نشاط #{idx + 1}</span>
             <button 

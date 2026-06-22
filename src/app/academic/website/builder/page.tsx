@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getSections, saveSections, apiToEditor, editorToApi } from '@/services/pages';
+import Swal from 'sweetalert2';
 
 export default function PageBuilderPage() {
   const router = useRouter();
@@ -33,6 +34,8 @@ export default function PageBuilderPage() {
   const pageId = searchParams.get('pageId') || '1';
 
   const [tourStep, setTourStep] = useState<number>(-1);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [lastSavedContent, setLastSavedContent] = useState<string>('');
 
   const tourSteps = [
     {
@@ -204,61 +207,151 @@ export default function PageBuilderPage() {
     });
   };
 
-  const handleSaveDraft = async () => {
-    saveDraft();
-    if (pageId && currentTemplate) {
-      try {
-        const apiSections = editorToApi(currentTemplate.sections, pageId);
-        await saveSections(pageId, apiSections);
-        toast.success('تم حفظ مسودة تعديلاتك على السيرفر بنجاح.', {
-          style: {
-            fontFamily: 'IBM Plex Sans Arabic',
-            fontSize: '11px',
-            fontWeight: 'bold',
-            direction: 'rtl'
+  const handleSaveDraft = async (silent = false) => {
+    if (!silent) {
+      saveDraft();
+      if (pageId && currentTemplate) {
+        Swal.fire({
+          title: 'جاري الحفظ...',
+          text: 'جاري حفظ مسودة تصميمك على السيرفر',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          },
+          customClass: {
+            popup: 'font-["IBM_Plex_Sans_Arabic"]'
           }
         });
-      } catch (err) {
-        console.error('Failed to save draft to server:', err);
-        toast.error('حدث خطأ أثناء حفظ المسودة على السيرفر.');
+        try {
+          const apiSections = editorToApi(currentTemplate.sections, pageId);
+          await saveSections(pageId, apiSections);
+          setLastSavedContent(JSON.stringify(currentTemplate.sections));
+          Swal.fire({
+            icon: 'success',
+            title: 'تم الحفظ بنجاح!',
+            text: 'تم تسجيل كافة الخصائص وترتيب العناصر كما هي في لوحة التحكم.',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'حسناً',
+            customClass: {
+              popup: 'font-["IBM_Plex_Sans_Arabic"]'
+            }
+          });
+        } catch (err) {
+          console.error('Failed to save draft to server:', err);
+          Swal.fire({
+            icon: 'error',
+            title: 'خطأ',
+            text: 'عذراً، حدث خطأ أثناء الاتصال بالسيرفر لحفظ المسودة.',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'إغلاق',
+            customClass: {
+              popup: 'font-["IBM_Plex_Sans_Arabic"]'
+            }
+          });
+        }
+      } else {
+        Swal.fire({
+          icon: 'success',
+          title: 'تم الحفظ',
+          text: 'تم حفظ التغييرات في ذاكرة المتصفح المحلية بنجاح.',
+          confirmButtonColor: '#2563eb',
+          confirmButtonText: 'حسناً',
+          timer: 3000,
+          customClass: {
+            popup: 'font-["IBM_Plex_Sans_Arabic"]'
+          }
+        });
       }
     } else {
-      toast.success('تم حفظ مسودة تعديلاتك محلياً بنجاح.', {
-        style: {
-          fontFamily: 'IBM Plex Sans Arabic',
-          fontSize: '11px',
-          fontWeight: 'bold',
-          direction: 'rtl'
-        }
-      });
+      // Silent Auto-save (Local only)
+      setIsAutoSaving(true);
+      saveDraft();
+      setLastSavedContent(JSON.stringify(currentTemplate?.sections));
+      setTimeout(() => setIsAutoSaving(false), 1500);
     }
   };
 
+  // Auto-save logic
+  useEffect(() => {
+    if (!currentTemplate || !isEditing) return;
+
+    const currentContent = JSON.stringify(currentTemplate.sections);
+    
+    // Don't auto-save if content hasn't changed since last save
+    if (currentContent === lastSavedContent) return;
+
+    const timer = setTimeout(() => {
+      handleSaveDraft(true);
+    }, 3000); // 3 seconds debounce
+
+    return () => clearTimeout(timer);
+  }, [currentTemplate?.sections, isEditing]);
+
   const handlePublish = async () => {
+    const confirmResult = await Swal.fire({
+      title: 'تأكيد النشر',
+      text: 'هل أنت متأكد من الوصول للتصميم النهائي؟ سيتم نشر الموقع وتحديث المحتوى والترتيب فوراً لجميع الطلاب.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#2563eb',
+      cancelButtonColor: '#ef4444',
+      confirmButtonText: 'نعم، انشر الآن',
+      cancelButtonText: 'إلغاء',
+      customClass: {
+        popup: 'font-["IBM_Plex_Sans_Arabic"]'
+      }
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
     publishTemplate();
     if (pageId && currentTemplate) {
+      Swal.fire({
+        title: 'جاري النشر...',
+        text: 'جاري معالجة ونشر التصميم النهائي...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+        customClass: {
+          popup: 'font-["IBM_Plex_Sans_Arabic"]'
+        }
+      });
       try {
         const apiSections = editorToApi(currentTemplate.sections, pageId);
         await saveSections(pageId, apiSections);
-        toast.success('تهانينا! تم نشر تعديلات القالب وتحديث الصفحة على السيرفر بنجاح.', {
-          style: {
-            fontFamily: 'IBM Plex Sans Arabic',
-            fontSize: '11px',
-            fontWeight: 'bold',
-            direction: 'rtl'
+        Swal.fire({
+          icon: 'success',
+          title: 'تم النشر!',
+          text: 'مبارك! تم نشر موقعك بنجاح بأحدث إصدار وتنسيق. يمكنك الآن مشاركة الرابط مع طلابك.',
+          confirmButtonColor: '#2563eb',
+          confirmButtonText: 'حسناً',
+          customClass: {
+            popup: 'font-["IBM_Plex_Sans_Arabic"]'
           }
         });
       } catch (err) {
         console.error('Failed to publish to server:', err);
-        toast.error('حدث خطأ أثناء النشر على السيرفر.');
+        Swal.fire({
+          icon: 'error',
+          title: 'خطأ',
+          text: 'حدث خطأ أثناء محاولة النشر على السيرفر، يرجى المحاولة مرة أخرى.',
+          confirmButtonColor: '#2563eb',
+          confirmButtonText: 'إغلاق',
+          customClass: {
+            popup: 'font-["IBM_Plex_Sans_Arabic"]'
+          }
+        });
       }
     } else {
-      toast.success('تهانينا! تم نشر تعديلات القالب وتحديث موجه موقعك بنجاح.', {
-        style: {
-          fontFamily: 'IBM Plex Sans Arabic',
-          fontSize: '11px',
-          fontWeight: 'bold',
-          direction: 'rtl'
+      Swal.fire({
+        icon: 'success',
+        title: 'تم التحديث',
+        text: 'تم تحديث حالة القالب إلى "منشور" في الذاكرة المحلية.',
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'حسناً',
+        customClass: {
+          popup: 'font-["IBM_Plex_Sans_Arabic"]'
         }
       });
     }
@@ -300,6 +393,12 @@ export default function PageBuilderPage() {
                 }`}>
                 {currentTemplate.status === 'published' ? 'منشور' : 'مسودة'}
               </span>
+              {isAutoSaving && (
+                <span className="flex items-center gap-1 text-[8px] font-black text-blue-400 animate-pulse">
+                  <Save className="w-2.5 h-2.5" />
+                  جاري الحفظ التلقائي محلياً...
+                </span>
+              )}
             </div>
             <p className="text-[9px] text-slate-400 font-bold mt-1">نسخة الإصدار v{currentTemplate.version}</p>
           </div>

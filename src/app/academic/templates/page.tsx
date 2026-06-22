@@ -69,9 +69,10 @@ export default function TemplatesPage() {
     setActivatingId(id);
 
     try {
+      const uniqueSuffix = Math.floor(Math.random() * 10000);
       const payload = {
-        title: 'الرئيسية',
-        slug: 'home',
+        title: `الرئيسية - ${uniqueSuffix}`,
+        slug: `home-${Date.now()}`,
         status: 'published',
         template: id
       };
@@ -94,7 +95,19 @@ export default function TemplatesPage() {
       });
     } catch (err: any) {
       console.error('Failed to activate template:', err);
-      toast.error('فشل تفعيل القالب. يرجى المحاولة مجدداً.', {
+      
+      // Extract specific validation error if available
+      let errorMsg = 'فشل تفعيل القالب. يرجى المحاولة مجدداً.';
+      if (err.response?.data?.errors) {
+        const firstErrorKey = Object.keys(err.response.data.errors)[0];
+        if (firstErrorKey) {
+          errorMsg = err.response.data.errors[firstErrorKey][0];
+        }
+      } else if (err.response?.data?.message) {
+        errorMsg = err.response.data.message;
+      }
+
+      toast.error(errorMsg, {
         style: {
           fontFamily: 'IBM Plex Sans Arabic',
           fontWeight: 'bold',

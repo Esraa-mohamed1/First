@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Trash2, ChevronDown, Plus } from 'lucide-react';
 import { AVAILABLE_ICONS, getIconComponent } from '../../utils/icons';
 import { MOCK_METRICS } from '../../components/MetricsCards';
+import { useBuilderStore } from '../../store/builderStore';
 
 interface MetricsCardsEditorProps {
   props: Record<string, any>;
@@ -21,6 +22,16 @@ export default function MetricsCardsEditor({
   setIconSearch,
 }: MetricsCardsEditorProps) {
   const metrics = props.metrics || MOCK_METRICS;
+  const { selectedItemIndex } = useBuilderStore();
+
+  useEffect(() => {
+    if (selectedItemIndex !== null) {
+      const element = document.getElementById(`item-editor-${selectedItemIndex}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [selectedItemIndex]);
 
   return (
     <div className="space-y-4 pt-4 border-t border-slate-100">
@@ -28,7 +39,13 @@ export default function MetricsCardsEditor({
       {metrics.map((metric: any, idx: number) => {
         const IconComponent = getIconComponent(metric.icon);
         return (
-          <div key={idx} className="p-3.5 bg-slate-50 border border-slate-100 rounded-2xl space-y-3 relative group">
+          <div 
+            key={idx} 
+            id={`item-editor-${idx}`}
+            className={`p-3.5 bg-slate-50 border rounded-2xl space-y-3 relative group transition-all duration-300 ${
+              selectedItemIndex === idx ? 'border-blue-500 shadow-md bg-blue-50/10 ring-2 ring-blue-500/20' : 'border-slate-100'
+            }`}
+          >
             <div className="flex justify-between items-center">
               <span className="text-[10px] font-black text-slate-400">مؤشر #{idx + 1}</span>
               <button 

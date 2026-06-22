@@ -1,8 +1,10 @@
 import React from 'react';
 import { User, CheckCircle2, Award, MessageSquare, BookOpen } from 'lucide-react';
 import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
+import { useBuilderStore } from '../store/builderStore';
 
 interface StudentFeedProps {
+  id?: string;
   title?: string;
   limit?: number;
   showStatusBadges?: boolean;
@@ -60,11 +62,23 @@ export const MOCK_ACTIVITIES = [
 
 export default function StudentFeed(props: StudentFeedProps) {
   const {
+    id: sectionId,
     title = 'تحديثات نشاط المتعلمين',
     limit = 4,
     showStatusBadges = true,
     activities = MOCK_ACTIVITIES,
   } = props;
+
+  const { 
+    isEditing, 
+    selectedNodeId, 
+    setSelectedNodeId, 
+    selectedItemIndex, 
+    setSelectedItemIndex, 
+    hoveredItemIndex, 
+    setHoveredItemIndex 
+  } = useBuilderStore();
+
   const visibleFeed = activities.slice(0, limit);
 
   const getIcon = (type: string) => {
@@ -95,7 +109,6 @@ export default function StudentFeed(props: StudentFeedProps) {
   return (
     <div className={`${isTransparentBg ? 'bg-white/70 border-white/40 shadow-lg shadow-slate-900/5 backdrop-blur-md' : 'bg-white border-slate-100 shadow-[0_12px_40px_rgba(25,28,29,0.02)]'} rounded-3xl p-6 space-y-6 text-right`} dir="rtl">
 
-      
       <h3 
         style={titleTypography.style}
         className={`border-b border-slate-50 pb-3 ${titleTypography.className}`}
@@ -104,53 +117,70 @@ export default function StudentFeed(props: StudentFeedProps) {
       </h3>
 
       <div className="space-y-6 relative before:absolute before:right-6 before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100/80">
-        {visibleFeed.map((item) => (
-          <div key={item.id} className="relative flex items-start gap-4 pr-1.5 group">
-            
-            {/* Timeline dot */}
+        {visibleFeed.map((item, index) => {
+          const isSelected = isEditing && selectedNodeId === sectionId && selectedItemIndex === index;
+          const isHovered = isEditing && hoveredItemIndex === index;
+
+          return (
             <div 
-              style={{ borderColor: item.color }}
-              className="w-10 h-10 rounded-2xl bg-white border-2 flex items-center justify-center shrink-0 shadow-sm relative z-10 group-hover:scale-105 transition-transform"
+              key={item.id} 
+              onClick={(e) => {
+                if (isEditing && sectionId) {
+                  e.stopPropagation();
+                  setSelectedNodeId(sectionId);
+                  setSelectedItemIndex(index);
+                }
+              }}
+              onMouseEnter={() => isEditing && setHoveredItemIndex(index)}
+              onMouseLeave={() => isEditing && setHoveredItemIndex(null)}
+              className={`relative flex items-start gap-4 pr-1.5 group cursor-pointer transition-all duration-300 ${
+                isSelected ? 'ring-4 ring-blue-500 ring-offset-2 rounded-2xl' : isHovered ? 'ring-4 ring-blue-300 ring-offset-1 rounded-2xl' : ''
+              }`}
             >
-              {getIcon(item.type)}
-            </div>
-
-            {/* Content info */}
-            <div className={`flex-1 min-w-0 ${isTransparentBg ? 'bg-white/30 border-white/10 group-hover:bg-white/40' : 'bg-slate-50/50 border-slate-100/20 group-hover:bg-slate-50'} rounded-2xl p-4 border transition-colors`}>
-
-              <div className="flex justify-between items-center gap-2 mb-1.5">
-                <span className="text-xs font-black text-slate-800 truncate">
-                  {item.user}
-                </span>
-                <span className="text-[10px] text-slate-400 font-bold shrink-0">
-                  {item.time}
-                </span>
+              {/* Timeline dot */}
+              <div 
+                style={{ borderColor: item.color }}
+                className="w-10 h-10 rounded-2xl bg-white border-2 flex items-center justify-center shrink-0 shadow-sm relative z-10 group-hover:scale-105 transition-transform"
+              >
+                {getIcon(item.type)}
               </div>
-              <p className="text-xs text-slate-600 font-bold leading-relaxed">
-                {item.action}
-              </p>
-              
-              {showStatusBadges && (
-                <div className="mt-3 pt-2.5 border-t border-slate-200/50 flex justify-between items-center">
-                  <span className="text-[9px] font-black text-slate-400">
-                    الكورس: {item.course}
+
+              {/* Content info */}
+              <div className={`flex-1 min-w-0 ${isTransparentBg ? 'bg-white/30 border-white/10 group-hover:bg-white/40' : 'bg-slate-50/50 border-slate-100/20 group-hover:bg-slate-50'} rounded-2xl p-4 border transition-colors`}>
+
+                <div className="flex justify-between items-center gap-2 mb-1.5">
+                  <span className="text-xs font-black text-slate-800 truncate">
+                    {item.user}
                   </span>
-                  
-                  <span 
-                    style={{ backgroundColor: `${item.color}10`, color: item.color }}
-                    className="px-2 py-0.5 rounded-md text-[8px] font-black"
-                  >
-                    {item.type === 'lesson' ? 'درس' :
-                     item.type === 'quiz' ? 'اختبار' :
-                     item.type === 'comment' ? 'استفسار' :
-                     item.type === 'certificate' ? 'شهادة' : 'تسجيل جديد'}
+                  <span className="text-[10px] text-slate-400 font-bold shrink-0">
+                    {item.time}
                   </span>
                 </div>
-              )}
+                <p className="text-xs text-slate-600 font-bold leading-relaxed">
+                  {item.action}
+                </p>
+                
+                {showStatusBadges && (
+                  <div className="mt-3 pt-2.5 border-t border-slate-200/50 flex justify-between items-center">
+                    <span className="text-[9px] font-black text-slate-400">
+                      الكورس: {item.course}
+                    </span>
+                    
+                    <span 
+                      style={{ backgroundColor: `${item.color}10`, color: item.color }}
+                      className="px-2 py-0.5 rounded-md text-[8px] font-black"
+                    >
+                      {item.type === 'lesson' ? 'درس' :
+                       item.type === 'quiz' ? 'اختبار' :
+                       item.type === 'comment' ? 'استفسار' :
+                       item.type === 'certificate' ? 'شهادة' : 'تسجيل جديد'}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
-
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

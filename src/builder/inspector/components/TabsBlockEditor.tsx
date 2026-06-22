@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Trash2, Plus } from 'lucide-react';
 import { MOCK_TABS } from '../../components/TabsBlock';
+import { useBuilderStore } from '../../store/builderStore';
 
 interface TabsBlockEditorProps {
   props: Record<string, any>;
@@ -12,12 +13,28 @@ export default function TabsBlockEditor({
   handlePropChange,
 }: TabsBlockEditorProps) {
   const tabs = props.tabs || MOCK_TABS;
+  const { selectedItemIndex } = useBuilderStore();
+
+  useEffect(() => {
+    if (selectedItemIndex !== null) {
+      const element = document.getElementById(`item-editor-${selectedItemIndex}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [selectedItemIndex]);
 
   return (
     <div className="space-y-4 pt-4 border-t border-slate-100">
       <label className="text-[10px] font-black text-slate-400 pr-1 block">تعديل علامات التبويب</label>
       {tabs.map((tab: any, idx: number) => (
-        <div key={tab.id} className="p-3.5 bg-slate-50 border border-slate-100 rounded-2xl space-y-3 relative group">
+        <div 
+          key={tab.id} 
+          id={`item-editor-${idx}`}
+          className={`p-3.5 bg-slate-50 border rounded-2xl space-y-3 relative group transition-all duration-300 ${
+            selectedItemIndex === idx ? 'border-blue-500 shadow-md bg-blue-50/10 ring-2 ring-blue-500/20' : 'border-slate-100'
+          }`}
+        >
           <div className="flex justify-between items-center">
             <span className="text-[10px] font-black text-slate-400">تبويب #{idx + 1}</span>
             <button 

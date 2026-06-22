@@ -3,6 +3,7 @@ import * as LucideIcons from 'lucide-react';
 import { ComponentRegistryEntry } from '../interfaces';
 import { buildStyles, extractContentProps, extractStyleProps } from '../utils/typography';
 import { useDeviceMode } from '../context/DeviceModeContext';
+import { useBuilderStore } from '../store/builderStore';
 
 // Import existing blocks
 import HeroBanner from '../components/HeroBanner';
@@ -38,6 +39,16 @@ function getResponsiveGridClass(cols: number) {
 // ─── Dynamic Component Implementations (using React.createElement for pure .ts compliance) ───
 
 export const HeroSection = React.memo((props: any) => {
+  const { 
+    isEditing, 
+    selectedNodeId, 
+    setSelectedNodeId, 
+    selectedItemIndex, 
+    setSelectedItemIndex, 
+    hoveredItemIndex, 
+    setHoveredItemIndex 
+  } = useBuilderStore();
+  
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
@@ -75,6 +86,9 @@ export const HeroSection = React.memo((props: any) => {
     const slideAlign = slideProps.align || 'center';
     const alignClass = slideAlign === 'left' ? 'text-left items-start' : slideAlign === 'center' ? 'text-center items-center' : 'text-right items-end';
 
+    const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === current;
+    const isHovered = isEditing && hoveredItemIndex === current;
+
     const slideStyle: React.CSSProperties = {
       backgroundColor: slideProps.bg_image ? undefined : slideProps.background_color || '#1e40af',
       backgroundImage: slideProps.bg_image ? `url(${slideProps.bg_image})` : undefined,
@@ -85,7 +99,20 @@ export const HeroSection = React.memo((props: any) => {
 
     return React.createElement(
       'div',
-      { className: 'relative overflow-hidden w-full select-none min-h-[220px] sm:min-h-[280px]' },
+      { 
+        className: `relative overflow-hidden w-full select-none min-h-[220px] sm:min-h-[280px] transition-all duration-300 ${
+          isSelected ? 'ring-4 ring-blue-500 ring-inset' : isHovered ? 'ring-4 ring-blue-300 ring-inset' : ''
+        }`,
+        onClick: (e: any) => {
+          if (isEditing) {
+            e.stopPropagation();
+            setSelectedNodeId(props.id);
+            setSelectedItemIndex(current);
+          }
+        },
+        onMouseEnter: () => isEditing && setHoveredItemIndex(current),
+        onMouseLeave: () => isEditing && setHoveredItemIndex(null),
+      },
       React.createElement(
         'section',
         {
@@ -170,6 +197,16 @@ export const HeroSection = React.memo((props: any) => {
 HeroSection.displayName = 'HeroSection';
 
 export const FeaturesSection = React.memo((props: any) => {
+  const { 
+    isEditing, 
+    selectedNodeId, 
+    setSelectedNodeId, 
+    selectedItemIndex, 
+    setSelectedItemIndex, 
+    hoveredItemIndex, 
+    setHoveredItemIndex 
+  } = useBuilderStore();
+
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
@@ -192,9 +229,26 @@ export const FeaturesSection = React.memo((props: any) => {
       { className: `grid gap-4 ${gridClass}` },
       items.map((item: any, idx: number) => {
         const itemProps = item.props || {};
+        const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
+        const isHovered = isEditing && hoveredItemIndex === idx;
+
         return React.createElement(
           'div',
-          { key: idx, className: 'p-4 bg-white/60 backdrop-blur-sm border border-slate-100 hover:border-slate-200 rounded-2xl flex flex-col items-start gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-md' },
+          { 
+            key: idx, 
+            className: `p-4 bg-white/60 backdrop-blur-sm border rounded-2xl flex flex-col items-start gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
+              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100'
+            }`,
+            onClick: (e: any) => {
+              if (isEditing) {
+                e.stopPropagation();
+                setSelectedNodeId(props.id);
+                setSelectedItemIndex(idx);
+              }
+            },
+            onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
+            onMouseLeave: () => isEditing && setHoveredItemIndex(null),
+          },
           itemProps.icon
             ? React.createElement(
               'div',
@@ -219,6 +273,16 @@ export const FeaturesSection = React.memo((props: any) => {
 FeaturesSection.displayName = 'FeaturesSection';
 
 export const FaqSection = React.memo((props: any) => {
+  const { 
+    isEditing, 
+    selectedNodeId, 
+    setSelectedNodeId, 
+    selectedItemIndex, 
+    setSelectedItemIndex, 
+    hoveredItemIndex, 
+    setHoveredItemIndex 
+  } = useBuilderStore();
+
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
@@ -241,14 +305,39 @@ export const FaqSection = React.memo((props: any) => {
       items.map((item: any, idx: number) => {
         const itemProps = item.props || {};
         const isOpen = openIdx === idx;
+        const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
+        const isHovered = isEditing && hoveredItemIndex === idx;
+
         return React.createElement(
           'div',
-          { key: idx, className: 'border border-slate-100 rounded-2xl bg-white/60 backdrop-blur-sm overflow-hidden transition-all duration-300' },
+          { 
+            key: idx, 
+            className: `border rounded-2xl bg-white/60 backdrop-blur-sm overflow-hidden transition-all duration-300 ${
+              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100'
+            }`,
+            onClick: (e: any) => {
+              if (isEditing) {
+                e.stopPropagation();
+                setSelectedNodeId(props.id);
+                setSelectedItemIndex(idx);
+              }
+            },
+            onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
+            onMouseLeave: () => isEditing && setHoveredItemIndex(null),
+          },
           React.createElement(
             'button',
             {
               type: 'button',
-              onClick: () => setOpenIdx(isOpen ? null : idx),
+              onClick: (e: any) => {
+                if (isEditing) {
+                  // If editing, click selects, double click or toggle button might be needed for actual FAQ toggle
+                  // but for now let's keep it simple
+                  setOpenIdx(isOpen ? null : idx);
+                } else {
+                  setOpenIdx(isOpen ? null : idx);
+                }
+              },
               className: 'w-full p-4 flex justify-between items-center text-right hover:bg-slate-50/50 transition-colors gap-3'
             },
             React.createElement('span', { className: 'text-xs font-black text-slate-800 break-words text-right flex-1' }, itemProps.question || `سؤال ${idx + 1}`),
@@ -257,8 +346,9 @@ export const FaqSection = React.memo((props: any) => {
           React.createElement(
             'div',
             {
-              className: `transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-[300px] border-t border-slate-100 p-4 bg-white/30' : 'max-h-0'
-                }`
+              className: `transition-all duration-300 ease-in-out overflow-hidden ${
+                isOpen ? 'max-h-[300px] border-t border-slate-100 p-4 bg-white/30' : 'max-h-0'
+              }`
             },
             React.createElement('p', { className: 'text-xs text-slate-500 font-bold leading-relaxed break-words' }, itemProps.answer)
           )
@@ -270,6 +360,16 @@ export const FaqSection = React.memo((props: any) => {
 FaqSection.displayName = 'FaqSection';
 
 export const TestimonialsSection = React.memo((props: any) => {
+  const { 
+    isEditing, 
+    selectedNodeId, 
+    setSelectedNodeId, 
+    selectedItemIndex, 
+    setSelectedItemIndex, 
+    hoveredItemIndex, 
+    setHoveredItemIndex 
+  } = useBuilderStore();
+
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
@@ -290,9 +390,26 @@ export const TestimonialsSection = React.memo((props: any) => {
       { className: 'grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3' },
       items.map((item: any, idx: number) => {
         const itemProps = item.props || {};
+        const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
+        const isHovered = isEditing && hoveredItemIndex === idx;
+
         return React.createElement(
           'div',
-          { key: idx, className: 'p-5 bg-white border border-slate-100 rounded-2xl flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300' },
+          { 
+            key: idx, 
+            className: `p-5 bg-white border rounded-2xl flex flex-col justify-between shadow-sm transition-all duration-300 ${
+              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100 hover:shadow-md'
+            }`,
+            onClick: (e: any) => {
+              if (isEditing) {
+                e.stopPropagation();
+                setSelectedNodeId(props.id);
+                setSelectedItemIndex(idx);
+              }
+            },
+            onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
+            onMouseLeave: () => isEditing && setHoveredItemIndex(null),
+          },
           React.createElement(
             'div',
             { className: 'space-y-3' },
@@ -330,6 +447,16 @@ export const TestimonialsSection = React.memo((props: any) => {
 TestimonialsSection.displayName = 'TestimonialsSection';
 
 export const GallerySection = React.memo((props: any) => {
+  const { 
+    isEditing, 
+    selectedNodeId, 
+    setSelectedNodeId, 
+    selectedItemIndex, 
+    setSelectedItemIndex, 
+    hoveredItemIndex, 
+    setHoveredItemIndex 
+  } = useBuilderStore();
+
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
@@ -364,9 +491,26 @@ export const GallerySection = React.memo((props: any) => {
       { className: `grid gap-3 ${gridClass}` },
       items.map((item: any, idx: number) => {
         const itemProps = item.props || {};
+        const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
+        const isHovered = isEditing && hoveredItemIndex === idx;
+
         return React.createElement(
           'div',
-          { key: idx, className: `relative ${aspectClass} rounded-xl overflow-hidden group border border-slate-100/40 shadow-sm bg-slate-100` },
+          { 
+            key: idx, 
+            className: `relative ${aspectClass} rounded-xl overflow-hidden group shadow-sm bg-slate-100 transition-all duration-300 ${
+              isSelected ? 'ring-4 ring-blue-500 ring-inset' : isHovered ? 'ring-4 ring-blue-300 ring-inset' : 'border border-slate-100/40'
+            }`,
+            onClick: (e: any) => {
+              if (isEditing) {
+                e.stopPropagation();
+                setSelectedNodeId(props.id);
+                setSelectedItemIndex(idx);
+              }
+            },
+            onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
+            onMouseLeave: () => isEditing && setHoveredItemIndex(null),
+          },
           React.createElement('img', {
             src: itemProps.image_url || 'https://images.unsplash.com/photo-1498050108023-c5249f4df085',
             alt: itemProps.caption || '',
@@ -387,6 +531,16 @@ export const GallerySection = React.memo((props: any) => {
 GallerySection.displayName = 'GallerySection';
 
 export const PricingSection = React.memo((props: any) => {
+  const { 
+    isEditing, 
+    selectedNodeId, 
+    setSelectedNodeId, 
+    selectedItemIndex, 
+    setSelectedItemIndex, 
+    hoveredItemIndex, 
+    setHoveredItemIndex 
+  } = useBuilderStore();
+
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
@@ -409,15 +563,25 @@ export const PricingSection = React.memo((props: any) => {
         const itemProps = item.props || {};
         const isPopular = itemProps.is_popular;
         const features = itemProps.features_list ? itemProps.features_list.split('\n').filter(Boolean) : [];
+        const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
+        const isHovered = isEditing && hoveredItemIndex === idx;
 
         return React.createElement(
           'div',
           {
             key: idx,
-            className: `flex flex-col bg-white border ${isPopular
-              ? 'border-2 border-yellow-400 relative shadow-xl z-10'
-              : 'border-slate-100 shadow-sm hover:shadow-md'
-              } rounded-3xl p-5 transition-all duration-300`
+            className: `flex flex-col bg-white border rounded-3xl p-5 transition-all duration-300 ${
+              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : (isPopular ? 'border-2 border-yellow-400 relative shadow-xl z-10' : 'border-slate-100 shadow-sm hover:shadow-md')
+            }`,
+            onClick: (e: any) => {
+              if (isEditing) {
+                e.stopPropagation();
+                setSelectedNodeId(props.id);
+                setSelectedItemIndex(idx);
+              }
+            },
+            onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
+            onMouseLeave: () => isEditing && setHoveredItemIndex(null),
           },
           isPopular
             ? React.createElement(
@@ -468,6 +632,16 @@ PricingSection.displayName = 'PricingSection';
 // ─── Categories Section ───────────────────────────────────────────────────────
 
 export const CategoriesSection = React.memo((props: any) => {
+  const { 
+    isEditing, 
+    selectedNodeId, 
+    setSelectedNodeId, 
+    selectedItemIndex, 
+    setSelectedItemIndex, 
+    hoveredItemIndex, 
+    setHoveredItemIndex 
+  } = useBuilderStore();
+
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
@@ -500,11 +674,25 @@ export const CategoriesSection = React.memo((props: any) => {
           shapeClass = 'rounded-none';
         }
 
+        const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
+        const isHovered = isEditing && hoveredItemIndex === idx;
+
         return React.createElement(
           'div',
           {
             key: idx,
-            className: `group relative overflow-hidden border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer bg-white flex flex-col items-center justify-center text-center p-6 ${shapeClass}`
+            className: `group relative overflow-hidden border shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer bg-white flex flex-col items-center justify-center text-center p-6 ${shapeClass} ${
+              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100'
+            }`,
+            onClick: (e: any) => {
+              if (isEditing) {
+                e.stopPropagation();
+                setSelectedNodeId(props.id);
+                setSelectedItemIndex(idx);
+              }
+            },
+            onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
+            onMouseLeave: () => isEditing && setHoveredItemIndex(null),
           },
           p.icon
             ? React.createElement(
