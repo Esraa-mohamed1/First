@@ -45,14 +45,30 @@ export default function ActiveTemplatePage() {
         const apiPages = await getPages();
         setPages(apiPages);
         
-        // Find if any page has a template defined and resolves as our home page
-        const homePage = apiPages.find((p: any) => p.slug === 'home' || p.slug?.startsWith('home-'));
+        const TEMPLATE_SLUGS = ['academy-dashboard', 'template_1', 'template_2', 'template_3', 'template_4', 'template_courses_1'];
+        
+        let homePage = apiPages.find((p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true');
+        if (!homePage) {
+          const templatePages = apiPages.filter((p: any) => TEMPLATE_SLUGS.includes(p.title));
+          homePage = templatePages.sort((a: any, b: any) => Number(b.id) - Number(a.id))[0];
+        }
+        
         if (homePage) {
-          const tId = homePage.template || homePage.template_id;
-          if (tId) {
-            setActiveTemplateId(tId);
-          }
+          const resolvedTemplateId = homePage.title || homePage.slug;
+          setActiveTemplateId(resolvedTemplateId);
           setActivePageId(String(homePage.id));
+          
+          // Sync with localStorage
+          localStorage.setItem('darab_active_template', resolvedTemplateId);
+          localStorage.setItem('darab_active_page_id', String(homePage.id));
+        } else {
+          // Fallback to old slug check
+          const oldHomePage = apiPages.find((p: any) => p.slug === 'home' || p.slug?.startsWith('home-'));
+          if (oldHomePage) {
+            const tId = oldHomePage.template || oldHomePage.template_id || 'template_1';
+            setActiveTemplateId(tId);
+            setActivePageId(String(oldHomePage.id));
+          }
         }
       } catch (err) {
         console.error('Failed to load pages data:', err);

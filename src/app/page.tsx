@@ -57,21 +57,28 @@ async function fetchTenantHomepage(tenantKey: string) {
             return null;
         }
 
-        let homePage = pages.find((p: any) => p.slug === 'home' || p.slug?.startsWith('home-'));
+        const TEMPLATE_SLUGS = ['academy-dashboard', 'template_1', 'template_2', 'template_3', 'template_4', 'template_courses_1'];
+        
+        let homePage = pages.find((p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true');
         if (!homePage) {
-            homePage = pages[0];
+            const templatePages = pages.filter((p: any) => TEMPLATE_SLUGS.includes(p.title));
+            homePage = templatePages.sort((a: any, b: any) => Number(b.id) - Number(a.id))[0];
+        }
+
+        if (!homePage) {
+            homePage = pages.find((p: any) => p.slug === 'home' || p.slug?.startsWith('home-')) || pages[0];
         }
 
         if (!homePage) return null;
 
         const sectionsResponse = await api.get('/sections', {
-            params: { page_id: homePage.id, pages_id: homePage.id }
+            params: { page_id: homePage.id }
         });
         const unwrappedSections = unwrapEncryptedResponseData(sectionsResponse.data) as any;
         const sectionsData = unwrappedSections?.data ?? unwrappedSections;
 
         return {
-            templateId: homePage.template || homePage.template_id || 'template_1',
+            templateId: homePage.template || homePage.template_id || homePage.title || homePage.slug || 'template_1',
             sections: Array.isArray(sectionsData) ? sectionsData : []
         };
     } catch (error: any) {

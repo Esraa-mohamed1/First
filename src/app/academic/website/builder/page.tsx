@@ -24,7 +24,7 @@ import {
   LayoutGrid
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getSections, saveSections, apiToEditor, editorToApi } from '@/services/pages';
+import { getSections, saveSections, apiToEditor, editorToApi, getPages } from '@/services/pages';
 import Swal from 'sweetalert2';
 
 export default function PageBuilderPage() {
@@ -133,21 +133,52 @@ export default function PageBuilderPage() {
     redo,
     saveDraft,
     publishTemplate,
-    setPageId
+    setPageId,
+    pageId: storePageId
   } = useBuilderStore();
 
   // Load selected template configuration or page sections from API
   useEffect(() => {
     const fetchPageSections = async () => {
       let activeId = templateId;
-      if (!activeId && typeof window !== 'undefined') {
-        activeId = localStorage.getItem('darab_active_template') || 'academy-dashboard';
+      let activePageId = pageId;
+
+      try {
+        const apiPages = await getPages();
+        const TEMPLATE_SLUGS = ['academy-dashboard', 'template_1', 'template_2', 'template_3', 'template_4', 'template_courses_1'];
+        
+        let activePage = apiPages.find((p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true');
+        if (!activePage) {
+          const templatePages = apiPages.filter((p: any) => TEMPLATE_SLUGS.includes(p.title));
+          activePage = templatePages.sort((a: any, b: any) => Number(b.id) - Number(a.id))[0];
+        }
+
+        if (activePage) {
+          activeId = activePage.title || activePage.slug; // template ID
+          activePageId = String(activePage.id);
+        } else {
+          // Fallback to checking older home page slug
+          const oldHomePage = apiPages.find((p: any) => p.slug === 'home' || p.slug?.startsWith('home-'));
+          if (oldHomePage) {
+            activeId = oldHomePage.template || oldHomePage.template_id || 'academy-dashboard';
+            activePageId = String(oldHomePage.id);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to resolve active template from API in builder:', err);
+        // Fallback to query params or localStorage if API fails
+        if (typeof window !== 'undefined') {
+          const storedTemplate = localStorage.getItem('darab_active_template');
+          const storedPageId = localStorage.getItem('darab_active_page_id');
+          if (storedTemplate) activeId = storedTemplate;
+          if (storedPageId) activePageId = storedPageId;
+        }
       }
 
-      if (pageId) {
-        setPageId(pageId);
+      if (activePageId) {
+        setPageId(activePageId);
         try {
-          const apiSections = await getSections(pageId);
+          const apiSections = await getSections(activePageId);
           if (apiSections && apiSections.length > 0) {
             const editorNodes = apiToEditor(apiSections);
             loadTemplate({
@@ -210,7 +241,8 @@ export default function PageBuilderPage() {
   const handleSaveDraft = async (silent = false) => {
     if (!silent) {
       saveDraft();
-      if (pageId && currentTemplate) {
+      const apiPageId = storePageId || pageId;
+      if (apiPageId && currentTemplate) {
         Swal.fire({
           title: 'جاري الحفظ...',
           text: 'جاري حفظ مسودة تصميمك على السيرفر',
@@ -223,8 +255,8 @@ export default function PageBuilderPage() {
           }
         });
         try {
-          const apiSections = editorToApi(currentTemplate.sections, pageId);
-          await saveSections(pageId, apiSections);
+          const apiSections = editorToApi(currentTemplate.sections, apiPageId);
+          await saveSections(apiPageId, apiSections);
           setLastSavedContent(JSON.stringify(currentTemplate.sections));
           Swal.fire({
             icon: 'success',
@@ -305,7 +337,8 @@ export default function PageBuilderPage() {
     if (!confirmResult.isConfirmed) return;
 
     publishTemplate();
-    if (pageId && currentTemplate) {
+    const apiPageId = storePageId || pageId;
+    if (apiPageId && currentTemplate) {
       Swal.fire({
         title: 'جاري النشر...',
         text: 'جاري معالجة ونشر التصميم النهائي...',
@@ -318,8 +351,8 @@ export default function PageBuilderPage() {
         }
       });
       try {
-        const apiSections = editorToApi(currentTemplate.sections, pageId);
-        await saveSections(pageId, apiSections);
+        const apiSections = editorToApi(currentTemplate.sections, apiPageId);
+        await saveSections(apiPageId, apiSections);
         Swal.fire({
           icon: 'success',
           title: 'تم النشر!',

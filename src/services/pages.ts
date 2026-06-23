@@ -10,6 +10,7 @@ export interface CreatePagePayload {
   slug: string;
   status: string;
   template?: string;
+  is_active?: string | number | boolean;
 }
 
 export interface CreatedPageResponse {
@@ -133,8 +134,37 @@ export const createPage = async (
     formData.append('template', payload.template);
     formData.append('template_id', payload.template);
   }
+  if (payload.is_active !== undefined) {
+    formData.append('is_active', String(payload.is_active));
+  }
 
   const response = await academyApi.post<any>('/pages', formData);
+  const data = response.data?.data ?? response.data;
+  if (!data) throw new Error('No data returned from pages API');
+  return data as CreatedPageResponse;
+};
+
+// -----------------------------------------------------------------------
+// updatePage
+// -----------------------------------------------------------------------
+
+export const updatePage = async (
+  pageId: string | number,
+  payload: Partial<CreatePagePayload>
+): Promise<CreatedPageResponse> => {
+  const formData = new URLSearchParams();
+  if (payload.title !== undefined) formData.append('title', payload.title);
+  if (payload.slug !== undefined) formData.append('slug', payload.slug);
+  if (payload.status !== undefined) formData.append('status', payload.status);
+  if (payload.template !== undefined) {
+    formData.append('template', payload.template);
+    formData.append('template_id', payload.template);
+  }
+  if (payload.is_active !== undefined) {
+    formData.append('is_active', String(payload.is_active));
+  }
+
+  const response = await academyApi.put<any>(`/pages/${pageId}`, formData);
   const data = response.data?.data ?? response.data;
   if (!data) throw new Error('No data returned from pages API');
   return data as CreatedPageResponse;
@@ -167,7 +197,7 @@ export const getSections = async (
   pageId: string | number
 ): Promise<ApiSection[]> => {
   const response = await academyApi.get<any>(`/sections`, {
-    params: { page_id: pageId, pages_id: pageId },
+    params: { page_id: pageId },
   });
   const data = response.data?.data ?? response.data;
   return (Array.isArray(data) ? data : []) as ApiSection[];

@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-import { createPage, getSections, apiToEditor } from '@/services/pages';
+import { createPage, getSections, apiToEditor, getPages, updatePage } from '@/services/pages';
 import { getTemplateById } from '@/builder/utils/templates';
 import TemplateRenderer from '@/builder/templates/renderer/TemplateRenderer';
 
@@ -47,9 +47,12 @@ interface Template {
   loadSpeed: string;
 }
 
+const TEMPLATE_SLUGS = ['academy-dashboard', 'template_1', 'template_2', 'template_3', 'template_4', 'template_courses_1'];
+
 export default function TemplatesPage() {
   const [activeTemplateId, setActiveTemplateId] = useState<string>('template_1');
   const [activePageId, setActivePageId] = useState<string | null>(null);
+  const [pages, setPages] = useState<any[]>([]);
   const [activatingId, setActivatingId] = useState<string | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const [simulatorMode, setSimulatorMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
@@ -57,8 +60,9 @@ export default function TemplatesPage() {
   const [previewSections, setPreviewSections] = useState<any[]>([]);
   const [loadingPreview, setLoadingPreview] = useState(false);
 
-  // Load selected template and page ID from localStorage
+  // Load selected template and page ID from localStorage & API
   useEffect(() => {
+    // 1. Sync from localStorage initially as fallback
     const cachedTemplate = localStorage.getItem('darab_active_template');
     if (cachedTemplate) {
       setActiveTemplateId(cachedTemplate);
@@ -67,6 +71,35 @@ export default function TemplatesPage() {
     if (cachedPageId) {
       setActivePageId(cachedPageId);
     }
+
+    // 2. Fetch pages from the backend to resolve the actual active template
+    const loadActiveTemplate = async () => {
+      try {
+        const pagesList = await getPages();
+        setPages(pagesList);
+        
+        // Find page by is_active first, else fall back to title matching heuristic
+        let active = pagesList.find((p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true');
+        if (!active) {
+          const templatePages = pagesList.filter((p: any) => TEMPLATE_SLUGS.includes(p.title));
+          active = templatePages.sort((a: any, b: any) => Number(b.id) - Number(a.id))[0];
+        }
+        
+        if (active) {
+          const activeSlug = active.title;
+          const activeId = String(active.id);
+          setActiveTemplateId(activeSlug);
+          setActivePageId(activeId);
+          
+          // Sync localStorage for fallback compatibility
+          localStorage.setItem('darab_active_template', activeSlug);
+          localStorage.setItem('darab_active_page_id', activeId);
+        }
+      } catch (err) {
+        console.error('Failed to load pages in TemplatesPage:', err);
+      }
+    };
+    loadActiveTemplate();
   }, []);
 
   const handleSelectTemplate = async (id: string, name: string) => {
@@ -74,16 +107,39 @@ export default function TemplatesPage() {
     setActivatingId(id);
 
     try {
-      const uniqueSuffix = Math.floor(Math.random() * 10000);
-      const payload = {
-        title: `الرئيسية - ${uniqueSuffix}`,
-        slug: `home-${Date.now()}`,
-        status: 'published',
-        template: id
-      };
-      
-      const created = await createPage(payload);
-      const pageId = String(created.id);
+      const existingPage = pages.find((p: any) => p.title === id);
+      let pageId = '';
+
+      if (existingPage) {
+        // Activate existing page by sending only is_active key
+        const updated = await updatePage(existingPage.id, { is_active: '1' });
+        pageId = String(updated.id);
+
+        // Update pages state: set is_active = '1' for the activated page, and '0' for others
+        setPages(prev => prev.map((p: any) => {
+          if (String(p.id) === pageId) {
+            return { ...p, is_active: '1' };
+          }
+          return { ...p, is_active: '0' };
+        }));
+      } else {
+        // Create new page
+        const payload = {
+          title: id,
+          slug: `home-${Date.now()}`,
+          status: 'published',
+          template: id,
+          is_active: '1'
+        };
+        const created = await createPage(payload);
+        pageId = String(created.id);
+
+        // Update pages state: add new page and set others as inactive
+        setPages(prev => [
+          { ...created, is_active: '1' },
+          ...prev.map((p: any) => ({ ...p, is_active: '0' }))
+        ]);
+      }
 
       localStorage.setItem('darab_active_template', id);
       localStorage.setItem('darab_active_page_id', pageId);
@@ -131,13 +187,12 @@ export default function TemplatesPage() {
     setLoadingPreview(true);
 
     try {
-      // Check if it matches activeTemplateId or check if we have a saved page ID for it
-      let targetPageId = activePageId;
-      if (template.id !== activeTemplateId) {
-        // Look up if we have a created page for this specific template in localStorage
-        const storedPageId = localStorage.getItem(`darab_active_page_id_${template.id}`);
-        if (storedPageId) targetPageId = storedPageId;
-        else targetPageId = null;
+      // Find the page in our fetched pages that has title === template.id
+      const matchingPage = pages.find((p: any) => p.title === template.id);
+      let targetPageId = matchingPage ? String(matchingPage.id) : null;
+
+      if (!targetPageId && template.id === activeTemplateId) {
+        targetPageId = activePageId;
       }
 
       if (targetPageId) {
@@ -348,7 +403,7 @@ export default function TemplatesPage() {
                             <span>جاري التفعيل...</span>
                           </>
                         ) : (
-                          <span>اختيار القالب</span>
+                          <span>{pages.some((p: any) => p.title === tmpl.id) ? 'إعادة تفعيل' : 'اختيار القالب'}</span>
                         )}
                       </button>
                     )}
@@ -439,7 +494,7 @@ export default function TemplatesPage() {
                             <span>جاري التفعيل...</span>
                           </>
                         ) : (
-                          <span>اختيار القالب</span>
+                          <span>{pages.some((p: any) => p.title === tmpl.id) ? 'إعادة تفعيل' : 'اختيار القالب'}</span>
                         )}
                       </button>
                     )}
