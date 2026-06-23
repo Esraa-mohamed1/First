@@ -38,7 +38,7 @@ export default function HeroBanner(props: HeroBannerProps) {
     align = 'right',
     titleColor = '#1f2937',
     subtitleColor = '#6b7280',
-    buttonColor = '#2563eb',
+    buttonColor = 'var(--theme-primary)',
     buttonTextColor = '#ffffff',
     backgroundColor = '#f8fafc',
     bgImage = '',
@@ -97,7 +97,7 @@ export default function HeroBanner(props: HeroBannerProps) {
     font: 'IBM Plex Sans Arabic',
     size: 'text-[11px]',
     weight: 'font-black',
-    color: '#2563eb',
+    color: 'var(--theme-primary)',
   });
 
   const buttonTypography = getTypographyStyle(props, 'buttonText', {

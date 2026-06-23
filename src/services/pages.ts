@@ -109,6 +109,16 @@ academyApi.interceptors.request.use((config) => {
 });
 
 // -----------------------------------------------------------------------
+// getPages
+// -----------------------------------------------------------------------
+
+export const getPages = async (): Promise<any[]> => {
+  const response = await academyApi.get<any>('/pages');
+  const data = response.data?.data ?? response.data;
+  return (Array.isArray(data) ? data : []) as any[];
+};
+
+// -----------------------------------------------------------------------
 // createPage
 // -----------------------------------------------------------------------
 

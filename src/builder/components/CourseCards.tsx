@@ -29,7 +29,7 @@ export default function CourseCards(props: CourseCardsProps) {
     gridCols = '3',
     showPrice = true,
     showStudentsCount = true,
-    buttonBg = '#2563eb',
+    buttonBg = 'var(--theme-primary)',
     courses = MOCK_COURSES,
   } = props;
 

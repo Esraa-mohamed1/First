@@ -22,7 +22,7 @@ export const MOCK_TABS = [
 export default function TabsBlock(props: TabsBlockProps) {
   const {
     tabs = MOCK_TABS,
-    activeTabColor = '#2563eb',
+    activeTabColor = 'var(--theme-primary)',
     alignment = 'right',
   } = props;
   const [activeId, setActiveId] = useState<string | null>(null);

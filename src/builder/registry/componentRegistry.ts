@@ -186,7 +186,7 @@ export const HeroSection = React.memo((props: any) => {
         'a',
         {
           href: content.button_link || '#',
-          style: { backgroundColor: props.button_color || '#2563eb', color: '#ffffff' },
+          style: { backgroundColor: props.button_color || 'var(--theme-primary)', color: '#ffffff' },
           className: 'px-6 py-3 rounded-xl font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md inline-block'
         },
         content.button_text
@@ -253,7 +253,7 @@ export const FeaturesSection = React.memo((props: any) => {
             ? React.createElement(
               'div',
               {
-                style: { backgroundColor: `${itemProps.icon_color || '#2563eb'}15`, color: itemProps.icon_color || '#2563eb' },
+                style: { backgroundColor: itemProps.icon_color ? `${itemProps.icon_color}15` : 'rgba(var(--theme-primary-rgb), 0.15)', color: itemProps.icon_color || 'var(--theme-primary)' },
                 className: 'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0'
               },
               React.createElement(DynamicIcon, { name: itemProps.icon, className: 'w-4 h-4' })
@@ -618,7 +618,7 @@ export const PricingSection = React.memo((props: any) => {
             {
               href: itemProps.button_link || '#',
               className: 'w-full py-2.5 text-center text-white font-black text-xs rounded-xl hover:brightness-110 transition-all block mt-auto',
-              style: { backgroundColor: isPopular ? '#f59e0b' : '#2563eb' }
+              style: { backgroundColor: isPopular ? '#f59e0b' : 'var(--theme-primary)' }
             },
             itemProps.button_text || 'اشترك الآن'
           )

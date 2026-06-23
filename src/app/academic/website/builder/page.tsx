@@ -489,7 +489,7 @@ export default function PageBuilderPage() {
           </button>
 
           <button
-            onClick={handleSaveDraft}
+            onClick={() => handleSaveDraft(false)}
             className="px-4 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-slate-800 border border-slate-700/60 active:scale-95 transition-all flex items-center gap-1.5"
           >
             <Save className="w-4 h-4" />
