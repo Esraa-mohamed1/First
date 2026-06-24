@@ -8,7 +8,7 @@ import Pricing from '@/components/Sections/Pricing';
 import Testimonials from '@/components/Sections/Testimonials';
 import CTA from '@/components/Sections/CTA';
 import ScrollReveal from '@/components/ScrollReveal';
-import { headers } from 'next/headers';
+import { headers, cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import axios from 'axios';
 import { unwrapEncryptedResponseData } from '@/lib/decryption';
@@ -31,21 +31,23 @@ function getTenantKey(host: string): string | null {
         return hostname.replace('.localhost', '');
     }
     
-    if (hostname.endsWith('.darab.academy')) {
-        return hostname.replace('.darab.academy', '');
-    }
-    
     return hostname;
 }
 
-async function fetchTenantHomepage(tenantKey: string) {
+async function fetchTenantHomepage(tenantKey: string, token?: string) {
     try {
+        const reqHeaders: Record<string, string> = {
+            'Content-Type': 'application/json',
+            'X-Tenant-Key': tenantKey
+        };
+        
+        if (token) {
+            reqHeaders['Authorization'] = `Bearer ${token}`;
+        }
+
         const api = axios.create({
             baseURL: 'https://api.darab.academy/api/academy',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Tenant-Key': tenantKey
-            }
+            headers: reqHeaders
         });
 
         const pagesResponse = await api.get('/pages');
@@ -82,7 +84,7 @@ async function fetchTenantHomepage(tenantKey: string) {
             sections: Array.isArray(sectionsData) ? sectionsData : []
         };
     } catch (error: any) {
-        console.error(`Failed to fetch tenant homepage for ${tenantKey}:`, error.message);
+        console.error(`Failed to fetch tenant homepage for ${tenantKey}:`, error.message, error.response?.status, error.response?.data);
         return null;
     }
 }
@@ -93,7 +95,10 @@ export default async function Home() {
     const tenantKey = getTenantKey(host);
 
     if (tenantKey) {
-        const homepageData = await fetchTenantHomepage(tenantKey);
+        const cookieStore = await cookies();
+        const token = cookieStore.get('token')?.value;
+        console.log(`[Home Server Component] host: ${host}, tenantKey: ${tenantKey}, token: ${token ? token.substring(0, 10) + '...' : 'undefined'}`);
+        const homepageData = await fetchTenantHomepage(tenantKey, token);
         if (homepageData) {
             const editorNodes = apiToEditor(homepageData.sections);
             return (

@@ -159,7 +159,17 @@ export default function AcademyLoginPage() {
                 toast.error('فشل تسجيل الدخول: استجابة غير صالحة');
             }
         } catch (error: any) {
-            const errorMessage = error.message || error.error || 'حدث خطأ أثناء تسجيل الدخول';
+            let errorMessage = error.message || error.error || 'حدث خطأ أثناء تسجيل الدخول';
+            
+            // Map common English API errors to user-friendly Arabic
+            if (errorMessage === 'Invalid credentials' || errorMessage === 'Unauthorized' || errorMessage.toLowerCase().includes('credential')) {
+                errorMessage = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+            } else if (errorMessage === 'User not found' || errorMessage.toLowerCase().includes('user not found')) {
+                errorMessage = 'المستخدم غير موجود';
+            } else if (errorMessage.toLowerCase().includes('network error')) {
+                errorMessage = 'حدث خطأ في الاتصال، يرجى التحقق من الشبكة';
+            }
+
             toast.error(errorMessage);
         } finally {
             setIsLoading(false);
