@@ -5,6 +5,7 @@ import { useBuilderStore } from '../store/builderStore';
 import RecursiveRenderer from '../renderer/RecursiveRenderer';
 import DndWrapper from '../dnd/DndWrapper';
 import { DeviceModeContext } from '../context/DeviceModeContext';
+import { getThemeBySlug } from '../templates/themeStyles';
 
 export default function CanvasContainer() {
   const { currentTemplate, deviceMode, isEditing } = useBuilderStore();
@@ -33,6 +34,18 @@ export default function CanvasContainer() {
   const isMobile = deviceMode === 'mobile';
   const isTablet = deviceMode === 'tablet';
   const isDesktop = deviceMode === 'desktop';
+
+  // Load the visual styles for the active template
+  const theme = getThemeBySlug(currentTemplate.id);
+  const cssVariables = {
+    '--theme-primary': theme.primaryColor,
+    '--theme-primary-rgb': theme.primaryRgb,
+    '--theme-secondary': theme.secondaryColor,
+    '--theme-accent': theme.accentColor,
+    '--theme-bg': theme.backgroundColor,
+    '--theme-text': theme.textColor,
+    fontFamily: `'${theme.fontFamily}', sans-serif`,
+  } as React.CSSProperties;
 
   return (
     <div
@@ -72,12 +85,16 @@ export default function CanvasContainer() {
           <div className="w-8" />
         </div>
 
-        {/* Workspace Canvas Frame */}
+        {/* Workspace Canvas Frame with Active Template Visual Styles */}
         <div
-          className={`overflow-y-auto custom-scrollbar bg-[#F3F4F6] rounded-b-[2rem] ${
+          className={`overflow-y-auto custom-scrollbar rounded-b-[2rem] transition-all duration-300 ${
             isMobile ? 'p-0' : isTablet ? 'p-4' : 'p-6 md:p-10'
           }`}
-          style={{ flex: 1 }}
+          style={{ 
+            flex: 1,
+            backgroundColor: theme.backgroundColor,
+            ...cssVariables
+          }}
         >
           <DeviceModeContext.Provider value={deviceMode}>
             <DndWrapper>

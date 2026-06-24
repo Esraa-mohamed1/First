@@ -15,15 +15,28 @@ interface KpiCardItem {
 }
 
 interface KpiCardsProps {
+  id?: string;
   cards?: KpiCardItem[];
   gridCols?: '1' | '2' | '3' | '4' | '5' | '6';
 }
 
 export default function KpiCards(props: KpiCardsProps) {
   const {
+    id: sectionId,
     cards = [],
     gridCols = '4',
   } = props;
+  
+  const { 
+    isEditing, 
+    selectedNodeId, 
+    setSelectedNodeId, 
+    selectedItemIndex, 
+    setSelectedItemIndex, 
+    hoveredItemIndex, 
+    setHoveredItemIndex 
+  } = useBuilderStore();
+  
   // Read deviceMode with a fail-safe fallback
   let deviceMode = 'desktop';
   try {
@@ -49,12 +62,26 @@ export default function KpiCards(props: KpiCardsProps) {
 
   return (
     <div className={`grid gap-6 ${gridClass} text-right`} dir="rtl">
-      {cards.map((card) => {
+      {cards.map((card, idx) => {
         const IconComponent = getIconComponent(card.icon);
+        const isSelected = isEditing && selectedNodeId === sectionId && selectedItemIndex === idx;
+        const isHovered = isEditing && hoveredItemIndex === idx;
+
         return (
           <div 
             key={card.id}
-            className={`${isTransparentBg ? 'bg-white/70 border-white/40 shadow-lg shadow-slate-900/5 backdrop-blur-md' : 'bg-white border-slate-100/80 shadow-[0_12px_40px_rgba(25,28,29,0.02)]'} rounded-3xl p-6 flex flex-col justify-between space-y-4 hover:-translate-y-1 transition-all duration-300 group`}
+            onClick={(e) => {
+              if (isEditing && sectionId) {
+                e.stopPropagation();
+                setSelectedNodeId(sectionId);
+                setSelectedItemIndex(idx);
+              }
+            }}
+            onMouseEnter={() => isEditing && setHoveredItemIndex(idx)}
+            onMouseLeave={() => isEditing && setHoveredItemIndex(null)}
+            className={`${isTransparentBg ? 'bg-white/70 border-white/40 shadow-lg shadow-slate-900/5 backdrop-blur-md' : 'bg-white border-slate-100/80 shadow-[0_12px_40px_rgba(25,28,29,0.02)]'} rounded-3xl p-6 flex flex-col justify-between space-y-4 hover:-translate-y-1 transition-all duration-300 group cursor-pointer ${
+              isSelected ? 'ring-4 ring-blue-500 ring-offset-2' : isHovered ? 'ring-4 ring-blue-300 ring-offset-1' : ''
+            }`}
           >
 
             <div className="flex justify-between items-start">

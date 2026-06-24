@@ -3,6 +3,7 @@ import * as LucideIcons from 'lucide-react';
 import { ComponentRegistryEntry } from '../interfaces';
 import { buildStyles, extractContentProps, extractStyleProps } from '../utils/typography';
 import { useDeviceMode } from '../context/DeviceModeContext';
+import { useBuilderStore } from '../store/builderStore';
 
 // Import existing blocks
 import HeroBanner from '../components/HeroBanner';
@@ -24,17 +25,35 @@ export function DynamicIcon({ name, className }: { name: string; className?: str
   return React.createElement(IconComponent, { className });
 }
 
+// ─── Responsive Grid Helper ──────────────────────────────────────────────────
+
+function getResponsiveGridClass(cols: number) {
+  if (cols <= 1) return 'grid-cols-1';
+  if (cols === 2) return 'grid-cols-1 sm:grid-cols-2';
+  if (cols === 3) return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3';
+  if (cols === 4) return 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4';
+  if (cols === 5) return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5';
+  return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6';
+}
+
 // ─── Dynamic Component Implementations (using React.createElement for pure .ts compliance) ───
 
 export const HeroSection = React.memo((props: any) => {
+  const { 
+    isEditing, 
+    selectedNodeId, 
+    setSelectedNodeId, 
+    selectedItemIndex, 
+    setSelectedItemIndex, 
+    hoveredItemIndex, 
+    setHoveredItemIndex 
+  } = useBuilderStore();
+  
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
-  const deviceMode = useDeviceMode();
-  const isMobile = deviceMode === 'mobile';
-  const isTablet = deviceMode === 'tablet';
-  const px = isMobile ? 'px-4' : isTablet ? 'px-8' : 'px-16';
-  const py = isMobile ? 'py-10' : 'py-16';
+  const px = 'px-4 sm:px-8 lg:px-16';
+  const py = 'py-10 sm:py-16';
 
   const [current, setCurrent] = React.useState(0);
   const [transitioning, setTransitioning] = React.useState(false);
@@ -67,6 +86,9 @@ export const HeroSection = React.memo((props: any) => {
     const slideAlign = slideProps.align || 'center';
     const alignClass = slideAlign === 'left' ? 'text-left items-start' : slideAlign === 'center' ? 'text-center items-center' : 'text-right items-end';
 
+    const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === current;
+    const isHovered = isEditing && hoveredItemIndex === current;
+
     const slideStyle: React.CSSProperties = {
       backgroundColor: slideProps.bg_image ? undefined : slideProps.background_color || '#1e40af',
       backgroundImage: slideProps.bg_image ? `url(${slideProps.bg_image})` : undefined,
@@ -77,19 +99,32 @@ export const HeroSection = React.memo((props: any) => {
 
     return React.createElement(
       'div',
-      { className: 'relative overflow-hidden w-full select-none', style: { minHeight: isMobile ? '220px' : '280px' } },
+      { 
+        className: `relative overflow-hidden w-full select-none min-h-[220px] sm:min-h-[280px] transition-all duration-300 ${
+          isSelected ? 'ring-4 ring-blue-500 ring-inset' : isHovered ? 'ring-4 ring-blue-300 ring-inset' : ''
+        }`,
+        onClick: (e: any) => {
+          if (isEditing) {
+            e.stopPropagation();
+            setSelectedNodeId(props.id);
+            setSelectedItemIndex(current);
+          }
+        },
+        onMouseEnter: () => isEditing && setHoveredItemIndex(current),
+        onMouseLeave: () => isEditing && setHoveredItemIndex(null),
+      },
       React.createElement(
         'section',
         {
           style: { ...styles, ...slideStyle },
           className: `relative w-full ${py} ${px} flex flex-col justify-center ${alignClass} ${transitioning ? 'opacity-0' : 'opacity-100'}`
         },
-        slideProps.bg_image ? React.createElement('div', { className: 'absolute inset-0 bg-slate-900/40' }) : null,
+        slideProps.bg_image ? React.createElement('div', { className: 'absolute inset-0 bg-slate-950/40' }) : null,
         React.createElement(
           'div',
           { className: `relative z-10 w-full flex flex-col gap-3 ${alignClass}` },
-          slideProps.title ? React.createElement('h1', { className: `font-black mb-2 leading-tight text-white ${isMobile ? 'text-2xl' : 'text-3xl md:text-5xl'}` }, slideProps.title) : null,
-          slideProps.subtitle ? React.createElement('p', { className: `opacity-90 mb-4 leading-relaxed text-slate-100 ${isMobile ? 'text-xs' : 'text-base'}` }, slideProps.subtitle) : null,
+          slideProps.title ? React.createElement('h1', { className: 'font-black mb-2 leading-tight text-white text-2xl sm:text-3xl lg:text-5xl' }, slideProps.title) : null,
+          slideProps.subtitle ? React.createElement('p', { className: 'opacity-90 mb-4 leading-relaxed text-slate-100 text-xs sm:text-sm lg:text-base' }, slideProps.subtitle) : null,
           slideProps.button_text
             ? React.createElement(
               'a',
@@ -144,14 +179,14 @@ export const HeroSection = React.memo((props: any) => {
   return React.createElement(
     'section',
     { style: styles, className: `${py} ${px} w-full flex flex-col justify-center ${alignClass} transition-all duration-300 shadow-sm` },
-    content.title ? React.createElement('h1', { className: `font-black mb-4 leading-tight ${isMobile ? 'text-2xl' : 'text-4xl'}` }, content.title) : null,
-    content.subtitle ? React.createElement('p', { className: `opacity-85 mb-8 leading-relaxed ${isMobile ? 'text-xs max-w-full' : 'text-lg max-w-2xl'}` }, content.subtitle) : null,
+    content.title ? React.createElement('h1', { className: 'font-black mb-4 leading-tight text-2xl sm:text-3xl lg:text-4xl' }, content.title) : null,
+    content.subtitle ? React.createElement('p', { className: 'opacity-85 mb-8 leading-relaxed text-xs sm:text-sm lg:text-lg max-w-full sm:max-w-2xl' }, content.subtitle) : null,
     props.show_button && content.button_text
       ? React.createElement(
         'a',
         {
           href: content.button_link || '#',
-          style: { backgroundColor: props.button_color || '#2563eb', color: '#ffffff' },
+          style: { backgroundColor: props.button_color || 'var(--theme-primary)', color: '#ffffff' },
           className: 'px-6 py-3 rounded-xl font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md inline-block'
         },
         content.button_text
@@ -162,18 +197,23 @@ export const HeroSection = React.memo((props: any) => {
 HeroSection.displayName = 'HeroSection';
 
 export const FeaturesSection = React.memo((props: any) => {
+  const { 
+    isEditing, 
+    selectedNodeId, 
+    setSelectedNodeId, 
+    selectedItemIndex, 
+    setSelectedItemIndex, 
+    hoveredItemIndex, 
+    setHoveredItemIndex 
+  } = useBuilderStore();
+
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
-  const deviceMode = useDeviceMode();
-  const isMobile = deviceMode === 'mobile';
-  const isTablet = deviceMode === 'tablet';
-  const px = isMobile ? 'px-4' : isTablet ? 'px-6' : 'px-8';
-  const py = isMobile ? 'py-8' : 'py-16';
-  const cols = props.grid_cols || 3;
-  // Force single column on mobile, respect cols on tablet+
-  const gridCols = isMobile ? 1 : isTablet ? Math.min(cols, 2) : cols;
-  const gridClass = gridCols === 1 ? 'grid-cols-1' : gridCols === 2 ? 'grid-cols-2' : gridCols === 3 ? 'grid-cols-3' : 'grid-cols-4';
+  const px = 'px-4 sm:px-6 lg:px-8';
+  const py = 'py-8 sm:py-16';
+  const cols = Number(props.grid_cols) || 3;
+  const gridClass = getResponsiveGridClass(cols);
 
   return React.createElement(
     'section',
@@ -181,7 +221,7 @@ export const FeaturesSection = React.memo((props: any) => {
     React.createElement(
       'div',
       { className: 'text-center mb-8' },
-      content.title ? React.createElement('h2', { className: `font-black mb-3 ${isMobile ? 'text-xl' : 'text-3xl'}` }, content.title) : null,
+      content.title ? React.createElement('h2', { className: 'font-black mb-3 text-xl sm:text-2xl lg:text-3xl' }, content.title) : null,
       content.subtitle ? React.createElement('p', { className: 'text-sm opacity-75 max-w-xl mx-auto' }, content.subtitle) : null
     ),
     React.createElement(
@@ -189,14 +229,31 @@ export const FeaturesSection = React.memo((props: any) => {
       { className: `grid gap-4 ${gridClass}` },
       items.map((item: any, idx: number) => {
         const itemProps = item.props || {};
+        const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
+        const isHovered = isEditing && hoveredItemIndex === idx;
+
         return React.createElement(
           'div',
-          { key: idx, className: 'p-4 bg-white/60 backdrop-blur-sm border border-slate-100 hover:border-slate-200 rounded-2xl flex flex-col items-start gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-md' },
+          { 
+            key: idx, 
+            className: `p-4 bg-white/60 backdrop-blur-sm border rounded-2xl flex flex-col items-start gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
+              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100'
+            }`,
+            onClick: (e: any) => {
+              if (isEditing) {
+                e.stopPropagation();
+                setSelectedNodeId(props.id);
+                setSelectedItemIndex(idx);
+              }
+            },
+            onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
+            onMouseLeave: () => isEditing && setHoveredItemIndex(null),
+          },
           itemProps.icon
             ? React.createElement(
               'div',
               {
-                style: { backgroundColor: `${itemProps.icon_color || '#2563eb'}15`, color: itemProps.icon_color || '#2563eb' },
+                style: { backgroundColor: itemProps.icon_color ? `${itemProps.icon_color}15` : 'rgba(var(--theme-primary-rgb), 0.15)', color: itemProps.icon_color || 'var(--theme-primary)' },
                 className: 'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0'
               },
               React.createElement(DynamicIcon, { name: itemProps.icon, className: 'w-4 h-4' })
@@ -216,14 +273,22 @@ export const FeaturesSection = React.memo((props: any) => {
 FeaturesSection.displayName = 'FeaturesSection';
 
 export const FaqSection = React.memo((props: any) => {
+  const { 
+    isEditing, 
+    selectedNodeId, 
+    setSelectedNodeId, 
+    selectedItemIndex, 
+    setSelectedItemIndex, 
+    hoveredItemIndex, 
+    setHoveredItemIndex 
+  } = useBuilderStore();
+
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
   const [openIdx, setOpenIdx] = React.useState<number | null>(null);
-  const deviceMode = useDeviceMode();
-  const isMobile = deviceMode === 'mobile';
-  const px = isMobile ? 'px-4' : 'px-8';
-  const py = isMobile ? 'py-8' : 'py-16';
+  const px = 'px-4 sm:px-8';
+  const py = 'py-8 sm:py-16';
 
   return React.createElement(
     'section',
@@ -231,7 +296,7 @@ export const FaqSection = React.memo((props: any) => {
     React.createElement(
       'div',
       { className: 'text-center mb-8' },
-      content.title ? React.createElement('h2', { className: `font-black mb-3 ${isMobile ? 'text-xl' : 'text-3xl'}` }, content.title) : null,
+      content.title ? React.createElement('h2', { className: 'font-black mb-3 text-xl sm:text-2xl lg:text-3xl' }, content.title) : null,
       content.subtitle ? React.createElement('p', { className: 'text-sm opacity-75 max-w-xl mx-auto' }, content.subtitle) : null
     ),
     React.createElement(
@@ -240,14 +305,39 @@ export const FaqSection = React.memo((props: any) => {
       items.map((item: any, idx: number) => {
         const itemProps = item.props || {};
         const isOpen = openIdx === idx;
+        const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
+        const isHovered = isEditing && hoveredItemIndex === idx;
+
         return React.createElement(
           'div',
-          { key: idx, className: 'border border-slate-100 rounded-2xl bg-white/60 backdrop-blur-sm overflow-hidden transition-all duration-300' },
+          { 
+            key: idx, 
+            className: `border rounded-2xl bg-white/60 backdrop-blur-sm overflow-hidden transition-all duration-300 ${
+              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100'
+            }`,
+            onClick: (e: any) => {
+              if (isEditing) {
+                e.stopPropagation();
+                setSelectedNodeId(props.id);
+                setSelectedItemIndex(idx);
+              }
+            },
+            onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
+            onMouseLeave: () => isEditing && setHoveredItemIndex(null),
+          },
           React.createElement(
             'button',
             {
               type: 'button',
-              onClick: () => setOpenIdx(isOpen ? null : idx),
+              onClick: (e: any) => {
+                if (isEditing) {
+                  // If editing, click selects, double click or toggle button might be needed for actual FAQ toggle
+                  // but for now let's keep it simple
+                  setOpenIdx(isOpen ? null : idx);
+                } else {
+                  setOpenIdx(isOpen ? null : idx);
+                }
+              },
               className: 'w-full p-4 flex justify-between items-center text-right hover:bg-slate-50/50 transition-colors gap-3'
             },
             React.createElement('span', { className: 'text-xs font-black text-slate-800 break-words text-right flex-1' }, itemProps.question || `سؤال ${idx + 1}`),
@@ -256,8 +346,9 @@ export const FaqSection = React.memo((props: any) => {
           React.createElement(
             'div',
             {
-              className: `transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-[300px] border-t border-slate-100 p-4 bg-white/30' : 'max-h-0'
-                }`
+              className: `transition-all duration-300 ease-in-out overflow-hidden ${
+                isOpen ? 'max-h-[300px] border-t border-slate-100 p-4 bg-white/30' : 'max-h-0'
+              }`
             },
             React.createElement('p', { className: 'text-xs text-slate-500 font-bold leading-relaxed break-words' }, itemProps.answer)
           )
@@ -269,13 +360,21 @@ export const FaqSection = React.memo((props: any) => {
 FaqSection.displayName = 'FaqSection';
 
 export const TestimonialsSection = React.memo((props: any) => {
+  const { 
+    isEditing, 
+    selectedNodeId, 
+    setSelectedNodeId, 
+    selectedItemIndex, 
+    setSelectedItemIndex, 
+    hoveredItemIndex, 
+    setHoveredItemIndex 
+  } = useBuilderStore();
+
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
-  const deviceMode = useDeviceMode();
-  const isMobile = deviceMode === 'mobile';
-  const px = isMobile ? 'px-4' : 'px-8';
-  const py = isMobile ? 'py-8' : 'py-16';
+  const px = 'px-4 sm:px-8';
+  const py = 'py-8 sm:py-16';
 
   return React.createElement(
     'section',
@@ -283,17 +382,34 @@ export const TestimonialsSection = React.memo((props: any) => {
     React.createElement(
       'div',
       { className: 'text-center mb-8' },
-      content.title ? React.createElement('h2', { className: `font-black mb-3 ${isMobile ? 'text-xl' : 'text-3xl'}` }, content.title) : null,
+      content.title ? React.createElement('h2', { className: 'font-black mb-3 text-xl sm:text-2xl lg:text-3xl' }, content.title) : null,
       content.subtitle ? React.createElement('p', { className: 'text-sm opacity-75 max-w-xl mx-auto' }, content.subtitle) : null
     ),
     React.createElement(
       'div',
-      { className: `grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}` },
+      { className: 'grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3' },
       items.map((item: any, idx: number) => {
         const itemProps = item.props || {};
+        const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
+        const isHovered = isEditing && hoveredItemIndex === idx;
+
         return React.createElement(
           'div',
-          { key: idx, className: 'p-5 bg-white border border-slate-100 rounded-2xl flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300' },
+          { 
+            key: idx, 
+            className: `p-5 bg-white border rounded-2xl flex flex-col justify-between shadow-sm transition-all duration-300 ${
+              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100 hover:shadow-md'
+            }`,
+            onClick: (e: any) => {
+              if (isEditing) {
+                e.stopPropagation();
+                setSelectedNodeId(props.id);
+                setSelectedItemIndex(idx);
+              }
+            },
+            onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
+            onMouseLeave: () => isEditing && setHoveredItemIndex(null),
+          },
           React.createElement(
             'div',
             { className: 'space-y-3' },
@@ -331,16 +447,35 @@ export const TestimonialsSection = React.memo((props: any) => {
 TestimonialsSection.displayName = 'TestimonialsSection';
 
 export const GallerySection = React.memo((props: any) => {
+  const { 
+    isEditing, 
+    selectedNodeId, 
+    setSelectedNodeId, 
+    selectedItemIndex, 
+    setSelectedItemIndex, 
+    hoveredItemIndex, 
+    setHoveredItemIndex 
+  } = useBuilderStore();
+
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
-  const deviceMode = useDeviceMode();
-  const isMobile = deviceMode === 'mobile';
-  const px = isMobile ? 'px-3' : 'px-8';
-  const py = isMobile ? 'py-8' : 'py-16';
-  const cols = props.grid_cols || 4;
-  const gridCols = isMobile ? Math.min(cols, 2) : cols;
-  const gridClass = gridCols === 1 ? 'grid-cols-1' : gridCols === 2 ? 'grid-cols-2' : gridCols === 3 ? 'grid-cols-3' : 'grid-cols-4';
+  const px = 'px-4 sm:px-8 lg:px-16';
+  const py = 'py-8 sm:py-16';
+  const cols = Number(props.grid_cols) || 4;
+  const gridClass = getResponsiveGridClass(cols);
+
+  const aspect = props.image_aspect || 'video';
+  let aspectClass = 'aspect-video';
+  if (aspect === 'square') {
+    aspectClass = 'aspect-square';
+  } else if (aspect === 'cinema') {
+    aspectClass = 'aspect-[21/9]';
+  } else if (aspect === 'portrait') {
+    aspectClass = 'aspect-[3/4]';
+  } else if (aspect === 'auto') {
+    aspectClass = 'h-64';
+  }
 
   return React.createElement(
     'section',
@@ -348,7 +483,7 @@ export const GallerySection = React.memo((props: any) => {
     React.createElement(
       'div',
       { className: 'text-center mb-8' },
-      content.title ? React.createElement('h2', { className: `font-black mb-3 ${isMobile ? 'text-xl' : 'text-3xl'}` }, content.title) : null,
+      content.title ? React.createElement('h2', { className: 'font-black mb-3 text-xl sm:text-2xl lg:text-3xl' }, content.title) : null,
       content.subtitle ? React.createElement('p', { className: 'text-sm opacity-75 max-w-xl mx-auto' }, content.subtitle) : null
     ),
     React.createElement(
@@ -356,9 +491,26 @@ export const GallerySection = React.memo((props: any) => {
       { className: `grid gap-3 ${gridClass}` },
       items.map((item: any, idx: number) => {
         const itemProps = item.props || {};
+        const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
+        const isHovered = isEditing && hoveredItemIndex === idx;
+
         return React.createElement(
           'div',
-          { key: idx, className: 'relative aspect-video rounded-xl overflow-hidden group border border-slate-100/40 shadow-sm bg-slate-100' },
+          { 
+            key: idx, 
+            className: `relative ${aspectClass} rounded-xl overflow-hidden group shadow-sm bg-slate-100 transition-all duration-300 ${
+              isSelected ? 'ring-4 ring-blue-500 ring-inset' : isHovered ? 'ring-4 ring-blue-300 ring-inset' : 'border border-slate-100/40'
+            }`,
+            onClick: (e: any) => {
+              if (isEditing) {
+                e.stopPropagation();
+                setSelectedNodeId(props.id);
+                setSelectedItemIndex(idx);
+              }
+            },
+            onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
+            onMouseLeave: () => isEditing && setHoveredItemIndex(null),
+          },
           React.createElement('img', {
             src: itemProps.image_url || 'https://images.unsplash.com/photo-1498050108023-c5249f4df085',
             alt: itemProps.caption || '',
@@ -367,8 +519,8 @@ export const GallerySection = React.memo((props: any) => {
           itemProps.caption
             ? React.createElement(
               'div',
-              { className: 'absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3' },
-              React.createElement('p', { className: 'text-[10px] font-black text-white' }, itemProps.caption)
+              { className: 'absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent p-3 pt-8 flex items-end' },
+              React.createElement('p', { className: 'text-xs font-black text-white' }, itemProps.caption)
             )
             : null
         );
@@ -379,13 +531,21 @@ export const GallerySection = React.memo((props: any) => {
 GallerySection.displayName = 'GallerySection';
 
 export const PricingSection = React.memo((props: any) => {
+  const { 
+    isEditing, 
+    selectedNodeId, 
+    setSelectedNodeId, 
+    selectedItemIndex, 
+    setSelectedItemIndex, 
+    hoveredItemIndex, 
+    setHoveredItemIndex 
+  } = useBuilderStore();
+
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
-  const deviceMode = useDeviceMode();
-  const isMobile = deviceMode === 'mobile';
-  const px = isMobile ? 'px-4' : 'px-8';
-  const py = isMobile ? 'py-8' : 'py-16';
+  const px = 'px-4 sm:px-8 lg:px-16';
+  const py = 'py-8 sm:py-16';
 
   return React.createElement(
     'section',
@@ -393,25 +553,35 @@ export const PricingSection = React.memo((props: any) => {
     React.createElement(
       'div',
       { className: 'text-center mb-8' },
-      content.title ? React.createElement('h2', { className: `font-black mb-3 ${isMobile ? 'text-xl' : 'text-3xl'}` }, content.title) : null,
+      content.title ? React.createElement('h2', { className: 'font-black mb-3 text-xl sm:text-2xl lg:text-3xl' }, content.title) : null,
       content.subtitle ? React.createElement('p', { className: 'text-sm opacity-75 max-w-xl mx-auto' }, content.subtitle) : null
     ),
     React.createElement(
       'div',
-      { className: `grid gap-5 items-stretch pt-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}` },
+      { className: 'grid gap-5 items-stretch pt-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3' },
       items.map((item: any, idx: number) => {
         const itemProps = item.props || {};
         const isPopular = itemProps.is_popular;
         const features = itemProps.features_list ? itemProps.features_list.split('\n').filter(Boolean) : [];
+        const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
+        const isHovered = isEditing && hoveredItemIndex === idx;
 
         return React.createElement(
           'div',
           {
             key: idx,
-            className: `flex flex-col bg-white border ${isPopular
-              ? 'border-2 border-yellow-400 relative shadow-xl z-10'
-              : 'border-slate-100 shadow-sm hover:shadow-md'
-              } rounded-3xl p-5 transition-all duration-300`
+            className: `flex flex-col bg-white border rounded-3xl p-5 transition-all duration-300 ${
+              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : (isPopular ? 'border-2 border-yellow-400 relative shadow-xl z-10' : 'border-slate-100 shadow-sm hover:shadow-md')
+            }`,
+            onClick: (e: any) => {
+              if (isEditing) {
+                e.stopPropagation();
+                setSelectedNodeId(props.id);
+                setSelectedItemIndex(idx);
+              }
+            },
+            onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
+            onMouseLeave: () => isEditing && setHoveredItemIndex(null),
           },
           isPopular
             ? React.createElement(
@@ -448,7 +618,7 @@ export const PricingSection = React.memo((props: any) => {
             {
               href: itemProps.button_link || '#',
               className: 'w-full py-2.5 text-center text-white font-black text-xs rounded-xl hover:brightness-110 transition-all block mt-auto',
-              style: { backgroundColor: isPopular ? '#f59e0b' : '#2563eb' }
+              style: { backgroundColor: isPopular ? '#f59e0b' : 'var(--theme-primary)' }
             },
             itemProps.button_text || 'اشترك الآن'
           )
@@ -462,17 +632,23 @@ PricingSection.displayName = 'PricingSection';
 // ─── Categories Section ───────────────────────────────────────────────────────
 
 export const CategoriesSection = React.memo((props: any) => {
+  const { 
+    isEditing, 
+    selectedNodeId, 
+    setSelectedNodeId, 
+    selectedItemIndex, 
+    setSelectedItemIndex, 
+    hoveredItemIndex, 
+    setHoveredItemIndex 
+  } = useBuilderStore();
+
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
-  const deviceMode = useDeviceMode();
-  const isMobile = deviceMode === 'mobile';
-  const isTablet = deviceMode === 'tablet';
-  const px = isMobile ? 'px-4' : isTablet ? 'px-6' : 'px-8';
-  const py = isMobile ? 'py-8' : 'py-16';
-  const cols = props.grid_cols || 4;
-  const gridCols = isMobile ? 2 : isTablet ? Math.min(cols, 3) : cols;
-  const gridClass = gridCols === 1 ? 'grid-cols-1' : gridCols === 2 ? 'grid-cols-2' : gridCols === 3 ? 'grid-cols-3' : 'grid-cols-4';
+  const px = 'px-4 sm:px-8 lg:px-16';
+  const py = 'py-8 sm:py-16';
+  const cols = Number(props.grid_cols) || 4;
+  const gridClass = getResponsiveGridClass(cols);
 
   return React.createElement(
     'section',
@@ -480,7 +656,7 @@ export const CategoriesSection = React.memo((props: any) => {
     React.createElement(
       'div',
       { className: 'text-center mb-8' },
-      content.title ? React.createElement('h2', { className: `font-black mb-2 ${isMobile ? 'text-xl' : 'text-3xl'}` }, content.title) : null,
+      content.title ? React.createElement('h2', { className: 'font-black mb-2 text-xl sm:text-2xl lg:text-3xl' }, content.title) : null,
       content.subtitle ? React.createElement('p', { className: 'text-sm opacity-70 max-w-xl mx-auto' }, content.subtitle) : null
     ),
     React.createElement(
@@ -498,11 +674,25 @@ export const CategoriesSection = React.memo((props: any) => {
           shapeClass = 'rounded-none';
         }
 
+        const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
+        const isHovered = isEditing && hoveredItemIndex === idx;
+
         return React.createElement(
           'div',
           {
             key: idx,
-            className: `group relative overflow-hidden border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer bg-white flex flex-col items-center justify-center text-center p-6 ${shapeClass}`
+            className: `group relative overflow-hidden border shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer bg-white flex flex-col items-center justify-center text-center p-6 ${shapeClass} ${
+              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100'
+            }`,
+            onClick: (e: any) => {
+              if (isEditing) {
+                e.stopPropagation();
+                setSelectedNodeId(props.id);
+                setSelectedItemIndex(idx);
+              }
+            },
+            onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
+            onMouseLeave: () => isEditing && setHoveredItemIndex(null),
           },
           p.icon
             ? React.createElement(
@@ -516,7 +706,7 @@ export const CategoriesSection = React.memo((props: any) => {
             { className: 'w-full flex flex-col items-center' },
             React.createElement(
               'h3',
-              { className: `font-black text-slate-800 break-words ${isMobile ? 'text-xs' : 'text-sm'}` },
+              { className: 'font-black text-slate-800 break-words text-xs sm:text-sm' },
               p.name || `فئة ${idx + 1}`
             ),
             p.count !== undefined && p.count !== ''
@@ -689,7 +879,7 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
     itemFields: [
       { name: 'title', label: 'عنوان الميزة', type: 'text', defaultValue: 'Feature Title' },
       { name: 'description', label: 'الوصف', type: 'textarea', defaultValue: 'Feature description text.' },
-      { name: 'icon', label: 'الأيقونة (Lucide)', type: 'text', defaultValue: 'Star' },
+      { name: 'icon', label: 'الأيقونة (Lucide)', type: 'icon', defaultValue: 'Star' },
       { name: 'icon_color', label: 'لون الأيقونة', type: 'color', defaultValue: '#2563eb' }
     ],
     defaultProps: {
@@ -784,6 +974,19 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       { name: 'background_color', label: 'لون الخلفية', type: 'color', defaultValue: '#ffffff' },
       { name: 'text_color', label: 'لون النص', type: 'color', defaultValue: '#1f2937' },
       { name: 'grid_cols', label: 'عدد الأعمدة', type: 'number', defaultValue: 3 },
+      {
+        name: 'image_aspect',
+        label: 'نسبة أبعاد الصورة',
+        type: 'select',
+        defaultValue: 'video',
+        options: [
+          { label: 'فيديو (16:9)', value: 'video' },
+          { label: 'مربع (1:1)', value: 'square' },
+          { label: 'سينمائي (21:9)', value: 'cinema' },
+          { label: 'طولي (3:4)', value: 'portrait' },
+          { label: 'تلقائي (ارتفاع محدد)', value: 'auto' }
+        ]
+      },
       { name: 'padding_top', label: 'تباعد علوي (px)', type: 'number', defaultValue: 60 },
       { name: 'padding_bottom', label: 'تباعد سفلي (px)', type: 'number', defaultValue: 60 },
       ...SECTION_STYLE_FIELDS
@@ -799,6 +1002,7 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       background_color: '#ffffff',
       text_color: '#1f2937',
       grid_cols: 3,
+      image_aspect: 'video',
       padding_top: 60,
       padding_bottom: 60,
       items: []
@@ -861,7 +1065,7 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
         options: [
           { label: 'بطاقة مستديرة (Classic)', value: 'classic' },
           { label: 'شكل دائري (Circle)', value: 'circle' },
-          { label: 'شكل بيضاوي', value: 'oval' },
+          { label: 'شكل ورقة شجر (Leaf)', value: 'leaf' },
           { label: 'شكل مربع (Square)', value: 'square' },
         ]
       },

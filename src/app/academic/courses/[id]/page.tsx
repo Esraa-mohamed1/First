@@ -25,6 +25,32 @@ import { getLogoUrl } from '@/lib/utils';
 
 const MySwal = withReactContent(Swal);
 
+const translateErrorToArabic = (msg: string): string => {
+  const normalized = msg.toLowerCase().trim();
+  if (normalized.includes('receiver_accounts') || normalized.includes('receiver accounts') || normalized.includes('receiving account') || normalized.includes('receiving_account') || normalized.includes('receiver')) {
+    return 'يرجى تحديد حساب أو وسيلة استقبال المدفوعات (حساب التحصيل مطلوب للدورات المدفوعة).';
+  }
+  if (normalized.includes('title') && normalized.includes('required')) {
+    return 'عنوان الدورة مطلوب.';
+  }
+  if (normalized.includes('description') && (normalized.includes('required') || normalized.includes('must not be empty'))) {
+    return 'وصف الدورة مطلوب.';
+  }
+  if (normalized.includes('category') && normalized.includes('required')) {
+    return 'الفئة مطلوبة.';
+  }
+  if (normalized.includes('user') && normalized.includes('required')) {
+    return 'المدرب مطلوب.';
+  }
+  if (normalized.includes('price') && normalized.includes('required')) {
+    return 'سعر الدورة مطلوب للدورات المدفوعة.';
+  }
+  if (normalized.includes('validation errors detected')) {
+    return 'يرجى تصحيح الأخطاء في البيانات المدخلة.';
+  }
+  return msg;
+};
+
 export default function CourseDetailsPage() {
   const router = useRouter();
   const params = useParams();
@@ -165,6 +191,14 @@ export default function CourseDetailsPage() {
     }
   };
 
+  const handleNextFromInfo = () => {
+    if (!courseInfo.title.trim()) {
+      toast.error('عنوان الدورة مطلوب');
+      return;
+    }
+    setActiveTab('content');
+  };
+
   const handleSaveCourseInfo = async () => {
     // Basic implementation for saving course info
     try {
@@ -202,8 +236,21 @@ export default function CourseDetailsPage() {
       await updateCourse(Number(id), payload);
       toast.success('تم حفظ بيانات الدورة بنجاح');
       setActiveTab('content');
-    } catch (error) {
-      toast.error('فشل حفظ بيانات الدورة');
+    } catch (error: any) {
+      if (error?.errors) {
+        const allMsgs: string[] = [];
+        if (error.message && error.message !== 'Validation errors detected.') {
+          allMsgs.push(translateErrorToArabic(error.message));
+        }
+        Object.values(error.errors).forEach((msgs: any) => {
+          const messages = Array.isArray(msgs) ? msgs : [String(msgs)];
+          messages.forEach((msg) => allMsgs.push(translateErrorToArabic(msg)));
+        });
+        const toastMsg = allMsgs.length > 0 ? allMsgs.join(' | ') : 'يرجى تصحيح الأخطاء أدناه';
+        toast.error(toastMsg);
+      } else {
+        toast.error(translateErrorToArabic(error?.message || 'فشل حفظ بيانات الدورة'));
+      }
     }
   };
 
@@ -238,8 +285,21 @@ export default function CourseDetailsPage() {
           await updateCourse(Number(id), payload);
           toast.success('تم حفظ بيانات التسعير بنجاح');
           fetchCourse();
-        } catch (error) {
-          toast.error('فشل حفظ بيانات التسعير');
+        } catch (error: any) {
+          if (error?.errors) {
+            const allMsgs: string[] = [];
+            if (error.message && error.message !== 'Validation errors detected.') {
+              allMsgs.push(translateErrorToArabic(error.message));
+            }
+            Object.values(error.errors).forEach((msgs: any) => {
+              const messages = Array.isArray(msgs) ? msgs : [String(msgs)];
+              messages.forEach((msg) => allMsgs.push(translateErrorToArabic(msg)));
+            });
+            const toastMsg = allMsgs.length > 0 ? allMsgs.join(' | ') : 'يرجى تصحيح الأخطاء أدناه';
+            toast.error(toastMsg);
+          } else {
+            toast.error(translateErrorToArabic(error?.message || 'فشل حفظ بيانات التسعير'));
+          }
         } finally {
           setIsSavingPricing(false);
         }
@@ -801,7 +861,7 @@ export default function CourseDetailsPage() {
               </button>
               <button 
                 type="button"
-                onClick={handleSaveCourseInfo}
+                onClick={handleNextFromInfo}
                 className="px-12 py-3 bg-blue-600 text-white font-black rounded-full shadow-lg shadow-blue-100 hover:brightness-110 transition-all text-sm"
               >
                 التالي

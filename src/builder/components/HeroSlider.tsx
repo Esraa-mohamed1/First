@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { hasSectionBackground } from '../utils/typography';
-
+import { useBuilderStore } from '../store/builderStore';
 
 export interface HeroSlide {
   id: string;
@@ -18,6 +18,7 @@ export interface HeroSlide {
 }
 
 interface HeroSliderProps {
+  id?: string;
   slides?: HeroSlide[];
   autoPlay?: boolean;
   interval?: number;
@@ -66,6 +67,7 @@ const DEFAULT_SLIDES: HeroSlide[] = [
 
 export default function HeroSlider(props: HeroSliderProps) {
   const {
+    id: sectionId,
     slides = DEFAULT_SLIDES,
     autoPlay = true,
     interval = 4000,
@@ -73,6 +75,17 @@ export default function HeroSlider(props: HeroSliderProps) {
     showArrows = true,
     paddingTop = 'py-16',
   } = props;
+
+  const { 
+    isEditing, 
+    selectedNodeId, 
+    setSelectedNodeId, 
+    selectedItemIndex, 
+    setSelectedItemIndex, 
+    hoveredItemIndex, 
+    setHoveredItemIndex 
+  } = useBuilderStore();
+
   const [current, setCurrent] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
 
@@ -117,13 +130,30 @@ export default function HeroSlider(props: HeroSliderProps) {
   const alignClass =
     slide.align === 'center' ? 'text-center items-center' :
     slide.align === 'left' ? 'text-left items-start' : 'text-right items-end';
+  
+  const isSelected = isEditing && selectedNodeId === sectionId && selectedItemIndex === current;
+  const isHovered = isEditing && hoveredItemIndex === current;
 
   return (
-    <div className="relative overflow-hidden rounded-3xl select-none" style={{ minHeight: '280px' }}>
+    <div 
+      className={`relative overflow-hidden rounded-3xl select-none transition-all duration-300 ${
+        isSelected ? 'ring-4 ring-blue-500 ring-inset' : isHovered ? 'ring-4 ring-blue-300 ring-inset' : ''
+      }`} 
+      style={{ minHeight: '280px' }}
+      onClick={(e) => {
+        if (isEditing && sectionId) {
+          e.stopPropagation();
+          setSelectedNodeId(sectionId);
+          setSelectedItemIndex(current);
+        }
+      }}
+      onMouseEnter={() => isEditing && setHoveredItemIndex(current)}
+      onMouseLeave={() => isEditing && setHoveredItemIndex(null)}
+    >
       {/* Slide */}
       <div
         style={containerStyle}
-        className={`relative w-full transition-opacity duration-300 ${transitioning ? 'opacity-0' : 'opacity-100'} flex flex-col justify-center ${paddingClass} px-10 md:px-16`}
+        className={`relative w-full transition-opacity duration-300 ${transitioning ? 'opacity-0' : 'opacity-100'} flex flex-col justify-center ${paddingClass} px-10 md:px-16 cursor-pointer`}
         key={slide.id}
       >
         {slide.bgImage && <div className="absolute inset-0 bg-slate-900/45" />}

@@ -60,7 +60,7 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
 
             {/* Preview Website Button */}
             <button
-              onClick={() => router.push('/academic/templates')}
+              onClick={() => window.open('/', '_blank')}
               className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-black text-sm shadow-lg shadow-blue-100 transition-all whitespace-nowrap hidden md:block"
             >
               معاينة الموقع

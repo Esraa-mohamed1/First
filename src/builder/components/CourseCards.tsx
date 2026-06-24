@@ -5,6 +5,7 @@ import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
 
 
 interface CourseCardsProps {
+  id?: string;
   title?: string;
   gridCols?: '2' | '3' | '4' | '5' | '6';
   showPrice?: boolean;
@@ -23,13 +24,24 @@ export const MOCK_COURSES = [
 
 export default function CourseCards(props: CourseCardsProps) {
   const {
+    id: sectionId,
     title = 'أحدث الدورات المسجلة',
     gridCols = '3',
     showPrice = true,
     showStudentsCount = true,
-    buttonBg = '#2563eb',
+    buttonBg = 'var(--theme-primary)',
     courses = MOCK_COURSES,
   } = props;
+
+  const { 
+    isEditing, 
+    selectedNodeId, 
+    setSelectedNodeId, 
+    selectedItemIndex, 
+    setSelectedItemIndex, 
+    hoveredItemIndex, 
+    setHoveredItemIndex 
+  } = useBuilderStore();
 
   // Read deviceMode with a fail-safe fallback
   let deviceMode = 'desktop';
@@ -81,65 +93,81 @@ export default function CourseCards(props: CourseCardsProps) {
       </div>
 
       <div className={`grid gap-6 ${gridClass}`}>
-        {coursesToRender.map((course) => (
-          <div 
-            key={course.id} 
-            className={`${isTransparentBg ? 'bg-white/70 border-white/40 shadow-lg shadow-slate-900/5 backdrop-blur-md' : 'bg-white border-slate-100/80 shadow-[0_12px_30px_rgba(25,28,29,0.02)]'} rounded-3xl overflow-hidden hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group`}
-          >
+        {coursesToRender.map((course, idx) => {
+          const isSelected = isEditing && selectedNodeId === sectionId && selectedItemIndex === idx;
+          const isHovered = isEditing && hoveredItemIndex === idx;
 
-            {/* Image Header with styled avatar overlay */}
-            <div className="h-40 relative overflow-hidden bg-[#0a192f] flex items-center justify-center p-4">
-              <img 
-                src={course.image} 
-                alt={course.title}
-                className="w-20 h-20 rounded-full border-2 border-white/60 object-cover shadow-sm bg-slate-700 relative z-10 transition-transform duration-500 group-hover:scale-105"
-              />
-              {/* Blur design backgrounds */}
-              <div className="absolute inset-0 bg-slate-950/40 z-0" />
-              <div className="absolute bottom-3 right-4 text-right z-10">
-                <span className="text-[10px] font-black text-blue-400 block tracking-wider uppercase">محاضرة معتمدة</span>
-                <span className="text-xs font-black text-white block mt-0.5">{course.instructor}</span>
+          return (
+            <div 
+              key={course.id} 
+              onClick={(e) => {
+                if (isEditing && sectionId) {
+                  e.stopPropagation();
+                  setSelectedNodeId(sectionId);
+                  setSelectedItemIndex(idx);
+                }
+              }}
+              onMouseEnter={() => isEditing && setHoveredItemIndex(idx)}
+              onMouseLeave={() => isEditing && setHoveredItemIndex(null)}
+              className={`${isTransparentBg ? 'bg-white/70 border-white/40 shadow-lg shadow-slate-900/5 backdrop-blur-md' : 'bg-white border-slate-100/80 shadow-[0_12px_30px_rgba(25,28,29,0.02)]'} rounded-3xl overflow-hidden hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group cursor-pointer ${
+                isSelected ? 'ring-4 ring-blue-500 ring-offset-2' : isHovered ? 'ring-4 ring-blue-300 ring-offset-1' : ''
+              }`}
+            >
+
+              {/* Image Header with styled avatar overlay */}
+              <div className="h-40 relative overflow-hidden bg-[#0a192f] flex items-center justify-center p-4">
+                <img 
+                  src={course.image} 
+                  alt={course.title}
+                  className="w-20 h-20 rounded-full border-2 border-white/60 object-cover shadow-sm bg-slate-700 relative z-10 transition-transform duration-500 group-hover:scale-105"
+                />
+                {/* Blur design backgrounds */}
+                <div className="absolute inset-0 bg-slate-950/40 z-0" />
+                <div className="absolute bottom-3 right-4 text-right z-10">
+                  <span className="text-[10px] font-black text-blue-400 block tracking-wider uppercase">محاضرة معتمدة</span>
+                  <span className="text-xs font-black text-white block mt-0.5">{course.instructor}</span>
+                </div>
               </div>
-            </div>
 
-            {/* Course Information details */}
-            <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-              <h4 className="text-xs font-black text-slate-800 leading-snug group-hover:text-blue-600 transition-colors min-h-[36px]">
-                {course.title}
-              </h4>
-              
-              <div className="flex items-center justify-between text-[9px] text-slate-400 font-black pt-3 border-t border-slate-50">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {course.duration}
-                </span>
+              {/* Course Information details */}
+              <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                <h4 className="text-xs font-black text-slate-800 leading-snug group-hover:text-blue-600 transition-colors min-h-[36px]">
+                  {course.title}
+                </h4>
                 
-                {showStudentsCount && (
+                <div className="flex items-center justify-between text-[9px] text-slate-400 font-black pt-3 border-t border-slate-50">
                   <span className="flex items-center gap-1">
-                    <Users className="w-3 h-3 text-blue-500" />
-                    {course.students}
+                    <Clock className="w-3 h-3" />
+                    {course.duration}
                   </span>
-                )}
+                  
+                  {showStudentsCount && (
+                    <span className="flex items-center gap-1">
+                      <Users className="w-3 h-3 text-blue-500" />
+                      {course.students}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex justify-between items-center pt-2">
+                  {showPrice ? (
+                    <span className="text-sm font-black text-slate-800">
+                      {course.price}
+                    </span>
+                  ) : <span className="w-1"></span>}
+
+                  <button 
+                    style={{ backgroundColor: buttonBg }}
+                    className="hover:brightness-110 text-white font-black text-[9px] px-3.5 py-2 rounded-lg transition-all shadow-sm shadow-blue-500/10 active:scale-95"
+                  >
+                    انضم الآن
+                  </button>
+                </div>
               </div>
 
-              <div className="flex justify-between items-center pt-2">
-                {showPrice ? (
-                  <span className="text-sm font-black text-slate-800">
-                    {course.price}
-                  </span>
-                ) : <span className="w-1"></span>}
-
-                <button 
-                  style={{ backgroundColor: buttonBg }}
-                  className="hover:brightness-110 text-white font-black text-[9px] px-3.5 py-2 rounded-lg transition-all shadow-sm shadow-blue-500/10 active:scale-95"
-                >
-                  انضم الآن
-                </button>
-              </div>
             </div>
-
-          </div>
-        ))}
+          );
+        })}
       </div>
 
     </div>

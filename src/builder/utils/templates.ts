@@ -51,6 +51,26 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
         }
       },
       {
+        id: 'categories-1',
+        type: 'categories_section',
+        props: {
+          title: 'تصفح التصنيفات',
+          subtitle: 'اختر المجال الذي يناسبك وابدأ رحلتك التعليمية',
+          background_color: '#f8fafc',
+          text_color: '#1f2937',
+          grid_cols: 4,
+          card_shape: 'classic',
+          padding_top: 60,
+          padding_bottom: 60,
+          items: [
+            { id: 'cat-item-1', order: 1, props: { name: 'البرمجة والتطوير', icon: 'Code', count: '12', description: 'تعلم لغات البرمجة المختلفة وتطوير الويب' } },
+            { id: 'cat-item-2', order: 2, props: { name: 'التصميم الإبداعي', icon: 'Palette', count: '8', description: 'تصميم الواجهات والجرافيك وتجربة المستخدم' } },
+            { id: 'cat-item-3', order: 3, props: { name: 'إدارة الأعمال', icon: 'Briefcase', count: '15', description: 'مهارات الريادة، الإدارة والتسويق الرقمي' } },
+            { id: 'cat-item-4', order: 4, props: { name: 'الذكاء الاصطناعي', icon: 'Cpu', count: '6', description: 'تعلم الآلة، البيانات والشبكات العصبية' } }
+          ]
+        }
+      },
+      {
         id: 'charts-1',
         type: 'charts',
         props: {
@@ -238,9 +258,71 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
         }
       }
     ]
+  },
+  'template_4': {
+    id: 'template_4',
+    name: 'القالب الريادي الذهبي (Corporate Teal)',
+    description: 'قالب ريادي أنيق مناسب لمجالات التمويل والتكنولوجيا والاستشارات الإدارية المرموقة بلمسات تيل وذهبية.',
+    status: 'draft',
+    version: '1.0',
+    updatedAt: new Date().toISOString(),
+    sections: [
+      {
+        id: 'navbar-4',
+        type: 'navbar',
+        props: {
+          title: 'الأكاديمية الريادية للتطوير',
+          showSearch: true,
+          showProfile: true,
+          bgColor: '#ffffff',
+          borderColor: '#e2d3bb'
+        }
+      },
+      {
+        id: 'hero-4',
+        type: 'hero',
+        props: {
+          title: 'استثمر في مستقبلك المهني اليوم',
+          subtitle: 'تطوير القيادات، التكنولوجيا المالية، وإدارة المشاريع بمناهج حديثة ومعتمدة عالمياً.',
+          buttonText: 'تصفح البرامج التنفيذية',
+          buttonLink: '#',
+          align: 'right',
+          titleColor: '#115e59',
+          subtitleColor: '#0f766e',
+          buttonColor: '#0d9488',
+          buttonTextColor: '#ffffff',
+          backgroundColor: '#f0fdfa',
+          bgImage: ''
+        }
+      },
+      {
+        id: 'kpis-4',
+        type: 'kpi-cards',
+        props: {
+          gridCols: '3',
+          cards: [
+            { id: '1', title: 'القادة المتخرجين', value: '340 قائد تنفيذي', change: '+14% هذا الفصل', isPositive: true, icon: 'Award', color: '#0d9488' },
+            { id: '2', title: 'نسبة التوظيف والترقية', value: '94.2%', change: '+2.1% مؤخراً', isPositive: true, icon: 'TrendingUp', color: '#0d9488' },
+            { id: '3', title: 'شركاء الأعمال', value: '18 جهة حكومية وخاصة', change: 'ثابت', isPositive: true, icon: 'Users', color: '#0f766e' }
+          ]
+        }
+      },
+      {
+        id: 'courses-4',
+        type: 'course-cards',
+        props: {
+          title: 'البرامج التنفيذية والدبلومات المهنية المتاحة',
+          gridCols: '3',
+          showPrice: true,
+          showStudentsCount: true,
+          buttonBg: '#0d9488'
+        }
+      }
+    ]
   }
 };
 
 export const getTemplateById = (id: string): TemplateSchema => {
   return MOCK_TEMPLATES[id] || MOCK_TEMPLATES['academy-dashboard'];
 };
+

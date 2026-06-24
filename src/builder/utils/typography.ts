@@ -188,6 +188,11 @@ export function buildStyles(props: Record<string, any>): React.CSSProperties {
     else if (key === 'gap') styles.gap = formatUnit(value, 'px');
   }
 
+  // Force transparent background for sections if a shape or custom background is active in the parent wrapper
+  if (hasSectionBackground(props)) {
+    styles.backgroundColor = 'transparent';
+  }
+
   return styles;
 }
 

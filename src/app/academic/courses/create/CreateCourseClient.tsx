@@ -32,7 +32,7 @@ import { PaymentMethodValueInput } from '@/components/payment/PaymentMethodValue
 import { AcademyPaymentMethod, PaymentMethod } from '@/types/payment';
 import { showAlert } from '@/lib/sweetalert';
 import { getUserPaymentInfos, UserPaymentInfo } from '@/services/finance';
-import { getLogoUrl } from '@/lib/utils';
+import { getLogoUrl, translateErrorToArabic } from '@/lib/utils';
 
 const MySwal = withReactContent(Swal);
 
@@ -274,16 +274,16 @@ export default function CreateCourseClient() {
         setErrors(error.errors);
         const allMsgs: string[] = [];
         if (error.message && error.message !== 'Validation errors detected.') {
-          allMsgs.push(error.message);
+          allMsgs.push(translateErrorToArabic(error.message));
         }
         Object.values(error.errors).forEach((msgs: any) => {
           const messages = Array.isArray(msgs) ? msgs : [String(msgs)];
-          messages.forEach((msg) => allMsgs.push(msg));
+          messages.forEach((msg) => allMsgs.push(translateErrorToArabic(msg)));
         });
         const toastMsg = allMsgs.length > 0 ? allMsgs.join(' | ') : 'يرجى تصحيح الأخطاء أدناه';
         toast.error(toastMsg);
       } else {
-        toast.error(error?.message || 'فشل الحفظ');
+        toast.error(translateErrorToArabic(error?.message || 'فشل الحفظ'));
       }
       throw error;
     }
@@ -416,6 +416,23 @@ export default function CreateCourseClient() {
     }
   };
 
+  const handleNextFromInfo = () => {
+    // Basic client-side validation
+    const newErrors: Record<string, any> = {};
+    if (!title.trim()) newErrors.title = 'عنوان الدورة مطلوب';
+    if (!selectedInstructor && (currentUser?.role === 'admin' || currentUser?.role === 'academy')) {
+      newErrors.user_id = 'يرجى اختيار مدرب';
+    }
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error('يرجى ملء الحقول المطلوبة');
+      return;
+    }
+
+    setActiveTab('content');
+  };
+
   const handleSave = async () => {
     // Basic client-side validation
     const newErrors: Record<string, any> = {};
@@ -502,14 +519,10 @@ export default function CreateCourseClient() {
           }
         } else {
           const created = await createCourse(payload);
-          toast.success('تم إنشاء الدورة بنجاح');
+          toast.success('تم إنشاء الدورة بنجاح. يمكنك الآن إضافة الوحدات والدروس.');
           setCourseId(created.id);
           await refreshCourseContent(created.id);
-          if (activeTab === 'info') {
-            setActiveTab('content');
-          } else {
-            router.push(`/academic/courses/${created.id}`);
-          }
+          setActiveTab('content');
         }
       } catch (error: any) {
         if (error?.errors) {
@@ -517,16 +530,16 @@ export default function CreateCourseClient() {
           
           const allMsgs: string[] = [];
           if (error.message && error.message !== 'Validation errors detected.') {
-            allMsgs.push(error.message);
+            allMsgs.push(translateErrorToArabic(error.message));
           }
           Object.values(error.errors).forEach((msgs: any) => {
             const messages = Array.isArray(msgs) ? msgs : [String(msgs)];
-            messages.forEach((msg) => allMsgs.push(msg));
+            messages.forEach((msg) => allMsgs.push(translateErrorToArabic(msg)));
           });
           const toastMsg = allMsgs.length > 0 ? allMsgs.join(' | ') : 'يرجى تصحيح الأخطاء أدناه';
           toast.error(toastMsg);
         } else {
-          toast.error(error?.message || 'فشل الحفظ');
+          toast.error(translateErrorToArabic(error?.message || 'فشل الحفظ'));
         }
       }
     } catch (error: any) {
@@ -630,6 +643,29 @@ export default function CreateCourseClient() {
         <div className="mt-6">
           {activeTab === 'info' && (
             <div className="max-w-4xl space-y-6">
+              {/* Server Validation Error Summary */}
+              {Object.keys(errors).length > 0 && (
+                <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                    <X size={14} className="text-red-500" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-black text-red-700">يرجى تصحيح الأخطاء التالية:</p>
+                    <ul className="space-y-0.5">
+                      {Object.entries(errors).map(([key, msg]) => {
+                        const val = Array.isArray(msg) ? msg[0] : msg;
+                        if (!val) return null;
+                        return (
+                          <li key={key} className="text-xs font-bold text-red-600 flex items-center gap-1.5">
+                            <span className="w-1 h-1 bg-red-400 rounded-full inline-block" />
+                            {translateErrorToArabic(String(val))}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </div>
+              )}
               {/* Course Title */}
               <div className="space-y-2">
                 <label className="flex items-center gap-1 text-sm font-black text-gray-900">
@@ -648,7 +684,7 @@ export default function CreateCourseClient() {
                 {errors.title && (
                   <p className="text-red-500 text-xs font-bold mt-1 flex items-center gap-1">
                     <X size={12} />
-                    {errors.title}
+                    {translateErrorToArabic(Array.isArray(errors.title) ? errors.title[0] : String(errors.title))}
                   </p>
                 )}
               </div>
@@ -663,7 +699,7 @@ export default function CreateCourseClient() {
                   if (errors.category_id) setErrors(prev => ({ ...prev, category_id: null }));
                 }}
                 placeholder="اختر فئة (اختياري)"
-                error={errors.category_id}
+                error={errors.category_id ? translateErrorToArabic(Array.isArray(errors.category_id) ? errors.category_id[0] : String(errors.category_id)) : undefined}
               />
 
               {/* Coach & Instructor Info */}
@@ -685,7 +721,7 @@ export default function CreateCourseClient() {
                       if (errors.user_id) setErrors(prev => ({ ...prev, user_id: null }));
                     }}
                     placeholder="اختر مدرب"
-                    error={errors.user_id}
+                    error={errors.user_id ? translateErrorToArabic(Array.isArray(errors.user_id) ? errors.user_id[0] : String(errors.user_id)) : undefined}
                     required
                   />
                 )}
@@ -737,7 +773,7 @@ export default function CreateCourseClient() {
                         onChange={setDescription}
                         placeholder="ادخل وصف الدورة"
                       />
-                      {errors.description && <p className="text-red-500 text-xs font-bold mt-2">{errors.description}</p>}
+                      {errors.description && <p className="text-red-500 text-xs font-bold mt-2">{translateErrorToArabic(Array.isArray(errors.description) ? errors.description[0] : String(errors.description))}</p>}
                     </div>
                   )}
                 </div>
@@ -758,7 +794,7 @@ export default function CreateCourseClient() {
                         onChange={setWhoIsThisFor}
                         placeholder="الفئة المستهدفة من الدورة"
                       />
-                      {errors.who_is_this_for && <p className="text-red-500 text-xs font-bold mt-2">{errors.who_is_this_for}</p>}
+                      {errors.who_is_this_for && <p className="text-red-500 text-xs font-bold mt-2">{translateErrorToArabic(Array.isArray(errors.who_is_this_for) ? errors.who_is_this_for[0] : String(errors.who_is_this_for))}</p>}
                     </div>
                   )}
                 </div>
@@ -867,7 +903,7 @@ export default function CreateCourseClient() {
                 </button>
                 <button
                   type="button"
-                  onClick={handleSave}
+                  onClick={handleNextFromInfo}
                   disabled={isSubmitting}
                   className="px-12 py-3 bg-blue-600 text-white font-black rounded-full shadow-lg shadow-blue-100 hover:brightness-110 transition-all text-sm disabled:opacity-70"
                 >
@@ -879,7 +915,6 @@ export default function CreateCourseClient() {
 
           {activeTab === 'content' && (
             <div className="flex flex-col gap-6">
-              {/* Header & Add Unit */}
               <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between border border-blue-200 rounded-xl p-2 bg-white gap-3 shadow-sm">
                 <div className="flex-1 text-center md:text-right px-4 py-1.5">
                   <span className="font-bold text-gray-800 text-sm">
@@ -1037,19 +1072,37 @@ export default function CreateCourseClient() {
                   ))
                 ) : (
                   !isAddingUnit && (
-                    <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-100">
-                      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Plus className="text-gray-300" size={32} />
+                    courseId ? (
+                      <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-100">
+                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <Plus className="text-gray-300" size={32} />
+                        </div>
+                        <h3 className="text-lg font-black text-gray-900 mb-1">لا يوجد وحدات حتى الآن</h3>
+                        <p className="text-gray-400 font-bold text-sm mb-6">ابدأ بإضافة وحدة جديدة لترتيب محتوى الدورة</p>
+                        <button
+                          onClick={() => setIsAddingUnit(true)}
+                          className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all text-sm"
+                        >
+                          اضافة وحدة جديدة
+                        </button>
                       </div>
-                      <h3 className="text-lg font-black text-gray-900 mb-1">لا يوجد وحدات حتى الآن</h3>
-                      <p className="text-gray-400 font-bold text-sm mb-6">ابدأ بإضافة وحدة جديدة لترتيب محتوى الدورة</p>
-                      <button
-                        onClick={() => setIsAddingUnit(true)}
-                        className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all text-sm"
-                      >
-                        اضافة وحدة جديدة
-                      </button>
-                    </div>
+                    ) : (
+                      <div className="text-center py-12 bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 flex flex-col items-center justify-center gap-4">
+                        <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-blue-500">
+                          <Landmark size={32} />
+                        </div>
+                        <h3 className="text-lg font-black text-gray-900">يرجى حفظ الدورة أولاً من خطوة التسعير</h3>
+                        <p className="text-gray-500 font-bold text-sm max-w-md text-center">
+                          لتتمكن من إضافة وحدات ودروس، يرجى الانتقال إلى الخطوة التالية (التسعير) وتحديد خيارات التسعير وحفظ الدورة.
+                        </p>
+                        <button
+                          onClick={() => setActiveTab('pricing')}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-black shadow-lg shadow-blue-100 active:scale-95 transition-all text-sm"
+                        >
+                          الانتقال للتسعير وحفظ الدورة
+                        </button>
+                      </div>
+                    )
                   )
                 )}
               </div>
@@ -1080,6 +1133,30 @@ export default function CreateCourseClient() {
                 <h2 className="text-3xl font-black text-gray-900">تحديد سعر الدورة</h2>
                 <p className="text-gray-400 font-bold">اختر خطة التسعير المناسبة لدورتك</p>
               </div>
+
+              {/* Server Validation Error Summary */}
+              {Object.keys(errors).length > 0 && (
+                <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                    <X size={14} className="text-red-500" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-black text-red-700">يرجى تصحيح الأخطاء التالية:</p>
+                    <ul className="space-y-0.5">
+                      {Object.entries(errors).map(([key, msg]) => {
+                        const val = Array.isArray(msg) ? msg[0] : msg;
+                        if (!val) return null;
+                        return (
+                          <li key={key} className="text-xs font-bold text-red-600 flex items-center gap-1.5">
+                            <span className="w-1 h-1 bg-red-400 rounded-full inline-block" />
+                            {translateErrorToArabic(String(val))}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-6">
                 <div
@@ -1154,7 +1231,7 @@ export default function CreateCourseClient() {
                     {errors.price && (
                       <p className="text-red-500 text-xs font-bold mt-1 flex items-center gap-1">
                         <X size={12} />
-                        {errors.price}
+                        {translateErrorToArabic(Array.isArray(errors.price) ? errors.price[0] : String(errors.price))}
                       </p>
                     )}
                   </div>
@@ -1206,9 +1283,18 @@ export default function CreateCourseClient() {
                           };
                         }).filter(Boolean) as AcademyPaymentMethod[];
                         setSelectedPaymentMethods(newMethods);
+                        if (errors.receiver_accounts) setErrors(prev => ({ ...prev, receiver_accounts: null }));
                       }}
                       error={errors.paymentMethods}
                     />
+                    {(errors.receiver_accounts || errors['receiver_accounts']) && (
+                      <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl p-3 mt-2">
+                        <X size={14} className="text-red-500 shrink-0" />
+                        <p className="text-red-600 text-xs font-bold">
+                          {translateErrorToArabic(Array.isArray(errors.receiver_accounts) ? errors.receiver_accounts[0] : String(errors.receiver_accounts || ''))}
+                        </p>
+                      </div>
+                    )}
 
                     {selectedPaymentMethods.length > 0 && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-top-2 duration-300">

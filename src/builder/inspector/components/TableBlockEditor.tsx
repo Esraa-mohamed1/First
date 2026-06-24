@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Trash2, Plus } from 'lucide-react';
 import { MOCK_ROWS } from '../../components/TableBlock';
+import { useBuilderStore } from '../../store/builderStore';
 
 interface TableBlockEditorProps {
   props: Record<string, any>;
@@ -12,12 +13,28 @@ export default function TableBlockEditor({
   handlePropChange,
 }: TableBlockEditorProps) {
   const rows = props.rows || MOCK_ROWS;
+  const { selectedItemIndex } = useBuilderStore();
+
+  useEffect(() => {
+    if (selectedItemIndex !== null) {
+      const element = document.getElementById(`item-editor-${selectedItemIndex}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [selectedItemIndex]);
 
   return (
     <div className="space-y-4 pt-4 border-t border-slate-100">
       <label className="text-[10px] font-black text-slate-400 pr-1 block">تعديل أسطر الجدول</label>
       {rows.map((row: any, idx: number) => (
-        <div key={row.id} className="p-3.5 bg-slate-50 border border-slate-100 rounded-2xl space-y-3 relative group">
+        <div 
+          key={row.id} 
+          id={`item-editor-${idx}`}
+          className={`p-3.5 bg-slate-50 border rounded-2xl space-y-3 relative group transition-all duration-300 ${
+            selectedItemIndex === idx ? 'border-blue-500 shadow-md bg-blue-50/10 ring-2 ring-blue-500/20' : 'border-slate-100'
+          }`}
+        >
           <div className="flex justify-between items-center">
             <span className="text-[10px] font-black text-slate-400">سطر #{idx + 1}</span>
             <button 

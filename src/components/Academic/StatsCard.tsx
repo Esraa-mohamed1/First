@@ -32,29 +32,29 @@ const iconBg = {
 
 const StatCard = ({ title, value, trend, icon: Icon, color }: StatCardProps) => {
   return (
-    <div className="bg-white p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between h-full min-h-[140px] md:min-h-[155px] relative">
-      <div className="flex items-start justify-between gap-4 mb-3 relative z-10 w-full">
+    <div className="bg-white p-3.5 sm:p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between h-full min-h-[115px] sm:min-h-[140px] md:min-h-[155px] relative">
+      <div className="flex items-start justify-between gap-2 sm:gap-4 mb-2 sm:mb-3 relative z-10 w-full">
         {/* Right side: text details (flexible and won't overflow) */}
-        <div className="text-right space-y-1 flex-1 min-w-0">
-          <h3 className="text-xs font-bold text-gray-500 whitespace-normal break-words leading-tight">{title}</h3>
-          <p className="text-xl md:text-2xl font-black text-gray-900 leading-none mt-1">{value}</p>
+        <div className="text-right space-y-0.5 sm:space-y-1 flex-1 min-w-0">
+          <h3 className="text-[10px] sm:text-xs font-bold text-gray-500 whitespace-normal break-words leading-tight">{title}</h3>
+          <p className="text-base sm:text-xl md:text-2xl font-black text-gray-900 leading-none mt-1">{value}</p>
         </div>
         {/* Left side: circular icon container (larger size) */}
-        <div className={twMerge("w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shrink-0 shadow-sm transition-all duration-300", iconBg[color])}>
-          <Icon className="w-6 h-6 md:w-7 md:h-7" />
+        <div className={twMerge("w-9 h-9 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shrink-0 shadow-sm transition-all duration-300", iconBg[color])}>
+          <Icon className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
         </div>
       </div>
       
       {trend && (
         <div className="flex items-center gap-1 mt-auto self-start relative z-10">
           <div className={twMerge(
-            "flex items-center gap-1 font-bold text-[11px] md:text-xs",
+            "flex items-center gap-1 font-bold text-[9px] sm:text-[11px] md:text-xs",
             trend.isPositive ? "text-emerald-500" : "text-rose-500"
           )}>
             {trend.isPositive ? (
-              <TrendingUp className="w-3.5 h-3.5" />
+              <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             ) : (
-              <TrendingDown className="w-3.5 h-3.5" />
+              <TrendingDown className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             )}
             <span>{trend.value}%</span>
             <span className="text-gray-400 font-medium">زيادة عن أمس</span>

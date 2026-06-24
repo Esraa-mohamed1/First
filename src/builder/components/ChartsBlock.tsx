@@ -39,7 +39,7 @@ export default function ChartsBlock(props: ChartsBlockProps) {
   const {
     title = 'إحصائيات التسجيل الشهري',
     chartType = 'area',
-    primaryColor = '#2563eb',
+    primaryColor = 'var(--theme-primary)',
     secondaryColor = '#fbbf24',
     height = 300,
     showGrid = true,

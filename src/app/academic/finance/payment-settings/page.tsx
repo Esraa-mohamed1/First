@@ -21,6 +21,38 @@ import {
   MAX_ACTIVE_ACCOUNTS,
 } from '@/components/forms/AcademyPaymentSettingsForm';
 
+const fetchImageAsFile = async (url: string, filename: string): Promise<File> => {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return new File([blob], filename, { type: blob.type });
+};
+
+const translateErrorToArabic = (msg: string): string => {
+  const normalized = msg.toLowerCase().trim();
+  if (normalized.includes('logo') && (normalized.includes('required') || normalized.includes('must not be empty'))) {
+    return 'شعار وسيلة الدفع مطلوب.';
+  }
+  if (normalized.includes('name') && (normalized.includes('required') || normalized.includes('must not be empty'))) {
+    return 'اسم وسيلة الدفع مطلوب.';
+  }
+  if (normalized.includes('key') && (normalized.includes('required') || normalized.includes('must not be empty'))) {
+    return 'مفتاح وسيلة الدفع مطلوب.';
+  }
+  if (normalized.includes('country_code') || normalized.includes('country code')) {
+    return 'رمز الدولة مطلوب.';
+  }
+  if (normalized.includes('account_value') || normalized.includes('account value') || normalized.includes('value')) {
+    return 'رقم الحساب أو رقم الهاتف المربوط مطلوب.';
+  }
+  if (normalized.includes('currency')) {
+    return 'العملة مقبولة ومطلوبة.';
+  }
+  if (normalized.includes('receiver_account_id') || normalized.includes('receiver account id')) {
+    return 'يرجى اختيار وسيلة الدفع من القوالب.';
+  }
+  return msg;
+};
+
 export default function AcademyPaymentSettingsPage() {
 
   // ─── Data Lists ─────────────────────────────────────────────────────────────
@@ -122,7 +154,17 @@ export default function AcademyPaymentSettingsPage() {
       resetTemplateForm();
       setReceiverTemplates(await getReceiverAccounts());
     } catch (error: any) {
-      showAlert.error('خطأ أثناء الحفظ', error?.message || 'حدث خطأ غير متوقع');
+      if (error?.errors) {
+        const allMsgs: string[] = [];
+        Object.values(error.errors).forEach((msgs: any) => {
+          const messages = Array.isArray(msgs) ? msgs : [String(msgs)];
+          messages.forEach((msg) => allMsgs.push(translateErrorToArabic(msg)));
+        });
+        const errorMsg = allMsgs.length > 0 ? allMsgs.join(' | ') : 'يرجى تصحيح الأخطاء أدناه';
+        showAlert.error('خطأ في البيانات', errorMsg);
+      } else {
+        showAlert.error('خطأ أثناء الحفظ', translateErrorToArabic(error?.message || 'حدث خطأ غير متوقع'));
+      }
     } finally {
       setLoadingTemplate(false);
     }
@@ -157,12 +199,25 @@ export default function AcademyPaymentSettingsPage() {
     setTemplateName('');
   }, []);
 
-  const handlePresetChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handlePresetChange = useCallback(async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
     setSelectedPresetId(val);
     if (val) {
       const selected = receiverTemplates.find(t => t.id.toString() === val);
-      if (selected) setTemplateName(selected.name);
+      if (selected) {
+        setTemplateName(selected.name);
+        if (selected.logo) {
+          try {
+            const logoFile = await fetchImageAsFile(selected.logo, `${selected.key}.png`);
+            setTemplateLogoFile(logoFile);
+          } catch (err) {
+            console.error('Failed to fetch preset logo:', err);
+          }
+        }
+      }
+    } else {
+      setTemplateName('');
+      setTemplateLogoFile(null);
     }
   }, [receiverTemplates]);
 
@@ -201,7 +256,17 @@ export default function AcademyPaymentSettingsPage() {
       resetAccountForm();
       setActiveAccounts(await getUserPaymentInfos());
     } catch (error: any) {
-      showAlert.error('خطأ أثناء الحفظ', error?.message || 'حدث خطأ غير متوقع');
+      if (error?.errors) {
+        const allMsgs: string[] = [];
+        Object.values(error.errors).forEach((msgs: any) => {
+          const messages = Array.isArray(msgs) ? msgs : [String(msgs)];
+          messages.forEach((msg) => allMsgs.push(translateErrorToArabic(msg)));
+        });
+        const errorMsg = allMsgs.length > 0 ? allMsgs.join(' | ') : 'يرجى تصحيح الأخطاء أدناه';
+        showAlert.error('خطأ في البيانات', errorMsg);
+      } else {
+        showAlert.error('خطأ أثناء الحفظ', translateErrorToArabic(error?.message || 'حدث خطأ غير متوقع'));
+      }
     } finally {
       setLoadingAccount(false);
     }

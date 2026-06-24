@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Trash2, ChevronDown, Plus } from 'lucide-react';
 import { AVAILABLE_ICONS, getIconComponent } from '../../utils/icons';
+import { useBuilderStore } from '../../store/builderStore';
 
 interface KpiCardsEditorProps {
   props: Record<string, any>;
@@ -20,6 +21,16 @@ export default function KpiCardsEditor({
   setIconSearch,
 }: KpiCardsEditorProps) {
   const cards = props.cards || [];
+  const { selectedItemIndex } = useBuilderStore();
+
+  useEffect(() => {
+    if (selectedItemIndex !== null) {
+      const element = document.getElementById(`item-editor-${selectedItemIndex}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [selectedItemIndex]);
 
   return (
     <div className="space-y-4 pt-4 border-t border-slate-100">
@@ -27,7 +38,13 @@ export default function KpiCardsEditor({
       {cards.map((card: any, idx: number) => {
         const IconComponent = getIconComponent(card.icon);
         return (
-          <div key={card.id} className="p-3.5 bg-slate-50 border border-slate-100 rounded-2xl space-y-3 relative group">
+          <div 
+            key={card.id} 
+            id={`item-editor-${idx}`}
+            className={`p-3.5 bg-slate-50 border rounded-2xl space-y-3 relative group transition-all duration-300 ${
+              selectedItemIndex === idx ? 'border-blue-500 shadow-md bg-blue-50/10 ring-2 ring-blue-500/20' : 'border-slate-100'
+            }`}
+          >
             <div className="flex justify-between items-center">
               <span className="text-[10px] font-black text-slate-400">بطاقة #{idx + 1}</span>
               <button 
@@ -140,10 +157,9 @@ export default function KpiCardsEditor({
                             setShowIconDropdown(null);
                             setIconSearch('');
                           }}
-                          className="p-1.5 hover:bg-blue-50 border border-slate-100 hover:border-blue-200 rounded flex flex-col items-center justify-center gap-1 text-slate-600 hover:text-blue-600 transition-all"
+                          className="p-2 hover:bg-blue-50 border border-slate-100 hover:border-blue-200 rounded flex items-center justify-center text-slate-600 hover:text-blue-600 transition-all"
                         >
                           <IconComp className="w-4 h-4 shrink-0" />
-                          <span className="text-[8px] truncate max-w-full font-bold">{icon.substr(0, 5)}</span>
                         </button>
                       );
                     })}

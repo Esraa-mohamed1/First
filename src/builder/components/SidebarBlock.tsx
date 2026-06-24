@@ -24,7 +24,7 @@ export default function SidebarBlock(props: SidebarBlockProps) {
     title = 'أكاديمية درب الذكية',
     logoText = 'د',
     theme = 'light',
-    accentColor = '#2563eb',
+    accentColor = 'var(--theme-accent)',
   } = props;
   const isDark = theme === 'dark';
 

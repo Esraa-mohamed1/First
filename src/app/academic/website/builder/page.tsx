@@ -7,32 +7,35 @@ import { getTemplateById } from '@/builder/utils/templates';
 import CanvasContainer from '@/builder/canvas/CanvasContainer';
 import InspectorPanel from '@/builder/inspector/InspectorPanel';
 import { COMPONENT_REGISTRY } from '@/builder/registry/componentRegistry';
-import { 
-  Monitor, 
-  Tablet, 
-  Smartphone, 
-  Undo2, 
-  Redo2, 
-  Eye, 
-  EyeOff, 
-  ArrowRight, 
-  Sparkles, 
-  Check, 
-  Save, 
+import {
+  Monitor,
+  Tablet,
+  Smartphone,
+  Undo2,
+  Redo2,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Sparkles,
+  Check,
+  Save,
   Globe,
   Plus,
   LayoutGrid
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getSections, saveSections, apiToEditor, editorToApi } from '@/services/pages';
+import { getSections, saveSections, apiToEditor, editorToApi, getPages } from '@/services/pages';
+import Swal from 'sweetalert2';
 
 export default function PageBuilderPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const templateId = searchParams.get('templateId') || '';
-  const pageId = searchParams.get('pageId') || null;
+  const templateId = searchParams.get('templateId') || 'academy-dashboard';
+  const pageId = searchParams.get('pageId') || '1';
 
   const [tourStep, setTourStep] = useState<number>(-1);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [lastSavedContent, setLastSavedContent] = useState<string>('');
 
   const tourSteps = [
     {
@@ -130,21 +133,52 @@ export default function PageBuilderPage() {
     redo,
     saveDraft,
     publishTemplate,
-    setPageId
+    setPageId,
+    pageId: storePageId
   } = useBuilderStore();
 
   // Load selected template configuration or page sections from API
   useEffect(() => {
     const fetchPageSections = async () => {
       let activeId = templateId;
-      if (!activeId && typeof window !== 'undefined') {
-        activeId = localStorage.getItem('darab_active_template') || 'academy-dashboard';
+      let activePageId = pageId;
+
+      try {
+        const apiPages = await getPages();
+        const TEMPLATE_SLUGS = ['academy-dashboard', 'template_1', 'template_2', 'template_3', 'template_4', 'template_courses_1'];
+        
+        let activePage = apiPages.find((p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true');
+        if (!activePage) {
+          const templatePages = apiPages.filter((p: any) => TEMPLATE_SLUGS.includes(p.title));
+          activePage = templatePages.sort((a: any, b: any) => Number(b.id) - Number(a.id))[0];
+        }
+
+        if (activePage) {
+          activeId = activePage.title || activePage.slug; // template ID
+          activePageId = String(activePage.id);
+        } else {
+          // Fallback to checking older home page slug
+          const oldHomePage = apiPages.find((p: any) => p.slug === 'home' || p.slug?.startsWith('home-'));
+          if (oldHomePage) {
+            activeId = oldHomePage.template || oldHomePage.template_id || 'academy-dashboard';
+            activePageId = String(oldHomePage.id);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to resolve active template from API in builder:', err);
+        // Fallback to query params or localStorage if API fails
+        if (typeof window !== 'undefined') {
+          const storedTemplate = localStorage.getItem('darab_active_template');
+          const storedPageId = localStorage.getItem('darab_active_page_id');
+          if (storedTemplate) activeId = storedTemplate;
+          if (storedPageId) activePageId = storedPageId;
+        }
       }
 
-      if (pageId) {
-        setPageId(pageId);
+      if (activePageId) {
+        setPageId(activePageId);
         try {
-          const apiSections = await getSections(pageId);
+          const apiSections = await getSections(activePageId);
           if (apiSections && apiSections.length > 0) {
             const editorNodes = apiToEditor(apiSections);
             loadTemplate({
@@ -204,61 +238,153 @@ export default function PageBuilderPage() {
     });
   };
 
-  const handleSaveDraft = async () => {
-    saveDraft();
-    if (pageId && currentTemplate) {
-      try {
-        const apiSections = editorToApi(currentTemplate.sections, pageId);
-        await saveSections(pageId, apiSections);
-        toast.success('تم حفظ مسودة تعديلاتك على السيرفر بنجاح.', {
-          style: {
-            fontFamily: 'IBM Plex Sans Arabic',
-            fontSize: '11px',
-            fontWeight: 'bold',
-            direction: 'rtl'
+  const handleSaveDraft = async (silent = false) => {
+    if (!silent) {
+      saveDraft();
+      const apiPageId = storePageId || pageId;
+      if (apiPageId && currentTemplate) {
+        Swal.fire({
+          title: 'جاري الحفظ...',
+          text: 'جاري حفظ مسودة تصميمك على السيرفر',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          },
+          customClass: {
+            popup: 'font-["IBM_Plex_Sans_Arabic"]'
           }
         });
-      } catch (err) {
-        console.error('Failed to save draft to server:', err);
-        toast.error('حدث خطأ أثناء حفظ المسودة على السيرفر.');
+        try {
+          const apiSections = editorToApi(currentTemplate.sections, apiPageId);
+          await saveSections(apiPageId, apiSections);
+          setLastSavedContent(JSON.stringify(currentTemplate.sections));
+          Swal.fire({
+            icon: 'success',
+            title: 'تم الحفظ بنجاح!',
+            text: 'تم تسجيل كافة الخصائص وترتيب العناصر كما هي في لوحة التحكم.',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'حسناً',
+            customClass: {
+              popup: 'font-["IBM_Plex_Sans_Arabic"]'
+            }
+          });
+        } catch (err) {
+          console.error('Failed to save draft to server:', err);
+          Swal.fire({
+            icon: 'error',
+            title: 'خطأ',
+            text: 'عذراً، حدث خطأ أثناء الاتصال بالسيرفر لحفظ المسودة.',
+            confirmButtonColor: '#2563eb',
+            confirmButtonText: 'إغلاق',
+            customClass: {
+              popup: 'font-["IBM_Plex_Sans_Arabic"]'
+            }
+          });
+        }
+      } else {
+        Swal.fire({
+          icon: 'success',
+          title: 'تم الحفظ',
+          text: 'تم حفظ التغييرات في ذاكرة المتصفح المحلية بنجاح.',
+          confirmButtonColor: '#2563eb',
+          confirmButtonText: 'حسناً',
+          timer: 3000,
+          customClass: {
+            popup: 'font-["IBM_Plex_Sans_Arabic"]'
+          }
+        });
       }
     } else {
-      toast.success('تم حفظ مسودة تعديلاتك محلياً بنجاح.', {
-        style: {
-          fontFamily: 'IBM Plex Sans Arabic',
-          fontSize: '11px',
-          fontWeight: 'bold',
-          direction: 'rtl'
-        }
-      });
+      // Silent Auto-save (Local only)
+      setIsAutoSaving(true);
+      saveDraft();
+      setLastSavedContent(JSON.stringify(currentTemplate?.sections));
+      setTimeout(() => setIsAutoSaving(false), 1500);
     }
   };
 
+  // Auto-save logic
+  useEffect(() => {
+    if (!currentTemplate || !isEditing) return;
+
+    const currentContent = JSON.stringify(currentTemplate.sections);
+    
+    // Don't auto-save if content hasn't changed since last save
+    if (currentContent === lastSavedContent) return;
+
+    const timer = setTimeout(() => {
+      handleSaveDraft(true);
+    }, 3000); // 3 seconds debounce
+
+    return () => clearTimeout(timer);
+  }, [currentTemplate?.sections, isEditing]);
+
   const handlePublish = async () => {
+    const confirmResult = await Swal.fire({
+      title: 'تأكيد النشر',
+      text: 'هل أنت متأكد من الوصول للتصميم النهائي؟ سيتم نشر الموقع وتحديث المحتوى والترتيب فوراً لجميع الطلاب.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#2563eb',
+      cancelButtonColor: '#ef4444',
+      confirmButtonText: 'نعم، انشر الآن',
+      cancelButtonText: 'إلغاء',
+      customClass: {
+        popup: 'font-["IBM_Plex_Sans_Arabic"]'
+      }
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
     publishTemplate();
-    if (pageId && currentTemplate) {
+    const apiPageId = storePageId || pageId;
+    if (apiPageId && currentTemplate) {
+      Swal.fire({
+        title: 'جاري النشر...',
+        text: 'جاري معالجة ونشر التصميم النهائي...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+        customClass: {
+          popup: 'font-["IBM_Plex_Sans_Arabic"]'
+        }
+      });
       try {
-        const apiSections = editorToApi(currentTemplate.sections, pageId);
-        await saveSections(pageId, apiSections);
-        toast.success('تهانينا! تم نشر تعديلات القالب وتحديث الصفحة على السيرفر بنجاح.', {
-          style: {
-            fontFamily: 'IBM Plex Sans Arabic',
-            fontSize: '11px',
-            fontWeight: 'bold',
-            direction: 'rtl'
+        const apiSections = editorToApi(currentTemplate.sections, apiPageId);
+        await saveSections(apiPageId, apiSections);
+        Swal.fire({
+          icon: 'success',
+          title: 'تم النشر!',
+          text: 'مبارك! تم نشر موقعك بنجاح بأحدث إصدار وتنسيق. يمكنك الآن مشاركة الرابط مع طلابك.',
+          confirmButtonColor: '#2563eb',
+          confirmButtonText: 'حسناً',
+          customClass: {
+            popup: 'font-["IBM_Plex_Sans_Arabic"]'
           }
         });
       } catch (err) {
         console.error('Failed to publish to server:', err);
-        toast.error('حدث خطأ أثناء النشر على السيرفر.');
+        Swal.fire({
+          icon: 'error',
+          title: 'خطأ',
+          text: 'حدث خطأ أثناء محاولة النشر على السيرفر، يرجى المحاولة مرة أخرى.',
+          confirmButtonColor: '#2563eb',
+          confirmButtonText: 'إغلاق',
+          customClass: {
+            popup: 'font-["IBM_Plex_Sans_Arabic"]'
+          }
+        });
       }
     } else {
-      toast.success('تهانينا! تم نشر تعديلات القالب وتحديث موجه موقعك بنجاح.', {
-        style: {
-          fontFamily: 'IBM Plex Sans Arabic',
-          fontSize: '11px',
-          fontWeight: 'bold',
-          direction: 'rtl'
+      Swal.fire({
+        icon: 'success',
+        title: 'تم التحديث',
+        text: 'تم تحديث حالة القالب إلى "منشور" في الذاكرة المحلية.',
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'حسناً',
+        customClass: {
+          popup: 'font-["IBM_Plex_Sans_Arabic"]'
         }
       });
     }
@@ -279,28 +405,33 @@ export default function PageBuilderPage() {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-slate-950 font-['IBM_Plex_Sans_Arabic']" dir="rtl">
-      
+
       {/* 1. TOP CONTROL BAR MENU */}
       <header className="bg-slate-900 border-b border-slate-800 px-6 py-3.5 flex flex-row items-center justify-between z-50 shadow-md">
-        
+
         {/* Navigation title details */}
         <div className="flex items-center gap-4">
-          <button 
+          <button
             onClick={handleGoBack}
             className="p-2.5 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-colors border border-slate-800"
             title="رجوع للقوالب"
           >
             <ArrowRight className="w-4 h-4" />
           </button>
-          
+
           <div className="leading-tight text-right">
             <div className="flex items-center gap-2">
               <h1 className="text-xs font-black text-white">{currentTemplate.name}</h1>
-              <span className={`px-2 py-0.5 rounded text-[8px] font-black ${
-                currentTemplate.status === 'published' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-              }`}>
+              <span className={`px-2 py-0.5 rounded text-[8px] font-black ${currentTemplate.status === 'published' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                }`}>
                 {currentTemplate.status === 'published' ? 'منشور' : 'مسودة'}
               </span>
+              {isAutoSaving && (
+                <span className="flex items-center gap-1 text-[8px] font-black text-blue-400 animate-pulse">
+                  <Save className="w-2.5 h-2.5" />
+                  جاري الحفظ التلقائي محلياً...
+                </span>
+              )}
             </div>
             <p className="text-[9px] text-slate-400 font-bold mt-1">نسخة الإصدار v{currentTemplate.version}</p>
           </div>
@@ -308,31 +439,28 @@ export default function PageBuilderPage() {
 
         {/* Responsive device modes simulator */}
         <div className="flex bg-slate-800/80 rounded-xl p-1 items-center border border-slate-700/40 select-none">
-          <button 
+          <button
             onClick={() => setDeviceMode('desktop')}
-            className={`p-2 rounded-lg text-xs font-bold transition-all ${
-              deviceMode === 'desktop' ? 'bg-[#2563eb] text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`p-2 rounded-lg text-xs font-bold transition-all ${deviceMode === 'desktop' ? 'bg-[#2563eb] text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+              }`}
             title="شاشة كمبيوتر"
           >
             <Monitor className="w-4 h-4" />
           </button>
 
-          <button 
+          <button
             onClick={() => setDeviceMode('tablet')}
-            className={`p-2 rounded-lg text-xs font-bold transition-all ${
-              deviceMode === 'tablet' ? 'bg-[#2563eb] text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`p-2 rounded-lg text-xs font-bold transition-all ${deviceMode === 'tablet' ? 'bg-[#2563eb] text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+              }`}
             title="شاشة تابلت"
           >
             <Tablet className="w-4 h-4" />
           </button>
 
-          <button 
+          <button
             onClick={() => setDeviceMode('mobile')}
-            className={`p-2 rounded-lg text-xs font-bold transition-all ${
-              deviceMode === 'mobile' ? 'bg-[#2563eb] text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`p-2 rounded-lg text-xs font-bold transition-all ${deviceMode === 'mobile' ? 'bg-[#2563eb] text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+              }`}
             title="شاشة جوال"
           >
             <Smartphone className="w-4 h-4" />
@@ -344,20 +472,18 @@ export default function PageBuilderPage() {
           <button
             onClick={undo}
             disabled={historyPast.length === 0}
-            className={`p-2 rounded-lg transition-colors ${
-              historyPast.length > 0 ? 'text-slate-200 hover:bg-slate-800' : 'text-slate-600 cursor-not-allowed'
-            }`}
+            className={`p-2 rounded-lg transition-colors ${historyPast.length > 0 ? 'text-slate-200 hover:bg-slate-800' : 'text-slate-600 cursor-not-allowed'
+              }`}
             title="تراجع"
           >
             <Undo2 className="w-4 h-4" />
           </button>
-          
+
           <button
             onClick={redo}
             disabled={historyFuture.length === 0}
-            className={`p-2 rounded-lg transition-colors ${
-              historyFuture.length > 0 ? 'text-slate-200 hover:bg-slate-800' : 'text-slate-600 cursor-not-allowed'
-            }`}
+            className={`p-2 rounded-lg transition-colors ${historyFuture.length > 0 ? 'text-slate-200 hover:bg-slate-800' : 'text-slate-600 cursor-not-allowed'
+              }`}
             title="إعادة تطبيق"
           >
             <Redo2 className="w-4 h-4" />
@@ -372,16 +498,15 @@ export default function PageBuilderPage() {
             className="px-4 py-2 rounded-xl text-xs font-black text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 active:scale-95 transition-all flex items-center gap-1.5"
             title="بدء الجولة التعليمية"
           >
-            <span>جولة تعليمية 🎮</span>
+            <span>جولة تعليمية 🔍</span>
           </button>
 
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
-              !isEditing 
-                ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' 
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${!isEditing
+                ? 'bg-blue-600/10 text-blue-400 border-blue-500/20'
                 : 'bg-slate-800 text-slate-300 border-slate-700/60 hover:text-slate-100'
-            }`}
+              }`}
           >
             {isEditing ? (
               <>
@@ -397,7 +522,7 @@ export default function PageBuilderPage() {
           </button>
 
           <button
-            onClick={handleSaveDraft}
+            onClick={() => handleSaveDraft(false)}
             className="px-4 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-slate-800 border border-slate-700/60 active:scale-95 transition-all flex items-center gap-1.5"
           >
             <Save className="w-4 h-4" />
@@ -417,12 +542,12 @@ export default function PageBuilderPage() {
 
       {/* 2. BODY LAYOUT PANELS */}
       <div className="flex-1 flex flex-row overflow-hidden relative">
-        
+
         {/* Left Side: Widgets list (only visible in edit mode) */}
         {isEditing && (
           <aside className="w-[280px] bg-slate-900 border-l border-slate-800 flex flex-col justify-between overflow-y-auto z-30 select-none">
             <div className="p-5 space-y-6">
-              
+
               <div className="space-y-1">
                 <h2 className="text-xs font-black text-white flex items-center gap-2">
                   <LayoutGrid className="w-4 h-4 text-blue-500" />
@@ -433,7 +558,7 @@ export default function PageBuilderPage() {
 
               {/* Categorized blocks directory */}
               <div className="space-y-4">
-                
+
                 {/* Content Category */}
                 <div className="space-y-2">
                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-wide block">عناصر المحتوى</span>
@@ -490,29 +615,7 @@ export default function PageBuilderPage() {
                   </div>
                 </div>
 
-                {/* Navigation Category */}
-                <div className="space-y-2 pt-2">
-                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-wide block">أشرطة التنقل والتبويبات</span>
-                  <div className="grid grid-cols-1 gap-2">
-                    {[
-                      { type: 'navbar', name: 'ترويسة الموقع العلوي', desc: 'شريط تصفح علوي و بروفايل' },
-                      { type: 'sidebar', name: 'شريط القائمة الجانبية', desc: 'قائمة لوحة التحكم الرئيسية' },
-                      { type: 'tabs', name: 'أزرار التبويبات والفرز', desc: 'مفاتيح التنقل وتصفح الأقسام' }
-                    ].map((item) => (
-                      <button
-                        key={item.type}
-                        onClick={() => handleAddWidget(item.type)}
-                        className="w-full text-right p-3.5 bg-slate-800/40 hover:bg-slate-800 border border-slate-800 hover:border-slate-700/60 rounded-2xl flex flex-col justify-center space-y-1.5 transition-all group"
-                      >
-                        <span className="text-[11px] font-black text-slate-200 group-hover:text-blue-400 transition-colors flex items-center gap-1.5">
-                          <Plus className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500" />
-                          {item.name}
-                        </span>
-                        <span className="text-[8px] text-slate-400 font-medium">{item.desc}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+
 
               </div>
 
@@ -544,10 +647,10 @@ export default function PageBuilderPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none select-none">
           {/* Dark overlay backdrop */}
           <div className="absolute inset-0 bg-slate-950/70 pointer-events-auto" />
-          
+
           {/* Highlight element border */}
           {getHighlightStyles(tourSteps[tourStep]?.target) && (
-            <div 
+            <div
               style={getHighlightStyles(tourSteps[tourStep]?.target)!}
               className="fixed border-4 border-amber-400 rounded-3xl shadow-[0_0_40px_rgba(251,191,36,0.6)] z-[110] transition-all duration-500 pointer-events-none animate-pulse"
             />
@@ -555,7 +658,7 @@ export default function PageBuilderPage() {
 
           {/* Dialog Mascot box */}
           <div className={`${getDialogPositionClass(tourSteps[tourStep]?.target)} bg-slate-900/95 backdrop-blur-2xl border border-slate-800 rounded-3xl p-6 shadow-2xl z-[120] pointer-events-auto text-right font-['IBM_Plex_Sans_Arabic'] flex flex-col gap-4 text-white relative`}>
-            
+
             {/* Mascot header */}
             <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
               <div className="w-12 h-12 rounded-2xl bg-amber-400/10 flex items-center justify-center border border-amber-400/20 text-2xl animate-bounce">
@@ -567,7 +670,7 @@ export default function PageBuilderPage() {
                 </span>
                 <h3 className="text-xs font-black text-slate-100">{tourSteps[tourStep]?.title}</h3>
               </div>
-              <button 
+              <button
                 onClick={() => {
                   setTourStep(-1);
                   localStorage.setItem('darab_builder_tour_completed', 'true');
@@ -585,15 +688,14 @@ export default function PageBuilderPage() {
 
             {/* Stepper progress dots & buttons */}
             <div className="flex items-center justify-between mt-2 pt-3 border-t border-slate-800">
-              
+
               {/* Stepper dots */}
               <div className="flex gap-1.5">
                 {tourSteps.map((_, idx) => (
-                  <div 
+                  <div
                     key={idx}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      idx === tourStep ? 'w-6 bg-amber-400' : 'w-2 bg-slate-800'
-                    }`}
+                    className={`h-2 rounded-full transition-all duration-300 ${idx === tourStep ? 'w-6 bg-amber-400' : 'w-2 bg-slate-800'
+                      }`}
                   />
                 ))}
               </div>
@@ -608,7 +710,7 @@ export default function PageBuilderPage() {
                     السابق
                   </button>
                 )}
-                
+
                 <button
                   onClick={() => {
                     if (tourStep === tourSteps.length - 1) {
@@ -664,7 +766,7 @@ export default function PageBuilderPage() {
               >
                 تخطي للبدء بالتصميم مباشرة ⚙️
               </button>
-              
+
               <button
                 onClick={() => {
                   setTourStep(0);

@@ -28,7 +28,9 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-import { createPage } from '@/services/pages';
+import { createPage, getSections, apiToEditor, getPages, updatePage } from '@/services/pages';
+import { getTemplateById } from '@/builder/utils/templates';
+import TemplateRenderer from '@/builder/templates/renderer/TemplateRenderer';
 
 // -------------------------------------------------------------
 // Interfaces and Type Definitions
@@ -45,15 +47,22 @@ interface Template {
   loadSpeed: string;
 }
 
+const TEMPLATE_SLUGS = ['academy-dashboard', 'template_1', 'template_2', 'template_3', 'template_4', 'template_courses_1'];
+
 export default function TemplatesPage() {
   const [activeTemplateId, setActiveTemplateId] = useState<string>('template_1');
   const [activePageId, setActivePageId] = useState<string | null>(null);
+  const [pages, setPages] = useState<any[]>([]);
   const [activatingId, setActivatingId] = useState<string | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const [simulatorMode, setSimulatorMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
-  // Load selected template and page ID from localStorage
+  const [previewSections, setPreviewSections] = useState<any[]>([]);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+
+  // Load selected template and page ID from localStorage & API
   useEffect(() => {
+    // 1. Sync from localStorage initially as fallback
     const cachedTemplate = localStorage.getItem('darab_active_template');
     if (cachedTemplate) {
       setActiveTemplateId(cachedTemplate);
@@ -62,6 +71,35 @@ export default function TemplatesPage() {
     if (cachedPageId) {
       setActivePageId(cachedPageId);
     }
+
+    // 2. Fetch pages from the backend to resolve the actual active template
+    const loadActiveTemplate = async () => {
+      try {
+        const pagesList = await getPages();
+        setPages(pagesList);
+        
+        // Find page by is_active first, else fall back to title matching heuristic
+        let active = pagesList.find((p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true');
+        if (!active) {
+          const templatePages = pagesList.filter((p: any) => TEMPLATE_SLUGS.includes(p.title));
+          active = templatePages.sort((a: any, b: any) => Number(b.id) - Number(a.id))[0];
+        }
+        
+        if (active) {
+          const activeSlug = active.title;
+          const activeId = String(active.id);
+          setActiveTemplateId(activeSlug);
+          setActivePageId(activeId);
+          
+          // Sync localStorage for fallback compatibility
+          localStorage.setItem('darab_active_template', activeSlug);
+          localStorage.setItem('darab_active_page_id', activeId);
+        }
+      } catch (err) {
+        console.error('Failed to load pages in TemplatesPage:', err);
+      }
+    };
+    loadActiveTemplate();
   }, []);
 
   const handleSelectTemplate = async (id: string, name: string) => {
@@ -69,18 +107,43 @@ export default function TemplatesPage() {
     setActivatingId(id);
 
     try {
-      const payload = {
-        title: 'الرئيسية',
-        slug: 'home',
-        status: 'published',
-        template: id
-      };
-      
-      const created = await createPage(payload);
-      const pageId = String(created.id);
+      const existingPage = pages.find((p: any) => p.title === id);
+      let pageId = '';
+
+      if (existingPage) {
+        // Activate existing page by sending only is_active key
+        const updated = await updatePage(existingPage.id, { is_active: '1' });
+        pageId = String(updated.id);
+
+        // Update pages state: set is_active = '1' for the activated page, and '0' for others
+        setPages(prev => prev.map((p: any) => {
+          if (String(p.id) === pageId) {
+            return { ...p, is_active: '1' };
+          }
+          return { ...p, is_active: '0' };
+        }));
+      } else {
+        // Create new page
+        const payload = {
+          title: id,
+          slug: `home-${Date.now()}`,
+          status: 'published',
+          template: id,
+          is_active: '1'
+        };
+        const created = await createPage(payload);
+        pageId = String(created.id);
+
+        // Update pages state: add new page and set others as inactive
+        setPages(prev => [
+          { ...created, is_active: '1' },
+          ...prev.map((p: any) => ({ ...p, is_active: '0' }))
+        ]);
+      }
 
       localStorage.setItem('darab_active_template', id);
       localStorage.setItem('darab_active_page_id', pageId);
+      localStorage.setItem(`darab_active_page_id_${id}`, pageId);
       
       setActiveTemplateId(id);
       setActivePageId(pageId);
@@ -94,7 +157,19 @@ export default function TemplatesPage() {
       });
     } catch (err: any) {
       console.error('Failed to activate template:', err);
-      toast.error('فشل تفعيل القالب. يرجى المحاولة مجدداً.', {
+      
+      // Extract specific validation error if available
+      let errorMsg = 'فشل تفعيل القالب. يرجى المحاولة مجدداً.';
+      if (err.response?.data?.errors) {
+        const firstErrorKey = Object.keys(err.response.data.errors)[0];
+        if (firstErrorKey) {
+          errorMsg = err.response.data.errors[firstErrorKey][0];
+        }
+      } else if (err.response?.data?.message) {
+        errorMsg = err.response.data.message;
+      }
+
+      toast.error(errorMsg, {
         style: {
           fontFamily: 'IBM Plex Sans Arabic',
           fontWeight: 'bold',
@@ -106,9 +181,42 @@ export default function TemplatesPage() {
     }
   };
 
-  const handleOpenPreview = (template: Template) => {
+  const handleOpenPreview = async (template: Template) => {
     setPreviewTemplate(template);
     setSimulatorMode('desktop');
+    setLoadingPreview(true);
+
+    try {
+      // Find the page in our fetched pages that has title === template.id
+      const matchingPage = pages.find((p: any) => p.title === template.id);
+      let targetPageId = matchingPage ? String(matchingPage.id) : null;
+
+      if (!targetPageId && template.id === activeTemplateId) {
+        targetPageId = activePageId;
+      }
+
+      if (targetPageId) {
+        const apiSections = await getSections(targetPageId);
+        if (apiSections && apiSections.length > 0) {
+          const editorNodes = apiToEditor(apiSections);
+          setPreviewSections(editorNodes);
+          setLoadingPreview(false);
+          return;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch preview sections from API:', e);
+    }
+
+    // Fallback: load static defaults from templates.ts definition
+    try {
+      const defaultTemplateConfig = getTemplateById(template.id);
+      setPreviewSections(defaultTemplateConfig.sections);
+    } catch (e) {
+      console.error('Failed to fetch static default template sections:', e);
+      setPreviewSections([]);
+    }
+    setLoadingPreview(false);
   };
 
   const handleSelectInsideSimulator = async () => {
@@ -295,7 +403,7 @@ export default function TemplatesPage() {
                             <span>جاري التفعيل...</span>
                           </>
                         ) : (
-                          <span>اختيار القالب</span>
+                          <span>{pages.some((p: any) => p.title === tmpl.id) ? 'إعادة تفعيل' : 'اختيار القالب'}</span>
                         )}
                       </button>
                     )}
@@ -386,7 +494,7 @@ export default function TemplatesPage() {
                             <span>جاري التفعيل...</span>
                           </>
                         ) : (
-                          <span>اختيار القالب</span>
+                          <span>{pages.some((p: any) => p.title === tmpl.id) ? 'إعادة تفعيل' : 'اختيار القالب'}</span>
                         )}
                       </button>
                     )}
@@ -507,717 +615,14 @@ export default function TemplatesPage() {
               </div>
 
               {/* DYNAMIC HIGH-FIDELITY PREVIEW RENDERING */}
-              {previewTemplate.id === 'template_1' ? (
-                
-                /* =========================================================
-                   TEMPLATE 1: INDIGO CLASSIC MOCKUP (matches input_file_0.png)
-                   ========================================================= */
-                <div className="flex-1 overflow-y-auto custom-scrollbar text-slate-800 bg-[#F3F4F5] font-['IBM_Plex_Sans_Arabic']" dir="rtl">
-                  
-                  {/* Top Header */}
-                  <header className={`bg-white border-b border-slate-100 py-3.5 flex justify-between items-center sticky top-0 z-50 ${
-                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
-                  }`}>
-                    <div className="flex items-center gap-6">
-                      {/* Logo Play */}
-                      <div className="flex items-center gap-2">
-                        <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-white shrink-0">
-                          <Play className="w-4.5 h-4.5 text-white fill-white shrink-0 ml-0.5" />
-                        </div>
-                        <span className="font-black text-slate-900 text-xl tracking-tight">درب</span>
-                      </div>
-                    </div>
-
-                    {/* Middle Search bar */}
-                    {simulatorMode === 'desktop' && (
-                      <div className="flex-1 max-w-lg mx-8 flex items-center" dir="ltr">
-                        <button className="bg-[#2563eb] text-white px-5 py-2 rounded-l-xl text-xs font-bold shrink-0">ابحث</button>
-                        <div className="relative flex-1">
-                          <input 
-                            type="text" 
-                            placeholder="البحث في الدورات والطلاب" 
-                            className="w-full bg-slate-50 border border-slate-200 rounded-r-xl py-2 px-4 text-xs font-medium text-right text-slate-700 outline-none focus:ring-1 focus:ring-[#2563eb]"
-                          />
-                          <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
-                        </div>
-                      </div>
-                    )}
-
-                    <div className={`flex items-center text-xs font-black text-slate-500 ${
-                      simulatorMode === 'mobile' ? 'gap-2 text-[10px]' : simulatorMode === 'tablet' ? 'gap-4' : 'gap-6'
-                    }`}>
-                      <span className="cursor-pointer hover:text-[#2563eb] transition-colors">مسارات التعلم</span>
-                      <span className="cursor-pointer hover:text-[#2563eb] transition-colors">حسابي</span>
-                      <span className="text-red-500 cursor-pointer hover:text-red-600 transition-colors">تسجيل الخروج</span>
-                    </div>
-                  </header>
-
-                  {/* Hero Block */}
-                  <section className={`bg-gradient-to-b from-[#e8f1ff] to-white text-center relative overflow-hidden ${
-                    simulatorMode === 'desktop' ? 'py-16 px-12' : simulatorMode === 'tablet' ? 'py-14 px-8' : 'py-10 px-4'
-                  }`}>
-                    <div className="max-w-2xl mx-auto space-y-6">
-                      <h2 className={`font-black text-slate-800 leading-tight ${
-                        simulatorMode === 'desktop' ? 'text-5xl' : simulatorMode === 'tablet' ? 'text-3xl' : 'text-2xl'
-                      }`}>
-                        ابدأ اليوم... وخلّ مستقبلك يتغير.
-                      </h2>
-                      <p className={`text-slate-500 font-semibold leading-relaxed max-w-lg mx-auto ${
-                        simulatorMode === 'desktop' ? 'text-base' : 'text-sm'
-                      }`}>
-                        محتوى بسيط وعملي يوصلك لنتيجة حقيقية بدون تعقيد.
-                      </p>
-                      
-                      <div className={`flex justify-center gap-4 pt-2 ${
-                        simulatorMode === 'mobile' ? 'flex-col items-center gap-2 px-6' : 'flex-row'
-                      }`}>
-                        <button className={`py-3.5 rounded-xl bg-[#2563eb] text-white font-black text-xs shadow-lg shadow-blue-500/20 active:scale-95 transition-all ${
-                          simulatorMode === 'mobile' ? 'w-full' : 'px-8'
-                        }`}>
-                          ابدأ الآن
-                        </button>
-                        <button className={`py-3.5 rounded-xl bg-slate-800 text-white font-black text-xs active:scale-95 transition-all ${
-                          simulatorMode === 'mobile' ? 'w-full' : 'px-8'
-                        }`}>
-                          تصفح الكورسات
-                        </button>
-                      </div>
-
-                      {/* Stat Metrics */}
-                      <div className={`grid grid-cols-3 pt-10 border-t border-slate-100 max-w-xl mx-auto text-center ${
-                        simulatorMode === 'desktop' ? 'gap-6' : 'gap-2'
-                      }`}>
-                        <div className="relative">
-                          <p className={`font-black text-slate-800 ${
-                            simulatorMode === 'desktop' ? 'text-3xl' : simulatorMode === 'tablet' ? 'text-2xl' : 'text-base'
-                          }`}>542,412</p>
-                          <p className="text-[10px] text-slate-400 font-bold mt-1">متعلم خريج</p>
-                          <div className="absolute left-0 top-1/4 h-1/2 w-[1px] bg-slate-200"></div>
-                        </div>
-                        <div className="relative">
-                          <p className={`font-black text-slate-800 ${
-                            simulatorMode === 'desktop' ? 'text-3xl' : simulatorMode === 'tablet' ? 'text-2xl' : 'text-base'
-                          }`}>412+</p>
-                          <p className="text-[10px] text-slate-400 font-bold mt-1">فيديو</p>
-                          <div className="absolute left-0 top-1/4 h-1/2 w-[1px] bg-slate-200"></div>
-                        </div>
-                        <div>
-                          <p className={`font-black text-slate-800 ${
-                            simulatorMode === 'desktop' ? 'text-3xl' : simulatorMode === 'tablet' ? 'text-2xl' : 'text-base'
-                          }`}>263,124</p>
-                          <p className="text-[10px] text-slate-400 font-bold mt-1">شهادة صادرة</p>
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Categories Tags Section */}
-                  <section className={`py-8 bg-white text-center ${
-                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
-                  }`}>
-                    <h3 className={`font-black text-slate-800 mb-6 ${
-                      simulatorMode === 'desktop' ? 'text-xl' : 'text-base'
-                    }`}>الأقسام</h3>
-                    <div className="flex flex-wrap justify-center gap-2 max-w-3xl mx-auto">
-                      <span className="bg-[#2563eb] text-white text-[10px] font-bold px-4 py-2 rounded-full cursor-pointer shadow-sm">كل الأقسام</span>
-                      <span className="bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-bold px-4 py-2 rounded-full cursor-pointer hover:border-[#2563eb]">الرسم والتصميم</span>
-                      <span className="bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-bold px-4 py-2 rounded-full cursor-pointer hover:border-[#2563eb]">التسويق</span>
-                      <span className="bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-bold px-4 py-2 rounded-full cursor-pointer hover:border-[#2563eb]">تكنولوجيا المعلومات</span>
-                      <span className="bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-bold px-4 py-2 rounded-full cursor-pointer hover:border-[#2563eb]">الأعمال</span>
-                      <span className="bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-bold px-4 py-2 rounded-full cursor-pointer hover:border-[#2563eb]">التصوير وصناعة الأفلام</span>
-                      <span className="bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-bold px-4 py-2 rounded-full cursor-pointer hover:border-[#2563eb]">صناعة المحتوى</span>
-                      <span className="bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-bold px-4 py-2 rounded-full cursor-pointer hover:border-[#2563eb]">التحريك</span>
-                    </div>
-                  </section>
-
-                  {/* Latest Courses Section */}
-                  <section className={`py-12 bg-white ${
-                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
-                  }`}>
-                    <div className="max-w-6xl mx-auto">
-                      <h3 className={`font-black text-slate-800 mb-8 flex items-center gap-2.5 ${
-                        simulatorMode === 'desktop' ? 'text-2xl' : 'text-lg'
-                      }`}>
-                        <span className="w-1.5 h-6 bg-[#2563eb] rounded-full"></span>
-                        آخر الدورات المسجلة
-                      </h3>
-
-                      <div className={`grid gap-8 ${
-                        simulatorMode === 'desktop' ? 'grid-cols-3' : simulatorMode === 'tablet' ? 'grid-cols-2' : 'grid-cols-1'
-                      }`}>
-                        {[
-                          { name: 'MOHAMED ELMUFTY', role: 'PHOTOSHOP FUNDAMENTALS', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM' },
-                          { name: 'SOHAIP HASSAN', role: 'MICROSOFT EXCEL', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDapuZMqMbglOubBSplHYKHbUUEPOVBNZfPBYfEdrnbwVoJA6p_fXveTFrcYVKfSEKsCZOzcikKHpuWVQRu4n8xxKYXhgM_nanjOQ0cdv-kXhVbMcOq5kzHgm5DH5WlDzYGmDh0ROSe4C_qATsLJhy-iZA4oKXn9HQImP6_0u46v5kDYayBS8_wDmyGvixd7EoZGbUePlgROCvJVAy1-l6nThq3n3XvQJDoOFPy76n8F28rsKmL09nMbF_TcgXK5YffQFE2uS-uFwI' },
-                          { name: 'MOSTAFA ABD EL SABOR', role: 'LEARNING ENGLISH', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM' },
-                          { name: 'AMR EL-BROLOSY', role: 'FUNDAMENTALS OF FILM', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDapuZMqMbglOubBSplHYKHbUUEPOVBNZfPBYfEdrnbwVoJA6p_fXveTFrcYVKfSEKsCZOzcikKHpuWVQRu4n8xxKYXhgM_nanjOQ0cdv-kXhVbMcOq5kzHgm5DH5WlDzYGmDh0ROSe4C_qATsLJhy-iZA4oKXn9HQImP6_0u46v5kDYayBS8_wDmyGvixd7EoZGbUePlgROCvJVAy1-l6nThq3n3XvQJDoOFPy76n8F28rsKmL09nMbF_TcgXK5YffQFE2uS-uFwI' },
-                          { name: 'MOSTAFA ABD EL SABOR', role: 'LEARNING ENGLISH', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM' },
-                          { name: 'ISLAM ELSADEK', role: 'BEGINNER TO MARKETING', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDapuZMqMbglOubBSplHYKHbUUEPOVBNZfPBYfEdrnbwVoJA6p_fXveTFrcYVKfSEKsCZOzcikKHpuWVQRu4n8xxKYXhgM_nanjOQ0cdv-kXhVbMcOq5kzHgm5DH5WlDzYGmDh0ROSe4C_qATsLJhy-iZA4oKXn9HQImP6_0u46v5kDYayBS8_wDmyGvixd7EoZGbUePlgROCvJVAy1-l6nThq3n3XvQJDoOFPy76n8F28rsKmL09nMbF_TcgXK5YffQFE2uS-uFwI' }
-                        ].map((instructor, idx) => (
-                          <div key={idx} className="bg-white rounded-2xl overflow-hidden shadow-[0_12px_30px_rgba(25,28,29,0.03)] border border-slate-100 hover:scale-[1.01] transition-transform duration-200 flex flex-col">
-                            {/* Card Image header containing instructor */}
-                            <div className="h-44 bg-[#0a192f] flex items-center justify-center p-4 relative text-white">
-                              {/* Curved profile framing */}
-                              <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-white/50 bg-slate-700">
-                                <img className="w-full h-full object-cover" src={instructor.img} alt={instructor.name} />
-                              </div>
-                              <div className="absolute bottom-4 right-4 text-right">
-                                <p className="text-[10px] font-black text-blue-400">{instructor.role}</p>
-                                <p className="text-xs font-black text-white">{instructor.name}</p>
-                              </div>
-                            </div>
-                            
-                            {/* Card Info details */}
-                            <div className="p-5 space-y-4">
-                              <h4 className="text-sm font-black text-slate-800 leading-snug">اللغة الإنجليزية-المستوى الأول</h4>
-                              <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold pt-3 border-t border-slate-50">
-                                <span className="flex items-center gap-1">
-                                  <Clock className="w-3.5 h-3.5" />
-                                  6 ساعات
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Users className="w-3.5 h-3.5 text-blue-500" />
-                                  109 طلاب
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-center pt-2">
-                                <span className="text-base font-extrabold text-[#2563eb]">250 ريال</span>
-                                <button className="bg-[#2563eb] hover:bg-blue-600 text-white font-black text-[9px] px-3.5 py-2 rounded-lg transition-colors">
-                                  انضم الآن
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Testimonial slider section */}
-                  <section className={`py-12 bg-slate-100/60 text-center ${
-                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
-                  }`}>
-                    <div className="max-w-4xl mx-auto space-y-8">
-                      <h3 className={`font-black text-slate-800 border-b-2 border-[#2563eb] pb-2 inline-block ${
-                        simulatorMode === 'desktop' ? 'text-2xl' : 'text-lg'
-                      }`}>ماذا يقول طلابنا</h3>
-                      
-                      <div className={`grid gap-6 text-right ${
-                        simulatorMode === 'desktop' ? 'grid-cols-3' : simulatorMode === 'tablet' ? 'grid-cols-2' : 'grid-cols-1'
-                      }`}>
-                        {[1, 2, 3].map((val) => (
-                          <div key={val} className="bg-[#2563eb] text-white p-6 rounded-2xl shadow-md relative flex flex-col justify-between min-h-[160px]">
-                            <span className="text-3xl opacity-20 block leading-none font-serif">“</span>
-                            <p className="text-xs font-semibold leading-relaxed mb-4">
-                              "أعتقد أن EduTech من أفضل المواقع للدراسة عبر الإنترنت. أنا طالب منتظم وأنا سعيد جداً بالدراسة مع معلمي."
-                            </p>
-                            <div className="flex items-center gap-3 border-t border-white/10 pt-3">
-                              <div className="w-7 h-7 rounded-full bg-white/20 overflow-hidden">
-                                <img className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDapuZMqMbglOubBSplHYKHbUUEPOVBNZfPBYfEdrnbwVoJA6p_fXveTFrcYVKfSEKsCZOzcikKHpuWVQRu4n8xxKYXhgM_nanjOQ0cdv-kXhVbMcOq5kzHgm5DH5WlDzYGmDh0ROSe4C_qATsLJhy-iZA4oKXn9HQImP6_0u46v5kDYayBS8_wDmyGvixd7EoZGbUePlgROCvJVAy1-l6nThq3n3XvQJDoOFPy76n8F28rsKmL09nMbF_TcgXK5YffQFE2uS-uFwI" alt="Student avatar" />
-                              </div>
-                              <div>
-                                <p className="font-black text-[10px]">أحمد محمد</p>
-                                <p className="text-[8px] opacity-75">جرافيك ديزاينر</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Footer Section */}
-                  <footer className={`bg-slate-900 text-slate-400 py-12 border-t border-slate-800 text-sm ${
-                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
-                  }`}>
-                    <div className={`max-w-6xl mx-auto grid gap-8 text-right ${
-                      simulatorMode === 'desktop' ? 'grid-cols-4' : simulatorMode === 'tablet' ? 'grid-cols-2' : 'grid-cols-1'
-                    }`}>
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-white">
-                          <Play className="w-5 h-5 fill-white" />
-                          <span className="text-lg font-black">درب</span>
-                        </div>
-                        <p className="text-xs text-slate-500 leading-relaxed">منصة تعليمية تساعدك في تطوير مهاراتك العلمية والعملية بسهولة تامة وبأساليب حديثة.</p>
-                      </div>
-
-                      <div className="space-y-3">
-                        <h4 className="font-black text-white text-xs">قائمتنا</h4>
-                        <ul className="space-y-2 text-xs text-slate-500">
-                          <li>الرئيسية</li>
-                          <li>من نحن</li>
-                          <li>الباقات والأستعار</li>
-                          <li>تواصل معنا</li>
-                        </ul>
-                      </div>
-
-                      <div className="space-y-3">
-                        <h4 className="font-black text-white text-xs">المعلومات</h4>
-                        <ul className="space-y-2 text-xs text-slate-500">
-                          <li>الأسئلة الشائعة</li>
-                          <li>عن الأكاديمية</li>
-                          <li>المدربون</li>
-                          <li>كيف تعمل المنصة</li>
-                        </ul>
-                      </div>
-
-                      <div className="space-y-3">
-                        <h4 className="font-black text-white text-xs">تواصل معنا</h4>
-                        <ul className="space-y-2 text-xs text-slate-500">
-                          <li dir="ltr">+966 5000000</li>
-                          <li>info@darab.academy</li>
-                          <li>الرياض، المملكة العربية السعودية</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </footer>
-
+              {loadingPreview ? (
+                <div className="flex-1 flex flex-col items-center justify-center bg-slate-950 text-slate-400 gap-3">
+                  <span className="w-8 h-8 border-4 border-slate-700 border-t-transparent rounded-full animate-spin"></span>
+                  <span className="text-xs font-bold font-['IBM_Plex_Sans_Arabic']">جاري تحميل معاينة القالب...</span>
                 </div>
               ) : (
-                
-                /* =========================================================
-                   TEMPLATE 2: TEAL TURQUOISE MOCKUP (matches input_file_1.png)
-                   ========================================================= */
-                <div className="flex-1 overflow-y-auto custom-scrollbar text-slate-800 bg-white font-['IBM_Plex_Sans_Arabic']" dir="rtl">
-                  
-                  {/* Teal Header (matching screenshot) */}
-                  <header className={`bg-white border-b border-slate-100 py-4 flex justify-between items-center sticky top-0 z-50 ${
-                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
-                  }`}>
-                    
-                    {/* Left: Button "سجل الآن" */}
-                    <div className="flex items-center gap-4">
-                      <button className="px-6 py-2.5 rounded-full bg-[#00a896] hover:bg-[#009282] text-white font-black text-xs shadow-md shadow-[#00a896]/15 hover:shadow-lg transition-all duration-200 active:scale-95 shrink-0">
-                        سجل الآن
-                      </button>
-                    </div>
-
-                    {/* Center-Left: Search Input Bar "ماذا تريد أن تتعلم اليوم؟" */}
-                    {simulatorMode === 'desktop' && (
-                      <div className="flex items-center flex-1 max-w-sm mx-4 bg-slate-50 border border-slate-200/80 rounded-full px-4 py-2 relative shadow-inner">
-                        <input 
-                          type="text" 
-                          placeholder="ماذا تريد أن تتعلم اليوم?" 
-                          className="w-full bg-transparent text-[11px] font-bold text-slate-700 outline-none text-right placeholder-slate-400"
-                          dir="rtl"
-                        />
-                        <Search className="w-3.5 h-3.5 text-slate-400 mr-2 shrink-0" />
-                      </div>
-                    )}
-
-                    {/* Right-Center Navigation & Right Logo */}
-                    <div className="flex items-center gap-8">
-                      {simulatorMode === 'desktop' && (
-                        <nav className="flex items-center gap-6 text-xs font-black text-slate-600">
-                          <span className="text-[#00a896] hover:opacity-90 transition-colors cursor-pointer flex items-center gap-1">
-                            الدورات
-                            <svg className="w-2.5 h-2.5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                          </span>
-                          <span className="hover:text-[#00a896] transition-colors cursor-pointer flex items-center gap-1">
-                            التخصصات
-                            <svg className="w-2.5 h-2.5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                          </span>
-                          <span className="hover:text-[#00a896] transition-colors cursor-pointer">الشركاء</span>
-                        </nav>
-                      )}
-                      
-                      {/* Logo mimicking "إدراك" */}
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-[#00a896] flex items-center justify-center text-white shrink-0 font-extrabold text-sm shadow-sm shadow-[#00a896]/15">
-                          <Award className="w-4 h-4" />
-                        </div>
-                        <span className="font-black text-[#00a896] text-lg tracking-tight select-none">إدراك</span>
-                      </div>
-                    </div>
-                  </header>
-
-                  {/* Hero Block with concentric waves background & Students photo */}
-                  <section className={`bg-white py-16 relative overflow-hidden border-b border-slate-100/80 ${
-                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
-                  }`}>
-                    
-                    {/* Concentric rings mimicking the waves in the screenshot */}
-                    <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[600px] h-[600px] border border-teal-50/60 rounded-full pointer-events-none z-0"></div>
-                    <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[480px] h-[480px] border border-teal-100/40 rounded-full pointer-events-none z-0"></div>
-                    <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[360px] h-[360px] border border-teal-150/30 rounded-full pointer-events-none z-0"></div>
-
-                    <div className={`max-w-6xl mx-auto flex items-center justify-between gap-12 relative z-10 ${
-                      simulatorMode === 'desktop' ? 'flex-row' : 'flex-col-reverse'
-                    }`}>
-                      
-                      {/* Left: circular students layout in high premium framing */}
-                      <div className={`flex justify-center relative ${
-                        simulatorMode === 'desktop' ? 'w-1/2' : 'w-full max-w-sm'
-                      }`}>
-                        <div className="relative">
-                          {/* Sleek shadow backdrops */}
-                          <div className="absolute -inset-4 bg-gradient-to-tr from-[#02c39a]/10 to-[#00a896]/15 rounded-[48px] rotate-3 blur-md scale-95"></div>
-                          <div className="absolute -inset-1 bg-gradient-to-tr from-[#02c39a]/20 to-[#00a896]/30 rounded-[52px] -rotate-2 scale-100"></div>
-                          
-                          <div className={`rounded-[42px] overflow-hidden border-[6px] border-white bg-slate-50 flex items-center justify-center relative shadow-xl ${
-                            simulatorMode === 'desktop' ? 'w-[380px] h-[380px]' : 'w-72 h-72'
-                          }`}>
-                            <div className="absolute inset-0 bg-teal-900/5 mix-blend-multiply"></div>
-                            <img 
-                              className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-700" 
-                              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM" 
-                              alt="Students studying on laptop"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right: Hero texts & Statistics Cards */}
-                      <div className={`space-y-8 ${
-                        simulatorMode === 'desktop' ? 'w-1/2 text-right' : 'w-full text-center flex flex-col items-center'
-                      }`}>
-                        <div className="space-y-4">
-                          <h2 className={`font-black text-slate-800 leading-tight ${
-                            simulatorMode === 'desktop' ? 'text-5xl' : simulatorMode === 'tablet' ? 'text-3xl' : 'text-2xl'
-                          }`}>
-                            تعلم، طبق، وخلك مميز
-                          </h2>
-                          <p className="text-slate-500 text-sm font-semibold leading-relaxed max-w-lg">
-                            تأهيل كامل لسوق العمل من خلال مسارات تعليمية وتطبيقية متكاملة بأساليب حديثة.
-                          </p>
-                        </div>
-                        
-                        <button className="px-7 py-4 rounded-xl bg-[#00a896] hover:bg-[#009282] text-white font-black text-xs shadow-lg shadow-[#00a896]/20 transition-all hover:shadow-[#00a896]/30 hover:-translate-y-0.5 active:scale-95 duration-200">
-                          اكتشف برامجنا التعليمية
-                        </button>
-
-                        {/* Custom framed statistics cards */}
-                        <div className={`grid grid-cols-3 gap-4 pt-8 border-t border-slate-100 max-w-md ${
-                          simulatorMode === 'desktop' ? '' : 'w-full'
-                        }`}>
-                          <div className="bg-white border border-[#00a896]/25 px-2 py-3.5 rounded-2xl shadow-sm text-center transform hover:scale-[1.02] transition-transform">
-                            <p className={`font-extrabold text-[#00a896] ${
-                              simulatorMode === 'desktop' ? 'text-2xl' : 'text-xl'
-                            }`}>50+</p>
-                            <p className="text-[9px] text-slate-400 font-bold mt-1.5 leading-tight">تخصص ومسار تعليمي</p>
-                          </div>
-                          <div className="bg-white border border-[#00a896]/25 px-2 py-3.5 rounded-2xl shadow-sm text-center transform hover:scale-[1.02] transition-transform">
-                            <p className={`font-extrabold text-[#00a896] ${
-                              simulatorMode === 'desktop' ? 'text-2xl' : 'text-xl'
-                            }`}>500+</p>
-                            <p className="text-[9px] text-slate-400 font-bold mt-1.5 leading-tight">دورة تدريبية</p>
-                          </div>
-                          <div className="bg-white border border-[#00a896]/25 px-2 py-3.5 rounded-2xl shadow-sm text-center transform hover:scale-[1.02] transition-transform">
-                            <p className={`font-extrabold text-[#00a896] ${
-                              simulatorMode === 'desktop' ? 'text-2xl' : 'text-xl'
-                            }`}>100+</p>
-                            <p className="text-[9px] text-slate-400 font-bold mt-1.5 leading-tight">مشروع تطبيقي وعملي</p>
-                          </div>
-                        </div>
-                      </div>
-
-                    </div>
-                  </section>
-
-                  {/* Vibrant Teal Banner Section (ابدأ التعلم مجاناً الآن) */}
-                  <section className={`py-12 bg-[#00a896] text-center text-white relative overflow-hidden ${
-                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
-                  }`}>
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full blur-2xl"></div>
-                    <div className="max-w-4xl mx-auto space-y-6 relative z-10">
-                      <h3 className={`font-black text-white ${
-                        simulatorMode === 'desktop' ? 'text-2xl' : 'text-xl'
-                      }`}>ابدأ التعلم مجاناً الآن</h3>
-                      <p className="text-teal-50 text-xs font-semibold leading-relaxed max-w-xl mx-auto">
-                        اكتشف مجموعة واسعة من أكثر من 300 دورة، مصممة خصيصاً لتلبية مهاراتكم واهتماماتكم!
-                      </p>
-
-                      {/* Category pills exactly like the screenshot */}
-                      <div className="flex flex-wrap justify-center gap-2 pt-2">
-                        <span className="bg-[#0b2b2b] text-white text-[10px] font-bold px-4.5 py-2.5 rounded-full cursor-pointer shadow-md transform hover:scale-[1.02] transition-all">
-                          كل الأقسام
-                        </span>
-                        {[
-                          'الرسم والتصميم',
-                          'الفنون',
-                          'تكنولوجيا المعلومات',
-                          'الأعمال',
-                          'اللغات',
-                          'صناعة المحتوى',
-                          'التحريك',
-                          'مؤتمرات وبرامج'
-                        ].map((cat, idx) => (
-                          <span 
-                            key={idx} 
-                            className="bg-transparent border border-white/40 hover:border-white text-white text-[10px] font-bold px-4.5 py-2.5 rounded-full cursor-pointer hover:bg-white/5 transform hover:scale-[1.02] transition-all"
-                          >
-                            {cat}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Main Courses Grid Section */}
-                  <section className={`py-16 bg-[#f8fafc] ${
-                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
-                  }`}>
-                    <div className="max-w-6xl mx-auto space-y-12">
-                      
-                      <div className={`grid gap-8 ${
-                        simulatorMode === 'desktop' ? 'grid-cols-3' : simulatorMode === 'tablet' ? 'grid-cols-2' : 'grid-cols-1'
-                      }`}>
-                        {[
-                          { title: 'تصميم واجهة المستخدم (UI)', rating: '4.9', duration: '12 ساعة', tag: 'دورة مميزة', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB4iH4QN5hawBNBS5h9s9nS1TEOla1eY5JJBqQOqqjhAcuOlHHEGvnQUIHaXpvbQX9suHmsGlgv0xfg0Us7GtGZPQZLjNjAsSb3srLVJGGI4JhTw1Ox5L1yvBbvfJnp2IzBFGjUi-SISVcwTm1m9E2wpeb0s33mi9i-k6-PXWT7bxjjJfB8-tokQtf0u5nDOyc2UDANLG2c6UALdgFPTLJ5HDo34MDxx0k5foN_8S6R-2hJhXdyF5sEUPHIXe8KarPgOvzf7Tg2VLI' },
-                          { title: 'أساسيات البرمجة بلغة جافاسكريبت', rating: '4.8', duration: '18 ساعة', tag: 'جديد', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM' },
-                          { title: 'تصميم ثلاثي الأبعاد والتحريك المتقدم', rating: '4.7', duration: '20 ساعة', tag: 'دورة مجانية', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDapuZMqMbglOubBSplHYKHbUUEPOVBNZfPBYfEdrnbwVoJA6p_fXveTFrcYVKfSEKsCZOzcikKHpuWVQRu4n8xxKYXhgM_nanjOQ0cdv-kXhVbMcOq5kzHgm5DH5WlDzYGmDh0ROSe4C_qATsLJhy-iZA4oKXn9HQImP6_0u46v5kDYayBS8_wDmyGvixd7EoZGbUePlgROCvJVAy1-l6nThq3n3XvQJDoOFPy76n8F28rsKmL09nMbF_TcgXK5YffQFE2uS-uFwI' },
-                          { title: 'البحث وتحليل البيانات واتخاذ القرار الاستراتيجي', rating: '4.9', duration: '15 ساعة', tag: 'دورة مجانية', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDtqpBVFtjEqV4PVoWYoyU8fcNsGZBndlgPIbkTUs2JhnbX94-veF8_k8_HudB9diVBtjprCKzLuuiObyibFF6J9QbaMi1GcDswO0I4W3wlUhbXjD_j1nPDgegx4guIeTcmiF9PHyt3yU3B-zTYYixNNb5rzSTyXu_dNsQybxKmntcB87QhR6ICgCXRlHXPPaV2v4GrYnnz6NmYa8CQCbDOZw82qqN70CS7UckmVyBWvUnicK0nzC2SZsnW_QwGRn3db9X6vbI-6DE' },
-                          { title: 'إدارة المستودعات وسلاسل الإمداد اللوجستية', rating: '4.6', duration: '10 ساعات', tag: 'دورة مجانية', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB7fji1EMzpBjvIOPzTzKZXMfFMs_z3kV26cI_u4VZySsAciXaJgM3Az6NM1Dv4arh-Prux6XN7GqdYRv9_L_BhcETvxgmkH2Kp9mMzgjM20WJE7jHDI92KCOYa6xe-XZwTN0tfSlUKxH_y6pOE1twvM7NsZtmAJ7xCG0dMyz3ptUE3dE9DxwvuOp1VEeL-6bnYlbgE1DBMdUmQEwlcdIE5qzhXXvAcf--sm_qb604Y61GeGM2PWxgDVqcnyY_7mFtiZsqC_a593Nc' },
-                          { title: 'صناعة المحتوى الرقمي المسموع والمرئي', rating: '4.9', duration: '14 ساعة', tag: 'جديد', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB4iH4QN5hawBNBS5h9s9nS1TEOla1eY5JJBqQOqqjhAcuOlHHEGvnQUIHaXpvbQX9suHmsGlgv0xfg0Us7GtGZPQZLjNjAsSb3srLVJGGI4JhTw1Ox5L1yvBbvfJnp2IzBFGjUi-SISVcwTm1m9E2wpeb0s33mi9i-k6-PXWT7bxjjJfB8-tokQtf0u5nDOyc2UDANLG2c6UALdgFPTLJ5HDo34MDxx0k5foN_8S6R-2hJhXdyF5sEUPHIXe8KarPgOvzf7Tg2VLI' }
-                        ].map((course, idx) => (
-                          <div key={idx} className="bg-white rounded-3xl overflow-hidden shadow-[0_12px_40px_rgba(25,28,29,0.02)] border border-slate-100 hover:-translate-y-1.5 transition-all duration-300 flex flex-col group">
-                            
-                            {/* Card Image Header */}
-                            <div className="h-44 overflow-hidden relative bg-slate-50 p-3 shrink-0">
-                              <img className="w-full h-full object-cover rounded-2xl transition-transform duration-700 group-hover:scale-105" src={course.img} alt={course.title} />
-                              <span className="absolute top-5 right-5 bg-amber-100 text-amber-800 text-[9px] font-black px-3 py-1 rounded-full shadow-sm">
-                                {course.tag}
-                              </span>
-                            </div>
-                            
-                            {/* Card Content Details */}
-                            <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                              <div>
-                                <h4 className="text-xs font-black text-slate-800 leading-snug line-clamp-2">{course.title}</h4>
-                                <div className="flex items-center gap-1.5 mt-2">
-                                  <div className="flex items-center gap-0.5">
-                                    {[1, 2, 3, 4, 5].map((s) => (
-                                      <Star key={s} className="w-3 h-3 text-amber-500 fill-amber-500" />
-                                    ))}
-                                  </div>
-                                  <span className="text-[10px] text-slate-400 font-bold mt-0.5">({course.rating})</span>
-                                </div>
-                                <p className="text-[10px] text-slate-400 font-bold mt-2">{course.duration}</p>
-                              </div>
-
-                              {/* Card Action footer (wishlist & purple enroll button) */}
-                              <div className="flex justify-between items-center pt-3 border-t border-slate-150">
-                                <button className="p-2.5 rounded-full border border-slate-100 hover:border-red-150 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
-                                  <Heart className="w-3.5 h-3.5" />
-                                </button>
-                                <button className="bg-[#3b2dcf] hover:bg-[#2b1dcf] text-white text-[9px] font-black px-5 py-2.5 rounded-full transition-all active:scale-95 shadow-md shadow-[#3b2dcf]/15">
-                                  اشترك الآن
-                                </button>
-                              </div>
-                            </div>
-
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Browse more teal button */}
-                      <div className="flex justify-center pt-4">
-                        <button className="px-6 py-3 rounded-xl bg-[#00a896] hover:bg-[#009282] text-white font-black text-xs shadow-md transition-all active:scale-95">
-                          تصفح المزيد من الدورات
-                        </button>
-                      </div>
-
-                    </div>
-                  </section>
-
-                  {/* Specializations Section with grid paper background */}
-                  <section className={`py-16 relative overflow-hidden bg-slate-50/50 border-t border-b border-slate-100 ${
-                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
-                  }`} 
-                    style={{
-                      backgroundImage: 'linear-gradient(to right, rgba(0, 168, 150, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 168, 150, 0.05) 1px, transparent 1px)',
-                      backgroundSize: '24px 24px'
-                    }}
-                  >
-                    <div className="max-w-6xl mx-auto space-y-12 relative z-10">
-                      
-                      {/* Subheading */}
-                      <div className="text-center space-y-2">
-                        <span className="text-xs text-[#00a896] font-black uppercase tracking-wider bg-teal-50 px-3 py-1 rounded-full">التخصصات</span>
-                        <h3 className={`font-black text-slate-800 ${
-                          simulatorMode === 'desktop' ? 'text-2xl' : 'text-xl'
-                        }`}>طور مهاراتك عبر مسارات برامج تعليمية متخصصة</h3>
-                      </div>
-
-                      <div className={`grid gap-8 ${
-                        simulatorMode === 'desktop' ? 'grid-cols-3' : simulatorMode === 'tablet' ? 'grid-cols-2' : 'grid-cols-1'
-                      }`}>
-                        {[
-                          { title: 'أساسيات تصميم UI/UX', desc: 'كل ما تحتاجه لتصميم تطبيقات ومواقع مذهلة تلبي رغبات المستخدمين وتمنحهم تجربة استخدام لا تُنسى.', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB4iH4QN5hawBNBS5h9s9nS1TEOla1eY5JJBqQOqqjhAcuOlHHEGvnQUIHaXpvbQX9suHmsGlgv0xfg0Us7GtGZPQZLjNjAsSb3srLVJGGI4JhTw1Ox5L1yvBbvfJnp2IzBFGjUi-SISVcwTm1m9E2wpeb0s33mi9i-k6-PXWT7bxjjJfB8-tokQtf0u5nDOyc2UDANLG2c6UALdgFPTLJ5HDo34MDxx0k5foN_8S6R-2hJhXdyF5sEUPHIXe8KarPgOvzf7Tg2VLI' },
-                          { title: 'إتقان فيجما (Figma)', desc: 'تعلم التحكم الكامل بأقوى برامج تصميم الواجهات وبناء المكونات والمكتبات المشتركة باحترافية كاملة.', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB9KcwP0hcNTjqTsP9-zEoZDcp7ymS0jNj6ob0RwCIdKZ108wU5GjjnHQ0Ji6KDK0ow73ll6wBAdPJRnFpak6zMSPeZ4oAs50vCNlTZKzFA-09Anx2ZOEFVdcumpmAMBHwpacUtUq3v8BNDiO8uMUSw84-4TcE5wdXfhHaOF0A9vgFNdp5-eoQ3H2QBP0nj_d2E4mHbznhcP-MK1K3iSrqNQPbcQChXz_3auUIfp_d-OYnMw6Hv-Uca0MdxRgbltFjrZV6VFE9-guA' },
-                          { title: 'إتقان بريمير (Premiere)', desc: 'كن قادراً على تحرير الفيديوهات وإضافة المؤثرات البصرية وتنسيق المقاطع بدقة عالية.', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB7fji1EMzpBjvIOPzTzKZXMfFMs_z3kV26cI_u4VZySsAciXaJgM3Az6NM1Dv4arh-Prux6XN7GqdYRv9_L_BhcETvxgmkH2Kp9mMzgjM20WJE7jHDI92KCOYa6xe-XZwTN0tfSlUKxH_y6pOE1twvM7NsZtmAJ7xCG0dMyz3ptUE3dE9DxwvuOp1VEeL-6bnYlbgE1DBMdUmQEwlcdIE5qzhXXvAcf--sm_qb604Y61GeGM2PWxgDVqcnyY_7mFtiZsqC_a593Nc' }
-                        ].map((path, idx) => (
-                          <div key={idx} className="bg-white border border-slate-100 p-5 rounded-3xl shadow-sm hover:scale-[1.01] hover:shadow-md transition-all duration-300 space-y-4">
-                            <div className="h-36 overflow-hidden rounded-2xl relative bg-slate-50">
-                              <img className="w-full h-full object-cover" src={path.img} alt={path.title} />
-                            </div>
-                            <h4 className="text-sm font-black text-slate-800">{path.title}</h4>
-                            <p className="text-[11px] text-slate-400 font-bold leading-relaxed">{path.desc}</p>
-                            <div className="pt-2">
-                              <span className="flex items-center gap-1 text-[#00a896] text-xs font-black hover:opacity-80 cursor-pointer">
-                                طور تخصصك
-                                <ChevronLeft className="w-3.5 h-3.5" />
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Browse more teal button */}
-                      <div className="flex justify-center pt-4">
-                        <button className="px-6 py-3 rounded-xl bg-[#00a896] hover:bg-[#009282] text-white font-black text-xs shadow-md transition-all active:scale-95">
-                          تصفح المزيد من الدورات
-                        </button>
-                      </div>
-
-                    </div>
-                  </section>
-
-                  {/* Discovery and Search Box Section */}
-                  <section className={`py-16 bg-white text-center border-b border-slate-100/60 ${
-                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
-                  }`}>
-                    <div className="max-w-2xl mx-auto space-y-6">
-                      <h3 className={`font-black text-slate-800 leading-relaxed ${
-                        simulatorMode === 'desktop' ? 'text-lg' : 'text-base'
-                      }`}>
-                        اكتشف أكثر من 300 دورة تدريبية مجانية على منصة إدراك
-                      </h3>
-                      <div className="relative flex items-center max-w-xl mx-auto border border-slate-200 bg-slate-50/50 rounded-2xl shadow-inner px-4 py-2.5">
-                        <input 
-                          type="text" 
-                          placeholder="ابحث عن دورة أو تخصص..." 
-                          className="w-full bg-transparent text-xs font-bold text-slate-700 outline-none text-right placeholder-slate-400"
-                          dir="rtl"
-                        />
-                        <Search className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Latest Courses Section (أحدث الدورات) */}
-                  <section className={`py-16 bg-[#f8fafc] border-b border-slate-100 ${
-                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
-                  }`}>
-                    <div className="max-w-6xl mx-auto space-y-12">
-                      
-                      <div className="text-center space-y-2">
-                        <span className="text-xs text-[#00a896] font-black uppercase tracking-wider bg-teal-50 px-3 py-1 rounded-full">أحدث الدورات</span>
-                        <h3 className={`font-black text-slate-800 leading-tight ${
-                          simulatorMode === 'desktop' ? 'text-2xl' : 'text-xl'
-                        }`}>
-                          اكتشف أبرز الدورات التي تساهم في تعزيز مهاراتك وتطوير مسيرتك المهنية
-                        </h3>
-                        <p className="text-slate-400 text-xs font-semibold leading-relaxed max-w-xl mx-auto">
-                          مصممة بعناية لتوفير أعلى مستويات الجودة والتأثير في مجالك المهني.
-                        </p>
-                      </div>
-
-                      <div className={`grid gap-8 ${
-                        simulatorMode === 'desktop' ? 'grid-cols-3' : simulatorMode === 'tablet' ? 'grid-cols-2' : 'grid-cols-1'
-                      }`}>
-                        {[
-                          { title: 'لغة الجسد وفن التأثير والاتصال الإنساني', rating: '4.9', duration: '8 ساعات', tag: 'مجاني', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM' },
-                          { title: 'المحاسبة المالية والحسابات لغير المحاسبين', rating: '4.8', duration: '12 ساعة', tag: 'دورة مميزة', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDapuZMqMbglOubBSplHYKHbUUEPOVBNZfPBYfEdrnbwVoJA6p_fXveTFrcYVKfSEKsCZOzcikKHpuWVQRu4n8xxKYXhgM_nanjOQ0cdv-kXhVbMcOq5kzHgm5DH5WlDzYGmDh0ROSe4C_qATsLJhy-iZA4oKXn9HQImP6_0u46v5kDYayBS8_wDmyGvixd7EoZGbUePlgROCvJVAy1-l6nThq3n3XvQJDoOFPy76n8F28rsKmL09nMbF_TcgXK5YffQFE2uS-uFwI' },
-                          { title: 'تطوير واجهات الويب وتطبيقات الهاتف بالـ React', rating: '4.7', duration: '20 ساعة', tag: 'جديد', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDtqpBVFtjEqV4PVoWYoyU8fcNsGZBndlgPIbkTUs2JhnbX94-veF8_k8_HudB9diVBtjprCKzLuuiObyibFF6J9QbaMi1GcDswO0I4W3wlUhbXjD_j1nPDgegx4guIeTcmiF9PHyt3yU3B-zTYYixNNb5rzSTyXu_dNsQybxKmntcB87QhR6ICgCXRlHXPPaV2v4GrYnnz6NmYa8CQCbDOZw82qqN70CS7UckmVyBWvUnicK0nzC2SZsnW_QwGRn3db9X6vbI-6DE' }
-                        ].map((course, idx) => (
-                          <div key={idx} className="bg-white rounded-3xl overflow-hidden shadow-[0_12px_40px_rgba(25,28,29,0.02)] border border-slate-100 hover:-translate-y-1.5 transition-all duration-300 flex flex-col group">
-                            
-                            {/* Card Image Header */}
-                            <div className="h-44 overflow-hidden relative bg-slate-50 p-3 shrink-0">
-                              <img className="w-full h-full object-cover rounded-2xl transition-transform duration-700 group-hover:scale-105" src={course.img} alt={course.title} />
-                              <span className="absolute top-5 right-5 bg-amber-100 text-amber-800 text-[9px] font-black px-3 py-1 rounded-full shadow-sm">
-                                {course.tag}
-                              </span>
-                            </div>
-                            
-                            {/* Card Content Details */}
-                            <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                              <div>
-                                <h4 className="text-xs font-black text-slate-800 leading-snug line-clamp-2">{course.title}</h4>
-                                <div className="flex items-center gap-1.5 mt-2">
-                                  <div className="flex items-center gap-0.5">
-                                    {[1, 2, 3, 4, 5].map((s) => (
-                                      <Star key={s} className="w-3 h-3 text-amber-500 fill-amber-500" />
-                                    ))}
-                                  </div>
-                                  <span className="text-[10px] text-slate-400 font-bold mt-0.5">({course.rating})</span>
-                                </div>
-                                <p className="text-[10px] text-slate-400 font-bold mt-2">{course.duration}</p>
-                              </div>
-
-                              {/* Card Action footer (wishlist & purple enroll button) */}
-                              <div className="flex justify-between items-center pt-3 border-t border-slate-150">
-                                <button className="p-2.5 rounded-full border border-slate-100 hover:border-red-155 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
-                                  <Heart className="w-3.5 h-3.5" />
-                                </button>
-                                <button className="bg-[#3b2dcf] hover:bg-[#2b1dcf] text-white text-[9px] font-black px-5 py-2.5 rounded-full transition-all active:scale-95 shadow-md shadow-[#3b2dcf]/15">
-                                  اشترك الآن
-                                </button>
-                              </div>
-                            </div>
-
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Browse more teal button */}
-                      <div className="flex justify-center pt-4">
-                        <button className="px-6 py-3 rounded-xl bg-[#00a896] hover:bg-[#009282] text-white font-black text-xs shadow-md transition-all active:scale-95">
-                          تصفح المزيد من الدورات
-                        </button>
-                      </div>
-
-                    </div>
-                  </section>
-
-                  {/* Testimonials Section (آراء المتعلمين) */}
-                  <section className={`py-16 bg-white text-center ${
-                    simulatorMode === 'desktop' ? 'px-12' : simulatorMode === 'tablet' ? 'px-8' : 'px-4'
-                  }`}>
-                    <div className="max-w-5xl mx-auto space-y-12">
-                      
-                      <div className="text-center space-y-2">
-                        <span className="text-xs text-[#00a896] font-black uppercase tracking-wider bg-teal-50 px-3 py-1 rounded-full">آراء المتعلمين</span>
-                        <h3 className={`font-black text-slate-800 ${
-                          simulatorMode === 'desktop' ? 'text-2xl' : 'text-xl'
-                        }`}>تأثير حقيقي وتجارب ملهمة</h3>
-                      </div>
-
-                      <div className={`grid gap-8 text-right ${
-                        simulatorMode === 'desktop' ? 'grid-cols-3' : simulatorMode === 'tablet' ? 'grid-cols-2' : 'grid-cols-1'
-                      }`}>
-                        {[
-                          { text: 'الدورات المقدمة في منتهى الاحترافية والتبسيط الشديد. لقد مكنتني هذه المسارات من ترقية مهاراتي في التصميم والحصول على وظيفة أحلامي كفيلانسر.', name: 'أمجد الكيلاني', role: 'مصمم واجهات مستقل', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDapuZMqMbglOubBSplHYKHbUUEPOVBNZfPBYfEdrnbwVoJA6p_fXveTFrcYVKfSEKsCZOzcikKHpuWVQRu4n8xxKYXhgM_nanjOQ0cdv-kXhVbMcOq5kzHgm5DH5WlDzYGmDh0ROSe4C_qATsLJhy-iZA4oKXn9HQImP6_0u46v5kDYayBS8_wDmyGvixd7EoZGbUePlgROCvJVAy1-l6nThq3n3XvQJDoOFPy76n8F28rsKmL09nMbF_TcgXK5YffQFE2uS-uFwI' },
-                          { text: 'أعتقد أن هذه المنصة هي الأفضل للدراسة عبر الإنترنت في العالم العربي. التدريب العملي والمشاريع تعطي قيمة مضافة عالية جداً وتجعل التعليم حيوياً.', name: 'ريناد الحربي', role: 'محللة بيانات ناشئة', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM' },
-                          { text: 'أشكر القائمين على هذا العمل الرائع. نظام الكورسات والواجهة مريحة وممتعة جداً للدراسة والمراجعة في أي وقت، والشهادات حافز قوي.', name: 'خالد السديري', role: 'مبرمج ويب مبتدئ', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDtqpBVFtjEqV4PVoWYoyU8fcNsGZBndlgPIbkTUs2JhnbX94-veF8_k8_HudB9diVBtjprCKzLuuiObyibFF6J9QbaMi1GcDswO0I4W3wlUhbXjD_j1nPDgegx4guIeTcmiF9PHyt3yU3B-zTYYixNNb5rzSTyXu_dNsQybxKmntcB87QhR6ICgCXRlHXPPaV2v4GrYnnz6NmYa8CQCbDOZw82qqN70CS7UckmVyBWvUnicK0nzC2SZsnW_QwGRn3db9X6vbI-6DE' }
-                        ].map((val, idx) => (
-                          <div key={idx} className="bg-[#e6f4f2]/80 border border-[#00a896]/10 p-6 rounded-3xl shadow-[0_10px_30px_rgba(0,168,150,0.01)] relative flex flex-col justify-between min-h-[200px] hover:scale-[1.01] hover:shadow-md transition-all duration-300">
-                            <span className="text-4xl text-[#00a896] opacity-35 block leading-none font-serif select-none">“</span>
-                            <p className="text-xs font-bold leading-relaxed text-slate-700 mb-6 mt-2">
-                              "{val.text}"
-                            </p>
-                            <div className="flex items-center gap-3 border-t border-[#00a896]/10 pt-4">
-                              <div className="w-8 h-8 rounded-full overflow-hidden border border-[#00a896]/20 bg-slate-100">
-                                <img className="w-full h-full object-cover" src={val.img} alt={val.name} />
-                              </div>
-                              <div>
-                                <p className="font-black text-[10px] text-slate-800">{val.name}</p>
-                                <p className="text-[8px] font-black text-[#00a896]">{val.role}</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                    </div>
-                  </section>
-
-                  {/* Sleek Dark Teal Footer Section */}
-                  <footer className="bg-[#081816] text-[#00a896]/55 py-8 px-6 text-center text-[10px] border-t border-[#040e0d] font-bold">
-                    <p className="text-[#00a896]/70 mb-1">© 2026 إدراك. جميع الحقوق محفوظة للأكاديمية التعليمية الشريكة.</p>
-                    <p className="opacity-75">مصمم بأعلى معايير الجودة لتجربة تعليمية فريدة ومستدامة.</p>
-                  </footer>
-
+                <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50">
+                  <TemplateRenderer templateId={previewTemplate.id} sections={previewSections} />
                 </div>
               )}
 

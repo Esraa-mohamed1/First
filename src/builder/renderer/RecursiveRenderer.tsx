@@ -150,7 +150,7 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
 
     return (
       <Suspense fallback={<div className="p-4 text-center text-xs text-slate-400 font-bold animate-pulse">جاري تحميل المكون...</div>}>
-        <Component {...props} />
+        <Component {...props} id={node.id} />
       </Suspense>
     );
   }, []);
@@ -207,7 +207,7 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
                   {/* Component with optional section background/shape wrapper */}
                   <div className="select-none">
                     <SectionBackground node={node}>
-                      <div className={isSelected ? '' : 'pointer-events-none'}>
+                      <div>
                         {renderComponent(node)}
                       </div>
                     </SectionBackground>
@@ -245,7 +245,7 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
                   )}
                   <div className="select-none">
                     <SectionBackground node={node}>
-                      <div className={isSelected ? '' : 'pointer-events-none'}>
+                      <div>
                         {renderComponent(node)}
                       </div>
                     </SectionBackground>
