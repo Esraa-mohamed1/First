@@ -36,6 +36,32 @@ import { getLogoUrl } from '@/lib/utils';
 
 const MySwal = withReactContent(Swal);
 
+const translateErrorToArabic = (msg: string): string => {
+  const normalized = msg.toLowerCase().trim();
+  if (normalized.includes('receiver_accounts') || normalized.includes('receiver accounts') || normalized.includes('receiving account') || normalized.includes('receiving_account') || normalized.includes('receiver')) {
+    return 'يرجى تحديد حساب أو وسيلة استقبال المدفوعات (حساب التحصيل مطلوب للدورات المدفوعة).';
+  }
+  if (normalized.includes('title') && normalized.includes('required')) {
+    return 'عنوان الدورة مطلوب.';
+  }
+  if (normalized.includes('description') && (normalized.includes('required') || normalized.includes('must not be empty'))) {
+    return 'وصف الدورة مطلوب.';
+  }
+  if (normalized.includes('category') && normalized.includes('required')) {
+    return 'الفئة مطلوبة.';
+  }
+  if (normalized.includes('user') && normalized.includes('required')) {
+    return 'المدرب مطلوب.';
+  }
+  if (normalized.includes('price') && normalized.includes('required')) {
+    return 'سعر الدورة مطلوب للدورات المدفوعة.';
+  }
+  if (normalized.includes('validation errors detected')) {
+    return 'يرجى تصحيح الأخطاء في البيانات المدخلة.';
+  }
+  return msg;
+};
+
 export default function CreateCourseClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -274,16 +300,16 @@ export default function CreateCourseClient() {
         setErrors(error.errors);
         const allMsgs: string[] = [];
         if (error.message && error.message !== 'Validation errors detected.') {
-          allMsgs.push(error.message);
+          allMsgs.push(translateErrorToArabic(error.message));
         }
         Object.values(error.errors).forEach((msgs: any) => {
           const messages = Array.isArray(msgs) ? msgs : [String(msgs)];
-          messages.forEach((msg) => allMsgs.push(msg));
+          messages.forEach((msg) => allMsgs.push(translateErrorToArabic(msg)));
         });
         const toastMsg = allMsgs.length > 0 ? allMsgs.join(' | ') : 'يرجى تصحيح الأخطاء أدناه';
         toast.error(toastMsg);
       } else {
-        toast.error(error?.message || 'فشل الحفظ');
+        toast.error(translateErrorToArabic(error?.message || 'فشل الحفظ'));
       }
       throw error;
     }
@@ -416,6 +442,23 @@ export default function CreateCourseClient() {
     }
   };
 
+  const handleNextFromInfo = () => {
+    // Basic client-side validation
+    const newErrors: Record<string, any> = {};
+    if (!title.trim()) newErrors.title = 'عنوان الدورة مطلوب';
+    if (!selectedInstructor && (currentUser?.role === 'admin' || currentUser?.role === 'academy')) {
+      newErrors.user_id = 'يرجى اختيار مدرب';
+    }
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error('يرجى ملء الحقول المطلوبة');
+      return;
+    }
+
+    setActiveTab('content');
+  };
+
   const handleSave = async () => {
     // Basic client-side validation
     const newErrors: Record<string, any> = {};
@@ -502,14 +545,10 @@ export default function CreateCourseClient() {
           }
         } else {
           const created = await createCourse(payload);
-          toast.success('تم إنشاء الدورة بنجاح');
+          toast.success('تم إنشاء الدورة بنجاح. يمكنك الآن إضافة الوحدات والدروس.');
           setCourseId(created.id);
           await refreshCourseContent(created.id);
-          if (activeTab === 'info') {
-            setActiveTab('content');
-          } else {
-            router.push(`/academic/courses/${created.id}`);
-          }
+          setActiveTab('content');
         }
       } catch (error: any) {
         if (error?.errors) {
@@ -517,16 +556,16 @@ export default function CreateCourseClient() {
           
           const allMsgs: string[] = [];
           if (error.message && error.message !== 'Validation errors detected.') {
-            allMsgs.push(error.message);
+            allMsgs.push(translateErrorToArabic(error.message));
           }
           Object.values(error.errors).forEach((msgs: any) => {
             const messages = Array.isArray(msgs) ? msgs : [String(msgs)];
-            messages.forEach((msg) => allMsgs.push(msg));
+            messages.forEach((msg) => allMsgs.push(translateErrorToArabic(msg)));
           });
           const toastMsg = allMsgs.length > 0 ? allMsgs.join(' | ') : 'يرجى تصحيح الأخطاء أدناه';
           toast.error(toastMsg);
         } else {
-          toast.error(error?.message || 'فشل الحفظ');
+          toast.error(translateErrorToArabic(error?.message || 'فشل الحفظ'));
         }
       }
     } catch (error: any) {
@@ -867,7 +906,7 @@ export default function CreateCourseClient() {
                 </button>
                 <button
                   type="button"
-                  onClick={handleSave}
+                  onClick={handleNextFromInfo}
                   disabled={isSubmitting}
                   className="px-12 py-3 bg-blue-600 text-white font-black rounded-full shadow-lg shadow-blue-100 hover:brightness-110 transition-all text-sm disabled:opacity-70"
                 >
@@ -879,7 +918,6 @@ export default function CreateCourseClient() {
 
           {activeTab === 'content' && (
             <div className="flex flex-col gap-6">
-              {/* Header & Add Unit */}
               <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between border border-blue-200 rounded-xl p-2 bg-white gap-3 shadow-sm">
                 <div className="flex-1 text-center md:text-right px-4 py-1.5">
                   <span className="font-bold text-gray-800 text-sm">
@@ -1037,19 +1075,37 @@ export default function CreateCourseClient() {
                   ))
                 ) : (
                   !isAddingUnit && (
-                    <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-100">
-                      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Plus className="text-gray-300" size={32} />
+                    courseId ? (
+                      <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-100">
+                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <Plus className="text-gray-300" size={32} />
+                        </div>
+                        <h3 className="text-lg font-black text-gray-900 mb-1">لا يوجد وحدات حتى الآن</h3>
+                        <p className="text-gray-400 font-bold text-sm mb-6">ابدأ بإضافة وحدة جديدة لترتيب محتوى الدورة</p>
+                        <button
+                          onClick={() => setIsAddingUnit(true)}
+                          className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all text-sm"
+                        >
+                          اضافة وحدة جديدة
+                        </button>
                       </div>
-                      <h3 className="text-lg font-black text-gray-900 mb-1">لا يوجد وحدات حتى الآن</h3>
-                      <p className="text-gray-400 font-bold text-sm mb-6">ابدأ بإضافة وحدة جديدة لترتيب محتوى الدورة</p>
-                      <button
-                        onClick={() => setIsAddingUnit(true)}
-                        className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all text-sm"
-                      >
-                        اضافة وحدة جديدة
-                      </button>
-                    </div>
+                    ) : (
+                      <div className="text-center py-12 bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 flex flex-col items-center justify-center gap-4">
+                        <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-blue-500">
+                          <Landmark size={32} />
+                        </div>
+                        <h3 className="text-lg font-black text-gray-900">يرجى حفظ الدورة أولاً من خطوة التسعير</h3>
+                        <p className="text-gray-500 font-bold text-sm max-w-md text-center">
+                          لتتمكن من إضافة وحدات ودروس، يرجى الانتقال إلى الخطوة التالية (التسعير) وتحديد خيارات التسعير وحفظ الدورة.
+                        </p>
+                        <button
+                          onClick={() => setActiveTab('pricing')}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-black shadow-lg shadow-blue-100 active:scale-95 transition-all text-sm"
+                        >
+                          الانتقال للتسعير وحفظ الدورة
+                        </button>
+                      </div>
+                    )
                   )
                 )}
               </div>
