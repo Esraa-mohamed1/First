@@ -172,20 +172,20 @@ export default function AcademicDashboardPage() {
   };
 
   return (
-    <div className="space-y-8 pb-20 animate-in fade-in duration-700 text-right relative" dir="rtl">
+    <div className="space-y-6 sm:space-y-8 pb-10 sm:pb-20 animate-in fade-in duration-700 text-right relative" dir="rtl">
 
       {/* Top Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-right">
-        <h2 className="text-3xl font-black text-gray-900 tracking-tight">لوحة التحكم</h2>
-        <div className="flex justify-start gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 text-right">
+        <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">لوحة التحكم</h2>
+        <div className="flex justify-start gap-2 sm:gap-3">
           <button
             onClick={() => setTourStep(0)}
-            className="flex items-center gap-2 bg-blue-50 border border-blue-100 hover:bg-blue-100/60 text-blue-600 px-4 py-2.5 rounded-xl font-black text-sm shadow-sm transition-colors"
+            className="flex items-center gap-1.5 sm:gap-2 bg-blue-50 border border-blue-100 hover:bg-blue-100/60 text-blue-600 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl font-black text-xs sm:text-sm shadow-sm transition-colors"
           >
             <span>جولة تعليمية 🔍</span>
           </button>
-          <button className="flex items-center gap-2 bg-white border border-gray-200 text-gray-600 px-4 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 transition-colors">
-            <ChevronDown size={25} className="text-gray-400" />
+          <button className="flex items-center gap-1.5 sm:gap-2 bg-white border border-gray-200 text-gray-600 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm shadow-sm hover:bg-gray-50 transition-colors">
+            <ChevronDown className="text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
             <span>التاريخ</span>
           </button>
         </div>
@@ -197,10 +197,10 @@ export default function AcademicDashboardPage() {
       </div>
 
       {/* Main Two-Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
 
         {/* RIGHT COLUMN (Main widgets) */}
-        <div className="lg:col-span-8 xl:col-span-9 space-y-6 lg:space-y-8 order-1">
+        <div className="lg:col-span-8 xl:col-span-9 space-y-6 sm:space-y-8 order-1">
 
           {/* A. Last Registered Students Card */}
           <div id="students-table" className="scroll-mt-24">
@@ -238,7 +238,7 @@ export default function AcademicDashboardPage() {
         </div>
 
         {/* LEFT COLUMN (Sidebar widgets) */}
-        <div className="lg:col-span-4 xl:col-span-3 space-y-6 lg:space-y-8 order-2">
+        <div className="lg:col-span-4 xl:col-span-3 space-y-6 sm:space-y-8 order-2">
           <div id="dashboard-checklist" className="scroll-mt-24">
             <DashboardChecklist
               setIsSelectTypeModalOpen={setIsSelectTypeModalOpen}
