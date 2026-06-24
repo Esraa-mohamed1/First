@@ -68,29 +68,43 @@ export const createWithdrawalRequest = async (payload: CreateWithdrawalPayload):
 export const getUserPaymentInfos = async (): Promise<UserPaymentInfo[]> => {
   try {
     const response = await academyApi.get<ApiResponse<any>>('instructor_receiver_accounts');
-    let rawData = response.data.data;
+    const responseBody = response.data as any;
     let items: any[] = [];
+    let lastPage = 1;
+    let currentPage = 1;
 
-    if (Array.isArray(rawData)) {
-      items = rawData;
-    } else if (rawData && Array.isArray(rawData.data)) {
-      items = [...rawData.data];
-      const lastPage = rawData.last_page;
-      const currentPage = rawData.current_page || 1;
-
-      if (lastPage && lastPage > currentPage) {
-        const fetchPromises = [];
-        for (let page = currentPage + 1; page <= lastPage; page++) {
-          fetchPromises.push(academyApi.get<ApiResponse<any>>(`instructor_receiver_accounts?page=${page}`));
+    if (responseBody) {
+      if (Array.isArray(responseBody.data)) {
+        items = [...responseBody.data];
+        if (responseBody.meta) {
+          lastPage = responseBody.meta.last_page || 1;
+          currentPage = responseBody.meta.current_page || 1;
+        } else if (responseBody.last_page) {
+          lastPage = responseBody.last_page;
+          currentPage = responseBody.current_page || 1;
         }
-        const pagesResponses = await Promise.all(fetchPromises);
-        pagesResponses.forEach(pageRes => {
-          const pageData = pageRes.data?.data?.data || pageRes.data?.data;
+      } else if (responseBody.data && Array.isArray(responseBody.data.data)) {
+        items = [...responseBody.data.data];
+        lastPage = responseBody.data.last_page || 1;
+        currentPage = responseBody.data.current_page || 1;
+      }
+    }
+
+    if (lastPage && lastPage > currentPage) {
+      const fetchPromises = [];
+      for (let page = currentPage + 1; page <= lastPage; page++) {
+        fetchPromises.push(academyApi.get<ApiResponse<any>>(`instructor_receiver_accounts?page=${page}`));
+      }
+      const pagesResponses = await Promise.all(fetchPromises);
+      pagesResponses.forEach(pageRes => {
+        const pageBody = pageRes.data;
+        if (pageBody) {
+          const pageData = pageBody.data?.data || pageBody.data;
           if (Array.isArray(pageData)) {
             items = items.concat(pageData);
           }
-        });
-      }
+        }
+      });
     }
 
     return items.map(item => ({
@@ -202,40 +216,64 @@ export const deleteAcademyReceiverAccount = async (id: number): Promise<void> =>
   }
 };
 
-export const getReceiverAccounts = async (): Promise<ReceiverAccount[]> => {
+export const getReceiverAccounts = async (countryCode?: string): Promise<ReceiverAccount[]> => {
   try {
-    const response = await academyApi.get<ApiResponse<any>>('receiver_accounts');
-    const resData = response.data.data;
-
-    // Check if it's a flat array
-    if (Array.isArray(resData)) {
-      return resData;
+    const params: Record<string, any> = {};
+    if (countryCode) {
+      params.country_code = countryCode;
     }
 
-    // Check if it's paginated (i.e. has nested data array)
-    if (resData && Array.isArray(resData.data)) {
-      let allItems = [...resData.data];
-      const lastPage = resData.last_page;
-      const currentPage = resData.current_page || 1;
+    const response = await academyApi.get<ApiResponse<any>>('receiver_accounts', { params });
+    const responseBody = response.data as any;
+    let allItems: any[] = [];
+    let lastPage = 1;
+    let currentPage = 1;
 
-      // Fetch subsequent pages if any
-      if (lastPage && lastPage > currentPage) {
-        const fetchPromises = [];
-        for (let page = currentPage + 1; page <= lastPage; page++) {
-          fetchPromises.push(academyApi.get<ApiResponse<any>>(`receiver_accounts?page=${page}`));
+    if (responseBody) {
+      if (Array.isArray(responseBody.data)) {
+        allItems = [...responseBody.data];
+        if (responseBody.meta) {
+          lastPage = responseBody.meta.last_page || 1;
+          currentPage = responseBody.meta.current_page || 1;
+        } else if (responseBody.last_page) {
+          lastPage = responseBody.last_page;
+          currentPage = responseBody.current_page || 1;
         }
-        const pagesResponses = await Promise.all(fetchPromises);
-        pagesResponses.forEach(pageRes => {
-          const pageData = pageRes.data?.data?.data || pageRes.data?.data;
+      } else if (responseBody.data && Array.isArray(responseBody.data.data)) {
+        allItems = [...responseBody.data.data];
+        lastPage = responseBody.data.last_page || 1;
+        currentPage = responseBody.data.current_page || 1;
+      }
+    }
+
+    // Fetch subsequent pages if any
+    if (lastPage && lastPage > currentPage) {
+      const fetchPromises = [];
+      for (let page = currentPage + 1; page <= lastPage; page++) {
+        fetchPromises.push(
+          academyApi.get<ApiResponse<any>>('receiver_accounts', {
+            params: { ...params, page }
+          })
+        );
+      }
+      const pagesResponses = await Promise.all(fetchPromises);
+      pagesResponses.forEach(pageRes => {
+        const pageBody = pageRes.data;
+        if (pageBody) {
+          const pageData = pageBody.data?.data || pageBody.data;
           if (Array.isArray(pageData)) {
             allItems = allItems.concat(pageData);
           }
-        });
-      }
-      return allItems;
+        }
+      });
     }
 
-    return [];
+    // Safeguard: filter locally if countryCode is provided
+    if (countryCode) {
+      allItems = allItems.filter(item => item.country_code === countryCode);
+    }
+
+    return allItems;
   } catch (error: any) {
     console.error('Failed to get receiver accounts:', error);
     throw error.response?.data || error;

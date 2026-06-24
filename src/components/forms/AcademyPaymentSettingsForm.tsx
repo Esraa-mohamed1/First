@@ -145,28 +145,30 @@ export function TemplateForm({
           </div>
 
           {/* Logo */}
-          <div className="space-y-2">
-            <label className="block text-xs font-black text-gray-700">شعار وسيلة الدفع (اختياري)</label>
-            <div className="flex items-center gap-2">
-              <input
-                ref={logoFileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={onLogoChange}
-                className="flex-1 p-2 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-xs transition-all text-gray-900 cursor-pointer file:border-0 file:bg-blue-50 file:text-blue-700 file:rounded-xl file:px-3 file:py-2 file:font-black file:text-[11px] file:ml-3 file:cursor-pointer hover:file:bg-blue-100"
-              />
-              {templateLogoFile && (
-                <button
-                  type="button"
-                  onClick={onClearLogo}
-                  title="إلغاء الصورة"
-                  className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-600 border border-red-100 transition-all"
-                >
-                  <X size={18} />
-                </button>
-              )}
+          {!selectedPresetId && (
+            <div className="space-y-2">
+              <label className="block text-xs font-black text-gray-700">شعار وسيلة الدفع (اختياري)</label>
+              <div className="flex items-center gap-2">
+                <input
+                  ref={logoFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={onLogoChange}
+                  className="flex-1 p-2 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-xs transition-all text-gray-900 cursor-pointer file:border-0 file:bg-blue-50 file:text-blue-700 file:rounded-xl file:px-3 file:py-2 file:font-black file:text-[11px] file:ml-3 file:cursor-pointer hover:file:bg-blue-100"
+                />
+                {templateLogoFile && (
+                  <button
+                    type="button"
+                    onClick={onClearLogo}
+                    title="إلغاء الصورة"
+                    className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-600 border border-red-100 transition-all"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
         </div>
 
