@@ -32,35 +32,9 @@ import { PaymentMethodValueInput } from '@/components/payment/PaymentMethodValue
 import { AcademyPaymentMethod, PaymentMethod } from '@/types/payment';
 import { showAlert } from '@/lib/sweetalert';
 import { getUserPaymentInfos, UserPaymentInfo } from '@/services/finance';
-import { getLogoUrl } from '@/lib/utils';
+import { getLogoUrl, translateErrorToArabic } from '@/lib/utils';
 
 const MySwal = withReactContent(Swal);
-
-const translateErrorToArabic = (msg: string): string => {
-  const normalized = msg.toLowerCase().trim();
-  if (normalized.includes('receiver_accounts') || normalized.includes('receiver accounts') || normalized.includes('receiving account') || normalized.includes('receiving_account') || normalized.includes('receiver')) {
-    return 'يرجى تحديد حساب أو وسيلة استقبال المدفوعات (حساب التحصيل مطلوب للدورات المدفوعة).';
-  }
-  if (normalized.includes('title') && normalized.includes('required')) {
-    return 'عنوان الدورة مطلوب.';
-  }
-  if (normalized.includes('description') && (normalized.includes('required') || normalized.includes('must not be empty'))) {
-    return 'وصف الدورة مطلوب.';
-  }
-  if (normalized.includes('category') && normalized.includes('required')) {
-    return 'الفئة مطلوبة.';
-  }
-  if (normalized.includes('user') && normalized.includes('required')) {
-    return 'المدرب مطلوب.';
-  }
-  if (normalized.includes('price') && normalized.includes('required')) {
-    return 'سعر الدورة مطلوب للدورات المدفوعة.';
-  }
-  if (normalized.includes('validation errors detected')) {
-    return 'يرجى تصحيح الأخطاء في البيانات المدخلة.';
-  }
-  return msg;
-};
 
 export default function CreateCourseClient() {
   const router = useRouter();
@@ -669,6 +643,29 @@ export default function CreateCourseClient() {
         <div className="mt-6">
           {activeTab === 'info' && (
             <div className="max-w-4xl space-y-6">
+              {/* Server Validation Error Summary */}
+              {Object.keys(errors).length > 0 && (
+                <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                    <X size={14} className="text-red-500" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-black text-red-700">يرجى تصحيح الأخطاء التالية:</p>
+                    <ul className="space-y-0.5">
+                      {Object.entries(errors).map(([key, msg]) => {
+                        const val = Array.isArray(msg) ? msg[0] : msg;
+                        if (!val) return null;
+                        return (
+                          <li key={key} className="text-xs font-bold text-red-600 flex items-center gap-1.5">
+                            <span className="w-1 h-1 bg-red-400 rounded-full inline-block" />
+                            {translateErrorToArabic(String(val))}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </div>
+              )}
               {/* Course Title */}
               <div className="space-y-2">
                 <label className="flex items-center gap-1 text-sm font-black text-gray-900">
@@ -687,7 +684,7 @@ export default function CreateCourseClient() {
                 {errors.title && (
                   <p className="text-red-500 text-xs font-bold mt-1 flex items-center gap-1">
                     <X size={12} />
-                    {errors.title}
+                    {translateErrorToArabic(Array.isArray(errors.title) ? errors.title[0] : String(errors.title))}
                   </p>
                 )}
               </div>
@@ -702,7 +699,7 @@ export default function CreateCourseClient() {
                   if (errors.category_id) setErrors(prev => ({ ...prev, category_id: null }));
                 }}
                 placeholder="اختر فئة (اختياري)"
-                error={errors.category_id}
+                error={errors.category_id ? translateErrorToArabic(Array.isArray(errors.category_id) ? errors.category_id[0] : String(errors.category_id)) : undefined}
               />
 
               {/* Coach & Instructor Info */}
@@ -724,7 +721,7 @@ export default function CreateCourseClient() {
                       if (errors.user_id) setErrors(prev => ({ ...prev, user_id: null }));
                     }}
                     placeholder="اختر مدرب"
-                    error={errors.user_id}
+                    error={errors.user_id ? translateErrorToArabic(Array.isArray(errors.user_id) ? errors.user_id[0] : String(errors.user_id)) : undefined}
                     required
                   />
                 )}
@@ -776,7 +773,7 @@ export default function CreateCourseClient() {
                         onChange={setDescription}
                         placeholder="ادخل وصف الدورة"
                       />
-                      {errors.description && <p className="text-red-500 text-xs font-bold mt-2">{errors.description}</p>}
+                      {errors.description && <p className="text-red-500 text-xs font-bold mt-2">{translateErrorToArabic(Array.isArray(errors.description) ? errors.description[0] : String(errors.description))}</p>}
                     </div>
                   )}
                 </div>
@@ -797,7 +794,7 @@ export default function CreateCourseClient() {
                         onChange={setWhoIsThisFor}
                         placeholder="الفئة المستهدفة من الدورة"
                       />
-                      {errors.who_is_this_for && <p className="text-red-500 text-xs font-bold mt-2">{errors.who_is_this_for}</p>}
+                      {errors.who_is_this_for && <p className="text-red-500 text-xs font-bold mt-2">{translateErrorToArabic(Array.isArray(errors.who_is_this_for) ? errors.who_is_this_for[0] : String(errors.who_is_this_for))}</p>}
                     </div>
                   )}
                 </div>
@@ -1137,6 +1134,30 @@ export default function CreateCourseClient() {
                 <p className="text-gray-400 font-bold">اختر خطة التسعير المناسبة لدورتك</p>
               </div>
 
+              {/* Server Validation Error Summary */}
+              {Object.keys(errors).length > 0 && (
+                <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                    <X size={14} className="text-red-500" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-black text-red-700">يرجى تصحيح الأخطاء التالية:</p>
+                    <ul className="space-y-0.5">
+                      {Object.entries(errors).map(([key, msg]) => {
+                        const val = Array.isArray(msg) ? msg[0] : msg;
+                        if (!val) return null;
+                        return (
+                          <li key={key} className="text-xs font-bold text-red-600 flex items-center gap-1.5">
+                            <span className="w-1 h-1 bg-red-400 rounded-full inline-block" />
+                            {translateErrorToArabic(String(val))}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-6">
                 <div
                   onClick={() => setPricingType('free')}
@@ -1210,7 +1231,7 @@ export default function CreateCourseClient() {
                     {errors.price && (
                       <p className="text-red-500 text-xs font-bold mt-1 flex items-center gap-1">
                         <X size={12} />
-                        {errors.price}
+                        {translateErrorToArabic(Array.isArray(errors.price) ? errors.price[0] : String(errors.price))}
                       </p>
                     )}
                   </div>
@@ -1262,9 +1283,18 @@ export default function CreateCourseClient() {
                           };
                         }).filter(Boolean) as AcademyPaymentMethod[];
                         setSelectedPaymentMethods(newMethods);
+                        if (errors.receiver_accounts) setErrors(prev => ({ ...prev, receiver_accounts: null }));
                       }}
                       error={errors.paymentMethods}
                     />
+                    {(errors.receiver_accounts || errors['receiver_accounts']) && (
+                      <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl p-3 mt-2">
+                        <X size={14} className="text-red-500 shrink-0" />
+                        <p className="text-red-600 text-xs font-bold">
+                          {translateErrorToArabic(Array.isArray(errors.receiver_accounts) ? errors.receiver_accounts[0] : String(errors.receiver_accounts || ''))}
+                        </p>
+                      </div>
+                    )}
 
                     {selectedPaymentMethods.length > 0 && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-top-2 duration-300">

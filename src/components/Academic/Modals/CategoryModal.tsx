@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, LayoutGrid, Loader2, Check } from 'lucide-react';
+import { X, LayoutGrid, Loader2, Check, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createCategory, updateCategory } from '@/services/courses';
+import { translateErrorToArabic } from '@/lib/utils';
 
 interface CategoryModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ const CategoryModal = ({ isOpen, onClose, category, onSuccess }: CategoryModalPr
   const [name, setName] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (category) {
@@ -25,6 +27,7 @@ const CategoryModal = ({ isOpen, onClose, category, onSuccess }: CategoryModalPr
       setName('');
       setIsActive(true);
     }
+    setFieldErrors({});
   }, [category, isOpen]);
 
   if (!isOpen) return null;
@@ -32,10 +35,10 @@ const CategoryModal = ({ isOpen, onClose, category, onSuccess }: CategoryModalPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      toast.error('يرجى إدخال اسم الفئة');
+      setFieldErrors({ name: 'يرجى إدخال اسم الفئة' });
       return;
     }
-
+    setFieldErrors({});
     setIsSubmitting(true);
     try {
       if (category) {
@@ -48,7 +51,20 @@ const CategoryModal = ({ isOpen, onClose, category, onSuccess }: CategoryModalPr
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error?.message || 'فشل تنفيذ العملية');
+      // Map server validation errors to field-level display
+      if (error?.errors && typeof error.errors === 'object') {
+        const errObj = error.errors as Record<string, string | string[]>;
+        const mapped: Record<string, string> = {};
+        const getFirst = (v: string | string[]) => (Array.isArray(v) ? v[0] : v) || '';
+        if (errObj.name) mapped.name = translateErrorToArabic(getFirst(errObj.name));
+        if (errObj.is_active) mapped.is_active = translateErrorToArabic(getFirst(errObj.is_active));
+        setFieldErrors(mapped);
+
+        const allMsgs = Object.values(errObj).map(v => translateErrorToArabic(getFirst(v))).filter(Boolean);
+        toast.error(allMsgs.length > 0 ? allMsgs[0] : (translateErrorToArabic(error?.message) || 'فشل تنفيذ العملية'));
+      } else {
+        toast.error(translateErrorToArabic(error?.message || 'فشل تنفيذ العملية'));
+      }
       console.error(error);
     } finally {
       setIsSubmitting(false);
@@ -89,11 +105,20 @@ const CategoryModal = ({ isOpen, onClose, category, onSuccess }: CategoryModalPr
             <input
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (fieldErrors.name) setFieldErrors(prev => ({ ...prev, name: '' }));
+              }}
               placeholder="مثال: التصوير الفوتوغرافي، البرمجة..."
-              className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-right transition-all text-gray-900"
+              className={`w-full p-4 bg-gray-50 border ${fieldErrors.name ? 'border-red-500 bg-red-50/40 focus:border-red-500' : 'border-gray-100 focus:border-blue-600'} rounded-2xl outline-none focus:bg-white font-bold text-right transition-all text-gray-900`}
               autoFocus
             />
+            {fieldErrors.name && (
+              <p className="flex items-center gap-1 text-red-500 text-xs font-bold px-1">
+                <X size={12} />
+                {fieldErrors.name}
+              </p>
+            )}
           </div>
 
           <div className="flex items-center justify-between bg-gray-50 p-4 rounded-2xl border border-gray-100">

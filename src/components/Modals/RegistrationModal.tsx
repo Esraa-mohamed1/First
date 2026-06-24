@@ -9,6 +9,8 @@ import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useCountry } from '@/hooks/useCountry';
 import { PhoneInput } from '@/components/CountrySelector';
+import { translateErrorToArabic } from '@/lib/utils';
+
 
 const RegistrationModal = () => {
     const { isOpen, view, closeModal, openModal, data } = useModal();
@@ -257,7 +259,26 @@ const RegistrationModal = () => {
             toast.success('تم إنشاء الحساب بنجاح');
             setStep(4);
         } catch (error: any) {
-            toast.error(error.message || 'حدث خطأ أثناء إنشاء الحساب');
+            // Map server validation errors to specific fields
+            if (error?.errors && typeof error.errors === 'object') {
+                const serverErrors: typeof errors = { email: '', phone: '', password: '', confirmPassword: '' };
+                const errObj = error.errors as Record<string, string | string[]>;
+
+                const getFirst = (v: string | string[]) => (Array.isArray(v) ? v[0] : v) || '';
+
+                if (errObj.email) serverErrors.email = translateErrorToArabic(getFirst(errObj.email));
+                if (errObj.phone) serverErrors.phone = translateErrorToArabic(getFirst(errObj.phone));
+                if (errObj.password) serverErrors.password = translateErrorToArabic(getFirst(errObj.password));
+                if (errObj.password_confirmation) serverErrors.confirmPassword = translateErrorToArabic(getFirst(errObj.password_confirmation));
+
+                setErrors(serverErrors);
+
+                // Also show a top-level toast with all messages
+                const allMsgs = Object.values(errObj).map(v => translateErrorToArabic(getFirst(v))).filter(Boolean);
+                toast.error(allMsgs.length > 0 ? allMsgs[0] : (translateErrorToArabic(error.message) || 'حدث خطأ أثناء إنشاء الحساب'));
+            } else {
+                toast.error(translateErrorToArabic(error.message || 'حدث خطأ أثناء إنشاء الحساب'));
+            }
         } finally {
             setIsLoading(false);
         }
