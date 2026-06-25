@@ -97,6 +97,61 @@ export default function CourseCards(props: CourseCardsProps) {
           const isSelected = isEditing && selectedNodeId === sectionId && selectedItemIndex === idx;
           const isHovered = isEditing && hoveredItemIndex === idx;
 
+          const isPurpleTheme = buttonBg === '#7c3aed';
+
+          if (isPurpleTheme) {
+            return (
+              <div 
+                key={course.id} 
+                onClick={(e) => {
+                  if (isEditing && sectionId) {
+                    e.stopPropagation();
+                    setSelectedNodeId(sectionId);
+                    setSelectedItemIndex(idx);
+                  }
+                }}
+                onMouseEnter={() => isEditing && setHoveredItemIndex(idx)}
+                onMouseLeave={() => isEditing && setHoveredItemIndex(null)}
+                className={`bg-white border border-slate-150 rounded-3xl overflow-hidden hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between group cursor-pointer ${
+                  isSelected ? 'ring-4 ring-purple-500 ring-offset-2' : isHovered ? 'ring-4 ring-purple-300 ring-offset-1' : 'shadow-sm'
+                }`}
+              >
+                {/* Course Image cover */}
+                <div className="h-44 w-full overflow-hidden bg-slate-100 relative">
+                  <img 
+                    src={course.image || 'https://images.unsplash.com/photo-1586717791821-3f44a563fa4c'} 
+                    alt={course.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
+
+                {/* Course details */}
+                <div className="p-6 flex-1 flex flex-col justify-between space-y-4 text-right">
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-black text-slate-800 leading-snug group-hover:text-purple-600 transition-colors">
+                      {course.title}
+                    </h4>
+                    <p className="text-[11px] text-slate-500 leading-relaxed font-semibold">
+                      {course.description || 'تعلم مبادئ التصميم خطوة بخطوة وكيفية التعامل مع الألوان والخطوط لبناء واجهات سهلة الاستخدام ومحترفة.'}
+                    </p>
+                  </div>
+                  
+                  <div className="flex justify-between items-center pt-3 border-t border-slate-100">
+                    <div className="flex items-center gap-1 text-[11px] font-black text-purple-600 group-hover:gap-2 transition-all">
+                      <span>عرض التفاصيل</span>
+                      <span className="text-sm font-black">←</span>
+                    </div>
+                    {showPrice && (
+                      <span className="text-xs font-black text-slate-400">
+                        {course.price || 'مجانًا'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
           return (
             <div 
               key={course.id} 

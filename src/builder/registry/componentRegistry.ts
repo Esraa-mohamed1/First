@@ -236,8 +236,8 @@ export const FeaturesSection = React.memo((props: any) => {
           'div',
           { 
             key: idx, 
-            className: `p-4 bg-white/60 backdrop-blur-sm border rounded-2xl flex flex-col items-start gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
-              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100'
+            className: `relative p-5 bg-white border rounded-2xl flex flex-col items-start gap-4 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg overflow-hidden ${
+              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100 shadow-sm'
             }`,
             onClick: (e: any) => {
               if (isEditing) {
@@ -249,21 +249,34 @@ export const FeaturesSection = React.memo((props: any) => {
             onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
             onMouseLeave: () => isEditing && setHoveredItemIndex(null),
           },
+          // Subtle top accent line using icon color
+          itemProps.icon_color
+            ? React.createElement('div', {
+                className: 'absolute top-0 right-0 w-full h-0.5 rounded-t-2xl',
+                style: { backgroundColor: itemProps.icon_color || 'var(--theme-primary)' }
+              })
+            : null,
           itemProps.icon
             ? React.createElement(
               'div',
               {
-                style: { backgroundColor: itemProps.icon_color ? `${itemProps.icon_color}15` : 'rgba(var(--theme-primary-rgb), 0.15)', color: itemProps.icon_color || 'var(--theme-primary)' },
-                className: 'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0'
+                style: {
+                  background: itemProps.icon_color
+                    ? `linear-gradient(135deg, ${itemProps.icon_color}20, ${itemProps.icon_color}10)`
+                    : 'rgba(var(--theme-primary-rgb), 0.12)',
+                  color: itemProps.icon_color || 'var(--theme-primary)',
+                  boxShadow: itemProps.icon_color ? `0 4px 12px ${itemProps.icon_color}25` : undefined
+                },
+                className: 'w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0'
               },
-              React.createElement(DynamicIcon, { name: itemProps.icon, className: 'w-4 h-4' })
+              React.createElement(DynamicIcon, { name: itemProps.icon, className: 'w-5 h-5' })
             )
             : null,
           React.createElement(
             'div',
-            { className: 'space-y-1 text-right w-full min-w-0' },
-            React.createElement('h3', { className: 'text-sm font-black text-slate-800 break-words' }, itemProps.title || `ميزة ${idx + 1}`),
-            itemProps.description ? React.createElement('p', { className: 'text-xs text-slate-500 font-bold leading-relaxed break-words' }, itemProps.description) : null
+            { className: 'space-y-1.5 text-right w-full min-w-0' },
+            React.createElement('h3', { className: 'text-sm font-black text-slate-800 break-words leading-snug' }, itemProps.title || `ميزة ${idx + 1}`),
+            itemProps.description ? React.createElement('p', { className: 'text-xs text-slate-500 leading-relaxed break-words' }, itemProps.description) : null
           )
         );
       })
@@ -397,8 +410,8 @@ export const TestimonialsSection = React.memo((props: any) => {
           'div',
           { 
             key: idx, 
-            className: `p-5 bg-white border rounded-2xl flex flex-col justify-between shadow-sm transition-all duration-300 ${
-              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100 hover:shadow-md'
+            className: `relative p-6 bg-white border rounded-2xl flex flex-col justify-between shadow-sm transition-all duration-300 overflow-hidden ${
+              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100 hover:shadow-lg hover:-translate-y-1'
             }`,
             onClick: (e: any) => {
               if (isEditing) {
@@ -410,33 +423,42 @@ export const TestimonialsSection = React.memo((props: any) => {
             onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
             onMouseLeave: () => isEditing && setHoveredItemIndex(null),
           },
+          // Decorative large quote mark
           React.createElement(
             'div',
-            { className: 'space-y-3' },
-            React.createElement(
-              'div',
-              { className: 'flex gap-1 text-amber-400' },
-              Array.from({ length: itemProps.rating || 5 }).map((_, i) =>
-                React.createElement(LucideIcons.Star, { key: i, className: 'w-3.5 h-3.5 fill-current' })
-              )
-            ),
-            React.createElement('p', { className: 'text-xs text-slate-600 font-bold italic leading-relaxed break-words' }, `"${itemProps.quote || 'تعليق متميز للعميل'}"`)
+            { className: 'absolute top-3 left-4 text-7xl font-black leading-none select-none pointer-events-none', style: { color: 'rgba(var(--theme-primary-rgb), 0.06)', fontFamily: 'Georgia, serif' } },
+            '\u201C'
           ),
           React.createElement(
             'div',
-            { className: 'flex items-center gap-3 mt-5 pt-4 border-t border-slate-50' },
+            { className: 'space-y-3 relative z-10' },
             React.createElement(
               'div',
-              { className: 'w-9 h-9 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center text-xs font-black text-slate-400 flex-shrink-0' },
+              { className: 'flex gap-0.5' },
+              Array.from({ length: itemProps.rating || 5 }).map((_, i) =>
+                React.createElement(LucideIcons.Star, { key: i, className: 'w-3.5 h-3.5 fill-amber-400 text-amber-400' })
+              )
+            ),
+            React.createElement('p', { className: 'text-xs text-slate-600 leading-relaxed break-words font-medium' }, itemProps.quote || 'تعليق متميز للعميل')
+          ),
+          React.createElement(
+            'div',
+            { className: 'flex items-center gap-3 mt-5 pt-4 border-t border-slate-100 relative z-10' },
+            React.createElement(
+              'div',
+              {
+                className: 'w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-sm font-black text-white flex-shrink-0',
+                style: { background: 'linear-gradient(135deg, var(--theme-primary), var(--theme-secondary, #10b981))' }
+              },
               itemProps.avatar
                 ? React.createElement('img', { src: itemProps.avatar, alt: itemProps.author, className: 'w-full h-full object-cover' })
-                : itemProps.author?.[0] || 'U'
+                : (itemProps.author?.[0] || 'U')
             ),
             React.createElement(
               'div',
-              { className: 'text-right min-w-0' },
-              React.createElement('h4', { className: 'text-[11px] font-black text-slate-800 truncate' }, itemProps.author || 'اسم العميل'),
-              itemProps.role ? React.createElement('p', { className: 'text-[9px] text-slate-400 font-bold' }, itemProps.role) : null
+              { className: 'text-right min-w-0 flex-1' },
+              React.createElement('h4', { className: 'text-xs font-black text-slate-800 truncate' }, itemProps.author || 'اسم العميل'),
+              itemProps.role ? React.createElement('p', { className: 'text-[10px] text-slate-400 font-semibold mt-0.5' }, itemProps.role) : null
             )
           )
         );
@@ -681,7 +703,7 @@ export const CategoriesSection = React.memo((props: any) => {
           'div',
           {
             key: idx,
-            className: `group relative overflow-hidden border shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer bg-white flex flex-col items-center justify-center text-center p-6 ${shapeClass} ${
+            className: `group relative overflow-hidden border shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer bg-white flex flex-col items-center justify-center text-center p-6 ${shapeClass} ${
               isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100'
             }`,
             onClick: (e: any) => {
@@ -694,32 +716,46 @@ export const CategoriesSection = React.memo((props: any) => {
             onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
             onMouseLeave: () => isEditing && setHoveredItemIndex(null),
           },
+          // Hover gradient fill overlay
+          React.createElement('div', {
+            className: 'absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300',
+            style: { background: 'linear-gradient(135deg, var(--theme-primary), var(--theme-secondary, #10b981))' }
+          }),
           p.icon
             ? React.createElement(
               'div',
-              { className: 'w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3 transition-all duration-300 group-hover:bg-blue-600 group-hover:text-white' },
-              React.createElement(DynamicIcon, { name: p.icon, className: 'w-6 h-6' })
+              {
+                className: 'relative z-10 w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-all duration-300',
+                style: {
+                  backgroundColor: 'rgba(var(--theme-primary-rgb), 0.10)',
+                  color: 'var(--theme-primary)'
+                }
+              },
+              React.createElement(DynamicIcon, { name: p.icon, className: 'w-6 h-6 group-hover:text-white transition-colors duration-300' })
             )
             : null,
           React.createElement(
             'div',
-            { className: 'w-full flex flex-col items-center' },
+            { className: 'relative z-10 w-full flex flex-col items-center' },
             React.createElement(
               'h3',
-              { className: 'font-black text-slate-800 break-words text-xs sm:text-sm' },
+              { className: 'font-black text-slate-800 group-hover:text-white break-words text-xs sm:text-sm transition-colors duration-300' },
               p.name || `فئة ${idx + 1}`
             ),
             p.count !== undefined && p.count !== ''
               ? React.createElement(
                 'span',
-                { className: 'inline-block text-[10px] text-blue-500 bg-blue-50 px-2.5 py-0.5 rounded-full font-bold mt-1.5' },
+                {
+                  className: 'inline-block text-[10px] px-2.5 py-0.5 rounded-full font-bold mt-1.5 transition-all duration-300 group-hover:bg-white/20 group-hover:text-white',
+                  style: { color: 'var(--theme-primary)', backgroundColor: 'rgba(var(--theme-primary-rgb), 0.08)' }
+                },
                 `${p.count} دورة`
               )
               : null,
             p.description
               ? React.createElement(
                 'p',
-                { className: 'text-[10px] text-slate-500 font-medium mt-2 break-words leading-relaxed' },
+                { className: 'text-[10px] text-slate-500 group-hover:text-white/80 font-medium mt-2 break-words leading-relaxed transition-colors duration-300' },
                 p.description
               )
               : null

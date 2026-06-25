@@ -29,6 +29,50 @@ export default function NavbarBlock(props: NavbarBlockProps) {
 
   const isTransparentBg = hasSectionBackground(props);
 
+  const isLandingPage = title === 'درب' || title === 'أكاديمية درب';
+
+  if (isLandingPage) {
+    return (
+      <header 
+        style={{ 
+          backgroundColor: isTransparentBg ? 'rgba(255, 255, 255, 0.7)' : bgColor, 
+          borderColor: isTransparentBg ? 'rgba(255, 255, 255, 0.4)' : borderColor 
+        }}
+        className={`w-full rounded-2xl border px-6 py-4 flex justify-between items-center ${isTransparentBg ? 'backdrop-blur-md shadow-md' : 'shadow-sm'} select-none z-50`}
+        dir="rtl"
+      >
+        {/* Left Side: Registration Button */}
+        <div>
+          <button 
+            style={{ backgroundColor: 'var(--theme-primary)' }}
+            className="px-5 py-2 rounded-xl text-white font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md"
+          >
+            التسجيل
+          </button>
+        </div>
+
+        {/* Center: Navigation Links */}
+        <nav className="hidden md:flex items-center gap-6 text-xs font-bold text-slate-600">
+          <a href="#hero-t1" className="hover:text-[var(--theme-primary)] transition-colors">الرئيسية</a>
+          <a href="#about-t1" className="hover:text-[var(--theme-primary)] transition-colors">نبذة عني</a>
+          <a href="#courses-t1" className="hover:text-[var(--theme-primary)] transition-colors">الدورات</a>
+          <a href="#gallery-t1" className="hover:text-[var(--theme-primary)] transition-colors">أعمالي</a>
+          <a href="#testimonials-t1" className="hover:text-[var(--theme-primary)] transition-colors">آراء الطلاب</a>
+        </nav>
+
+        {/* Right Side: Logo */}
+        <div className="flex items-center gap-3">
+          <span 
+            style={{ ...titleTypography.style, fontSize: '18px', color: 'var(--theme-primary)' }}
+            className={`font-black tracking-wide ${titleTypography.className}`}
+          >
+            {title}
+          </span>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header 
       style={{ 

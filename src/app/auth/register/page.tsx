@@ -124,8 +124,19 @@ export default function StudentRegisterPage() {
             }
         } catch (error: any) {
             console.error('Registration error:', error);
-            const errorMessage = error.message || error.error || 'حدث خطأ أثناء إنشاء الحساب';
+            let errorMessage = error.message || error.error || 'حدث خطأ أثناء إنشاء الحساب';
             
+            // Map common English API errors to user-friendly Arabic
+            if (errorMessage === 'Invalid credentials' || errorMessage === 'Unauthorized' || errorMessage.toLowerCase().includes('credential')) {
+                errorMessage = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+            } else if (errorMessage.toLowerCase().includes('email has already been taken') || errorMessage.toLowerCase().includes('email already exists') || errorMessage.toLowerCase().includes('email must be unique')) {
+                errorMessage = 'البريد الإلكتروني مستخدم بالفعل';
+            } else if (errorMessage.toLowerCase().includes('phone has already been taken') || errorMessage.toLowerCase().includes('phone already exists') || errorMessage.toLowerCase().includes('phone must be unique')) {
+                errorMessage = 'رقم الجوال مستخدم بالفعل';
+            } else if (errorMessage.toLowerCase().includes('network error')) {
+                errorMessage = 'حدث خطأ في الاتصال، يرجى التحقق من الشبكة';
+            }
+
             MySwal.fire({
                 title: 'خطأ في إنشاء الحساب',
                 text: errorMessage,

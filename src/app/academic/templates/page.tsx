@@ -187,14 +187,11 @@ export default function TemplatesPage() {
     setLoadingPreview(true);
 
     try {
-      // Find the page in our fetched pages that has title === template.id
+      // Find the saved page for THIS specific template (matched by title === template.id)
       const matchingPage = pages.find((p: any) => p.title === template.id);
-      let targetPageId = matchingPage ? String(matchingPage.id) : null;
+      const targetPageId = matchingPage ? String(matchingPage.id) : null;
 
-      if (!targetPageId && template.id === activeTemplateId) {
-        targetPageId = activePageId;
-      }
-
+      // Only fetch API sections if this template has its own saved page
       if (targetPageId) {
         const apiSections = await getSections(targetPageId);
         if (apiSections && apiSections.length > 0) {
@@ -208,7 +205,7 @@ export default function TemplatesPage() {
       console.error('Failed to fetch preview sections from API:', e);
     }
 
-    // Fallback: load static defaults from templates.ts definition
+    // Fallback: load this template's own static default sections
     try {
       const defaultTemplateConfig = getTemplateById(template.id);
       setPreviewSections(defaultTemplateConfig.sections);
@@ -325,37 +322,244 @@ export default function TemplatesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {WEBSITE_TEMPLATES.map((tmpl) => {
             const isActive = activeTemplateId === tmpl.id;
+
+            /* ─── Template 1: Classic Royal Blue ─── */
+            if (tmpl.id === 'template_1') {
+              return (
+                <div
+                  key={tmpl.id}
+                  className={`group relative flex flex-col rounded-3xl overflow-hidden transition-all duration-300 bg-white ${
+                    isActive
+                      ? 'ring-4 ring-[#005c86] shadow-2xl shadow-[#005c86]/15'
+                      : 'shadow-[0_8px_32px_rgba(0,92,134,0.08)] hover:shadow-[0_20px_48px_rgba(0,92,134,0.18)] hover:-translate-y-2'
+                  }`}
+                >
+                  {/* Top accent gradient bar */}
+                  <div className="h-1.5 w-full bg-gradient-to-r from-[#005c86] via-[#0e76a8] to-[#2563eb] shrink-0" />
+
+                  {/* Browser mockup bar */}
+                  <div className="bg-[#f1f5f9] border-b border-slate-200/80 px-4 py-2 flex items-center gap-2 shrink-0 select-none">
+                    <div className="flex gap-1.5 items-center">
+                      <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-green-400" />
+                    </div>
+                    <div className="flex-1 bg-white border border-slate-200 rounded-md text-[10px] font-semibold text-slate-400 text-center px-3 py-0.5 truncate">
+                      darab.academy
+                    </div>
+                  </div>
+
+                  {/* Screenshot */}
+                  <div className="h-52 overflow-hidden relative bg-slate-100 shrink-0">
+                    <img
+                      className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                      src={tmpl.imageUrl}
+                      alt={tmpl.name}
+                    />
+                    {/* Hover shimmer */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#005c86]/25 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
+                    {isActive && (
+                      <span className="absolute top-3 right-3 bg-[#005c86] text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1">
+                        <Check className="w-3 h-3 stroke-[3px]" />
+                        مفعّل
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Card body */}
+                  <div className="flex-1 flex flex-col p-5 gap-4">
+                    {/* Badges row */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="inline-flex items-center gap-1.5 bg-[#eff6ff] text-[#005c86] text-[10px] font-black px-2.5 py-1 rounded-full border border-[#bfdbfe]">
+                        <Globe className="w-3 h-3" />
+                        {tmpl.themeName}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+                        <Star className="w-2.5 h-2.5 fill-current" />
+                        {tmpl.rating}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-200">
+                        <Clock className="w-2.5 h-2.5" />
+                        {tmpl.loadSpeed}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-black text-slate-800 leading-snug">{tmpl.name}</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed mt-2 line-clamp-2">{tmpl.description}</p>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="pt-3 border-t border-slate-100 flex gap-2.5 mt-auto">
+                      <button
+                        onClick={() => handleOpenPreview(tmpl)}
+                        className="flex-1 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[#005c86] font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        معاينة
+                      </button>
+                      {isActive ? (
+                        <Link
+                          href={`/academic/website/builder?templateId=${tmpl.id}${activePageId ? `&pageId=${activePageId}` : ''}`}
+                          className="flex-1 py-2.5 rounded-xl bg-gradient-to-l from-[#005c86] to-[#0e76a8] text-white font-bold text-xs shadow-md shadow-[#005c86]/25 text-center flex items-center justify-center gap-1.5 hover:shadow-lg hover:brightness-110 active:scale-95 transition-all"
+                        >
+                          <BookOpen className="w-3.5 h-3.5" />
+                          تعديل
+                        </Link>
+                      ) : (
+                        <button
+                          onClick={() => handleSelectTemplate(tmpl.id, tmpl.name)}
+                          disabled={!!activatingId}
+                          className="flex-1 py-2.5 rounded-xl bg-gradient-to-l from-[#005c86] to-[#0e76a8] text-white font-bold text-xs shadow-md shadow-[#005c86]/25 flex items-center justify-center gap-1.5 hover:shadow-lg hover:brightness-110 active:scale-95 transition-all disabled:opacity-60"
+                        >
+                          {activatingId === tmpl.id ? (
+                            <>
+                              <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              <span>جاري...</span>
+                            </>
+                          ) : (
+                            <span>{pages.some((p: any) => p.title === tmpl.id) ? 'إعادة تفعيل' : 'اختيار'}</span>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            /* ─── Template 2: Turquoise Glassmorphism ─── */
+            if (tmpl.id === 'template_2') {
+              return (
+                <div
+                  key={tmpl.id}
+                  className={`group relative flex flex-col rounded-3xl overflow-hidden transition-all duration-300 ${
+                    isActive
+                      ? 'ring-4 ring-[#00a896] shadow-2xl shadow-[#00a896]/20'
+                      : 'shadow-[0_8px_32px_rgba(0,168,150,0.10)] hover:shadow-[0_20px_48px_rgba(0,168,150,0.22)] hover:-translate-y-2'
+                  }`}
+                >
+                  {/* Full-bleed image with teal gradient overlay */}
+                  <div className="relative h-56 overflow-hidden shrink-0">
+                    <img
+                      className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-110"
+                      src={tmpl.imageUrl}
+                      alt={tmpl.name}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#00a896]/75 via-[#0f766e]/65 to-[#042f2e]/80" />
+
+                    {/* Glass browser bar */}
+                    <div className="absolute top-0 inset-x-0 px-4 py-3 flex items-center gap-2 select-none">
+                      <div className="flex gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-white/40" />
+                        <span className="w-2 h-2 rounded-full bg-white/40" />
+                        <span className="w-2 h-2 rounded-full bg-white/40" />
+                      </div>
+                      <div className="flex-1 bg-white/15 backdrop-blur-md border border-white/25 rounded-lg text-[9px] font-semibold text-white/80 text-center py-0.5 px-3 truncate">
+                        {tmpl.themeName}.darab.academy
+                      </div>
+                      {isActive && (
+                        <span className="bg-white/20 backdrop-blur-md border border-white/30 text-white text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                          <Check className="w-2.5 h-2.5 stroke-[3px]" />
+                          مفعّل
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Bottom overlay content */}
+                    <div className="absolute bottom-0 inset-x-0 p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/25">
+                          <Star className="w-2.5 h-2.5 fill-amber-300 text-amber-300" />
+                          {tmpl.rating}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/25">
+                          <Clock className="w-2.5 h-2.5" />
+                          {tmpl.loadSpeed}
+                        </span>
+                      </div>
+                      <h3 className="text-sm font-black text-white leading-snug drop-shadow-md">{tmpl.name}</h3>
+                    </div>
+                  </div>
+
+                  {/* Card body */}
+                  <div className="flex-1 flex flex-col p-5 gap-4 bg-white">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 bg-[#f0fdfa] text-[#00a896] text-[10px] font-black px-2.5 py-1 rounded-full border border-[#99f6e4]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#00a896]" />
+                        {tmpl.themeName}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">{tmpl.description}</p>
+
+                    <div className="pt-3 border-t border-slate-100 flex gap-2.5 mt-auto">
+                      <button
+                        onClick={() => handleOpenPreview(tmpl)}
+                        className="flex-1 py-2.5 rounded-xl border border-[#99f6e4] bg-[#f0fdfa] hover:bg-[#ccfbf1] text-[#00a896] font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        معاينة
+                      </button>
+                      {isActive ? (
+                        <Link
+                          href={`/academic/website/builder?templateId=${tmpl.id}${activePageId ? `&pageId=${activePageId}` : ''}`}
+                          className="flex-1 py-2.5 rounded-xl bg-gradient-to-l from-[#00a896] to-[#0f766e] text-white font-bold text-xs shadow-md shadow-[#00a896]/25 text-center flex items-center justify-center gap-1.5 hover:shadow-lg hover:brightness-110 active:scale-95 transition-all"
+                        >
+                          <BookOpen className="w-3.5 h-3.5" />
+                          تعديل
+                        </Link>
+                      ) : (
+                        <button
+                          onClick={() => handleSelectTemplate(tmpl.id, tmpl.name)}
+                          disabled={!!activatingId}
+                          className="flex-1 py-2.5 rounded-xl bg-gradient-to-l from-[#00a896] to-[#0f766e] text-white font-bold text-xs shadow-md shadow-[#00a896]/25 flex items-center justify-center gap-1.5 hover:shadow-lg hover:brightness-110 active:scale-95 transition-all disabled:opacity-60"
+                        >
+                          {activatingId === tmpl.id ? (
+                            <>
+                              <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              <span>جاري...</span>
+                            </>
+                          ) : (
+                            <span>{pages.some((p: any) => p.title === tmpl.id) ? 'إعادة تفعيل' : 'اختيار'}</span>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            /* ─── Template 3 & 4: Original style (unchanged) ─── */
             return (
-              <div 
+              <div
                 key={tmpl.id}
                 className={`bg-white rounded-3xl overflow-hidden shadow-[0_12px_40px_rgba(25,28,29,0.02)] border transition-all duration-300 flex flex-col group ${
-                  isActive 
-                    ? 'border-4 border-[#005c86] shadow-lg shadow-[#005c86]/5' 
+                  isActive
+                    ? 'border-4 border-[#005c86] shadow-lg shadow-[#005c86]/5'
                     : 'border-slate-100 hover:border-slate-200 hover:-translate-y-1.5'
                 }`}
               >
-                
                 {/* Browser Mockup Frame Header */}
                 <div className="bg-slate-100/90 border-b border-slate-200 px-4 py-2.5 flex items-center justify-between shrink-0 select-none">
-                  {/* Browser circles */}
                   <div className="flex gap-1.5 items-center">
                     <span className="w-2.5 h-2.5 rounded-full bg-red-400"></span>
                     <span className="w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
                     <span className="w-2.5 h-2.5 rounded-full bg-green-400"></span>
                   </div>
-                  {/* Simulated URL bar */}
                   <div className="bg-white/90 border border-slate-200 rounded-md text-[10px] font-semibold text-slate-400 text-center px-4 py-0.5 w-1/2 select-none truncate">
-                    {tmpl.id === 'template_1' ? 'darab.academy' : `${tmpl.themeName}.darab.academy`}
+                    {tmpl.themeName}.darab.academy
                   </div>
                   <div className="w-8"></div>
                 </div>
 
                 {/* Template Thumbnail screenshot with zoom */}
                 <div className="h-48 overflow-hidden relative bg-slate-50 shrink-0">
-                  <img 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                    src={tmpl.imageUrl} 
-                    alt={tmpl.name} 
+                  <img
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    src={tmpl.imageUrl}
+                    alt={tmpl.name}
                   />
                   {isActive && (
                     <span className="absolute top-4 right-4 bg-[#005c86] text-white text-[11px] font-black px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
@@ -378,21 +582,21 @@ export default function TemplatesPage() {
                   </div>
 
                   <div className="pt-4 border-t border-slate-100 flex gap-3">
-                    <button 
+                    <button
                       onClick={() => handleOpenPreview(tmpl)}
                       className="flex-1 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-[#005c86] font-bold text-xs transition-colors border border-slate-100"
                     >
                       معاينة القالب
                     </button>
                     {isActive ? (
-                      <Link 
+                      <Link
                         href={`/academic/website/builder?templateId=${tmpl.id}${activePageId ? `&pageId=${activePageId}` : ''}`}
                         className="flex-1 py-2.5 rounded-xl bg-[#005c86] hover:bg-[#0e76a8] text-white font-bold text-xs transition-colors shadow-sm text-center flex items-center justify-center"
                       >
                         تعديل بالباني
                       </Link>
                     ) : (
-                      <button 
+                      <button
                         onClick={() => handleSelectTemplate(tmpl.id, tmpl.name)}
                         disabled={!!activatingId}
                         className="flex-1 py-2.5 rounded-xl bg-[#005c86] hover:bg-[#0e76a8] text-white font-bold text-xs transition-colors shadow-sm flex items-center justify-center gap-1.5"
@@ -409,7 +613,6 @@ export default function TemplatesPage() {
                     )}
                   </div>
                 </div>
-
               </div>
             );
           })}

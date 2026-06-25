@@ -11,23 +11,23 @@ export interface TemplateTheme {
 
 export const TEMPLATE_THEMES: Record<string, TemplateTheme> = {
   'academy-dashboard': {
-    primaryColor: '#2563eb', // Indigo Blue
-    primaryRgb: '37, 99, 235',
-    secondaryColor: '#10b981',
-    accentColor: '#005c86',
-    backgroundColor: '#eff6ff',
+    primaryColor: '#7c3aed', // Purple
+    primaryRgb: '124, 58, 237',
+    secondaryColor: '#a855f7',
+    accentColor: '#6d28d9',
+    backgroundColor: '#ffffff',
     textColor: '#1f2937',
-    fontFamily: 'IBM Plex Sans Arabic',
+    fontFamily: 'Cairo',
     cardShape: 'classic',
   },
   'template_1': { // fallback / alias
-    primaryColor: '#2563eb',
-    primaryRgb: '37, 99, 235',
-    secondaryColor: '#10b981',
-    accentColor: '#005c86',
-    backgroundColor: '#eff6ff',
+    primaryColor: '#7c3aed', // Purple
+    primaryRgb: '124, 58, 237',
+    secondaryColor: '#a855f7',
+    accentColor: '#6d28d9',
+    backgroundColor: '#ffffff',
     textColor: '#1f2937',
-    fontFamily: 'IBM Plex Sans Arabic',
+    fontFamily: 'Cairo',
     cardShape: 'classic',
   },
   'template_2': {
