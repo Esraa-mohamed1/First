@@ -121,7 +121,13 @@ export default function HeroBanner(props: HeroBannerProps) {
       )}
 
       <h1 style={titleTypography.style} className={`leading-tight ${titleTypography.className}`}>
-        {title}
+        {title && typeof title === 'string' && title.includes('UI/UX') ? (
+          title.split(/(UI\/UX)/g).map((part, i) => 
+            part === 'UI/UX' 
+              ? <span key={i} style={{ color: 'var(--theme-primary, #7c3aed)' }}>{part}</span>
+              : part
+          )
+        ) : title}
       </h1>
 
       {subtitle && (
@@ -140,8 +146,12 @@ export default function HeroBanner(props: HeroBannerProps) {
           </button>
           {showSecondButton && secondButtonText && (
             <button
-              style={{ backgroundColor: secondButtonColor, color: secondButtonTextColor }}
-              className="px-8 py-3.5 rounded-xl font-black text-xs transition-all active:scale-95 select-none border border-slate-200/60"
+              style={{ 
+                backgroundColor: secondButtonColor, 
+                color: secondButtonTextColor,
+                borderColor: secondButtonTextColor || 'var(--theme-primary)'
+              }}
+              className="px-8 py-3.5 rounded-xl font-black text-xs transition-all active:scale-95 select-none border"
             >
               {secondButtonText}
             </button>

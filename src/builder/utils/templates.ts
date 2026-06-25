@@ -3,190 +3,252 @@ import { TemplateSchema } from '../interfaces';
 export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
   'academy-dashboard': {
     id: 'academy-dashboard',
-    name: 'لوحة التحكم الكلاسيكية (المتكاملة)',
-    description: 'قالب لوحة تحكم ذكي يتضمن إحصائيات الطلاب والمبيعات وتحديثات النشاط المباشر.',
-    status: 'draft',
+    name: 'القالب الأول (الكلاسيكي الملكي)',
+    description: 'تصميم احترافي بلمسات زرقاء ملكية وتخطيط أكاديمي راقٍ.',
+    status: 'published',
     version: '1.0',
     updatedAt: new Date().toISOString(),
     sections: [
       {
-        id: 'navbar-1',
+        id: 'navbar-t1',
         type: 'navbar',
         props: {
-          title: 'بوابة أكاديمية درب الكلاسيكية',
-          showSearch: true,
-          showProfile: true,
+          title: 'درب',
+          showSearch: false,
+          showProfile: false,
           bgColor: '#ffffff',
-          borderColor: '#f1f5f9'
+          borderColor: 'transparent',
+          order: 1
         }
       },
       {
-        id: 'hero-1',
+        id: 'hero-t1',
         type: 'hero',
         props: {
-          title: 'مرحباً بك في لوحة تحكم الأكاديمية الجديدة',
-          subtitle: 'تابع أداء طلابك، مبيعات الدورات، وتقارير المشاهدة أولاً بأول من مكان واحد وبشكل تفاعلي بالكامل.',
-          buttonText: 'تصفح التقارير الشاملة',
+          title: 'ابدأ رحلتك في UI/UX واصنع تصاميم تخطف الانتباه من أول نظرة',
+          subtitle: 'نتعلم خطوة بخطوة إزاي نصمم واجهات احترافية وفهم سلوك المستخدم بشكل عملي.',
+          badgeText: 'ابدأ رحلتك في UI/UX',
+          buttonText: 'ابدأ الآن',
           buttonLink: '#',
+          showSecondButton: true,
+          secondButtonText: 'تصفح الدورات',
+          secondButtonColor: '#ffffff',
+          secondButtonTextColor: '#7c3aed',
+          heroImage: '/assets/ima.png',
+          heroImagePosition: 'right', // puts text first, image second (on the left in RTL)
           align: 'right',
+          backgroundColor: '#ffffff',
           titleColor: '#1f2937',
           subtitleColor: '#4b5563',
-          buttonColor: '#2563eb',
+          buttonColor: '#7c3aed',
           buttonTextColor: '#ffffff',
-          backgroundColor: '#eff6ff',
-          bgImage: ''
+          order: 2
         }
       },
       {
-        id: 'kpis-1',
+        id: 'about-t1',
+        type: 'hero',
+        props: {
+          title: 'نبذة عني',
+          subtitle: 'أكثر من 5 سنوات من الخبرة في مشاريع حقيقية مع شركات عالمية وناشئة، ساعدت مئات الطلاب على دخول سوق العمل وبناء مسيرة مهنية مستدامة في عالم التصميم الرقمي.',
+          buttonText: '',
+          heroImage: '/assets/profile.png',
+          heroImagePosition: 'right', // puts text first, image second (on the left in RTL)
+          align: 'right',
+          backgroundColor: '#ffffff',
+          titleColor: '#1f2937',
+          subtitleColor: '#4b5563',
+          order: 3
+        }
+      },
+      {
+        id: 'kpis-t1',
         type: 'kpi-cards',
         props: {
-          gridCols: '4',
+          gridCols: '3',
+          backgroundColor: '#ffffff',
+          order: 4,
           cards: [
-            { id: '1', title: 'الطلاب النشطين اليوم', value: '1,248 متعلم', change: '+12% هذا الأسبوع', isPositive: true, icon: 'Users', color: '#2563eb' },
-            { id: '2', title: 'المبيعات الكلية', value: '14,850 ريال', change: '+8.4% منذ أمس', isPositive: true, icon: 'Wallet', color: '#10b981' },
-            { id: '3', title: 'الدورات المنجزة', value: '312 دورة كورس', change: '-2.1% هذا الشهر', isPositive: false, icon: 'Award', color: '#f59e0b' },
-            { id: '4', title: 'ساعات البث المنجزة', value: '5,280 ساعة', change: '+24% مؤخراً', isPositive: true, icon: 'Clock', color: '#8b5cf6' }
+            { id: 'kpi-1', title: 'سنوات خبرة', value: '+5', change: '', isPositive: true, icon: '', color: '#7c3aed' },
+            { id: 'kpi-2', title: 'طالب', value: '500+', change: '', isPositive: true, icon: '', color: '#7c3aed' },
+            { id: 'kpi-3', title: 'مشروع مكتمل', value: '100+', change: '', isPositive: true, icon: '', color: '#7c3aed' }
           ]
         }
       },
       {
-        id: 'categories-1',
-        type: 'categories_section',
-        props: {
-          title: 'تصفح التصنيفات',
-          subtitle: 'اختر المجال الذي يناسبك وابدأ رحلتك التعليمية',
-          background_color: '#f8fafc',
-          text_color: '#1f2937',
-          grid_cols: 4,
-          card_shape: 'classic',
-          padding_top: 60,
-          padding_bottom: 60,
-          items: [
-            { id: 'cat-item-1', order: 1, props: { name: 'البرمجة والتطوير', icon: 'Code', count: '12', description: 'تعلم لغات البرمجة المختلفة وتطوير الويب' } },
-            { id: 'cat-item-2', order: 2, props: { name: 'التصميم الإبداعي', icon: 'Palette', count: '8', description: 'تصميم الواجهات والجرافيك وتجربة المستخدم' } },
-            { id: 'cat-item-3', order: 3, props: { name: 'إدارة الأعمال', icon: 'Briefcase', count: '15', description: 'مهارات الريادة، الإدارة والتسويق الرقمي' } },
-            { id: 'cat-item-4', order: 4, props: { name: 'الذكاء الاصطناعي', icon: 'Cpu', count: '6', description: 'تعلم الآلة، البيانات والشبكات العصبية' } }
-          ]
-        }
-      },
-      {
-        id: 'charts-1',
-        type: 'charts',
-        props: {
-          title: 'تحليلات تقدم الطلاب وإحصائيات المبيعات',
-          chartType: 'area',
-          primaryColor: '#2563eb',
-          secondaryColor: '#f59e0b',
-          height: 300,
-          showGrid: true
-        }
-      },
-      {
-        id: 'tabs-1',
-        type: 'tabs',
-        props: {
-          activeTabColor: '#2563eb',
-          alignment: 'right',
-          tabs: [
-            { id: '1', label: 'إدارة الكورسات' },
-            { id: '2', label: 'المشتركين الجدد' },
-            { id: '3', label: 'المراجعات والتقييمات' }
-          ]
-        },
-        children: []
-      },
-      {
-        id: 'courses-1',
+        id: 'courses-t1',
         type: 'course-cards',
         props: {
-          title: 'أحدث الكورسات والدورات المسجلة بالأكاديمية',
+          title: 'الدورات المتاحة',
           gridCols: '3',
           showPrice: true,
-          showStudentsCount: true,
-          buttonBg: '#2563eb'
+          showStudentsCount: false,
+          buttonBg: '#7c3aed',
+          background_color: '#f4f4f5',
+          padding_top: 64,
+          padding_bottom: 64,
+          order: 5,
+          courses: [
+            { id: 'c1', title: 'أساسيات تصميم UI/UX', instructor: 'أ. عمرو البرلسي', price: '٤٠٠ ريال', students: '٨٧ طالب', duration: '٨ ساعات', image: '/assets/course3.jpg', description: 'تعلم مبادئ التصميم خطوة بخطوة وكيفية التعامل مع الألوان والخطوط لبناء واجهات سهلة الاستخدام ومحترفة.' },
+            { id: 'c2', title: 'إتقان فيجما (FigJam)', instructor: 'أ. مصطفى عبد الصبور', price: '٢٥٠ ريال', students: '٣١٢ طالب', duration: '١٥ ساعة', image: '/assets/course1.png', description: 'تعلم كيفية استخدام أداة FigJam للعصف الذهني والتخطيط وتصميم خرائط تجربة المستخدم بشكل تعاوني وممتع.' },
+            { id: 'c3', title: 'إتقان فيجما (FigJam)', instructor: 'أ. صهيب حسن', price: '١٩٠ ريال', students: '٢٤٣ طالب', duration: '١٢ ساعة', image: '/assets/course1.png', description: 'تعلم كيفية استخدام أداة FigJam للعصف الذهني والتخطيط وتصميم خرائط تجربة المستخدم بشكل تعاوني وممتع.' }
+          ]
         }
       },
       {
-        id: 'tables-1',
-        type: 'tables',
+        id: 'testimonials-t1',
+        type: 'testimonials_section',
         props: {
-          title: 'جدول تفصيلي لعمليات التسجيل الأخيرة',
-          showSearch: true,
-          rowsLimit: 5,
-          headerBg: '#f8fafc'
+          title: 'ماذا يقول طلابي ؟',
+          subtitle: 'آراء حقيقية من طلابنا الذين بدأوا مسيرتهم المهنية في مجال تصميم واجهات المستخدم.',
+          background_color: '#ffffff',
+          text_color: '#1e293b',
+          padding_top: 64,
+          padding_bottom: 64,
+          order: 6,
+          items: [
+            { id: 't1', order: 1, props: { quote: 'الدورات ممتازة وتطبيقية جداً، حصلت على أول عميل بعد أسبوعين فقط من إتمام الكورس.', author: 'أحمد المنصوري', role: 'مصمم UI/UX مستقل', rating: 5 } },
+            { id: 't2', order: 2, props: { quote: 'أسلوب التدريس واضح ومنهجي، ساعدني على بناء مشروعي الخاص بثقة ومهارة عالية.', author: 'سارة العمري', role: 'مطورة ويب متقدمة', rating: 5 } },
+            { id: 't3', order: 3, props: { quote: 'استطعت مضاعفة دخلي خلال 3 أشهر بعد التخصص في تصميم واجهات المستخدم.', author: 'خالد الزهراني', role: 'مصمم واجهات محترف', rating: 5 } }
+          ]
         }
       },
       {
-        id: 'feed-1',
-        type: 'student-feed',
+        id: 'gallery-t1',
+        type: 'gallery_section',
         props: {
-          title: 'الأنشطة الأخيرة لمتعلمي الأكاديمية',
-          limit: 4,
-          showStatusBadges: true
+          title: 'معرض أعمالي',
+          subtitle: 'استعرض بعضاً من المشاريع والتصاميم التي قام طلابنا بتطويرها خلال التدريب الميداني والعملي.',
+          background_color: '#ffffff',
+          grid_cols: 3,
+          image_aspect: 'auto',
+          padding_top: 64,
+          padding_bottom: 64,
+          order: 7,
+          items: [
+            { id: 'g1', order: 1, props: { image_url: '/assets/stats.jpg', caption: 'تصميم تطبيق خدمات مالية' } },
+            { id: 'g2', order: 2, props: { image_url: '/assets/beniftsbg.png', caption: 'تصميم موقع تجارة إلكترونية' } },
+            { id: 'g3', order: 3, props: { image_url: '/assets/paymentbg.jpg', caption: 'تصميم تطبيق توصيل طلبات' } },
+            { id: 'g4', order: 4, props: { image_url: '/assets/stats.jpg', caption: 'تصميم لوحة تحكم ذكية' } },
+            { id: 'g5', order: 5, props: { image_url: '/assets/beniftsbg.png', caption: 'تصميم واجهة محفظة رقمية' } },
+            { id: 'g6', order: 6, props: { image_url: '/assets/paymentbg.jpg', caption: 'تصميم تطبيق سياحة وسفر' } }
+          ]
+        }
+      },
+      {
+        id: 'cta-t1',
+        type: 'hero',
+        props: {
+          title: 'هل أنت مستعد لبدء مسيرتك في التصميم؟',
+          subtitle: 'اصنع مستقبلك اليوم وابدأ بتطوير مهاراتك خطوة بخطوة.',
+          buttonText: 'سجل الآن',
+          buttonLink: '#',
+          align: 'center',
+          backgroundColor: '#7c3aed',
+          titleColor: '#ffffff',
+          subtitleColor: '#f3e8ff',
+          buttonColor: '#ffffff',
+          buttonTextColor: '#7c3aed',
+          showSecondButton: false,
+          padding_top: 64,
+          padding_bottom: 64,
+          order: 8
         }
       }
     ]
   },
   'template_2': {
     id: 'template_2',
-    name: 'لوحة التحكم الفيروزية (العصرية)',
-    description: 'قالب لوحة تحكم ذكي بلمسات فيروزية رقيقة مناسب للمنصات التكنولوجية الحديثة.',
-    status: 'draft',
+    name: 'القالب الثاني (العصري الفيروزي)',
+    description: 'واجهة حيوية بألوان فيروزية منعشة وتأثيرات بصرية راقية.',
+    status: 'published',
     version: '1.0',
     updatedAt: new Date().toISOString(),
     sections: [
       {
-        id: 'navbar-2',
-        type: 'navbar',
+        id: 'hero-t2',
+        type: 'hero_section',
         props: {
-          title: 'منصة إدراك التعليمية',
-          showSearch: true,
-          showProfile: true,
-          bgColor: '#ffffff',
-          borderColor: '#f1f5f9'
-        }
-      },
-      {
-        id: 'hero-2',
-        type: 'hero',
-        props: {
-          title: 'منصة التعلم الذاتي المتطورة',
-          subtitle: 'واجهة مشبعة بحيوية اللون الأخضر الفيروزي وتأثيرات بصرية راقية تجذب المتعلم الحديث لبناء مستقبل باهر.',
-          buttonText: 'سجل الآن مجاناً',
-          buttonLink: '#',
+          background_color: '#0d9488',
+          text_color: '#ffffff',
+          padding_top: 96,
+          padding_bottom: 96,
+          title: 'تعلّم. طوّر. احترف.',
+          subtitle: 'منصة تعليمية عصرية تنقلك من المبتدئ إلى المحترف بأسلوب تفاعلي وديناميكي يناسب جيل اليوم.',
+          show_button: true,
+          button_text: 'انطلق الآن',
+          button_link: '#',
+          button_color: '#ffffff',
           align: 'center',
-          titleColor: '#0f766e',
-          subtitleColor: '#4b5563',
-          buttonColor: '#00a896',
-          buttonTextColor: '#ffffff',
-          backgroundColor: '#f0fdfa',
-          bgImage: ''
         }
       },
       {
-        id: 'kpis-2',
-        type: 'kpi-cards',
+        id: 'features-t2',
+        type: 'features_section',
         props: {
-          gridCols: '3',
-          cards: [
-            { id: '1', title: 'المسجلين في الدورة', value: '4,812 طالب', change: '+18% منذ الأسبوع الماضي', isPositive: true, icon: 'Users', color: '#00a896' },
-            { id: '2', title: 'الإيرادات المحققة', value: '25,410 ريال', change: '+14.2% مؤخراً', isPositive: true, icon: 'Wallet', color: '#00a896' },
-            { id: '3', title: 'إنجاز المنهج', value: '88% للدفعة الحالية', change: '+3% اليوم', isPositive: true, icon: 'CheckCircle', color: '#0f766e' }
+          title: 'ميزات تجعلنا مختلفين',
+          subtitle: 'تجربة تعليمية فريدة صممت خصيصاً لتواكب متطلبات العصر الرقمي.',
+          background_color: '#f0fdfa',
+          text_color: '#134e4a',
+          grid_cols: 3,
+          padding_top: 64,
+          padding_bottom: 64,
+          items: [
+            { id: 'feat-t2-1', order: 1, props: { icon: 'Zap', icon_color: '#0d9488', title: 'تعلم بوتيرتك الخاصة', description: 'محتوى مرن يمكنك الوصول إليه في أي وقت ومن أي مكان حول العالم.' } },
+            { id: 'feat-t2-2', order: 2, props: { icon: 'BarChart', icon_color: '#0f766e', title: 'تقارير تقدم مفصلة', description: 'تابع مسيرتك التعليمية لحظة بلحظة مع تقارير ذكية وتحليلات دقيقة.' } },
+            { id: 'feat-t2-3', order: 3, props: { icon: 'ShieldCheck', icon_color: '#00a896', title: 'شهادات موثوقة ومعتمدة', description: 'شهادات رقمية مشفرة ومحمية يمكن التحقق منها فورياً عبر الإنترنت.' } },
           ]
         }
       },
       {
-        id: 'courses-2',
+        id: 'categories-t2',
+        type: 'categories_section',
+        props: {
+          title: 'استكشف المسارات التعليمية',
+          subtitle: 'اختر مسارك وابدأ رحلتك نحو مستقبل أفضل',
+          background_color: '#ffffff',
+          text_color: '#134e4a',
+          grid_cols: 3,
+          padding_top: 64,
+          padding_bottom: 64,
+          items: [
+            { id: 'cat-t2-1', order: 1, props: { name: 'تطوير التطبيقات', icon: 'Smartphone', count: '14', description: 'iOS وAndroid والتطبيقات المتعددة المنصات' } },
+            { id: 'cat-t2-2', order: 2, props: { name: 'علم البيانات', icon: 'Database', count: '10', description: 'تحليل البيانات وتصويرها وتفسيرها' } },
+            { id: 'cat-t2-3', order: 3, props: { name: 'الأمن الإلكتروني', icon: 'Shield', count: '6', description: 'حماية الأنظمة والشبكات من الهجمات' } },
+          ]
+        }
+      },
+      {
+        id: 'courses-t2',
         type: 'course-cards',
         props: {
-          title: 'مسارات تعليمية مقترحة',
+          title: 'دورات مميزة لك',
           gridCols: '3',
           showPrice: true,
           showStudentsCount: true,
-          buttonBg: '#00a896'
+          buttonBg: '#0d9488',
+          background_color: '#f0fdfa',
+          padding_top: 64,
+          padding_bottom: 64,
         }
-      }
+      },
+      {
+        id: 'testimonials-t2',
+        type: 'testimonials_section',
+        props: {
+          title: 'قصص نجاح حقيقية',
+          subtitle: 'متعلمون حوّلوا شغفهم إلى مسيرة مهنية ناجحة بفضل منصتنا.',
+          background_color: '#ffffff',
+          text_color: '#134e4a',
+          padding_top: 64,
+          padding_bottom: 64,
+          items: [
+            { id: 'tst-t2-1', order: 1, props: { quote: 'المحتوى عملي ومباشر، وفّر لي الوقت والجهد مقارنة بأي مصدر تعليمي آخر جربته.', author: 'نورة القحطاني', role: 'مطورة تطبيقات', rating: 5 } },
+            { id: 'tst-t2-2', order: 2, props: { quote: 'انتقلت من عدم معرفة شيء عن البيانات إلى محلل بيانات معتمد في أقل من 5 أشهر.', author: 'يوسف الحربي', role: 'محلل بيانات', rating: 5 } },
+            { id: 'tst-t2-3', order: 3, props: { quote: 'الدعم المستمر من المدربين والمجتمع النشط جعل التعلم تجربة ممتعة وليس مرهقة.', author: 'منى السعيد', role: 'متخصصة أمن إلكتروني', rating: 5 } },
+          ]
+        }
+      },
     ]
   },
   'template_3': {
@@ -322,7 +384,15 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
   }
 };
 
+// Alias: template_1 uses the same sections as academy-dashboard
+MOCK_TEMPLATES['template_1'] = { ...MOCK_TEMPLATES['academy-dashboard'], id: 'template_1', name: 'القالب الأول (الكلاسيكي الملكي)' };
+
 export const getTemplateById = (id: string): TemplateSchema => {
-  return MOCK_TEMPLATES[id] || MOCK_TEMPLATES['academy-dashboard'];
+  // Explicit map for known aliases
+  const aliasMap: Record<string, string> = {
+    'template_1': 'template_1',
+  };
+  const resolvedId = aliasMap[id] || id;
+  return MOCK_TEMPLATES[resolvedId] || MOCK_TEMPLATES['academy-dashboard'];
 };
 
