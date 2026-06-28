@@ -43,7 +43,7 @@ export default function SetupPage() {
   };
 
   const handleDomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    const value = e.target.value.toLowerCase();
     setDomainPrefix(value);
 
     const fullLink = value + domainSuffix;
@@ -100,7 +100,7 @@ export default function SetupPage() {
         phone_academy: formData.phone,
         country_code: selectedCountry?.isoCode, // Passed efficiently via context
         specialties: formData.field,
-        link_academy: fullLink // Use the constructed link
+        link_academy: fullLink.toLowerCase() // Use the constructed link in lowercase
       };
 
       if (cachedEmail) {
@@ -109,10 +109,25 @@ export default function SetupPage() {
         payload.phone = cachedPhone;
       }
 
-      await createAccountInfoAcademy(payload);
+      const setupResponse = (await createAccountInfoAcademy(payload)) as any;
+
+      // Extract academy link from API response payload if available to respect "source of truth", forcing to lowercase
+      const responseLink = setupResponse?.data?.link_academy || setupResponse?.link_academy || setupResponse?.data?.academy?.link_academy;
+      let finalLink = fullLink.toLowerCase();
+      let finalDomainPrefix = domainPrefix.toLowerCase();
+
+      if (responseLink && typeof responseLink === 'string') {
+        finalLink = responseLink.toLowerCase();
+        // Extract prefix in lowercase
+        if (finalLink.endsWith(domainSuffix.toLowerCase())) {
+          finalDomainPrefix = finalLink.slice(0, -domainSuffix.length);
+        } else {
+          finalDomainPrefix = finalLink.split('.')[0];
+        }
+      }
 
       // Save academy link name to localStorage for subsequent login header
-      localStorage.setItem('academy_link_name', fullLink);
+      localStorage.setItem('academy_link_name', finalLink);
 
       toast.success('تم حفظ معلومات الأكاديمية بنجاح');
 
@@ -144,6 +159,11 @@ export default function SetupPage() {
               }));
             }
             loginSuccess = true;
+            
+            // Clear backup cookies on successful login
+            document.cookie = "backup_email=; path=/; max-age=0; SameSite=Lax";
+            document.cookie = "backup_phone=; path=/; max-age=0; SameSite=Lax";
+            document.cookie = "backup_password=; path=/; max-age=0; SameSite=Lax";
           }
         } catch (loginError) {
           console.error('Auto login failed:', loginError);
@@ -162,7 +182,7 @@ export default function SetupPage() {
       if (!loginSuccess) {
         const tenantSuffix = process.env.NEXT_PUBLIC_TENANT_DOMAIN_SUFFIX || defaultSuffix;
         const protocol = window.location.protocol;
-        const tenantUrl = `${protocol}//${domainPrefix}${tenantSuffix}/auth/setup`;
+        const tenantUrl = `${protocol}//${finalDomainPrefix}${tenantSuffix}/auth/setup`;
 
         console.log('Auto-login failed. Redirecting to tenant login:', tenantUrl);
         triggerPageLoader(true);
@@ -178,7 +198,7 @@ export default function SetupPage() {
       // Get the token we just received
       const token = localStorage.getItem('token');
 
-      const tenantUrl = `${protocol}//${domainPrefix}${tenantSuffix}${dashboardPath}${token ? `?token=${token}` : ''}`;
+      const tenantUrl = `${protocol}//${finalDomainPrefix}${tenantSuffix}${dashboardPath}${token ? `?token=${token}` : ''}`;
 
       console.log('Redirecting to tenant dashboard:', tenantUrl);
 
@@ -186,6 +206,20 @@ export default function SetupPage() {
       window.location.href = tenantUrl;
     } catch (error: any) {
       console.error(error);
+
+      // Store credentials in cookies as a temporary backup so the user is not locked out
+      const cachedEmail = localStorage.getItem('user_email');
+      const cachedPhone = localStorage.getItem('user_phone');
+      const cachedPassword = localStorage.getItem('user_password');
+      if (cachedPassword) {
+        document.cookie = `backup_password=${encodeURIComponent(cachedPassword)}; path=/; max-age=3600; SameSite=Lax`;
+      }
+      if (cachedEmail) {
+        document.cookie = `backup_email=${encodeURIComponent(cachedEmail)}; path=/; max-age=3600; SameSite=Lax`;
+      }
+      if (cachedPhone) {
+        document.cookie = `backup_phone=${encodeURIComponent(cachedPhone)}; path=/; max-age=3600; SameSite=Lax`;
+      }
 
       let handled = false;
 

@@ -136,6 +136,11 @@ export default function AcademyLoginPage() {
                 document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
                 localStorage.setItem('token', token);
 
+                // Clear backup credentials cookies on successful login
+                document.cookie = "backup_email=; path=/; max-age=0; SameSite=Lax";
+                document.cookie = "backup_phone=; path=/; max-age=0; SameSite=Lax";
+                document.cookie = "backup_password=; path=/; max-age=0; SameSite=Lax";
+
                 if (response.data) {
                     const userRole = (response.data as any).role || 'student';
                     localStorage.setItem('user_info', JSON.stringify({

@@ -42,7 +42,10 @@ api.interceptors.request.use(
       }
 
       if (tenantKey) {
-        config.headers['X-Tenant-Key'] = tenantKey;
+        const lowerKey = tenantKey.toLowerCase();
+        config.headers['X-Tenant-Key'] = lowerKey;
+        config.headers['X-Tenant'] = lowerKey;
+        config.headers['x-tenant-name'] = lowerKey;
       }
     }
     return config;

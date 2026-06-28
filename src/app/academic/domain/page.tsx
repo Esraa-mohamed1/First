@@ -66,7 +66,7 @@ export default function CustomDomainPage() {
 
     try {
       const response = await academyApi.put('custom-domain', {
-        domain: editValue.trim()
+        domain: editValue.trim().toLowerCase()
       });
 
       if (response.data.success) {
@@ -74,7 +74,8 @@ export default function CustomDomainPage() {
 
         // Update local storage
         if (typeof window !== 'undefined') {
-          localStorage.setItem('academy_link_name', editValue.trim());
+          const lowerDomain = editValue.trim().toLowerCase();
+          localStorage.setItem('academy_link_name', lowerDomain);
 
           triggerPageLoader(true);
 
@@ -90,15 +91,15 @@ export default function CustomDomainPage() {
             // Check if we are on a subdomain already
             if (currentHostname.includes('.darab.academy.localhost')) {
               // Replace the tenant part (everything before .darab.academy.localhost)
-              const tenantPrefix = editValue.trim().split('.')[0]; // Take the first part of the new domain
+              const tenantPrefix = lowerDomain.split('.')[0]; // Take the first part of the new domain
               newUrl = `${protocol}//${tenantPrefix}.darab.academy.localhost${port}/academic`;
             } else {
               // Fallback for simple localhost
-              newUrl = `${protocol}//${editValue.trim()}${port}/academic`;
+              newUrl = `${protocol}//${lowerDomain}${port}/academic`;
             }
           } else {
             // Production: Use the new domain directly
-            newUrl = `${protocol}//${editValue.trim()}/academic`;
+            newUrl = `${protocol}//${lowerDomain}/academic`;
           }
 
           // Clear auth data and redirect
@@ -107,7 +108,7 @@ export default function CustomDomainPage() {
             // But user said "clear local storage"
             localStorage.clear();
             // Re-set the new academy link name so the next page knows the tenant
-            localStorage.setItem('academy_link_name', editValue.trim());
+            localStorage.setItem('academy_link_name', lowerDomain);
 
             // Clear cookies
             document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
@@ -117,7 +118,7 @@ export default function CustomDomainPage() {
           }, 1500);
         }
 
-        setCustomDomain(response.data.data || { domain: editValue.trim(), status: 'pending' });
+        setCustomDomain(response.data.data || { domain: editValue.trim().toLowerCase(), status: 'pending' });
         setIsEditing(false);
       } else {
         if (response.data.errors) {
@@ -221,7 +222,7 @@ export default function CustomDomainPage() {
                     <input
                       type="text"
                       value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
+                      onChange={(e) => setEditValue(e.target.value.toLowerCase())}
                       placeholder="example.com"
                       className={`w-full p-5 bg-gray-50 border ${errors.domain ? 'border-red-300' : 'border-gray-100'} rounded-[2rem] outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-left font-bold text-lg text-gray-900`}
                       dir="ltr"
