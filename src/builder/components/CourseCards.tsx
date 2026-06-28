@@ -1,7 +1,9 @@
 import React from 'react';
 import { Clock, Users, BookOpen } from 'lucide-react';
+import Link from 'next/link';
 import { useBuilderStore } from '../store/builderStore';
 import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
+import { getCourses } from '@/services/courses';
 
 
 interface CourseCardsProps {
@@ -43,6 +45,36 @@ export default function CourseCards(props: CourseCardsProps) {
     setHoveredItemIndex 
   } = useBuilderStore();
 
+  const [realCourses, setRealCourses] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    async function fetchRealData() {
+      try {
+        const data = await getCourses();
+        if (data && data.length > 0) {
+          setRealCourses(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch courses in CourseCards:', err);
+      }
+    }
+    fetchRealData();
+  }, []);
+
+  const formattedCourses = React.useMemo(() => {
+    if (realCourses.length === 0) return courses;
+    return realCourses.map(course => ({
+      id: String(course.id),
+      title: course.title,
+      instructor: course.instructor || course.instructor_name || course.coach || 'أحمد محمد',
+      price: Number(course.price) === 0 ? 'مجانًا' : `${course.price} ر.س`,
+      students: `${course.students_count ?? course.students ?? 0} طالب`,
+      duration: course.duration || (course.units?.reduce((acc: number, unit: any) => acc + (unit.lessons?.length || 0), 0) ? `${course.units.reduce((acc: number, unit: any) => acc + (unit.lessons?.length || 0), 0)} درس` : 'غير محدد'),
+      image: course.image || course.cover_image || 'https://images.unsplash.com/photo-1586717791821-3f44a563fa4c',
+      description: course.description
+    }));
+  }, [realCourses, courses]);
+
   // Read deviceMode with a fail-safe fallback
   let deviceMode = 'desktop';
   try {
@@ -64,7 +96,7 @@ export default function CourseCards(props: CourseCardsProps) {
   const gridClass = getGridClass();
 
   // Limit course display for grid mapping
-  const coursesToRender = courses;
+  const coursesToRender = formattedCourses;
 
   const titleTypography = getTypographyStyle(props, 'title', {
     font: 'IBM Plex Sans Arabic',
@@ -77,6 +109,17 @@ export default function CourseCards(props: CourseCardsProps) {
 
   return (
     <div className="space-y-6 text-right" dir="rtl">
+      {isEditing && (
+        <div className="bg-amber-50 border-r-4 border-amber-500 p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs text-amber-800 font-bold shadow-sm" dir="rtl">
+          <span className="flex items-center gap-1.5">
+            <span className="text-base">💡</span>
+            هذه البيانات حقيقية معروضة من قاعدة البيانات ولا يمكن تعديلها من هنا. لتعديلها يرجى الانتقال إلى صفحة إدارة الدورات.
+          </span>
+          <Link href="/academic/courses" className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl transition-colors whitespace-nowrap">
+            إدارة الدورات
+          </Link>
+        </div>
+      )}
       
       <div className="flex items-center justify-between border-b border-slate-100 pb-4">
         <h3 
