@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BuilderNode } from '../../interfaces';
 import ClassicTemplate from '../classic/ClassicTemplate';
 import TurquoiseTemplate from '../turquoise/TurquoiseTemplate';
 import PurpleTemplate from '../purple/PurpleTemplate';
 import TealTemplate from '../teal/TealTemplate';
+import { useBuilderStore } from '../../store/builderStore';
 
 interface TemplateRendererProps {
   templateId: string;
@@ -13,6 +14,13 @@ interface TemplateRendererProps {
 }
 
 export default function TemplateRenderer({ templateId, sections }: TemplateRendererProps) {
+  const { setIsEditing } = useBuilderStore();
+
+  useEffect(() => {
+    // Force read-only layout rendering for previews/live site
+    setIsEditing(false);
+  }, [setIsEditing]);
+
   // Sort sections by their 'order' property before rendering
   const sortedSections = React.useMemo(() => {
     return [...sections].sort((a, b) => {
