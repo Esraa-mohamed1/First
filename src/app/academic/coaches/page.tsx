@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import AddStudentModal from '@/components/Academic/Modals/AddStudentModal';
+import EditUserModal from '@/components/Academic/Modals/EditUserModal';
 
 const MySwal = withReactContent(Swal);
 
@@ -19,6 +20,9 @@ export default function CoachesPage() {
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [editingCoach, setEditingCoach] = useState<User | null>(null);
+
+  const isAdmin = currentUser?.role === 'admin';
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user_info');
@@ -187,9 +191,15 @@ export default function CoachesPage() {
                         <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all">
                           <Eye size={18} />
                         </button>
-                        <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all">
-                          <Edit size={18} />
-                        </button>
+                        {isAdmin && (
+                          <button
+                            onClick={() => setEditingCoach(coach)}
+                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                            title="تعديل"
+                          >
+                            <Edit size={18} />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleDeleteCoach(coach.id)}
                           className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
@@ -211,6 +221,15 @@ export default function CoachesPage() {
         onClose={() => setIsAddModalOpen(false)}
         onStudentAdded={(coach) => {
           setCoaches(prev => [coach, ...prev]);
+        }}
+      />
+      <EditUserModal
+        isOpen={!!editingCoach}
+        onClose={() => setEditingCoach(null)}
+        user={editingCoach}
+        onUserUpdated={(updated) => {
+          setCoaches(prev => prev.map(c => c.id === updated.id ? updated : c));
+          setEditingCoach(null);
         }}
       />
     </div>

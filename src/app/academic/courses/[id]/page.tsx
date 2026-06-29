@@ -441,12 +441,8 @@ export default function CourseDetailsPage() {
         if (userData) {
           setCurrentUser(userData);
           if (userData.role === 'admin' || userData.role === 'academy') {
-            const allUsers = await getUsers();
-            if (userData.role === 'admin') {
-              setInstructors(allUsers);
-            } else {
-              setInstructors(allUsers.filter((user: any) => user.role === 'instructor' || user.role === 'academy'));
-            }
+            const coaches = await getUsers('academy');
+            setInstructors(coaches);
           }
         }
       } catch (error) {

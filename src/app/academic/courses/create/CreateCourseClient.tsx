@@ -311,12 +311,8 @@ export default function CreateCourseClient() {
             setSelectedInstructor(null);
           }
           if (userData.role === 'admin' || userData.role === 'academy') {
-            const allUsers = await getUsers();
-            if (userData.role === 'admin') {
-              setInstructors(allUsers);
-            } else {
-              setInstructors(allUsers.filter((user) => user.role === 'academy' || user.role === 'instructor'));
-            }
+            const coaches = await getUsers('academy');
+            setInstructors(coaches);
           }
         }
       } catch (error) {

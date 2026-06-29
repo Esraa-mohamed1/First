@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import AddStudentModal from '@/components/Academic/Modals/AddStudentModal';
+import EditUserModal from '@/components/Academic/Modals/EditUserModal';
 
 const MySwal = withReactContent(Swal);
 
@@ -18,10 +19,18 @@ export default function StudentsPage() {
   const [students, setStudents] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
+    const storedUser = localStorage.getItem('user_info');
+    if (storedUser) {
+      try { setCurrentUser(JSON.parse(storedUser)); } catch (e) {}
+    }
     fetchStudents();
   }, []);
+
+  const isAdmin = currentUser?.role === 'admin';
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -180,31 +189,34 @@ export default function StudentsPage() {
                       {student.created_at ? new Date(student.created_at).toLocaleDateString('ar-EG') : 'غير متوفر'}
                     </td>
                     <td className="px-8 py-8 whitespace-nowrap">
-                      <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
-                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                          title="عرض التفاصيل"
-                        >
-                          <Eye size={18} />
-                        </button>
-                        <button 
-                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                          title="تعديل"
-                        >
-                          <Edit size={18} />
-                        </button>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteStudent(student.id);
-                          }}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                          title="حذف"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
+                       <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <button 
+                           className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                           title="عرض التفاصيل"
+                         >
+                           <Eye size={18} />
+                         </button>
+                         {isAdmin && (
+                           <button
+                             onClick={(e) => { e.stopPropagation(); setEditingStudent(student); }}
+                             className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                             title="تعديل"
+                           >
+                             <Edit size={18} />
+                           </button>
+                         )}
+                         <button 
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             handleDeleteStudent(student.id);
+                           }}
+                           className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                           title="حذف"
+                         >
+                           <Trash2 size={18} />
+                         </button>
+                       </div>
+                     </td>
                   </tr>
                 ))}
               </tbody>
@@ -218,6 +230,15 @@ export default function StudentsPage() {
         onClose={() => setIsAddModalOpen(false)}
         onStudentAdded={(student) => {
           setStudents(prev => [student, ...prev]);
+        }}
+      />
+      <EditUserModal
+        isOpen={!!editingStudent}
+        onClose={() => setEditingStudent(null)}
+        user={editingStudent}
+        onUserUpdated={(updated) => {
+          setStudents(prev => prev.map(s => s.id === updated.id ? updated : s));
+          setEditingStudent(null);
         }}
       />
     </div>
