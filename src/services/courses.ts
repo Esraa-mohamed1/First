@@ -109,6 +109,59 @@ export const createLesson = async (payload: CreateLessonPayload): Promise<Lesson
   }
 };
 
+export const createPhysicalLesson = async (payload: {
+  course_id?: number;
+  chapter_id?: number;
+  address: string;
+  start_date: string;
+  end_date: string;
+  map_url?: string;
+  attachment?: File | null;
+  [key: string]: any;
+}): Promise<any> => {
+  try {
+    const formData = new FormData();
+    Object.keys(payload).forEach((key) => {
+      const value = payload[key];
+      if (value !== undefined && value !== null && value !== '') {
+        if (key === 'attachment' && value instanceof File) {
+          formData.append('attachment', value);
+        } else if (!(value instanceof File)) {
+          formData.append(key, String(value));
+        }
+      }
+    });
+
+    const response = await academyApi.post<ApiResponse<any>>('physical_course_details', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to create physical lesson:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const createOnlineSession = async (payload: {
+  course_id?: number;
+  chapter_id?: number;
+  title?: string;
+  session_url: string;
+  date: string;
+  time: string;
+  description?: string;
+  notes?: string;
+  [key: string]: any;
+}): Promise<any> => {
+  try {
+    const response = await academyApi.post<ApiResponse<any>>('online_sessions', payload);
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to create online session:', error);
+    throw error.response?.data || error;
+  }
+};
+
 export const updateLesson = async (id: number, payload: any): Promise<Lesson> => {
   try {
     const response = await academyApi.put<ApiResponse<Lesson>>(`lessons/${id}`, payload);
