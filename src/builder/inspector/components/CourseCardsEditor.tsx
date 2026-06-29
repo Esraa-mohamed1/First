@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Trash2, Plus } from 'lucide-react';
 import { MOCK_COURSES } from '../../components/CourseCards';
 import ImageUploader from './ImageUploader';
 import { useBuilderStore } from '../../store/builderStore';
+import { getCourses } from '@/services/courses';
 
 interface CourseCardsEditorProps {
   props: Record<string, any>;
@@ -15,6 +16,21 @@ export default function CourseCardsEditor({
 }: CourseCardsEditorProps) {
   const courses = props.courses || MOCK_COURSES;
   const { selectedItemIndex } = useBuilderStore();
+  const [isDynamic, setIsDynamic] = useState(false);
+
+  useEffect(() => {
+    async function checkDynamic() {
+      try {
+        const data = await getCourses();
+        if (data && data.length > 0) {
+          setIsDynamic(true);
+        }
+      } catch (e) {
+        console.error('Failed to check dynamic courses in editor:', e);
+      }
+    }
+    checkDynamic();
+  }, []);
 
   useEffect(() => {
     if (selectedItemIndex !== null) {
@@ -24,6 +40,16 @@ export default function CourseCardsEditor({
       }
     }
   }, [selectedItemIndex]);
+
+  if (isDynamic) {
+    return (
+      <div className="space-y-4 pt-4 border-t border-slate-100">
+        <div className="bg-amber-50 border-r-4 border-amber-500 p-4 rounded-2xl text-[11px] text-amber-800 font-bold leading-relaxed shadow-sm">
+          💡 البيانات معروضة ديناميكياً من قاعدة البيانات ولا يمكن تعديلها يدوياً من هنا. يمكنك تحديد عدد الكورسات المعروضة عبر حقل "الحد الأقصى للدورات المعروضة" أعلاه.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 pt-4 border-t border-slate-100">

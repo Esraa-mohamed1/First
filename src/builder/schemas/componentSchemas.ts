@@ -57,6 +57,7 @@ export const CourseCardsSchema = z.object({
   showPrice: z.boolean().default(true),
   showStudentsCount: z.boolean().default(true),
   buttonBg: z.string().default('#2563eb'),
+  limit: z.number().default(3),
 });
 
 export const SidebarBlockSchema = z.object({
@@ -72,7 +73,16 @@ export const NavbarBlockSchema = z.object({
   showProfile: z.boolean().default(true),
   bgColor: z.string().default('#ffffff'),
   borderColor: z.string().default('#e2e8f0'),
+  isLandingPage: z.boolean().default(false),
+  links: z.array(z.object({
+    label: z.string(),
+    href: z.string(),
+  })).optional(),
+  buttonText: z.string().default('التسجيل'),
+  buttonLink: z.string().default('#'),
+  showButton: z.boolean().default(true),
 });
+
 
 export const TabsBlockSchema = z.object({
   tabs: z.array(z.object({

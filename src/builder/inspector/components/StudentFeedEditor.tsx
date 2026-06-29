@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Trash2, ChevronDown, Plus } from 'lucide-react';
 import { MOCK_ACTIVITIES } from '../../components/StudentFeed';
 import { useBuilderStore } from '../../store/builderStore';
+import { getUsers } from '@/services/users';
 
 interface StudentFeedEditorProps {
   props: Record<string, any>;
@@ -14,6 +15,24 @@ export default function StudentFeedEditor({
 }: StudentFeedEditorProps) {
   const activities = props.activities || MOCK_ACTIVITIES;
   const { selectedItemIndex } = useBuilderStore();
+  const [isDynamic, setIsDynamic] = useState(false);
+
+  const isCoaches = (props.title || '').includes('مدرب') || (props.title || '').includes('المدربين');
+
+  useEffect(() => {
+    async function checkDynamic() {
+      try {
+        const role = isCoaches ? 'academy' : 'student';
+        const users = await getUsers(role);
+        if (users && users.length > 0) {
+          setIsDynamic(true);
+        }
+      } catch (e) {
+        console.error('Failed to check dynamic users in editor:', e);
+      }
+    }
+    checkDynamic();
+  }, [isCoaches]);
 
   useEffect(() => {
     if (selectedItemIndex !== null) {
@@ -23,6 +42,16 @@ export default function StudentFeedEditor({
       }
     }
   }, [selectedItemIndex]);
+
+  if (isDynamic) {
+    return (
+      <div className="space-y-4 pt-4 border-t border-slate-100">
+        <div className="bg-amber-50 border-r-4 border-amber-500 p-4 rounded-2xl text-[11px] text-amber-800 font-bold leading-relaxed shadow-sm">
+          💡 البيانات معروضة ديناميكياً من قاعدة البيانات ولا يمكن تعديلها يدوياً من هنا. يمكنك تحديد عدد التحديثات المعروضة عبر حقل "عدد الأنشطة المعروضة" (أو "عدد الأنشطة") أعلاه.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 pt-4 border-t border-slate-100">
