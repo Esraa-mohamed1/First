@@ -1,7 +1,10 @@
 import React from 'react';
 import { User, CheckCircle2, Award, MessageSquare, BookOpen } from 'lucide-react';
+import Link from 'next/link';
 import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
 import { useBuilderStore } from '../store/builderStore';
+import { getUsers } from '@/services/users';
+import { getCourses } from '@/services/courses';
 
 interface StudentFeedProps {
   id?: string;
@@ -79,7 +82,77 @@ export default function StudentFeed(props: StudentFeedProps) {
     setHoveredItemIndex 
   } = useBuilderStore();
 
-  const visibleFeed = activities.slice(0, limit);
+  const [realUsers, setRealUsers] = React.useState<any[]>([]);
+  const [realCourses, setRealCourses] = React.useState<any[]>([]);
+
+  const isCoaches = title.includes('مدرب') || title.includes('المدربين');
+
+  React.useEffect(() => {
+    async function loadData() {
+      try {
+        const role = isCoaches ? 'academy' : 'student';
+        const [usersData, coursesData] = await Promise.all([
+          getUsers(role),
+          getCourses().catch(() => [])
+        ]);
+        if (usersData && usersData.length > 0) {
+          setRealUsers(usersData);
+        }
+        if (coursesData && coursesData.length > 0) {
+          setRealCourses(coursesData);
+        }
+      } catch (err) {
+        console.error('Failed to load data for StudentFeed:', err);
+      }
+    }
+    loadData();
+  }, [isCoaches]);
+
+  const formattedActivities = React.useMemo(() => {
+    if (realUsers.length === 0) return activities;
+    return realUsers.map((u, idx) => {
+      const courseObj = realCourses.length > 0 ? realCourses[idx % realCourses.length] : null;
+      const courseTitle = courseObj ? courseObj.title : (isCoaches ? 'إدارة التدريب' : 'الدورة التمهيدية');
+      
+      const timeStr = u.created_at
+        ? new Date(u.created_at).toLocaleDateString('ar-EG')
+        : `منذ ${idx + 1} أيام`;
+
+      if (isCoaches) {
+        return {
+          id: String(u.id),
+          user: u.name || u.fullName || 'مدرب متعاون',
+          action: 'انضم كمدرب معتمد للمنصة ومستعد لتقديم الدورات',
+          course: courseTitle,
+          time: timeStr,
+          type: 'lesson',
+          color: '#10b981'
+        };
+      }
+
+      const actions = [
+        'أكمل درساً جديداً وتفاعل مع محتواه',
+        'انضم إلى الأكاديمية بنجاح كعضو جديد',
+        'طرح استفساراً جديداً في قسم المناقشات',
+        'أنهى اختبار المستوى وحصل على تقييم ممتاز'
+      ];
+      const types = ['lesson', 'signup', 'comment', 'quiz'];
+      const colors = ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981'];
+      const actionIdx = idx % actions.length;
+
+      return {
+        id: String(u.id),
+        user: u.name || u.fullName || 'طالب الأكاديمية',
+        action: actions[actionIdx],
+        course: courseTitle,
+        time: timeStr,
+        type: types[actionIdx],
+        color: colors[actionIdx]
+      };
+    });
+  }, [realUsers, realCourses, activities, isCoaches]);
+
+  const visibleFeed = formattedActivities.slice(0, limit);
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -108,6 +181,17 @@ export default function StudentFeed(props: StudentFeedProps) {
 
   return (
     <div className={`${isTransparentBg ? 'bg-white/70 border-white/40 shadow-lg shadow-slate-900/5 backdrop-blur-md' : 'bg-white border-slate-100 shadow-[0_12px_40px_rgba(25,28,29,0.02)]'} rounded-3xl p-6 space-y-6 text-right`} dir="rtl">
+      {isEditing && (
+        <div className="bg-amber-50 border-r-4 border-amber-500 p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs text-amber-800 font-bold shadow-sm" dir="rtl">
+          <span className="flex items-center gap-1.5 text-right">
+            <span className="text-base">💡</span>
+            هذه البيانات حقيقية معروضة من قاعدة البيانات ولا يمكن تعديلها من هنا. لتعديلها يرجى الانتقال إلى صفحة {isCoaches ? 'المدربين' : 'الطلاب'}.
+          </span>
+          <Link href={isCoaches ? '/academic/coaches' : '/academic/students'} className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl transition-colors whitespace-nowrap">
+            {isCoaches ? 'إدارة المدربين' : 'إدارة الطلاب'}
+          </Link>
+        </div>
+      )}
 
       <h3 
         style={titleTypography.style}

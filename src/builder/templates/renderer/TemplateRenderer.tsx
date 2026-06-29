@@ -14,21 +14,25 @@ interface TemplateRendererProps {
 }
 
 export default function TemplateRenderer({ templateId, sections }: TemplateRendererProps) {
-  const { setIsEditing } = useBuilderStore();
+  const { setIsEditing, loadTemplate } = useBuilderStore();
 
   useEffect(() => {
     // Force read-only layout rendering for previews/live site
     setIsEditing(false);
-  }, [setIsEditing]);
-
-  // Sort sections by their 'order' property before rendering
-  const sortedSections = React.useMemo(() => {
-    return [...sections].sort((a, b) => {
-      const orderA = a.props?.order ?? 0;
-      const orderB = b.props?.order ?? 0;
-      return orderA - orderB;
+    
+    // Propagate template metadata to the store so children can resolve the active template
+    loadTemplate({
+      id: templateId,
+      name: templateId === 'template_2' ? 'قالب يوديمي الاحترافي' : 'قالب الأكاديمية',
+      sections,
+      status: 'published',
+      version: '1.0',
+      updatedAt: '',
     });
-  }, [sections]);
+  }, [setIsEditing, loadTemplate, templateId, sections]);
+
+  // Use the sections array in its natural order as managed by the builder/API
+  const sortedSections = sections;
 
   // Load correct template wrapper component
   switch (templateId) {

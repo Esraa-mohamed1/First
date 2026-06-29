@@ -6,26 +6,28 @@ import { X, Play, Video, FileText, FilePieChart as FilePowerpoint, Upload, Check
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { createLesson } from '@/services/courses';
+import { createLesson, createPhysicalLesson, createOnlineSession } from '@/services/courses';
 import { createVideoResource, uploadVideoFile, waitForVideoReady, fetchCollections, createCollection } from '@/services/bunnyStream';
 import { uploadFile } from '@/services/upload';
 import { getProfileStatus, getMyUsageLimit } from '@/services/auth';
 import VerificationModal from '@/components/Academic/Modals/VerificationModal';
 import LiveLessonForm from './components/LiveLessonForm';
+import { translateErrorToArabic } from '@/lib/utils';
 interface AddLessonModalProps {
   isOpen: boolean;
   onClose: () => void;
   unitId: number;
-  unitName: string; // Add unitName
+  courseId?: number;
+  unitName: string;
   courseTitle: string;
-  instructorName: string; // Add instructorName
+  instructorName: string;
   onLessonAdded: () => void;
   courseType?: string;
 }
 
 const MySwal = withReactContent(Swal);
 
-const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instructorName, onLessonAdded, courseType }: AddLessonModalProps) => {
+const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, courseTitle, instructorName, onLessonAdded, courseType }: AddLessonModalProps) => {
   const [lessonType, setLessonType] = useState<'video' | 'pdf' | 'powerpoint'>('video');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -151,17 +153,27 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
     }
 
     if (isPhysical) {
-      if (startDate && endDate) {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-          toast.error('الرجاء اختيار تواريخ صالحة');
-          return;
-        }
-        if (start > end) {
-          toast.error('تاريخ البداية يجب أن يكون قبل تاريخ النهاية');
-          return;
-        }
+      if (!locationLink.trim()) {
+        toast.error('الرجاء إدخال موقع/عنوان المحاضرة الحضورية');
+        return;
+      }
+      if (!startDate) {
+        toast.error('الرجاء تحديد تاريخ البداية للمحاضرة الحضورية');
+        return;
+      }
+      if (!endDate) {
+        toast.error('الرجاء تحديد تاريخ النهاية للمحاضرة الحضورية');
+        return;
+      }
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        toast.error('الرجاء اختيار تواريخ صالحة');
+        return;
+      }
+      if (start > end) {
+        toast.error('تاريخ البداية يجب أن يكون قبل تاريخ النهاية');
+        return;
       }
     }
 
@@ -311,30 +323,79 @@ const AddLessonModal = ({ isOpen, onClose, unitId, unitName, courseTitle, instru
 <!--OFFLINE_METADATA:${JSON.stringify({ locationLink, startDate, endDate })}-->`
         : description;
 
-      // Create Lesson in Backend
-      await createLesson({
-        chapter_id: unitId,
-        title,
-        description: finalDescription,
-        type: isLive ? 'video' : activeLessonType,
-        video_id: finalVideoId || undefined,
-        file_url: finalFileUrl || undefined,
-        library_id: (activeLessonType === 'video' && !isLive) ? (libraryId || undefined) : undefined,
-        video_url: isLive ? sessionLink : (finalVideoId ? `https://iframe.mediadelivery.net/embed/${libraryId}/${finalVideoId}` : undefined),
-        thumbnail_url: (finalVideoId && !isLive) ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/thumbnail.jpg` : undefined,
-        embed_url: isLive ? sessionLink : (locationLink || (finalVideoId ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/playlist.m3u8` : undefined)),
-        order: 1, // Default order
-        file_size_mb: selectedFile ? parseFloat((selectedFile.size / (1024 * 1024)).toFixed(2)) : 0,
-        is_free: false, // Default to paid
-      });
+      // Create Lesson in Backend — route to correct endpoint based on course type
+      if (isPhysical) {
+        await createPhysicalLesson({
+          course_id: courseId || undefined,
+          chapter_id: unitId,
+          address: locationLink,
+          start_date: startDate,
+          end_date: endDate,
+          map_url: locationLink.startsWith('http') ? locationLink : undefined,
+          attachment: (selectedFile && uploadFileToggle) ? selectedFile : null,
+          title,
+          description: description || undefined,
+        });
+      } else if (isLive) {
+        // Split sessionDateTime (e.g. "2026-06-29T14:30") into date + time
+        let sessionDate = '';
+        let sessionTime = '';
+        if (sessionDateTime) {
+          const [datePart, timePart] = sessionDateTime.split('T');
+          sessionDate = datePart || '';
+          sessionTime = timePart ? timePart.substring(0, 5) : ''; // HH:MM
+        }
+
+        const sessionNotes = [
+          title ? `عنوان اللقاء: ${title}` : '',
+          sessionDateTime ? `📅 التاريخ والوقت: ${sessionDateTime}` : '',
+        ].filter(Boolean).join('\n') || undefined;
+
+        await createOnlineSession({
+          course_id: courseId || undefined,
+          chapter_id: unitId,
+          title,
+          session_url: sessionLink,
+          date: sessionDate,
+          time: sessionTime,
+          description: description || undefined,
+          notes: sessionNotes,
+        });
+      } else {
+        await createLesson({
+          chapter_id: unitId,
+          title,
+          description: finalDescription,
+          type: activeLessonType,
+          video_id: finalVideoId || undefined,
+          file_url: finalFileUrl || undefined,
+          library_id: activeLessonType === 'video' ? (libraryId || undefined) : undefined,
+          video_url: finalVideoId ? `https://iframe.mediadelivery.net/embed/${libraryId}/${finalVideoId}` : undefined,
+          thumbnail_url: finalVideoId ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/thumbnail.jpg` : undefined,
+          embed_url: finalVideoId ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/playlist.m3u8` : undefined,
+          order: 1,
+          file_size_mb: selectedFile ? parseFloat((selectedFile.size / (1024 * 1024)).toFixed(2)) : 0,
+          is_free: false,
+        });
+      }
 
       toast.success('تم حفظ الدرس بنجاح');
       onLessonAdded();
       handleClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       setUploadStatus('error');
-      toast.error('فشل حفظ الدرس');
+      
+      let errorMsg = 'فشل حفظ الدرس';
+      if (error?.errors) {
+        const msgs = Object.values(error.errors).flat();
+        if (msgs.length > 0) {
+          errorMsg = translateErrorToArabic(String(msgs[0]));
+        }
+      } else if (error?.message) {
+        errorMsg = translateErrorToArabic(error.message);
+      }
+      toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
     }

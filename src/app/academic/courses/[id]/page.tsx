@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye, Landmark } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye, Landmark, X } from 'lucide-react';
 import { getCourse, deleteUnit, deleteLesson, createUnit, updateCourse, getCategories } from '@/services/courses';
 import { getProfileStatus } from '@/services/auth';
 import { getUsers } from '@/services/users';
@@ -129,6 +129,7 @@ export default function CourseDetailsPage() {
   const [price, setPrice] = useState('');
   const [currency, setCurrency] = useState<'EGP' | 'SAR'>('SAR');
   const [isSavingPricing, setIsSavingPricing] = useState(false);
+  const [errors, setErrors] = useState<Record<string, any>>({});
 
 
 
@@ -200,7 +201,13 @@ export default function CourseDetailsPage() {
   };
 
   const handleSaveCourseInfo = async () => {
-    // Basic implementation for saving course info
+    setErrors({});
+    if (!courseInfo.title.trim()) {
+      setErrors({ title: ['عنوان الدورة مطلوب'] });
+      toast.error('يرجى ملء الحقول المطلوبة');
+      return;
+    }
+
     try {
       const payload: any = {
         title: courseInfo.title,
@@ -238,6 +245,7 @@ export default function CourseDetailsPage() {
       setActiveTab('content');
     } catch (error: any) {
       if (error?.errors) {
+        setErrors(error.errors);
         const allMsgs: string[] = [];
         if (error.message && error.message !== 'Validation errors detected.') {
           allMsgs.push(translateErrorToArabic(error.message));
@@ -255,55 +263,75 @@ export default function CourseDetailsPage() {
   };
 
   const handleSavePricing = async () => {
-        setIsSavingPricing(true);
-        try {
-          // Validate before saving if publishing
-          if (status === 'published') {
-            const missing = [];
-            if (!courseInfo.title) missing.push('عنوان الدورة');
-            if (!courseInfo.description) missing.push('وصف الدورة');
-            if (pricingType === 'paid' && !price) missing.push('سعر الدورة');
-            if (pricingType === 'paid' && selectedPaymentMethods.length === 0) missing.push('وسيلة دفع واحدة على الأقل');
-            if (course?.units?.length === 0) missing.push('محتوى الدورة (وحدة واحدة على الأقل)');
-  
-            if (missing.length > 0) {
-              showAlert.warning('لا يمكن النشر الآن', `يرجى إكمال الحقول التالية أولاً: \n ${missing.join('، ')}`);
-              setIsSavingPricing(false);
-              return;
-            }
-          }
-  
-          const payload = {
-            price: pricingType === 'free' ? 0 : Number(price),
-            final_price: pricingType === 'free' ? 0 : Number(price),
-            price_type: pricingType,
-            currency: currency,
-            status: status,
-            receiver_accounts: selectedPaymentMethods.map(m => Number(m.methodId))
-          };
-  
-          await updateCourse(Number(id), payload);
-          toast.success('تم حفظ بيانات التسعير بنجاح');
-          fetchCourse();
-        } catch (error: any) {
-          if (error?.errors) {
-            const allMsgs: string[] = [];
-            if (error.message && error.message !== 'Validation errors detected.') {
-              allMsgs.push(translateErrorToArabic(error.message));
-            }
-            Object.values(error.errors).forEach((msgs: any) => {
-              const messages = Array.isArray(msgs) ? msgs : [String(msgs)];
-              messages.forEach((msg) => allMsgs.push(translateErrorToArabic(msg)));
-            });
-            const toastMsg = allMsgs.length > 0 ? allMsgs.join(' | ') : 'يرجى تصحيح الأخطاء أدناه';
-            toast.error(toastMsg);
-          } else {
-            toast.error(translateErrorToArabic(error?.message || 'فشل حفظ بيانات التسعير'));
-          }
-        } finally {
+    setErrors({});
+    setIsSavingPricing(true);
+
+    if (pricingType === 'paid') {
+      const clientErrors: Record<string, any> = {};
+      if (!price || Number(price) <= 0) {
+        clientErrors.price = ['سعر الدورة مطلوب للدورات المدفوعة ويجب أن يكون أكبر من 0'];
+      }
+      if (selectedPaymentMethods.length === 0) {
+        clientErrors.receiver_accounts = ['يجب اختيار وسيلة دفع واحدة على الأقل للتحصيل.'];
+      }
+
+      if (Object.keys(clientErrors).length > 0) {
+        setErrors(clientErrors);
+        toast.error('يرجى تصحيح الأخطاء في صفحة التسعير');
+        setIsSavingPricing(false);
+        return;
+      }
+    }
+
+    try {
+      // Validate before saving if publishing
+      if (status === 'published') {
+        const missing = [];
+        if (!courseInfo.title) missing.push('عنوان الدورة');
+        if (!courseInfo.description) missing.push('وصف الدورة');
+        if (pricingType === 'paid' && !price) missing.push('سعر الدورة');
+        if (pricingType === 'paid' && selectedPaymentMethods.length === 0) missing.push('وسيلة دفع واحدة على الأقل');
+        if (course?.units?.length === 0) missing.push('محتوى الدورة (وحدة واحدة على الأقل)');
+
+        if (missing.length > 0) {
+          showAlert.warning('لا يمكن النشر الآن', `يرجى إكمال الحقول التالية أولاً: \n ${missing.join('، ')}`);
           setIsSavingPricing(false);
+          return;
         }
+      }
+
+      const payload = {
+        price: pricingType === 'free' ? 0 : Number(price),
+        final_price: pricingType === 'free' ? 0 : Number(price),
+        price_type: pricingType,
+        currency: currency,
+        status: status,
+        receiver_accounts: selectedPaymentMethods.map(m => Number(m.methodId))
       };
+
+      await updateCourse(Number(id), payload);
+      toast.success('تم حفظ بيانات التسعير بنجاح');
+      fetchCourse();
+    } catch (error: any) {
+      if (error?.errors) {
+        setErrors(error.errors);
+        const allMsgs: string[] = [];
+        if (error.message && error.message !== 'Validation errors detected.') {
+          allMsgs.push(translateErrorToArabic(error.message));
+        }
+        Object.values(error.errors).forEach((msgs: any) => {
+          const messages = Array.isArray(msgs) ? msgs : [String(msgs)];
+          messages.forEach((msg) => allMsgs.push(translateErrorToArabic(msg)));
+        });
+        const toastMsg = allMsgs.length > 0 ? allMsgs.join(' | ') : 'يرجى تصحيح الأخطاء أدناه';
+        toast.error(toastMsg);
+      } else {
+        toast.error(translateErrorToArabic(error?.message || 'فشل حفظ بيانات التسعير'));
+      }
+    } finally {
+      setIsSavingPricing(false);
+    }
+  };
 
 
   const fetchCourse = async () => {
@@ -441,12 +469,8 @@ export default function CourseDetailsPage() {
         if (userData) {
           setCurrentUser(userData);
           if (userData.role === 'admin' || userData.role === 'academy') {
-            const allUsers = await getUsers();
-            if (userData.role === 'admin') {
-              setInstructors(allUsers);
-            } else {
-              setInstructors(allUsers.filter((user: any) => user.role === 'instructor' || user.role === 'academy'));
-            }
+            const coaches = await getUsers('academy');
+            setInstructors(coaches);
           }
         }
       } catch (error) {
@@ -639,6 +663,30 @@ export default function CourseDetailsPage() {
       <div className="mt-6">
         {activeTab === 'info' && (
           <div className="max-w-4xl space-y-6">
+            {/* Server Validation Error Summary */}
+            {Object.keys(errors).length > 0 && (
+              <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                  <X size={14} className="text-red-500" />
+                </div>
+                <div className="flex-1 space-y-1">
+                  <p className="text-sm font-black text-red-700">يرجى تصحيح الأخطاء التالية:</p>
+                  <ul className="space-y-0.5">
+                    {Object.entries(errors).map(([key, msg]) => {
+                      const val = Array.isArray(msg) ? msg[0] : msg;
+                      if (!val) return null;
+                      return (
+                        <li key={key} className="text-xs font-bold text-red-600 flex items-center gap-1.5">
+                          <span className="w-1 h-1 bg-red-400 rounded-full inline-block" />
+                          {translateErrorToArabic(String(val))}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </div>
+            )}
+
             {/* Course Title */}
             <div className="space-y-2">
               <label className="flex items-center gap-1 text-sm font-black text-gray-900">
@@ -647,10 +695,19 @@ export default function CourseDetailsPage() {
               <input
                 type="text"
                 value={courseInfo.title}
-                onChange={(e) => setCourseInfo({ ...courseInfo, title: e.target.value })}
+                onChange={(e) => {
+                  setCourseInfo({ ...courseInfo, title: e.target.value });
+                  if (errors.title) setErrors(prev => ({ ...prev, title: null }));
+                }}
                 placeholder="ادخل اسم الدورة"
-                className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all text-gray-900"
+                className={`w-full p-4 bg-white border ${errors.title ? 'border-red-500 bg-red-50/30' : 'border-gray-200'} rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all text-gray-900`}
               />
+              {errors.title && (
+                <p className="text-red-500 text-xs font-bold mt-1 flex items-center gap-1">
+                  <X size={12} />
+                  {translateErrorToArabic(Array.isArray(errors.title) ? errors.title[0] : String(errors.title))}
+                </p>
+              )}
             </div>
 
             {/* Category Dropdown */}
@@ -1070,6 +1127,30 @@ export default function CourseDetailsPage() {
               <p className="text-gray-400 font-bold">اختر خطة التسعير المناسبة لدورتك</p>
             </div>
 
+            {/* Server Validation Error Summary */}
+            {Object.keys(errors).length > 0 && (
+              <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                  <X size={14} className="text-red-500" />
+                </div>
+                <div className="flex-1 space-y-1">
+                  <p className="text-sm font-black text-red-700">يرجى تصحيح الأخطاء التالية:</p>
+                  <ul className="space-y-0.5">
+                    {Object.entries(errors).map(([key, msg]) => {
+                      const val = Array.isArray(msg) ? msg[0] : msg;
+                      if (!val) return null;
+                      return (
+                        <li key={key} className="text-xs font-bold text-red-600 flex items-center gap-1.5">
+                          <span className="w-1 h-1 bg-red-400 rounded-full inline-block" />
+                          {translateErrorToArabic(String(val))}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-6">
               <div
                 onClick={() => setPricingType('free')}
@@ -1106,9 +1187,12 @@ export default function CourseDetailsPage() {
                     <input
                       type="number"
                       value={price}
-                      onChange={(e) => setPrice(e.target.value)}
+                      onChange={(e) => {
+                        setPrice(e.target.value);
+                        if (errors.price) setErrors(prev => ({ ...prev, price: null }));
+                      }}
                       placeholder="0.00"
-                      className="w-full p-5 bg-white border border-gray-100 rounded-2xl outline-none focus:border-blue-600 font-bold text-left transition-all pl-24 text-gray-900 shadow-sm group-hover:border-gray-200"
+                      className={`w-full p-5 bg-white border ${errors.price ? 'border-red-500 bg-red-50/30' : 'border-gray-100'} rounded-2xl outline-none focus:border-blue-600 font-bold text-left transition-all pl-24 text-gray-900 shadow-sm group-hover:border-gray-200`}
                     />
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 border-r border-gray-100 pr-4">
                       <select 
@@ -1128,6 +1212,12 @@ export default function CourseDetailsPage() {
                       </select>
                     </div>
                   </div>
+                  {errors.price && (
+                    <p className="text-red-500 text-xs font-bold mt-1 flex items-center gap-1">
+                      <X size={12} />
+                      {translateErrorToArabic(Array.isArray(errors.price) ? errors.price[0] : String(errors.price))}
+                    </p>
+                  )}
                 </div>
 
                 {/* Pricing Ways / Payment Methods */}
@@ -1177,8 +1267,17 @@ export default function CourseDetailsPage() {
                         };
                       }).filter(Boolean) as AcademyPaymentMethod[];
                       setSelectedPaymentMethods(newMethods);
+                      if (errors.receiver_accounts) setErrors(prev => ({ ...prev, receiver_accounts: null }));
                     }}
                   />
+                  {(errors.receiver_accounts || errors['receiver_accounts']) && (
+                    <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl p-3 mt-2">
+                      <X size={14} className="text-red-500 shrink-0" />
+                      <p className="text-red-600 text-xs font-bold">
+                        {translateErrorToArabic(Array.isArray(errors.receiver_accounts) ? errors.receiver_accounts[0] : String(errors.receiver_accounts || ''))}
+                      </p>
+                    </div>
+                  )}
 
                   {selectedPaymentMethods.length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -1266,6 +1365,7 @@ export default function CourseDetailsPage() {
         isOpen={isAddLessonOpen}
         onClose={() => setIsAddLessonOpen(false)}
         unitId={selectedUnitId!}
+        courseId={Number(id)}
         unitName={selectedUnitTitle}
         courseTitle={course.title}
         instructorName={course.instructor || ''}

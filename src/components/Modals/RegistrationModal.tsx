@@ -250,11 +250,16 @@ const RegistrationModal = () => {
             if (contactMethod === 'email') {
                 localStorage.setItem('user_email', formData.email);
                 localStorage.removeItem('user_phone');
+                document.cookie = `backup_email=${encodeURIComponent(formData.email)}; path=/; max-age=3600; SameSite=Lax`;
+                document.cookie = `backup_phone=; path=/; max-age=0; SameSite=Lax`;
             } else {
                 localStorage.setItem('user_phone', formData.phone);
                 localStorage.removeItem('user_email');
+                document.cookie = `backup_phone=${encodeURIComponent(formData.phone)}; path=/; max-age=3600; SameSite=Lax`;
+                document.cookie = `backup_email=; path=/; max-age=0; SameSite=Lax`;
             }
             localStorage.setItem('user_password', formData.password);
+            document.cookie = `backup_password=${encodeURIComponent(formData.password)}; path=/; max-age=3600; SameSite=Lax`;
 
             toast.success('تم إنشاء الحساب بنجاح');
             setStep(4);

@@ -27,6 +27,7 @@ import TableBlockEditor from './components/TableBlockEditor';
 import MetricsCardsEditor from './components/MetricsCardsEditor';
 import TabsBlockEditor from './components/TabsBlockEditor';
 import HeroSliderEditor from './components/HeroSliderEditor';
+import NavbarBlockEditor from './components/NavbarBlockEditor';
 import ImageUploader from './components/ImageUploader';
 import ItemImageUploader from './components/ImageUploader';
 import { AVAILABLE_ICONS, getIconComponent } from '../utils/icons';
@@ -410,6 +411,13 @@ export default function InspectorPanel() {
 
             {selectedNode.type === 'hero-slider' && (
               <HeroSliderEditor 
+                props={props} 
+                handlePropChange={handlePropChange}
+              />
+            )}
+
+            {selectedNode.type === 'navbar' && (
+              <NavbarBlockEditor 
                 props={props} 
                 handlePropChange={handlePropChange}
               />

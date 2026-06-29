@@ -18,6 +18,7 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
           showProfile: false,
           bgColor: '#ffffff',
           borderColor: 'transparent',
+          isLandingPage: true,
           order: 1
         }
       },
@@ -159,8 +160,8 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
   },
   'template_2': {
     id: 'template_2',
-    name: 'القالب الثاني (العصري الفيروزي)',
-    description: 'واجهة حيوية بألوان فيروزية منعشة وتأثيرات بصرية راقية.',
+    name: 'قالب يوديمي الاحترافي',
+    description: 'تصميم تعليمي كلاسيكي وعصري مستوحى من منصة Udemy، لعرض الكورسات والتصنيفات بطريقة مرتبة وجذابة.',
     status: 'published',
     version: '1.0',
     updatedAt: new Date().toISOString(),
@@ -169,34 +170,34 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
         id: 'hero-t2',
         type: 'hero_section',
         props: {
-          background_color: '#0d9488',
-          text_color: '#ffffff',
+          background_color: '#ffffff',
+          text_color: '#1c1d1f',
           padding_top: 96,
           padding_bottom: 96,
-          title: 'تعلّم. طوّر. احترف.',
-          subtitle: 'منصة تعليمية عصرية تنقلك من المبتدئ إلى المحترف بأسلوب تفاعلي وديناميكي يناسب جيل اليوم.',
+          title: 'تعلّم بلا حدود. طوّر مهاراتك.',
+          subtitle: 'انضم إلى ملايين المتعلمين من جميع أنحاء العالم واستكشف آلاف الدورات التدريبية المخصصة لتطوير مستقبلك المهني.',
           show_button: true,
-          button_text: 'انطلق الآن',
+          button_text: 'ابدأ التعلم الآن',
           button_link: '#',
-          button_color: '#ffffff',
-          align: 'center',
+          button_color: '#a435f0',
+          align: 'right',
         }
       },
       {
         id: 'features-t2',
         type: 'features_section',
         props: {
-          title: 'ميزات تجعلنا مختلفين',
-          subtitle: 'تجربة تعليمية فريدة صممت خصيصاً لتواكب متطلبات العصر الرقمي.',
-          background_color: '#f0fdfa',
-          text_color: '#134e4a',
+          title: 'لماذا تتعلم معنا؟',
+          subtitle: 'ميزات تضمن لك تجربة تعليمية فريدة ومستمرة',
+          background_color: '#f7f9fa',
+          text_color: '#1c1d1f',
           grid_cols: 3,
           padding_top: 64,
           padding_bottom: 64,
           items: [
-            { id: 'feat-t2-1', order: 1, props: { icon: 'Zap', icon_color: '#0d9488', title: 'تعلم بوتيرتك الخاصة', description: 'محتوى مرن يمكنك الوصول إليه في أي وقت ومن أي مكان حول العالم.' } },
-            { id: 'feat-t2-2', order: 2, props: { icon: 'BarChart', icon_color: '#0f766e', title: 'تقارير تقدم مفصلة', description: 'تابع مسيرتك التعليمية لحظة بلحظة مع تقارير ذكية وتحليلات دقيقة.' } },
-            { id: 'feat-t2-3', order: 3, props: { icon: 'ShieldCheck', icon_color: '#00a896', title: 'شهادات موثوقة ومعتمدة', description: 'شهادات رقمية مشفرة ومحمية يمكن التحقق منها فورياً عبر الإنترنت.' } },
+            { id: 'feat-t2-1', order: 1, props: { icon: 'PlayCircle', icon_color: '#a435f0', title: 'أكثر من 200,000 دورة فيديو', description: 'استكشف مواضيع جديدة بأسعار مناسبة وبشكل مرن.' } },
+            { id: 'feat-t2-2', order: 2, props: { icon: 'Award', icon_color: '#a435f0', title: 'مدربون وخبراء معتمدون', description: 'تعلم من المحترفين في مجالاتهم والذين يمارسون المهنة فعلياً.' } },
+            { id: 'feat-t2-3', order: 3, props: { icon: 'Clock', icon_color: '#a435f0', title: 'وصول مدى الحياة', description: 'تعلم بالوتيرة التي تناسب جدولك ومواعيد حياتك اليومية.' } },
           ]
         }
       },
@@ -204,17 +205,17 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
         id: 'categories-t2',
         type: 'categories_section',
         props: {
-          title: 'استكشف المسارات التعليمية',
-          subtitle: 'اختر مسارك وابدأ رحلتك نحو مستقبل أفضل',
+          title: 'أهم مجالات التعلم والمهارات',
+          subtitle: 'اختر المجال الذي يناسب شغفك وابدأ رحلتك نحو التميز',
           background_color: '#ffffff',
-          text_color: '#134e4a',
+          text_color: '#1c1d1f',
           grid_cols: 3,
           padding_top: 64,
           padding_bottom: 64,
           items: [
-            { id: 'cat-t2-1', order: 1, props: { name: 'تطوير التطبيقات', icon: 'Smartphone', count: '14', description: 'iOS وAndroid والتطبيقات المتعددة المنصات' } },
-            { id: 'cat-t2-2', order: 2, props: { name: 'علم البيانات', icon: 'Database', count: '10', description: 'تحليل البيانات وتصويرها وتفسيرها' } },
-            { id: 'cat-t2-3', order: 3, props: { name: 'الأمن الإلكتروني', icon: 'Shield', count: '6', description: 'حماية الأنظمة والشبكات من الهجمات' } },
+            { id: 'cat-t2-1', order: 1, props: { name: 'تطوير الويب وبرمجة المواقع', icon: 'Code', count: '18', description: 'HTML, CSS, JavaScript, React, Node.js' } },
+            { id: 'cat-t2-2', order: 2, props: { name: 'تصميم واجهات المستخدم UI/UX', icon: 'PenTool', count: '12', description: 'Figma, Adobe XD, تجربة المستخدم, أبحاث التصميم' } },
+            { id: 'cat-t2-3', order: 3, props: { name: 'إدارة الأعمال والتسويق الرقمي', icon: 'TrendingUp', count: '15', description: 'التسويق عبر البريد، الإعلانات، تحسين محركات البحث SEO' } },
           ]
         }
       },
@@ -222,12 +223,12 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
         id: 'courses-t2',
         type: 'course-cards',
         props: {
-          title: 'دورات مميزة لك',
+          title: 'أحدث الدورات التدريبية المتاحة',
           gridCols: '3',
           showPrice: true,
           showStudentsCount: true,
-          buttonBg: '#0d9488',
-          background_color: '#f0fdfa',
+          buttonBg: '#a435f0',
+          background_color: '#ffffff',
           padding_top: 64,
           padding_bottom: 64,
         }
@@ -236,16 +237,16 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
         id: 'testimonials-t2',
         type: 'testimonials_section',
         props: {
-          title: 'قصص نجاح حقيقية',
-          subtitle: 'متعلمون حوّلوا شغفهم إلى مسيرة مهنية ناجحة بفضل منصتنا.',
-          background_color: '#ffffff',
-          text_color: '#134e4a',
+          title: 'ماذا يقول طلابنا؟',
+          subtitle: 'آراء وتجارب حقيقية من متعلمين حققوا أهدافهم المهنية بفضل منصتنا.',
+          background_color: '#f7f9fa',
+          text_color: '#1c1d1f',
           padding_top: 64,
           padding_bottom: 64,
           items: [
-            { id: 'tst-t2-1', order: 1, props: { quote: 'المحتوى عملي ومباشر، وفّر لي الوقت والجهد مقارنة بأي مصدر تعليمي آخر جربته.', author: 'نورة القحطاني', role: 'مطورة تطبيقات', rating: 5 } },
-            { id: 'tst-t2-2', order: 2, props: { quote: 'انتقلت من عدم معرفة شيء عن البيانات إلى محلل بيانات معتمد في أقل من 5 أشهر.', author: 'يوسف الحربي', role: 'محلل بيانات', rating: 5 } },
-            { id: 'tst-t2-3', order: 3, props: { quote: 'الدعم المستمر من المدربين والمجتمع النشط جعل التعلم تجربة ممتعة وليس مرهقة.', author: 'منى السعيد', role: 'متخصصة أمن إلكتروني', rating: 5 } },
+            { id: 'tst-t2-1', order: 1, props: { quote: 'الدورات ممتازة وتطبيقية جداً، حصلت على أول وظيفة لي بعد إتمام المسار التدريبي مباشرة.', author: 'نورة القحطاني', role: 'مطورة تطبيقات جوال', rating: 5 } },
+            { id: 'tst-t2-2', order: 2, props: { quote: 'المحتوى احترافي جداً والمدربين ممتازين، يوفر لك ما تبحث عنه بالضبط بأسرع طريقة.', author: 'يوسف الحربي', role: 'محلل بيانات أول', rating: 5 } },
+            { id: 'tst-t2-3', order: 3, props: { quote: 'ساعدتني هذه المنصة على الانتقال إلى مجال الأمن السيبراني وتأسيس مشاريعي الخاصة بثقة.', author: 'منى السعيد', role: 'مهندسة أمن شبكات', rating: 5 } },
           ]
         }
       },

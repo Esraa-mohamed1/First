@@ -1,6 +1,10 @@
 import React from 'react';
-import { Search, Mail, Calendar, BookOpen } from 'lucide-react';
+import { Search, Mail, Calendar, BookOpen, Phone } from 'lucide-react';
+import Link from 'next/link';
 import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
+import { useBuilderStore } from '../store/builderStore';
+import { getUsers } from '@/services/users';
+import { getCourses } from '@/services/courses';
 
 interface TableBlockProps {
   title?: string;
@@ -28,7 +32,67 @@ export default function TableBlock(props: TableBlockProps) {
     headerBg = '#f8fafc',
     rows = MOCK_ROWS,
   } = props;
-  const visibleRows = rows.slice(0, rowsLimit);
+
+  const { isEditing } = useBuilderStore();
+  const [realUsers, setRealUsers] = React.useState<any[]>([]);
+  const [realCourses, setRealCourses] = React.useState<any[]>([]);
+
+  const isCoachesTable = title.includes('مدرب') || title.includes('المدربين');
+
+  React.useEffect(() => {
+    async function loadData() {
+      try {
+        const role = isCoachesTable ? 'academy' : 'student';
+        const [usersData, coursesData] = await Promise.all([
+          getUsers(role),
+          getCourses().catch(() => [])
+        ]);
+        if (usersData && usersData.length > 0) {
+          setRealUsers(usersData);
+        }
+        if (coursesData && coursesData.length > 0) {
+          setRealCourses(coursesData);
+        }
+      } catch (err) {
+        console.error('Failed to load data for TableBlock:', err);
+      }
+    }
+    loadData();
+  }, [isCoachesTable]);
+
+  const formattedRows = React.useMemo(() => {
+    if (realUsers.length === 0) return rows;
+    return realUsers.map((u, idx) => {
+      const courseObj = realCourses.length > 0 ? realCourses[idx % realCourses.length] : null;
+      const courseTitle = courseObj ? courseObj.title : 'الدورة التمهيدية';
+      
+      const dateStr = u.created_at
+        ? new Date(u.created_at).toLocaleDateString('ar-EG')
+        : `2026/06/${String(idx + 1).padStart(2, '0')}`;
+
+      if (isCoachesTable) {
+        return {
+          id: String(u.id),
+          name: u.name || u.fullName || 'مدرب متعاون',
+          email: u.email,
+          course: u.phone || 'غير متوفر',
+          price: u.status === 'active' || !u.status ? 'نشط' : 'غير نشط',
+          date: dateStr
+        };
+      }
+
+      return {
+        id: String(u.id),
+        name: u.name || u.fullName || 'طالب الأكاديمية',
+        email: u.email,
+        course: courseTitle,
+        price: 'مجاني',
+        date: dateStr
+      };
+    });
+  }, [realUsers, realCourses, rows, isCoachesTable]);
+
+  const visibleRows = formattedRows.slice(0, rowsLimit);
 
   const titleTypography = getTypographyStyle(props, 'title', {
     font: 'IBM Plex Sans Arabic',
@@ -42,7 +106,17 @@ export default function TableBlock(props: TableBlockProps) {
 
   return (
     <div className={`${isTransparentBg ? 'bg-white/70 border-white/40 shadow-lg shadow-slate-900/5 backdrop-blur-md' : 'bg-white border-slate-100 shadow-[0_12px_40px_rgba(25,28,29,0.02)]'} rounded-3xl p-6 space-y-5 text-right`} dir="rtl">
-
+      {isEditing && (
+        <div className="bg-amber-50 border-r-4 border-amber-500 p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs text-amber-800 font-bold shadow-sm" dir="rtl">
+          <span className="flex items-center gap-1.5 text-right">
+            <span className="text-base">💡</span>
+            هذه البيانات حقيقية معروضة من قاعدة البيانات ولا يمكن تعديلها من هنا. لتعديلها يرجى الانتقال إلى صفحة {isCoachesTable ? 'المدربين' : 'الطلاب'}.
+          </span>
+          <Link href={isCoachesTable ? '/academic/coaches' : '/academic/students'} className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl transition-colors whitespace-nowrap">
+            {isCoachesTable ? 'إدارة المدربين' : 'إدارة الطلاب'}
+          </Link>
+        </div>
+      )}
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h3 
@@ -73,10 +147,10 @@ export default function TableBlock(props: TableBlockProps) {
                 style={{ backgroundColor: actualHeaderBg }}
                 className="border-b border-slate-100"
               >
-                <th className="py-4 px-6 text-xs font-black text-slate-400">الطالب</th>
-                <th className="py-4 px-6 text-xs font-black text-slate-400">الدورة المسجل بها</th>
-                <th className="py-4 px-6 text-xs font-black text-slate-400">القيمة المدفوعة</th>
-                <th className="py-4 px-6 text-xs font-black text-slate-400">التاريخ</th>
+                <th className="py-4 px-6 text-xs font-black text-slate-400">{isCoachesTable ? 'المدرب' : 'الطالب'}</th>
+                <th className="py-4 px-6 text-xs font-black text-slate-400">{isCoachesTable ? 'الهاتف' : 'الدورة المسجل بها'}</th>
+                <th className="py-4 px-6 text-xs font-black text-slate-400">{isCoachesTable ? 'الحالة' : 'القيمة المدفوعة'}</th>
+                <th className="py-4 px-6 text-xs font-black text-slate-400">{isCoachesTable ? 'تاريخ الانضمام' : 'التاريخ'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -93,12 +167,25 @@ export default function TableBlock(props: TableBlockProps) {
                   </td>
                   <td className="py-4 px-6">
                     <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
-                      <BookOpen className="w-3.5 h-3.5 text-blue-500" />
-                      {row.course}
+                      {isCoachesTable ? (
+                        <>
+                          <Phone className="w-3.5 h-3.5 text-blue-500" />
+                          {row.course}
+                        </>
+                      ) : (
+                        <>
+                          <BookOpen className="w-3.5 h-3.5 text-blue-500" />
+                          {row.course}
+                        </>
+                      )}
                     </span>
                   </td>
                   <td className="py-4 px-6">
-                    <span className="text-xs font-black text-emerald-600">
+                    <span className={`text-xs font-black ${
+                      row.price === 'نشط' ? 'text-green-600 bg-green-50 px-2 py-0.5 rounded' : 
+                      row.price === 'غير نشط' ? 'text-rose-600 bg-rose-50 px-2 py-0.5 rounded' : 
+                      'text-emerald-600'
+                    }`}>
                       {row.price}
                     </span>
                   </td>

@@ -1,12 +1,15 @@
 import React from 'react';
 import { Clock, Users, BookOpen } from 'lucide-react';
+import Link from 'next/link';
 import { useBuilderStore } from '../store/builderStore';
 import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
+import { getCourses } from '@/services/courses';
 
 
 interface CourseCardsProps {
   id?: string;
   title?: string;
+  limit?: number;
   gridCols?: '2' | '3' | '4' | '5' | '6';
   showPrice?: boolean;
   showStudentsCount?: boolean;
@@ -26,6 +29,7 @@ export default function CourseCards(props: CourseCardsProps) {
   const {
     id: sectionId,
     title = 'أحدث الدورات المسجلة',
+    limit = 3,
     gridCols = '3',
     showPrice = true,
     showStudentsCount = true,
@@ -42,6 +46,44 @@ export default function CourseCards(props: CourseCardsProps) {
     hoveredItemIndex, 
     setHoveredItemIndex 
   } = useBuilderStore();
+
+  let currentTemplate: any = null;
+  try {
+    currentTemplate = useBuilderStore((state) => state.currentTemplate);
+  } catch (e) {
+    // Fallback if rendered outside the store context
+  }
+  const isUdemy = currentTemplate?.id === 'template_2';
+
+  const [realCourses, setRealCourses] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    async function fetchRealData() {
+      try {
+        const data = await getCourses();
+        if (data && data.length > 0) {
+          setRealCourses(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch courses in CourseCards:', err);
+      }
+    }
+    fetchRealData();
+  }, []);
+
+  const formattedCourses = React.useMemo(() => {
+    if (realCourses.length === 0) return courses;
+    return realCourses.map(course => ({
+      id: String(course.id),
+      title: course.title,
+      instructor: course.instructor || course.instructor_name || course.coach || 'أحمد محمد',
+      price: Number(course.price) === 0 ? 'مجانًا' : `${course.price} ر.س`,
+      students: `${course.students_count ?? course.students ?? 0} طالب`,
+      duration: course.duration || (course.units?.reduce((acc: number, unit: any) => acc + (unit.lessons?.length || 0), 0) ? `${course.units.reduce((acc: number, unit: any) => acc + (unit.lessons?.length || 0), 0)} درس` : 'غير محدد'),
+      image: course.image || course.cover_image || 'https://images.unsplash.com/photo-1586717791821-3f44a563fa4c',
+      description: course.description
+    }));
+  }, [realCourses, courses]);
 
   // Read deviceMode with a fail-safe fallback
   let deviceMode = 'desktop';
@@ -64,7 +106,7 @@ export default function CourseCards(props: CourseCardsProps) {
   const gridClass = getGridClass();
 
   // Limit course display for grid mapping
-  const coursesToRender = courses;
+  const coursesToRender = formattedCourses.slice(0, limit);
 
   const titleTypography = getTypographyStyle(props, 'title', {
     font: 'IBM Plex Sans Arabic',
@@ -77,6 +119,17 @@ export default function CourseCards(props: CourseCardsProps) {
 
   return (
     <div className="space-y-6 text-right" dir="rtl">
+      {isEditing && (
+        <div className="bg-amber-50 border-r-4 border-amber-500 p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs text-amber-800 font-bold shadow-sm" dir="rtl">
+          <span className="flex items-center gap-1.5">
+            <span className="text-base">💡</span>
+            هذه البيانات حقيقية معروضة من قاعدة البيانات ولا يمكن تعديلها من هنا. لتعديلها يرجى الانتقال إلى صفحة إدارة الدورات.
+          </span>
+          <Link href="/academic/courses" className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl transition-colors whitespace-nowrap">
+            إدارة الدورات
+          </Link>
+        </div>
+      )}
       
       <div className="flex items-center justify-between border-b border-slate-100 pb-4">
         <h3 
@@ -98,6 +151,94 @@ export default function CourseCards(props: CourseCardsProps) {
           const isHovered = isEditing && hoveredItemIndex === idx;
 
           const isPurpleTheme = buttonBg === '#7c3aed';
+
+          if (isUdemy) {
+            return (
+              <div 
+                key={course.id} 
+                onClick={(e) => {
+                  if (isEditing && sectionId) {
+                    e.stopPropagation();
+                    setSelectedNodeId(sectionId);
+                    setSelectedItemIndex(idx);
+                  }
+                }}
+                onMouseEnter={() => isEditing && setHoveredItemIndex(idx)}
+                onMouseLeave={() => isEditing && setHoveredItemIndex(null)}
+                className={`bg-white border border-slate-200 rounded-lg overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col justify-between group cursor-pointer ${
+                  isSelected ? 'ring-4 ring-[#a435f0] ring-offset-2' : isHovered ? 'ring-4 ring-purple-200' : ''
+                }`}
+              >
+                {/* Course Image cover */}
+                <div className="h-44 w-full overflow-hidden bg-slate-100 relative">
+                  <img 
+                    src={course.image || 'https://images.unsplash.com/photo-1586717791821-3f44a563fa4c'} 
+                    alt={course.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-102"
+                  />
+                  {/* Bestselling badge overlay */}
+                  {idx % 2 === 0 && (
+                    <span className="absolute top-2 right-2 bg-amber-400 text-slate-900 text-[10px] font-extrabold px-2.5 py-0.5 shadow-sm rounded-sm">
+                      الأكثر مبيعاً
+                    </span>
+                  )}
+                </div>
+
+                {/* Course details */}
+                <div className="p-4 flex-1 flex flex-col justify-between gap-2 text-right">
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-bold text-slate-800 leading-snug group-hover:text-purple-600 transition-colors line-clamp-2 min-h-[40px]">
+                      {course.title}
+                    </h4>
+                    <p className="text-[11px] text-slate-500 leading-relaxed font-semibold">
+                      {course.instructor}
+                    </p>
+                    
+                    {/* Rating UI */}
+                    <div className="flex items-center gap-1.5 flex-row-reverse justify-end text-[11px] font-black text-amber-500" dir="ltr">
+                      <span className="text-slate-400 font-bold">({120 + idx * 15})</span>
+                      <div className="flex gap-0.5 text-amber-500">
+                        <span>★</span>
+                        <span>★</span>
+                        <span>★</span>
+                        <span>★</span>
+                        <span className={idx === 1 ? "text-slate-200" : "text-amber-500"}>★</span>
+                      </div>
+                      <span className="font-extrabold text-amber-600 text-xs">{idx === 1 ? "4.5" : "4.8"}</span>
+                    </div>
+
+                    {/* Metadata */}
+                    <div className="flex items-center gap-3 text-[10px] text-slate-400 font-bold pt-1">
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-slate-400" />
+                        {course.duration}
+                      </span>
+                      {showStudentsCount && (
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3.5 h-3.5 text-slate-400" />
+                          {course.students}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center pt-3 border-t border-slate-100 mt-2">
+                    {showPrice && (
+                      <span className="text-sm font-extrabold text-slate-900">
+                        {course.price || 'مجانًا'}
+                      </span>
+                    )}
+                    <button 
+                      style={{ backgroundColor: buttonBg || '#a435f0' }}
+                      className="hover:brightness-110 text-white font-bold text-[10px] px-3.5 py-1.5 rounded-sm transition-all shadow-sm active:scale-95"
+                    >
+                      انضم الآن
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          }
 
           if (isPurpleTheme) {
             return (

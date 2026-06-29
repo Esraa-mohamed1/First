@@ -36,9 +36,12 @@ function getTenantKey(host: string): string | null {
 
 async function fetchTenantHomepage(tenantKey: string, token?: string) {
     try {
+        const lowerKey = tenantKey.toLowerCase();
         const reqHeaders: Record<string, string> = {
             'Content-Type': 'application/json',
-            'X-Tenant-Key': tenantKey
+            'X-Tenant-Key': lowerKey,
+            'X-Tenant': lowerKey,
+            'x-tenant-name': lowerKey
         };
         
         if (token) {

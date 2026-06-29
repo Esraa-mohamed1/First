@@ -30,3 +30,13 @@ export const createUser = async (payload: Partial<User>): Promise<User> => {
     throw error.response?.data || error;
   }
 };
+
+export const updateUser = async (id: number, payload: Partial<User>): Promise<User> => {
+  try {
+    const response = await academyApi.put<ApiResponse<User>>(`users/${id}`, payload);
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to update user:', error);
+    throw error.response?.data || error;
+  }
+};

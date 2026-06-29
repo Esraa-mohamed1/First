@@ -40,11 +40,16 @@ export function translateErrorToArabic(msg: string): string {
     return 'تأكيد كلمة المرور غير متطابق.';
   }
 
-  // Name & Category & Course Info
+  // Name & Category & Course Info / Lesson Info
   if (normalized.includes('name has already been taken')) return 'الاسم مستخدم بالفعل.';
   if (normalized.includes('name field is required') || normalized.includes('name is required')) return 'الاسم مطلوب.';
-  if (normalized.includes('title field is required') || normalized.includes('title is required')) return 'عنوان الدورة مطلوب.';
-  if (normalized.includes('description field is required') || normalized.includes('description is required')) return 'وصف الدورة مطلوب.';
+  if (normalized.includes('title field is required') || normalized.includes('title is required')) {
+    return 'العنوان مطلوب.';
+  }
+  if (normalized.includes('address field is required') || normalized.includes('address is required')) return 'موقع أو عنوان المحاضرة مطلوب.';
+  if (normalized.includes('start date field is required') || normalized.includes('start_date field is required')) return 'تاريخ بداية المحاضرة مطلوب.';
+  if (normalized.includes('end date field is required') || normalized.includes('end_date field is required')) return 'تاريخ نهاية المحاضرة مطلوب.';
+  if (normalized.includes('description field is required') || normalized.includes('description is required')) return 'الوصف مطلوب.';
   if (
     normalized.includes('category id field is required') || 
     normalized.includes('category_id field is required') || 

@@ -21,7 +21,9 @@ export const createVideoResource = async (libraryId: string, apiKey: string, tit
     payload,
     {
       headers: {
-        'X-Tenant-Key': tenantKey,
+        'X-Tenant-Key': tenantKey.toLowerCase(),
+        'X-Tenant': tenantKey.toLowerCase(),
+        'x-tenant-name': tenantKey.toLowerCase(),
         AccessKey: apiKey,
         'Content-Type': 'application/json',
       },

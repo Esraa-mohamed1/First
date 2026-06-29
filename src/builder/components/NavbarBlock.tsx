@@ -8,6 +8,11 @@ interface NavbarBlockProps {
   showProfile?: boolean;
   bgColor?: string;
   borderColor?: string;
+  isLandingPage?: boolean;
+  links?: Array<{ label: string; href: string }>;
+  buttonText?: string;
+  buttonLink?: string;
+  showButton?: boolean;
   [key: string]: any;
 }
 
@@ -18,6 +23,17 @@ export default function NavbarBlock(props: NavbarBlockProps) {
     showProfile = true,
     bgColor = '#ffffff',
     borderColor = '#e2e8f0',
+    isLandingPage: propIsLandingPage,
+    links = [
+      { label: 'الرئيسية', href: '#hero-t1' },
+      { label: 'نبذة عني', href: '#about-t1' },
+      { label: 'الدورات', href: '#courses-t1' },
+      { label: 'أعمالي', href: '#gallery-t1' },
+      { label: 'آراء الطلاب', href: '#testimonials-t1' }
+    ],
+    buttonText = 'التسجيل',
+    buttonLink = '#',
+    showButton = true,
   } = props;
 
   const titleTypography = getTypographyStyle(props, 'title', {
@@ -29,7 +45,8 @@ export default function NavbarBlock(props: NavbarBlockProps) {
 
   const isTransparentBg = hasSectionBackground(props);
 
-  const isLandingPage = title === 'درب' || title === 'أكاديمية درب';
+  // For backward compatibility, fall back to title check if isLandingPage is not defined
+  const isLandingPage = propIsLandingPage ?? (title === 'درب' || title === 'أكاديمية درب');
 
   if (isLandingPage) {
     return (
@@ -43,21 +60,28 @@ export default function NavbarBlock(props: NavbarBlockProps) {
       >
         {/* Left Side: Registration Button */}
         <div>
-          <button 
-            style={{ backgroundColor: 'var(--theme-primary)' }}
-            className="px-5 py-2 rounded-xl text-white font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md"
-          >
-            التسجيل
-          </button>
+          {showButton && (
+            <a 
+              href={buttonLink}
+              style={{ backgroundColor: 'var(--theme-primary)' }}
+              className="px-5 py-2 rounded-xl text-white font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md inline-block text-center"
+            >
+              {buttonText}
+            </a>
+          )}
         </div>
 
         {/* Center: Navigation Links */}
         <nav className="hidden md:flex items-center gap-6 text-xs font-bold text-slate-600">
-          <a href="#hero-t1" className="hover:text-[var(--theme-primary)] transition-colors">الرئيسية</a>
-          <a href="#about-t1" className="hover:text-[var(--theme-primary)] transition-colors">نبذة عني</a>
-          <a href="#courses-t1" className="hover:text-[var(--theme-primary)] transition-colors">الدورات</a>
-          <a href="#gallery-t1" className="hover:text-[var(--theme-primary)] transition-colors">أعمالي</a>
-          <a href="#testimonials-t1" className="hover:text-[var(--theme-primary)] transition-colors">آراء الطلاب</a>
+          {links.map((link: any, idx: number) => (
+            <a 
+              key={idx} 
+              href={link.href} 
+              className="hover:text-[var(--theme-primary)] transition-colors"
+            >
+              {link.label}
+            </a>
+          ))}
         </nav>
 
         {/* Right Side: Logo */}

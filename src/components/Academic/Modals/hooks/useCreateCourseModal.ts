@@ -82,9 +82,9 @@ export const useCreateCourseModal = ({
           const userData = profile.data || profile;
           if (userData) {
             setCurrentUser(userData);
-            if (userData.role === 'admin' || userData.role === 'academy') {
-              const allUsers = await getUsers();
-              setInstructors(allUsers.filter((user) => user.role === 'academy'));
+          if (userData.role === 'admin' || userData.role === 'academy') {
+              const coaches = await getUsers('academy');
+              setInstructors(coaches);
             }
           }
 

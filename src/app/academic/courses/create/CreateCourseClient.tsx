@@ -311,12 +311,8 @@ export default function CreateCourseClient() {
             setSelectedInstructor(null);
           }
           if (userData.role === 'admin' || userData.role === 'academy') {
-            const allUsers = await getUsers();
-            if (userData.role === 'admin') {
-              setInstructors(allUsers);
-            } else {
-              setInstructors(allUsers.filter((user) => user.role === 'academy' || user.role === 'instructor'));
-            }
+            const coaches = await getUsers('academy');
+            setInstructors(coaches);
           }
         }
       } catch (error) {
@@ -440,10 +436,18 @@ export default function CreateCourseClient() {
     if (!selectedInstructor && (currentUser?.role === 'admin' || currentUser?.role === 'academy')) {
       newErrors.user_id = 'يرجى اختيار مدرب';
     }
+    if (pricingType === 'paid') {
+      if (!price || Number(price) <= 0) {
+        newErrors.price = 'سعر الدورة مطلوب للدورات المدفوعة ويجب أن يكون أكبر من 0';
+      }
+      if (selectedPaymentMethods.length === 0) {
+        newErrors.receiver_accounts = 'يجب اختيار وسيلة دفع واحدة على الأقل للتحصيل.';
+      }
+    }
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      toast.error('يرجى ملء الحقول المطلوبة');
+      toast.error('يرجى ملء الحقول المطلوبة وتصحيح الأخطاء');
       return;
     }
 
@@ -1382,6 +1386,7 @@ export default function CreateCourseClient() {
             setCurrentUnitForLesson(null);
           }}
           unitId={currentUnitForLesson || 0}
+          courseId={courseId || undefined}
           unitName={units.find((u) => u.id === currentUnitForLesson)?.title || ''}
           courseTitle={title}
           instructorName={selectedInstructor ? instructors.find(i => i.id === selectedInstructor)?.name || '' : currentUser?.name || ''}
