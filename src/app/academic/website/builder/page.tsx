@@ -21,7 +21,8 @@ import {
   Save,
   Globe,
   Plus,
-  LayoutGrid
+  LayoutGrid,
+  X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getSections, saveSections, apiToEditor, editorToApi, getPages } from '@/services/pages';
@@ -36,6 +37,7 @@ export default function PageBuilderPage() {
   const [tourStep, setTourStep] = useState<number>(-1);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [lastSavedContent, setLastSavedContent] = useState<string>('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const tourSteps = [
     {
@@ -109,16 +111,6 @@ export default function PageBuilderPage() {
     }
   };
 
-  // Start tour invitation automatically on first load
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const completed = localStorage.getItem('darab_builder_tour_completed');
-      if (!completed) {
-        setTourStep(-2); // -2 represents the optional invitation modal
-      }
-    }
-  }, []);
-
   const {
     currentTemplate,
     deviceMode,
@@ -136,6 +128,24 @@ export default function PageBuilderPage() {
     setPageId,
     pageId: storePageId
   } = useBuilderStore();
+
+  // Start tour invitation automatically on first load and force edit mode by default
+  useEffect(() => {
+    setIsEditing(true);
+    if (typeof window !== 'undefined') {
+      const completed = localStorage.getItem('darab_builder_tour_completed');
+      if (!completed) {
+        setTourStep(-2); // -2 represents the optional invitation modal
+      }
+    }
+  }, [setIsEditing]);
+
+  // Keep sidebar open during tour steps that target it
+  useEffect(() => {
+    if (tourStep >= 0 && tourSteps[tourStep]?.target === 'aside-widgets') {
+      setIsSidebarOpen(true);
+    }
+  }, [tourStep]);
 
   // Load selected template configuration or page sections from API
   useEffect(() => {
@@ -419,6 +429,20 @@ export default function PageBuilderPage() {
             <ArrowRight className="w-4 h-4" />
           </button>
 
+          {isEditing && (
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className={`p-2.5 hover:bg-slate-800 rounded-xl transition-all border ${
+                isSidebarOpen
+                  ? 'bg-blue-600/10 text-blue-400 border-blue-500/20'
+                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+              }`}
+              title={isSidebarOpen ? "إخفاء قائمة العناصر" : "إظهار قائمة العناصر"}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+          )}
+
           <div className="leading-tight text-right">
             <div className="flex items-center gap-2">
               <h1 className="text-xs font-black text-white">{currentTemplate.name}</h1>
@@ -543,17 +567,27 @@ export default function PageBuilderPage() {
       {/* 2. BODY LAYOUT PANELS */}
       <div className="flex-1 flex flex-row overflow-hidden relative">
 
-        {/* Left Side: Widgets list (only visible in edit mode) */}
-        {isEditing && (
+        {/* Left Side: Widgets list (only visible in edit mode and when sidebar is open) */}
+        {isEditing && isSidebarOpen && (
           <aside className="w-[280px] bg-slate-900 border-l border-slate-800 flex flex-col justify-between overflow-y-auto z-30 select-none">
             <div className="p-5 space-y-6">
 
-              <div className="space-y-1">
-                <h2 className="text-xs font-black text-white flex items-center gap-2">
-                  <LayoutGrid className="w-4 h-4 text-blue-500" />
-                  <span>دليل العناصر والمكونات</span>
-                </h2>
-                <p className="text-[9px] text-slate-400 font-bold">اضغط على أي مكون لإضافته فورياً إلى أسفل الصفحة</p>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <h2 className="text-xs font-black text-white flex items-center gap-2">
+                    <LayoutGrid className="w-4 h-4 text-blue-500" />
+                    <span>دليل العناصر والمكونات</span>
+                  </h2>
+                  <p className="text-[9px] text-slate-400 font-bold">اضغط على أي مكون لإضافته فورياً إلى أسفل الصفحة</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors mr-2 flex-shrink-0"
+                  title="إخفاء القائمة"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
 
               {/* Categorized blocks directory */}

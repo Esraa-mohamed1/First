@@ -450,7 +450,7 @@ export default function InspectorPanel() {
                         type="color" 
                         value={props[field.name] ?? field.defaultValue} 
                         onChange={(e) => handlePropChange(field.name, e.target.value)}
-                        className="w-10 h-10 p-0 rounded-xl border border-slate-200 cursor-pointer overflow-hidden outline-none bg-transparent"
+                        className="w-10 h-10 p-0 rounded-xl border border-slate-200 cursor-pointer overflow-hidden outline-none bg-transparent shrink-0"
                       />
                       
                       {!isSimpleMode ? (
@@ -702,12 +702,20 @@ function DynamicListEditor({ items = [], fields = [], itemLabel = 'عنصر', on
                       </label>
                       
                       {f.type === 'text' && (
-                        <input
-                          type="text"
-                          value={itemProps[f.name] ?? ''}
-                          onChange={(e) => handleUpdateItemProp(idx, f.name, e.target.value)}
-                          className="w-full p-3 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-xs font-bold text-slate-700 outline-none transition-all"
-                        />
+                        (f.name.toLowerCase().includes('image') || f.name.toLowerCase().includes('img') || f.name.toLowerCase().includes('logo') || f.name.toLowerCase().includes('avatar')) ? (
+                          <ItemImageUploader
+                            value={itemProps[f.name] ?? ''}
+                            onChange={(val) => handleUpdateItemProp(idx, f.name, val)}
+                            label={f.label}
+                          />
+                        ) : (
+                          <input
+                            type="text"
+                            value={itemProps[f.name] ?? ''}
+                            onChange={(e) => handleUpdateItemProp(idx, f.name, e.target.value)}
+                            className="w-full p-3 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-xs font-bold text-slate-700 outline-none transition-all"
+                          />
+                        )
                       )}
                       
                       {f.type === 'textarea' && (
@@ -746,13 +754,13 @@ function DynamicListEditor({ items = [], fields = [], itemLabel = 'عنصر', on
                             type="color"
                             value={itemProps[f.name] ?? f.defaultValue}
                             onChange={(e) => handleUpdateItemProp(idx, f.name, e.target.value)}
-                            className="w-8 h-8 p-0 rounded-lg border border-slate-200 cursor-pointer overflow-hidden outline-none bg-transparent"
+                            className="w-8 h-8 p-0 rounded-lg border border-slate-200 cursor-pointer overflow-hidden outline-none bg-transparent shrink-0"
                           />
                           <input
                             type="text"
                             value={itemProps[f.name] ?? f.defaultValue}
                             onChange={(e) => handleUpdateItemProp(idx, f.name, e.target.value)}
-                            className="flex-1 p-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-mono font-bold text-slate-600 outline-none text-left"
+                            className="flex-1 min-w-0 p-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-mono font-bold text-slate-600 outline-none text-left"
                             dir="ltr"
                           />
                         </div>

@@ -162,13 +162,23 @@ export default function HeroBanner(props: HeroBannerProps) {
   );
 
   // ── SIDE IMAGE BLOCK ──────────────────────────────────────────────
+  const shapeClass = 
+    props.heroImageShape === 'circle' ? 'rounded-full' :
+    props.heroImageShape === 'square' ? 'rounded-none' :
+    props.heroImageShape === 'leaf' ? 'rounded-3xl rounded-tr-none rounded-bl-none' : 'rounded-2xl';
+
   const imageBlock = hasSideImage ? (
     <div className={`relative z-10 flex-1 flex items-center ${heroImagePosition === 'right' ? 'justify-end' : 'justify-start'}`}>
       <img
         src={heroImage}
         alt="Hero"
-        className="max-h-72 md:max-h-96 w-auto object-contain rounded-2xl shadow-2xl"
-        style={{ maxWidth: '100%' }}
+        className={`${shapeClass} shadow-2xl`}
+        style={{ 
+          maxWidth: '100%',
+          width: props.heroImageWidth ? `${props.heroImageWidth}px` : 'auto',
+          height: props.heroImageHeight ? `${props.heroImageHeight}px` : 'auto',
+          objectFit: props.heroImageFit || 'contain'
+        }}
       />
     </div>
   ) : null;

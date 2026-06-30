@@ -112,7 +112,7 @@ export default function HeroSliderEditor({
               <input
                 type="color" value={slide.backgroundColor || '#1e40af'}
                 onChange={(e) => { const u = slides.map((s: any) => s.id === slide.id ? { ...s, backgroundColor: e.target.value } : s); handlePropChange('slides', u); }}
-                className="w-6 h-6 p-0 rounded border border-slate-200 cursor-pointer overflow-hidden bg-transparent"
+                className="w-6 h-6 p-0 rounded border border-slate-200 cursor-pointer overflow-hidden bg-transparent shrink-0"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -120,7 +120,7 @@ export default function HeroSliderEditor({
               <input
                 type="color" value={slide.buttonColor || '#ffffff'}
                 onChange={(e) => { const u = slides.map((s: any) => s.id === slide.id ? { ...s, buttonColor: e.target.value } : s); handlePropChange('slides', u); }}
-                className="w-6 h-6 p-0 rounded border border-slate-200 cursor-pointer overflow-hidden bg-transparent"
+                className="w-6 h-6 p-0 rounded border border-slate-200 cursor-pointer overflow-hidden bg-transparent shrink-0"
               />
             </div>
             <div className="relative">
