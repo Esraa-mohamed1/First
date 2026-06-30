@@ -250,6 +250,7 @@ export function useAddLesson({
               if (!tenantName && typeof window !== 'undefined') {
                 let hostname = window.location.hostname;
                 if (hostname.endsWith('.localhost')) hostname = hostname.replace('.localhost', '');
+                if (hostname.endsWith('.darab.academy')) hostname = hostname.replace('.darab.academy', '');
                 if (hostname && hostname !== 'localhost') tenantName = hostname;
               }
               tenantName = tenantName || 'Default';

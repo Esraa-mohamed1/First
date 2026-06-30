@@ -125,8 +125,8 @@ function VerificationContent() {
     };
 
     return (
-        <div className="min-h-screen  flex items-center justify-center p-4" dir="rtl">
-            <div className=" bg-[#f8faff] rounded-[2.5rem] p-10 md:p-16 text-center shadow-2xl w-full max-w-2xl animate-in fade-in zoom-in duration-500">
+        <div className="w-full max-w-[520px] mx-auto z-10 animate-fade-in-up p-4 sm:p-6" dir="rtl">
+            <div className="bg-white rounded-[32px] md:rounded-[40px] p-8 md:p-12 text-center shadow-2xl">
 
                 {step === 'initial' ? (
                     <>

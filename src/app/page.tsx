@@ -31,6 +31,10 @@ function getTenantKey(host: string): string | null {
         return hostname.replace('.localhost', '');
     }
 
+    if (hostname.endsWith('.darab.academy')) {
+        return hostname.replace('.darab.academy', '');
+    }
+
     return hostname;
 }
 
@@ -101,7 +105,17 @@ export default async function Home() {
 
     let tenantKey = getTenantKey(host) || cookieTenant;
     if (!tenantKey && (host.includes('localhost') || host.includes('127.0.0.1'))) {
-        tenantKey = 'esraa.darab.academy';
+        tenantKey = 'esraa';
+    }
+
+    if (tenantKey) {
+        if (tenantKey.endsWith('.darab.academy')) {
+            tenantKey = tenantKey.replace('.darab.academy', '');
+        }
+        if (tenantKey.endsWith('.localhost')) {
+            tenantKey = tenantKey.replace('.localhost', '');
+        }
+        tenantKey = tenantKey.toLowerCase();
     }
 
     if (tenantKey) {
