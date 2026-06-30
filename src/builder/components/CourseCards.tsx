@@ -272,9 +272,16 @@ export default function CourseCards(props: CourseCardsProps) {
                     <h4 className="text-sm font-black text-slate-800 leading-snug group-hover:text-purple-600 transition-colors">
                       {course.title}
                     </h4>
-                    <p className="text-[11px] text-slate-500 leading-relaxed font-semibold">
-                      {course.description || 'تعلم مبادئ التصميم خطوة بخطوة وكيفية التعامل مع الألوان والخطوط لبناء واجهات سهلة الاستخدام ومحترفة.'}
-                    </p>
+                    {course.description ? (
+                      <div
+                        className="text-[11px] text-slate-500 leading-relaxed font-semibold line-clamp-2"
+                        dangerouslySetInnerHTML={{ __html: course.description }}
+                      />
+                    ) : (
+                      <p className="text-[11px] text-slate-500 leading-relaxed font-semibold">
+                        تعلم مبادئ التصميم خطوة بخطوة وكيفية التعامل مع الألوان والخطوط لبناء واجهات سهلة الاستخدام ومحترفة.
+                      </p>
+                    )}
                   </div>
                   
                   <div className="flex justify-between items-center pt-3 border-t border-slate-100">

@@ -740,8 +740,16 @@ export const TestimonialsSection = React.memo((props: any) => {
             React.createElement(
               'div',
               {
-                className: 'w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-sm font-black text-white flex-shrink-0',
-                style: { background: 'linear-gradient(135deg, var(--theme-primary), var(--theme-secondary, #10b981))' }
+                className: `${
+                  (props.avatar_shape || 'circle') === 'rounded' ? 'rounded-xl' :
+                  (props.avatar_shape || 'circle') === 'square' ? 'rounded-none' :
+                  (props.avatar_shape || 'circle') === 'leaf' ? 'rounded-3xl rounded-tr-none rounded-bl-none' : 'rounded-full'
+                } overflow-hidden flex items-center justify-center text-sm font-black text-white flex-shrink-0`,
+                style: { 
+                  background: 'linear-gradient(135deg, var(--theme-primary), var(--theme-secondary, #10b981))',
+                  width: `${props.avatar_size || 40}px`,
+                  height: `${props.avatar_size || 40}px`
+                }
               },
               itemProps.avatar
                 ? React.createElement('img', { src: itemProps.avatar, alt: itemProps.author, className: 'w-full h-full object-cover' })
@@ -782,6 +790,7 @@ export const GallerySection = React.memo((props: any) => {
 
   const aspect = props.image_aspect || 'video';
   let aspectClass = 'aspect-video';
+  let customStyle: React.CSSProperties = {};
   if (aspect === 'square') {
     aspectClass = 'aspect-square';
   } else if (aspect === 'cinema') {
@@ -789,7 +798,18 @@ export const GallerySection = React.memo((props: any) => {
   } else if (aspect === 'portrait') {
     aspectClass = 'aspect-[3/4]';
   } else if (aspect === 'auto') {
-    aspectClass = 'h-64';
+    aspectClass = '';
+    customStyle.height = `${props.image_custom_height || 250}px`;
+  }
+
+  const shape = props.image_shape || 'rounded';
+  let shapeClass = 'rounded-xl';
+  if (shape === 'circle') {
+    shapeClass = 'rounded-full';
+  } else if (shape === 'square') {
+    shapeClass = 'rounded-none';
+  } else if (shape === 'leaf') {
+    shapeClass = 'rounded-3xl rounded-tr-none rounded-bl-none';
   }
 
   return React.createElement(
@@ -813,7 +833,8 @@ export const GallerySection = React.memo((props: any) => {
           'div',
           { 
             key: idx, 
-            className: `relative ${aspectClass} rounded-xl overflow-hidden group shadow-sm bg-slate-100 transition-all duration-300 ${
+            style: customStyle,
+            className: `relative ${aspectClass} ${shapeClass} overflow-hidden group shadow-sm bg-slate-100 transition-all duration-300 ${
               isSelected ? 'ring-4 ring-blue-500 ring-inset' : isHovered ? 'ring-4 ring-blue-300 ring-inset' : 'border border-slate-100/40'
             }`,
             onClick: (e: any) => {
@@ -1247,7 +1268,7 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       { name: 'subtitle', label: 'العنوان الفرعي', type: 'textarea', defaultValue: 'أضف وصف الشريحة هنا' },
       { name: 'button_text', label: 'نص الزر', type: 'text', defaultValue: 'اكتشف المزيد' },
       { name: 'button_link', label: 'رابط الزر', type: 'text', defaultValue: '#' },
-      { name: 'bg_image', label: 'صورة الخلفية (URL)', type: 'text', defaultValue: '' },
+      { name: 'bg_image', label: '📷 رفع صورة الخلفية', type: 'image', defaultValue: '' },
       { name: 'background_color', label: 'لون الخلفية', type: 'color', defaultValue: '#1e40af' },
       { name: 'button_color', label: 'لون الزر', type: 'color', defaultValue: '#ffffff' },
       {
@@ -1359,6 +1380,19 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       { name: 'text_color', label: 'لون النص', type: 'color', defaultValue: '#1f2937' },
       { name: 'padding_top', label: 'تباعد علوي (px)', type: 'number', defaultValue: 60 },
       { name: 'padding_bottom', label: 'تباعد سفلي (px)', type: 'number', defaultValue: 60 },
+      { name: 'avatar_size', label: 'حجم صورة العميل (px)', type: 'number', defaultValue: 40 },
+      {
+        name: 'avatar_shape',
+        label: 'شكل صورة العميل',
+        type: 'select',
+        defaultValue: 'circle',
+        options: [
+          { label: 'دائرة (Circle)', value: 'circle' },
+          { label: 'زوايا دائرية (Rounded)', value: 'rounded' },
+          { label: 'مربع (Square)', value: 'square' },
+          { label: 'ورقة شجر (Leaf)', value: 'leaf' }
+        ]
+      },
       ...SECTION_STYLE_FIELDS
     ],
     itemLabel: 'رأي',
@@ -1376,6 +1410,8 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       text_color: '#1f2937',
       padding_top: 60,
       padding_bottom: 60,
+      avatar_size: 40,
+      avatar_shape: 'circle',
       items: [
         { order: 1, props: { quote: 'Excellent service!', author: 'John Doe', role: 'CEO', rating: 5, avatar: '' } }
       ]
@@ -1406,6 +1442,19 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
           { label: 'تلقائي (ارتفاع محدد)', value: 'auto' }
         ]
       },
+      {
+        name: 'image_shape',
+        label: 'شكل صور المعرض',
+        type: 'select',
+        defaultValue: 'rounded',
+        options: [
+          { label: 'زوايا دائرية (Rounded)', value: 'rounded' },
+          { label: 'دائرة (Circle)', value: 'circle' },
+          { label: 'مربع (Square)', value: 'square' },
+          { label: 'ورقة شجر (Leaf)', value: 'leaf' }
+        ]
+      },
+      { name: 'image_custom_height', label: 'ارتفاع مخصص للصور (px - للتلقائي)', type: 'number', defaultValue: 250 },
       { name: 'padding_top', label: 'تباعد علوي (px)', type: 'number', defaultValue: 60 },
       { name: 'padding_bottom', label: 'تباعد سفلي (px)', type: 'number', defaultValue: 60 },
       ...SECTION_STYLE_FIELDS
@@ -1422,6 +1471,8 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       text_color: '#1f2937',
       grid_cols: 3,
       image_aspect: 'video',
+      image_shape: 'rounded',
+      image_custom_height: 250,
       padding_top: 60,
       padding_bottom: 60,
       items: []
@@ -1540,7 +1591,24 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       {
         name: 'heroImagePosition', label: 'موقع الصورة الجانبية', type: 'select', defaultValue: 'left', options: [
           { label: 'يسار النص', value: 'left' },
-          { label: 'يمين النص', value: 'right' },
+          { label: 'يمين النص', value: 'right' }
+        ]
+      },
+      { name: 'heroImageWidth', label: 'عرض الصورة الجانبية (px)', type: 'number', defaultValue: 384 },
+      { name: 'heroImageHeight', label: 'ارتفاع الصورة الجانبية (px)', type: 'number', defaultValue: 384 },
+      {
+        name: 'heroImageShape', label: 'شكل الصورة الجانبية', type: 'select', defaultValue: 'rounded', options: [
+          { label: 'زوايا دائرية (Rounded)', value: 'rounded' },
+          { label: 'دائرة (Circle)', value: 'circle' },
+          { label: 'مربع (Square)', value: 'square' },
+          { label: 'ورقة شجر (Leaf)', value: 'leaf' }
+        ]
+      },
+      {
+        name: 'heroImageFit', label: 'ملاءمة الصورة الجانبية', type: 'select', defaultValue: 'contain', options: [
+          { label: 'ملاءمة (Contain)', value: 'contain' },
+          { label: 'تعبئة (Cover)', value: 'cover' },
+          { label: 'تمطيط (Fill)', value: 'fill' }
         ]
       },
       { name: 'showSecondButton', label: 'إظهار زر ثانوي إضافي', type: 'boolean', defaultValue: false },
@@ -1569,6 +1637,10 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       bgImage: '',
       heroImage: '',
       heroImagePosition: 'left',
+      heroImageWidth: 384,
+      heroImageHeight: 384,
+      heroImageShape: 'rounded',
+      heroImageFit: 'contain',
       showSecondButton: false,
       secondButtonText: 'اعرف أكثر',
       secondButtonColor: '#f1f5f9',

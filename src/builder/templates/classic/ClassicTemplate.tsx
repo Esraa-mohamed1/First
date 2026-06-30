@@ -22,6 +22,7 @@ export default function ClassicTemplate({ sections }: TemplateProps) {
 
   return (
     <div style={cssVariables} className="min-h-screen w-full transition-all duration-300">
+
       <RecursiveRenderer nodes={sections} />
     </div>
   );

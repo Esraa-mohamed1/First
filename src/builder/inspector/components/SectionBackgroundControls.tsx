@@ -2,6 +2,17 @@ import React from 'react';
 import { ChevronDown } from 'lucide-react';
 import ImageUploader from './ImageUploader';
 
+const GRADIENT_PRESETS = [
+  { name: 'غروب دافئ', from: '#f59e0b', to: '#ef4444' },
+  { name: 'أزرق المحيط', from: '#3b82f6', to: '#06b6d4' },
+  { name: 'بنفسجي ساحر', from: '#7c3aed', to: '#ec4899' },
+  { name: 'الغابة الخضراء', from: '#10b981', to: '#059669' },
+  { name: 'حلم منتصف الليل', from: '#1e293b', to: '#0f172a' },
+  { name: 'ملكي فاخر', from: '#8b5cf6', to: '#3b82f6' },
+  { name: 'الوردي الذهبي', from: '#fda4af', to: '#f43f5e' },
+  { name: 'سايبر بانك', from: '#d946ef', to: '#06b6d4' },
+];
+
 interface SectionBackgroundControlsProps {
   props: Record<string, any>;
   handlePropChange: (key: string, value: any) => void;
@@ -75,20 +86,47 @@ export default function SectionBackgroundControls({
 
         {/* Gradient */}
         {!isSimpleMode && activeBgType === 'gradient' && (
-          <div className="space-y-2">
+          <div className="space-y-3.5">
+            {/* Curated Presets */}
+            <div className="space-y-1.5">
+              <label className="text-[9px] font-black text-slate-400 block">اختر قالب تدرج جاهز (Gradient Presets)</label>
+              <div className="grid grid-cols-4 gap-1.5">
+                {GRADIENT_PRESETS.map((preset) => (
+                  <button
+                    key={preset.name}
+                    type="button"
+                    onClick={() => {
+                      handlePropChange('sectionGradientFrom', preset.from);
+                      handlePropChange('sectionGradientTo', preset.to);
+                    }}
+                    className="flex flex-col items-center gap-1 p-1 bg-white hover:bg-slate-50 border border-slate-100 hover:border-slate-200 rounded-xl transition-all active:scale-95 group text-center"
+                    title={preset.name}
+                  >
+                    <div 
+                      className="w-full h-6 rounded-lg border border-slate-100 shadow-sm"
+                      style={{ backgroundImage: `linear-gradient(135deg, ${preset.from}, ${preset.to})` }}
+                    />
+                    <span className="text-[7.5px] font-black text-slate-500 group-hover:text-slate-700 truncate w-full">
+                      {preset.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
                 <label className="text-[9px] font-black text-slate-400 block">اللون الأول</label>
                 <div className="flex items-center gap-1.5">
-                  <input type="color" value={props.sectionGradientFrom || '#2563eb'} onChange={(e) => handlePropChange('sectionGradientFrom', e.target.value)} className="w-8 h-8 p-0 rounded-lg border border-slate-200 cursor-pointer overflow-hidden bg-transparent" />
-                  <input type="text" value={props.sectionGradientFrom || '#2563eb'} onChange={(e) => handlePropChange('sectionGradientFrom', e.target.value)} className="flex-1 p-2 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-mono outline-none" dir="ltr" />
+                  <input type="color" value={props.sectionGradientFrom || '#2563eb'} onChange={(e) => handlePropChange('sectionGradientFrom', e.target.value)} className="w-8 h-8 p-0 rounded-lg border border-slate-200 cursor-pointer overflow-hidden bg-transparent shrink-0" />
+                  <input type="text" value={props.sectionGradientFrom || '#2563eb'} onChange={(e) => handlePropChange('sectionGradientFrom', e.target.value)} className="flex-1 min-w-0 p-2 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-mono outline-none" dir="ltr" />
                 </div>
               </div>
               <div className="space-y-1">
                 <label className="text-[9px] font-black text-slate-400 block">اللون الثاني</label>
                 <div className="flex items-center gap-1.5">
-                  <input type="color" value={props.sectionGradientTo || '#7c3aed'} onChange={(e) => handlePropChange('sectionGradientTo', e.target.value)} className="w-8 h-8 p-0 rounded-lg border border-slate-200 cursor-pointer overflow-hidden bg-transparent" />
-                  <input type="text" value={props.sectionGradientTo || '#7c3aed'} onChange={(e) => handlePropChange('sectionGradientTo', e.target.value)} className="flex-1 p-2 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-mono outline-none" dir="ltr" />
+                  <input type="color" value={props.sectionGradientTo || '#7c3aed'} onChange={(e) => handlePropChange('sectionGradientTo', e.target.value)} className="w-8 h-8 p-0 rounded-lg border border-slate-200 cursor-pointer overflow-hidden bg-transparent shrink-0" />
+                  <input type="text" value={props.sectionGradientTo || '#7c3aed'} onChange={(e) => handlePropChange('sectionGradientTo', e.target.value)} className="flex-1 min-w-0 p-2 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-mono outline-none" dir="ltr" />
                 </div>
               </div>
             </div>
@@ -145,12 +183,12 @@ export default function SectionBackgroundControls({
                 <input
                   type="color" value={props.sectionShapeColor || '#3b82f6'}
                   onChange={(e) => handlePropChange('sectionShapeColor', e.target.value)}
-                  className="w-8 h-8 p-0 rounded-lg border border-slate-200 cursor-pointer overflow-hidden bg-transparent"
+                  className="w-8 h-8 p-0 rounded-lg border border-slate-200 cursor-pointer overflow-hidden bg-transparent shrink-0"
                 />
                 <input
                   type="text" value={props.sectionShapeColor || '#3b82f6'}
                   onChange={(e) => handlePropChange('sectionShapeColor', e.target.value)}
-                  className="flex-1 p-2 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-mono outline-none" dir="ltr"
+                  className="flex-1 min-w-0 p-2 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-mono outline-none" dir="ltr"
                 />
               </div>
               <div className="space-y-1">

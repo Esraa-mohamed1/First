@@ -244,7 +244,7 @@ export default function CreateCourseClient() {
       price: pricingType === 'free' ? 0 : Number(price || 0),
       final_price: pricingType === 'free' ? 0 : Number(price || 0),
       status,
-      coach: coachName,
+      coach: coachName || currentUser?.name || currentUser?.fullName || '',
       receiver_accounts: selectedPaymentMethods.map((m: any) => Number(m.methodId)),
       type: mapTypeToBackend(courseTypeParam),
       price_type: pricingType,
@@ -416,9 +416,6 @@ export default function CreateCourseClient() {
     // Basic client-side validation
     const newErrors: Record<string, any> = {};
     if (!title.trim()) newErrors.title = 'عنوان الدورة مطلوب';
-    if (!selectedInstructor && (currentUser?.role === 'admin' || currentUser?.role === 'academy')) {
-      newErrors.user_id = 'يرجى اختيار مدرب';
-    }
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -433,9 +430,6 @@ export default function CreateCourseClient() {
     // Basic client-side validation
     const newErrors: Record<string, any> = {};
     if (!title.trim()) newErrors.title = 'عنوان الدورة مطلوب';
-    if (!selectedInstructor && (currentUser?.role === 'admin' || currentUser?.role === 'academy')) {
-      newErrors.user_id = 'يرجى اختيار مدرب';
-    }
     if (pricingType === 'paid') {
       if (!price || Number(price) <= 0) {
         newErrors.price = 'سعر الدورة مطلوب للدورات المدفوعة ويجب أن يكون أكبر من 0';
@@ -496,7 +490,7 @@ export default function CreateCourseClient() {
         final_price: pricingType === 'free' ? 0 : Number(price),
         currency,
         image: selectedFile || undefined,
-        coach: coachName,
+        coach: coachName || currentUser?.name || currentUser?.fullName || '',
         receiver_accounts: selectedPaymentMethods.map(m => Number(m.methodId))
       };
 
@@ -713,20 +707,24 @@ export default function CreateCourseClient() {
                 {/* Instructor Dropdown (Admin/Academy Only) */}
                 {(currentUser?.role === 'admin' || currentUser?.role === 'academy') && (
                   <SearchableSelect
-                    label="اختر المدرب (للمسئولين)"
+                    label="اختر المدرب (اختياري - افتراضياً الأكاديمية)"
                     options={instructors.map(i => ({ id: i.id, name: i.name }))}
                     value={selectedInstructor}
                     onChange={(val) => {
-                      setSelectedInstructor(val as number);
-                      const selectedInst = instructors.find(i => i.id === val);
-                      if (selectedInst) {
-                        setCoachName(selectedInst.name || selectedInst.fullName || '');
+                      if (val) {
+                        setSelectedInstructor(val as number);
+                        const selectedInst = instructors.find(i => i.id === val);
+                        if (selectedInst) {
+                          setCoachName(selectedInst.name || selectedInst.fullName || '');
+                        }
+                      } else {
+                        setSelectedInstructor(null);
+                        setCoachName('');
                       }
                       if (errors.user_id) setErrors(prev => ({ ...prev, user_id: null }));
                     }}
                     placeholder="اختر مدرب"
                     error={errors.user_id ? translateErrorToArabic(Array.isArray(errors.user_id) ? errors.user_id[0] : String(errors.user_id)) : undefined}
-                    required
                   />
                 )}
               </div>

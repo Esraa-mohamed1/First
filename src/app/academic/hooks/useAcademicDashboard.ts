@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getCourses, getStats } from '@/services/courses';
 import { getUsers } from '@/services/users';
+import { getMyUsageLimit } from '@/services/auth';
 
 export const useAcademicDashboard = () => {
   const [isSelectTypeModalOpen, setIsSelectTypeModalOpen] = useState(false);
@@ -14,19 +15,22 @@ export const useAcademicDashboard = () => {
   const [courses, setCourses] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
+  const [usageLimits, setUsageLimits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch data
   const fetchData = async () => {
     try {
-      const [coursesData, studentsData, statsData] = await Promise.all([
+      const [coursesData, studentsData, statsData, usageResponse] = await Promise.all([
         getCourses(),
         getUsers('student'),
-        getStats().catch(() => null)
+        getStats().catch(() => null),
+        getMyUsageLimit().catch(() => null)
       ]);
       setCourses(coursesData || []);
       setStudents(studentsData || []);
       setStats(statsData || null);
+      setUsageLimits(usageResponse?.data || (Array.isArray(usageResponse) ? usageResponse : []));
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
     } finally {
@@ -90,18 +94,24 @@ export const useAcademicDashboard = () => {
   };
 
   // Dynamic calculations for progress meters
-  const totalStudentsLimit = 5000;
-  const usedStudents = stats?.active_students || students.length || 0;
+  const maxStudentsObj = usageLimits.find((i: any) => i.feature_slug === 'max_students');
+  const maxCoursesObj = usageLimits.find((i: any) => i.feature_slug === 'max_courses');
+  const storageLimitObj = usageLimits.find((i: any) => i.feature_slug === 'storage_limit');
+
+  const totalStudentsLimit = maxStudentsObj ? parseFloat(maxStudentsObj.total_limit || '5000') : 5000;
+  const usedStudents = students.length;
   const remainingStudents = Math.max(totalStudentsLimit - usedStudents, 0);
-  const studentProgressPercent = Math.min((usedStudents / totalStudentsLimit) * 100, 100);
+  const studentProgressPercent = totalStudentsLimit > 0 ? Math.min((usedStudents / totalStudentsLimit) * 100, 100) : 0;
 
-  const totalCoursesLimit = 50;
-  const usedCourses = stats?.published_courses || courses.length || 0;
+  const totalCoursesLimit = maxCoursesObj ? parseFloat(maxCoursesObj.total_limit || '50') : 50;
+  const usedCourses = maxCoursesObj ? parseFloat(maxCoursesObj.used_amount || '0') : (stats?.published_courses || courses.length || 0);
   const remainingCourses = Math.max(totalCoursesLimit - usedCourses, 0);
-  const courseProgressPercent = Math.min((usedCourses / totalCoursesLimit) * 100, 100);
+  const courseProgressPercent = totalCoursesLimit > 0 ? Math.min((usedCourses / totalCoursesLimit) * 100, 100) : 0;
 
-  // Storage calculation (mocked based on courses presence or real usage)
-  const storagePercent = usedCourses > 0 ? 82 : 0;
+  // Storage calculation from API usage limit
+  const storageUsed = storageLimitObj ? parseFloat(storageLimitObj.used_amount || '0') : (usedCourses > 0 ? 8.2 : 0);
+  const storageTotal = storageLimitObj ? parseFloat(storageLimitObj.total_limit || '10') : 10;
+  const storagePercent = storageTotal > 0 ? Math.min(Math.round((storageUsed / storageTotal) * 100), 100) : 0;
 
   return {
     isSelectTypeModalOpen,
