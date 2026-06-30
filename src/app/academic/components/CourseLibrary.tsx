@@ -59,7 +59,9 @@ export const CourseLibrary = ({
             <div className="space-y-1">
               <h4 className="font-black text-gray-900 text-sm sm:text-base">{courses[0].name || courses[0].title}</h4>
               <p className="text-[11px] sm:text-xs text-gray-400 font-bold leading-relaxed line-clamp-2">
-                {courses[0].description || "شرح مبسط يساعدك على فهم أساسيات المادة العلمية خطوة بخطوة."}
+                {courses[0].description 
+                  ? courses[0].description.replace(/<\/?[^>]+(>|$)/g, "").replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+                  : "شرح مبسط يساعدك على فهم أساسيات المادة العلمية خطوة بخطوة."}
               </p>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 pt-2">

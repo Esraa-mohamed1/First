@@ -115,8 +115,8 @@ export const PremiumUsage = ({
                   style={{ width: `${storagePercent}%` }}
                 />
               </div>
-              <p className={`text-[9px] sm:text-[10px] font-black text-center ${storagePercent > 0 ? 'text-red-500' : 'text-blue-600'}`}>
-                {storagePercent > 0 ? 'تحذير : لقد اوشكت على استهلاك مساحة التخزين' : '100% متاح'}
+              <p className={`text-[9px] sm:text-[10px] font-black text-center ${storagePercent >= 80 ? 'text-red-500' : 'text-blue-600'}`}>
+                {storagePercent >= 80 ? 'تحذير : لقد اوشكت على استهلاك مساحة التخزين' : `${100 - storagePercent}% متاح`}
               </p>
             </div>
 
