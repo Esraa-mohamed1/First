@@ -17,7 +17,7 @@ import TemplateRenderer from '@/builder/templates/renderer/TemplateRenderer';
 
 function getTenantKey(host: string): string | null {
     const hostname = host.split(':')[0].toLowerCase();
-    
+
     if (
         hostname === 'localhost' ||
         hostname === 'darab.academy' ||
@@ -26,11 +26,11 @@ function getTenantKey(host: string): string | null {
     ) {
         return null;
     }
-    
+
     if (hostname.endsWith('.localhost')) {
         return hostname.replace('.localhost', '');
     }
-    
+
     return hostname;
 }
 
@@ -43,7 +43,7 @@ async function fetchTenantHomepage(tenantKey: string, token?: string) {
             'X-Tenant': lowerKey,
             'x-tenant-name': lowerKey
         };
-        
+
         if (token) {
             reqHeaders['Authorization'] = `Bearer ${token}`;
         }
@@ -63,7 +63,7 @@ async function fetchTenantHomepage(tenantKey: string, token?: string) {
         }
 
         const TEMPLATE_SLUGS = ['academy-dashboard', 'template_1', 'template_2', 'template_3', 'template_4', 'template_courses_1'];
-        
+
         let homePage = pages.find((p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true');
         if (!homePage) {
             const templatePages = pages.filter((p: any) => TEMPLATE_SLUGS.includes(p.title));
@@ -95,17 +95,22 @@ async function fetchTenantHomepage(tenantKey: string, token?: string) {
 export default async function Home() {
     const headersList = await headers();
     const host = headersList.get('host') || '';
-    const tenantKey = getTenantKey(host);
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+    const cookieTenant = cookieStore.get('academy_link_name')?.value;
+
+    let tenantKey = getTenantKey(host) || cookieTenant;
+    if (!tenantKey && (host.includes('localhost') || host.includes('127.0.0.1'))) {
+        tenantKey = 'esraa.darab.academy';
+    }
 
     if (tenantKey) {
-        const cookieStore = await cookies();
-        const token = cookieStore.get('token')?.value;
         console.log(`[Home Server Component] host: ${host}, tenantKey: ${tenantKey}, token: ${token ? token.substring(0, 10) + '...' : 'undefined'}`);
         const homepageData = await fetchTenantHomepage(tenantKey, token);
         if (homepageData) {
             const editorNodes = apiToEditor(homepageData.sections);
             return (
-                <main className="w-full min-h-screen bg-white">
+                <main className="min-h-screen bg-white  mx-auto px-12 py-12">
                     <TemplateRenderer templateId={homepageData.templateId} sections={editorNodes} />
                 </main>
             );
