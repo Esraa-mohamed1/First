@@ -145,17 +145,15 @@ async function fetchTenantHomepage(tenantKey: string, token?: string) {
     }
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
     const headersList = await headers();
     const host = headersList.get('host') || '';
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
-    const cookieTenant = cookieStore.get('academy_link_name')?.value;
 
-    let tenantKey = getTenantKey(host) || cookieTenant;
-    if (!tenantKey && (host.includes('localhost') || host.includes('127.0.0.1'))) {
-        tenantKey = 'esraa.darab.academy';
-    }
+    const tenantKey = getTenantKey(host);
 
     if (tenantKey) {
         console.log(`[Home Server Component] host: ${host}, tenantKey: ${tenantKey}, token: ${token ? token.substring(0, 10) + '...' : 'undefined'}`);
@@ -163,15 +161,19 @@ export default async function Home() {
         if (homepageData) {
             const editorNodes = apiToEditor(homepageData.sections);
             return (
-                <main className="min-h-screen bg-white  mx-auto px-12 py-12">
-                    <TemplateRenderer templateId={homepageData.templateId} sections={editorNodes} />
+                <main className="min-h-screen bg-slate-50/50 py-12 px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-7xl mx-auto bg-white rounded-3xl shadow-xl border border-slate-100/80 overflow-hidden">
+                        <TemplateRenderer templateId={homepageData.templateId} sections={editorNodes} />
+                    </div>
                 </main>
             );
         } else {
             const defaultTemplate = getTemplateById('template_1');
             return (
-                <main className="min-h-screen bg-white  mx-auto px-12 py-12">
-                    <TemplateRenderer templateId="template_1" sections={defaultTemplate.sections} />
+                <main className="min-h-screen bg-slate-50/50 py-12 px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-7xl mx-auto bg-white rounded-3xl shadow-xl border border-slate-100/80 overflow-hidden">
+                        <TemplateRenderer templateId="template_1" sections={defaultTemplate.sections} />
+                    </div>
                 </main>
             );
         }
