@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useBuilderStore } from '../store/builderStore';
 import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
 import { getCourses } from '@/services/courses';
+import { getStudentCourses } from '@/services/student-courses';
 
 
 interface CourseCardsProps {
@@ -60,7 +61,7 @@ export default function CourseCards(props: CourseCardsProps) {
   React.useEffect(() => {
     async function fetchRealData() {
       try {
-        const data = await getCourses();
+        const data = isEditing ? await getCourses() : await getStudentCourses();
         if (data && data.length > 0) {
           setRealCourses(data);
         }
@@ -69,7 +70,7 @@ export default function CourseCards(props: CourseCardsProps) {
       }
     }
     fetchRealData();
-  }, []);
+  }, [isEditing]);
 
   const formattedCourses = React.useMemo(() => {
     if (realCourses.length === 0) return courses;

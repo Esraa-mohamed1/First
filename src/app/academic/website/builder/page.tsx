@@ -27,6 +27,7 @@ import {
 import toast from 'react-hot-toast';
 import { getSections, saveSections, apiToEditor, editorToApi, getPages } from '@/services/pages';
 import Swal from 'sweetalert2';
+import { syncHomepageCache } from '@/lib/homepage-cache';
 
 export default function PageBuilderPage() {
   const router = useRouter();
@@ -267,6 +268,11 @@ export default function PageBuilderPage() {
         try {
           const apiSections = editorToApi(currentTemplate.sections, apiPageId);
           await saveSections(apiPageId, apiSections);
+          try {
+            await syncHomepageCache(templateId, currentTemplate.sections);
+          } catch (cacheErr) {
+            console.error('Failed to sync to homepage cache during save:', cacheErr);
+          }
           setLastSavedContent(JSON.stringify(currentTemplate.sections));
           Swal.fire({
             icon: 'success',
@@ -363,6 +369,11 @@ export default function PageBuilderPage() {
       try {
         const apiSections = editorToApi(currentTemplate.sections, apiPageId);
         await saveSections(apiPageId, apiSections);
+        try {
+          await syncHomepageCache(templateId, currentTemplate.sections);
+        } catch (cacheErr) {
+          console.error('Failed to sync to homepage cache during publish:', cacheErr);
+        }
         Swal.fire({
           icon: 'success',
           title: 'تم النشر!',
