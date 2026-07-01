@@ -120,7 +120,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         { label: 'دورة لايف اون لاين', href: '/academic/courses/live-online' },
         { label: 'دورة حضوري', href: '/academic/courses/in-person' },
         { label: 'فئات الدورات', href: '/academic/courses/categories' },
-        { label: 'الأحصائيات', href: '/academic/courses/stats' },
         { label: 'معاينة كطالب (تجريبي)', href: '/academic/courses/8/student' },
       ],
     },

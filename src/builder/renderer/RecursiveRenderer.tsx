@@ -17,6 +17,7 @@ const StudentFeed = dynamic(() => import('../components/StudentFeed'), { ssr: fa
 const CourseCards = dynamic(() => import('../components/CourseCards'), { ssr: false });
 const SidebarBlock = dynamic(() => import('../components/SidebarBlock'), { ssr: false });
 const NavbarBlock = dynamic(() => import('../components/NavbarBlock'), { ssr: false });
+const FooterBlock = dynamic(() => import('../components/NavbarBlock').then(m => m.FooterBlock), { ssr: false });
 const TabsBlock = dynamic(() => import('../components/TabsBlock'), { ssr: false });
 const MetricsCards = dynamic(() => import('../components/MetricsCards'), { ssr: false });
 
@@ -49,6 +50,7 @@ const rendererRegistry: Record<string, React.ComponentType<any>> = {
   'course-cards': CourseCards,
   sidebar: SidebarBlock,
   navbar: NavbarBlock,
+  footer: FooterBlock,
   tabs: TabsBlock,
   metrics: MetricsCards,
 };

@@ -157,7 +157,7 @@ export default function PageBuilderPage() {
       try {
         const apiPages = await getPages();
         const TEMPLATE_SLUGS = ['academy-dashboard', 'template_1', 'template_2', 'template_3', 'template_4', 'template_courses_1'];
-        
+
         let activePage = apiPages.find((p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true');
         if (!activePage) {
           const templatePages = apiPages.filter((p: any) => TEMPLATE_SLUGS.includes(p.title));
@@ -324,7 +324,7 @@ export default function PageBuilderPage() {
     if (!currentTemplate || !isEditing) return;
 
     const currentContent = JSON.stringify(currentTemplate.sections);
-    
+
     // Don't auto-save if content hasn't changed since last save
     if (currentContent === lastSavedContent) return;
 
@@ -443,11 +443,10 @@ export default function PageBuilderPage() {
           {isEditing && (
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className={`p-2.5 hover:bg-slate-800 rounded-xl transition-all border ${
-                isSidebarOpen
+              className={`p-2.5 hover:bg-slate-800 rounded-xl transition-all border ${isSidebarOpen
                   ? 'bg-blue-600/10 text-blue-400 border-blue-500/20'
                   : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
-              }`}
+                }`}
               title={isSidebarOpen ? "إخفاء قائمة العناصر" : "إظهار قائمة العناصر"}
             >
               <LayoutGrid className="w-4 h-4" />
@@ -539,8 +538,8 @@ export default function PageBuilderPage() {
           <button
             onClick={() => setIsEditing(!isEditing)}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${!isEditing
-                ? 'bg-blue-600/10 text-blue-400 border-blue-500/20'
-                : 'bg-slate-800 text-slate-300 border-slate-700/60 hover:text-slate-100'
+              ? 'bg-blue-600/10 text-blue-400 border-blue-500/20'
+              : 'bg-slate-800 text-slate-300 border-slate-700/60 hover:text-slate-100'
               }`}
           >
             {isEditing ? (
@@ -617,8 +616,7 @@ export default function PageBuilderPage() {
                       { type: 'testimonials_section', name: 'آراء العملاء', desc: 'توصيات وآراء المشتركين' },
                       { type: 'pricing_section', name: 'خطط الأسعار', desc: 'بطاقات خطط التسعير والاشتراك' },
                       { type: 'hero', name: 'بانر هيرو (قديم)', desc: 'عنوان و كبسة استدعاء' },
-                      { type: 'course-cards', name: 'بطاقات الكورسات', desc: 'شبكة عرض الدورات الكلية' },
-                      { type: 'student-feed', name: 'أحدث أنشطة المتعلمين', desc: 'تحديثات الأنشطة المباشرة' }
+                      { type: 'course-cards', name: 'بطاقات الكورسات', desc: 'شبكة عرض الدورات الكلية' }
                     ].map((item) => (
                       <button
                         key={item.type}
@@ -641,9 +639,30 @@ export default function PageBuilderPage() {
                   <div className="grid grid-cols-1 gap-2">
                     {[
                       { type: 'kpi-cards', name: 'بطاقات المؤشرات (KPIs)', desc: 'أهم الأرقام والنسب المئوية' },
-                      { type: 'charts', name: 'الرسومات والمخططات البيانية', desc: 'رسم بياني تفاعلي للمبيعات' },
-                      { type: 'tables', name: 'جداول التقارير والمسجلين', desc: 'قائمة بيانات المشتركين' },
                       { type: 'metrics', name: 'مؤشرات الأداء المصغرة', desc: 'بطاقات تتبع التقدم والتقييم' }
+                    ].map((item) => (
+                      <button
+                        key={item.type}
+                        onClick={() => handleAddWidget(item.type)}
+                        className="w-full text-right p-3.5 bg-slate-800/40 hover:bg-slate-800 border border-slate-800 hover:border-slate-700/60 rounded-2xl flex flex-col justify-center space-y-1.5 transition-all group"
+                      >
+                        <span className="text-[11px] font-black text-slate-200 group-hover:text-blue-400 transition-colors flex items-center gap-1.5">
+                          <Plus className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500" />
+                          {item.name}
+                        </span>
+                        <span className="text-[8px] text-slate-400 font-medium">{item.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Navigation Category */}
+                <div className="space-y-2 pt-2">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-wide block">الترويسة و الفوتر  (Navigation)</span>
+                  <div className="grid grid-cols-1 gap-2">
+                    {[
+                      { type: 'navbar', name: 'شريط الترويسة العلوي (Navbar)', desc: 'شريط التنقل العلوي للأكاديمية' },
+                      { type: 'footer', name: 'شريط السفلي (Footer)', desc: 'تذييل الصفحة مع معلومات التواصل والروابط' }
                     ].map((item) => (
                       <button
                         key={item.type}
