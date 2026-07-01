@@ -150,9 +150,10 @@ export default function StudentRegisterPage() {
     };
 
     return (
-        <div className="w-full max-w-[520px] mx-auto z-10 animate-fade-in-up p-4 sm:p-6" dir="rtl">
-            <div className="bg-white p-8 sm:p-12 rounded-[32px] md:rounded-[40px] shadow-xl border">
-                <div className="mb-10 text-center">
+        <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 relative font-sans overflow-hidden " dir="rtl">
+            <div className="w-full max-w-2xl relative z-10 animate-fade-in-up">
+                <div className="bg-white p-10 sm:p-14 rounded-[40px] shadow-xl border ">
+                    <div className="mb-10 text-center">
                         <h1 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">إنشاء حساب طالب</h1>
                         <p className="text-gray-500 font-bold">ابدأ رحلتك التعليمية معنا اليوم</p>
                     </div>
@@ -266,6 +267,7 @@ export default function StudentRegisterPage() {
                             </p>
                         </div>
                     </form>
+                </div>
             </div>
         </div>
     );

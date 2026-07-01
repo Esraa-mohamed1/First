@@ -1,0 +1,99 @@
+{
+  "templateId": "template_2",
+  "sections": [
+    {
+      "id": "131",
+      "type": "navbar",
+      "props": {
+        "title": "منصة إدراك التعليمية",
+        "showSearch": true,
+        "showProfile": true,
+        "bgColor": "#ffffff",
+        "borderColor": "#f1f5f9",
+        "items": []
+      }
+    },
+    {
+      "id": "132",
+      "type": "hero",
+      "props": {
+        "title": "منصة التعلم الذاتي المتطورة eesrsraearesrd",
+        "subtitle": "واجهة مشبعة بحيوية اللون الأخضر الفيروزي وتأثيرات بصرية راقية تجذب المتعلم الحديث لبناء مستقبل باهر.",
+        "buttonText": "سجل الآن مجاناً",
+        "buttonLink": "#",
+        "backgroundColor": "#f0fdfa",
+        "textColor": "#1f2937",
+        "paddingTop": 80,
+        "paddingBottom": 80,
+        "align": "center",
+        "titleColor": "#0f766e",
+        "subtitleColor": "#4b5563",
+        "buttonColor": "#00a896",
+        "buttonTextColor": "#ffffff",
+        "bgImage": null,
+        "items": []
+      }
+    },
+    {
+      "id": "133",
+      "type": "kpi-cards",
+      "props": {
+        "title": null,
+        "backgroundColor": "#ffffff",
+        "textColor": "#1f2937",
+        "paddingTop": 60,
+        "paddingBottom": 60,
+        "gridCols": "3",
+        "cards": [
+          {
+            "id": "1",
+            "title": "المسجلين في الدورة",
+            "value": "4,812 طالب",
+            "change": "+18% منذ الأسبوع الماضي",
+            "isPositive": true,
+            "icon": "Users",
+            "color": "#00a896"
+          },
+          {
+            "id": "2",
+            "title": "الإيرادات المحققة",
+            "value": "25,410 ريال",
+            "change": "+14.2% مؤخراً",
+            "isPositive": true,
+            "icon": "Wallet",
+            "color": "#00a896"
+          },
+          {
+            "id": "3",
+            "title": "إنجاز المنهج",
+            "value": "88% للدفعة الحالية",
+            "change": "+3% اليوم",
+            "isPositive": true,
+            "icon": "CheckCircle",
+            "color": "#0f766e"
+          }
+        ],
+        "items": []
+      }
+    },
+    {
+      "id": "134",
+      "type": "course-cards",
+      "props": {
+        "title": "مسارات تعليمية مقترحة",
+        "subtitle": null,
+        "backgroundColor": "#ffffff",
+        "textColor": "#1f2937",
+        "paddingTop": 60,
+        "paddingBottom": 60,
+        "gridCols": "3",
+        "showPrice": true,
+        "showStudentsCount": true,
+        "buttonBg": "#00a896",
+        "limit": 4,
+        "items": []
+      }
+    }
+  ],
+  "updatedAt": "2026-07-01T08:42:57.062Z"
+}

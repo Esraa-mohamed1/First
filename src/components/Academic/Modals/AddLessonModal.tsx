@@ -252,9 +252,6 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, courseTit
                 if (hostname.endsWith('.localhost')) {
                   hostname = hostname.replace('.localhost', '');
                 }
-                if (hostname.endsWith('.darab.academy')) {
-                  hostname = hostname.replace('.darab.academy', '');
-                }
                 if (hostname && hostname !== 'localhost') {
                   tenantName = hostname;
                 }

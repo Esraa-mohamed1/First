@@ -31,6 +31,7 @@ import toast from 'react-hot-toast';
 import { createPage, getSections, apiToEditor, getPages, updatePage } from '@/services/pages';
 import { getTemplateById } from '@/builder/utils/templates';
 import TemplateRenderer from '@/builder/templates/renderer/TemplateRenderer';
+import { syncHomepageCache } from '@/lib/homepage-cache';
 
 // -------------------------------------------------------------
 // Interfaces and Type Definitions
@@ -122,6 +123,15 @@ export default function TemplatesPage() {
           }
           return { ...p, is_active: '0' };
         }));
+
+        // Fetch sections of the existing page to sync to cache
+        try {
+          const apiSections = await getSections(pageId);
+          const editorNodes = apiToEditor(apiSections);
+          await syncHomepageCache(id, editorNodes);
+        } catch (cacheErr) {
+          console.error('Failed to sync activated existing page to homepage cache:', cacheErr);
+        }
       } else {
         // Create new page
         const payload = {
@@ -139,6 +149,14 @@ export default function TemplatesPage() {
           { ...created, is_active: '1' },
           ...prev.map((p: any) => ({ ...p, is_active: '0' }))
         ]);
+
+        // Sync default static template config to cache
+        try {
+          const templateConfig = getTemplateById(id);
+          await syncHomepageCache(id, templateConfig.sections);
+        } catch (cacheErr) {
+          console.error('Failed to sync activated new page default to homepage cache:', cacheErr);
+        }
       }
 
       localStorage.setItem('darab_active_template', id);

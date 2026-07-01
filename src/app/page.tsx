@@ -11,9 +11,12 @@ import ScrollReveal from '@/components/ScrollReveal';
 import { headers, cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
 import { unwrapEncryptedResponseData } from '@/lib/decryption';
 import { apiToEditor } from '@/services/pages';
 import TemplateRenderer from '@/builder/templates/renderer/TemplateRenderer';
+import { getTemplateById } from '@/builder/utils/templates';
 
 function getTenantKey(host: string): string | null {
     const hostname = host.split(':')[0].toLowerCase();
@@ -31,16 +34,31 @@ function getTenantKey(host: string): string | null {
         return hostname.replace('.localhost', '');
     }
 
-    if (hostname.endsWith('.darab.academy')) {
-        return hostname.replace('.darab.academy', '');
-    }
-
     return hostname;
 }
 
 async function fetchTenantHomepage(tenantKey: string, token?: string) {
+    const lowerKey = tenantKey.toLowerCase();
+    const cacheDir = path.join(process.cwd(), 'public', 'tenant-cache');
+    const cacheFilePath = path.join(cacheDir, `${lowerKey}.json`);
+
+    // If no token is provided, attempt to serve immediately from local cache
+    if (!token) {
+        if (fs.existsSync(cacheFilePath)) {
+            try {
+                const cachedContent = fs.readFileSync(cacheFilePath, 'utf8');
+                const cachedData = JSON.parse(cachedContent);
+                if (cachedData && cachedData.templateId && Array.isArray(cachedData.sections)) {
+                    console.log(`[Home Server Component] Guest access - read homepage data from local cache for ${tenantKey}`);
+                    return cachedData;
+                }
+            } catch (cacheErr: any) {
+                console.error(`Failed to read guest cache for ${tenantKey}:`, cacheErr.message);
+            }
+        }
+    }
+
     try {
-        const lowerKey = tenantKey.toLowerCase();
         const reqHeaders: Record<string, string> = {
             'Content-Type': 'application/json',
             'X-Tenant-Key': lowerKey,
@@ -86,12 +104,43 @@ async function fetchTenantHomepage(tenantKey: string, token?: string) {
         const unwrappedSections = unwrapEncryptedResponseData(sectionsResponse.data) as any;
         const sectionsData = unwrappedSections?.data ?? unwrappedSections;
 
-        return {
+        const resultData = {
             templateId: homePage.template || homePage.template_id || homePage.title || homePage.slug || 'template_1',
             sections: Array.isArray(sectionsData) ? sectionsData : []
         };
+
+        // Cache the successful retrieval for future guest loads
+        try {
+            if (!fs.existsSync(cacheDir)) {
+                fs.mkdirSync(cacheDir, { recursive: true });
+            }
+            fs.writeFileSync(cacheFilePath, JSON.stringify({
+                ...resultData,
+                updatedAt: new Date().toISOString()
+            }, null, 2), 'utf8');
+            console.log(`[Home Server Component] Automatically updated homepage cache for ${lowerKey}`);
+        } catch (writeErr: any) {
+            console.error(`Failed to write cache for ${tenantKey}:`, writeErr.message);
+        }
+
+        return resultData;
     } catch (error: any) {
         console.error(`Failed to fetch tenant homepage for ${tenantKey}:`, error.message, error.response?.status, error.response?.data);
+        
+        // Fallback to cache on error
+        if (fs.existsSync(cacheFilePath)) {
+            try {
+                const cachedContent = fs.readFileSync(cacheFilePath, 'utf8');
+                const cachedData = JSON.parse(cachedContent);
+                if (cachedData && cachedData.templateId && Array.isArray(cachedData.sections)) {
+                    console.log(`[Home Server Component] API failed - fall back to local cache for ${tenantKey}`);
+                    return cachedData;
+                }
+            } catch (cacheErr: any) {
+                console.error(`Failed to read fallback cache for ${tenantKey}:`, cacheErr.message);
+            }
+        }
+        
         return null;
     }
 }
@@ -105,17 +154,7 @@ export default async function Home() {
 
     let tenantKey = getTenantKey(host) || cookieTenant;
     if (!tenantKey && (host.includes('localhost') || host.includes('127.0.0.1'))) {
-        tenantKey = 'esraa';
-    }
-
-    if (tenantKey) {
-        if (tenantKey.endsWith('.darab.academy')) {
-            tenantKey = tenantKey.replace('.darab.academy', '');
-        }
-        if (tenantKey.endsWith('.localhost')) {
-            tenantKey = tenantKey.replace('.localhost', '');
-        }
-        tenantKey = tenantKey.toLowerCase();
+        tenantKey = 'esraa.darab.academy';
     }
 
     if (tenantKey) {
@@ -129,7 +168,12 @@ export default async function Home() {
                 </main>
             );
         } else {
-            redirect('/auth/login');
+            const defaultTemplate = getTemplateById('template_1');
+            return (
+                <main className="min-h-screen bg-white  mx-auto px-12 py-12">
+                    <TemplateRenderer templateId="template_1" sections={defaultTemplate.sections} />
+                </main>
+            );
         }
     }
 
