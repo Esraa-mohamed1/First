@@ -145,8 +145,6 @@ async function fetchTenantHomepage(tenantKey: string, token?: string) {
     }
 }
 
-export const dynamic = 'force-dynamic';
-
 export default async function Home() {
     const headersList = await headers();
     const host = headersList.get('host') || '';
@@ -161,8 +159,8 @@ export default async function Home() {
         if (homepageData) {
             const editorNodes = apiToEditor(homepageData.sections);
             return (
-                <main className="min-h-screen bg-slate-50/50 py-12 px-4 sm:px-6 lg:px-8">
-                    <div className="max-w-7xl mx-auto bg-white rounded-3xl shadow-xl border border-slate-100/80 overflow-hidden">
+                <main className="w-full min-h-screen bg-white">
+                    <div className="max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12">
                         <TemplateRenderer templateId={homepageData.templateId} sections={editorNodes} />
                     </div>
                 </main>
@@ -170,8 +168,8 @@ export default async function Home() {
         } else {
             const defaultTemplate = getTemplateById('template_1');
             return (
-                <main className="min-h-screen bg-slate-50/50 py-12 px-4 sm:px-6 lg:px-8">
-                    <div className="max-w-7xl mx-auto bg-white rounded-3xl shadow-xl border border-slate-100/80 overflow-hidden">
+                <main className="w-full min-h-screen bg-white">
+                    <div className="max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12">
                         <TemplateRenderer templateId="template_1" sections={defaultTemplate.sections} />
                     </div>
                 </main>
