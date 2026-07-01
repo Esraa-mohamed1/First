@@ -28,12 +28,9 @@ api.interceptors.request.use(
       let tenantKey = localStorage.getItem('academy_link_name');
       if (!tenantKey) {
         let hostname = window.location.hostname;
-        // Remove .localhost and .darab.academy if present
+        // Remove .localhost if present
         if (hostname.endsWith('.localhost')) {
           hostname = hostname.replace('.localhost', '');
-        }
-        if (hostname.endsWith('.darab.academy')) {
-          hostname = hostname.replace('.darab.academy', '');
         }
         if (hostname && hostname !== 'localhost') {
            tenantKey = hostname;

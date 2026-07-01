@@ -188,9 +188,10 @@ export default function AcademyLoginPage() {
     };
 
     return (
-        <div className="w-full max-w-[520px] mx-auto z-10 animate-fade-in-up p-4 sm:p-6" dir="rtl">
-            <div className="bg-white p-8 sm:p-12 rounded-[32px] md:rounded-[40px] shadow-2xl shadow-blue-900/5 border border-gray-100">
-                <div className="mb-10 text-center">
+        <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 relative font-sans overflow-hidden " dir="rtl">
+            <div className="w-full max-w-2xl relative z-10 animate-fade-in-up">
+                <div className="bg-white p-10 sm:p-14 lg:p-16 rounded-[48px] shadow-2xl shadow-blue-900/5 border border-gray-100 backdrop-blur-sm">
+                    <div className="mb-10 text-center">
                         <div className="w-20 h-20 bg-blue-600 text-white rounded-3xl flex items-center justify-center mb-8 shadow-2xl shadow-blue-200 mx-auto transform hover:rotate-6 transition-transform duration-300">
                             <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14v6.5"></path></svg>
                         </div>
@@ -355,6 +356,7 @@ export default function AcademyLoginPage() {
                     </form>
 
 
+                </div>
             </div>
         </div>
     );

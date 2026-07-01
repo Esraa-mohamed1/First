@@ -6,9 +6,6 @@ const getTenantKey = () => {
   if (hostname.endsWith('.localhost')) {
     hostname = hostname.replace('.localhost', '');
   }
-  if (hostname.endsWith('.darab.academy')) {
-    hostname = hostname.replace('.darab.academy', '');
-  }
   return hostname === 'localhost' ? '' : hostname;
 };
 
