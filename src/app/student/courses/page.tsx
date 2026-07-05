@@ -21,21 +21,27 @@ export default function CoursesPage() {
         setLoading(true);
         const fetchedEnrollments = await getMyEnrolledCourses();
         const studentCourses: Course[] = fetchedEnrollments.map(enrollment => {
-          const course = enrollment.course;
-          if (!course) {
+          const course = enrollment.course || enrollment;
+          if (!course || !course.title) {
+            return null;
+          }
+          const enrollmentStatus = enrollment.course ? (enrollment.status || 'active') : 'active';
+          const isAccepted = enrollmentStatus === 'active' || enrollmentStatus === 'accepted';
+          if (!isAccepted) {
             return null;
           }
           const courseId = course.id ?? enrollment.course_id ?? enrollment.id;
+          const progressVal = enrollment.progress || course.progress || 0;
           return {
             id: String(courseId),
             title: course.title,
             slug: course.slug,
             description: course.description,
-            progress: enrollment.progress || 0,
+            progress: progressVal,
             image: course.image || course.cover_image || course.thumbnail || '',
             instructor: course.instructor_name || 'Unknown',
             category: course.category?.name || 'Uncategorized',
-            status: enrollment.status || 'in-progress',
+            status: (progressVal === 100 ? 'completed' : 'in-progress') as any,
             price_type: course.price_type,
             is_enrolled: true,
           };

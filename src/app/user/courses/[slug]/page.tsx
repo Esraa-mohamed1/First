@@ -156,8 +156,9 @@ export default function CourseStudentViewPage() {
           units: data.units || (data as any).chapters || [],
           learning_points: learningPoints,
           info_sections: infoSections,
-          is_subscribed: (data as any).is_enrolled || false,
-          subscription_status: subStatus,
+          is_subscribed: (data as any).is_enrolled || (data as any).enrollment_status === 'active' || (data as any).enrollment_status === 'accepted' || subStatus === 'active' || subStatus === 'accepted' || false,
+          subscription_status: subStatus || (data as any).enrollment_status,
+          rejection_reason: (data as any).rejection_reason || (courseSubscription ? (courseSubscription.message || courseSubscription.rejection_reason || courseSubscription.rejectionReason) : '') || '',
           payment_methods: paymentMethodsData,
         };
 
@@ -445,6 +446,30 @@ export default function CourseStudentViewPage() {
                     قيد الانتظار (المراجعة)
                   </button>
                 </div>
+              ) : (course.subscription_status === 'rejected' || course.subscription_status === 'cancelled') ? (
+                <div className="space-y-4">
+                  <div className="text-center space-y-2">
+                    <div className="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+                      <Lock size="24" />
+                    </div>
+                    <h3 className="text-lg font-black text-slate-900 text-red-600">طلب الاشتراك مرفوض</h3>
+                    <p className="text-slate-500 font-bold text-[10px] md:text-xs">
+                      {course.rejection_reason || 'تم رفض طلب اشتراكك في هذه الدورة من قبل الإدارة.'}
+                    </p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      if (course.rejection_reason) {
+                        alert(`سبب الرفض: ${course.rejection_reason}`);
+                      } else {
+                        alert('تم رفض طلب الاشتراك.');
+                      }
+                    }}
+                    className="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black text-sm shadow-md shadow-red-200 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    مرفوض
+                  </button>
+                </div>
               ) : (
                 <>
                   <div className="text-right mb-1">
@@ -588,6 +613,13 @@ export default function CourseStudentViewPage() {
               style={{ backgroundColor: '#8b5cf6' }}
             >
               قيد الانتظار
+            </button>
+          ) : (course.subscription_status === 'rejected' || course.subscription_status === 'cancelled') ? (
+            <button
+              onClick={() => alert(`طلب الاشتراك مرفوض. السبب: ${course.rejection_reason || 'غير محدد'}`)}
+              className="px-4 py-2 bg-red-600 text-white font-black text-xs rounded-xl shadow-md cursor-pointer whitespace-nowrap"
+            >
+              مرفوض
             </button>
           ) : (
             <button

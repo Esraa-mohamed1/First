@@ -36,6 +36,7 @@ interface PurchaseRequest {
   receiptImage: string; // Base64 encoding for local storage preview
   status: 'pending' | 'accepted' | 'rejected';
   date: string;
+  rejectionReason?: string;
 }
 
 export default function StudentRequestsPage() {
@@ -107,8 +108,8 @@ export default function StudentRequestsPage() {
 
       const mapped: PurchaseRequest[] = (backendRequests || []).map((req: any) => {
         let resolvedStatus: PurchaseRequest['status'] = 'pending';
-        if (req.status === 'accepted') resolvedStatus = 'accepted';
-        else if (req.status === 'rejected') resolvedStatus = 'rejected';
+        if (req.status === 'accepted' || req.status === 'active') resolvedStatus = 'accepted';
+        else if (req.status === 'rejected' || req.status === 'cancelled') resolvedStatus = 'rejected';
         else if (req.status === 'penidng' || req.status === 'pending') resolvedStatus = 'pending';
 
         const courseTitle = req.course?.title || 'دورة تعليمية';
@@ -128,7 +129,8 @@ export default function StudentRequestsPage() {
           paymentMethod: req.payment_method || 'تحويل بنكي',
           receiptImage: getLogoUrl(req.receipt),
           status: resolvedStatus,
-          date: req.created_at ? new Date(req.created_at).toLocaleDateString('ar-EG') : new Date().toLocaleDateString('ar-EG')
+          date: req.created_at ? new Date(req.created_at).toLocaleDateString('ar-EG') : new Date().toLocaleDateString('ar-EG'),
+          rejectionReason: req.message || req.rejection_reason || req.rejectionReason || ''
         };
       });
       setRequests(mapped);

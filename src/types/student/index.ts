@@ -11,6 +11,8 @@ export interface Course {
   price_type?: 'free' | 'paid';
   is_enrolled?: boolean;
   subscription_status?: string | null;
+  enrollment_status?: string | null;
+  rejection_reason?: string | null;
 }
 
 export interface UserProfile {
