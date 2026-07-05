@@ -141,8 +141,33 @@ export default function AdminRequestsPage() {
   const handleViewReceipt = (imageUrl: string) => {
     MySwal.fire({
       title: 'إيصال دفع العميل المرفق',
-      imageUrl: imageUrl,
-      imageAlt: 'Receipt Proof',
+      html: (
+        <div className="w-full overflow-hidden mt-4">
+          <a
+            href={imageUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block cursor-zoom-in group relative"
+            title="اضغط لفتح الصورة بالحجم الكامل في نافذة جديدة"
+          >
+            <img
+              src={imageUrl}
+              alt="Receipt Proof"
+              className="w-full h-auto max-h-[60vh] object-contain rounded-xl border border-gray-100 shadow-sm transition-transform duration-300 group-hover:scale-[1.01]"
+            />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl flex items-center justify-center">
+              <span className="text-white text-xs font-bold bg-black/60 px-4 py-2 rounded-full backdrop-blur-sm">
+                فتح الصورة بالحجم الكامل 🔍
+              </span>
+            </div>
+          </a>
+          <p className="text-[11px] text-gray-400 mt-3 font-semibold">
+            اضغط على الصورة لعرضها بالحجم الكامل في علامة تبويب جديدة
+          </p>
+        </div>
+      ),
+      width: '800px',
+      showCloseButton: true,
       confirmButtonText: 'إغلاق',
       confirmButtonColor: '#2563eb'
     });
