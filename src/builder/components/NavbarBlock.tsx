@@ -19,6 +19,21 @@ interface NavbarBlockProps {
   [key: string]: any;
 }
 
+const isValidField = (val: any) => {
+  if (!val || typeof val !== 'string') return false;
+  const trimmed = val.trim();
+  if (trimmed.length > 30 && /^[A-Za-z0-9+/=\s]+$/.test(trimmed)) {
+    return false;
+  }
+  return true;
+};
+
+const isValidImageUrl = (url: any) => {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  return trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:image/') || trimmed.startsWith('/');
+};
+
 export default function NavbarBlock(props: NavbarBlockProps) {
   const {
     title = 'بوابة التعلم',
@@ -150,7 +165,7 @@ export default function NavbarBlock(props: NavbarBlockProps) {
 
         {/* Right Side: Logo */}
         <div className="flex items-center gap-3">
-          {activeLogo ? (
+          {isValidImageUrl(activeLogo) ? (
             <img src={activeLogo} alt={activeTitle} className="w-8 h-8 object-contain rounded-lg" />
           ) : (
             <div className="w-8 h-8 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600 shrink-0 font-extrabold text-sm">
@@ -180,7 +195,7 @@ export default function NavbarBlock(props: NavbarBlockProps) {
 
       {/* Brand logo details */}
       <div className="flex items-center gap-3">
-        {activeLogo ? (
+        {isValidImageUrl(activeLogo) ? (
           <img src={activeLogo} alt={activeTitle} className="w-8 h-8 object-contain rounded-lg" />
         ) : (
           <div className="w-8 h-8 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600 shrink-0 font-extrabold text-sm">
@@ -320,7 +335,7 @@ export function FooterBlock(props: any) {
           <div className="flex flex-col gap-5 items-start">
             {showLogo && (
               <div className="flex items-center gap-3">
-                {activeLogo ? (
+                {isValidImageUrl(activeLogo) ? (
                   <img src={activeLogo} alt={academyName} className="w-10 h-10 object-contain rounded-lg" />
                 ) : (
                   <div className="w-10 h-10 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600 font-extrabold text-base">
@@ -332,29 +347,31 @@ export function FooterBlock(props: any) {
                 </span>
               </div>
             )}
-            <p className="text-xs font-bold opacity-75 leading-relaxed max-w-sm">
-              {description}
-            </p>
+            {isValidField(description) && (
+              <p className="text-xs font-bold opacity-75 leading-relaxed max-w-sm">
+                {description}
+              </p>
+            )}
             
             {/* Social Icons */}
             {showSocials && (
               <div className="flex items-center gap-3 mt-2">
-                {activeFacebook && (
+                {activeFacebook && isValidField(activeFacebook) && (
                   <a href={activeFacebook} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-blue-50 text-slate-400 hover:text-[#1877F2] flex items-center justify-center transition-colors">
                     <Facebook size={16} />
                   </a>
                 )}
-                {activeInstagram && (
+                {activeInstagram && isValidField(activeInstagram) && (
                   <a href={activeInstagram} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-pink-50 text-slate-400 hover:text-pink-500 flex items-center justify-center transition-colors">
                     <Instagram size={16} />
                   </a>
                 )}
-                {activeLinkedin && (
+                {activeLinkedin && isValidField(activeLinkedin) && (
                   <a href={activeLinkedin} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-blue-50 text-slate-400 hover:text-blue-600 flex items-center justify-center transition-colors">
                     <Linkedin size={16} />
                   </a>
                 )}
-                {activeTwitter && (
+                {activeTwitter && isValidField(activeTwitter) && (
                   <a href={activeTwitter} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-900 flex items-center justify-center transition-colors">
                     <Twitter size={16} />
                   </a>
@@ -383,17 +400,19 @@ export function FooterBlock(props: any) {
           <div className="flex flex-col gap-4 items-start">
             <h3 className="text-xs font-black uppercase tracking-wider">اتصل بنا والدعم</h3>
             <ul className="space-y-3 text-xs font-bold opacity-75 text-right">
-              <li className="flex items-center gap-3">
-                <Mail size={16} className="opacity-60" />
-                <span>{activeEmail}</span>
-              </li>
-              {activePhone && (
+              {activeEmail && isValidField(activeEmail) && (
+                <li className="flex items-center gap-3">
+                  <Mail size={16} className="opacity-60" />
+                  <span>{activeEmail}</span>
+                </li>
+              )}
+              {activePhone && isValidField(activePhone) && (
                 <li className="flex items-center gap-3">
                   <Phone size={16} className="opacity-60" />
                   <span dir="ltr">{activePhone}</span>
                 </li>
               )}
-              {activeAddress && (
+              {activeAddress && isValidField(activeAddress) && (
                 <li className="flex items-center gap-3">
                   <MapPin size={16} className="opacity-60" />
                   <span>{activeAddress}</span>

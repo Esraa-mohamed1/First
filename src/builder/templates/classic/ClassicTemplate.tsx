@@ -5,6 +5,21 @@ import { getThemeBySlug } from '../themeStyles';
 import { Mail, Phone, MapPin, Facebook, Instagram, Linkedin, Twitter } from 'lucide-react';
 import { unwrapEncryptedResponseData } from '@/lib/decryption';
 
+const isValidField = (val: any) => {
+  if (!val || typeof val !== 'string') return false;
+  const trimmed = val.trim();
+  if (trimmed.length > 30 && /^[A-Za-z0-9+/=\s]+$/.test(trimmed)) {
+    return false;
+  }
+  return true;
+};
+
+const isValidImageUrl = (url: any) => {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  return trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:image/') || trimmed.startsWith('/');
+};
+
 export function TenantFooter() {
   const [profile, setProfile] = useState<any>(null);
 
@@ -79,7 +94,7 @@ export function TenantFooter() {
           {/* Column 1: Brand details */}
           <div className="flex flex-col gap-5 items-start">
             <div className="flex items-center gap-3">
-              {logoUrl ? (
+              {isValidImageUrl(logoUrl) ? (
                 <img src={logoUrl} alt={academyName} className="w-10 h-10 object-contain rounded-lg" />
               ) : (
                 <div className="w-10 h-10 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600 font-extrabold text-base">
@@ -90,28 +105,30 @@ export function TenantFooter() {
                 {academyName}
               </span>
             </div>
-            <p className="text-xs font-bold text-slate-500 leading-relaxed max-w-sm">
-              {description}
-            </p>
+            {isValidField(description) && (
+              <p className="text-xs font-bold text-slate-500 leading-relaxed max-w-sm">
+                {description}
+              </p>
+            )}
             
             {/* Social Icons */}
             <div className="flex items-center gap-3 mt-2">
-              {profile?.facebook_handle && (
+              {profile?.facebook_handle && isValidField(profile.facebook_handle) && (
                 <a href={profile.facebook_handle} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-blue-50 text-slate-400 hover:text-[#1877F2] flex items-center justify-center transition-colors">
                   <Facebook size={16} />
                 </a>
               )}
-              {profile?.instagram_handle && (
+              {profile?.instagram_handle && isValidField(profile.instagram_handle) && (
                 <a href={profile.instagram_handle} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-pink-50 text-slate-400 hover:text-pink-500 flex items-center justify-center transition-colors">
                   <Instagram size={16} />
                 </a>
               )}
-              {profile?.linkedin_handle && (
+              {profile?.linkedin_handle && isValidField(profile.linkedin_handle) && (
                 <a href={profile.linkedin_handle} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-blue-50 text-slate-400 hover:text-blue-600 flex items-center justify-center transition-colors">
                   <Linkedin size={16} />
                 </a>
               )}
-              {profile?.twitter_handle && (
+              {profile?.twitter_handle && isValidField(profile.twitter_handle) && (
                 <a href={profile.twitter_handle} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-900 flex items-center justify-center transition-colors">
                   <Twitter size={16} />
                 </a>
@@ -139,17 +156,19 @@ export function TenantFooter() {
           <div className="flex flex-col gap-4 items-start">
             <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">اتصل بنا والدعم</h3>
             <ul className="space-y-3 text-xs font-bold text-slate-500 text-right">
-              <li className="flex items-center gap-3">
-                <Mail size={16} className="text-slate-400" />
-                <span>{email}</span>
-              </li>
-              {phone && (
+              {email && isValidField(email) && (
+                <li className="flex items-center gap-3">
+                  <Mail size={16} className="text-slate-400" />
+                  <span>{email}</span>
+                </li>
+              )}
+              {phone && isValidField(phone) && (
                 <li className="flex items-center gap-3">
                   <Phone size={16} className="text-slate-400" />
                   <span dir="ltr">{phone}</span>
                 </li>
               )}
-              {address && (
+              {address && isValidField(address) && (
                 <li className="flex items-center gap-3">
                   <MapPin size={16} className="text-slate-400" />
                   <span>{address}</span>
