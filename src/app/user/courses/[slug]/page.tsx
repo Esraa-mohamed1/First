@@ -56,6 +56,13 @@ export default function CourseStudentViewPage() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<AcademyPaymentMethod | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [showFloatingWidget, setShowFloatingWidget] = useState(true);
+  const [isRetrying, setIsRetrying] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      return searchParams.get('retry') === 'true';
+    }
+    return false;
+  });
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -446,7 +453,7 @@ export default function CourseStudentViewPage() {
                     قيد الانتظار (المراجعة)
                   </button>
                 </div>
-              ) : (course.subscription_status === 'rejected' || course.subscription_status === 'cancelled') ? (
+              ) : (course.subscription_status === 'rejected' || course.subscription_status === 'cancelled') && !isRetrying ? (
                 <div className="space-y-4">
                   <div className="text-center space-y-2">
                     <div className="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
@@ -457,18 +464,26 @@ export default function CourseStudentViewPage() {
                       {course.rejection_reason || 'تم رفض طلب اشتراكك في هذه الدورة من قبل الإدارة.'}
                     </p>
                   </div>
-                  <button 
-                    onClick={() => {
-                      if (course.rejection_reason) {
-                        alert(`سبب الرفض: ${course.rejection_reason}`);
-                      } else {
-                        alert('تم رفض طلب الاشتراك.');
-                      }
-                    }}
-                    className="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black text-sm shadow-md shadow-red-200 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    مرفوض
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button 
+                      onClick={() => {
+                        if (course.rejection_reason) {
+                          alert(`سبب الرفض: ${course.rejection_reason}`);
+                        } else {
+                          alert('تم رفض طلب الاشتراك.');
+                        }
+                      }}
+                      className="w-full py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-black text-sm border border-red-100 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      تفاصيل الرفض
+                    </button>
+                    <button 
+                      onClick={() => setIsRetrying(true)}
+                      className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-sm shadow-md shadow-blue-500/10 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      إعادة محاولة الاشتراك
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <>
@@ -614,12 +629,18 @@ export default function CourseStudentViewPage() {
             >
               قيد الانتظار
             </button>
-          ) : (course.subscription_status === 'rejected' || course.subscription_status === 'cancelled') ? (
+          ) : (course.subscription_status === 'rejected' || course.subscription_status === 'cancelled') && !isRetrying ? (
             <button
-              onClick={() => alert(`طلب الاشتراك مرفوض. السبب: ${course.rejection_reason || 'غير محدد'}`)}
-              className="px-4 py-2 bg-red-600 text-white font-black text-xs rounded-xl shadow-md cursor-pointer whitespace-nowrap"
+              onClick={() => {
+                setIsRetrying(true);
+                const element = document.getElementById('payment-section');
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-95 whitespace-nowrap"
             >
-              مرفوض
+              إعادة محاولة الاشتراك
             </button>
           ) : (
             <button

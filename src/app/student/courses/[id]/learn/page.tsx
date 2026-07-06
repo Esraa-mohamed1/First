@@ -134,12 +134,34 @@ export default function CoursePlayerPage() {
   const [panelNoteText, setPanelNoteText] = useState('');
   const videoDurationRef = useRef(0);
   const [rocketData, setRocketData] = useState<any>(null);
+  const [studentName, setStudentName] = useState('أحمد');
 
   useEffect(() => {
     fetch('https://lottie.host/80e15967-b508-410a-8e2b-f8f4116d97c6/g7G8yvN0z6.json')
       .then(res => res.json())
       .then(data => setRocketData(data))
       .catch(err => console.error('Failed to load rocket animation:', err));
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedName = localStorage.getItem('user_name');
+      if (storedName) {
+        const firstName = storedName.trim().split(' ')[0];
+        setStudentName(firstName);
+      } else {
+        const userInfoStr = localStorage.getItem('user_info');
+        if (userInfoStr) {
+          try {
+            const userInfo = JSON.parse(userInfoStr);
+            const name = userInfo.name || userInfo.fullname;
+            if (name) {
+              setStudentName(name.trim().split(' ')[0]);
+            }
+          } catch (e) {}
+        }
+      }
+    }
   }, []);
 
   const videoContext = useMemo(() => {
@@ -1541,7 +1563,7 @@ export default function CoursePlayerPage() {
                     fontFamily: "system-ui, sans-serif"
                   }}
                 >
-                  أحسنت يا أحمد!
+                  أحسنت يا {studentName}!
                 </motion.text>
               </svg>
             </div>
