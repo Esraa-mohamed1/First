@@ -109,7 +109,7 @@ export const useAcademicDashboard = () => {
   const courseProgressPercent = totalCoursesLimit > 0 ? Math.min((usedCourses / totalCoursesLimit) * 100, 100) : 0;
 
   // Storage calculation from API usage limit
-  const storageUsed = storageLimitObj ? parseFloat(storageLimitObj.used_amount || '0') : (usedCourses > 0 ? 8.2 : 0);
+  const storageUsed = storageLimitObj ? parseFloat(storageLimitObj.used_amount || '0') / 1024 : (usedCourses > 0 ? 8.2 : 0);
   const storageTotal = storageLimitObj ? parseFloat(storageLimitObj.total_limit || '10') : 10;
   const storagePercent = storageTotal > 0 ? Math.min(Math.round((storageUsed / storageTotal) * 100), 100) : 0;
 

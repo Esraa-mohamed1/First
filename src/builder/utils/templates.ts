@@ -36,7 +36,7 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
           secondButtonColor: '#ffffff',
           secondButtonTextColor: '#7c3aed',
           heroImage: '/assets/ima.png',
-          heroImagePosition: 'right', // puts text first, image second (on the left in RTL)
+          heroImagePosition: 'right',
           align: 'right',
           backgroundColor: '#ffffff',
           titleColor: '#1f2937',
@@ -54,7 +54,7 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
           subtitle: 'أكثر من 5 سنوات من الخبرة في مشاريع حقيقية مع شركات عالمية وناشئة، ساعدت مئات الطلاب على دخول سوق العمل وبناء مسيرة مهنية مستدامة في عالم التصميم الرقمي.',
           buttonText: '',
           heroImage: '/assets/profile.png',
-          heroImagePosition: 'right', // puts text first, image second (on the left in RTL)
+          heroImagePosition: 'right',
           align: 'right',
           backgroundColor: '#ffffff',
           titleColor: '#1f2937',
@@ -63,12 +63,31 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
         }
       },
       {
+        id: 'features-t1',
+        type: 'features_section',
+        props: {
+          title: 'ما يميز أكاديميتنا',
+          subtitle: 'نقدم لك أفضل تجربة تعليمية متكاملة لضمان نجاحك وتفوقك المهني.',
+          background_color: '#ffffff',
+          text_color: '#1e293b',
+          grid_cols: 3,
+          padding_top: 64,
+          padding_bottom: 64,
+          order: 4,
+          items: [
+            { id: 'f1', order: 1, props: { icon: 'PlayCircle', icon_color: '#7c3aed', title: 'محتوى تعليمي تطبيقي', description: 'دروس مسجلة بجودة عالية ومشاريع حقيقية تصممها بنفسك.' } },
+            { id: 'f2', order: 2, props: { icon: 'Users', icon_color: '#7c3aed', title: 'دعم ومتابعة مستمرة', description: 'تواصل مباشر مع المدربين للحصول على إجابات لاستفساراتك وتقييم أعمالك.' } },
+            { id: 'f3', order: 3, props: { icon: 'Award', icon_color: '#7c3aed', title: 'شهادات إتمام معتمدة', description: 'احصل على شهادة تثبت مهاراتك عند إتمامك لكافة المتطلبات والمشاريع.' } }
+          ]
+        }
+      },
+      {
         id: 'kpis-t1',
         type: 'kpi-cards',
         props: {
           gridCols: '3',
           backgroundColor: '#ffffff',
-          order: 4,
+          order: 5,
           cards: [
             { id: 'kpi-1', title: 'سنوات خبرة', value: '+5', change: '', isPositive: true, icon: '', color: '#7c3aed' },
             { id: 'kpi-2', title: 'طالب', value: '500+', change: '', isPositive: true, icon: '', color: '#7c3aed' },
@@ -88,11 +107,65 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
           background_color: '#f4f4f5',
           padding_top: 64,
           padding_bottom: 64,
-          order: 5,
+          order: 6,
           courses: [
             { id: 'c1', title: 'أساسيات تصميم UI/UX', instructor: 'أ. عمرو البرلسي', price: '٤٠٠ ريال', students: '٨٧ طالب', duration: '٨ ساعات', image: '/assets/course3.jpg', description: 'تعلم مبادئ التصميم خطوة بخطوة وكيفية التعامل مع الألوان والخطوط لبناء واجهات سهلة الاستخدام ومحترفة.' },
             { id: 'c2', title: 'إتقان فيجما (FigJam)', instructor: 'أ. مصطفى عبد الصبور', price: '٢٥٠ ريال', students: '٣١٢ طالب', duration: '١٥ ساعة', image: '/assets/course1.png', description: 'تعلم كيفية استخدام أداة FigJam للعصف الذهني والتخطيط وتصميم خرائط تجربة المستخدم بشكل تعاوني وممتع.' },
             { id: 'c3', title: 'إتقان فيجما (FigJam)', instructor: 'أ. صهيب حسن', price: '١٩٠ ريال', students: '٢٤٣ طالب', duration: '١٢ ساعة', image: '/assets/course1.png', description: 'تعلم كيفية استخدام أداة FigJam للعصف الذهني والتخطيط وتصميم خرائط تجربة المستخدم بشكل تعاوني وممتع.' }
+          ]
+        }
+      },
+      {
+        id: 'pricing-t1',
+        type: 'pricing_section',
+        props: {
+          title: 'خطط الاشتراك والأسعار',
+          subtitle: 'اختر الخطة المناسبة لك وابدأ التعلم وتطوير مهاراتك اليوم.',
+          background_color: '#ffffff',
+          text_color: '#1e293b',
+          padding_top: 64,
+          padding_bottom: 64,
+          order: 7,
+          items: [
+            {
+              id: 'p1',
+              order: 1,
+              props: {
+                title: 'الخطة الأساسية',
+                price: '99$',
+                duration: 'شهرياً',
+                features: ['الوصول إلى الدورات الأساسية', 'دعم عبر البريد الإلكتروني', 'شهادة إتمام أساسية'],
+                button_text: 'اشترك الآن',
+                button_link: '#',
+                is_popular: false
+              }
+            },
+            {
+              id: 'p2',
+              order: 2,
+              props: {
+                title: 'الخطة الاحترافية',
+                price: '199$',
+                duration: 'شهرياً',
+                features: ['الوصول إلى جميع الدورات', 'دعم مباشر ومتابعة مخصصة', 'شهادة معتمدة ومشاريع عملية'],
+                button_text: 'اشترك الآن',
+                button_link: '#',
+                is_popular: true
+              }
+            },
+            {
+              id: 'p3',
+              order: 3,
+              props: {
+                title: 'الخطة المتقدمة',
+                price: '299$',
+                duration: 'شهرياً',
+                features: ['استشارات خاصة 1-on-1', 'مراجعة بورتفوليو مخصصة', 'أولوية دعم وتوظيف'],
+                button_text: 'اشترك الآن',
+                button_link: '#',
+                is_popular: false
+              }
+            }
           ]
         }
       },
@@ -106,7 +179,7 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
           text_color: '#1e293b',
           padding_top: 64,
           padding_bottom: 64,
-          order: 6,
+          order: 8,
           items: [
             { id: 't1', order: 1, props: { quote: 'الدورات ممتازة وتطبيقية جداً، حصلت على أول عميل بعد أسبوعين فقط من إتمام الكورس.', author: 'أحمد المنصوري', role: 'مصمم UI/UX مستقل', rating: 5 } },
             { id: 't2', order: 2, props: { quote: 'أسلوب التدريس واضح ومنهجي، ساعدني على بناء مشروعي الخاص بثقة ومهارة عالية.', author: 'سارة العمري', role: 'مطورة ويب متقدمة', rating: 5 } },
@@ -125,14 +198,11 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
           image_aspect: 'auto',
           padding_top: 64,
           padding_bottom: 64,
-          order: 7,
+          order: 9,
           items: [
             { id: 'g1', order: 1, props: { image_url: '/assets/stats.jpg', caption: 'تصميم تطبيق خدمات مالية' } },
             { id: 'g2', order: 2, props: { image_url: '/assets/beniftsbg.png', caption: 'تصميم موقع تجارة إلكترونية' } },
-            { id: 'g3', order: 3, props: { image_url: '/assets/paymentbg.jpg', caption: 'تصميم تطبيق توصيل طلبات' } },
-            { id: 'g4', order: 4, props: { image_url: '/assets/stats.jpg', caption: 'تصميم لوحة تحكم ذكية' } },
-            { id: 'g5', order: 5, props: { image_url: '/assets/beniftsbg.png', caption: 'تصميم واجهة محفظة رقمية' } },
-            { id: 'g6', order: 6, props: { image_url: '/assets/paymentbg.jpg', caption: 'تصميم تطبيق سياحة وسفر' } }
+            { id: 'g3', order: 3, props: { image_url: '/assets/paymentbg.jpg', caption: 'تصميم تطبيق توصيل طلبات' } }
           ]
         }
       },
@@ -153,7 +223,21 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
           showSecondButton: false,
           padding_top: 64,
           padding_bottom: 64,
-          order: 8
+          order: 10
+        }
+      },
+      {
+        id: 'footer-t1',
+        type: 'footer',
+        props: {
+          copyright: 'جميع الحقوق محفوظة',
+          logoUrl: '',
+          logoText: 'د',
+          bgColor: '#ffffff',
+          textColor: '#1f2937',
+          showLogo: true,
+          showSocials: true,
+          order: 11
         }
       }
     ]

@@ -36,6 +36,7 @@ interface PurchaseRequest {
   receiptImage: string; // Base64 encoding for local storage preview
   status: 'pending' | 'accepted' | 'rejected';
   date: string;
+  rejectionReason?: string;
 }
 
 export default function StudentRequestsPage() {
@@ -107,8 +108,8 @@ export default function StudentRequestsPage() {
 
       const mapped: PurchaseRequest[] = (backendRequests || []).map((req: any) => {
         let resolvedStatus: PurchaseRequest['status'] = 'pending';
-        if (req.status === 'accepted') resolvedStatus = 'accepted';
-        else if (req.status === 'rejected') resolvedStatus = 'rejected';
+        if (req.status === 'accepted' || req.status === 'active') resolvedStatus = 'accepted';
+        else if (req.status === 'rejected' || req.status === 'cancelled') resolvedStatus = 'rejected';
         else if (req.status === 'penidng' || req.status === 'pending') resolvedStatus = 'pending';
 
         const courseTitle = req.course?.title || 'دورة تعليمية';
@@ -128,7 +129,8 @@ export default function StudentRequestsPage() {
           paymentMethod: req.payment_method || 'تحويل بنكي',
           receiptImage: getLogoUrl(req.receipt),
           status: resolvedStatus,
-          date: req.created_at ? new Date(req.created_at).toLocaleDateString('ar-EG') : new Date().toLocaleDateString('ar-EG')
+          date: req.created_at ? new Date(req.created_at).toLocaleDateString('ar-EG') : new Date().toLocaleDateString('ar-EG'),
+          rejectionReason: req.message || req.rejection_reason || req.rejectionReason || ''
         };
       });
       setRequests(mapped);
@@ -308,8 +310,33 @@ export default function StudentRequestsPage() {
   const handleShowReceipt = (imageUrl: string) => {
     MySwal.fire({
       title: 'إيصال التحويل المرفق',
-      imageUrl: imageUrl,
-      imageAlt: 'Receipt Image',
+      html: (
+        <div className="w-full overflow-hidden mt-4">
+          <a
+            href={imageUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block cursor-zoom-in group relative"
+            title="اضغط لفتح الصورة بالحجم الكامل في نافذة جديدة"
+          >
+            <img
+              src={imageUrl}
+              alt="Receipt Image"
+              className="w-full h-auto max-h-[60vh] object-contain rounded-xl border border-gray-100 shadow-sm transition-transform duration-300 group-hover:scale-[1.01]"
+            />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl flex items-center justify-center">
+              <span className="text-white text-xs font-bold bg-black/60 px-4 py-2 rounded-full backdrop-blur-sm">
+                فتح الصورة بالحجم الكامل 🔍
+              </span>
+            </div>
+          </a>
+          <p className="text-[11px] text-gray-400 mt-3 font-semibold">
+            اضغط على الصورة لعرضها بالحجم الكامل في علامة تبويب جديدة
+          </p>
+        </div>
+      ),
+      width: '800px',
+      showCloseButton: true,
       confirmButtonText: 'إغلاق',
       confirmButtonColor: '#2563eb'
     });

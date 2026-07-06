@@ -20,12 +20,15 @@ import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { twMerge } from 'tailwind-merge';
+import { getStudentPurchaseRequests, updateStudentPurchaseRequestStatus } from '@/services/finance';
+import { getLogoUrl } from '@/lib/utils';
 
 const MySwal = withReactContent(Swal);
 
 // Interface for payment requests stored in localStorage
 interface PurchaseRequest {
   id: string;
+  backendId?: string | number;
   studentName: string;
   studentEmail: string;
   courseId: string;
@@ -44,58 +47,90 @@ export default function AdminRequestsPage() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'accepted' | 'rejected'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
-    loadRequests();
+    const storedUser = localStorage.getItem('user_info');
+    let userObj: any = null;
+    if (storedUser) {
+      try {
+        userObj = JSON.parse(storedUser);
+        setCurrentUser(userObj);
+      } catch (e) {}
+    }
+    loadRequests(userObj);
   }, []);
 
-  const loadRequests = () => {
+  const loadRequests = async (userObj?: any) => {
     setLoading(true);
-    const stored = localStorage.getItem('darab_course_requests');
-    if (stored) {
-      try {
-        setRequests(JSON.parse(stored));
-      } catch (e) {
-        console.error(e);
-      }
-    } else {
-      // Seed default requests if none exist
-      const defaultRequests: PurchaseRequest[] = [
-        {
-          id: 'REQ-9041',
-          studentName: 'أحمد محمد',
-          studentEmail: 'student@darab.academy',
-          courseId: '1',
-          courseTitle: 'دورة أدوبي فوتوشوب للمبتدئين',
-          courseImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqzo_VQo06VQCFdzirf_0z2ioWmpWofFyxtbeUSOpgDZrefJDg9H6UA9iCfqy4ro7yg5FfYec1hNWpAg3PRosaeLX6QWVUEzwo9ublQriYxfSfNDlWA1uW1O6hw0le5xYhMv7XPFhD6yd7QpDnU9K5cZxFvPxYlfNukbtioKQZrrRJZFrM7nRQG0i4Kox8vCBDr8AVXDoZiEZCpnzjCCNjg_6oXBTMLW_BrGX4m-hb12D3_A2ef40AdQp3X9xGODqnl-ASu_rn0GM',
-          amount: '250 ريال',
-          paymentMethod: 'Vodafone Cash',
-          receiptImage: 'https://api.darab.academy/receiver-account-logos/vodafone-cash.png',
-          status: 'pending',
-          date: new Date().toLocaleDateString('ar-EG')
+    try {
+      const activeUser = userObj || currentUser;
+      const backendRequests = await getStudentPurchaseRequests();
+      
+      let filtered = backendRequests || [];
+      if (activeUser) {
+        const isTeacher = activeUser.role === 'teacher' || activeUser.role === 'instructor' || activeUser.role === 'coach';
+        if (isTeacher) {
+          filtered = (backendRequests || []).filter((req: any) => {
+            return req.course && Number(req.course.user_id) === Number(activeUser.id);
+          });
         }
-      ];
-      localStorage.setItem('darab_course_requests', JSON.stringify(defaultRequests));
-      setRequests(defaultRequests);
+      }
+
+      const mapped: PurchaseRequest[] = filtered.map((req: any) => {
+        let resolvedStatus: PurchaseRequest['status'] = 'pending';
+        if (req.status === 'accepted' || req.status === 'active') resolvedStatus = 'accepted';
+        else if (req.status === 'rejected' || req.status === 'cancelled') resolvedStatus = 'rejected';
+        else if (req.status === 'penidng' || req.status === 'pending') resolvedStatus = 'pending';
+
+        const courseTitle = req.course?.title || 'دورة تعليمية';
+        const courseImage = req.course?.image ? getLogoUrl(req.course.image) : '';
+        const finalPrice = req.course?.final_price || req.course?.price || '';
+        const currency = req.course?.currency || 'SAR';
+        const formattedAmount = finalPrice ? `${finalPrice} ${currency}` : 'مجانية';
+
+        return {
+          id: req.transaction_id || `REQ-${req.id}`,
+          backendId: req.id,
+          studentName: req.user?.name || `طالب #${req.user_id || ''}`,
+          studentEmail: req.user?.email || '',
+          courseId: String(req.course_id || req.course?.id || ''),
+          courseTitle,
+          courseImage,
+          amount: formattedAmount,
+          paymentMethod: req.payment_method || 'تحويل بنكي',
+          receiptImage: getLogoUrl(req.receipt),
+          status: resolvedStatus,
+          date: req.created_at ? new Date(req.created_at).toLocaleDateString('ar-EG') : new Date().toLocaleDateString('ar-EG'),
+          rejectionReason: req.message || req.rejection_reason || req.rejectionReason || ''
+        };
+      });
+
+      setRequests(mapped);
+    } catch (err) {
+      console.error('Failed to load student purchase requests:', err);
+      toast.error('فشل في تحميل طلبات الاشتراك من الخادم.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const handleUpdateStatus = (id: string, newStatus: 'accepted' | 'rejected', reason?: string) => {
-    const updated = requests.map(req => {
-      if (req.id === id) {
-        return { 
-          ...req, 
-          status: newStatus,
-          rejectionReason: reason 
-        };
-      }
-      return req;
-    });
+  const handleUpdateStatus = async (id: string, newStatus: 'accepted' | 'rejected', reason?: string) => {
+    try {
+      const reqObj = requests.find(r => r.id === id);
+      if (!reqObj) return;
 
-    localStorage.setItem('darab_course_requests', JSON.stringify(updated));
-    setRequests(updated);
-    toast.success(`تم تحديث حالة الطلب بنجاح إلى: ${newStatus === 'accepted' ? 'مقبول' : 'مرفوض'}`);
+      const backendId = reqObj.backendId || id;
+      await updateStudentPurchaseRequestStatus(backendId, newStatus, reason);
+      
+      toast.success(newStatus === 'accepted' ? 'تم قبول طلب الاشتراك بنجاح.' : 'تم رفض طلب الاشتراك.');
+      
+      // Reload requests
+      loadRequests(currentUser);
+    } catch (err: any) {
+      console.error('Failed to update request status:', err);
+      toast.error(err?.message || 'حدث خطأ أثناء تحديث حالة الطلب. يرجى المحاولة مرة أخرى.');
+    }
   };
 
   const handleAccept = async (req: PurchaseRequest) => {
@@ -141,8 +176,33 @@ export default function AdminRequestsPage() {
   const handleViewReceipt = (imageUrl: string) => {
     MySwal.fire({
       title: 'إيصال دفع العميل المرفق',
-      imageUrl: imageUrl,
-      imageAlt: 'Receipt Proof',
+      html: (
+        <div className="w-full overflow-hidden mt-4">
+          <a
+            href={imageUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block cursor-zoom-in group relative"
+            title="اضغط لفتح الصورة بالحجم الكامل في نافذة جديدة"
+          >
+            <img
+              src={imageUrl}
+              alt="Receipt Proof"
+              className="w-full h-auto max-h-[60vh] object-contain rounded-xl border border-gray-100 shadow-sm transition-transform duration-300 group-hover:scale-[1.01]"
+            />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl flex items-center justify-center">
+              <span className="text-white text-xs font-bold bg-black/60 px-4 py-2 rounded-full backdrop-blur-sm">
+                فتح الصورة بالحجم الكامل 🔍
+              </span>
+            </div>
+          </a>
+          <p className="text-[11px] text-gray-400 mt-3 font-semibold">
+            اضغط على الصورة لعرضها بالحجم الكامل في علامة تبويب جديدة
+          </p>
+        </div>
+      ),
+      width: '800px',
+      showCloseButton: true,
       confirmButtonText: 'إغلاق',
       confirmButtonColor: '#2563eb'
     });

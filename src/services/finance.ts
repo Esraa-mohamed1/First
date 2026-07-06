@@ -300,4 +300,63 @@ export const configureReceiverAccount = async (payload: ConfigureReceiverAccount
   }
 };
 
+export interface StudentPurchaseRequest {
+  id: number;
+  user_id: number;
+  course_id: number;
+  starts_at: string;
+  transaction_id: string;
+  receipt: string;
+  status: 'pending' | 'accepted' | 'rejected' | 'penidng' | string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  course?: {
+    id: number;
+    title: string;
+    user_id: number;
+    price: string;
+    final_price: string;
+    currency: string;
+    image: string;
+  };
+}
+
+export const getStudentPurchaseRequests = async (): Promise<StudentPurchaseRequest[]> => {
+  try {
+    const response = await academyApi.get<ApiResponse<StudentPurchaseRequest[]>>('user_subscribes');
+    return response.data.data || [];
+  } catch (error: any) {
+    console.error('Failed to get student purchase requests:', error);
+    return [];
+  }
+};
+
+export const updateStudentPurchaseRequestStatus = async (
+  id: number | string,
+  status: 'accepted' | 'rejected' | 'active' | 'cancelled',
+  rejectionReason?: string
+): Promise<any> => {
+  try {
+    let backendStatus = status;
+    if (status === 'accepted') backendStatus = 'active';
+    else if (status === 'rejected') backendStatus = 'cancelled';
+
+    const payload: any = { status: backendStatus };
+    if (rejectionReason) {
+      payload.message = rejectionReason;
+    }
+    const response = await academyApi.put<ApiResponse<any>>(`user_subscribes/${id}`, payload);
+    return response.data.data;
+  } catch (error: any) {
+    console.error(`Failed to update student purchase request status for ${id}:`, error);
+    throw error.response?.data || error;
+  }
+};
+
 

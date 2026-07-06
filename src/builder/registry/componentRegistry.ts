@@ -14,7 +14,7 @@ import TableBlock from '../components/TableBlock';
 import StudentFeed from '../components/StudentFeed';
 import CourseCards from '../components/CourseCards';
 import SidebarBlock from '../components/SidebarBlock';
-import NavbarBlock from '../components/NavbarBlock';
+import NavbarBlock, { FooterBlock } from '../components/NavbarBlock';
 import TabsBlock from '../components/TabsBlock';
 import MetricsCards from '../components/MetricsCards';
 
@@ -39,14 +39,14 @@ function getResponsiveGridClass(cols: number) {
 // ─── Dynamic Component Implementations (using React.createElement for pure .ts compliance) ───
 
 export const HeroSection = React.memo((props: any) => {
-  const { 
-    isEditing, 
-    selectedNodeId, 
-    setSelectedNodeId, 
-    selectedItemIndex, 
-    setSelectedItemIndex, 
-    hoveredItemIndex, 
-    setHoveredItemIndex 
+  const {
+    isEditing,
+    selectedNodeId,
+    setSelectedNodeId,
+    selectedItemIndex,
+    setSelectedItemIndex,
+    hoveredItemIndex,
+    setHoveredItemIndex
   } = useBuilderStore();
 
   let currentTemplate: any = null;
@@ -56,7 +56,7 @@ export const HeroSection = React.memo((props: any) => {
     // Fallback if rendered outside the store context
   }
   const isUdemy = currentTemplate?.id === 'template_2';
-  
+
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
@@ -108,10 +108,9 @@ export const HeroSection = React.memo((props: any) => {
     if (isUdemy) {
       return React.createElement(
         'div',
-        { 
-          className: `relative overflow-hidden w-full select-none min-h-[320px] md:min-h-[400px] transition-all duration-300 ${
-            isSelected ? 'ring-4 ring-[#a435f0] ring-inset' : isHovered ? 'ring-4 ring-purple-300 ring-inset' : ''
-          }`,
+        {
+          className: `relative overflow-hidden w-full select-none min-h-[320px] md:min-h-[400px] transition-all duration-300 ${isSelected ? 'ring-4 ring-[#a435f0] ring-inset' : isHovered ? 'ring-4 ring-purple-300 ring-inset' : ''
+            }`,
           onClick: (e: any) => {
             if (isEditing) {
               e.stopPropagation();
@@ -139,7 +138,7 @@ export const HeroSection = React.memo((props: any) => {
           slideProps.bg_image ? React.createElement('div', { className: 'absolute inset-0 bg-slate-900/10' }) : null,
           React.createElement(
             'div',
-            { 
+            {
               className: 'relative z-10 bg-white p-8 max-w-md w-full shadow-2xl border border-slate-100 flex flex-col gap-3 rounded-lg text-right md:mr-10'
             },
             slideProps.title ? React.createElement('h1', { className: 'font-black text-slate-800 leading-tight text-xl sm:text-2xl lg:text-3xl' }, slideProps.title) : null,
@@ -195,10 +194,9 @@ export const HeroSection = React.memo((props: any) => {
 
     return React.createElement(
       'div',
-      { 
-        className: `relative overflow-hidden w-full select-none min-h-[220px] sm:min-h-[280px] transition-all duration-300 ${
-          isSelected ? 'ring-4 ring-blue-500 ring-inset' : isHovered ? 'ring-4 ring-blue-300 ring-inset' : ''
-        }`,
+      {
+        className: `relative overflow-hidden w-full select-none min-h-[220px] sm:min-h-[280px] transition-all duration-300 ${isSelected ? 'ring-4 ring-blue-500 ring-inset' : isHovered ? 'ring-4 ring-blue-300 ring-inset' : ''
+          }`,
         onClick: (e: any) => {
           if (isEditing) {
             e.stopPropagation();
@@ -273,18 +271,18 @@ export const HeroSection = React.memo((props: any) => {
   if (isUdemy) {
     return React.createElement(
       'section',
-      { 
-        style: { ...styles, backgroundColor: props.background_color || '#ffffff' }, 
-        className: `relative overflow-hidden w-full min-h-[300px] md:min-h-[400px] flex items-center justify-start md:px-16 px-4 py-12 transition-all duration-300` 
+      {
+        style: { ...styles, backgroundColor: props.background_color || '#ffffff' },
+        className: `relative overflow-hidden w-full min-h-[300px] md:min-h-[400px] flex items-center justify-start md:px-16 px-4 py-12 transition-all duration-300`
       },
-      props.bg_image ? React.createElement('div', { 
+      props.bg_image ? React.createElement('div', {
         style: { backgroundImage: `url(${props.bg_image})`, backgroundSize: 'cover', backgroundPosition: 'center' },
         className: 'absolute inset-0 z-0'
       }) : null,
       props.bg_image ? React.createElement('div', { className: 'absolute inset-0 bg-slate-900/10 z-0' }) : null,
       React.createElement(
         'div',
-        { 
+        {
           className: 'relative z-10 bg-white p-8 max-w-md w-full shadow-2xl border border-slate-100 flex flex-col gap-3 rounded-lg text-right md:mr-10'
         },
         content.title ? React.createElement('h1', { className: 'font-black text-slate-800 leading-tight text-xl sm:text-2xl lg:text-3xl' }, content.title) : null,
@@ -327,14 +325,14 @@ export const HeroSection = React.memo((props: any) => {
 HeroSection.displayName = 'HeroSection';
 
 export const FeaturesSection = React.memo((props: any) => {
-  const { 
-    isEditing, 
-    selectedNodeId, 
-    setSelectedNodeId, 
-    selectedItemIndex, 
-    setSelectedItemIndex, 
-    hoveredItemIndex, 
-    setHoveredItemIndex 
+  const {
+    isEditing,
+    selectedNodeId,
+    setSelectedNodeId,
+    selectedItemIndex,
+    setSelectedItemIndex,
+    hoveredItemIndex,
+    setHoveredItemIndex
   } = useBuilderStore();
 
   let currentTemplate: any = null;
@@ -356,9 +354,9 @@ export const FeaturesSection = React.memo((props: any) => {
   if (isUdemy) {
     return React.createElement(
       'section',
-      { 
-        style: { ...styles, backgroundColor: props.background_color || '#f7f9fa', color: '#1c1d1f' }, 
-        className: `${py} ${px} w-full transition-all duration-300 text-right` 
+      {
+        style: { ...styles, backgroundColor: props.background_color || '#f7f9fa', color: '#1c1d1f' },
+        className: `${py} ${px} w-full transition-all duration-300 text-right`
       },
       React.createElement(
         'div',
@@ -381,9 +379,8 @@ export const FeaturesSection = React.memo((props: any) => {
               'div',
               {
                 key: idx,
-                className: `relative p-6 bg-white border border-slate-200 rounded-sm flex items-start gap-4 transition-all duration-300 hover:shadow-md cursor-pointer ${
-                  isSelected ? 'ring-2 ring-[#a435f0] ring-offset-2' : isHovered ? 'ring-2 ring-purple-200' : ''
-                }`,
+                className: `relative p-6 bg-white border border-slate-200 rounded-sm flex items-start gap-4 transition-all duration-300 hover:shadow-md cursor-pointer ${isSelected ? 'ring-2 ring-[#a435f0] ring-offset-2' : isHovered ? 'ring-2 ring-purple-200' : ''
+                  }`,
                 onClick: (e: any) => {
                   if (isEditing) {
                     e.stopPropagation();
@@ -435,11 +432,10 @@ export const FeaturesSection = React.memo((props: any) => {
 
         return React.createElement(
           'div',
-          { 
-            key: idx, 
-            className: `relative p-5 bg-white border rounded-2xl flex flex-col items-start gap-4 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg overflow-hidden ${
-              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100 shadow-sm'
-            }`,
+          {
+            key: idx,
+            className: `relative p-5 bg-white border rounded-2xl flex flex-col items-start gap-4 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg overflow-hidden ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100 shadow-sm'
+              }`,
             onClick: (e: any) => {
               if (isEditing) {
                 e.stopPropagation();
@@ -453,9 +449,9 @@ export const FeaturesSection = React.memo((props: any) => {
           // Subtle top accent line using icon color
           itemProps.icon_color
             ? React.createElement('div', {
-                className: 'absolute top-0 right-0 w-full h-0.5 rounded-t-2xl',
-                style: { backgroundColor: itemProps.icon_color || 'var(--theme-primary)' }
-              })
+              className: 'absolute top-0 right-0 w-full h-0.5 rounded-t-2xl',
+              style: { backgroundColor: itemProps.icon_color || 'var(--theme-primary)' }
+            })
             : null,
           itemProps.icon
             ? React.createElement(
@@ -487,14 +483,14 @@ export const FeaturesSection = React.memo((props: any) => {
 FeaturesSection.displayName = 'FeaturesSection';
 
 export const FaqSection = React.memo((props: any) => {
-  const { 
-    isEditing, 
-    selectedNodeId, 
-    setSelectedNodeId, 
-    selectedItemIndex, 
-    setSelectedItemIndex, 
-    hoveredItemIndex, 
-    setHoveredItemIndex 
+  const {
+    isEditing,
+    selectedNodeId,
+    setSelectedNodeId,
+    selectedItemIndex,
+    setSelectedItemIndex,
+    hoveredItemIndex,
+    setHoveredItemIndex
   } = useBuilderStore();
 
   const styles = buildStyles(props);
@@ -524,11 +520,10 @@ export const FaqSection = React.memo((props: any) => {
 
         return React.createElement(
           'div',
-          { 
-            key: idx, 
-            className: `border rounded-2xl bg-white/60 backdrop-blur-sm overflow-hidden transition-all duration-300 ${
-              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100'
-            }`,
+          {
+            key: idx,
+            className: `border rounded-2xl bg-white/60 backdrop-blur-sm overflow-hidden transition-all duration-300 ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100'
+              }`,
             onClick: (e: any) => {
               if (isEditing) {
                 e.stopPropagation();
@@ -560,9 +555,8 @@ export const FaqSection = React.memo((props: any) => {
           React.createElement(
             'div',
             {
-              className: `transition-all duration-300 ease-in-out overflow-hidden ${
-                isOpen ? 'max-h-[300px] border-t border-slate-100 p-4 bg-white/30' : 'max-h-0'
-              }`
+              className: `transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-[300px] border-t border-slate-100 p-4 bg-white/30' : 'max-h-0'
+                }`
             },
             React.createElement('p', { className: 'text-xs text-slate-500 font-bold leading-relaxed break-words' }, itemProps.answer)
           )
@@ -574,14 +568,14 @@ export const FaqSection = React.memo((props: any) => {
 FaqSection.displayName = 'FaqSection';
 
 export const TestimonialsSection = React.memo((props: any) => {
-  const { 
-    isEditing, 
-    selectedNodeId, 
-    setSelectedNodeId, 
-    selectedItemIndex, 
-    setSelectedItemIndex, 
-    hoveredItemIndex, 
-    setHoveredItemIndex 
+  const {
+    isEditing,
+    selectedNodeId,
+    setSelectedNodeId,
+    selectedItemIndex,
+    setSelectedItemIndex,
+    hoveredItemIndex,
+    setHoveredItemIndex
   } = useBuilderStore();
 
   let currentTemplate: any = null;
@@ -601,9 +595,9 @@ export const TestimonialsSection = React.memo((props: any) => {
   if (isUdemy) {
     return React.createElement(
       'section',
-      { 
-        style: { ...styles, backgroundColor: props.background_color || '#f7f9fa', color: '#1c1d1f' }, 
-        className: `${py} ${px} w-full transition-all duration-300 text-right` 
+      {
+        style: { ...styles, backgroundColor: props.background_color || '#f7f9fa', color: '#1c1d1f' },
+        className: `${py} ${px} w-full transition-all duration-300 text-right`
       },
       React.createElement(
         'div',
@@ -626,9 +620,8 @@ export const TestimonialsSection = React.memo((props: any) => {
               'div',
               {
                 key: idx,
-                className: `relative p-6 bg-white border border-slate-200 rounded-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 cursor-pointer ${
-                  isSelected ? 'ring-2 ring-[#a435f0] ring-offset-2' : isHovered ? 'ring-2 ring-purple-200' : ''
-                }`,
+                className: `relative p-6 bg-white border border-slate-200 rounded-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 cursor-pointer ${isSelected ? 'ring-2 ring-[#a435f0] ring-offset-2' : isHovered ? 'ring-2 ring-purple-200' : ''
+                  }`,
                 onClick: (e: any) => {
                   if (isEditing) {
                     e.stopPropagation();
@@ -701,11 +694,10 @@ export const TestimonialsSection = React.memo((props: any) => {
 
         return React.createElement(
           'div',
-          { 
-            key: idx, 
-            className: `relative p-6 bg-white border rounded-2xl flex flex-col justify-between shadow-sm transition-all duration-300 overflow-hidden ${
-              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100 hover:shadow-lg hover:-translate-y-1'
-            }`,
+          {
+            key: idx,
+            className: `relative p-6 bg-white border rounded-2xl flex flex-col justify-between shadow-sm transition-all duration-300 overflow-hidden ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100 hover:shadow-lg hover:-translate-y-1'
+              }`,
             onClick: (e: any) => {
               if (isEditing) {
                 e.stopPropagation();
@@ -740,12 +732,11 @@ export const TestimonialsSection = React.memo((props: any) => {
             React.createElement(
               'div',
               {
-                className: `${
-                  (props.avatar_shape || 'circle') === 'rounded' ? 'rounded-xl' :
-                  (props.avatar_shape || 'circle') === 'square' ? 'rounded-none' :
-                  (props.avatar_shape || 'circle') === 'leaf' ? 'rounded-3xl rounded-tr-none rounded-bl-none' : 'rounded-full'
-                } overflow-hidden flex items-center justify-center text-sm font-black text-white flex-shrink-0`,
-                style: { 
+                className: `${(props.avatar_shape || 'circle') === 'rounded' ? 'rounded-xl' :
+                    (props.avatar_shape || 'circle') === 'square' ? 'rounded-none' :
+                      (props.avatar_shape || 'circle') === 'leaf' ? 'rounded-3xl rounded-tr-none rounded-bl-none' : 'rounded-full'
+                  } overflow-hidden flex items-center justify-center text-sm font-black text-white flex-shrink-0`,
+                style: {
                   background: 'linear-gradient(135deg, var(--theme-primary), var(--theme-secondary, #10b981))',
                   width: `${props.avatar_size || 40}px`,
                   height: `${props.avatar_size || 40}px`
@@ -770,14 +761,14 @@ export const TestimonialsSection = React.memo((props: any) => {
 TestimonialsSection.displayName = 'TestimonialsSection';
 
 export const GallerySection = React.memo((props: any) => {
-  const { 
-    isEditing, 
-    selectedNodeId, 
-    setSelectedNodeId, 
-    selectedItemIndex, 
-    setSelectedItemIndex, 
-    hoveredItemIndex, 
-    setHoveredItemIndex 
+  const {
+    isEditing,
+    selectedNodeId,
+    setSelectedNodeId,
+    selectedItemIndex,
+    setSelectedItemIndex,
+    hoveredItemIndex,
+    setHoveredItemIndex
   } = useBuilderStore();
 
   const styles = buildStyles(props);
@@ -831,12 +822,11 @@ export const GallerySection = React.memo((props: any) => {
 
         return React.createElement(
           'div',
-          { 
-            key: idx, 
+          {
+            key: idx,
             style: customStyle,
-            className: `relative ${aspectClass} ${shapeClass} overflow-hidden group shadow-sm bg-slate-100 transition-all duration-300 ${
-              isSelected ? 'ring-4 ring-blue-500 ring-inset' : isHovered ? 'ring-4 ring-blue-300 ring-inset' : 'border border-slate-100/40'
-            }`,
+            className: `relative ${aspectClass} ${shapeClass} overflow-hidden group shadow-sm bg-slate-100 transition-all duration-300 ${isSelected ? 'ring-4 ring-blue-500 ring-inset' : isHovered ? 'ring-4 ring-blue-300 ring-inset' : 'border border-slate-100/40'
+              }`,
             onClick: (e: any) => {
               if (isEditing) {
                 e.stopPropagation();
@@ -867,14 +857,14 @@ export const GallerySection = React.memo((props: any) => {
 GallerySection.displayName = 'GallerySection';
 
 export const PricingSection = React.memo((props: any) => {
-  const { 
-    isEditing, 
-    selectedNodeId, 
-    setSelectedNodeId, 
-    selectedItemIndex, 
-    setSelectedItemIndex, 
-    hoveredItemIndex, 
-    setHoveredItemIndex 
+  const {
+    isEditing,
+    selectedNodeId,
+    setSelectedNodeId,
+    selectedItemIndex,
+    setSelectedItemIndex,
+    hoveredItemIndex,
+    setHoveredItemIndex
   } = useBuilderStore();
 
   const styles = buildStyles(props);
@@ -906,9 +896,8 @@ export const PricingSection = React.memo((props: any) => {
           'div',
           {
             key: idx,
-            className: `flex flex-col bg-white border rounded-3xl p-5 transition-all duration-300 ${
-              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : (isPopular ? 'border-2 border-yellow-400 relative shadow-xl z-10' : 'border-slate-100 shadow-sm hover:shadow-md')
-            }`,
+            className: `flex flex-col bg-white border rounded-3xl p-5 transition-all duration-300 ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : (isPopular ? 'border-2 border-yellow-400 relative shadow-xl z-10' : 'border-slate-100 shadow-sm hover:shadow-md')
+              }`,
             onClick: (e: any) => {
               if (isEditing) {
                 e.stopPropagation();
@@ -968,14 +957,14 @@ PricingSection.displayName = 'PricingSection';
 // ─── Categories Section ───────────────────────────────────────────────────────
 
 export const CategoriesSection = React.memo((props: any) => {
-  const { 
-    isEditing, 
-    selectedNodeId, 
-    setSelectedNodeId, 
-    selectedItemIndex, 
-    setSelectedItemIndex, 
-    hoveredItemIndex, 
-    setHoveredItemIndex 
+  const {
+    isEditing,
+    selectedNodeId,
+    setSelectedNodeId,
+    selectedItemIndex,
+    setSelectedItemIndex,
+    hoveredItemIndex,
+    setHoveredItemIndex
   } = useBuilderStore();
 
   let currentTemplate: any = null;
@@ -997,9 +986,9 @@ export const CategoriesSection = React.memo((props: any) => {
   if (isUdemy) {
     return React.createElement(
       'section',
-      { 
-        style: { ...styles, backgroundColor: props.background_color || '#ffffff', color: '#1c1d1f' }, 
-        className: `${py} ${px} w-full transition-all duration-300 text-right` 
+      {
+        style: { ...styles, backgroundColor: props.background_color || '#ffffff', color: '#1c1d1f' },
+        className: `${py} ${px} w-full transition-all duration-300 text-right`
       },
       React.createElement(
         'div',
@@ -1022,9 +1011,8 @@ export const CategoriesSection = React.memo((props: any) => {
               'div',
               {
                 key: idx,
-                className: `group relative overflow-hidden border border-slate-200 p-5 bg-[#f7f9fa] hover:bg-[#eff1f2] rounded-sm transition-all duration-300 cursor-pointer flex flex-col items-start text-right ${
-                  isSelected ? 'ring-2 ring-[#a435f0] ring-offset-2 bg-white' : isHovered ? 'ring-2 ring-purple-200' : ''
-                }`,
+                className: `group relative overflow-hidden border border-slate-200 p-5 bg-[#f7f9fa] hover:bg-[#eff1f2] rounded-sm transition-all duration-300 cursor-pointer flex flex-col items-start text-right ${isSelected ? 'ring-2 ring-[#a435f0] ring-offset-2 bg-white' : isHovered ? 'ring-2 ring-purple-200' : ''
+                  }`,
                 onClick: (e: any) => {
                   if (isEditing) {
                     e.stopPropagation();
@@ -1107,9 +1095,8 @@ export const CategoriesSection = React.memo((props: any) => {
           'div',
           {
             key: idx,
-            className: `group relative overflow-hidden border shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer bg-white flex flex-col items-center justify-center text-center p-6 ${shapeClass} ${
-              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100'
-            }`,
+            className: `group relative overflow-hidden border shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer bg-white flex flex-col items-center justify-center text-center p-6 ${shapeClass} ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100'
+              }`,
             onClick: (e: any) => {
               if (isEditing) {
                 e.stopPropagation();
@@ -1183,12 +1170,10 @@ export const componentRegistry = {
   hero: HeroBanner,
   'hero-slider': HeroSlider,
   'kpi-cards': KpiCards,
-  charts: ChartsBlock,
-  tables: TableBlock,
-  'student-feed': StudentFeed,
   'course-cards': CourseCards,
   sidebar: SidebarBlock,
   navbar: NavbarBlock,
+  footer: FooterBlock,
   tabs: TabsBlock,
   metrics: MetricsCards
 };
@@ -1323,15 +1308,17 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       { name: 'icon_color', label: 'لون الأيقونة', type: 'color', defaultValue: '#2563eb' }
     ],
     defaultProps: {
-      title: 'Our Features',
-      subtitle: 'What makes us special',
+      title: 'مميزاتنا',
+      subtitle: 'ما الذي يجعلنا مميزين ومختلفين عن الآخرين',
       background_color: '#f8fafc',
       text_color: '#1f2937',
       grid_cols: 3,
       padding_top: 60,
       padding_bottom: 60,
       items: [
-        { order: 1, props: { title: 'Feature One', description: 'Feature description', icon: 'Star', icon_color: '#2563eb' } }
+        { order: 1, props: { title: 'ميزة 1', description: 'وصف الميزة الأولى هنا بالتفصيل وبأسلوب شيق وجذاب للمتعلمين.', icon: 'Star', icon_color: '#2563eb' } },
+        { order: 2, props: { title: 'ميزة 2', description: 'وصف الميزة الثانية هنا بالتفصيل لتوضيح القيمة المقدمة.', icon: 'Heart', icon_color: '#ef4444' } },
+        { order: 3, props: { title: 'ميزة 3', description: 'وصف الميزة الثالثة بالتفصيل لبيان الفوائد والامتيازات.', icon: 'Shield', icon_color: '#10b981' } }
       ]
     }
   },
@@ -1404,8 +1391,8 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       { name: 'avatar', label: 'رابط الصورة الرمزية (URL)', type: 'text', defaultValue: '' }
     ],
     defaultProps: {
-      title: 'Testimonials',
-      subtitle: 'What our clients say',
+      title: 'آراء المشتركين',
+      subtitle: 'ماذا يقول طلابنا وعملاؤنا عن تجربتهم التعليمية معنا',
       background_color: '#f8fafc',
       text_color: '#1f2937',
       padding_top: 60,
@@ -1413,7 +1400,9 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       avatar_size: 40,
       avatar_shape: 'circle',
       items: [
-        { order: 1, props: { quote: 'Excellent service!', author: 'John Doe', role: 'CEO', rating: 5, avatar: '' } }
+        { order: 1, props: { quote: 'الخدمة ممتازة والدورات مفيدة جداً والتجربة التعليمية كانت رائعة وفاقت توقعاتي!', author: 'محمد أحمد', role: 'مصمم واجهات', rating: 5, avatar: '' } },
+        { order: 2, props: { quote: 'المدربين متعاونين والشرح عملي وواضح وسهل التطبيق والمنهج ممتاز جداً.', author: 'سارة خالد', role: 'مطور ويب', rating: 5, avatar: '' } },
+        { order: 3, props: { quote: 'أنصح الجميع بالاشتراك في الأكاديمية للحصول على شهادات قوية تدعم المستقبل المهني.', author: 'خالد عبدالله', role: 'مدير منتج', rating: 4, avatar: '' } }
       ]
     }
   },
@@ -1475,7 +1464,11 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       image_custom_height: 250,
       padding_top: 60,
       padding_bottom: 60,
-      items: []
+      items: [
+        { order: 1, props: { image_url: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085', caption: 'تصميم مواقع وتطبيقات' } },
+        { order: 2, props: { image_url: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12', caption: 'ورش العمل التفاعلية' } },
+        { order: 3, props: { image_url: 'https://images.unsplash.com/photo-1542744094-3a31f103e35f', caption: 'لقاءات توظيف وتدريب' } }
+      ]
     }
   },
 
@@ -1504,14 +1497,16 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       { name: 'is_popular', label: 'خطة شائعة (تمييز)', type: 'boolean', defaultValue: false }
     ],
     defaultProps: {
-      title: 'Pricing Plans',
-      subtitle: 'Choose the best plan for you',
+      title: 'خطط الأسعار',
+      subtitle: 'اختر الخطة المناسبة لك وابدأ التعلم فوراً',
       background_color: '#ffffff',
       text_color: '#1f2937',
       padding_top: 60,
       padding_bottom: 60,
       items: [
-        { order: 1, props: { plan_name: 'Basic', price: '99', period: 'month', button_text: 'Choose Plan', button_link: '#', features_list: 'Feature 1\nFeature 2', is_popular: false } }
+        { order: 1, props: { plan_name: 'الخطة الأساسية', price: '99', period: 'شهري', button_text: 'اشترك الآن', button_link: '#', features_list: 'الوصول لـ 5 دورات\nشهادة إتمام أساسية\nدعم فني عبر البريد', is_popular: false } },
+        { order: 2, props: { plan_name: 'الخطة الاحترافية', price: '199', period: 'شهري', button_text: 'اشترك الآن', button_link: '#', features_list: 'الوصول لجميع الدورات\nشهادات معتمدة بالكامل\nدعم فني مباشر 24/7\nلقاءات أسبوعية مع المدربين', is_popular: true } },
+        { order: 3, props: { plan_name: 'خطة الشركات', price: '499', period: 'شهري', button_text: 'اشترك الآن', button_link: '#', features_list: 'حسابات غير محدودة للموظفين\nمسارات تعليمية مخصصة للشركة\nلوحة تحكم إدارية خاصة\nتقارير أداء دورية للمتعلمين', is_popular: false } }
       ]
     }
   },
@@ -1708,81 +1703,9 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
     }
   },
 
-  'charts': {
-    type: 'charts',
-    name: 'الرسومات البيانية (Charts)',
-    category: 'data',
-    icon: 'LayoutGrid',
-    fields: [
-      { name: 'title', label: 'عنوان الرسم البياني', type: 'text', defaultValue: 'إحصائيات التسجيل الشهري' },
-      {
-        name: 'chartType', label: 'نوع المخطط', type: 'select', defaultValue: 'area', options: [
-          { label: 'مخطط مساحي (Area)', value: 'area' },
-          { label: 'مخطط أعمدة (Bar)', value: 'bar' },
-          { label: 'مخطط خطي (Line)', value: 'line' }
-        ]
-      },
-      { name: 'primaryColor', label: 'اللون الأساسي', type: 'color', defaultValue: '#2563eb' },
-      { name: 'secondaryColor', label: 'اللون الفرعي', type: 'color', defaultValue: '#fbbf24' },
-      { name: 'height', label: 'ارتفاع المخطط (بكسل)', type: 'number', defaultValue: 300 },
-      { name: 'showGrid', label: 'إظهار شبكة المخطط', type: 'boolean', defaultValue: true },
-      ...SECTION_STYLE_FIELDS,
-    ],
-    defaultProps: {
-      title: 'إحصائيات التسجيل الشهري',
-      chartType: 'area',
-      primaryColor: '#2563eb',
-      secondaryColor: '#fbbf24',
-      height: 300,
-      showGrid: true
-    }
-  },
 
-  'tables': {
-    type: 'tables',
-    name: 'جدول البيانات (Table Report)',
-    category: 'data',
-    icon: 'FileText',
-    fields: [
-      { name: 'title', label: 'عنوان الجدول', type: 'text', defaultValue: 'آخر المسجلين بالدورات' },
-      { name: 'showSearch', label: 'تفعيل شريط البحث السريع', type: 'boolean', defaultValue: true },
-      { name: 'rowsLimit', label: 'الحد الأقصى للسطور المعروضة', type: 'number', defaultValue: 5 },
-      { name: 'headerBg', label: 'لون خلفية الترويسة', type: 'color', defaultValue: '#f8fafc' },
-      { name: 'rowHoverColor', label: 'لون تظليل السطر عند التمرير', type: 'color', defaultValue: '#eff6ff' },
-      { name: 'titleColor', label: 'لون عنوان الجدول', type: 'color', defaultValue: '#111827' },
-      ...SECTION_STYLE_FIELDS,
-    ],
-    defaultProps: {
-      title: 'آخر المسجلين بالدورات',
-      showSearch: true,
-      rowsLimit: 5,
-      headerBg: '#f8fafc',
-      rowHoverColor: '#eff6ff',
-      titleColor: '#111827',
-    }
-  },
 
-  'student-feed': {
-    type: 'student-feed',
-    name: 'نشاطات الطلاب (Student Activity Feed)',
-    category: 'content',
-    icon: 'Users',
-    fields: [
-      { name: 'title', label: 'عنوان لوحة الأنشطة', type: 'text', defaultValue: 'تحديثات نشاط المتعلمين' },
-      { name: 'limit', label: 'عدد الأنشطة', type: 'number', defaultValue: 4 },
-      { name: 'showStatusBadges', label: 'إظهار شارات الحالة والنوع', type: 'boolean', defaultValue: true },
-      { name: 'cardBg', label: 'لون خلفية البطاقة', type: 'color', defaultValue: '#ffffff' },
-      { name: 'titleColor', label: 'لون العنوان', type: 'color', defaultValue: '#111827' },
-      ...SECTION_STYLE_FIELDS,
-    ],
-    defaultProps: {
-      title: 'تحديثات نشاط المتعلمين',
-      limit: 4,
-      showStatusBadges: true,
-      cardBg: '#ffffff',
-      titleColor: '#111827',
-    }
-  },
+
 
   'course-cards': {
     type: 'course-cards',
@@ -1856,6 +1779,7 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
     icon: 'Globe',
     fields: [
       { name: 'title', label: 'العنوان / لوجو الترويسة', type: 'text', defaultValue: 'بوابة التعلم' },
+      { name: 'logoUrl', label: 'صورة الشعار (Logo Image)', type: 'image', defaultValue: '' },
       { name: 'showSearch', label: 'تفعيل خانة البحث السريع', type: 'boolean', defaultValue: true },
       { name: 'showProfile', label: 'عرض أيقونة حساب المستخدم', type: 'boolean', defaultValue: true },
       { name: 'bgColor', label: 'لون الخلفية', type: 'color', defaultValue: '#ffffff' },
@@ -1866,6 +1790,7 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
     ],
     defaultProps: {
       title: 'بوابة التعلم',
+      logoUrl: '',
       showSearch: true,
       showProfile: true,
       bgColor: '#ffffff',
@@ -1941,6 +1866,46 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       cardBg: '#ffffff',
       labelColor: '#6b7280',
       valueColor: '#111827',
+    }
+  },
+
+  'footer': {
+    type: 'footer',
+    name: 'شريط السفلي (Footer)',
+    category: 'navigation',
+    icon: 'Grid',
+    fields: [
+      { name: 'copyright', label: 'حقوق النشر والملكية', type: 'text', defaultValue: 'جميع الحقوق محفوظة' },
+      { name: 'logoUrl', label: 'رابط الشعار المخصص (Logo URL)', type: 'image', defaultValue: '' },
+      { name: 'logoText', label: 'حرف الشعار البديل', type: 'text', defaultValue: 'د' },
+      { name: 'bgColor', label: 'لون الخلفية', type: 'color', defaultValue: '#ffffff' },
+      { name: 'textColor', label: 'لون النص', type: 'color', defaultValue: '#1f2937' },
+      { name: 'email', label: 'البريد الإلكتروني المخصص', type: 'text', defaultValue: '' },
+      { name: 'phone', label: 'رقم الهاتف المخصص', type: 'text', defaultValue: '' },
+      { name: 'address', label: 'العنوان المخصص', type: 'text', defaultValue: '' },
+      { name: 'facebookUrl', label: 'رابط فيسبوك المخصص', type: 'text', defaultValue: '' },
+      { name: 'instagramUrl', label: 'رابط إنستغرام المخصص', type: 'text', defaultValue: '' },
+      { name: 'linkedinUrl', label: 'رابط لينكد إن المخصص', type: 'text', defaultValue: '' },
+      { name: 'twitterUrl', label: 'رابط تويتر المخصص', type: 'text', defaultValue: '' },
+      { name: 'showLogo', label: 'عرض الشعار', type: 'boolean', defaultValue: true },
+      { name: 'showSocials', label: 'عرض أيقونات التواصل الاجتماعي', type: 'boolean', defaultValue: true },
+      ...SECTION_STYLE_FIELDS,
+    ],
+    defaultProps: {
+      copyright: 'جميع الحقوق محفوظة',
+      logoUrl: '',
+      logoText: 'د',
+      bgColor: '#ffffff',
+      textColor: '#1f2937',
+      email: '',
+      phone: '',
+      address: '',
+      facebookUrl: '',
+      instagramUrl: '',
+      linkedinUrl: '',
+      twitterUrl: '',
+      showLogo: true,
+      showSocials: true
     }
   }
 };

@@ -56,6 +56,13 @@ export default function CourseStudentViewPage() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<AcademyPaymentMethod | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [showFloatingWidget, setShowFloatingWidget] = useState(true);
+  const [isRetrying, setIsRetrying] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      return searchParams.get('retry') === 'true';
+    }
+    return false;
+  });
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -156,8 +163,9 @@ export default function CourseStudentViewPage() {
           units: data.units || (data as any).chapters || [],
           learning_points: learningPoints,
           info_sections: infoSections,
-          is_subscribed: (data as any).is_enrolled || false,
-          subscription_status: subStatus,
+          is_subscribed: (data as any).is_enrolled || (data as any).enrollment_status === 'active' || (data as any).enrollment_status === 'accepted' || subStatus === 'active' || subStatus === 'accepted' || false,
+          subscription_status: subStatus || (data as any).enrollment_status,
+          rejection_reason: (data as any).rejection_reason || (courseSubscription ? (courseSubscription.message || courseSubscription.rejection_reason || courseSubscription.rejectionReason) : '') || '',
           payment_methods: paymentMethodsData,
         };
 
@@ -445,6 +453,38 @@ export default function CourseStudentViewPage() {
                     قيد الانتظار (المراجعة)
                   </button>
                 </div>
+              ) : (course.subscription_status === 'rejected' || course.subscription_status === 'cancelled') && !isRetrying ? (
+                <div className="space-y-4">
+                  <div className="text-center space-y-2">
+                    <div className="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+                      <Lock size="24" />
+                    </div>
+                    <h3 className="text-lg font-black text-slate-900 text-red-600">طلب الاشتراك مرفوض</h3>
+                    <p className="text-slate-500 font-bold text-[10px] md:text-xs">
+                      {course.rejection_reason || 'تم رفض طلب اشتراكك في هذه الدورة من قبل الإدارة.'}
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <button 
+                      onClick={() => {
+                        if (course.rejection_reason) {
+                          alert(`سبب الرفض: ${course.rejection_reason}`);
+                        } else {
+                          alert('تم رفض طلب الاشتراك.');
+                        }
+                      }}
+                      className="w-full py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-black text-sm border border-red-100 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      تفاصيل الرفض
+                    </button>
+                    <button 
+                      onClick={() => setIsRetrying(true)}
+                      className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-sm shadow-md shadow-blue-500/10 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      إعادة محاولة الاشتراك
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <>
                   <div className="text-right mb-1">
@@ -588,6 +628,19 @@ export default function CourseStudentViewPage() {
               style={{ backgroundColor: '#8b5cf6' }}
             >
               قيد الانتظار
+            </button>
+          ) : (course.subscription_status === 'rejected' || course.subscription_status === 'cancelled') && !isRetrying ? (
+            <button
+              onClick={() => {
+                setIsRetrying(true);
+                const element = document.getElementById('payment-section');
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-95 whitespace-nowrap"
+            >
+              إعادة محاولة الاشتراك
             </button>
           ) : (
             <button

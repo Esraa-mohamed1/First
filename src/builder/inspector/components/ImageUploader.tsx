@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { UploadCloud, X, Image as ImageIcon } from 'lucide-react';
+import { UploadCloud, X, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { uploadFile } from '@/services/upload';
 
 interface ImageUploaderProps {
   value: string;
@@ -14,6 +15,7 @@ export default function ImageUploader({
 }: ImageUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -22,19 +24,26 @@ export default function ImageUploader({
     }
   };
 
-  const processFile = (file: File) => {
+  const processFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       alert('الرجاء اختيار ملف صورة صالح (PNG, JPG, WebP)');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        onChange(event.target.result as string);
+    setIsUploading(true);
+    try {
+      const uploadedUrl = await uploadFile(file);
+      if (uploadedUrl) {
+        onChange(uploadedUrl);
+      } else {
+        alert('فشل رفع الصورة، يرجى المحاولة مرة أخرى.');
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Failed to upload image in builder:', err);
+      alert('حدث خطأ أثناء رفع الصورة.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -59,7 +68,13 @@ export default function ImageUploader({
     <div className="space-y-1.5 text-right" dir="rtl">
       {label && <label className="text-[10px] font-black text-slate-400 block">{label}</label>}
       
-      {value ? (
+      {isUploading ? (
+        // Uploading state
+        <div className="border border-slate-100 rounded-2xl h-32 flex flex-col items-center justify-center gap-2 bg-slate-50">
+          <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+          <span className="text-[9px] font-black text-slate-500">جاري رفع الصورة...</span>
+        </div>
+      ) : value ? (
         // Preview state
         <div className="relative rounded-2xl border border-slate-100 overflow-hidden bg-slate-50 group h-32 flex items-center justify-center">
           <img 

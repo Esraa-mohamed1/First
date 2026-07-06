@@ -150,12 +150,8 @@ export default async function Home() {
     const host = headersList.get('host') || '';
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
-    const cookieTenant = cookieStore.get('academy_link_name')?.value;
 
-    let tenantKey = getTenantKey(host) || cookieTenant;
-    if (!tenantKey && (host.includes('localhost') || host.includes('127.0.0.1'))) {
-        tenantKey = 'esraa.darab.academy';
-    }
+    const tenantKey = getTenantKey(host);
 
     if (tenantKey) {
         console.log(`[Home Server Component] host: ${host}, tenantKey: ${tenantKey}, token: ${token ? token.substring(0, 10) + '...' : 'undefined'}`);
@@ -163,15 +159,19 @@ export default async function Home() {
         if (homepageData) {
             const editorNodes = apiToEditor(homepageData.sections);
             return (
-                <main className="min-h-screen bg-white  mx-auto px-12 py-12">
-                    <TemplateRenderer templateId={homepageData.templateId} sections={editorNodes} />
+                <main className="w-full min-h-screen bg-white">
+                    <div className="max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12">
+                        <TemplateRenderer templateId={homepageData.templateId} sections={editorNodes} />
+                    </div>
                 </main>
             );
         } else {
             const defaultTemplate = getTemplateById('template_1');
             return (
-                <main className="min-h-screen bg-white  mx-auto px-12 py-12">
-                    <TemplateRenderer templateId="template_1" sections={defaultTemplate.sections} />
+                <main className="w-full min-h-screen bg-white">
+                    <div className="max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12">
+                        <TemplateRenderer templateId="template_1" sections={defaultTemplate.sections} />
+                    </div>
                 </main>
             );
         }

@@ -35,8 +35,10 @@ export default function CoursesPage() {
             instructor: c.instructor_name || '',
             category: c.category?.name || 'General',
             status: (c.progress === 100 ? 'completed' : c.progress > 0 ? 'in-progress' : 'not-started') as any,
-            is_enrolled: c.is_enrolled || false,
+            is_enrolled: c.is_enrolled || c.enrollment_status === 'active' || c.enrollment_status === 'accepted' || (sub && (sub.status === 'active' || sub.status === 'accepted')) || false,
             subscription_status: sub ? sub.status : null,
+            enrollment_status: c.enrollment_status || (sub ? sub.status : null),
+            rejection_reason: c.rejection_reason || (sub ? (sub.message || sub.rejection_reason || sub.rejectionReason) : '') || '',
           };
         });
 

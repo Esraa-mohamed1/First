@@ -16,6 +16,13 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
   const [imgError, setImgError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
 
+  const isActuallySubscribed = isSubscribed || 
+    course.is_enrolled || 
+    course.enrollment_status === 'active' || 
+    course.enrollment_status === 'accepted' || 
+    course.subscription_status === 'active' || 
+    course.subscription_status === 'accepted';
+
   // Mock payment methods if not provided
   const paymentMethods = course.paymentMethods || [
     { type: 'mobile', methodName: 'Vodafone Cash', value: '01012345678' },
@@ -29,13 +36,23 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
       {/* Image Section */}
       <div className="relative h-48 w-full overflow-hidden bg-gray-50">
         {/* Category Badge */}
-        <div className="absolute top-4 left-4 z-20 flex gap-2">
+        <div className="absolute top-4 left-4 z-20 flex gap-2 flex-wrap">
           <span className="bg-blue-50 text-blue-600 text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-lg border border-blue-100/50">
             {course.category}
           </span>
-          {(course.subscription_status === 'pending' || course.subscription_status === 'penidng') && (
+          {(course.subscription_status === 'pending' || course.subscription_status === 'penidng' || course.enrollment_status === 'pending') && (
             <span className="text-white text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-lg shadow-sm animate-pulse" style={{ backgroundColor: '#f6c05cff' }}>
               قيد الانتظار
+            </span>
+          )}
+          {(course.subscription_status === 'rejected' || course.enrollment_status === 'rejected' || course.enrollment_status === 'cancelled') && (
+            <span className="text-white text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-lg shadow-sm bg-rose-500">
+              مرفوض
+            </span>
+          )}
+          {isActuallySubscribed && (
+            <span className="text-white text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-lg shadow-sm bg-emerald-500">
+              تم الاشتراك
             </span>
           )}
         </div>
@@ -89,7 +106,7 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
         </div>
 
         <div className="mt-auto pt-4 border-t border-gray-50">
-          {isSubscribed && (
+          {isActuallySubscribed && (
             <div className="mb-4">
               <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-gray-400 mb-2 font-bold">
                 <span className="flex items-center gap-1">
@@ -112,7 +129,7 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
             </div>
           )}
 
-          {isSubscribed ? (
+          {isActuallySubscribed ? (
             course.progress === 100 ? (
               <div className="flex gap-2 w-full">
                 <Link
@@ -150,7 +167,7 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
             )
           ) : (
             <div className="flex flex-col gap-2">
-              {course.subscription_status === 'pending' || course.subscription_status === 'penidng' ? (
+              {(course.subscription_status === 'pending' || course.subscription_status === 'penidng' || course.enrollment_status === 'pending') ? (
                 <div className="flex gap-2 w-full">
                   <button
                     onClick={(e) => {
@@ -169,6 +186,42 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
                   >
                     <Eye size={16} />
                   </Link>
+                </div>
+              ) : (course.subscription_status === 'rejected' || course.enrollment_status === 'rejected' || course.enrollment_status === 'cancelled') ? (
+                <div className="flex flex-col gap-2 w-full">
+                  <div className="flex gap-2 w-full">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (course.rejection_reason) {
+                          alert(`سبب الرفض: ${course.rejection_reason}`);
+                        } else {
+                          alert('تم رفض طلب الاشتراك.');
+                        }
+                      }}
+                      className="flex-1 flex items-center justify-center gap-2 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-3 rounded-xl border border-rose-100 transition-all duration-300 text-sm cursor-pointer"
+                    >
+                      <span>مرفوض</span>
+                    </button>
+                    <Link
+                      href={`/user/courses/${course.slug}?retry=true`}
+                      className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all duration-300 text-sm"
+                    >
+                      <span>إعادة الاشتراك</span>
+                    </Link>
+                    <Link
+                      href={`/user/courses/${course.slug}`}
+                      className="px-4 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold py-3 rounded-xl transition-all duration-300 border border-gray-100"
+                      title="عرض التفاصيل"
+                    >
+                      <Eye size={16} />
+                    </Link>
+                  </div>
+                  {course.rejection_reason && (
+                    <p className="text-[11px] text-rose-500 font-medium text-right mt-1">
+                      السبب: {course.rejection_reason}
+                    </p>
+                  )}
                 </div>
               ) : (
                 <Link

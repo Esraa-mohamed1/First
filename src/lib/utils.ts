@@ -7,11 +7,19 @@ export function cn(...inputs: ClassValue[]) {
 
 export function getLogoUrl(logo?: string | null): string {
   if (!logo) return '';
-  if (logo.startsWith('http://') || logo.startsWith('https://')) {
-    return logo;
+  let url = logo;
+  if (!logo.startsWith('http://') && !logo.startsWith('https://')) {
+    const cleanLogo = logo.startsWith('/') ? logo.substring(1) : logo;
+    url = `https://api.darab.academy/${cleanLogo}`;
   }
-  const cleanLogo = logo.startsWith('/') ? logo.substring(1) : logo;
-  return `https://api.darab.academy/${cleanLogo}`;
+  
+  // If the path contains '/uploads/' but not '/storage/uploads/', rewrite it
+  // to insert '/storage' so that the files resolve correctly.
+  if (url.includes('/uploads/') && !url.includes('/storage/uploads/')) {
+    url = url.replace('/uploads/', '/storage/uploads/');
+  }
+  
+  return url;
 }
 
 export function translateErrorToArabic(msg: string): string {

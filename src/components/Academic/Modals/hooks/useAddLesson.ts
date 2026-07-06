@@ -197,10 +197,14 @@ export function useAddLesson({
         );
         if (storageLimitObj) {
           const totalGB = parseFloat(storageLimitObj.total_limit || '0');
-          const usedGB = parseFloat(storageLimitObj.used_amount || '0');
-          const remainingBytes = (totalGB - usedGB) * 1024 * 1024 * 1024;
-          if (remainingBytes <= 0 || selectedFile.size > remainingBytes) {
-            const availableMB = Math.max(0, Math.round(remainingBytes / 1024 / 1024));
+          const usedMB = parseFloat(storageLimitObj.used_amount || '0');
+          
+          // Calculate remaining storage in MB (total is in GB, used is in MB)
+          const remainingMB = (totalGB * 1024) - usedMB;
+          const fileSizeMB = parseFloat((selectedFile.size / (1024 * 1024)).toFixed(2));
+          
+          if (remainingMB <= 0 || fileSizeMB > remainingMB) {
+            const availableMB = Math.max(0, Math.round(remainingMB));
             await MySwal.fire({
               title: 'تجاوزت المساحة المخصصة',
               text: `المساحة المتاحة: ${availableMB} MB. برجاء ترقية حسابك.`,
