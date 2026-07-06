@@ -7,7 +7,8 @@ import {
   Volume2, VolumeX, ListVideo, Search, ChevronDown, ChevronUp,
   PlayCircle, FileText, Menu, X, ArrowRight, ArrowLeft, Trophy, Star, Rocket,
   Download, MessageSquare, Info, StickyNote, ThumbsUp, MessageCircle,
-  Clock, CheckCircle2, Lock, AlertCircle, Pencil, Trash2, Bell, BookOpen, Video
+  Clock, CheckCircle2, Lock, AlertCircle, Pencil, Trash2, Bell, BookOpen, Video,
+  Heart, CornerDownLeft, Users
 } from 'lucide-react';
 import {
   getMyCourseDetails,
@@ -135,6 +136,7 @@ export default function CoursePlayerPage() {
   const videoDurationRef = useRef(0);
   const [rocketData, setRocketData] = useState<any>(null);
   const [studentName, setStudentName] = useState('أحمد');
+  const [studentAvatar, setStudentAvatar] = useState('');
 
   useEffect(() => {
     fetch('https://lottie.host/80e15967-b508-410a-8e2b-f8f4116d97c6/g7G8yvN0z6.json')
@@ -160,6 +162,14 @@ export default function CoursePlayerPage() {
             }
           } catch (e) {}
         }
+      }
+
+      const userInfoStr = localStorage.getItem('user_info');
+      if (userInfoStr) {
+        try {
+          const userInfo = JSON.parse(userInfoStr);
+          setStudentAvatar(userInfo.avatar || userInfo.avatar_url || '');
+        } catch (e) {}
       }
     }
   }, []);
@@ -1301,26 +1311,29 @@ export default function CoursePlayerPage() {
                                     </button>
                                   </div>
                                 )}
-                                <div className="bg-white border-2 border-gray-200 focus-within:border-blue-500 rounded-2xl p-4 transition-all shadow-sm">
-                                  <div className="flex gap-3 items-start">
-                                    <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shrink-0 overflow-hidden shadow-md">
-                                      <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar" />
+                                <div className="bg-[#F4F7F9] rounded-[2rem] p-6 border border-gray-200/60 shadow-[0_4px_20px_rgba(0,0,0,0.02)] transition-all">
+                                  <div className="flex gap-4 items-start">
+                                    <div className="w-10 h-10 rounded-full bg-white overflow-hidden shrink-0 border border-white shadow-sm">
+                                      <img 
+                                        src={studentAvatar || "/default-avatar.png"} 
+                                        alt="avatar" 
+                                        className="w-full h-full object-cover"
+                                      />
                                     </div>
                                     <textarea
                                       value={newComment}
                                       onChange={(e) => setNewComment(e.target.value)}
-                                      placeholder={replyingTo ? "اكتب ردك هنا..." : "شارك سؤالك أو رأيك حول هذا الدرس..."}
+                                      placeholder={replyingTo ? "اكتب ردك هنا..." : "أضف تعليقاً أو استفساراً..."}
                                       rows={3}
-                                      className="flex-1 bg-transparent text-base font-semibold text-gray-900 placeholder-gray-400 outline-none resize-none leading-relaxed"
+                                      className="flex-1 bg-transparent text-base font-semibold text-gray-900 placeholder-gray-400 outline-none resize-none leading-relaxed text-right"
                                     />
                                   </div>
-                                  <div className="flex justify-end mt-3 pt-3 border-t border-gray-100">
+                                  <div className="flex justify-start mt-4">
                                     <button
                                       onClick={handleAddComment}
                                       disabled={!newComment.trim()}
-                                      className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-sm shadow-lg shadow-blue-200 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                      className="px-8 py-2.5 bg-[#0050c8] hover:bg-blue-750 text-white rounded-full font-black text-sm active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                      <MessageSquare size={15} />
                                       {replyingTo ? "نشر الرد" : "نشر التعليق"}
                                     </button>
                                   </div>
@@ -1328,12 +1341,11 @@ export default function CoursePlayerPage() {
                               </div>
 
                               {/* Comments List */}
-                              <div className="max-w-3xl mx-auto space-y-1">
-                                <div className="flex items-center justify-between py-3 px-1">
-                                  <h4 className="font-black text-gray-900 text-base">التعليقات <span className="text-blue-600 ml-1">({comments.length})</span></h4>
-                                  <button className="text-xs font-black text-gray-500 flex items-center gap-1 hover:text-gray-800 transition-colors">
-                                    <span>الأحدث أولاً</span>
-                                    <ChevronDown size={14} />
+                              <div className="max-w-3xl mx-auto space-y-6">
+                                <div className="flex items-center justify-between py-3 px-1 border-b border-gray-150/30">
+                                  <h4 className="font-black text-gray-900 text-base">آخر التعليقات <span className="text-gray-400 font-bold ml-1">({comments.length})</span></h4>
+                                  <button className="text-xs font-black text-[#0050c8] hover:text-blue-800 transition-colors">
+                                    الأحدث أولاً
                                   </button>
                                 </div>
 
@@ -1344,74 +1356,116 @@ export default function CoursePlayerPage() {
                                     <p className="text-sm text-gray-400 mt-1">شارك سؤالك أو رأيك أعلاه</p>
                                   </div>
                                 ) : (
-                                  <div className="space-y-4">
-                                    {comments.map(comment => (
-                                      <div key={comment.id} className="group bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:border-gray-200 hover:shadow-md transition-all">
-                                        <div className="flex gap-4">
-                                          <div className="w-11 h-11 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
-                                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.user?.name || 'User'}`} alt="avatar" className="w-full h-full" />
-                                          </div>
-                                          <div className="flex-1 min-w-0">
-                                            <div className="flex items-center justify-between mb-2">
-                                              <div className="flex items-center gap-2">
-                                                <h4 className="font-black text-gray-900 text-sm">{comment.user?.name || 'طالب درب'}</h4>
-                                              </div>
-                                              <div className="flex items-center gap-2">
-                                                <span className="text-xs font-medium text-gray-400">{new Date(comment.created_at).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' })}</span>
-                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                  <button onClick={() => handleEditComment(comment)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Pencil size={13} /></button>
-                                                  <button onClick={() => handleDeleteComment(String(comment.id))} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={13} /></button>
-                                                </div>
-                                              </div>
+                                  <div className="space-y-6">
+                                    {comments.map(comment => {
+                                      const isCommentLiked = (comment as any).is_liked;
+                                      return (
+                                        <div key={comment.id} className="group transition-all">
+                                          <div className="flex gap-4 items-start">
+                                            {/* Avatar (Outside, Right) */}
+                                            <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-gray-100 shadow-sm">
+                                              <img 
+                                                src={comment.user?.profile_image || "/default-avatar.png"} 
+                                                alt="avatar" 
+                                                className="w-full h-full object-cover" 
+                                              />
                                             </div>
-                                            <div className="text-gray-700 text-sm font-semibold leading-relaxed mb-3">
-                                              <ReactMarkdown>{comment.body}</ReactMarkdown>
-                                            </div>
-                                            <div className="flex items-center gap-4">
-                                              <button
-                                                onClick={() => handleLikeComment(String(comment.id))}
-                                                className={cn(
-                                                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all",
-                                                  (comment as any).is_liked
-                                                    ? "bg-blue-100 text-blue-700 border border-blue-200"
-                                                    : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                                                )}
-                                              >
-                                                <ThumbsUp size={13} fill={(comment as any).is_liked ? "currentColor" : "none"} />
-                                                <span>{(comment as any).likes_count || 0} إعجاب</span>
-                                              </button>
-                                              <button
-                                                onClick={() => { setReplyingTo(comment); document.querySelector('textarea')?.focus(); }}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-all"
-                                              >
-                                                <MessageCircle size={13} />
-                                                <span>رد</span>
-                                              </button>
-                                            </div>
-                                            {comment.replies && comment.replies.length > 0 && (
-                                              <div className="mt-4 space-y-3 border-r-2 border-blue-100 pr-4">
-                                                {comment.replies.map(reply => (
-                                                  <div key={reply.id} className="flex gap-3">
-                                                    <div className="w-8 h-8 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
-                                                      <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.user?.name || "User"}`} alt="avatar" className="w-full h-full" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                      <div className="flex items-center gap-2 mb-1">
-                                                        <h5 className="font-black text-xs text-gray-900">{reply.user?.name || "طالب درب"}</h5>
-                                                        <span className="text-[10px] text-gray-400">{new Date(reply.created_at).toLocaleDateString("ar-EG")}</span>
-                                                      </div>
-                                                      <p className="text-gray-600 text-xs font-semibold leading-relaxed">{reply.body}</p>
+                                            
+                                            <div className="flex-1 min-w-0">
+                                              <div className="bg-[#F4F7F9] rounded-2xl p-4 md:p-5 border border-gray-200/40 relative shadow-[0_2px_12px_rgba(0,0,0,0.01)]">
+                                                <div className="flex items-start justify-between gap-4 mb-2">
+                                                  <h4 className="font-black text-[#0050c8] text-sm">{comment.user?.name || 'طالب درب'}</h4>
+                                                  
+                                                  <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] md:text-xs font-semibold text-gray-400">
+                                                      {new Date(comment.created_at).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' })}
+                                                    </span>
+                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                      <button onClick={() => handleEditComment(comment)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Pencil size={12} /></button>
+                                                      <button onClick={() => handleDeleteComment(String(comment.id))} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={12} /></button>
                                                     </div>
                                                   </div>
-                                                ))}
+                                                </div>
+                                                <div className="text-gray-800 text-sm font-semibold leading-relaxed text-right">
+                                                  <ReactMarkdown>{comment.body}</ReactMarkdown>
+                                                </div>
                                               </div>
-                                            )}
+                                              
+                                              {/* Actions Row */}
+                                              <div className="flex items-center gap-6 mt-2 mb-4 px-2">
+                                                <button
+                                                  onClick={() => handleLikeComment(String(comment.id))}
+                                                  className={cn(
+                                                    "flex items-center gap-1.5 text-xs font-bold transition-all",
+                                                    isCommentLiked ? "text-rose-600 font-black" : "text-gray-500 hover:text-gray-800"
+                                                  )}
+                                                >
+                                                  <Heart size={13} fill={isCommentLiked ? "currentColor" : "none"} className={isCommentLiked ? "text-rose-600" : "text-gray-400"} />
+                                                  <span>{comment.likes_count || 0} إعجاب</span>
+                                                </button>
+                                                
+                                                <button
+                                                  onClick={() => { setReplyingTo(comment); document.querySelector('textarea')?.focus(); }}
+                                                  className="flex items-center gap-1.5 text-xs font-bold text-[#0050c8] hover:text-blue-800 transition-all"
+                                                >
+                                                  <CornerDownLeft size={13} />
+                                                  <span>رد</span>
+                                                </button>
+                                              </div>
+
+                                              {/* Nested Replies */}
+                                              {comment.replies && comment.replies.length > 0 && (
+                                                <div className="mt-4 mr-6 space-y-4 border-r-2 border-gray-100 pr-4">
+                                                  {comment.replies.map(reply => {
+                                                    const isMe = reply.user?.name === studentName || reply.user?.name?.includes('أنت') || reply.user?.name?.includes('me');
+                                                    return (
+                                                      <div key={reply.id} className="flex gap-3 items-start">
+                                                        <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-gray-100 shadow-sm">
+                                                          <img 
+                                                            src={reply.user?.profile_image || "/default-avatar.png"} 
+                                                            alt="avatar" 
+                                                            className="w-full h-full object-cover" 
+                                                          />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                          <div className={cn(
+                                                            "rounded-2xl p-3.5 relative border shadow-[0_2px_8px_rgba(0,0,0,0.01)]",
+                                                            isMe ? "bg-[#F1FAF5] border-emerald-100/40" : "bg-[#F4F7F9] border-gray-200/40"
+                                                          )}>
+                                                            <div className="flex items-start justify-between gap-4 mb-1">
+                                                              <h5 className={cn(
+                                                                "font-black text-xs",
+                                                                isMe ? "text-[#016241]" : "text-[#0050c8]"
+                                                              )}>
+                                                                {reply.user?.name || "طالب درب"} {isMe && "(أنت)"}
+                                                              </h5>
+                                                              <span className="text-[10px] text-gray-400">
+                                                                {new Date(reply.created_at).toLocaleDateString("ar-EG")}
+                                                              </span>
+                                                            </div>
+                                                            <p className="text-gray-700 text-xs font-semibold leading-relaxed text-right">{reply.body}</p>
+                                                          </div>
+                                                        </div>
+                                                      </div>
+                                                    );
+                                                  })}
+                                                </div>
+                                              )}
+                                            </div>
                                           </div>
                                         </div>
-                                      </div>
-                                    ))}
+                                      );
+                                    })}
                                   </div>
                                 )}
+                                
+                                {/* Enter Public Discussion Room Button */}
+                                <div className="flex justify-center pt-8">
+                                  <button className="flex items-center gap-2.5 px-8 py-4 bg-[#016241] hover:bg-emerald-800 text-white rounded-full font-black text-sm shadow-lg shadow-emerald-700/10 active:scale-95 transition-all">
+                                    <Users size={18} />
+                                    <span>الدخول لغرفة النقاش العامة</span>
+                                  </button>
+                                </div>
                               </div>
                             </motion.div>
                           )}
