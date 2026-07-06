@@ -541,6 +541,28 @@ export default function InspectorPanel() {
               handlePropChange={handlePropChange}
               isSimpleMode={isSimpleMode}
             />
+
+            {/* Mobile Visibility Settings */}
+            <div className="border-t border-slate-150/60 pt-4 mt-4">
+              <span className="text-[10px] font-black text-slate-400 block mb-2">إعدادات الجوال (Mobile Settings)</span>
+              <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200/60 rounded-2xl">
+                <div className="flex flex-col text-right">
+                  <span className="text-xs font-bold text-slate-700">إخفاء في وضع الجوال</span>
+                  <span className="text-[9px] text-slate-400 font-semibold mt-0.5 leading-normal">
+                    لن يظهر هذا القسم للمشتركين عند التصفح من الهاتف المحمول
+                  </span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer select-none">
+                  <input 
+                    type="checkbox" 
+                    checked={!!props.hide_on_mobile}
+                    onChange={(e) => handlePropChange('hide_on_mobile', e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-350 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+            </div>
           </div>
         )}
 

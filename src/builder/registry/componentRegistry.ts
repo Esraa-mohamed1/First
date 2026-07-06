@@ -592,6 +592,19 @@ export const TestimonialsSection = React.memo((props: any) => {
   const px = 'px-4 sm:px-8';
   const py = 'py-8 sm:py-16';
 
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const isCarousel = items.length > 3;
+
+  const handleScroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const container = scrollRef.current;
+      const cardWidth = container.firstElementChild?.getBoundingClientRect().width || 300;
+      const offset = cardWidth + 24;
+      const scrollAmount = direction === 'left' ? -offset : offset;
+      container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
   if (isUdemy) {
     return React.createElement(
       'section',
@@ -608,9 +621,20 @@ export const TestimonialsSection = React.memo((props: any) => {
           content.title ? React.createElement('h2', { className: 'font-black mb-3 text-xl sm:text-2xl lg:text-3xl text-slate-800' }, content.title) : null,
           content.subtitle ? React.createElement('p', { className: 'text-sm text-slate-500 max-w-xl font-semibold' }, content.subtitle) : null
         ),
+        React.createElement('style', null, `
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+        `),
         React.createElement(
           'div',
-          { className: 'grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3' },
+          {
+            ref: scrollRef,
+            className: isCarousel 
+              ? 'flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-4 px-2 -mx-2 scrollbar-hide' 
+              : 'grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
+            style: isCarousel ? { scrollbarWidth: 'none', msOverflowStyle: 'none' } : undefined
+          },
           items.map((item: any, idx: number) => {
             const itemProps = item.props || {};
             const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
@@ -620,8 +644,9 @@ export const TestimonialsSection = React.memo((props: any) => {
               'div',
               {
                 key: idx,
-                className: `relative p-6 bg-white border border-slate-200 rounded-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 cursor-pointer ${isSelected ? 'ring-2 ring-[#a435f0] ring-offset-2' : isHovered ? 'ring-2 ring-purple-200' : ''
-                  }`,
+                className: `relative p-6 bg-white border border-slate-200 rounded-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 cursor-pointer ${
+                  isCarousel ? 'snap-start shrink-0 w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]' : ''
+                } ${isSelected ? 'ring-2 ring-[#a435f0] ring-offset-2' : isHovered ? 'ring-2 ring-purple-200' : ''}`,
                 onClick: (e: any) => {
                   if (isEditing) {
                     e.stopPropagation();
@@ -670,7 +695,27 @@ export const TestimonialsSection = React.memo((props: any) => {
               )
             );
           })
-        )
+        ),
+        isCarousel ? React.createElement(
+          'div',
+          { className: 'flex justify-center gap-3 mt-8' },
+          React.createElement(
+            'button',
+            {
+              onClick: () => handleScroll('right'),
+              className: 'w-10 h-10 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 hover:border-slate-350 transition-colors shadow-sm'
+            },
+            React.createElement(LucideIcons.ChevronRight, { className: 'w-5 h-5' })
+          ),
+          React.createElement(
+            'button',
+            {
+              onClick: () => handleScroll('left'),
+              className: 'w-10 h-10 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 hover:border-slate-350 transition-colors shadow-sm'
+            },
+            React.createElement(LucideIcons.ChevronLeft, { className: 'w-5 h-5' })
+          )
+        ) : null
       )
     );
   }
@@ -684,9 +729,20 @@ export const TestimonialsSection = React.memo((props: any) => {
       content.title ? React.createElement('h2', { className: 'font-black mb-3 text-xl sm:text-2xl lg:text-3xl' }, content.title) : null,
       content.subtitle ? React.createElement('p', { className: 'text-sm opacity-75 max-w-xl mx-auto' }, content.subtitle) : null
     ),
+    React.createElement('style', null, `
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+    `),
     React.createElement(
       'div',
-      { className: 'grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3' },
+      {
+        ref: scrollRef,
+        className: isCarousel 
+          ? 'flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-4 px-2 -mx-2 scrollbar-hide' 
+          : 'grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
+        style: isCarousel ? { scrollbarWidth: 'none', msOverflowStyle: 'none' } : undefined
+      },
       items.map((item: any, idx: number) => {
         const itemProps = item.props || {};
         const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
@@ -696,8 +752,9 @@ export const TestimonialsSection = React.memo((props: any) => {
           'div',
           {
             key: idx,
-            className: `relative p-6 bg-white border rounded-2xl flex flex-col justify-between shadow-sm transition-all duration-300 overflow-hidden ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100 hover:shadow-lg hover:-translate-y-1'
-              }`,
+            className: `relative p-6 bg-white border rounded-2xl flex flex-col justify-between shadow-sm transition-all duration-300 overflow-hidden ${
+              isCarousel ? 'snap-start shrink-0 w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]' : ''
+            } ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100 hover:shadow-lg hover:-translate-y-1'}`,
             onClick: (e: any) => {
               if (isEditing) {
                 e.stopPropagation();
@@ -755,7 +812,27 @@ export const TestimonialsSection = React.memo((props: any) => {
           )
         );
       })
-    )
+    ),
+    isCarousel ? React.createElement(
+      'div',
+      { className: 'flex justify-center gap-3 mt-8' },
+      React.createElement(
+        'button',
+        {
+          onClick: () => handleScroll('right'),
+          className: 'w-10 h-10 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 hover:border-slate-350 transition-colors shadow-sm'
+        },
+        React.createElement(LucideIcons.ChevronRight, { className: 'w-5 h-5' })
+      ),
+      React.createElement(
+        'button',
+        {
+          onClick: () => handleScroll('left'),
+          className: 'w-10 h-10 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 hover:border-slate-350 transition-colors shadow-sm'
+        },
+        React.createElement(LucideIcons.ChevronLeft, { className: 'w-5 h-5' })
+      )
+    ) : null
   );
 });
 TestimonialsSection.displayName = 'TestimonialsSection';
