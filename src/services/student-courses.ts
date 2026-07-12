@@ -96,13 +96,30 @@ export const enrollInCourse = async (courseId: number | string, methodId: number
   }
 };
 
-export const trackLessonProgress = async (courseId: string | number, lessonId: number, seconds: number, events: string[] = ['play', 'pause', 'seek', 'end']): Promise<any> => {
+export const trackLessonProgress = async (
+  courseId: string | number,
+  lessonId: number,
+  seconds: number,
+  events: string[] = ['play', 'pause', 'seek', 'end'],
+  durationSeconds?: number,
+  percentage?: number
+): Promise<any> => {
   try {
-    const response = await studentApi.post(`my-courses/${courseId}/track`, {
+    const payload: Record<string, unknown> = {
       lesson_id: lessonId,
       watched_seconds: seconds,
-      events: events
-    });
+      events,
+    };
+    // Optional enrichment — sent when available so the backend can persist them.
+    // Ignored gracefully if the backend doesn't recognise these fields yet.
+    if (durationSeconds !== undefined && durationSeconds > 0) {
+      payload.duration_seconds = durationSeconds;
+    }
+    if (percentage !== undefined) {
+      payload.percentage = percentage;
+      payload.completed = percentage >= 90;
+    }
+    const response = await studentApi.post(`my-courses/${courseId}/track`, payload);
     return response.data;
   } catch (error: any) {
     console.error('Failed to track progress:', error);
