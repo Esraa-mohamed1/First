@@ -1235,6 +1235,24 @@ export const CategoriesSection = React.memo((props: any) => {
 });
 CategoriesSection.displayName = 'CategoriesSection';
 
+export const CustomHtmlSection = React.memo((props: any) => {
+  const htmlContent = props.html || '';
+
+  if (!htmlContent.trim()) {
+    return React.createElement(
+      'div',
+      { className: 'py-12 border-2 border-dashed border-slate-200/60 rounded-3xl bg-slate-50/40 text-center text-xs text-slate-400 font-bold select-none' },
+      'قم بكتابة أو لصق كود HTML المخصص في لوحة التحكم الجانبية لعرضه هنا'
+    );
+  }
+
+  return React.createElement('div', {
+    className: 'w-full custom-html-wrapper',
+    dangerouslySetInnerHTML: { __html: htmlContent }
+  });
+});
+CustomHtmlSection.displayName = 'CustomHtmlSection';
+
 export const componentRegistry = {
   hero_section: HeroSection,
   features_section: FeaturesSection,
@@ -1243,6 +1261,7 @@ export const componentRegistry = {
   gallery_section: GallerySection,
   pricing_section: PricingSection,
   categories_section: CategoriesSection,
+  custom_html: CustomHtmlSection,
   // Existing static blocks
   hero: HeroBanner,
   'hero-slider': HeroSlider,
@@ -1983,6 +2002,20 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       twitterUrl: '',
       showLogo: true,
       showSocials: true
+    }
+  },
+
+  'custom_html': {
+    type: 'custom_html',
+    name: 'قسم HTML مخصص (Custom HTML)',
+    category: 'content',
+    icon: 'Code',
+    fields: [
+      { name: 'html', label: 'كود HTML المخصص', type: 'textarea', defaultValue: '<div class="p-6 text-center bg-blue-50 text-blue-600 font-bold rounded-2xl">كود HTML مخصص</div>' },
+      ...SECTION_STYLE_FIELDS,
+    ],
+    defaultProps: {
+      html: '<div class="p-6 text-center bg-blue-50 text-blue-600 font-bold rounded-2xl">كود HTML مخصص</div>'
     }
   }
 };

@@ -43,20 +43,20 @@ export const getCourses = async (userId?: number, userRole?: string, type?: stri
   try {
     let url = 'courses';
     const params = new URLSearchParams();
-    
+
     if (userRole === 'academy' && userId) {
       params.append('user_id', String(userId));
     }
-    
+
     if (type) {
       params.append('type', type);
     }
-    
+
     const queryString = params.toString();
     if (queryString) {
       url += `?${queryString}`;
     }
-    
+
     const response = await academyApi.get<ApiResponse<Course[]>>(url);
     return response.data.data;
   } catch (error: any) {
@@ -253,7 +253,6 @@ export const deleteCourse = async (id: number): Promise<void> => {
 export const updateCourse = async (id: number, payload: any): Promise<Course> => {
   try {
     // If payload contains a file (image), we must use FormData
-    // and often backends (like Laravel) require POST with _method=PUT for multipart/form-data
     if (payload.image instanceof File) {
       const formData = new FormData();
       Object.keys(payload).forEach(key => {
@@ -278,7 +277,7 @@ export const updateCourse = async (id: number, payload: any): Promise<Course> =>
         }
       });
       formData.append('_method', 'PUT');
-      
+
       const response = await academyApi.post<ApiResponse<Course>>(`courses/${id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',

@@ -29,6 +29,7 @@ const TestimonialsSection = dynamic(() => import('../registry/componentRegistry'
 const GallerySection = dynamic(() => import('../registry/componentRegistry').then(m => m.GallerySection), { ssr: false });
 const PricingSection = dynamic(() => import('../registry/componentRegistry').then(m => m.PricingSection), { ssr: false });
 const CategoriesSection = dynamic(() => import('../registry/componentRegistry').then(m => m.CategoriesSection), { ssr: false });
+const CustomHtmlSection = dynamic(() => import('../registry/componentRegistry').then(m => m.CustomHtmlSection), { ssr: false });
 
 // Component Rendering Map
 const rendererRegistry: Record<string, React.ComponentType<any>> = {
@@ -40,6 +41,7 @@ const rendererRegistry: Record<string, React.ComponentType<any>> = {
   gallery_section: GallerySection,
   pricing_section: PricingSection,
   categories_section: CategoriesSection,
+  custom_html: CustomHtmlSection,
   // Existing static blocks
   hero: HeroBanner,
   'hero-slider': HeroSlider,
@@ -171,7 +173,7 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
       {nodes.map((node) => {
         const isSelected = selectedNodeId === node.id;
         const isHovered = hoveredNodeId === node.id;
-        const isHiddenOnMobile = !!node.props?.hide_on_mobile;
+        const isHiddenOnMobile = !!node.props?.hide_on_mobile || !!node.props?.hideOnMobile;
         const showMobileOverlay = isEditing && deviceMode === 'mobile' && isHiddenOnMobile;
         const opacityClass = showMobileOverlay ? 'opacity-40 saturate-50 relative' : '';
 

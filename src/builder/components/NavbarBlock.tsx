@@ -85,9 +85,9 @@ export default function NavbarBlock(props: NavbarBlockProps) {
         };
 
         const token = localStorage.getItem('token');
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
+        if (!token) return;
+
+        headers['Authorization'] = `Bearer ${token}`;
 
         const res = await fetch('https://api.darab.academy/api/academy/me', { headers });
         if (res.ok) {
@@ -292,9 +292,9 @@ export function FooterBlock(props: any) {
         };
 
         const token = localStorage.getItem('token');
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
+        if (!token) return;
+
+        headers['Authorization'] = `Bearer ${token}`;
 
         const res = await fetch('https://api.darab.academy/api/academy/me', { headers });
         if (res.ok) {

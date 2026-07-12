@@ -306,10 +306,10 @@ export default function InspectorPanel() {
 
                 {field.type === 'textarea' && (
                   <textarea 
-                    rows={3}
+                    rows={field.name === 'html' ? 12 : 3}
                     value={props[field.name] ?? ''} 
                     onChange={(e) => handlePropChange(field.name, e.target.value)}
-                    className="w-full p-3.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-2xl text-xs font-bold text-slate-700 outline-none transition-all resize-none"
+                    className="w-full p-3.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-2xl text-xs font-bold text-slate-700 outline-none transition-all"
                   />
                 )}
 
@@ -555,8 +555,11 @@ export default function InspectorPanel() {
                 <label className="relative inline-flex items-center cursor-pointer select-none">
                   <input 
                     type="checkbox" 
-                    checked={!!props.hide_on_mobile}
-                    onChange={(e) => handlePropChange('hide_on_mobile', e.target.checked)}
+                    checked={!!props.hide_on_mobile || !!props.hideOnMobile}
+                    onChange={(e) => {
+                      handlePropChange('hide_on_mobile', e.target.checked);
+                      handlePropChange('hideOnMobile', e.target.checked);
+                    }}
                     className="sr-only peer"
                   />
                   <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-350 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>

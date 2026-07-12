@@ -402,11 +402,14 @@ export function apiToEditor(sections: ApiSection[]): BuilderNode[] {
       });
     }
 
+    const rawHide = rawProps.hide_on_mobile !== undefined ? rawProps.hide_on_mobile : rawProps.hideOnMobile;
+
     return {
       id: sec.id?.toString() || `${sec.type}-${Math.random().toString(36).substr(2, 9)}`,
       type: sec.type,
       props: {
         ...props,
+        ...(rawHide !== undefined ? { hide_on_mobile: !!rawHide, hideOnMobile: !!rawHide } : {}),
         items: editorItems,
       },
     };
@@ -434,6 +437,11 @@ export function editorToApi(nodes: BuilderNode[], pageId: string | number): ApiS
       : defaults;
 
     const apiProps = keysToSnake(mergedProps);
+
+    const rawHide = propsWithoutItems.hide_on_mobile !== undefined ? propsWithoutItems.hide_on_mobile : propsWithoutItems.hideOnMobile;
+    if (rawHide !== undefined) {
+      apiProps.hide_on_mobile = !!rawHide;
+    }
 
     // ✅ لو apiProps لسه فاضي نحط placeholder عشان الـ API ميرفضش
     const finalProps =
