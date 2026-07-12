@@ -398,7 +398,8 @@ export default function CoursePlayerPage() {
 
   // Real-time playback position: prefer the hook's live value (updates every timeupdate),
   // fall back to the page state (set from saved progress or the throttled onProgress).
-  const noteTime = liveCurrentTime > 0 ? liveCurrentTime : currentTime;
+  // Math.floor → backend requires video_time to be an integer.
+  const noteTime = Math.floor(liveCurrentTime > 0 ? liveCurrentTime : currentTime);
 
   const pauseIframe = () => {
     videoRef.current?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'pause' }), '*');
@@ -957,6 +958,9 @@ export default function CoursePlayerPage() {
                                 </span>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
+                                {lesson.is_completed && (
+                                  <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                                )}
                                 <span className="bg-blue-50 text-blue-600 text-[9px] font-black px-3 py-1.5 rounded-full whitespace-nowrap">
                                   قيد المشاهدة
                                 </span>
@@ -982,7 +986,15 @@ export default function CoursePlayerPage() {
                               {lesson.title}
                             </span>
                             <div className="text-gray-300 group-hover:text-gray-500 transition-colors shrink-0">
-                              {isLocked ? <Lock size={15} /> : (lesson.type === 'pdf' ? <FileText size={15} /> : <PlayCircle size={15} />)}
+                              {lesson.is_completed ? (
+                                <CheckCircle2 size={15} className="text-emerald-500" />
+                              ) : isLocked ? (
+                                <Lock size={15} />
+                              ) : lesson.type === 'pdf' ? (
+                                <FileText size={15} />
+                              ) : (
+                                <PlayCircle size={15} />
+                              )}
                             </div>
                           </button>
                         );

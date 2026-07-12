@@ -160,7 +160,8 @@ export function useBunnyPlayer(
   // ---------------------------------------------------------------------------
   // Event handlers (use ref to avoid stale closures)
   // ---------------------------------------------------------------------------
-  function handleTimeUpdate({ seconds }: { seconds: number }) {
+  function handleTimeUpdate({ seconds: rawSeconds }: { seconds: number }) {
+    const seconds = Math.floor(rawSeconds); // backend requires integer seconds
     const dur = durationRef.current;
     const pct = dur > 0 ? Math.min(100, Math.round((seconds / dur) * 100)) : 0;
 
