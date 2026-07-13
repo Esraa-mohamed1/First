@@ -52,10 +52,26 @@ export default function HeroBanner(props: HeroBannerProps) {
   } = props;
 
   let deviceMode = 'desktop';
+  let isEditing = false;
   try {
     deviceMode = useBuilderStore((state) => state.deviceMode);
+    // Fetch editing mode state from the builder store
+    isEditing = useBuilderStore((state) => state.isEditing);
   } catch (_) {}
 
+  const isVideoUrl = (url: string) => {
+    return url && (
+      url.startsWith('data:video/') || 
+      url.includes('video/mp4') || 
+      url.endsWith('.mp4') || 
+      url.endsWith('.webm') || 
+      url.endsWith('.ogg') ||
+      url.includes('/uploads/video')
+    );
+  };
+
+  const isVideoBg = isVideoUrl(bgImage);
+  const isVideoSide = isVideoUrl(heroImage);
   const hasSideImage = !!heroImage && !bgImage;
   const isMobile = deviceMode === 'mobile';
 
@@ -66,10 +82,10 @@ export default function HeroBanner(props: HeroBannerProps) {
   const isTransparentBg = hasSectionBackground(props);
 
   const containerStyle: React.CSSProperties = {
-    backgroundColor: isTransparentBg ? 'transparent' : (bgImage ? undefined : backgroundColor),
-    backgroundImage: isTransparentBg ? undefined : (bgImage ? `url(${bgImage})` : undefined),
-    backgroundSize: bgImage ? 'cover' : undefined,
-    backgroundPosition: bgImage ? 'center' : undefined,
+    backgroundColor: isTransparentBg ? 'transparent' : ((bgImage && !isVideoBg) ? undefined : backgroundColor),
+    backgroundImage: isTransparentBg ? undefined : ((bgImage && !isVideoBg) ? `url(${bgImage})` : undefined),
+    backgroundSize: (bgImage && !isVideoBg) ? 'cover' : undefined,
+    backgroundPosition: (bgImage && !isVideoBg) ? 'center' : undefined,
   };
 
   const paddingClass =
@@ -169,17 +185,50 @@ export default function HeroBanner(props: HeroBannerProps) {
 
   const imageBlock = hasSideImage ? (
     <div className={`relative z-10 flex-1 flex items-center ${heroImagePosition === 'right' ? 'justify-end' : 'justify-start'}`}>
-      <img
-        src={heroImage}
-        alt="Hero"
-        className={`${shapeClass} shadow-2xl`}
-        style={{ 
-          maxWidth: '100%',
-          width: props.heroImageWidth ? `${props.heroImageWidth}px` : 'auto',
-          height: props.heroImageHeight ? `${props.heroImageHeight}px` : 'auto',
-          objectFit: props.heroImageFit || 'contain'
-        }}
-      />
+      {isVideoSide ? (
+        <video
+          src={heroImage}
+          controls
+          className={`${shapeClass} shadow-2xl`}
+          style={{ 
+            maxWidth: '100%',
+            width: props.heroImageWidth ? `${props.heroImageWidth}px` : 'auto',
+            height: props.heroImageHeight ? `${props.heroImageHeight}px` : 'auto',
+            objectFit: props.heroImageFit || 'contain'
+          }}
+        />
+      ) : props.heroImageLink && !isEditing ? (
+        <a 
+          href={props.heroImageLink}
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="cursor-pointer transition-transform hover:scale-[1.01] active:scale-99 block"
+        >
+          <img
+            src={heroImage}
+            alt="Hero"
+            className={`${shapeClass} shadow-2xl`}
+            style={{ 
+              maxWidth: '100%',
+              width: props.heroImageWidth ? `${props.heroImageWidth}px` : 'auto',
+              height: props.heroImageHeight ? `${props.heroImageHeight}px` : 'auto',
+              objectFit: props.heroImageFit || 'contain'
+            }}
+          />
+        </a>
+      ) : (
+        <img
+          src={heroImage}
+          alt="Hero"
+          className={`${shapeClass} shadow-2xl`}
+          style={{ 
+            maxWidth: '100%',
+            width: props.heroImageWidth ? `${props.heroImageWidth}px` : 'auto',
+            height: props.heroImageHeight ? `${props.heroImageHeight}px` : 'auto',
+            objectFit: props.heroImageFit || 'contain'
+          }}
+        />
+      )}
     </div>
   ) : null;
 
@@ -192,7 +241,17 @@ export default function HeroBanner(props: HeroBannerProps) {
           : `flex items-center ${align === 'left' ? 'justify-start' : align === 'center' ? 'justify-center' : 'justify-end'}`
       }`}
     >
-      {bgImage && <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" />}
+      {bgImage && isVideoBg && (
+        <video 
+          src={bgImage} 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          className="absolute inset-0 w-full h-full object-cover z-0" 
+        />
+      )}
+      {bgImage && <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] z-0" />}
 
       {hasSideImage && !isMobile ? (
         heroImagePosition === 'right' ? (

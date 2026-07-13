@@ -186,6 +186,7 @@ export default function CoursePlayerPage() {
 
   // Persistence Logic
   const storageKey = useMemo(() => `tracking_${id}`, [id]);
+  const completedCacheKey = useMemo(() => `completed_lessons_${id}`, [id]);
 
   // Authorization Check
   useEffect(() => {
@@ -223,6 +224,26 @@ export default function CoursePlayerPage() {
       try {
         setLoading(true);
         const data = await getMyCourseDetails(id as string);
+
+        // Merge with local storage completion cache
+        try {
+          const localCompleted = JSON.parse(localStorage.getItem(completedCacheKey) || '{}');
+          const course = data?.course ?? data;
+          if (course && course.chapters) {
+            course.chapters = course.chapters.map((ch: any) => ({
+              ...ch,
+              lessons: (ch.lessons || []).map((l: any) => {
+                if (localCompleted[l.id] === true) {
+                  return { ...l, is_completed: true };
+                }
+                return l;
+              })
+            }));
+          }
+        } catch (e) {
+          console.warn('Failed to merge local completion cache:', e);
+        }
+
         setCourseData(data);
 
         const course = data?.course ?? data;
@@ -249,7 +270,7 @@ export default function CoursePlayerPage() {
       }
     };
     fetchDetails();
-  }, [id]);
+  }, [id, completedCacheKey]);
 
   // Keyboard Shortcuts
   useEffect(() => {
@@ -280,6 +301,46 @@ export default function CoursePlayerPage() {
   // currentTime from the hook updates on every timeupdate (unthrottled) —
   // use this for real-time display and note timestamps.
   // The page's own `currentTime` state is used only for the initial saved position.
+  /**
+   * Marks the given lesson as completed in both the player store (currentLesson)
+   * and in courseData.chapters so the sidebar checkmark appears immediately
+   * without needing a full page refresh.
+   */
+  const markLessonDoneLocally = useCallback((lessonId: number) => {
+    // 1. Update the player-store's active lesson so the header/controls reflect completion
+    //    setCurrentLesson expects a direct Lesson value (Zustand store setter, not React useState)
+    if (currentLesson) {
+      setCurrentLesson({ ...(currentLesson as any), is_completed: true });
+    }
+
+    // 2. Cache completion status in localStorage
+    try {
+      const localCompleted = JSON.parse(localStorage.getItem(completedCacheKey) || '{}');
+      localCompleted[lessonId] = true;
+      localStorage.setItem(completedCacheKey, JSON.stringify(localCompleted));
+    } catch (e) {
+      console.warn('Failed to update local completed cache:', e);
+    }
+
+    // 3. Mirror the flag into every chapter's lesson list so the sidebar icon shows
+    setCourseData((prev: any) => {
+      if (!prev) return prev;
+      const course = prev.course ?? prev;
+      const updatedChapters = (course.chapters || []).map((ch: any) => ({
+        ...ch,
+        lessons: (ch.lessons || []).map((l: any) =>
+          Number(l.id) === lessonId ? { ...l, is_completed: true } : l
+        ),
+      }));
+      // Handle both response shapes: { course: { chapters } } and flat { chapters }
+      if (prev.course) {
+        return { ...prev, course: { ...prev.course, chapters: updatedChapters } };
+      }
+      return { ...prev, chapters: updatedChapters };
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLesson, completedCacheKey]);
+
   const { seekTo, resetPlayer, bindToIframe, liveCurrentTime } = useBunnyPlayer(videoRef, {
     onProgress: useCallback((playerTime: number, dur: number, pct: number) => {
       if (!currentLesson || playerTime <= 0) return;
@@ -326,12 +387,13 @@ export default function CoursePlayerPage() {
       )
         .catch((err) => console.warn('Completion tracking failed:', err))
         .finally(() => {
-          setCurrentLesson({ ...(currentLesson as any), is_completed: true });
+          // Update both player store and sidebar lesson list
+          markLessonDoneLocally(lessonId);
           setShowCelebration(true);
           setTimeout(() => setShowCelebration(false), 4000);
         });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentLesson, id]),
+    }, [currentLesson, id, markLessonDoneLocally]),
 
     onEnded: useCallback((dur: number) => {
       if (!currentLesson || (currentLesson as any).is_completed) return;
@@ -346,12 +408,13 @@ export default function CoursePlayerPage() {
       )
         .catch((err) => console.warn('Ended tracking failed:', err))
         .finally(() => {
-          setCurrentLesson({ ...(currentLesson as any), is_completed: true });
+          // Update both player store and sidebar lesson list
+          markLessonDoneLocally(lessonId);
           setShowCelebration(true);
           setTimeout(() => setShowCelebration(false), 4000);
         });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentLesson, id]),
+    }, [currentLesson, id, markLessonDoneLocally]),
 
     onPause: useCallback(() => {
       // Progress is already flushed on pause inside the hook
@@ -823,6 +886,19 @@ export default function CoursePlayerPage() {
       }));
       setCourseData({ ...courseData, chapters: updatedChapters });
       setCurrentLesson({ ...currentLesson, is_completed: !isCurrentlyCompleted });
+
+      // Cache completion status in localStorage
+      try {
+        const localCompleted = JSON.parse(localStorage.getItem(completedCacheKey) || '{}');
+        if (isCurrentlyCompleted) {
+          delete localCompleted[currentLesson.id];
+        } else {
+          localCompleted[currentLesson.id] = true;
+        }
+        localStorage.setItem(completedCacheKey, JSON.stringify(localCompleted));
+      } catch (e) {
+        console.warn('Failed to update local completed cache:', e);
+      }
 
       if (!isCurrentlyCompleted) {
         setShowCelebration(true);

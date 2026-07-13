@@ -112,6 +112,275 @@ function ItemIconPicker({
   );
 }
 
+/**
+ * Helper to group similar adjacent controls into rows of two.
+ * Reduces the vertical footprint of the editing sidebar.
+ */
+function groupFields(fields: any[]) {
+  const groups: any[][] = [];
+  let i = 0;
+  while (i < fields.length) {
+    const f1 = fields[i];
+    const f2 = fields[i + 1];
+    
+    let canGroup = false;
+    if (f2) {
+      const isColorPair = f1.type === 'color' && f2.type === 'color';
+      
+      const isSizePair = f1.type === 'number' && f2.type === 'number' && 
+        (f1.name.toLowerCase().includes('width') || f1.name.toLowerCase().includes('height') || f1.name.toLowerCase().includes('padding') || f1.name.toLowerCase().includes('size')) &&
+        (f2.name.toLowerCase().includes('width') || f2.name.toLowerCase().includes('height') || f2.name.toLowerCase().includes('padding') || f2.name.toLowerCase().includes('size'));
+        
+      const isSelectPair = f1.type === 'select' && f2.type === 'select' &&
+        (f1.name.toLowerCase().includes('position') || f1.name.toLowerCase().includes('shape') || f1.name.toLowerCase().includes('fit') || f1.name.toLowerCase().includes('align')) &&
+        (f2.name.toLowerCase().includes('position') || f2.name.toLowerCase().includes('shape') || f2.name.toLowerCase().includes('fit') || f2.name.toLowerCase().includes('align'));
+
+      const isButtonColorPair = 
+        (f1.name.toLowerCase().includes('button') && f1.type === 'color') && 
+        (f2.name.toLowerCase().includes('button') && f2.type === 'color');
+
+      if (isColorPair || isSizePair || isSelectPair || isButtonColorPair) {
+        canGroup = true;
+      }
+    }
+    
+    if (canGroup) {
+      groups.push([f1, f2]);
+      i += 2;
+    } else {
+      groups.push([f1]);
+      i += 1;
+    }
+  }
+  return groups;
+}
+
+/**
+ * Provides clean guidance descriptions for builder editing inputs.
+ */
+function getFieldDescription(name: string, label: string): string | null {
+  const n = name.toLowerCase();
+  if (n === 'title') return 'العنوان الرئيسي الذي يظهر في مقدمة الكتلة بشكل بارز.';
+  if (n === 'subtitle') return 'نص فرعي توضيحي يظهر أسفل العنوان الرئيسي لإضافة تفاصيل.';
+  if (n === 'button_text' || n === 'buttontext') return 'النص المكتوب داخل زر التوجيه الأساسي.';
+  if (n === 'button_link' || n === 'buttonlink') return 'الرابط الذي ينتقل إليه المستخدم عند الضغط على الزر.';
+  if (n === 'background_color' || n === 'backgroundcolor') return 'لون خلفية القسم في حال لم تكن هناك صورة خلفية.';
+  if (n === 'text_color' || n === 'textcolor') return 'اللون الأساسي المطبق على جميع النصوص الفرعية.';
+  if (n === 'title_color' || n === 'titlecolor') return 'لون العنوان الرئيسي عند عدم استخدام صندوق خلفي.';
+  if (n === 'button_color' || n === 'buttoncolor') return 'اللون الخلفي لزر التوجيه.';
+  if (n === 'button_text_color' || n === 'buttontextcolor') return 'لون نص زر التوجيه.';
+  if (n === 'image_url' || n === 'bg_image' || n === 'bgimage' || n === 'heroimage' || n === 'side_image') return 'رفع أو تحديد رابط الصورة المراد عرضها.';
+  if (n.includes('image_link') || n.includes('imagelink') || n.includes('link_url')) return 'رابط خارجي يتم فتحه عند الضغط على الصورة بالمعاينة.';
+  if (n.includes('align')) return 'اتجاه محاذاة نصوص ومكونات هذا القسم (يمين، وسط، يسار).';
+  if (n.includes('width')) return 'عرض الصورة المخصصة بالبكسل (px).';
+  if (n.includes('height')) return 'ارتفاع الصورة المخصصة بالبكسل (px).';
+  if (n.includes('shape')) return 'نمط شكل حواف الصورة (دائري، زوايا مستديرة، مربع، شكل ورقة شجر).';
+  if (n.includes('fit')) return 'طريقة ملاءمة الصورة لمساحة العرض الخاصة بها.';
+  if (n.includes('grid_cols') || n.includes('gridcols')) return 'عدد العناصر المعروضة في الصف الواحد.';
+  if (n.includes('overlay')) return 'تفعيل خلفية تباين خفيفة خلف النصوص لتسهيل القراءة وتوضيحها.';
+  if (n === 'copyright') return 'نص حقوق الملكية الفكرية الذي يظهر أسفل الموقع.';
+  if (n === 'email') return 'البريد الإلكتروني المخصص للتواصل.';
+  if (n === 'phone') return 'رقم الهاتف المخصص للتواصل.';
+  if (n === 'address') return 'عنوان المقر الرئيسي أو فرع الأكاديمية.';
+  return null;
+}
+
+/**
+ * Returns true for fields that are only useful for advanced/developer users.
+ * Hidden when the inspector panel is in Simple (easy) mode.
+ */
+function isAdvancedField(field: any): boolean {
+  const n = field.name.toLowerCase();
+  // Colors are already in the style tab — exclude heavy number/link/toggle fields
+  return (
+    n.includes('font') ||
+    n.includes('padding') ||
+    n === 'border_radius' ||
+    n === 'slider_speed' ||
+    n === 'show_arrows' ||
+    n === 'show_card_overlay' ||
+    n.includes('_width') ||
+    n.includes('_height') ||
+    n.includes('_fit') ||
+    n.includes('_shape') ||
+    n === 'image_link' ||
+    n === 'grid_cols' ||
+    n === 'avatar_size' ||
+    n === 'avatar_shape'
+  );
+}
+
+function renderFieldInput({
+  field,
+  value,
+  onChange,
+}: {
+  field: any;
+  value: any;
+  onChange: (val: any) => void;
+}) {
+  const description = getFieldDescription(field.name, field.label);
+
+  return (
+    <div className="space-y-1.5 text-right w-full" dir="rtl">
+      {/* Field label — darker so it stands out from hint text below */}
+      <label className="text-[10px] font-black text-slate-700 pr-1 block">
+        {field.label}
+      </label>
+
+      {field.type === 'text' && (
+        // Show image uploader for image/avatar fields, but NOT for link fields (which need a URL text input)
+        (!field.name.toLowerCase().includes('link') &&
+          (field.name.toLowerCase().includes('image') ||
+           field.name.toLowerCase().includes('img') ||
+           field.name.toLowerCase().includes('logo') ||
+           field.name.toLowerCase().includes('avatar'))) ? (
+          <ImageUploader
+            value={value ?? ''}
+            onChange={onChange}
+            label={field.label}
+          />
+        ) : (
+          <input
+            type="text"
+            value={value ?? ''}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={field.name.toLowerCase().includes('link') || field.name.toLowerCase().includes('url') ? 'https://...' : ''}
+            className="w-full p-3.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-2xl text-xs font-bold text-slate-700 outline-none transition-all"
+            dir="ltr"
+          />
+        )
+      )}
+
+      {field.type === 'textarea' && (
+        <textarea 
+          rows={field.name === 'html' ? 12 : 3}
+          value={value ?? ''} 
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full p-3.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-2xl text-xs font-bold text-slate-700 outline-none transition-all resize-none"
+        />
+      )}
+
+      {field.type === 'number' && (
+        <input 
+          type="number" 
+          value={value ?? field.defaultValue} 
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="w-full p-3.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-2xl text-xs font-bold text-slate-700 outline-none transition-all"
+        />
+      )}
+
+      {field.type === 'boolean' && (
+        <label className="flex items-center gap-3.5 p-3.5 bg-slate-50 border border-slate-100 rounded-2xl cursor-pointer hover:bg-slate-100/40 select-none">
+          <input 
+            type="checkbox" 
+            checked={!!value} 
+            onChange={(e) => onChange(e.target.checked)}
+            className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+          />
+          <span className="text-xs font-bold text-slate-600">تفعيل {field.label}</span>
+        </label>
+      )}
+
+      {field.type === 'select' && (
+        <div className="relative">
+          <select
+            value={value ?? field.defaultValue}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full p-3.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-2xl text-xs font-bold text-slate-700 outline-none transition-all appearance-none"
+          >
+            {field.options?.map((opt: any) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+          <ChevronDown className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+        </div>
+      )}
+
+      {field.type === 'color' && (
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <input 
+              type="color" 
+              value={value ?? field.defaultValue ?? '#000000'} 
+              onChange={(e) => onChange(e.target.value)}
+              className="w-10 h-10 p-0 rounded-xl border border-slate-200 cursor-pointer overflow-hidden outline-none bg-transparent shrink-0"
+            />
+            <input 
+              type="text" 
+              value={value ?? field.defaultValue ?? ''} 
+              onChange={(e) => onChange(e.target.value)}
+              className="flex-1 p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs font-mono font-bold text-slate-600 outline-none text-left"
+              dir="ltr"
+            />
+          </div>
+        </div>
+      )}
+
+      {field.type === 'icon' && (
+        <ItemIconPicker
+          value={value ?? field.defaultValue ?? ''}
+          onChange={onChange}
+        />
+      )}
+
+      {/* Image/video upload field — renders a drop-zone uploader */}
+      {field.type === 'image' && (
+        <ImageUploader
+          value={value ?? ''}
+          onChange={onChange}
+          label={undefined}
+        />
+      )}
+
+      {/* Hint text — lighter gray, visually secondary to the label above */}
+      {description && (
+        <span className="text-[9px] text-slate-400 font-bold block mt-1 pr-1 leading-normal">
+          💡 {description}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function renderFieldsGrouped({
+  fields,
+  values,
+  onPropChange,
+}: {
+  fields: any[];
+  values: any;
+  onPropChange: (key: string, val: any) => void;
+}) {
+  return groupFields(fields).map((group, idx) => {
+    if (group.length === 2) {
+      return (
+        <div key={idx} className="grid grid-cols-2 gap-3.5 items-end">
+          {renderFieldInput({
+            field: group[0],
+            value: values[group[0].name],
+            onChange: (val) => onPropChange(group[0].name, val),
+          })}
+          {renderFieldInput({
+            field: group[1],
+            value: values[group[1].name],
+            onChange: (val) => onPropChange(group[1].name, val),
+          })}
+        </div>
+      );
+    }
+    return (
+      <div key={idx} className="w-full">
+        {renderFieldInput({
+          field: group[0],
+          value: values[group[0].name],
+          onChange: (val) => onPropChange(group[0].name, val),
+        })}
+      </div>
+    );
+  });
+}
+
 export default function InspectorPanel() {
   const { 
     selectedNodeId, 
@@ -147,7 +416,8 @@ export default function InspectorPanel() {
   }, [selectedNodeId]);
 
   useEffect(() => {
-    if (isSimpleMode && activeTab === 'spacing') {
+    // In simple mode, reset to content tab since style/spacing tabs are hidden
+    if (isSimpleMode && activeTab !== 'content') {
       setActiveTab('content');
     }
   }, [isSimpleMode, activeTab]);
@@ -188,13 +458,20 @@ export default function InspectorPanel() {
     updateNodeProps(selectedNodeId, { [key]: value });
   };
 
-  // Group fields into Content vs styling parameters
-  const contentFields = registryConfig.fields.filter(
-    (f) => !f.name.startsWith('section') && !['color', 'buttonColor', 'buttonTextColor', 'backgroundColor', 'titleColor', 'subtitleColor', 'headerBg', 'activeTabColor', 'accentColor', 'theme'].includes(f.type) && f.name !== 'align'
+  // Separate fields into content vs styling tabs
+  const COLOR_TYPES = ['color', 'buttonColor', 'buttonTextColor', 'backgroundColor', 'titleColor', 'subtitleColor', 'headerBg', 'activeTabColor', 'accentColor', 'theme'];
+
+  const allContentFields = registryConfig.fields.filter(
+    (f) => !f.name.startsWith('section') && !COLOR_TYPES.includes(f.type) && f.name !== 'align'
   );
-  
+
+  // In simple mode, strip out advanced/technical fields so the panel stays uncluttered
+  const contentFields = isSimpleMode
+    ? allContentFields.filter(f => !isAdvancedField(f))
+    : allContentFields;
+
   const stylingFields = registryConfig.fields.filter(
-    (f) => !f.name.startsWith('section') && (['color', 'buttonColor', 'buttonTextColor', 'backgroundColor', 'titleColor', 'subtitleColor', 'headerBg', 'activeTabColor', 'accentColor', 'theme'].includes(f.type) || f.name === 'align')
+    (f) => !f.name.startsWith('section') && (COLOR_TYPES.includes(f.type) || f.name === 'align')
   );
 
   return (
@@ -243,7 +520,7 @@ export default function InspectorPanel() {
         </div>
       </div>
 
-      {/* Selector Tabs */}
+      {/* Selector Tabs — style and spacing are advanced, hidden in simple mode */}
       <div className="flex border-b border-slate-100">
         <button
           onClick={() => setActiveTab('content')}
@@ -254,15 +531,18 @@ export default function InspectorPanel() {
           <FileText className="w-3.5 h-3.5" />
           المحتوى
         </button>
-        <button
-          onClick={() => setActiveTab('style')}
-          className={`flex-1 py-3 text-[11px] font-black border-b-2 flex items-center justify-center gap-1.5 ${
-            activeTab === 'style' ? 'border-blue-500 text-blue-600 bg-blue-50/10' : 'border-transparent text-slate-400 hover:text-slate-600'
-          }`}
-        >
-          <Paintbrush className="w-3.5 h-3.5" />
-          التنسيق
-        </button>
+        {/* Style and Spacing tabs are advanced — only show in advanced mode */}
+        {!isSimpleMode && (
+          <button
+            onClick={() => setActiveTab('style')}
+            className={`flex-1 py-3 text-[11px] font-black border-b-2 flex items-center justify-center gap-1.5 ${
+              activeTab === 'style' ? 'border-blue-500 text-blue-600 bg-blue-50/10' : 'border-transparent text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            <Paintbrush className="w-3.5 h-3.5" />
+            التنسيق
+          </button>
+        )}
         {!isSimpleMode && (
           <button
             onClick={() => setActiveTab('spacing')}
@@ -281,82 +561,11 @@ export default function InspectorPanel() {
         
         {activeTab === 'content' && (
           <div className="space-y-5">
-            {contentFields.map((field) => (
-              <div key={field.name} className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 pr-1 block">
-                  {field.label}
-                </label>
-
-                {field.type === 'text' && (
-                  (field.name.toLowerCase().includes('image') || field.name.toLowerCase().includes('img') || field.name.toLowerCase().includes('logo')) ? (
-                    <ImageUploader
-                      value={props[field.name] ?? ''}
-                      onChange={(val) => handlePropChange(field.name, val)}
-                      label={field.label}
-                    />
-                  ) : (
-                    <input 
-                      type="text" 
-                      value={props[field.name] ?? ''} 
-                      onChange={(e) => handlePropChange(field.name, e.target.value)}
-                      className="w-full p-3.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-2xl text-xs font-bold text-slate-700 outline-none transition-all"
-                    />
-                  )
-                )}
-
-                {field.type === 'textarea' && (
-                  <textarea 
-                    rows={field.name === 'html' ? 12 : 3}
-                    value={props[field.name] ?? ''} 
-                    onChange={(e) => handlePropChange(field.name, e.target.value)}
-                    className="w-full p-3.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-2xl text-xs font-bold text-slate-700 outline-none transition-all"
-                  />
-                )}
-
-                {field.type === 'number' && (
-                  <input 
-                    type="number" 
-                    value={props[field.name] ?? field.defaultValue} 
-                    onChange={(e) => handlePropChange(field.name, Number(e.target.value))}
-                    className="w-full p-3.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-2xl text-xs font-bold text-slate-700 outline-none transition-all"
-                  />
-                )}
-
-                {field.type === 'boolean' && (
-                  <label className="flex items-center gap-3.5 p-3.5 bg-slate-50 border border-slate-100 rounded-2xl cursor-pointer hover:bg-slate-100/40 select-none">
-                    <input 
-                      type="checkbox" 
-                      checked={props[field.name] ?? field.defaultValue} 
-                      onChange={(e) => handlePropChange(field.name, e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-xs font-bold text-slate-600">تفعيل هذا الخيار</span>
-                  </label>
-                )}
-
-                {field.type === 'select' && (
-                  <div className="relative">
-                    <select
-                      value={props[field.name] ?? field.defaultValue}
-                      onChange={(e) => handlePropChange(field.name, e.target.value)}
-                      className="w-full p-3.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-2xl text-xs font-bold text-slate-700 outline-none transition-all appearance-none"
-                    >
-                      {field.options?.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  </div>
-                )}
-
-                {field.type === 'icon' && (
-                  <ItemIconPicker
-                    value={props[field.name] ?? field.defaultValue}
-                    onChange={(val) => handlePropChange(field.name, val)}
-                  />
-                )}
-              </div>
-            ))}
+            {renderFieldsGrouped({
+              fields: contentFields,
+              values: props,
+              onPropChange: handlePropChange,
+            })}
 
             {/* Custom List Editors */}
             {selectedNode.type === 'kpi-cards' && (
@@ -423,13 +632,14 @@ export default function InspectorPanel() {
               />
             )}
 
-            {/* Dynamic Item List Editor */}
+            {/* Dynamic Item List Editor — passes isSimpleMode for field filtering inside slides */}
             {registryConfig.itemFields && (
               <DynamicListEditor
                 items={props.items || []}
                 fields={registryConfig.itemFields}
                 itemLabel={registryConfig.itemLabel || 'عنصر'}
                 onChange={(newItems) => handlePropChange('items', newItems)}
+                isSimpleMode={isSimpleMode}
               />
             )}
           </div>
@@ -437,53 +647,11 @@ export default function InspectorPanel() {
 
         {activeTab === 'style' && (
           <div className="space-y-5">
-            {stylingFields.map((field) => (
-              <div key={field.name} className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 pr-1 block">
-                  {field.label}
-                </label>
-
-                {field.type === 'color' && (
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-3">
-                      <input 
-                        type="color" 
-                        value={props[field.name] ?? field.defaultValue} 
-                        onChange={(e) => handlePropChange(field.name, e.target.value)}
-                        className="w-10 h-10 p-0 rounded-xl border border-slate-200 cursor-pointer overflow-hidden outline-none bg-transparent shrink-0"
-                      />
-                      
-                      {!isSimpleMode ? (
-                        <input 
-                          type="text" 
-                          value={props[field.name] ?? field.defaultValue} 
-                          onChange={(e) => handlePropChange(field.name, e.target.value)}
-                          className="flex-1 p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs font-mono font-bold text-slate-600 outline-none text-left"
-                          dir="ltr"
-                        />
-                      ) : (
-                        <span className="text-[10px] font-bold text-slate-500">اضغط لاختيار لون {field.label}</span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {field.type === 'select' && (
-                  <div className="relative">
-                    <select
-                      value={props[field.name] ?? field.defaultValue}
-                      onChange={(e) => handlePropChange(field.name, e.target.value)}
-                      className="w-full p-3.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-2xl text-xs font-bold text-slate-700 outline-none transition-all appearance-none"
-                    >
-                      {field.options?.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  </div>
-                )}
-              </div>
-            ))}
+            {renderFieldsGrouped({
+              fields: stylingFields,
+              values: props,
+              onPropChange: handlePropChange,
+            })}
 
              {/* Align text blocks */}
             {registryConfig.fields.some(f => f.name === 'align') && (
@@ -628,9 +796,11 @@ interface DynamicListEditorProps {
   fields: any[];
   itemLabel: string;
   onChange: (newItems: any[]) => void;
+  /** When true, advanced/technical fields are hidden inside each item editor */
+  isSimpleMode?: boolean;
 }
 
-function DynamicListEditor({ items = [], fields = [], itemLabel = 'عنصر', onChange }: DynamicListEditorProps) {
+function DynamicListEditor({ items = [], fields = [], itemLabel = 'عنصر', onChange, isSimpleMode = false }: DynamicListEditorProps) {
   const { selectedItemIndex, setSelectedItemIndex } = useBuilderStore();
 
   useEffect(() => {
@@ -720,105 +890,12 @@ function DynamicListEditor({ items = [], fields = [], itemLabel = 'عنصر', on
 
               {isEditing && (
                 <div className="p-4 bg-white border-t border-slate-100 space-y-4">
-                  {fields.map(f => (
-                    <div key={f.name} className="space-y-1.5">
-                      <label className="text-[10px] font-black text-slate-400 pr-1 block">
-                        {f.label}
-                      </label>
-                      
-                      {f.type === 'text' && (
-                        (f.name.toLowerCase().includes('image') || f.name.toLowerCase().includes('img') || f.name.toLowerCase().includes('logo') || f.name.toLowerCase().includes('avatar')) ? (
-                          <ItemImageUploader
-                            value={itemProps[f.name] ?? ''}
-                            onChange={(val) => handleUpdateItemProp(idx, f.name, val)}
-                            label={f.label}
-                          />
-                        ) : (
-                          <input
-                            type="text"
-                            value={itemProps[f.name] ?? ''}
-                            onChange={(e) => handleUpdateItemProp(idx, f.name, e.target.value)}
-                            className="w-full p-3 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-xs font-bold text-slate-700 outline-none transition-all"
-                          />
-                        )
-                      )}
-                      
-                      {f.type === 'textarea' && (
-                        <textarea
-                          rows={3}
-                          value={itemProps[f.name] ?? ''}
-                          onChange={(e) => handleUpdateItemProp(idx, f.name, e.target.value)}
-                          className="w-full p-3 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-xs font-bold text-slate-700 outline-none transition-all resize-none"
-                        />
-                      )}
-                      
-                      {f.type === 'number' && (
-                        <input
-                          type="number"
-                          value={itemProps[f.name] ?? f.defaultValue}
-                          onChange={(e) => handleUpdateItemProp(idx, f.name, Number(e.target.value))}
-                          className="w-full p-3 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-xs font-bold text-slate-700 outline-none transition-all"
-                        />
-                      )}
-                      
-                      {f.type === 'boolean' && (
-                        <label className="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-100 rounded-xl cursor-pointer hover:bg-slate-100/40 select-none">
-                          <input
-                            type="checkbox"
-                            checked={itemProps[f.name] ?? f.defaultValue}
-                            onChange={(e) => handleUpdateItemProp(idx, f.name, e.target.checked)}
-                            className="w-3.5 h-3.5 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-                          />
-                          <span className="text-[10px] font-bold text-slate-600">تفعيل هذا الخيار</span>
-                        </label>
-                      )}
-                      
-                      {f.type === 'color' && (
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="color"
-                            value={itemProps[f.name] ?? f.defaultValue}
-                            onChange={(e) => handleUpdateItemProp(idx, f.name, e.target.value)}
-                            className="w-8 h-8 p-0 rounded-lg border border-slate-200 cursor-pointer overflow-hidden outline-none bg-transparent shrink-0"
-                          />
-                          <input
-                            type="text"
-                            value={itemProps[f.name] ?? f.defaultValue}
-                            onChange={(e) => handleUpdateItemProp(idx, f.name, e.target.value)}
-                            className="flex-1 min-w-0 p-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-mono font-bold text-slate-600 outline-none text-left"
-                            dir="ltr"
-                          />
-                        </div>
-                      )}
-                      
-                      {f.type === 'image' && (
-                        <ItemImageUploader
-                          value={itemProps[f.name] ?? ''}
-                          onChange={(val) => handleUpdateItemProp(idx, f.name, val)}
-                          label={f.label}
-                        />
-                      )}
-                      
-                      {f.type === 'select' && (
-                        <select
-                          value={itemProps[f.name] ?? f.defaultValue}
-                          onChange={(e) => handleUpdateItemProp(idx, f.name, e.target.value)}
-                          className="w-full p-2.5 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl text-xs font-bold text-slate-700 outline-none transition-all"
-                        >
-                          {f.options?.map((opt: any) => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                          ))}
-                        </select>
-                      )}
-
-                      {f.type === 'icon' && (
-                        <ItemIconPicker
-                          value={itemProps[f.name] ?? f.defaultValue}
-                          onChange={(val) => handleUpdateItemProp(idx, f.name, val)}
-                        />
-                      )}
-                    </div>
-                  ))}
+                  {renderFieldsGrouped({
+                    // In simple mode, filter out advanced fields inside item editors too
+                    fields: isSimpleMode ? fields.filter(f => !isAdvancedField(f)) : fields,
+                    values: itemProps,
+                    onPropChange: (key, val) => handleUpdateItemProp(idx, key, val),
+                  })}
                 </div>
               )}
             </div>
