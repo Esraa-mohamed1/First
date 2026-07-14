@@ -1,0 +1,403 @@
+{
+  "templateId": "template_3",
+  "sections": [
+    {
+      "id": "nav-t3",
+      "type": "navbar",
+      "props": {
+        "title": "درب | الأكاديمية",
+        "showSearch": true,
+        "showProfile": true,
+        "bgColor": "#ffffff",
+        "borderColor": "#e2e8f0",
+        "isLandingPage": true,
+        "order": 1
+      }
+    },
+    {
+      "id": "hero-t3",
+      "type": "hero_section",
+      "props": {
+        "title": "تعليم أكاديمي معتمد من أقوى المؤسسات التعليمية",
+        "subtitle": "طوّر مهاراتك اليوم وحقق أهدافك المهنية مع برامج ودورات مصممة بأعلى المعايير الأكاديمية.",
+        "show_button": true,
+        "button_text": "تصفح البرامج والشهادات",
+        "button_link": "#",
+        "background_color": "#0f172a",
+        "text_color": "#cbd5e1",
+        "title_color": "#ffffff",
+        "button_color": "#10b981",
+        "button_text_color": "#ffffff",
+        "font_size": 42,
+        "font_weight": 700,
+        "padding_top": 80,
+        "padding_bottom": 80,
+        "align": "right",
+        "slider_speed": 4,
+        "show_arrows": true,
+        "show_card_overlay": false,
+        "items": [
+          {
+            "order": 1,
+            "props": {
+              "title": "ابدأ رحلة التعلم المعتمد والمهني اليوم",
+              "subtitle": "ادرس مسارات تكنولوجية وتقنية من منزلك، واحصل على شهادات معتمدة تدعم تقدمك الوظيفي والعملي.",
+              "button_text": "تصفح الدورات",
+              "button_link": "#",
+              "bg_image": "",
+              "background_color": "#0f172a",
+              "button_color": "#10b981",
+              "button_text_color": "#ffffff",
+              "title_color": "#ffffff",
+              "text_color": "#cbd5e1",
+              "align": "right",
+              "show_card_overlay": false,
+              "side_image": "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&auto=format&fit=crop",
+              "side_image_position": "left",
+              "side_image_shape": "leaf",
+              "side_image_width": 380,
+              "side_image_height": 380,
+              "side_image_fit": "cover"
+            }
+          },
+          {
+            "order": 2,
+            "props": {
+              "title": "اكتسب مهارات عملية من قادة الصناعة",
+              "subtitle": "شروحات تطبيقية وورش تفاعلية تصاحبك خطوة بخطوة للتميز والتمكن من مجالك المهني الجديد.",
+              "button_text": "ابدأ الآن",
+              "button_link": "#",
+              "bg_image": "",
+              "background_color": "#1e293b",
+              "button_color": "#6366f1",
+              "button_text_color": "#ffffff",
+              "title_color": "#ffffff",
+              "text_color": "#cbd5e1",
+              "align": "right",
+              "show_card_overlay": false,
+              "side_image": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop",
+              "side_image_position": "left",
+              "side_image_shape": "rounded",
+              "side_image_width": 380,
+              "side_image_height": 380,
+              "side_image_fit": "cover"
+            }
+          }
+        ],
+        "order": 2
+      }
+    },
+    {
+      "id": "kpis-t3",
+      "type": "kpi-cards",
+      "props": {
+        "gridCols": "3",
+        "backgroundColor": "#ffffff",
+        "order": 3,
+        "cards": [
+          {
+            "id": "kpi-t3-1",
+            "title": "شريك تعليمي ومهني معتمد",
+            "value": "+160",
+            "change": "",
+            "isPositive": true,
+            "icon": "Award",
+            "color": "#6366f1"
+          },
+          {
+            "id": "kpi-t3-2",
+            "title": "متعلم نشط حول العالم",
+            "value": "45M+",
+            "change": "",
+            "isPositive": true,
+            "icon": "Users",
+            "color": "#10b981"
+          },
+          {
+            "id": "kpi-t3-3",
+            "title": "مسار تعليمي متكامل للتخصص",
+            "value": "3,000+",
+            "change": "",
+            "isPositive": true,
+            "icon": "BookOpen",
+            "color": "#6366f1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tabs-t3",
+      "type": "tabs",
+      "props": {
+        "title": "استكشف التخصصات والمهارات الأكثر رواجاً",
+        "subtitle": "اختر المجال المهني الذي ترغب في إتقانه والبدء ببناء بورتفوليو متميز فيه",
+        "backgroundColor": "#f8fafc",
+        "activeTabColor": "#10b981",
+        "order": 4,
+        "tabs": [
+          {
+            "id": "tab-1",
+            "title": "علوم الحاسوب والبرمجة",
+            "content": "تعلّم لغات البرمجة الأكثر انتشاراً مثل Python و JavaScript، وتخصص في تطوير الويب أو بناء الأنظمة."
+          },
+          {
+            "id": "tab-2",
+            "title": "الذكاء الاصطناعي وهندسة البيانات",
+            "content": "مسارات متقدمة لتعلّم الآلة وعلم البيانات وبناء نماذج الذكاء الاصطناعي التوليدي والتحليلات الإحصائية."
+          },
+          {
+            "id": "tab-3",
+            "title": "إدارة الأعمال والقيادة المعتمدة",
+            "content": "برامج إدارة المشاريع المهنية، التمويل، والاستشارات الإدارية المعتمدة من أكبر كليات الأعمال الدولية."
+          }
+        ]
+      }
+    },
+    {
+      "id": "courses-t3",
+      "type": "course-cards",
+      "props": {
+        "title": "البرامج والدورات الأكاديمية والمهنية",
+        "gridCols": "3",
+        "showPrice": true,
+        "showStudentsCount": true,
+        "buttonBg": "#10b981",
+        "background_color": "#ffffff",
+        "padding_top": 60,
+        "padding_bottom": 60,
+        "order": 5,
+        "courses": [
+          {
+            "id": "c1",
+            "title": "الذكاء الاصطناعي التطبيقي لمطوري الويب",
+            "instructor": "د. يوسف سلامة",
+            "price": "٥٠٠ ريال",
+            "students": "١٢٠ طالب",
+            "duration": "٢٤ ساعة",
+            "image": "",
+            "description": "كيفية دمج نماذج الذكاء الاصطناعي وبناء تطبيقات تفاعلية متطورة."
+          },
+          {
+            "id": "c2",
+            "title": "القيادة التنفيذية وإدارة التغيير في المؤسسات",
+            "instructor": "د. ريما العتيبي",
+            "price": "٤٥٠ ريال",
+            "students": "١٨٠ طالب",
+            "duration": "١٦ ساعة",
+            "image": "",
+            "description": "إستراتيجيات قيادة فرق العمل وإدارة الأزمات في بيئة الأعمال المعاصرة."
+          }
+        ]
+      }
+    },
+    {
+      "id": "testimonials-t3",
+      "type": "testimonials_section",
+      "props": {
+        "title": "قصص نجاح من قلب مجتمعنا التعليمي",
+        "subtitle": "كيف غيرت شهاداتنا ومساراتنا المعتمدة المستقبل المهني لمتعلمينا",
+        "background_color": "#f8fafc",
+        "text_color": "#0f172a",
+        "padding_top": 60,
+        "padding_bottom": 60,
+        "avatar_size": 40,
+        "avatar_shape": "circle",
+        "items": [
+          {
+            "id": "t-t3-1",
+            "order": 1,
+            "props": {
+              "quote": "الدراسة هنا كانت تجربة فريدة، المناهج مصممة بعناية فائقة وتطابق تماماً ما يبحث عنه أصحاب العمل لتوظيفنا.",
+              "author": "المهندس عبدالله الفيصل",
+              "role": "مهندس برمجيات أول",
+              "rating": 5,
+              "avatar": ""
+            }
+          }
+        ],
+        "order": 6
+      }
+    },
+    {
+      "id": "gallery-t3",
+      "type": "gallery_section",
+      "props": {
+        "title": "شركاؤنا من الأكاديميات والجامعات العريقة",
+        "subtitle": "نعمل يداً بيد مع أفضل الجامعات والشركات لتوفير تعليم متميز وقابل للتطبيق المباشر.",
+        "background_color": "#ffffff",
+        "grid_cols": 3,
+        "image_aspect": "video",
+        "image_shape": "rounded",
+        "padding_top": 60,
+        "padding_bottom": 60,
+        "items": [
+          {
+            "id": "g-t3-1",
+            "order": 1,
+            "props": {
+              "image_url": "https://images.unsplash.com/photo-1541339907198-e08756dedf3f",
+              "caption": "الحرم الجامعي والتعاون العلمي",
+              "image_link": ""
+            }
+          },
+          {
+            "id": "g-t3-2",
+            "order": 2,
+            "props": {
+              "image_url": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1",
+              "caption": "مختبرات الحاسوب والأبحاث التكنولوجية",
+              "image_link": ""
+            }
+          },
+          {
+            "id": "g-t3-3",
+            "order": 3,
+            "props": {
+              "image_url": "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846",
+              "caption": "قاعات المحاضرات التفاعلية والورش المهنية",
+              "image_link": ""
+            }
+          }
+        ],
+        "order": 7
+      }
+    },
+    {
+      "id": "faq-t3",
+      "type": "faq_section",
+      "props": {
+        "title": "الأسئلة الشائعة حول الشهادات والقبول بالمنصة",
+        "subtitle": "إجابات وافية لمساعدتك على اتخاذ القرار الاستثماري الصحيح بمستقبلك",
+        "background_color": "#f8fafc",
+        "text_color": "#0f172a",
+        "padding_top": 60,
+        "padding_bottom": 60,
+        "items": [
+          {
+            "id": "faq-t3-1",
+            "order": 1,
+            "props": {
+              "question": "هل الشهادات مقبولة مهنياً؟",
+              "answer": "نعم، تصدر الشهادات بالتعاون مع جهات وجامعات معترف بها وتضيف قيمة حقيقية لسيرتك الذاتية."
+            }
+          },
+          {
+            "id": "faq-t3-2",
+            "order": 2,
+            "props": {
+              "question": "ما هو نظام الدراسة المتبع بالدورة؟",
+              "answer": "دراسة مرنة بالكامل عبر الإنترنت مع إمكانية حضور محاضرات مباشرة مسجلة."
+            }
+          }
+        ],
+        "order": 8
+      }
+    },
+    {
+      "id": "features-t3",
+      "type": "features_section",
+      "props": {
+        "title": "لماذا تختار برامجنا الأكاديمية؟",
+        "subtitle": "صممنا لك بيئة تعليمية متكاملة لضمان أقصى استفادة وتجربة تفاعلية متميزة",
+        "background_color": "#ffffff",
+        "text_color": "#0f172a",
+        "grid_cols": 3,
+        "padding_top": 60,
+        "padding_bottom": 60,
+        "items": [
+          {
+            "id": "feat-t3-1",
+            "order": 1,
+            "props": {
+              "icon": "Award",
+              "icon_color": "#10b981",
+              "title": "اعتماد دولي",
+              "description": "شهادات مهنية معتمدة من أقوى الهيئات العالمية تزيد من فرص قبولك الوظيفي."
+            }
+          },
+          {
+            "id": "feat-t3-2",
+            "order": 2,
+            "props": {
+              "icon": "BookOpen",
+              "icon_color": "#10b981",
+              "title": "محتوى حصري ومحدث",
+              "description": "مناهج دراسية متطورة باستمرار لتواكب أحدث التغيرات في سوق العمل التكنولوجي."
+            }
+          },
+          {
+            "id": "feat-t3-3",
+            "order": 3,
+            "props": {
+              "icon": "Users",
+              "icon_color": "#10b981",
+              "title": "شبكة مهنية وخريجين",
+              "description": "انضم لمجتمع واسع من الخبراء والمختصين وتبادل الخبرات معهم بشكل دوري."
+            }
+          }
+        ],
+        "order": 9
+      }
+    },
+    {
+      "id": "categories-t3",
+      "type": "categories_section",
+      "props": {
+        "title": "استكشف الكليات والأقسام الدراسية",
+        "subtitle": "اختر الكلية التي تود الانضمام إليها وتصفح كافة المسارات والبرامج المتعلقة بها",
+        "background_color": "#f8fafc",
+        "text_color": "#0f172a",
+        "grid_cols": 3,
+        "padding_top": 60,
+        "padding_bottom": 60,
+        "items": [
+          {
+            "id": "cat-t3-1",
+            "order": 1,
+            "props": {
+              "name": "كلية الهندسة وعلوم الحاسب",
+              "icon": "Cpu",
+              "count": "12 برنامج",
+              "description": "هندسة البرمجيات، الأمن السيبراني، وشبكات الحاسب."
+            }
+          },
+          {
+            "id": "cat-t3-2",
+            "order": 2,
+            "props": {
+              "name": "كلية إدارة الأعمال والريادة",
+              "icon": "Briefcase",
+              "count": "8 برامج",
+              "description": "إدارة الابتكار، التمويل، والإدارة التنفيذية المتقدمة."
+            }
+          },
+          {
+            "id": "cat-t3-3",
+            "order": 3,
+            "props": {
+              "name": "كلية التصميم والفنون الرقمية",
+              "icon": "PenTool",
+              "count": "6 برامج",
+              "description": "تصميم تجربة المستخدم، الرسوم المتحركة، والإنتاج البصري."
+            }
+          }
+        ],
+        "order": 10
+      }
+    },
+    {
+      "id": "footer-t3",
+      "type": "footer",
+      "props": {
+        "copyright": "جميع الحقوق محفوظة © درب ٢٠٢٦",
+        "logoText": "درب | الأكاديمية",
+        "bgColor": "#0f172a",
+        "textColor": "#ffffff",
+        "showLogo": true,
+        "showSocials": true,
+        "order": 11
+      }
+    }
+  ],
+  "updatedAt": "2026-07-13T14:12:18.766Z"
+}

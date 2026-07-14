@@ -184,12 +184,18 @@ export default function HeroBanner(props: HeroBannerProps) {
     props.heroImageShape === 'leaf' ? 'rounded-3xl rounded-tr-none rounded-bl-none' : 'rounded-2xl';
 
   const imageBlock = hasSideImage ? (
-    <div className={`relative z-10 flex-1 flex items-center ${heroImagePosition === 'right' ? 'justify-end' : 'justify-start'}`}>
+    <div className={`relative z-10 flex-1 flex items-center ${heroImagePosition === 'right' ? 'justify-end' : 'justify-start'} animate-[float_5s_ease-in-out_infinite]`}>
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes float {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-12px) scale(1.01); }
+        }
+      `}} />
       {isVideoSide ? (
         <video
           src={heroImage}
           controls
-          className={`${shapeClass} shadow-2xl`}
+          className={`${shapeClass} shadow-2xl transition-all duration-500 hover:rotate-1 hover:scale-[1.02]`}
           style={{ 
             maxWidth: '100%',
             width: props.heroImageWidth ? `${props.heroImageWidth}px` : 'auto',
@@ -207,7 +213,7 @@ export default function HeroBanner(props: HeroBannerProps) {
           <img
             src={heroImage}
             alt="Hero"
-            className={`${shapeClass} shadow-2xl`}
+            className={`${shapeClass} shadow-2xl transition-all duration-500 hover:rotate-1 hover:scale-[1.02]`}
             style={{ 
               maxWidth: '100%',
               width: props.heroImageWidth ? `${props.heroImageWidth}px` : 'auto',
@@ -220,7 +226,7 @@ export default function HeroBanner(props: HeroBannerProps) {
         <img
           src={heroImage}
           alt="Hero"
-          className={`${shapeClass} shadow-2xl`}
+          className={`${shapeClass} shadow-2xl transition-all duration-500 hover:rotate-1 hover:scale-[1.02]`}
           style={{ 
             maxWidth: '100%',
             width: props.heroImageWidth ? `${props.heroImageWidth}px` : 'auto',
@@ -235,12 +241,21 @@ export default function HeroBanner(props: HeroBannerProps) {
   return (
     <div
       style={containerStyle}
-      className={`relative overflow-hidden ${isTransparentBg ? '' : 'shadow-[0_12px_40px_rgba(25,28,29,0.02)] border border-slate-100/60'} ${paddingClass} ${
+      className={`relative overflow-hidden ${isTransparentBg ? '' : 'shadow-[0_15px_45px_rgba(30,41,59,0.04)] border border-slate-100/80'} ${paddingClass} ${
         hasSideImage && !isMobile
           ? 'flex flex-row gap-10 items-center'
           : `flex items-center ${align === 'left' ? 'justify-start' : align === 'center' ? 'justify-center' : 'justify-end'}`
       }`}
     >
+      {/* Floating decorative blobs for a premium creative frontend look */}
+      {!isTransparentBg && !bgImage && (
+        <>
+          <div className="absolute top-[-20%] left-[-10%] w-72 h-72 rounded-full bg-blue-400/10 blur-[80px] animate-pulse pointer-events-none z-0" style={{ animationDuration: '8s' }} />
+          <div className="absolute bottom-[-20%] right-[-10%] w-80 h-80 rounded-full bg-purple-400/10 blur-[90px] animate-pulse pointer-events-none z-0" style={{ animationDuration: '10s' }} />
+          <div className="absolute top-[30%] right-[20%] w-48 h-48 rounded-full bg-pink-300/5 blur-[60px] pointer-events-none z-0" />
+        </>
+      )}
+
       {bgImage && isVideoBg && (
         <video 
           src={bgImage} 

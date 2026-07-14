@@ -207,6 +207,23 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
         }
       },
       {
+        id: 'faq-t1',
+        type: 'faq_section',
+        props: {
+          title: 'الأسئلة الشائعة للطلاب',
+          subtitle: 'إجابات على أسئلتك قبل التسجيل في برامجنا التدريبية.',
+          background_color: '#f8fafc',
+          text_color: '#1e293b',
+          padding_top: 64,
+          padding_bottom: 64,
+          items: [
+            { id: 'faq-t1-1', order: 1, props: { question: 'كيف أستفيد من التدريب العملي؟', answer: 'كل كورس يحتوي على مشاريع تطبيقية تبني من خلالها بورتفوليو قوي لعرضه على الشركات.' } },
+            { id: 'faq-t1-2', order: 2, props: { question: 'هل الدورات مناسبة للمبتدئين؟', answer: 'نعم، نبدأ معك من الصفر خطوة بخطوة حتى الاحتراف.' } }
+          ],
+          order: 10
+        }
+      },
+      {
         id: 'cta-t1',
         type: 'hero',
         props: {
@@ -223,7 +240,7 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
           showSecondButton: false,
           padding_top: 64,
           padding_bottom: 64,
-          order: 10
+          order: 11
         }
       },
       {
@@ -237,7 +254,7 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
           textColor: '#1f2937',
           showLogo: true,
           showSocials: true,
-          order: 11
+          order: 12
         }
       }
     ]
@@ -251,157 +268,486 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
     updatedAt: new Date().toISOString(),
     sections: [
       {
+        id: 'nav-t2',
+        type: 'navbar',
+        props: {
+          title: 'درب | Udemy',
+          showSearch: true,
+          showProfile: true,
+          bgColor: '#ffffff',
+          borderColor: '#e2e8f0',
+          isLandingPage: true,
+          order: 1
+        }
+      },
+      {
         id: 'hero-t2',
         type: 'hero_section',
         props: {
-          background_color: '#ffffff',
-          text_color: '#1c1d1f',
-          padding_top: 96,
-          padding_bottom: 96,
           title: 'تعلّم بلا حدود. طوّر مهاراتك.',
           subtitle: 'انضم إلى ملايين المتعلمين من جميع أنحاء العالم واستكشف آلاف الدورات التدريبية المخصصة لتطوير مستقبلك المهني.',
           show_button: true,
           button_text: 'ابدأ التعلم الآن',
           button_link: '#',
+          background_color: '#f8fafc',
+          text_color: '#4b5563',
+          title_color: '#1c1d1f',
           button_color: '#a435f0',
+          button_text_color: '#ffffff',
+          font_size: 44,
+          font_weight: 800,
+          padding_top: 80,
+          padding_bottom: 80,
           align: 'right',
+          slider_speed: 4,
+          show_arrows: true,
+          show_card_overlay: true,
+          items: [
+            {
+              order: 1,
+              props: {
+                title: 'تعلّم مهارات المستقبل بالسرعة التي تناسبك',
+                subtitle: 'اختر من بين آلاف الدورات التدريبية في البرمجة، التصميم، التسويق وغيرها من المجالات الأكثر طلباً في سوق العمل.',
+                button_text: 'استكشف الدورات',
+                button_link: '#',
+                bg_image: '',
+                background_color: '#f8fafc',
+                button_color: '#1c1d1f',
+                button_text_color: '#ffffff',
+                title_color: '#1c1d1f',
+                text_color: '#2d2f31',
+                align: 'right',
+                show_card_overlay: true
+              }
+            },
+            {
+              order: 2,
+              props: {
+                title: 'احصل على تدريب عملي ومشاريع حقيقية',
+                subtitle: 'تعلم على أيدي خبراء ومحترفين يمارسون المهنة فعلياً، وابدأ في تطبيق ما تتعلمه مباشرة لبناء بورتفوليو متميز.',
+                button_text: 'تعرّف على المدربين',
+                button_link: '#',
+                bg_image: '',
+                background_color: '#f3f4f6',
+                button_color: '#a435f0',
+                button_text_color: '#ffffff',
+                title_color: '#1c1d1f',
+                text_color: '#2d2f31',
+                align: 'right',
+                show_card_overlay: true
+              }
+            }
+          ],
+          order: 2
         }
       },
       {
         id: 'features-t2',
         type: 'features_section',
         props: {
-          title: 'لماذا تتعلم معنا؟',
-          subtitle: 'ميزات تضمن لك تجربة تعليمية فريدة ومستمرة',
-          background_color: '#f7f9fa',
+          title: 'ما الذي يميز تجربة التعلم معنا؟',
+          subtitle: 'ميزات صُممت خصيصاً لمساعدتك على النجاح وتحقيق طموحك المهني',
+          background_color: '#ffffff',
           text_color: '#1c1d1f',
           grid_cols: 3,
-          padding_top: 64,
-          padding_bottom: 64,
+          padding_top: 60,
+          padding_bottom: 60,
           items: [
-            { id: 'feat-t2-1', order: 1, props: { icon: 'PlayCircle', icon_color: '#a435f0', title: 'أكثر من 200,000 دورة فيديو', description: 'استكشف مواضيع جديدة بأسعار مناسبة وبشكل مرن.' } },
-            { id: 'feat-t2-2', order: 2, props: { icon: 'Award', icon_color: '#a435f0', title: 'مدربون وخبراء معتمدون', description: 'تعلم من المحترفين في مجالاتهم والذين يمارسون المهنة فعلياً.' } },
-            { id: 'feat-t2-3', order: 3, props: { icon: 'Clock', icon_color: '#a435f0', title: 'وصول مدى الحياة', description: 'تعلم بالوتيرة التي تناسب جدولك ومواعيد حياتك اليومية.' } },
-          ]
+            { id: 'feat-t2-1', order: 1, props: { icon: 'PlayCircle', icon_color: '#a435f0', title: 'دروس مرنة وعالية الجودة', description: 'شاهد دروس الفيديو المسجلة بدقة عالية على أي جهاز في أي وقت.' } },
+            { id: 'feat-t2-2', order: 2, props: { icon: 'Users', icon_color: '#a435f0', title: 'تعلم من خبراء الصناعة', description: 'تفاعل مع مدربين ذوي خبرة وتلقى إجابات عن كل أسئلتك مباشرة.' } },
+            { id: 'feat-t2-3', order: 3, props: { icon: 'Award', icon_color: '#a435f0', title: 'شهادات إتمام لمسيرتك', description: 'عزز سيرتك الذاتية بشهادات معتمدة عند إتمامك لأي مسار تدريبي.' } }
+          ],
+          order: 3
         }
       },
       {
         id: 'categories-t2',
         type: 'categories_section',
         props: {
-          title: 'أهم مجالات التعلم والمهارات',
-          subtitle: 'اختر المجال الذي يناسب شغفك وابدأ رحلتك نحو التميز',
-          background_color: '#ffffff',
+          title: 'تصفح المجالات الأكثر طلباً',
+          subtitle: 'اختر التخصص الذي تبحث عنه وابدأ رحلتك التعلّمية اليوم',
+          background_color: '#f7f9fa',
           text_color: '#1c1d1f',
           grid_cols: 3,
-          padding_top: 64,
-          padding_bottom: 64,
+          padding_top: 60,
+          padding_bottom: 60,
           items: [
-            { id: 'cat-t2-1', order: 1, props: { name: 'تطوير الويب وبرمجة المواقع', icon: 'Code', count: '18', description: 'HTML, CSS, JavaScript, React, Node.js' } },
-            { id: 'cat-t2-2', order: 2, props: { name: 'تصميم واجهات المستخدم UI/UX', icon: 'PenTool', count: '12', description: 'Figma, Adobe XD, تجربة المستخدم, أبحاث التصميم' } },
-            { id: 'cat-t2-3', order: 3, props: { name: 'إدارة الأعمال والتسويق الرقمي', icon: 'TrendingUp', count: '15', description: 'التسويق عبر البريد، الإعلانات، تحسين محركات البحث SEO' } },
-          ]
+            { id: 'cat-t2-1', order: 1, props: { name: 'تطوير وبرمجة الويب', icon: 'Code', count: '24', description: 'HTML, CSS, JavaScript, React, Node.js, databases' } },
+            { id: 'cat-t2-2', order: 2, props: { name: 'تصميم واجهات المستخدم UI/UX', icon: 'Sparkles', count: '14', description: 'Figma, design systems, wireframing, usability testing' } },
+            { id: 'cat-t2-3', order: 3, props: { name: 'إدارة الأعمال والتسويق', icon: 'TrendingUp', count: '18', description: 'SEO, digital advertising, content strategies' } }
+          ],
+          order: 4
         }
       },
       {
         id: 'courses-t2',
         type: 'course-cards',
         props: {
-          title: 'أحدث الدورات التدريبية المتاحة',
+          title: 'ابدأ رحلة التعلم مع دوراتنا الأكثر مبيعاً',
           gridCols: '3',
           showPrice: true,
           showStudentsCount: true,
           buttonBg: '#a435f0',
           background_color: '#ffffff',
-          padding_top: 64,
-          padding_bottom: 64,
+          padding_top: 60,
+          padding_bottom: 60,
+          order: 5,
+          courses: [
+            { id: 'c1', title: 'تصميم واجهات المستخدم الشاملة من الصفر', instructor: 'أ. مصطفى الشافعي', price: '٢٩٠ ريال', students: '٤٥٠ طالب', duration: '١٨ ساعة', image: '', description: 'من أساسيات فيجما إلى تسليم المشاريع وبناء بورتفوليو قوي ومحترف.' },
+            { id: 'c2', title: 'المرجع الكامل في تطوير الويب الحديث', instructor: 'أ. مازن عبد العزيز', price: '٣٩٠ ريال', students: '٩١٠ طالب', duration: '٤٢ ساعة', image: '', description: 'تعلم فرونت إند وباك إند وقم ببناء ١٠ تطبيقات حقيقية ونشرها.' },
+            { id: 'c3', title: 'التسويق الرقمي وبناء العلامات التجارية الشخصية', instructor: 'أ. هند القاسم', price: '١٩٠ ريال', students: '٣٢٠ طالب', duration: '١٢ ساعة', image: '', description: 'كيفية كتابة المحتوى، وإطلاق الحملات الممولة وتحليل نتائجها.' }
+          ]
         }
       },
       {
         id: 'testimonials-t2',
         type: 'testimonials_section',
         props: {
-          title: 'ماذا يقول طلابنا؟',
-          subtitle: 'آراء وتجارب حقيقية من متعلمين حققوا أهدافهم المهنية بفضل منصتنا.',
+          title: 'ماذا يقول متعلمونا حول العالم؟',
+          subtitle: 'قصص نجاح واقعية لطلاب غيروا مسارهم المهني وبنوا مهارات جديدة',
           background_color: '#f7f9fa',
           text_color: '#1c1d1f',
-          padding_top: 64,
-          padding_bottom: 64,
+          padding_top: 60,
+          padding_bottom: 60,
+          avatar_size: 40,
+          avatar_shape: 'circle',
           items: [
-            { id: 'tst-t2-1', order: 1, props: { quote: 'الدورات ممتازة وتطبيقية جداً، حصلت على أول وظيفة لي بعد إتمام المسار التدريبي مباشرة.', author: 'نورة القحطاني', role: 'مطورة تطبيقات جوال', rating: 5 } },
-            { id: 'tst-t2-2', order: 2, props: { quote: 'المحتوى احترافي جداً والمدربين ممتازين، يوفر لك ما تبحث عنه بالضبط بأسرع طريقة.', author: 'يوسف الحربي', role: 'محلل بيانات أول', rating: 5 } },
-            { id: 'tst-t2-3', order: 3, props: { quote: 'ساعدتني هذه المنصة على الانتقال إلى مجال الأمن السيبراني وتأسيس مشاريعي الخاصة بثقة.', author: 'منى السعيد', role: 'مهندسة أمن شبكات', rating: 5 } },
+            { id: 't-t2-1', order: 1, props: { quote: 'الكورسات مبسطة وتطبيقية وتجيب عن جميع التساؤلات، حصلت على وظيفتي الأولى كمصمم بفضل هذه الدورة.', author: 'رائد المطيري', role: 'مصمم واجهات مستقل', rating: 5, avatar: '' } },
+            { id: 't-t2-2', order: 2, props: { quote: 'كود نظيف ومنهجية واضحة جداً سهلت علي الدخول لعالم البرمجة بعد سنوات من التردد.', author: 'عبير الجار الله', role: 'مطور فرونت إند مبتدئ', rating: 5, avatar: '' } }
+          ],
+          order: 6
+        }
+      },
+      {
+        id: 'metrics-t2',
+        type: 'kpi-cards',
+        props: {
+          gridCols: '4',
+          backgroundColor: '#f7f9fa',
+          order: 8,
+          cards: [
+            { id: 'm-1', title: 'اختر مسارك', value: 'استكشاف', change: '', isPositive: true, icon: 'Compass', color: '#a435f0' },
+            { id: 'm-2', title: 'سجل في الدورة', value: 'تسجيل', change: '', isPositive: true, icon: 'UserPlus', color: '#a435f0' },
+            { id: 'm-3', title: 'شاهد وتعلم', value: 'تعلم', change: '', isPositive: true, icon: 'PlayCircle', color: '#a435f0' },
+            { id: 'm-4', title: 'احصل على الشهادة', value: 'تخرج', change: '', isPositive: true, icon: 'Award', color: '#a435f0' }
           ]
         }
       },
+      {
+        id: 'cta-t2',
+        type: 'pricing_section',
+        props: {
+          title: 'قم بتعزيز مهاراتك اليوم مع منصتنا المتقدمة',
+          subtitle: 'آلاف الدورات في انتظارك، سجل الآن واحصل على وصول فوري لأفضل الموارد التعليمية.',
+          background_color: 'var(--t2-indigo)',
+          text_color: 'var(--t2-canvas)',
+          padding_top: 80,
+          padding_bottom: 80,
+          order: 10,
+          items: [
+            {
+              id: 'p-t2-1',
+              order: 1,
+              props: {
+                title: 'اشتراك شهري',
+                price: '99$',
+                duration: 'شهرياً',
+                features: ['وصول كامل للدورات', 'شهادات معتمدة', 'دعم فني'],
+                button_text: 'اشترك الآن',
+                button_link: '#',
+                is_popular: false
+              }
+            },
+            {
+              id: 'p-t2-2',
+              order: 2,
+              props: {
+                title: 'اشتراك سنوي',
+                price: '899$',
+                duration: 'سنوياً',
+                features: ['كل ميزات الشهري', 'توفير 20%', 'جلسات إرشادية'],
+                button_text: 'اشترك الآن',
+                button_link: '#',
+                is_popular: true
+              }
+            }
+          ]
+        }
+      },
+      {
+        id: 'footer-t2',
+        type: 'footer',
+        props: {
+          copyright: 'جميع الحقوق محفوظة © درب ٢٠٢٦',
+          logoText: 'درب | المنصة',
+          bgColor: '#1c1d1f',
+          textColor: '#ffffff',
+          showLogo: true,
+          showSocials: true,
+          order: 11
+        }
+      }
     ]
   },
   'template_3': {
     id: 'template_3',
-    name: 'القالب الأرجواني الإبداعي (Creative Purple)',
-    description: 'تصميم فني راقٍ بلمسات أرجوانية وخلفيات ناعمة ملائم للأكاديميات الفنية والتصميم والتحريك.',
-    status: 'draft',
+    name: 'قالب الأكاديمية والتعلم المعتمد',
+    description: 'تصميم تعليمي جامعي مرموق ومثالي لعرض المسارات والبرامج التدريبية المتقدمة بتناسق لوني مميز.',
+    status: 'published',
     version: '1.0',
     updatedAt: new Date().toISOString(),
     sections: [
       {
-        id: 'navbar-3',
+        id: 'nav-t3',
         type: 'navbar',
         props: {
-          title: 'أكاديمية الفنون البصرية والتحريك',
+          title: 'درب | الأكاديمية',
           showSearch: true,
           showProfile: true,
-          bgColor: '#FAF5FF',
-          borderColor: '#f3e8ff'
+          bgColor: '#ffffff',
+          borderColor: '#e2e8f0',
+          isLandingPage: true,
+          order: 1
         }
       },
       {
-        id: 'hero-3',
-        type: 'hero',
+        id: 'hero-t3',
+        type: 'hero_section',
         props: {
-          title: 'أطلق إبداعك الفني معنا اليوم',
-          subtitle: 'مسارات تعليمية متطورة لرواد التصميم الجرافيكي، التحريك ثلاثي الأبعاد، والفنون البصرية بإشراف كبار الفنانين المبدعين.',
-          buttonText: 'تصفح مسارات التعلم',
-          buttonLink: '#',
+          title: 'تعليم أكاديمي معتمد من أقوى المؤسسات التعليمية',
+          subtitle: 'طوّر مهاراتك اليوم وحقق أهدافك المهنية مع برامج ودورات مصممة بأعلى المعايير الأكاديمية.',
+          show_button: true,
+          button_text: 'تصفح البرامج والشهادات',
+          button_link: '#',
+          background_color: '#0f172a',
+          text_color: '#cbd5e1',
+          title_color: '#ffffff',
+          button_color: '#10b981',
+          button_text_color: '#ffffff',
+          font_size: 42,
+          font_weight: 700,
+          padding_top: 80,
+          padding_bottom: 80,
           align: 'right',
-          titleColor: '#581c87',
-          subtitleColor: '#6b21a8',
-          buttonColor: '#8b5cf6',
-          buttonTextColor: '#ffffff',
-          backgroundColor: '#FAF5FF',
-          bgImage: ''
+          slider_speed: 4,
+          show_arrows: true,
+          show_card_overlay: false,
+          items: [
+            {
+              order: 1,
+              props: {
+                title: 'ابدأ رحلة التعلم المعتمد والمهني اليوم',
+                subtitle: 'ادرس مسارات تكنولوجية وتقنية من منزلك، واحصل على شهادات معتمدة تدعم تقدمك الوظيفي والعملي.',
+                button_text: 'تصفح الدورات',
+                button_link: '#',
+                bg_image: '',
+                background_color: '#0f172a',
+                button_color: '#10b981',
+                button_text_color: '#ffffff',
+                title_color: '#ffffff',
+                text_color: '#cbd5e1',
+                align: 'right',
+                show_card_overlay: false,
+                side_image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&auto=format&fit=crop',
+                side_image_position: 'left',
+                side_image_shape: 'leaf',
+                side_image_width: 380,
+                side_image_height: 380,
+                side_image_fit: 'cover'
+              }
+            },
+            {
+              order: 2,
+              props: {
+                title: 'اكتسب مهارات عملية من قادة الصناعة',
+                subtitle: 'شروحات تطبيقية وورش تفاعلية تصاحبك خطوة بخطوة للتميز والتمكن من مجالك المهني الجديد.',
+                button_text: 'ابدأ الآن',
+                button_link: '#',
+                bg_image: '',
+                background_color: '#1e293b',
+                button_color: '#6366f1',
+                button_text_color: '#ffffff',
+                title_color: '#ffffff',
+                text_color: '#cbd5e1',
+                align: 'right',
+                show_card_overlay: false,
+                side_image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop',
+                side_image_position: 'left',
+                side_image_shape: 'rounded',
+                side_image_width: 380,
+                side_image_height: 380,
+                side_image_fit: 'cover'
+              }
+            }
+          ],
+          order: 2
         }
       },
       {
-        id: 'kpis-3',
+        id: 'kpis-t3',
         type: 'kpi-cards',
         props: {
           gridCols: '3',
+          backgroundColor: '#ffffff',
+          order: 3,
           cards: [
-            { id: '1', title: 'المشاركين النشطين', value: '842 مصمم', change: '+24% هذا الشهر', isPositive: true, icon: 'Users', color: '#8b5cf6' },
-            { id: '2', title: 'المشاريع المنجزة', value: '1,890 مشروع', change: '+12% مؤخراً', isPositive: true, icon: 'Award', color: '#8b5cf6' },
-            { id: '3', title: 'الشهادات الصادرة', value: '450 شهادة', change: '+6% منذ أمس', isPositive: true, icon: 'CheckCircle', color: '#581c87' }
+            { id: 'kpi-t3-1', title: 'شريك تعليمي ومهني معتمد', value: '+160', change: '', isPositive: true, icon: 'Award', color: '#6366f1' },
+            { id: 'kpi-t3-2', title: 'متعلم نشط حول العالم', value: '45M+', change: '', isPositive: true, icon: 'Users', color: '#10b981' },
+            { id: 'kpi-t3-3', title: 'مسار تعليمي متكامل للتخصص', value: '3,000+', change: '', isPositive: true, icon: 'BookOpen', color: '#6366f1' }
           ]
         }
       },
       {
-        id: 'metrics-3',
-        type: 'metrics',
+        id: 'tabs-t3',
+        type: 'tabs',
         props: {
-          title: 'معدل تقدم الدفعة الإبداعية الحالية',
-          layout: 'grid',
-          cardBg: '#FAF5FF'
+          title: 'استكشف التخصصات والمهارات الأكثر رواجاً',
+          subtitle: 'اختر المجال المهني الذي ترغب في إتقانه والبدء ببناء بورتفوليو متميز فيه',
+          backgroundColor: '#f8fafc',
+          activeTabColor: '#10b981',
+          order: 4,
+          tabs: [
+            {
+              id: 'tab-1',
+              title: 'علوم الحاسوب والبرمجة',
+              content: 'تعلّم لغات البرمجة الأكثر انتشاراً مثل Python و JavaScript، وتخصص في تطوير الويب أو بناء الأنظمة.'
+            },
+            {
+              id: 'tab-2',
+              title: 'الذكاء الاصطناعي وهندسة البيانات',
+              content: 'مسارات متقدمة لتعلّم الآلة وعلم البيانات وبناء نماذج الذكاء الاصطناعي التوليدي والتحليلات الإحصائية.'
+            },
+            {
+              id: 'tab-3',
+              title: 'إدارة الأعمال والقيادة المعتمدة',
+              content: 'برامج إدارة المشاريع المهنية، التمويل، والاستشارات الإدارية المعتمدة من أكبر كليات الأعمال الدولية.'
+            }
+          ]
         }
       },
       {
-        id: 'courses-3',
+        id: 'courses-t3',
         type: 'course-cards',
         props: {
-          title: 'أحدث الكورسات الفنية والتحريك ثلاثي الأبعاد',
+          title: 'البرامج والدورات الأكاديمية والمهنية',
           gridCols: '3',
           showPrice: true,
           showStudentsCount: true,
-          buttonBg: '#8b5cf6'
+          buttonBg: '#10b981',
+          background_color: '#ffffff',
+          padding_top: 60,
+          padding_bottom: 60,
+          order: 5,
+          courses: [
+            { id: 'c1', title: 'الذكاء الاصطناعي التطبيقي لمطوري الويب', instructor: 'د. يوسف سلامة', price: '٥٠٠ ريال', students: '١٢٠ طالب', duration: '٢٤ ساعة', image: '', description: 'كيفية دمج نماذج الذكاء الاصطناعي وبناء تطبيقات تفاعلية متطورة.' },
+            { id: 'c2', title: 'القيادة التنفيذية وإدارة التغيير في المؤسسات', instructor: 'د. ريما العتيبي', price: '٤٥٠ ريال', students: '١٨٠ طالب', duration: '١٦ ساعة', image: '', description: 'إستراتيجيات قيادة فرق العمل وإدارة الأزمات في بيئة الأعمال المعاصرة.' }
+          ]
+        }
+      },
+      {
+        id: 'testimonials-t3',
+        type: 'testimonials_section',
+        props: {
+          title: 'قصص نجاح من قلب مجتمعنا التعليمي',
+          subtitle: 'كيف غيرت شهاداتنا ومساراتنا المعتمدة المستقبل المهني لمتعلمينا',
+          background_color: '#f8fafc',
+          text_color: '#0f172a',
+          padding_top: 60,
+          padding_bottom: 60,
+          avatar_size: 40,
+          avatar_shape: 'circle',
+          items: [
+            { id: 't-t3-1', order: 1, props: { quote: 'الدراسة هنا كانت تجربة فريدة، المناهج مصممة بعناية فائقة وتطابق تماماً ما يبحث عنه أصحاب العمل لتوظيفنا.', author: 'المهندس عبدالله الفيصل', role: 'مهندس برمجيات أول', rating: 5, avatar: '' } }
+          ],
+          order: 6
+        }
+      },
+      {
+        id: 'gallery-t3',
+        type: 'gallery_section',
+        props: {
+          title: 'شركاؤنا من الأكاديميات والجامعات العريقة',
+          subtitle: 'نعمل يداً بيد مع أفضل الجامعات والشركات لتوفير تعليم متميز وقابل للتطبيق المباشر.',
+          background_color: '#ffffff',
+          grid_cols: 3,
+          image_aspect: 'video',
+          image_shape: 'rounded',
+          padding_top: 60,
+          padding_bottom: 60,
+          items: [
+            { id: 'g-t3-1', order: 1, props: { image_url: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f', caption: 'الحرم الجامعي والتعاون العلمي', image_link: '' } },
+            { id: 'g-t3-2', order: 2, props: { image_url: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1', caption: 'مختبرات الحاسوب والأبحاث التكنولوجية', image_link: '' } },
+            { id: 'g-t3-3', order: 3, props: { image_url: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846', caption: 'قاعات المحاضرات التفاعلية والورش المهنية', image_link: '' } }
+          ],
+          order: 7
+        }
+      },
+      {
+        id: 'faq-t3',
+        type: 'faq_section',
+        props: {
+          title: 'الأسئلة الشائعة حول الشهادات والقبول بالمنصة',
+          subtitle: 'إجابات وافية لمساعدتك على اتخاذ القرار الاستثماري الصحيح بمستقبلك',
+          background_color: '#f8fafc',
+          text_color: '#0f172a',
+          padding_top: 60,
+          padding_bottom: 60,
+          items: [
+            { id: 'faq-t3-1', order: 1, props: { question: 'هل الشهادات مقبولة مهنياً؟', answer: 'نعم، تصدر الشهادات بالتعاون مع جهات وجامعات معترف بها وتضيف قيمة حقيقية لسيرتك الذاتية.' } },
+            { id: 'faq-t3-2', order: 2, props: { question: 'ما هو نظام الدراسة المتبع بالدورة؟', answer: 'دراسة مرنة بالكامل عبر الإنترنت مع إمكانية حضور محاضرات مباشرة مسجلة.' } }
+          ],
+          order: 8
+        }
+      },
+      {
+        id: 'features-t3',
+        type: 'features_section',
+        props: {
+          title: 'لماذا تختار برامجنا الأكاديمية؟',
+          subtitle: 'صممنا لك بيئة تعليمية متكاملة لضمان أقصى استفادة وتجربة تفاعلية متميزة',
+          background_color: '#ffffff',
+          text_color: '#0f172a',
+          grid_cols: 3,
+          padding_top: 60,
+          padding_bottom: 60,
+          items: [
+            { id: 'feat-t3-1', order: 1, props: { icon: 'Award', icon_color: '#10b981', title: 'اعتماد دولي', description: 'شهادات مهنية معتمدة من أقوى الهيئات العالمية تزيد من فرص قبولك الوظيفي.' } },
+            { id: 'feat-t3-2', order: 2, props: { icon: 'BookOpen', icon_color: '#10b981', title: 'محتوى حصري ومحدث', description: 'مناهج دراسية متطورة باستمرار لتواكب أحدث التغيرات في سوق العمل التكنولوجي.' } },
+            { id: 'feat-t3-3', order: 3, props: { icon: 'Users', icon_color: '#10b981', title: 'شبكة مهنية وخريجين', description: 'انضم لمجتمع واسع من الخبراء والمختصين وتبادل الخبرات معهم بشكل دوري.' } }
+          ],
+          order: 9
+        }
+      },
+      {
+        id: 'categories-t3',
+        type: 'categories_section',
+        props: {
+          title: 'استكشف الكليات والأقسام الدراسية',
+          subtitle: 'اختر الكلية التي تود الانضمام إليها وتصفح كافة المسارات والبرامج المتعلقة بها',
+          background_color: '#f8fafc',
+          text_color: '#0f172a',
+          grid_cols: 3,
+          padding_top: 60,
+          padding_bottom: 60,
+          items: [
+            { id: 'cat-t3-1', order: 1, props: { name: 'كلية الهندسة وعلوم الحاسب', icon: 'Cpu', count: '12 برنامج', description: 'هندسة البرمجيات، الأمن السيبراني، وشبكات الحاسب.' } },
+            { id: 'cat-t3-2', order: 2, props: { name: 'كلية إدارة الأعمال والريادة', icon: 'Briefcase', count: '8 برامج', description: 'إدارة الابتكار، التمويل، والإدارة التنفيذية المتقدمة.' } },
+            { id: 'cat-t3-3', order: 3, props: { name: 'كلية التصميم والفنون الرقمية', icon: 'PenTool', count: '6 برامج', description: 'تصميم تجربة المستخدم، الرسوم المتحركة، والإنتاج البصري.' } }
+          ],
+          order: 10
+        }
+      },
+      {
+        id: 'footer-t3',
+        type: 'footer',
+        props: {
+          copyright: 'جميع الحقوق محفوظة © درب ٢٠٢٦',
+          logoText: 'درب | الأكاديمية',
+          bgColor: '#0f172a',
+          textColor: '#ffffff',
+          showLogo: true,
+          showSocials: true,
+          order: 11
         }
       }
     ]

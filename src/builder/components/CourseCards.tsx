@@ -132,21 +132,39 @@ export default function CourseCards(props: CourseCardsProps) {
         </div>
       )}
       
-      <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-        <h3 
-          style={titleTypography.style}
-          className={`flex items-center gap-2.5 ${titleTypography.className}`}
-        >
-          <span className="w-1.5 h-6 rounded-full" style={{ backgroundColor: buttonBg }}></span>
-          {title}
-        </h3>
-        
-        <span className="text-xs font-bold text-slate-400 cursor-pointer hover:text-slate-600 transition-colors">
-          عرض الكل
-        </span>
-      </div>
+      {isUdemy ? (() => {
+        const titleStyles = getTypographyStyle(props, 'title', { size: 'text-2xl', weight: 'font-black', color: 'var(--t2-ink)', font: 'Fraunces' });
+        return (
+          <div className="flex items-end justify-between border-b border-[var(--t2-indigo-3)]/20 pb-4 mb-2 t2-animate-on-scroll">
+            <h3 
+              style={titleStyles.style}
+              className={`flex items-center gap-3 ${titleStyles.className}`}
+            >
+              <span className="w-2 h-8 rounded-full bg-[var(--t2-gold)]"></span>
+              {title}
+            </h3>
+          <span className="text-sm font-bold text-[var(--t2-teal)] cursor-pointer hover:text-[var(--t2-gold)] transition-colors font-['Inter']">
+            عرض الكل
+          </span>
+        </div>
+        );
+      })() : (
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <h3 
+            style={titleTypography.style}
+            className={`flex items-center gap-2.5 ${titleTypography.className}`}
+          >
+            <span className="w-1.5 h-6 rounded-full" style={{ backgroundColor: buttonBg }}></span>
+            {title}
+          </h3>
+          
+          <span className="text-xs font-bold text-slate-400 cursor-pointer hover:text-slate-600 transition-colors">
+            عرض الكل
+          </span>
+        </div>
+      )}
 
-      <div className={`grid gap-6 ${gridClass}`}>
+      <div className={isUdemy ? "flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden t2-animate-on-scroll" : `grid gap-6 ${gridClass}`}>
         {coursesToRender.map((course, idx) => {
           const isSelected = isEditing && selectedNodeId === sectionId && selectedItemIndex === idx;
           const isHovered = isEditing && hoveredItemIndex === idx;
@@ -166,72 +184,64 @@ export default function CourseCards(props: CourseCardsProps) {
                 }}
                 onMouseEnter={() => isEditing && setHoveredItemIndex(idx)}
                 onMouseLeave={() => isEditing && setHoveredItemIndex(null)}
-                className={`bg-white border border-slate-200 rounded-lg overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col justify-between group cursor-pointer ${
-                  isSelected ? 'ring-4 ring-[#a435f0] ring-offset-2' : isHovered ? 'ring-4 ring-purple-200' : ''
+                className={`bg-[var(--t2-white)] rounded-[20px] overflow-hidden hover:shadow-[0_15px_30px_rgba(27,26,58,0.08)] hover:-translate-y-2 transition-all duration-500 flex flex-col justify-between group cursor-pointer border border-[var(--t2-indigo-3)]/10 min-w-[300px] sm:min-w-[340px] snap-center ${
+                  isSelected ? 'ring-2 ring-[var(--t2-gold)] ring-offset-2 ring-offset-[var(--t2-canvas)]' : isHovered ? 'ring-2 ring-[var(--t2-teal)] ring-offset-2 ring-offset-[var(--t2-canvas)]' : ''
                 }`}
               >
                 {/* Course Image cover */}
-                <div className="h-44 w-full overflow-hidden bg-slate-100 relative">
+                <div className="h-48 w-full overflow-hidden bg-[var(--t2-canvas-2)] relative">
                   <img 
                     src={course.image || 'https://images.unsplash.com/photo-1586717791821-3f44a563fa4c'} 
                     alt={course.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-102"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
-                  {/* Bestselling badge overlay */}
-                  {idx % 2 === 0 && (
-                    <span className="absolute top-2 right-2 bg-amber-400 text-slate-900 text-[10px] font-extrabold px-2.5 py-0.5 shadow-sm rounded-sm">
-                      الأكثر مبيعاً
-                    </span>
-                  )}
+                  {/* Category tag */}
+                  <span className="absolute top-4 right-4 bg-[var(--t2-white)]/90 backdrop-blur-sm text-[var(--t2-ink)] text-[10px] font-['IBM_Plex_Mono'] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm">
+                    {idx % 2 === 0 ? 'تطوير' : 'تصميم'}
+                  </span>
                 </div>
 
                 {/* Course details */}
-                <div className="p-4 flex-1 flex flex-col justify-between gap-2 text-right">
-                  <div className="space-y-1">
-                    <h4 className="text-sm font-bold text-slate-800 leading-snug group-hover:text-purple-600 transition-colors line-clamp-2 min-h-[40px]">
+                <div className="p-6 flex-1 flex flex-col justify-between gap-4 text-right">
+                  <div className="space-y-3">
+                    <h4 className="text-lg font-black text-[var(--t2-ink)] leading-snug group-hover:text-[var(--t2-teal)] transition-colors line-clamp-2 min-h-[56px] font-['Fraunces']">
                       {course.title}
                     </h4>
-                    <p className="text-[11px] text-slate-500 leading-relaxed font-semibold">
-                      {course.instructor}
-                    </p>
                     
-                    {/* Rating UI */}
-                    <div className="flex items-center gap-1.5 flex-row-reverse justify-end text-[11px] font-black text-amber-500" dir="ltr">
-                      <span className="text-slate-400 font-bold">({120 + idx * 15})</span>
-                      <div className="flex gap-0.5 text-amber-500">
+                    <div className="flex items-center justify-between text-xs font-['Inter']">
+                      <p className="text-[var(--t2-ink)]/70 font-medium">
+                        {course.instructor}
+                      </p>
+                      <div className="flex items-center gap-1 flex-row-reverse text-[var(--t2-gold)] font-bold" dir="ltr">
+                        <span className="text-xs text-[var(--t2-ink)]/70 mr-1.5">({120 + idx * 15})</span>
+                        <span className="text-[13px]">{idx === 1 ? "4.5" : "4.8"}</span>
                         <span>★</span>
-                        <span>★</span>
-                        <span>★</span>
-                        <span>★</span>
-                        <span className={idx === 1 ? "text-slate-200" : "text-amber-500"}>★</span>
                       </div>
-                      <span className="font-extrabold text-amber-600 text-xs">{idx === 1 ? "4.5" : "4.8"}</span>
                     </div>
 
                     {/* Metadata */}
-                    <div className="flex items-center gap-3 text-[10px] text-slate-400 font-bold pt-1">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    <div className="flex items-center gap-4 text-xs text-[var(--t2-ink)]/60 font-medium pt-2 font-['Inter']">
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="w-4 h-4" />
                         {course.duration}
                       </span>
                       {showStudentsCount && (
-                        <span className="flex items-center gap-1">
-                          <Users className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="flex items-center gap-1.5">
+                          <Users className="w-4 h-4" />
                           {course.students}
                         </span>
                       )}
                     </div>
                   </div>
                   
-                  <div className="flex justify-between items-center pt-3 border-t border-slate-100 mt-2">
+                  <div className="flex justify-between items-center pt-5 border-t border-[var(--t2-indigo-3)]/10 mt-2">
                     {showPrice && (
-                      <span className="text-sm font-extrabold text-slate-900">
+                      <span className="text-base font-black text-[var(--t2-ink)] font-['Inter']">
                         {course.price || 'مجانًا'}
                       </span>
                     )}
                     <button 
-                      style={{ backgroundColor: buttonBg || '#a435f0' }}
-                      className="hover:brightness-110 text-white font-bold text-[10px] px-3.5 py-1.5 rounded-sm transition-all shadow-sm active:scale-95"
+                      className="text-[var(--t2-gold)] border-[1.5px] border-[var(--t2-gold)] font-bold text-xs px-5 py-2 rounded-full hover:bg-[var(--t2-gold)] hover:text-[var(--t2-ink)] transition-all font-['Inter']"
                     >
                       انضم الآن
                     </button>
