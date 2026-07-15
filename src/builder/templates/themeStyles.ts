@@ -31,12 +31,12 @@ export const TEMPLATE_THEMES: Record<string, TemplateTheme> = {
     cardShape: 'classic',
   },
   'template_2': {
-    primaryColor: '#a435f0', // Udemy Purple
-    primaryRgb: '164, 53, 240',
-    secondaryColor: '#1c1d1f', // Udemy Dark Slate
-    accentColor: '#5624d0',
-    backgroundColor: '#ffffff',
-    textColor: '#1c1d1f',
+    primaryColor: '#2FA8E0', // Sky
+    primaryRgb: '47, 168, 224',
+    secondaryColor: '#0B2540', // Navy
+    accentColor: '#FF7A5C', // Coral
+    backgroundColor: '#F3F8FC', // Base
+    textColor: '#0B2540',
     fontFamily: 'IBM Plex Sans Arabic',
     cardShape: 'classic',
   },

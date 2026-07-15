@@ -264,8 +264,8 @@ export default function TemplatesPage() {
       category: 'website',
       imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB4iH4QN5hawBNBS5h9s9nS1TEOla1eY5JJBqQOqqjhAcuOlHHEGvnQUIHaXpvbQX9suHmsGlgv0xfg0Us7GtGZPQZLjNjAsSb3srLVJGGI4JhTw1Ox5L1yvBbvfJnp2IzBFGjUi-SISVcwTm1m9E2wpeb0s33mi9i-k6-PXWT7bxjjJfB8-tokQtf0u5nDOyc2UDANLG2c6UALdgFPTLJ5HDo34MDxx0k5foN_8S6R-2hJhXdyF5sEUPHIXe8KarPgOvzf7Tg2VLI',
       description: 'تصميم تعليمي كلاسيكي وعصري مستوحى من منصة Udemy، لعرض الكورسات والتصنيفات بطريقة مرتبة وجذابة.',
-      accentColor: '#a435f0',
-      themeName: 'يوديمي البنفسجي',
+      accentColor: '#2FA8E0',
+      themeName: 'السماوي الهادئ',
       rating: '4.9/5',
       loadSpeed: '0.5 ثانية'
     },
@@ -446,25 +446,25 @@ export default function TemplatesPage() {
               );
             }
 
-            /* ─── Template 2: Udemy Purple UI ─── */
+            /* ─── Template 2: Udemy Skylight UI ─── */
             if (tmpl.id === 'template_2') {
               return (
                 <div
                   key={tmpl.id}
                   className={`group relative flex flex-col rounded-3xl overflow-hidden transition-all duration-300 ${
                     isActive
-                      ? 'ring-4 ring-[#a435f0] shadow-2xl shadow-[#a435f0]/20'
-                      : 'shadow-[0_8px_32px_rgba(164,53,240,0.10)] hover:shadow-[0_20px_48px_rgba(164,53,240,0.22)] hover:-translate-y-2'
+                      ? 'ring-4 ring-[#2FA8E0] shadow-2xl shadow-[#2FA8E0]/20'
+                      : 'shadow-[0_8px_32px_rgba(47,168,224,0.10)] hover:shadow-[0_20px_48px_rgba(47,168,224,0.22)] hover:-translate-y-2'
                   }`}
                 >
-                  {/* Full-bleed image with purple gradient overlay */}
+                  {/* Full-bleed image with skylight gradient overlay */}
                   <div className="relative h-56 overflow-hidden shrink-0">
                     <img
                       className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-110"
                       src={tmpl.imageUrl}
                       alt={tmpl.name}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#a435f0]/75 via-[#5624d0]/65 to-[#1c1d1f]/80" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#2FA8E0]/75 via-[#FF7A5C]/45 to-[#0B2540]/80" />
 
                     {/* Glass browser bar */}
                     <div className="absolute top-0 inset-x-0 px-4 py-3 flex items-center gap-2 select-none">
@@ -503,8 +503,8 @@ export default function TemplatesPage() {
                   {/* Card body */}
                   <div className="flex-1 flex flex-col p-5 gap-4 bg-white">
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 bg-purple-50 text-[#a435f0] text-[10px] font-black px-2.5 py-1 rounded-full border border-purple-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#a435f0]" />
+                      <span className="inline-flex items-center gap-1.5 bg-sky-50 text-[#2FA8E0] text-[10px] font-black px-2.5 py-1 rounded-full border border-sky-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#2FA8E0]" />
                         {tmpl.themeName}
                       </span>
                     </div>
@@ -514,7 +514,7 @@ export default function TemplatesPage() {
                     <div className="pt-3 border-t border-slate-100 flex gap-2.5 mt-auto">
                       <button
                         onClick={() => handleOpenPreview(tmpl)}
-                        className="flex-1 py-2.5 rounded-xl border border-purple-200 bg-purple-50 hover:bg-purple-100 text-[#a435f0] font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
+                        className="flex-1 py-2.5 rounded-xl border border-sky-200 bg-sky-50 hover:bg-sky-100 text-[#2FA8E0] font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
                         معاينة
@@ -522,7 +522,7 @@ export default function TemplatesPage() {
                       {isActive ? (
                         <Link
                           href={`/academic/website/builder?templateId=${tmpl.id}${activePageId ? `&pageId=${activePageId}` : ''}`}
-                          className="flex-1 py-2.5 rounded-xl bg-gradient-to-l from-[#a435f0] to-[#5624d0] text-white font-bold text-xs shadow-md shadow-[#a435f0]/25 text-center flex items-center justify-center gap-1.5 hover:shadow-lg hover:brightness-110 active:scale-95 transition-all"
+                          className="flex-1 py-2.5 rounded-xl bg-gradient-to-l from-[#2FA8E0] to-[#0B2540] text-white font-bold text-xs shadow-md shadow-[#2FA8E0]/25 text-center flex items-center justify-center gap-1.5 hover:shadow-lg hover:brightness-110 active:scale-95 transition-all"
                         >
                           <BookOpen className="w-3.5 h-3.5" />
                           تعديل
@@ -531,7 +531,7 @@ export default function TemplatesPage() {
                         <button
                           onClick={() => handleSelectTemplate(tmpl.id, tmpl.name)}
                           disabled={!!activatingId}
-                          className="flex-1 py-2.5 rounded-xl bg-gradient-to-l from-[#a435f0] to-[#5624d0] text-white font-bold text-xs shadow-md shadow-[#a435f0]/25 flex items-center justify-center gap-1.5 hover:shadow-lg hover:brightness-110 active:scale-95 transition-all disabled:opacity-60"
+                          className="flex-1 py-2.5 rounded-xl bg-gradient-to-l from-[#2FA8E0] to-[#0B2540] text-white font-bold text-xs shadow-md shadow-[#2FA8E0]/25 flex items-center justify-center gap-1.5 hover:shadow-lg hover:brightness-110 active:scale-95 transition-all disabled:opacity-60"
                         >
                           {activatingId === tmpl.id ? (
                             <>

@@ -62,6 +62,12 @@ export const MOCK_ACTIVITIES = [
     color: '#ec4899',
   }
 ];
+function maskName(name: string): string {
+  if (!name) return 'طالب';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length <= 1) return name;
+  return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`;
+}
 
 export default function StudentFeed(props: StudentFeedProps) {
   const {
@@ -88,6 +94,7 @@ export default function StudentFeed(props: StudentFeedProps) {
   const isCoaches = title.includes('مدرب') || title.includes('المدربين');
 
   React.useEffect(() => {
+    if (!isEditing) return; // Do not fetch database users/courses on public live site to prevent 401 redirects and private data exposure
     async function loadData() {
       try {
         const role = isCoaches ? 'academy' : 'student';
@@ -106,7 +113,7 @@ export default function StudentFeed(props: StudentFeedProps) {
       }
     }
     loadData();
-  }, [isCoaches]);
+  }, [isCoaches, isEditing]);
 
   const formattedActivities = React.useMemo(() => {
     if (realUsers.length === 0) return activities;
@@ -234,7 +241,7 @@ export default function StudentFeed(props: StudentFeedProps) {
 
                 <div className="flex justify-between items-center gap-2 mb-1.5">
                   <span className="text-xs font-black text-slate-800 truncate">
-                    {item.user}
+                    {maskName(item.user)}
                   </span>
                   <span className="text-[10px] text-slate-400 font-bold shrink-0">
                     {item.time}

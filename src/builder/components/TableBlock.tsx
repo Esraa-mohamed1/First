@@ -23,6 +23,19 @@ export const MOCK_ROWS = [
   { id: '5', name: 'عبد الرحمن علي الشهري', email: 'abdulrahman@email.com', course: 'Fundamentals of Film Making', price: '400 ريال', date: '2026/06/04' },
   { id: '6', name: 'هند محمد الدوسري', email: 'hind.dos@email.com', course: 'Photoshop Fundamentals', price: '250 ريال', date: '2026/06/03' },
 ];
+function maskName(name: string): string {
+  if (!name) return 'طالب';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length <= 1) return name;
+  return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`;
+}
+
+function maskPhone(phone: string): string {
+  if (!phone || phone === 'غير متوفر') return 'غير متوفر';
+  const clean = phone.trim();
+  if (clean.length < 5) return '***';
+  return `${clean.slice(0, 3)}****${clean.slice(-2)}`;
+}
 
 export default function TableBlock(props: TableBlockProps) {
   const {
@@ -40,6 +53,7 @@ export default function TableBlock(props: TableBlockProps) {
   const isCoachesTable = title.includes('مدرب') || title.includes('المدربين');
 
   React.useEffect(() => {
+    if (!isEditing) return; // Do not fetch database users/courses on public live site to prevent 401 redirects and private data exposure
     async function loadData() {
       try {
         const role = isCoachesTable ? 'academy' : 'student';
@@ -58,7 +72,7 @@ export default function TableBlock(props: TableBlockProps) {
       }
     }
     loadData();
-  }, [isCoachesTable]);
+  }, [isCoachesTable, isEditing]);
 
   const formattedRows = React.useMemo(() => {
     if (realUsers.length === 0) return rows;
@@ -154,15 +168,11 @@ export default function TableBlock(props: TableBlockProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {visibleRows.map((row) => (
+               {visibleRows.map((row) => (
                 <tr key={row.id} className="hover:bg-slate-50/40 transition-colors">
                   <td className="py-4 px-6">
                     <div>
-                      <span className="text-xs font-extrabold text-slate-800 block">{row.name}</span>
-                      <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1 mt-0.5">
-                        <Mail className="w-3 h-3" />
-                        {row.email}
-                      </span>
+                      <span className="text-xs font-extrabold text-slate-800 block">{maskName(row.name)}</span>
                     </div>
                   </td>
                   <td className="py-4 px-6">
@@ -170,7 +180,7 @@ export default function TableBlock(props: TableBlockProps) {
                       {isCoachesTable ? (
                         <>
                           <Phone className="w-3.5 h-3.5 text-blue-500" />
-                          {row.course}
+                          {maskPhone(row.course)}
                         </>
                       ) : (
                         <>

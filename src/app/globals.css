@@ -12,18 +12,18 @@
   --bg-white: #ffffff;
 
   /* Template 2 Specific Design Tokens */
-  --t2-ink: #16152C;
-  --t2-indigo: #1B1A3A;
-  --t2-indigo-2: #232249;
-  --t2-indigo-3: #2C2B57;
-  --t2-canvas: #EFEAE0;
-  --t2-canvas-2: #E5DECE;
-  --t2-canvas-3: #DCD3BE;
-  --t2-gold: #E8A33D;
-  --t2-gold-light: #F4C26B;
-  --t2-coral: #E1583F;
-  --t2-teal: #1F6F63;
-  --t2-white: #FFFDF9;
+  --t2-ink: #0B2540;
+  --t2-indigo: #0B2540;
+  --t2-indigo-2: #113154;
+  --t2-indigo-3: #1d4670;
+  --t2-canvas: #F3F8FC;
+  --t2-canvas-2: #E6F1FA;
+  --t2-canvas-3: #D3E4F0;
+  --t2-gold: #2FA8E0;
+  --t2-gold-light: #48b9eb;
+  --t2-coral: #FF7A5C;
+  --t2-teal: #2FA8E0;
+  --t2-white: #ffffff;
 }
 
 * {

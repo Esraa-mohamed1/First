@@ -340,8 +340,8 @@ export const HeroSection = React.memo((props: any) => {
       'div',
       {
         className: `relative w-full select-none transition-all duration-300 rounded-sm ${
-          isSelected ? (isUdemy ? 'ring-4 ring-[#a435f0] ring-inset' : 'ring-4 ring-blue-500 ring-inset')
-          : isHovered ? (isUdemy ? 'ring-4 ring-purple-300 ring-inset' : 'ring-4 ring-blue-300 ring-inset')
+          isSelected ? (isUdemy ? 'ring-4 ring-[#2FA8E0] ring-inset' : 'ring-4 ring-blue-500 ring-inset')
+          : isHovered ? (isUdemy ? 'ring-4 ring-sky-300 ring-inset' : 'ring-4 ring-blue-300 ring-inset')
           : ''
         }`,
         onClick: (e: any) => {
@@ -776,7 +776,7 @@ export const FaqSection = React.memo((props: any) => {
               'div',
               {
                 key: idx,
-                className: `p-6 bg-white border rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col gap-2 ${isSelected ? 'ring-2 ring-purple-500 ring-offset-2' : isHovered ? 'ring-2 ring-purple-200' : 'border-slate-200'}`,
+                className: `p-6 bg-white border rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col gap-2 ${isSelected ? 'ring-2 ring-sky-500 ring-offset-2' : isHovered ? 'ring-2 ring-sky-200' : 'border-slate-200'}`,
                 onClick: (e: any) => {
                   if (isEditing) {
                     e.stopPropagation();
@@ -788,7 +788,7 @@ export const FaqSection = React.memo((props: any) => {
                 onMouseLeave: () => isEditing && setHoveredItemIndex(null),
               },
               React.createElement('h3', { className: 'text-sm font-black text-slate-800 flex items-start gap-2' }, 
-                React.createElement(LucideIcons.HelpCircle, { className: 'w-5 h-5 text-purple-600 flex-shrink-0' }),
+                React.createElement(LucideIcons.HelpCircle, { className: 'w-5 h-5 text-sky-600 flex-shrink-0' }),
                 itemProps.question || `سؤال ${idx + 1}`
               ),
               React.createElement('p', { className: 'text-xs text-slate-600 leading-relaxed font-semibold' }, itemProps.answer)
@@ -1606,7 +1606,7 @@ export const CategoriesSection = React.memo((props: any) => {
               'div',
               {
                 key: idx,
-                className: `group relative overflow-hidden border border-slate-200 p-5 bg-[#f7f9fa] hover:bg-[#eff1f2] rounded-sm transition-all duration-300 cursor-pointer flex flex-col items-start text-right ${isSelected ? 'ring-2 ring-[#a435f0] ring-offset-2 bg-white' : isHovered ? 'ring-2 ring-purple-200' : ''
+                className: `group relative overflow-hidden border border-slate-200 p-5 bg-[#f7f9fa] hover:bg-[#eff1f2] rounded-sm transition-all duration-300 cursor-pointer flex flex-col items-start text-right ${isSelected ? 'ring-2 ring-[#2FA8E0] ring-offset-2 bg-white' : isHovered ? 'ring-2 ring-sky-200' : ''
                   }`,
                 onClick: (e: any) => {
                   if (isEditing) {
@@ -1622,7 +1622,7 @@ export const CategoriesSection = React.memo((props: any) => {
                 ? React.createElement(
                   'div',
                   {
-                    className: 'w-10 h-10 rounded-full flex items-center justify-center mb-3 bg-white border border-slate-150 text-[#a435f0]'
+                    className: 'w-10 h-10 rounded-full flex items-center justify-center mb-3 bg-white border border-slate-150 text-[#2FA8E0]'
                   },
                   React.createElement(DynamicIcon, { name: p.icon, className: 'w-5 h-5' })
                 )
@@ -1632,7 +1632,7 @@ export const CategoriesSection = React.memo((props: any) => {
                 { className: 'w-full flex flex-col items-start gap-1 text-right' },
                 React.createElement(
                   'h3',
-                  { className: 'font-bold text-slate-800 text-sm break-words leading-tight group-hover:text-purple-600 transition-colors' },
+                  { className: 'font-bold text-slate-800 text-sm break-words leading-tight group-hover:text-sky-600 transition-colors' },
                   p.name || `فئة ${idx + 1}`
                 ),
                 p.count !== undefined && p.count !== ''

@@ -142,6 +142,9 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
   }, [selectedNodeId]);
 
   const renderComponent = React.useCallback((node: BuilderNode) => {
+    if (node.type === 'tables' || node.type === 'student-feed') {
+      return null;
+    }
     const props = node.props || {};
     const Component = rendererRegistry[node.type];
 

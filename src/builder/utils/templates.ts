@@ -289,10 +289,10 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
           show_button: true,
           button_text: 'ابدأ التعلم الآن',
           button_link: '#',
-          background_color: '#f8fafc',
+          background_color: '#F3F8FC',
           text_color: '#4b5563',
-          title_color: '#1c1d1f',
-          button_color: '#a435f0',
+          title_color: '#0B2540',
+          button_color: '#FF7A5C',
           button_text_color: '#ffffff',
           font_size: 44,
           font_weight: 800,
@@ -311,10 +311,10 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
                 button_text: 'استكشف الدورات',
                 button_link: '#',
                 bg_image: '',
-                background_color: '#f8fafc',
-                button_color: '#1c1d1f',
+                background_color: '#F3F8FC',
+                button_color: '#0B2540',
                 button_text_color: '#ffffff',
-                title_color: '#1c1d1f',
+                title_color: '#0B2540',
                 text_color: '#2d2f31',
                 align: 'right',
                 show_card_overlay: true
@@ -328,10 +328,10 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
                 button_text: 'تعرّف على المدربين',
                 button_link: '#',
                 bg_image: '',
-                background_color: '#f3f4f6',
-                button_color: '#a435f0',
+                background_color: '#E6F1FA',
+                button_color: '#FF7A5C',
                 button_text_color: '#ffffff',
-                title_color: '#1c1d1f',
+                title_color: '#0B2540',
                 text_color: '#2d2f31',
                 align: 'right',
                 show_card_overlay: true
@@ -353,9 +353,9 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
           padding_top: 60,
           padding_bottom: 60,
           items: [
-            { id: 'feat-t2-1', order: 1, props: { icon: 'PlayCircle', icon_color: '#a435f0', title: 'دروس مرنة وعالية الجودة', description: 'شاهد دروس الفيديو المسجلة بدقة عالية على أي جهاز في أي وقت.' } },
-            { id: 'feat-t2-2', order: 2, props: { icon: 'Users', icon_color: '#a435f0', title: 'تعلم من خبراء الصناعة', description: 'تفاعل مع مدربين ذوي خبرة وتلقى إجابات عن كل أسئلتك مباشرة.' } },
-            { id: 'feat-t2-3', order: 3, props: { icon: 'Award', icon_color: '#a435f0', title: 'شهادات إتمام لمسيرتك', description: 'عزز سيرتك الذاتية بشهادات معتمدة عند إتمامك لأي مسار تدريبي.' } }
+            { id: 'feat-t2-1', order: 1, props: { icon: 'PlayCircle', icon_color: '#2FA8E0', title: 'دروس مرنة وعالية الجودة', description: 'شاهد دروس الفيديو المسجلة بدقة عالية على أي جهاز في أي وقت.' } },
+            { id: 'feat-t2-2', order: 2, props: { icon: 'Users', icon_color: '#2FA8E0', title: 'تعلم من خبراء الصناعة', description: 'تفاعل مع مدربين ذوي خبرة وتلقى إجابات عن كل أسئلتك مباشرة.' } },
+            { id: 'feat-t2-3', order: 3, props: { icon: 'Award', icon_color: '#2FA8E0', title: 'شهادات إتمام لمسيرتك', description: 'عزز سيرتك الذاتية بشهادات معتمدة عند إتمامك لأي مسار تدريبي.' } }
           ],
           order: 3
         }
@@ -387,7 +387,7 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
           gridCols: '3',
           showPrice: true,
           showStudentsCount: true,
-          buttonBg: '#a435f0',
+          buttonBg: '#2FA8E0',
           background_color: '#ffffff',
           padding_top: 60,
           padding_bottom: 60,
@@ -426,10 +426,10 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
           backgroundColor: '#f7f9fa',
           order: 8,
           cards: [
-            { id: 'm-1', title: 'اختر مسارك', value: 'استكشاف', change: '', isPositive: true, icon: 'Compass', color: '#a435f0' },
-            { id: 'm-2', title: 'سجل في الدورة', value: 'تسجيل', change: '', isPositive: true, icon: 'UserPlus', color: '#a435f0' },
-            { id: 'm-3', title: 'شاهد وتعلم', value: 'تعلم', change: '', isPositive: true, icon: 'PlayCircle', color: '#a435f0' },
-            { id: 'm-4', title: 'احصل على الشهادة', value: 'تخرج', change: '', isPositive: true, icon: 'Award', color: '#a435f0' }
+            { id: 'm-1', title: 'اختر مسارك', value: 'استكشاف', change: '', isPositive: true, icon: 'Compass', color: '#2FA8E0' },
+            { id: 'm-2', title: 'سجل في الدورة', value: 'تسجيل', change: '', isPositive: true, icon: 'UserPlus', color: '#2FA8E0' },
+            { id: 'm-3', title: 'شاهد وتعلم', value: 'تعلم', change: '', isPositive: true, icon: 'PlayCircle', color: '#2FA8E0' },
+            { id: 'm-4', title: 'احصل على الشهادة', value: 'تخرج', change: '', isPositive: true, icon: 'Award', color: '#2FA8E0' }
           ]
         }
       },
@@ -480,7 +480,7 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
         props: {
           copyright: 'جميع الحقوق محفوظة © درب ٢٠٢٦',
           logoText: 'درب | المنصة',
-          bgColor: '#1c1d1f',
+          bgColor: '#0B2540',
           textColor: '#ffffff',
           showLogo: true,
           showSocials: true,
