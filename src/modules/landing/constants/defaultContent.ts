@@ -49,8 +49,8 @@ export const getTemplateDefaultContent = (course: any, templateName: string): La
       image: course?.image || 'https://images.unsplash.com/photo-1586717791821-3f44a563de4c?auto=format&fit=crop&q=80&w=1200',
       buttonText: 'اشترك في الدورة الآن ←',
       buttonLink: '#buy',
-      backgroundColor: isTemplate1 ? '#0D3B33' : '#ffffff',
-      textColor: isTemplate1 ? '#FFFFFF' : '#1f2937',
+      backgroundColor: isTemplate1 ? '#082A24' : '#ffffff',
+      textColor: isTemplate1 ? '#FBF7EE' : '#1f2937',
       typography: {
         titleSize: 42,
         bodySize: 16
@@ -60,7 +60,7 @@ export const getTemplateDefaultContent = (course: any, templateName: string): La
       title: 'ماذا ستتعلم في هذه الدورة؟',
       subtitle: 'مش مجرد فيديوهات مسجلة — منظومة تعلّم كاملة مصممة لتوصلك لنتيجة.',
       cards: learningCards,
-      backgroundColor: isTemplate1 ? '#FBF7EE' : '#f8fafc',
+      backgroundColor: isTemplate1 ? '#ffffff' : '#f8fafc',
       textColor: '#1f2937'
     },
     chapters: {
@@ -83,6 +83,41 @@ export const getTemplateDefaultContent = (course: any, templateName: string): La
       ],
       backgroundColor: isTemplate1 ? '#FBF7EE' : '#f8fafc',
       textColor: '#1f2937'
+    },
+    reviews: {
+      title: 'آراء وتجارب طلابنا المتميزين',
+      showSection: true,
+      backgroundColor: isTemplate1 ? '#ffffff' : '#ffffff',
+      textColor: '#1f2937',
+      items: [
+        {
+          id: 'rev-1',
+          name: 'محمد العتيبي',
+          role: 'مصمم واجهات مستقل',
+          comment: 'الدورة كانت نقطة تحول في مسيرتي المهنية. التطبيق العملي والمتابعة ساعدتني جداً في بناء بورتفوليو قوي.',
+          rating: 5,
+          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150'
+        },
+        {
+          id: 'rev-2',
+          name: 'سارة الشمري',
+          role: 'مطورة ويب',
+          comment: 'شرح رائع ومنظم، أنصح بالاشتراك بشدة لكل من يريد فهم مبادئ التصميم الحقيقية وتطبيقها برمجياً.',
+          rating: 5,
+          avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150'
+        }
+      ]
+    },
+    whatsapp: {
+      phoneNumber: '966500000000',
+      message: 'مرحباً، أود الاستفسار عن تفاصيل الاشتراك في الدورة',
+      showFloatingButton: true,
+      showInlineSection: true,
+      title: 'هل لديك أي استفسار آخر؟',
+      subtitle: 'تواصل معنا مباشرة عبر واتساب وسيجيب فريق الدعم على كافة أسئلتك واستفساراتك في أقرب وقت.',
+      buttonText: 'تواصل معنا عبر واتساب',
+      backgroundColor: '#25D366',
+      textColor: '#ffffff'
     },
     footer: {
       text: 'حقوق النشر © 2026 أكاديمية درب. جميع الحقوق محفوظة.',

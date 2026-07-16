@@ -7,6 +7,8 @@ import LearningSection from '../components/LearningSection';
 import ChapterSection from '../components/ChapterSection';
 import PaymentSection from '../components/PaymentSection';
 import FAQSection from '../components/FAQSection';
+import ReviewsSection from '../components/ReviewsSection';
+import WhatsAppSection from '../components/WhatsAppSection';
 import FooterSection from '../components/FooterSection';
 
 interface LandingRendererProps {
@@ -68,7 +70,7 @@ export default function LandingRenderer({
   } as React.CSSProperties;
 
   return (
-    <div style={cssVariables} className="min-h-screen w-full transition-all duration-300" dir="rtl">
+    <div style={cssVariables} className="min-h-screen w-full transition-all duration-300 relative" dir="rtl">
       {/* 1. Hero Section */}
       <HeroSection
         data={content.hero}
@@ -118,12 +120,28 @@ export default function LandingRenderer({
         onEdit={() => setActiveSectionId('faq')}
       />
 
+      {/* 5b. Reviews Section */}
+      <ReviewsSection
+        data={content.reviews}
+        templateId={templateName}
+        isEditable={isEditable}
+        onEdit={() => setActiveSectionId('reviews')}
+      />
+
       {/* 6. Footer Section */}
       <FooterSection
         data={content.footer}
         templateId={templateName}
         isEditable={isEditable}
         onEdit={() => setActiveSectionId('footer')}
+      />
+
+      {/* 7. WhatsApp Section and Widget */}
+      <WhatsAppSection
+        data={content.whatsapp}
+        templateId={templateName}
+        isEditable={isEditable}
+        onEdit={() => setActiveSectionId('whatsapp')}
       />
     </div>
   );

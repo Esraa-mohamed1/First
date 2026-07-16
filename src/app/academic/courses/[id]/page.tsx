@@ -32,6 +32,8 @@ import ChapterEditor from '@/modules/landing/editor/ChapterEditor';
 import PaymentEditor from '@/modules/landing/editor/PaymentEditor';
 import FAQEditor from '@/modules/landing/editor/FAQEditor';
 import FooterEditor from '@/modules/landing/editor/FooterEditor';
+import ReviewsEditor from '@/modules/landing/editor/ReviewsEditor';
+import WhatsAppEditor from '@/modules/landing/editor/WhatsAppEditor';
 
 const MySwal = withReactContent(Swal);
 
@@ -383,6 +385,7 @@ export default function CourseDetailsPage() {
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
 
   const activeSectionId = useLandingStore(state => state.activeSectionId);
+  const setActiveSectionId = useLandingStore(state => state.setActiveSectionId);
   const { saving, handleSave } = useLandingSave();
 
   useEffect(() => {
@@ -1943,18 +1946,43 @@ export default function CourseDetailsPage() {
             {/* Split Content Viewport */}
             <div className="flex-1 overflow-y-auto md:overflow-hidden flex flex-col md:flex-row h-auto md:h-[70vh]">
               {/* Left Column: Editor inspector Panel (350px width) */}
-              <div className="w-full md:w-[350px] border-b md:border-b-0 md:border-l border-slate-100 overflow-y-auto p-6 bg-slate-50/50 shrink-0 h-auto md:h-full">
-                {activeSectionId === 'hero' && <HeroEditor />}
-                {activeSectionId === 'learning' && <LearningEditor />}
-                {activeSectionId === 'chapters' && <ChapterEditor />}
-                {activeSectionId === 'payment' && <PaymentEditor />}
-                {activeSectionId === 'faq' && <FAQEditor />}
-                {activeSectionId === 'footer' && <FooterEditor />}
-                {!activeSectionId && (
-                  <div className="text-center py-16 text-slate-400 font-bold text-xs">
-                    👈 انقر فوق زر "تعديل القسم" على أي قسم في المعاينة لتعديل إعداداته هنا.
-                  </div>
-                )}
+              <div className="w-full md:w-[350px] border-b md:border-b-0 md:border-l border-slate-100 overflow-y-auto p-6 bg-slate-50/50 shrink-0 h-auto md:h-full flex flex-col gap-6">
+                
+                {/* Section Quick Selector */}
+                <div className="space-y-2 pb-4 border-b border-slate-200">
+                  <label className="text-xs font-black text-slate-500 block">اختر القسم للتعديل:</label>
+                  <select
+                    className="w-full border border-slate-200 rounded-xl p-2.5 text-xs bg-white font-bold focus:outline-none focus:border-blue-600 cursor-pointer"
+                    value={activeSectionId || ''}
+                    onChange={(e) => setActiveSectionId(e.target.value || null)}
+                  >
+                    <option value="">-- اختر قسماً من القائمة --</option>
+                    <option value="hero">البانر الرئيسي (الهيرو)</option>
+                    <option value="learning">ماذا ستتعلم؟</option>
+                    <option value="chapters">المنهج والدروس</option>
+                    <option value="payment">وسائل الدفع</option>
+                    <option value="faq">الأسئلة الشائعة</option>
+                    <option value="reviews">آراء الطلاب والتقييمات</option>
+                    <option value="whatsapp">زر تواصل واتساب</option>
+                    <option value="footer">تذييل الصفحة (الفوتر)</option>
+                  </select>
+                </div>
+
+                <div className="flex-grow overflow-y-auto">
+                  {activeSectionId === 'hero' && <HeroEditor />}
+                  {activeSectionId === 'learning' && <LearningEditor />}
+                  {activeSectionId === 'chapters' && <ChapterEditor />}
+                  {activeSectionId === 'payment' && <PaymentEditor />}
+                  {activeSectionId === 'faq' && <FAQEditor />}
+                  {activeSectionId === 'reviews' && <ReviewsEditor />}
+                  {activeSectionId === 'whatsapp' && <WhatsAppEditor />}
+                  {activeSectionId === 'footer' && <FooterEditor />}
+                  {!activeSectionId && (
+                    <div className="text-center py-16 text-slate-400 font-bold text-xs">
+                      👈 اختر قسماً من القائمة أعلاه أو انقر فوق زر "تعديل القسم" مباشرة لتعديل إعداداته هنا.
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Right Column: Live Interactive Preview (Flex fill) */}

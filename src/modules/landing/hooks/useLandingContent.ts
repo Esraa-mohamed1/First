@@ -57,7 +57,7 @@ export function useLandingContent(options: { courseId?: string | number; courseS
           }
 
           if (course && course.slug) {
-            landingPage = await getLandingPageByCourseSlug(course.slug);
+            landingPage = await getLandingPageByCourseSlug(course.slug, course.id);
           }
         } else if (options.courseSlug) {
           // Public Student view mode
@@ -66,7 +66,7 @@ export function useLandingContent(options: { courseId?: string | number; courseS
             course.units = course.chapters;
           }
           if (course && course.slug) {
-            landingPage = await getStudentLandingPageByCourseSlug(course.slug);
+            landingPage = await getStudentLandingPageByCourseSlug(course.slug, course.id);
           }
         }
 

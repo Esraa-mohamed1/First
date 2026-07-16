@@ -55,6 +55,35 @@ export interface FAQSectionData {
   textColor?: string;
 }
 
+export interface ReviewItem {
+  id: string;
+  name: string;
+  role: string;
+  comment: string;
+  rating: number;
+  avatar?: string;
+}
+
+export interface ReviewsSectionData {
+  title: string;
+  items: ReviewItem[];
+  showSection: boolean;
+  backgroundColor?: string;
+  textColor?: string;
+}
+
+export interface WhatsAppSectionData {
+  phoneNumber: string;
+  message: string;
+  showFloatingButton: boolean;
+  showInlineSection?: boolean;
+  title?: string;
+  subtitle?: string;
+  buttonText?: string;
+  backgroundColor?: string;
+  textColor?: string;
+}
+
 export interface FooterLink {
   label: string;
   url: string;
@@ -73,5 +102,7 @@ export interface LandingPageContent {
   chapters: ChapterSectionData;
   payment: PaymentSectionData;
   faq: FAQSectionData;
+  reviews: ReviewsSectionData;
+  whatsapp: WhatsAppSectionData;
   footer: FooterSectionData;
 }
