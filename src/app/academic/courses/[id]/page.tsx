@@ -23,6 +23,15 @@ import { showAlert } from '@/lib/sweetalert';
 import { getUserPaymentInfos, UserPaymentInfo } from '@/services/finance';
 import { getLogoUrl } from '@/lib/utils';
 import { EntitySelectWithCreate } from '@/components/Academic/Common/EntitySelectWithCreate';
+import LandingRenderer from '@/modules/landing/renderer/LandingRenderer';
+import { useLandingStore } from '@/modules/landing/store/landingStore';
+import { useLandingSave } from '@/modules/landing/hooks/useLandingSave';
+import HeroEditor from '@/modules/landing/editor/HeroEditor';
+import LearningEditor from '@/modules/landing/editor/LearningEditor';
+import ChapterEditor from '@/modules/landing/editor/ChapterEditor';
+import PaymentEditor from '@/modules/landing/editor/PaymentEditor';
+import FAQEditor from '@/modules/landing/editor/FAQEditor';
+import FooterEditor from '@/modules/landing/editor/FooterEditor';
 
 const MySwal = withReactContent(Swal);
 
@@ -365,7 +374,27 @@ export default function CourseDetailsPage() {
     { id: 'what_you_will_learn', title: 'ماذا ستتعلم؟', items: [''] }
   ]);
   const [courseTemplate, setCourseTemplate] = useState<string>('template_1');
+  const changeTemplate = (tpl: string) => {
+    setCourseTemplate(tpl);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`darab_course_template_${id}`, tpl);
+    }
+  };
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
+
+  const activeSectionId = useLandingStore(state => state.activeSectionId);
+  const { saving, handleSave } = useLandingSave();
+
+  useEffect(() => {
+    if (previewTemplateId && course) {
+      const store = useLandingStore.getState();
+      store.setTemplateName(previewTemplateId);
+      store.setCourseData(course);
+      if (currentUser?.id) {
+        store.setUserId(currentUser.id);
+      }
+    }
+  }, [previewTemplateId, course, currentUser]);
   
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -731,6 +760,9 @@ export default function CourseDetailsPage() {
       
       setCustomSections(parsedSections);
       setCourseTemplate(resolvedCourseTemplate);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`darab_course_template_${id}`, resolvedCourseTemplate);
+      }
 
       if (data.image) {
         setPreviewImage(data.image);
@@ -1150,7 +1182,7 @@ export default function CourseDetailsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                 <button
                   type="button"
-                  onClick={() => setCourseTemplate('template_1')}
+                  onClick={() => changeTemplate('template_1')}
                   className={`p-5 border rounded-3xl text-right transition-all flex flex-col gap-3 relative ${
                     courseTemplate === 'template_1'
                       ? 'border-blue-600 bg-blue-50/20 ring-2 ring-blue-600/10'
@@ -1183,7 +1215,7 @@ export default function CourseDetailsPage() {
 
                 <button
                   type="button"
-                  onClick={() => setCourseTemplate('template_2')}
+                  onClick={() => changeTemplate('template_2')}
                   className={`p-5 border rounded-3xl text-right transition-all flex flex-col gap-3 relative ${
                     courseTemplate === 'template_2'
                       ? 'border-blue-600 bg-blue-50/20 ring-2 ring-blue-600/10'
@@ -1873,217 +1905,67 @@ export default function CourseDetailsPage() {
       {previewTemplateId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" dir="rtl">
           <div 
-            className="bg-white rounded-[2.5rem] w-full max-w-4xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
+            className="bg-white rounded-[2.5rem] w-full max-w-7xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 bg-slate-50/50">
+            <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100 bg-slate-50/50 shrink-0">
               <div>
-                <h3 className="text-lg font-black text-slate-900">
-                  {previewTemplateId === 'template_1' ? 'معاينة القالب الأول (الكلاسيكي الملكي)' : 'معاينة قالب صفحة الدروس التفاعلية (الافتراضي)'}
+                <h3 className="text-sm font-black text-slate-900">
+                  {previewTemplateId === 'template_1' ? 'تخصيص القالب الأول (الكلاسيكي الملكي)' : 'تخصيص قالب صفحة الدروس التفاعلية (الافتراضي)'}
                 </h3>
-                <p className="text-xs text-slate-400 font-bold mt-1">عرض الهيكل التنظيمي والمظهر العام للتصميم</p>
+                <p className="text-[10px] text-slate-400 font-bold mt-0.5">انقر فوق أي قسم أو أيقونة "تعديل" لتخصيص محتواه مباشرة</p>
               </div>
-              <button 
-                type="button"
-                onClick={() => setPreviewTemplateId(null)}
-                className="w-10 h-10 bg-white hover:bg-slate-100 text-slate-500 rounded-full flex items-center justify-center border border-slate-200 hover:text-slate-900 transition-all active:scale-95"
-              >
-                <X size={18} />
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const success = await handleSave(currentUser?.id);
+                    if (success) {
+                      setPreviewTemplateId(null);
+                    }
+                  }}
+                  disabled={saving}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-full font-black text-xs transition-all active:scale-95 shadow-md flex items-center gap-1 cursor-pointer"
+                >
+                  {saving ? 'جاري الحفظ...' : 'حفظ التعديلات'}
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setPreviewTemplateId(null)}
+                  className="w-9 h-9 bg-white hover:bg-slate-100 text-slate-500 rounded-full flex items-center justify-center border border-slate-200 hover:text-slate-900 transition-all active:scale-95 cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-8 space-y-8">
-              {/* Miniature Dynamic Wireframe Mockup */}
-              <div className="border border-slate-200/60 rounded-[2rem] p-6 bg-slate-50 shadow-inner flex flex-col gap-4">
-                <span className="text-xs font-black text-slate-400 tracking-wide block text-right">رسم تخطيطي لهيكل الصفحة:</span>
-                
-                {previewTemplateId === 'template_1' ? (
-                  /* Template 1 Mockup */
-                  <div className="w-full flex flex-col gap-3 text-xs font-bold text-slate-700">
-                    {/* Header Banner */}
-                    <div className="bg-[#0D3B33] text-white p-6 rounded-2xl border-r-8 border-[#C9A24B] text-center space-y-2">
-                      <div className="bg-white/10 h-3 w-1/4 mx-auto rounded" />
-                      <div className="bg-white/20 h-5 w-2/3 mx-auto rounded" />
-                      <div className="bg-white/10 h-3 w-1/2 mx-auto rounded" />
-                    </div>
-                    {/* Stats Bar */}
-                    <div className="grid grid-cols-4 gap-2 text-center">
-                      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-1">
-                        <span className="text-[#C9A24B] font-black text-sm block">+٤٠</span>
-                        <span className="text-[9px] text-slate-400 block">ساعة تدريبية</span>
-                      </div>
-                      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-1">
-                        <span className="text-[#C9A24B] font-black text-sm block">١٢</span>
-                        <span className="text-[9px] text-slate-400 block">وحدة دراسية</span>
-                      </div>
-                      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-1">
-                        <span className="text-[#C9A24B] font-black text-sm block">١٠٠٪</span>
-                        <span className="text-[9px] text-slate-400 block">محتوى عملي</span>
-                      </div>
-                      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-1">
-                        <span className="text-[#C9A24B] font-black text-sm block">مفعل</span>
-                        <span className="text-[9px] text-slate-400 block">شهادة معتمدة</span>
-                      </div>
-                    </div>
-                    {/* Content Section Split */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      {/* Course Details (Left side / main) */}
-                      <div className="md:col-span-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
-                        <div className="h-4 bg-slate-100 rounded w-1/3" />
-                        <div className="space-y-1.5">
-                          <div className="h-3 bg-slate-100 rounded w-full" />
-                          <div className="h-3 bg-slate-100 rounded w-full" />
-                          <div className="h-3 bg-slate-100 rounded w-3/4" />
-                        </div>
-                        {/* Accordion mockup */}
-                        <div className="space-y-2 pt-2">
-                          <div className="h-9 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-between px-3">
-                            <div className="h-3 bg-slate-200 rounded w-1/2" />
-                            <div className="h-3 bg-slate-200 rounded w-4" />
-                          </div>
-                          <div className="h-9 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-between px-3">
-                            <div className="h-3 bg-slate-200 rounded w-1/3" />
-                            <div className="h-3 bg-slate-200 rounded w-4" />
-                          </div>
-                        </div>
-                      </div>
-                      {/* Subscription Box (Right side) */}
-                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3 justify-between">
-                        <div className="space-y-1">
-                          <span className="text-[10px] text-slate-400 block">سعر الدورة</span>
-                          <span className="text-lg font-black text-slate-900">١٩٩ SAR</span>
-                        </div>
-                        <div className="h-9 bg-[#C9A24B] text-white rounded-lg flex items-center justify-center font-black text-xs">
-                          اشترك الآن
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  /* Template 2 Mockup */
-                  <div className="w-full flex flex-col gap-3 text-xs font-bold text-slate-700">
-                    {/* Header bar */}
-                    <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                      <div className="h-3 bg-slate-200 rounded w-1/4" />
-                      <div className="h-4 bg-slate-100 rounded w-8" />
-                    </div>
-                    {/* Main Content & Right payment card */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      {/* Right payment card (Floating) */}
-                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3 flex flex-col justify-between">
-                        <div className="aspect-video bg-slate-900 rounded-lg flex items-center justify-center text-white">
-                          <Play size={20} className="opacity-60" />
-                        </div>
-                        <div className="space-y-1">
-                          <span className="text-[10px] text-slate-400 block">سعر الاشتراك</span>
-                          <span className="text-lg font-black text-slate-900">١٩٩ SAR</span>
-                        </div>
-                        <div className="h-9 bg-blue-600 text-white rounded-lg flex items-center justify-center font-black text-xs">
-                          سجل الآن في الدورة
-                        </div>
-                      </div>
-                      {/* Left main contents */}
-                      <div className="md:col-span-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
-                        <div className="h-5 bg-slate-100 rounded w-1/2" />
-                        {/* Tab header */}
-                        <div className="flex border-b border-slate-100 pb-1 gap-4">
-                          <span className="text-blue-600 border-b-2 border-blue-600 pb-1">عن الدورة</span>
-                          <span className="text-slate-400">المنهج الدراسي</span>
-                          <span className="text-slate-400">التقييمات</span>
-                        </div>
-                        <div className="space-y-1.5 pt-2">
-                          <div className="h-3 bg-slate-100 rounded w-full" />
-                          <div className="h-3 bg-slate-100 rounded w-full" />
-                          <div className="h-3 bg-slate-100 rounded w-2/3" />
-                        </div>
-                      </div>
-                    </div>
+            {/* Split Content Viewport */}
+            <div className="flex-1 overflow-y-auto md:overflow-hidden flex flex-col md:flex-row h-auto md:h-[70vh]">
+              {/* Left Column: Editor inspector Panel (350px width) */}
+              <div className="w-full md:w-[350px] border-b md:border-b-0 md:border-l border-slate-100 overflow-y-auto p-6 bg-slate-50/50 shrink-0 h-auto md:h-full">
+                {activeSectionId === 'hero' && <HeroEditor />}
+                {activeSectionId === 'learning' && <LearningEditor />}
+                {activeSectionId === 'chapters' && <ChapterEditor />}
+                {activeSectionId === 'payment' && <PaymentEditor />}
+                {activeSectionId === 'faq' && <FAQEditor />}
+                {activeSectionId === 'footer' && <FooterEditor />}
+                {!activeSectionId && (
+                  <div className="text-center py-16 text-slate-400 font-bold text-xs">
+                    👈 انقر فوق زر "تعديل القسم" على أي قسم في المعاينة لتعديل إعداداته هنا.
                   </div>
                 )}
               </div>
 
-              {/* Feature Details List */}
-              <div className="space-y-3 text-right">
-                <h4 className="font-black text-slate-900 text-sm">أبرز مميزات هذا القالب:</h4>
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  {previewTemplateId === 'template_1' ? (
-                    <>
-                      <li className="flex items-start gap-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
-                        <span className="w-2 h-2 bg-[#C9A24B] rounded-full shrink-0 mt-2" />
-                        <div className="space-y-0.5">
-                          <p className="text-xs font-black text-slate-800">الألوان الملكية الفاخرة</p>
-                          <p className="text-[10px] text-slate-400 font-bold">توليفة مميزة تجمع بين الزمردي الداكن والذهبي لتصميم راقٍ.</p>
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
-                        <span className="w-2 h-2 bg-[#C9A24B] rounded-full shrink-0 mt-2" />
-                        <div className="space-y-0.5">
-                          <p className="text-xs font-black text-slate-800">شريط الإحصائيات والأرقام</p>
-                          <p className="text-[10px] text-slate-400 font-bold">شريط تفاعلي يعرض مجموع الساعات، الدروس والشهادة بوضوح.</p>
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
-                        <span className="w-2 h-2 bg-[#C9A24B] rounded-full shrink-0 mt-2" />
-                        <div className="space-y-0.5">
-                          <p className="text-xs font-black text-slate-800">كاروسيل آراء الطلاب والتقييمات</p>
-                          <p className="text-[10px] text-slate-400 font-bold">شريط تمرير أفقي سلس لعرض شهادات وآراء خريجي الدورة.</p>
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
-                        <span className="w-2 h-2 bg-[#C9A24B] rounded-full shrink-0 mt-2" />
-                        <div className="space-y-0.5">
-                          <p className="text-xs font-black text-slate-800">شات محاكاة واتساب ونافذة تواصل</p>
-                          <p className="text-[10px] text-slate-400 font-bold">أيقونة واتساب عائمة ونماذج اتصال مباشرة لزيادة اشتراك الطلاب.</p>
-                        </div>
-                      </li>
-                    </>
-                  ) : (
-                    <>
-                      <li className="flex items-start gap-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
-                        <span className="w-2 h-2 bg-blue-600 rounded-full shrink-0 mt-2" />
-                        <div className="space-y-0.5">
-                          <p className="text-xs font-black text-slate-800">مشغل الفيديو البارز</p>
-                          <p className="text-[10px] text-slate-400 font-bold">فيديو تعريفي كبير يجذب انتباه الطالب فور دخول الصفحة.</p>
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
-                        <span className="w-2 h-2 bg-blue-600 rounded-full shrink-0 mt-2" />
-                        <div className="space-y-0.5">
-                          <p className="text-xs font-black text-slate-800">نظام التبويبات التفاعلي</p>
-                          <p className="text-[10px] text-slate-400 font-bold">تقسيم محتوى الدورة، تفاصيلها، والتقييمات في تبويبات سهلة التنقل.</p>
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
-                        <span className="w-2 h-2 bg-blue-600 rounded-full shrink-0 mt-2" />
-                        <div className="space-y-0.5">
-                          <p className="text-xs font-black text-slate-800">منهج دراسي مرن</p>
-                          <p className="text-[10px] text-slate-400 font-bold">قائمة منسدلة أنيقة للمنهج والدروس بترميز بصري مريح للمستخدم.</p>
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
-                        <span className="w-2 h-2 bg-blue-600 rounded-full shrink-0 mt-2" />
-                        <div className="space-y-0.5">
-                          <p className="text-xs font-black text-slate-800">كارت التسعير والاشتراك العائم</p>
-                          <p className="text-[10px] text-slate-400 font-bold">بطاقة جانبية مميزة تثبت عند التمرير لتسهيل الوصول لزر الدفع.</p>
-                        </div>
-                      </li>
-                    </>
-                  )}
-                </ul>
+              {/* Right Column: Live Interactive Preview (Flex fill) */}
+              <div className="flex-1 overflow-y-auto bg-slate-100 p-4 h-[500px] md:h-full">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200/50 overflow-hidden min-h-[500px]">
+                  <LandingRenderer
+                    courseId={id}
+                    isEditable={true}
+                  />
+                </div>
               </div>
-            </div>
-
-            {/* Footer */}
-            <div className="px-8 py-5 border-t border-slate-100 bg-slate-50/50 flex justify-end">
-              <button 
-                type="button"
-                onClick={() => setPreviewTemplateId(null)}
-                className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-full font-black text-xs transition-all active:scale-95 shadow-lg shadow-slate-900/10"
-              >
-                إغلاق المعاينة
-              </button>
             </div>
           </div>
         </div>

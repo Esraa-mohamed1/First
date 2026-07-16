@@ -33,6 +33,12 @@ export const getMyEnrolledCourses = async (): Promise<any[]> => {
 
 export const getMySubscriptions = async (): Promise<any[]> => {
   try {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return [];
+      }
+    }
     const response = await studentApi.get<ApiResponse<any[]>>('user-subscribe');
     return response.data.data;
   } catch (error: any) {
