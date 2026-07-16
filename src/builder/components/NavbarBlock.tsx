@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Bell, User, HelpCircle, Mail, Phone, MapPin, Facebook, Instagram, Linkedin, Twitter } from 'lucide-react';
 import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
 import { unwrapEncryptedResponseData } from '@/lib/decryption';
+import { useBuilderStore } from '../store/builderStore';
 
 interface NavbarBlockProps {
   title?: string;
@@ -58,6 +59,12 @@ export default function NavbarBlock(props: NavbarBlockProps) {
 
   const [academyInfo, setAcademyInfo] = useState<{ name?: string; logo?: string } | null>(null);
 
+  let currentTemplate: any = null;
+  try {
+    currentTemplate = useBuilderStore((state) => state.currentTemplate);
+  } catch (e) {}
+  const isUdemy = currentTemplate?.id === 'template_2';
+
   useEffect(() => {
     // Try localStorage first
     const cached = localStorage.getItem('darab_academy_profile');
@@ -85,9 +92,9 @@ export default function NavbarBlock(props: NavbarBlockProps) {
         };
 
         const token = localStorage.getItem('token');
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
+        if (!token) return;
+
+        headers['Authorization'] = `Bearer ${token}`;
 
         const res = await fetch('https://api.darab.academy/api/academy/me', { headers });
         if (res.ok) {
@@ -126,6 +133,58 @@ export default function NavbarBlock(props: NavbarBlockProps) {
   // Resolve active logo and title from either custom props or fetched profile
   const activeLogo = logoUrl || academyInfo?.logo;
   const activeTitle = title !== 'بوابة التعلم' && title !== 'درب' ? title : (academyInfo?.name || title);
+
+  if (isUdemy) {
+    return (
+      <header 
+        className="sticky top-0 left-0 right-0 w-full z-50 flex justify-between items-center px-6 py-4 backdrop-blur-xl bg-white/80 border-b border-slate-200/50 shadow-sm transition-all duration-300"
+        dir="rtl"
+      >
+        {/* Right Side: Logo */}
+        <div className="flex items-center gap-3">
+          {isValidImageUrl(activeLogo) ? (
+            <img src={activeLogo} alt={activeTitle} className="w-8 h-8 object-contain" />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-[var(--t2-ink)] flex items-center justify-center text-[var(--t2-gold)] shrink-0 font-extrabold text-sm font-['Fraunces']">
+              {logoText || activeTitle?.[0] || 'د'}
+            </div>
+          )}
+          <span className="font-black tracking-wide text-xl text-[var(--t2-ink)] font-['Fraunces']">
+            {activeTitle}
+          </span>
+        </div>
+
+        {/* Center: Navigation Links */}
+        <nav className="hidden md:flex items-center gap-8 text-[15px] font-medium text-[var(--t2-ink)] font-['Inter']">
+          {links.map((link: any, idx: number) => (
+            <a 
+              key={idx} 
+              href={link.href} 
+              className="relative group hover:text-[var(--t2-gold)] transition-colors"
+            >
+              {link.label}
+              <span className="absolute -bottom-1 right-0 w-0 h-0.5 bg-[var(--t2-gold)] transition-all group-hover:w-full"></span>
+            </a>
+          ))}
+        </nav>
+
+        {/* Left Side: Buttons */}
+        <div className="flex items-center gap-4">
+          <a href="/login" className="hidden sm:inline-block px-5 py-2 rounded-full border-[1.5px] border-[var(--t2-ink)] text-[var(--t2-ink)] font-bold text-sm hover:bg-[var(--t2-ink)] hover:text-white transition-all font-['Inter']">
+            تسجيل الدخول
+          </a>
+          {showButton && (
+            <a 
+              href={buttonLink}
+              className="px-6 py-2 rounded-full bg-[var(--t2-gold)] text-[var(--t2-ink)] font-bold text-sm hover:brightness-110 hover:shadow-[0_4px_15px_rgba(232,163,61,0.4)] hover:-translate-y-0.5 transition-all font-['Inter']"
+            >
+              {buttonText}
+            </a>
+          )}
+        </div>
+      </header>
+    );
+  }
 
   if (isLandingPage) {
     return (
@@ -266,6 +325,12 @@ export function FooterBlock(props: any) {
 
   const [profile, setProfile] = useState<any>(null);
 
+  let currentTemplate: any = null;
+  try {
+    currentTemplate = useBuilderStore((state) => state.currentTemplate);
+  } catch (e) {}
+  const isUdemy = currentTemplate?.id === 'template_2';
+
   useEffect(() => {
     const cached = localStorage.getItem('darab_academy_profile_full');
     if (cached) {
@@ -292,9 +357,9 @@ export function FooterBlock(props: any) {
         };
 
         const token = localStorage.getItem('token');
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
+        if (!token) return;
+
+        headers['Authorization'] = `Bearer ${token}`;
 
         const res = await fetch('https://api.darab.academy/api/academy/me', { headers });
         if (res.ok) {
@@ -325,6 +390,124 @@ export function FooterBlock(props: any) {
   const activeInstagram = instagramUrl || profile?.instagram_handle;
   const activeLinkedin = linkedinUrl || profile?.linkedin_handle;
   const activeTwitter = twitterUrl || profile?.twitter_handle;
+
+  if (isUdemy) {
+    return (
+      <footer className="w-full bg-[var(--t2-ink)] text-[var(--t2-canvas)] pt-20 pb-10 select-none font-['Inter']" dir="rtl">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+            
+            {/* Column 1: Brand details */}
+            <div className="flex flex-col gap-6 items-start md:col-span-1">
+              {showLogo && (
+                <div className="flex items-center gap-3">
+                  {isValidImageUrl(activeLogo) ? (
+                    <img src={activeLogo} alt={academyName} className="w-10 h-10 object-contain rounded-full bg-[var(--t2-white)] p-1" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-[var(--t2-gold)] flex items-center justify-center text-[var(--t2-ink)] font-extrabold text-xl font-['Fraunces']">
+                      {logoText || academyName?.[0] || 'د'}
+                    </div>
+                  )}
+                  <span className="text-2xl font-['Fraunces'] tracking-wide text-[var(--t2-gold)]">
+                    {academyName}
+                  </span>
+                </div>
+              )}
+              {isValidField(description) && (
+                <p className="text-sm opacity-80 leading-relaxed font-medium">
+                  {description}
+                </p>
+              )}
+              
+              {/* Social Icons */}
+              {showSocials && (
+                <div className="flex items-center gap-3 mt-2">
+                  {activeFacebook && isValidField(activeFacebook) && (
+                    <a href={activeFacebook} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full border border-[var(--t2-indigo-3)] hover:bg-[var(--t2-gold)] hover:border-[var(--t2-gold)] hover:text-[var(--t2-ink)] flex items-center justify-center transition-all">
+                      <Facebook size={18} />
+                    </a>
+                  )}
+                  {activeInstagram && isValidField(activeInstagram) && (
+                    <a href={activeInstagram} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full border border-[var(--t2-indigo-3)] hover:bg-[var(--t2-gold)] hover:border-[var(--t2-gold)] hover:text-[var(--t2-ink)] flex items-center justify-center transition-all">
+                      <Instagram size={18} />
+                    </a>
+                  )}
+                  {activeLinkedin && isValidField(activeLinkedin) && (
+                    <a href={activeLinkedin} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full border border-[var(--t2-indigo-3)] hover:bg-[var(--t2-gold)] hover:border-[var(--t2-gold)] hover:text-[var(--t2-ink)] flex items-center justify-center transition-all">
+                      <Linkedin size={18} />
+                    </a>
+                  )}
+                  {activeTwitter && isValidField(activeTwitter) && (
+                    <a href={activeTwitter} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full border border-[var(--t2-indigo-3)] hover:bg-[var(--t2-gold)] hover:border-[var(--t2-gold)] hover:text-[var(--t2-ink)] flex items-center justify-center transition-all">
+                      <Twitter size={18} />
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Column 2: Links */}
+            <div className="flex flex-col gap-5 items-start">
+              <h3 className="text-xs font-['IBM_Plex_Mono'] uppercase tracking-widest text-[var(--t2-gold-light)] mb-2">روابط سريعة</h3>
+              <ul className="space-y-4 text-sm font-medium opacity-80">
+                <li><a href="#" className="hover:text-[var(--t2-gold)] hover:translate-x-[-4px] inline-block transition-all">الرئيسية</a></li>
+                <li><a href="#" className="hover:text-[var(--t2-gold)] hover:translate-x-[-4px] inline-block transition-all">الدورات التدريبية</a></li>
+                <li><a href="#" className="hover:text-[var(--t2-gold)] hover:translate-x-[-4px] inline-block transition-all">المدربون</a></li>
+                <li><a href="#" className="hover:text-[var(--t2-gold)] hover:translate-x-[-4px] inline-block transition-all">تواصل معنا</a></li>
+              </ul>
+            </div>
+
+            {/* Column 3: Contact */}
+            <div className="flex flex-col gap-5 items-start">
+              <h3 className="text-xs font-['IBM_Plex_Mono'] uppercase tracking-widest text-[var(--t2-gold-light)] mb-2">الدعم الفني</h3>
+              <ul className="space-y-4 text-sm font-medium opacity-80">
+                {activeEmail && isValidField(activeEmail) && (
+                  <li className="flex items-center gap-3">
+                    <Mail size={16} className="text-[var(--t2-coral)]" />
+                    <span className="hover:text-[var(--t2-gold)] transition-colors cursor-pointer">{activeEmail}</span>
+                  </li>
+                )}
+                {activePhone && isValidField(activePhone) && (
+                  <li className="flex items-center gap-3">
+                    <Phone size={16} className="text-[var(--t2-coral)]" />
+                    <span dir="ltr" className="hover:text-[var(--t2-gold)] transition-colors cursor-pointer">{activePhone}</span>
+                  </li>
+                )}
+                {activeAddress && isValidField(activeAddress) && (
+                  <li className="flex items-start gap-3">
+                    <MapPin size={16} className="text-[var(--t2-coral)] mt-1 shrink-0" />
+                    <span>{activeAddress}</span>
+                  </li>
+                )}
+              </ul>
+            </div>
+
+            {/* Column 4: Newsletter */}
+            <div className="flex flex-col gap-5 items-start md:col-span-1">
+              <h3 className="text-xs font-['IBM_Plex_Mono'] uppercase tracking-widest text-[var(--t2-gold-light)] mb-2">النشرة البريدية</h3>
+              <p className="text-sm font-medium opacity-80">اشترك ليصلك كل جديد عن دوراتنا وعروضنا الحصرية.</p>
+              <div className="w-full flex mt-2 bg-[var(--t2-indigo-2)] rounded-full p-1 border border-[var(--t2-indigo-3)] focus-within:border-[var(--t2-gold)] transition-colors">
+                <input type="email" placeholder="البريد الإلكتروني" className="w-full bg-transparent border-none outline-none text-sm px-4 py-2 text-white placeholder-[var(--t2-canvas-3)]" />
+                <button className="bg-[var(--t2-gold)] text-[var(--t2-ink)] font-bold text-sm px-5 py-2 rounded-full hover:brightness-110 transition-all shrink-0">
+                  اشترك
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Footer bottom */}
+          <div className="border-t border-[var(--t2-indigo-3)] pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium opacity-60">
+            <p>© {new Date().getFullYear()} {academyName}. {copyright}</p>
+            <div className="flex items-center gap-6">
+              <a href="/terms" className="hover:text-[var(--t2-gold)] transition-colors">الشروط والأحكام</a>
+              <a href="/privacy" className="hover:text-[var(--t2-gold)] transition-colors">سياسة الخصوصية</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    );
+  }
 
   return (
     <footer style={{ backgroundColor: bgColor, color: textColor }} className="mt-20 border-t border-slate-100 pt-16 pb-8 select-none w-full" dir="rtl">

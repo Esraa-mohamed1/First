@@ -30,11 +30,12 @@ import {
   persistAuthToken,
 } from '@/lib/auth-storage';
 import { usePlayerStore } from '@/hooks/usePlayerStore';
+import { useBunnyPlayer } from '@/hooks/useBunnyPlayer';
+import { ResumePrompt } from '@/components/Student/Courses/ResumePrompt';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import Lottie from 'lottie-react';
-import _ from 'lodash';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 
@@ -134,6 +135,9 @@ export default function CoursePlayerPage() {
   const [isNotesPanelOpen, setIsNotesPanelOpen] = useState(false);
   const [panelNoteText, setPanelNoteText] = useState('');
   const videoDurationRef = useRef(0);
+  // Resume prompt state
+  const [showResumePrompt, setShowResumePrompt] = useState(false);
+  const resumeWatchedSeconds = useRef(0);
   const [rocketData, setRocketData] = useState<any>(null);
   const [studentName, setStudentName] = useState('أحمد');
   const [studentAvatar, setStudentAvatar] = useState('');
@@ -182,6 +186,7 @@ export default function CoursePlayerPage() {
 
   // Persistence Logic
   const storageKey = useMemo(() => `tracking_${id}`, [id]);
+  const completedCacheKey = useMemo(() => `completed_lessons_${id}`, [id]);
 
   // Authorization Check
   useEffect(() => {
@@ -219,6 +224,26 @@ export default function CoursePlayerPage() {
       try {
         setLoading(true);
         const data = await getMyCourseDetails(id as string);
+
+        // Merge with local storage completion cache
+        try {
+          const localCompleted = JSON.parse(localStorage.getItem(completedCacheKey) || '{}');
+          const course = data?.course ?? data;
+          if (course && course.chapters) {
+            course.chapters = course.chapters.map((ch: any) => ({
+              ...ch,
+              lessons: (ch.lessons || []).map((l: any) => {
+                if (localCompleted[l.id] === true) {
+                  return { ...l, is_completed: true };
+                }
+                return l;
+              })
+            }));
+          }
+        } catch (e) {
+          console.warn('Failed to merge local completion cache:', e);
+        }
+
         setCourseData(data);
 
         const course = data?.course ?? data;
@@ -245,7 +270,7 @@ export default function CoursePlayerPage() {
       }
     };
     fetchDetails();
-  }, [id]);
+  }, [id, completedCacheKey]);
 
   // Keyboard Shortcuts
   useEffect(() => {
@@ -270,110 +295,174 @@ export default function CoursePlayerPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Tracking & Sync Logic
-  const syncProgress = useCallback(_.debounce(async (lessonId: number, seconds: number) => {
-    try {
-      if (seconds <= 0) return; // Don't sync 0 or negative seconds unless explicitly needed
+  // ---------------------------------------------------------------------------
+  // player.js — throttled progress tracking via useBunnyPlayer hook
+  // ---------------------------------------------------------------------------
+  // currentTime from the hook updates on every timeupdate (unthrottled) —
+  // use this for real-time display and note timestamps.
+  // The page's own `currentTime` state is used only for the initial saved position.
+  /**
+   * Marks the given lesson as completed in both the player store (currentLesson)
+   * and in courseData.chapters so the sidebar checkmark appears immediately
+   * without needing a full page refresh.
+   */
+  const markLessonDoneLocally = useCallback((lessonId: number) => {
+    // 1. Update the player-store's active lesson so the header/controls reflect completion
+    //    setCurrentLesson expects a direct Lesson value (Zustand store setter, not React useState)
+    if (currentLesson) {
+      setCurrentLesson({ ...(currentLesson as any), is_completed: true });
+    }
 
-      // Persist locally first
+    // 2. Cache completion status in localStorage
+    try {
+      const localCompleted = JSON.parse(localStorage.getItem(completedCacheKey) || '{}');
+      localCompleted[lessonId] = true;
+      localStorage.setItem(completedCacheKey, JSON.stringify(localCompleted));
+    } catch (e) {
+      console.warn('Failed to update local completed cache:', e);
+    }
+
+    // 3. Mirror the flag into every chapter's lesson list so the sidebar icon shows
+    setCourseData((prev: any) => {
+      if (!prev) return prev;
+      const course = prev.course ?? prev;
+      const updatedChapters = (course.chapters || []).map((ch: any) => ({
+        ...ch,
+        lessons: (ch.lessons || []).map((l: any) =>
+          Number(l.id) === lessonId ? { ...l, is_completed: true } : l
+        ),
+      }));
+      // Handle both response shapes: { course: { chapters } } and flat { chapters }
+      if (prev.course) {
+        return { ...prev, course: { ...prev.course, chapters: updatedChapters } };
+      }
+      return { ...prev, chapters: updatedChapters };
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLesson, completedCacheKey]);
+
+  const { seekTo, resetPlayer, bindToIframe, liveCurrentTime } = useBunnyPlayer(videoRef, {
+    onProgress: useCallback((playerTime: number, dur: number, pct: number) => {
+      if (!currentLesson || playerTime <= 0) return;
+      const lessonId = Number(currentLesson.id);
+
+      // Update local UI
+      videoDurationRef.current = dur;
+      // Also update page currentTime state so saved-position display stays in sync
+      localStorage.setItem(`bunny_current_time_${lessonId}`, String(Math.floor(playerTime)));
+
+      // Persist locally
       const localData = JSON.parse(localStorage.getItem(storageKey) || '{}');
-      localData[lessonId] = seconds;
+      localData[lessonId] = Math.floor(playerTime);
       localStorage.setItem(storageKey, JSON.stringify(localData));
 
-      await trackLessonProgress(id as string, lessonId, seconds);
-    } catch (e) {
-      console.error('Sync failed', e);
-    }
-  }, 5000), [id, storageKey]);
+      // Update page state so saved-position reads remain accurate
+      setCurrentTime(Math.floor(playerTime));
 
-  // Handle video events from iframe/player
+      // Send to backend (already throttled by hook — every 5% or 10 s)
+      trackLessonProgress(
+        id as string,
+        lessonId,
+        Math.floor(playerTime),
+        ['play', 'pause', 'seek'],
+        dur,
+        pct
+      ).catch((err) =>
+        console.warn('Progress sync failed (non-critical):', err)
+      );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentLesson, id, storageKey]),
+
+    onCompleted: useCallback(() => {
+      if (!currentLesson || (currentLesson as any).is_completed) return;
+      const lessonId = Number(currentLesson.id);
+      const dur = videoDurationRef.current;
+      trackLessonProgress(
+        id as string,
+        lessonId,
+        Math.floor(dur),
+        ['play', 'pause', 'seek', 'end', 'completed'],
+        dur,
+        100
+      )
+        .catch((err) => console.warn('Completion tracking failed:', err))
+        .finally(() => {
+          // Update both player store and sidebar lesson list
+          markLessonDoneLocally(lessonId);
+          setShowCelebration(true);
+          setTimeout(() => setShowCelebration(false), 4000);
+        });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentLesson, id, markLessonDoneLocally]),
+
+    onEnded: useCallback((dur: number) => {
+      if (!currentLesson || (currentLesson as any).is_completed) return;
+      const lessonId = Number(currentLesson.id);
+      trackLessonProgress(
+        id as string,
+        lessonId,
+        Math.floor(dur),
+        ['play', 'pause', 'seek', 'end', 'completed'],
+        dur,
+        100
+      )
+        .catch((err) => console.warn('Ended tracking failed:', err))
+        .finally(() => {
+          // Update both player store and sidebar lesson list
+          markLessonDoneLocally(lessonId);
+          setShowCelebration(true);
+          setTimeout(() => setShowCelebration(false), 4000);
+        });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentLesson, id, markLessonDoneLocally]),
+
+    onPause: useCallback(() => {
+      // Progress is already flushed on pause inside the hook
+    }, []),
+  });
+
+  // Also keep a lightweight postMessage fallback for browsers/environments
+  // where player.js doesn't initialise (e.g. iframe blocked by CSP).
+  // This ONLY updates local UI state; throttled syncing is handled by the hook.
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      // Debug: log all messages to identify Bunny's format
       if (process.env.NODE_ENV === 'development') {
-        console.log('[Bunny postMessage]', event.origin, event.data);
+        console.debug('[Bunny postMessage fallback]', event.origin, event.data);
       }
-
-      // Normalize: handle string JSON or plain object from Bunny
       let msg: any = event.data;
       if (typeof msg === 'string') {
-        try { msg = JSON.parse(msg); } catch (e) { msg = null; }
+        try { msg = JSON.parse(msg); } catch (_) { msg = null; }
       }
       if (!msg || typeof msg !== 'object') return;
 
-      // Handle duration change (multiple known formats)
-      const duration = msg?.data?.duration ?? msg?.duration;
-      if (duration && !isNaN(Number(duration))) {
-        videoDurationRef.current = Math.floor(Number(duration));
-      }
+      // Duration
+      const dur = msg?.data?.duration ?? msg?.duration;
+      if (dur && !isNaN(Number(dur))) videoDurationRef.current = Math.floor(Number(dur));
 
-      // Handle timeupdate (multiple known formats)
+      // Timeupdate — only update local UI (no backend call — hook handles that)
       const eventName = msg?.event ?? msg?.type ?? '';
-      const isTimeUpdate = /timeupdate/i.test(String(eventName));
-      const rawTime = msg?.data?.currentTime ?? msg?.currentTime ?? msg?.time ?? msg?.seconds;
-
-      if (isTimeUpdate && rawTime !== undefined && currentLesson) {
-        const seconds = Math.floor(Number(rawTime));
-        if (!isNaN(seconds)) {
-          setCurrentTime(seconds);
-          localStorage.setItem(`bunny_current_time_${currentLesson.id}`, String(seconds));
-          syncProgress(Number(currentLesson.id), seconds);
-          const dur = videoDurationRef.current;
-          if (dur > 0 && seconds >= dur - 3 && !(currentLesson as any).is_completed) {
-            trackLessonProgress(id as string, Number(currentLesson.id), seconds, ['play', 'pause', 'seek', 'end', 'completed'])
-              .catch(err => console.warn('Backend tracking failed (proceeding with local UI updates):', err))
-              .finally(() => {
-                setCurrentLesson({ ...(currentLesson as any), is_completed: true });
-                setShowCelebration(true);
-                setTimeout(() => setShowCelebration(false), 4000);
-              });
-          }
-        }
-      }
-
-      // Handle video ended
-      const isEnded = /ended|complete/i.test(String(eventName));
-      if (isEnded && currentLesson && !(currentLesson as any).is_completed) {
-        trackLessonProgress(id as string, Number(currentLesson.id), videoDurationRef.current || 0, ['play', 'pause', 'seek', 'end', 'completed'])
-          .catch(err => console.warn('Backend tracking failed (proceeding with local UI updates):', err))
-          .finally(() => {
-            setCurrentLesson({ ...(currentLesson as any), is_completed: true });
-            setShowCelebration(true);
-            setTimeout(() => setShowCelebration(false), 4000);
-          });
-      }
-
-      // Legacy video-progress postMessage (from custom player wrappers)
-      if (event.data?.type === 'video-progress' && currentLesson) {
-        const seconds = Math.floor(event.data.seconds || 0);
-        if (!isNaN(seconds)) {
-          setCurrentTime(seconds);
-          localStorage.setItem(`bunny_current_time_${currentLesson.id}`, String(seconds));
-          syncProgress(Number(currentLesson.id), seconds);
-          if (event.data.isEnd) {
-            setShowCompletion(true);
-            if (!(currentLesson as any).is_completed) {
-              trackLessonProgress(id as string, Number(currentLesson.id), seconds, ['play', 'pause', 'seek', 'end', 'completed'])
-                .catch(err => console.warn('Backend tracking failed (proceeding with local UI updates):', err))
-                .finally(() => {
-                  setCurrentLesson({ ...(currentLesson as any), is_completed: true });
-                  setShowCelebration(true);
-                  setTimeout(() => setShowCelebration(false), 4000);
-                });
-            }
-          }
+      if (/timeupdate/i.test(String(eventName))) {
+        const raw = msg?.data?.currentTime ?? msg?.currentTime ?? msg?.time ?? msg?.seconds;
+        if (raw !== undefined && currentLesson) {
+          const secs = Math.floor(Number(raw));
+          if (!isNaN(secs)) setCurrentTime(secs);
         }
       }
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [currentLesson, syncProgress, id]);
+  }, [currentLesson]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Real-time playback position: prefer the hook's live value (updates every timeupdate),
+  // fall back to the page state (set from saved progress or the throttled onProgress).
+  // Math.floor → backend requires video_time to be an integer.
+  const noteTime = Math.floor(liveCurrentTime > 0 ? liveCurrentTime : currentTime);
 
   const pauseIframe = () => {
     videoRef.current?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'pause' }), '*');
@@ -417,7 +506,7 @@ export default function CoursePlayerPage() {
     if (!newNote.trim() || !currentLesson) return;
 
     try {
-      await addLessonNote(currentLesson.id, newNote, currentTime);
+      await addLessonNote(currentLesson.id, newNote, noteTime);
       await fetchInteractions();
       setNewNote('');
       MySwal.fire({
@@ -440,7 +529,7 @@ export default function CoursePlayerPage() {
   const handleSavePanelNote = async () => {
     if (!panelNoteText.trim() || !currentLesson) return;
     try {
-      await addLessonNote(currentLesson.id, panelNoteText, currentTime);
+      await addLessonNote(currentLesson.id, panelNoteText, noteTime);
       await fetchInteractions();
       setPanelNoteText('');
       setIsNotesPanelOpen(false);
@@ -643,21 +732,34 @@ export default function CoursePlayerPage() {
     fetchInteractions();
   }, [currentLesson]);
 
-  // Sidebar Auto-scroll logic
+  // Sidebar Auto-scroll + resume prompt logic
   useEffect(() => {
     if (currentLesson) {
       const el = document.getElementById(`lesson-${currentLesson.id}`);
       el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      // Restore last known currentTime from localStorage (mirrors Bunny track-session CurrentTime payload)
-      const stored = localStorage.getItem(`bunny_current_time_${currentLesson.id}`);
-      if (stored) {
-        const t = parseInt(stored, 10);
-        if (!isNaN(t)) setCurrentTime(t);
+
+      // Reset player binding whenever lesson changes
+      resetPlayer();
+      setShowResumePrompt(false);
+
+      // Determine saved position: prefer backend watched_seconds, fall back to localStorage
+      const backendSeconds = Number((currentLesson as any).watched_seconds ?? 0);
+      const storedStr = localStorage.getItem(`bunny_current_time_${currentLesson.id}`);
+      const localSeconds = storedStr ? parseInt(storedStr, 10) : 0;
+      const savedSeconds = backendSeconds > 0 ? backendSeconds : (!isNaN(localSeconds) ? localSeconds : 0);
+
+      resumeWatchedSeconds.current = savedSeconds;
+
+      // Show resume prompt if saved position > 30 s (skip trivial intros)
+      const RESUME_THRESHOLD = 30;
+      if (savedSeconds > RESUME_THRESHOLD) {
+        setCurrentTime(savedSeconds);
+        setShowResumePrompt(true);
       } else {
         setCurrentTime(0);
       }
     }
-  }, [currentLesson]);
+  }, [currentLesson, resetPlayer]);
 
   useEffect(() => {
     let cancelled = false;
@@ -668,8 +770,20 @@ export default function CoursePlayerPage() {
 
     const appendPullData = (src: string) => {
       if (!src) return '';
-      const separator = src.includes('?') ? '&' : '?';
-      return `${src}${separator}pullData=true`;
+      let out = src;
+      // Ensure player.js SDK can bind — requires enablejsapi=1
+      if (/mediadelivery\.net\/embed\//i.test(out)) {
+        const sep = out.includes('?') ? '&' : '?';
+        if (!/enablejsapi/i.test(out)) {
+          out = `${out}${sep}enablejsapi=1`;
+        }
+        // Add pullData as another param
+        out = `${out}&pullData=true`;
+      } else {
+        const separator = out.includes('?') ? '&' : '?';
+        out = `${out}${separator}pullData=true`;
+      }
+      return out;
     };
 
     const resolveVideoSrc = async () => {
@@ -772,6 +886,19 @@ export default function CoursePlayerPage() {
       }));
       setCourseData({ ...courseData, chapters: updatedChapters });
       setCurrentLesson({ ...currentLesson, is_completed: !isCurrentlyCompleted });
+
+      // Cache completion status in localStorage
+      try {
+        const localCompleted = JSON.parse(localStorage.getItem(completedCacheKey) || '{}');
+        if (isCurrentlyCompleted) {
+          delete localCompleted[currentLesson.id];
+        } else {
+          localCompleted[currentLesson.id] = true;
+        }
+        localStorage.setItem(completedCacheKey, JSON.stringify(localCompleted));
+      } catch (e) {
+        console.warn('Failed to update local completed cache:', e);
+      }
 
       if (!isCurrentlyCompleted) {
         setShowCelebration(true);
@@ -907,6 +1034,9 @@ export default function CoursePlayerPage() {
                                 </span>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
+                                {lesson.is_completed && (
+                                  <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                                )}
                                 <span className="bg-blue-50 text-blue-600 text-[9px] font-black px-3 py-1.5 rounded-full whitespace-nowrap">
                                   قيد المشاهدة
                                 </span>
@@ -932,7 +1062,15 @@ export default function CoursePlayerPage() {
                               {lesson.title}
                             </span>
                             <div className="text-gray-300 group-hover:text-gray-500 transition-colors shrink-0">
-                              {isLocked ? <Lock size={15} /> : (lesson.type === 'pdf' ? <FileText size={15} /> : <PlayCircle size={15} />)}
+                              {lesson.is_completed ? (
+                                <CheckCircle2 size={15} className="text-emerald-500" />
+                              ) : isLocked ? (
+                                <Lock size={15} />
+                              ) : lesson.type === 'pdf' ? (
+                                <FileText size={15} />
+                              ) : (
+                                <PlayCircle size={15} />
+                              )}
                             </div>
                           </button>
                         );
@@ -964,10 +1102,15 @@ export default function CoursePlayerPage() {
         <div className="hidden md:flex flex-col items-center flex-1 max-w-md mx-8">
           <div className="flex items-center justify-between w-full mb-2">
             <span className="text-sm font-black text-gray-900 truncate">{course.title}</span>
-            <span className="text-xs font-black text-[#0F766E]">65% مكتمل</span>
+            <span className="text-xs font-black text-[#0F766E]">
+              {Math.round(course.progress ?? 0)}% مكتمل
+            </span>
           </div>
           <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div className="w-[65%] h-full bg-[#0F766E] rounded-full" />
+            <div
+              className="h-full bg-[#0F766E] rounded-full transition-all duration-700"
+              style={{ width: `${Math.round(course.progress ?? 0)}%` }}
+            />
           </div>
         </div>
 
@@ -1009,6 +1152,19 @@ export default function CoursePlayerPage() {
 
                   {/* Video Area — outer wrapper has no overflow-hidden so notes UI layers above iframe */}
                   <div className="lg:col-span-7 relative shadow-2xl rounded-[32px] md:rounded-[40px] group" style={{ aspectRatio: '16/9' }}>
+                    {/* Resume-from-last-position prompt */}
+                    <ResumePrompt
+                      watchedSeconds={resumeWatchedSeconds.current}
+                      visible={showResumePrompt}
+                      onResume={() => {
+                        setShowResumePrompt(false);
+                        seekTo(resumeWatchedSeconds.current);
+                      }}
+                      onDismiss={() => {
+                        setShowResumePrompt(false);
+                        seekTo(0);
+                      }}
+                    />
                     {/* Actual video box — overflow-hidden only here for border-radius */}
                     <div className="absolute inset-0 bg-black rounded-[32px] md:rounded-[40px] overflow-hidden border-2 border-slate-300">
                       {currentLesson ? (
@@ -1070,6 +1226,7 @@ export default function CoursePlayerPage() {
                             allow="autoplay; encrypted-media; picture-in-picture"
                             referrerPolicy="strict-origin-when-cross-origin"
                             title={currentLesson.title}
+                            onLoad={bindToIframe}
                           />
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center text-white gap-3 px-6 text-center">
@@ -1099,7 +1256,7 @@ export default function CoursePlayerPage() {
                         <StickyNote size={14} />
                         <span>{isNotesPanelOpen ? 'إغلاق' : 'ملاحظة'}</span>
                         {!isNotesPanelOpen && (
-                          <span className="bg-blue-50 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{formatTime(currentTime)}</span>
+                          <span className="bg-blue-50 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{formatTime(noteTime)}</span>
                         )}
                       </button>
                     )}
@@ -1118,7 +1275,7 @@ export default function CoursePlayerPage() {
                           <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-white/10 shrink-0">
                             <div className="flex items-center gap-1.5 bg-blue-600 text-white text-xs font-black px-2.5 py-1 rounded-full">
                               <Clock size={11} />
-                              <span>{formatTime(currentTime)}</span>
+                              <span>{formatTime(noteTime)}</span>
                             </div>
                             <button onClick={handleCloseNotesPanel} className="p-1 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-all">
                               <X size={14} />
@@ -1487,7 +1644,7 @@ export default function CoursePlayerPage() {
                                 <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
                                   <div className="flex items-center gap-2 text-blue-800 font-black text-sm bg-blue-100 px-4 py-2.5 rounded-lg w-full sm:w-auto justify-center border border-blue-200">
                                     <Clock size={15} />
-                                    <span>توقيت الفيديو: {formatTime(currentTime)}</span>
+                                    <span>توقيت الفيديو: {formatTime(noteTime)}</span>
                                   </div>
                                   <button
                                     onClick={handleAddNote}

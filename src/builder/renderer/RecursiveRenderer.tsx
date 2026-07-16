@@ -29,6 +29,7 @@ const TestimonialsSection = dynamic(() => import('../registry/componentRegistry'
 const GallerySection = dynamic(() => import('../registry/componentRegistry').then(m => m.GallerySection), { ssr: false });
 const PricingSection = dynamic(() => import('../registry/componentRegistry').then(m => m.PricingSection), { ssr: false });
 const CategoriesSection = dynamic(() => import('../registry/componentRegistry').then(m => m.CategoriesSection), { ssr: false });
+const CustomHtmlSection = dynamic(() => import('../registry/componentRegistry').then(m => m.CustomHtmlSection), { ssr: false });
 
 // Component Rendering Map
 const rendererRegistry: Record<string, React.ComponentType<any>> = {
@@ -40,6 +41,7 @@ const rendererRegistry: Record<string, React.ComponentType<any>> = {
   gallery_section: GallerySection,
   pricing_section: PricingSection,
   categories_section: CategoriesSection,
+  custom_html: CustomHtmlSection,
   // Existing static blocks
   hero: HeroBanner,
   'hero-slider': HeroSlider,
@@ -118,6 +120,7 @@ interface RecursiveRendererProps {
 export default function RecursiveRenderer({ nodes, isNested = false }: RecursiveRendererProps) {
   const {
     isEditing,
+    deviceMode,
     selectedNodeId,
     hoveredNodeId,
     setSelectedNodeId,
@@ -139,6 +142,9 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
   }, [selectedNodeId]);
 
   const renderComponent = React.useCallback((node: BuilderNode) => {
+    if (node.type === 'tables' || node.type === 'student-feed') {
+      return null;
+    }
     const props = node.props || {};
     const Component = rendererRegistry[node.type];
 
@@ -170,6 +176,9 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
       {nodes.map((node) => {
         const isSelected = selectedNodeId === node.id;
         const isHovered = hoveredNodeId === node.id;
+        const isHiddenOnMobile = !!node.props?.hide_on_mobile || !!node.props?.hideOnMobile;
+        const showMobileOverlay = isEditing && deviceMode === 'mobile' && isHiddenOnMobile;
+        const opacityClass = showMobileOverlay ? 'opacity-40 saturate-50 relative' : '';
 
         if (isEditing) {
           if (!isNested) {
@@ -207,7 +216,12 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
                   )}
 
                   {/* Component with optional section background/shape wrapper */}
-                  <div className="select-none">
+                  <div className={`select-none ${opacityClass}`}>
+                    {showMobileOverlay && (
+                      <div className="absolute top-3 right-3 z-50 bg-rose-600 text-white text-[9px] font-black px-2.5 py-1 rounded-full shadow select-none" dir="rtl">
+                        👁️ مخفي في الجوال
+                      </div>
+                    )}
                     <SectionBackground node={node}>
                       <div>
                         {renderComponent(node)}
@@ -245,7 +259,12 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
                       <button onClick={(e) => { e.stopPropagation(); deleteNode(node.id); }} className="hover:bg-rose-600 px-1 py-0.5 rounded text-rose-100">حذف</button>
                     </div>
                   )}
-                  <div className="select-none">
+                  <div className={`select-none ${opacityClass}`}>
+                    {showMobileOverlay && (
+                      <div className="absolute top-2 right-2 z-50 bg-rose-600 text-white text-[8px] font-black px-2 py-0.5 rounded shadow select-none" dir="rtl">
+                        مخفي في الجوال
+                      </div>
+                    )}
                     <SectionBackground node={node}>
                       <div>
                         {renderComponent(node)}
@@ -260,7 +279,7 @@ export default function RecursiveRenderer({ nodes, isNested = false }: Recursive
 
         // Live preview — no editing overlays
         return (
-          <div key={node.id}>
+          <div key={node.id} className={isHiddenOnMobile ? 'max-md:hidden' : ''}>
             <SectionBackground node={node}>
               {renderComponent(node)}
             </SectionBackground>

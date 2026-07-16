@@ -14,6 +14,17 @@ export const HeroBannerSchema = z.object({
   bgImage: z.string().optional(),
   paddingTop: z.string().default('py-16'),
   paddingBottom: z.string().default('py-16'),
+  heroImage: z.string().optional(),
+  heroImagePosition: z.enum(['left', 'right']).default('left'),
+  heroImageWidth: z.number().default(384),
+  heroImageHeight: z.number().default(384),
+  heroImageShape: z.enum(['rounded', 'circle', 'square', 'leaf']).default('rounded'),
+  heroImageFit: z.enum(['contain', 'cover', 'fill']).default('contain'),
+  heroImageLink: z.string().optional(),
+  showSecondButton: z.boolean().default(false),
+  secondButtonText: z.string().optional(),
+  secondButtonColor: z.string().optional(),
+  secondButtonTextColor: z.string().optional(),
 });
 
 export const KpiCardsSchema = z.object({
@@ -104,18 +115,29 @@ export const HeroSectionSchema = z.object({
   subtitle: z.string().optional(),
   background_color: z.string().default('#ffffff'),
   text_color: z.string().default('#1f2937'),
+  title_color: z.string().default('#111827'),
   font_size: z.union([z.string(), z.number()]).default(48),
   font_weight: z.number().default(700),
   padding_top: z.number().default(60),
   padding_bottom: z.number().default(60),
   border_radius: z.number().default(12),
   button_color: z.string().default('#2563eb'),
+  button_text_color: z.string().default('#ffffff'),
   show_button: z.boolean().default(true),
   button_text: z.string().default('Get Started'),
   button_link: z.string().default('#'),
   align: z.enum(['right', 'center', 'left']).default('center'),
   slider_speed: z.number().default(4),
   show_arrows: z.boolean().default(true),
+  show_card_overlay: z.boolean().default(false),
+  bg_image: z.string().optional(),
+  side_image: z.string().optional(),
+  side_image_position: z.enum(['left', 'right']).default('left'),
+  side_image_shape: z.enum(['rounded', 'circle', 'square', 'leaf']).default('rounded'),
+  side_image_width: z.number().default(380),
+  side_image_height: z.number().default(380),
+  side_image_fit: z.enum(['contain', 'cover', 'fill']).default('contain'),
+  image_link: z.string().optional(),
   items: z.array(z.object({
     order: z.number(),
     props: z.object({
@@ -126,7 +148,18 @@ export const HeroSectionSchema = z.object({
       bg_image: z.string().optional(),
       background_color: z.string().default('#1e40af'),
       button_color: z.string().default('#ffffff'),
-      align: z.enum(['right', 'center', 'left']).default('right')
+      align: z.enum(['right', 'center', 'left']).default('right'),
+      show_card_overlay: z.boolean().default(false),
+      title_color: z.string().optional(),
+      text_color: z.string().optional(),
+      button_text_color: z.string().optional(),
+      side_image: z.string().optional(),
+      side_image_position: z.enum(['left', 'right']).default('left'),
+      side_image_shape: z.enum(['rounded', 'circle', 'square', 'leaf']).default('rounded'),
+      side_image_width: z.number().default(380),
+      side_image_height: z.number().default(380),
+      side_image_fit: z.enum(['contain', 'cover', 'fill']).default('contain'),
+      image_link: z.string().optional()
     })
   })).default([])
 });
@@ -198,6 +231,7 @@ export const GallerySectionSchema = z.object({
     props: z.object({
       image_url: z.string(),
       caption: z.string().optional(),
+      image_link: z.string().optional(),
     })
   })).default([]),
 });

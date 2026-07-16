@@ -52,10 +52,26 @@ export default function HeroBanner(props: HeroBannerProps) {
   } = props;
 
   let deviceMode = 'desktop';
+  let isEditing = false;
   try {
     deviceMode = useBuilderStore((state) => state.deviceMode);
+    // Fetch editing mode state from the builder store
+    isEditing = useBuilderStore((state) => state.isEditing);
   } catch (_) {}
 
+  const isVideoUrl = (url: string) => {
+    return url && (
+      url.startsWith('data:video/') || 
+      url.includes('video/mp4') || 
+      url.endsWith('.mp4') || 
+      url.endsWith('.webm') || 
+      url.endsWith('.ogg') ||
+      url.includes('/uploads/video')
+    );
+  };
+
+  const isVideoBg = isVideoUrl(bgImage);
+  const isVideoSide = isVideoUrl(heroImage);
   const hasSideImage = !!heroImage && !bgImage;
   const isMobile = deviceMode === 'mobile';
 
@@ -66,10 +82,10 @@ export default function HeroBanner(props: HeroBannerProps) {
   const isTransparentBg = hasSectionBackground(props);
 
   const containerStyle: React.CSSProperties = {
-    backgroundColor: isTransparentBg ? 'transparent' : (bgImage ? undefined : backgroundColor),
-    backgroundImage: isTransparentBg ? undefined : (bgImage ? `url(${bgImage})` : undefined),
-    backgroundSize: bgImage ? 'cover' : undefined,
-    backgroundPosition: bgImage ? 'center' : undefined,
+    backgroundColor: isTransparentBg ? 'transparent' : ((bgImage && !isVideoBg) ? undefined : backgroundColor),
+    backgroundImage: isTransparentBg ? undefined : ((bgImage && !isVideoBg) ? `url(${bgImage})` : undefined),
+    backgroundSize: (bgImage && !isVideoBg) ? 'cover' : undefined,
+    backgroundPosition: (bgImage && !isVideoBg) ? 'center' : undefined,
   };
 
   const paddingClass =
@@ -168,31 +184,89 @@ export default function HeroBanner(props: HeroBannerProps) {
     props.heroImageShape === 'leaf' ? 'rounded-3xl rounded-tr-none rounded-bl-none' : 'rounded-2xl';
 
   const imageBlock = hasSideImage ? (
-    <div className={`relative z-10 flex-1 flex items-center ${heroImagePosition === 'right' ? 'justify-end' : 'justify-start'}`}>
-      <img
-        src={heroImage}
-        alt="Hero"
-        className={`${shapeClass} shadow-2xl`}
-        style={{ 
-          maxWidth: '100%',
-          width: props.heroImageWidth ? `${props.heroImageWidth}px` : 'auto',
-          height: props.heroImageHeight ? `${props.heroImageHeight}px` : 'auto',
-          objectFit: props.heroImageFit || 'contain'
-        }}
-      />
+    <div className={`relative z-10 flex-1 flex items-center ${heroImagePosition === 'right' ? 'justify-end' : 'justify-start'} animate-[float_5s_ease-in-out_infinite]`}>
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes float {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-12px) scale(1.01); }
+        }
+      `}} />
+      {isVideoSide ? (
+        <video
+          src={heroImage}
+          controls
+          className={`${shapeClass} shadow-2xl transition-all duration-500 hover:rotate-1 hover:scale-[1.02]`}
+          style={{ 
+            maxWidth: '100%',
+            width: props.heroImageWidth ? `${props.heroImageWidth}px` : 'auto',
+            height: props.heroImageHeight ? `${props.heroImageHeight}px` : 'auto',
+            objectFit: props.heroImageFit || 'contain'
+          }}
+        />
+      ) : props.heroImageLink && !isEditing ? (
+        <a 
+          href={props.heroImageLink}
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="cursor-pointer transition-transform hover:scale-[1.01] active:scale-99 block"
+        >
+          <img
+            src={heroImage}
+            alt="Hero"
+            className={`${shapeClass} shadow-2xl transition-all duration-500 hover:rotate-1 hover:scale-[1.02]`}
+            style={{ 
+              maxWidth: '100%',
+              width: props.heroImageWidth ? `${props.heroImageWidth}px` : 'auto',
+              height: props.heroImageHeight ? `${props.heroImageHeight}px` : 'auto',
+              objectFit: props.heroImageFit || 'contain'
+            }}
+          />
+        </a>
+      ) : (
+        <img
+          src={heroImage}
+          alt="Hero"
+          className={`${shapeClass} shadow-2xl transition-all duration-500 hover:rotate-1 hover:scale-[1.02]`}
+          style={{ 
+            maxWidth: '100%',
+            width: props.heroImageWidth ? `${props.heroImageWidth}px` : 'auto',
+            height: props.heroImageHeight ? `${props.heroImageHeight}px` : 'auto',
+            objectFit: props.heroImageFit || 'contain'
+          }}
+        />
+      )}
     </div>
   ) : null;
 
   return (
     <div
       style={containerStyle}
-      className={`relative overflow-hidden ${isTransparentBg ? '' : 'shadow-[0_12px_40px_rgba(25,28,29,0.02)] border border-slate-100/60'} ${paddingClass} ${
+      className={`relative overflow-hidden ${isTransparentBg ? '' : 'shadow-[0_15px_45px_rgba(30,41,59,0.04)] border border-slate-100/80'} ${paddingClass} ${
         hasSideImage && !isMobile
           ? 'flex flex-row gap-10 items-center'
           : `flex items-center ${align === 'left' ? 'justify-start' : align === 'center' ? 'justify-center' : 'justify-end'}`
       }`}
     >
-      {bgImage && <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" />}
+      {/* Floating decorative blobs for a premium creative frontend look */}
+      {!isTransparentBg && !bgImage && (
+        <>
+          <div className="absolute top-[-20%] left-[-10%] w-72 h-72 rounded-full bg-blue-400/10 blur-[80px] animate-pulse pointer-events-none z-0" style={{ animationDuration: '8s' }} />
+          <div className="absolute bottom-[-20%] right-[-10%] w-80 h-80 rounded-full bg-purple-400/10 blur-[90px] animate-pulse pointer-events-none z-0" style={{ animationDuration: '10s' }} />
+          <div className="absolute top-[30%] right-[20%] w-48 h-48 rounded-full bg-pink-300/5 blur-[60px] pointer-events-none z-0" />
+        </>
+      )}
+
+      {bgImage && isVideoBg && (
+        <video 
+          src={bgImage} 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          className="absolute inset-0 w-full h-full object-cover z-0" 
+        />
+      )}
+      {bgImage && <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] z-0" />}
 
       {hasSideImage && !isMobile ? (
         heroImagePosition === 'right' ? (

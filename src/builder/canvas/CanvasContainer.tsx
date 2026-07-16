@@ -6,6 +6,7 @@ import RecursiveRenderer from '../renderer/RecursiveRenderer';
 import DndWrapper from '../dnd/DndWrapper';
 import { DeviceModeContext } from '../context/DeviceModeContext';
 import { getThemeBySlug } from '../templates/themeStyles';
+import PurpleTemplate from '../templates/purple/PurpleTemplate';
 
 export default function CanvasContainer() {
   const { currentTemplate, deviceMode, isEditing } = useBuilderStore();
@@ -97,9 +98,13 @@ export default function CanvasContainer() {
           }}
         >
           <DeviceModeContext.Provider value={deviceMode}>
-            <DndWrapper>
-              <RecursiveRenderer nodes={currentTemplate.sections} />
-            </DndWrapper>
+            {currentTemplate.id === 'template_3' ? (
+              <PurpleTemplate sections={currentTemplate.sections} />
+            ) : (
+              <DndWrapper>
+                <RecursiveRenderer nodes={currentTemplate.sections} />
+              </DndWrapper>
+            )}
           </DeviceModeContext.Provider>
         </div>
       </div>

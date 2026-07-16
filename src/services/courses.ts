@@ -11,15 +11,12 @@ export const createCourse = async (payload: CreateCoursePayload): Promise<Course
           formData.append('image', value);
         } else if ((key === 'receiverAccounts' || key === 'receiver_accounts') && Array.isArray(value)) {
           value.forEach((item, index) => {
+            let id = item;
             if (typeof item === 'object' && item !== null) {
-              const id = item.methodId || item.method_id || item.id;
-              const val = item.value || item.accountValue || item.account_value || '';
-              formData.append(`receiver_accounts[${index}][receiver_account_id]`, String(id));
-              formData.append(`receiver_accounts[${index}][value]`, String(val));
-              formData.append(`receiver_accounts[${index}][id]`, String(id));
-              formData.append(`receiver_accounts[${index}][account_value]`, String(val));
-            } else {
-              formData.append(`receiver_accounts[${index}]`, String(item));
+              id = item.receiver_account_id || item.methodId || item.method_id || item.id;
+            }
+            if (id !== undefined && id !== null) {
+              formData.append(`receiver_accounts[${index}]`, String(Number(id)));
             }
           });
         } else if (key === 'payment_methods') {
@@ -46,20 +43,20 @@ export const getCourses = async (userId?: number, userRole?: string, type?: stri
   try {
     let url = 'courses';
     const params = new URLSearchParams();
-    
+
     if (userRole === 'academy' && userId) {
       params.append('user_id', String(userId));
     }
-    
+
     if (type) {
       params.append('type', type);
     }
-    
+
     const queryString = params.toString();
     if (queryString) {
       url += `?${queryString}`;
     }
-    
+
     const response = await academyApi.get<ApiResponse<Course[]>>(url);
     return response.data.data;
   } catch (error: any) {
@@ -256,7 +253,6 @@ export const deleteCourse = async (id: number): Promise<void> => {
 export const updateCourse = async (id: number, payload: any): Promise<Course> => {
   try {
     // If payload contains a file (image), we must use FormData
-    // and often backends (like Laravel) require POST with _method=PUT for multipart/form-data
     if (payload.image instanceof File) {
       const formData = new FormData();
       Object.keys(payload).forEach(key => {
@@ -265,15 +261,12 @@ export const updateCourse = async (id: number, payload: any): Promise<Course> =>
             formData.append('image', payload.image);
           } else if ((key === 'receiverAccounts' || key === 'receiver_accounts') && Array.isArray(payload[key])) {
             payload[key].forEach((item: any, index: number) => {
+              let id = item;
               if (typeof item === 'object' && item !== null) {
-                const id = item.methodId || item.method_id || item.id;
-                const val = item.value || item.accountValue || item.account_value || '';
-                formData.append(`receiver_accounts[${index}][receiver_account_id]`, String(id));
-                formData.append(`receiver_accounts[${index}][value]`, String(val));
-                formData.append(`receiver_accounts[${index}][id]`, String(id));
-                formData.append(`receiver_accounts[${index}][account_value]`, String(val));
-              } else {
-                formData.append(`receiver_accounts[${index}]`, String(item));
+                id = item.receiver_account_id || item.methodId || item.method_id || item.id;
+              }
+              if (id !== undefined && id !== null) {
+                formData.append(`receiver_accounts[${index}]`, String(Number(id)));
               }
             });
           } else if (key === 'payment_methods') {
@@ -284,7 +277,7 @@ export const updateCourse = async (id: number, payload: any): Promise<Course> =>
         }
       });
       formData.append('_method', 'PUT');
-      
+
       const response = await academyApi.post<ApiResponse<Course>>(`courses/${id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -296,30 +289,23 @@ export const updateCourse = async (id: number, payload: any): Promise<Course> =>
     // Otherwise, standard JSON PUT.
     const jsonPayload = { ...payload };
     if (payload.receiverAccounts && Array.isArray(payload.receiverAccounts)) {
-      jsonPayload.receiver_accounts = payload.receiverAccounts.map((item: any) => ({
-        receiver_account_id: Number(item.methodId || item.method_id || item.id || item),
-        id: Number(item.methodId || item.method_id || item.id || item),
-        value: item.value || '',
-        account_value: item.value || ''
-      }));
+      jsonPayload.receiver_accounts = payload.receiverAccounts.map((item: any) => {
+        let id = item;
+        if (typeof item === 'object' && item !== null) {
+          id = item.receiver_account_id || item.methodId || item.method_id || item.id;
+        }
+        return Number(id);
+      });
       delete jsonPayload.receiverAccounts;
     }
     if (jsonPayload.receiver_accounts && Array.isArray(jsonPayload.receiver_accounts)) {
-      jsonPayload.receiver_accounts = jsonPayload.receiver_accounts.map((item: any) =>
-        typeof item === 'object'
-          ? {
-              receiver_account_id: Number(item.receiver_account_id || item.methodId || item.method_id || item.id),
-              id: Number(item.receiver_account_id || item.methodId || item.method_id || item.id),
-              value: item.value || item.accountValue || item.account_value || '',
-              account_value: item.value || item.accountValue || item.account_value || ''
-            }
-          : {
-              receiver_account_id: Number(item),
-              id: Number(item),
-              value: '',
-              account_value: ''
-            }
-      );
+      jsonPayload.receiver_accounts = jsonPayload.receiver_accounts.map((item: any) => {
+        let id = item;
+        if (typeof item === 'object' && item !== null) {
+          id = item.receiver_account_id || item.methodId || item.method_id || item.id;
+        }
+        return Number(id);
+      });
     }
     delete jsonPayload.payment_methods;
 

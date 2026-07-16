@@ -1,4 +1,8 @@
-'use client';
+import os
+
+target = r'src\builder\templates\purple\PurpleTemplate.tsx'
+
+content = r"""'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import * as Lucide from 'lucide-react';
@@ -632,7 +636,7 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
     { icon: 'Target', label: 'Leadership', desc: 'Management, coaching, and org design', count: '77 courses' },
   ];
   const categories = catNode?.props?.items?.map((item: any) => {
-    const p = item.props || item;
+    const p = item.props || item; nnnnnnnnnnnnnnnn
     return {
       icon: p.icon || 'Code',
       label: p.name || p.title || 'Specialization',
@@ -1122,3 +1126,10 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
     </>
   );
 }
+"""
+
+with open(target, 'w', encoding='utf-8') as f:
+    f.write(content)
+
+size = os.path.getsize(target)
+print(f'Updated {size} bytes in {target}')

@@ -50,9 +50,9 @@ export function TenantFooter() {
         };
 
         const token = localStorage.getItem('token');
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
+        if (!token) return;
+
+        headers['Authorization'] = `Bearer ${token}`;
 
         const res = await fetch('https://api.darab.academy/api/academy/me', { headers });
         if (res.ok) {

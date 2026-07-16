@@ -616,7 +616,8 @@ export default function PageBuilderPage() {
                       { type: 'testimonials_section', name: 'آراء العملاء', desc: 'توصيات وآراء المشتركين' },
                       { type: 'pricing_section', name: 'خطط الأسعار', desc: 'بطاقات خطط التسعير والاشتراك' },
                       { type: 'hero', name: 'بانر هيرو (قديم)', desc: 'عنوان و كبسة استدعاء' },
-                      { type: 'course-cards', name: 'بطاقات الكورسات', desc: 'شبكة عرض الدورات الكلية' }
+                      { type: 'course-cards', name: 'بطاقات الكورسات', desc: 'شبكة عرض الدورات الكلية' },
+                      { type: 'custom_html', name: 'قسم HTML مخصص', desc: 'أضف كود HTML خارجي وتنسيقات مخصصة' }
                     ].map((item) => (
                       <button
                         key={item.type}

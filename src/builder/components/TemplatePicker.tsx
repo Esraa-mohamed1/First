@@ -28,7 +28,7 @@ const TEMPLATES: TemplatePreview[] = [
   {
     id: 'academy-dashboard',
     name: 'لوحة التحكم الكلاسيكية',
-    description: 'قالب متكامل يضم إحصائيات الطلاب، المبيعات، الكورسات والأنشطة المباشرة.',
+    description: 'قالب متكامل يضم إحصائيات الطلاب، المبيعات، والكورسات.',
     badge: 'الأكثر شيوعاً ⭐',
     colors: {
       primary: '#2563eb',
@@ -36,7 +36,7 @@ const TEMPLATES: TemplatePreview[] = [
       accent: '#1d4ed8',
       secondary: '#10b981',
     },
-    sections: ['navbar', 'hero', 'KPIs', 'charts', 'course cards', 'tables', 'student feed'],
+    sections: ['navbar', 'hero', 'KPIs', 'charts', 'course cards'],
   },
   {
     id: 'template_2',
@@ -44,10 +44,10 @@ const TEMPLATES: TemplatePreview[] = [
     description: 'تصميم تعليمي كلاسيكي وعصري مستوحى من منصة Udemy، لعرض الكورسات والتصنيفات بطريقة مرتبة وجذابة.',
     badge: 'منصة تعليمية 🎓',
     colors: {
-      primary: '#a435f0',
-      bg: '#ffffff',
-      accent: '#1c1d1f',
-      secondary: '#2d2f31',
+      primary: '#2FA8E0',
+      bg: '#F3F8FC',
+      accent: '#0B2540',
+      secondary: '#FF7A5C',
     },
     sections: ['navbar', 'hero', 'features', 'categories', 'course cards', 'testimonials'],
   },

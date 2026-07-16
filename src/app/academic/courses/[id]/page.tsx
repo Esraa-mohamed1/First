@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye, Landmark, X } from 'lucide-react';
-import { getCourse, deleteUnit, deleteLesson, createUnit, updateCourse, getCategories } from '@/services/courses';
+import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye, Landmark, X, Check, User as UserIcon, Loader2 } from 'lucide-react';
+import { getCourse, deleteUnit, deleteLesson, createUnit, updateCourse, getCategories, createCategory } from '@/services/courses';
 import { getProfileStatus } from '@/services/auth';
-import { getUsers } from '@/services/users';
+import { getUsers, createUser } from '@/services/users';
 import { Course, Unit, Lesson, User } from '@/types/api';
 import { AcademyPaymentMethod, PaymentMethod } from '@/types/payment';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
@@ -22,8 +22,236 @@ import { PaymentMethodValueInput } from '@/components/payment/PaymentMethodValue
 import { showAlert } from '@/lib/sweetalert';
 import { getUserPaymentInfos, UserPaymentInfo } from '@/services/finance';
 import { getLogoUrl } from '@/lib/utils';
+import { EntitySelectWithCreate } from '@/components/Academic/Common/EntitySelectWithCreate';
 
 const MySwal = withReactContent(Swal);
+
+// --- Inline Form Components ---
+
+const CategoryFormInline = ({
+  onSubmit,
+  errors,
+  isSubmitting,
+  onClose,
+}: {
+  onSubmit: (payload: any) => Promise<void>;
+  errors: Record<string, string>;
+  isSubmitting: boolean;
+  onClose: () => void;
+}) => {
+  const [name, setName] = useState('');
+  const [isActive, setIsActive] = useState(true);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      toast.error('يرجى إدخال اسم الفئة');
+      return;
+    }
+    onSubmit({ name, is_active: isActive ? 1 : 0 });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6" dir="rtl">
+      <div className="space-y-2">
+        <label className="block text-sm font-black text-gray-900 text-right pr-1">
+          اسم الفئة <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="مثال: التصوير الفوتوغرافي، البرمجة..."
+          className={`w-full p-4 bg-gray-50 border ${errors.name ? 'border-red-500 bg-red-50/40 focus:border-red-500' : 'border-gray-100 focus:border-blue-600'} rounded-2xl outline-none focus:bg-white font-bold text-right transition-all text-gray-900`}
+          autoFocus
+        />
+        {errors.name && (
+          <p className="flex items-center gap-1 text-red-500 text-xs font-bold px-1 mt-1">
+            <X size={12} />
+            {errors.name}
+          </p>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between bg-gray-50 p-4 rounded-2xl border border-gray-100">
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isActive ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+            <Check size={20} />
+          </div>
+          <div>
+            <p className="text-sm font-black text-gray-900">حالة الفئة</p>
+            <p className="text-xs font-bold text-gray-400">{isActive ? 'الفئة نشطة وستظهر للطلاب' : 'الفئة غير نشطة ولن تظهر'}</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsActive(!isActive)}
+          className={`w-14 h-8 rounded-full transition-all relative ${isActive ? 'bg-blue-600' : 'bg-gray-200'}`}
+        >
+          <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${isActive ? 'right-7' : 'right-1'}`} />
+        </button>
+      </div>
+
+      <div className="flex gap-3 pt-2">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex-1 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
+        >
+          {isSubmitting ? (
+            <Loader2 className="animate-spin" size={20} />
+          ) : (
+            <>
+              <Check size={20} />
+              <span>إضافة الفئة</span>
+            </>
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={isSubmitting}
+          className="px-8 py-4 bg-gray-50 text-gray-500 font-bold rounded-2xl hover:bg-gray-100 transition-all"
+        >
+          إلغاء
+        </button>
+      </div>
+    </form>
+  );
+};
+
+const CoachFormInline = ({
+  onSubmit,
+  errors,
+  isSubmitting,
+  onClose,
+}: {
+  onSubmit: (payload: any) => Promise<void>;
+  errors: Record<string, string>;
+  isSubmitting: boolean;
+  onClose: () => void;
+}) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    role: 'academy',
+    status: 'active'
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email || !formData.password) {
+      toast.error('يرجى تعبئة الحقول المطلوبة');
+      return;
+    }
+    onSubmit(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6" dir="rtl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Name */}
+        <div className="space-y-2">
+          <label className="block text-sm font-black text-gray-900 pr-1 text-right">
+            الاسم بالكامل <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="مثال: أحمد محمد"
+            className={`w-full p-4 bg-gray-50 border ${errors.name ? 'border-red-500 bg-red-50/40 focus:border-red-500' : 'border-gray-100 focus:border-blue-600'} rounded-2xl outline-none focus:bg-white font-bold text-sm transition-all text-gray-900 text-right`}
+            required
+            autoFocus
+          />
+          {errors.name && <p className="text-red-500 text-xs font-bold text-right">{errors.name}</p>}
+        </div>
+
+        {/* Email */}
+        <div className="space-y-2">
+          <label className="block text-sm font-black text-gray-900 pr-1 text-right">
+            البريد الإلكتروني <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="example@email.com"
+            className={`w-full p-4 bg-gray-50 border ${errors.email ? 'border-red-500 bg-red-50/40 focus:border-red-500' : 'border-gray-100 focus:border-blue-600'} rounded-2xl outline-none focus:bg-white font-bold text-sm transition-all text-gray-900 text-right`}
+            required
+          />
+          {errors.email && <p className="text-red-500 text-xs font-bold text-right">{errors.email}</p>}
+        </div>
+
+        {/* Phone */}
+        <div className="space-y-2">
+          <label className="block text-sm font-black text-gray-900 pr-1 text-right">رقم الجوال</label>
+          <input
+            type="tel"
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
+            placeholder="05X XXX XXXX"
+            className={`w-full p-4 bg-gray-50 border ${errors.phone ? 'border-red-500 bg-red-50/40 focus:border-red-500' : 'border-gray-100 focus:border-blue-600'} rounded-2xl outline-none focus:bg-white font-bold text-sm transition-all text-gray-900 text-right`}
+            dir="ltr"
+          />
+          {errors.phone && <p className="text-red-500 text-xs font-bold text-right">{errors.phone}</p>}
+        </div>
+
+        {/* Password */}
+        <div className="space-y-2">
+          <label className="block text-sm font-black text-gray-900 pr-1 text-right">
+            كلمة المرور <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            placeholder="كلمة مرور قوية"
+            className={`w-full p-4 bg-gray-50 border ${errors.password ? 'border-red-500 bg-red-50/40 focus:border-red-500' : 'border-gray-100 focus:border-blue-600'} rounded-2xl outline-none focus:bg-white font-bold text-sm transition-all text-gray-900 text-right`}
+            required
+          />
+          {errors.password && <p className="text-red-500 text-xs font-bold text-right">{errors.password}</p>}
+        </div>
+      </div>
+
+      <div className="flex gap-3 pt-4 border-t border-gray-100">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex-1 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
+        >
+          {isSubmitting ? (
+            <Loader2 className="animate-spin" size={20} />
+          ) : (
+            <>
+              <Check size={20} />
+              <span>حفظ بيانات المدرب</span>
+            </>
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={isSubmitting}
+          className="px-8 py-4 bg-gray-50 text-gray-500 font-bold rounded-2xl hover:bg-gray-100 transition-all"
+        >
+          إلغاء
+        </button>
+      </div>
+    </form>
+  );
+};
+
 
 const translateErrorToArabic = (msg: string): string => {
   const normalized = msg.toLowerCase().trim();
@@ -95,6 +323,24 @@ export default function CourseDetailsPage() {
 
   // Tabs State
   const [activeTab, setActiveTab] = useState<'info' | 'content' | 'pricing'>('info');
+
+  const getActiveTabErrors = () => {
+    const infoFields = ['title', 'category_id', 'description', 'image', 'user_id', 'coach'];
+    const pricingFields = ['price', 'receiver_accounts', 'currency', 'price_type'];
+    
+    return Object.entries(errors).filter(([key, msg]) => {
+      const val = Array.isArray(msg) ? msg[0] : msg;
+      if (!val) return false;
+      
+      if (activeTab === 'info') {
+        return infoFields.includes(key);
+      }
+      if (activeTab === 'pricing') {
+        return pricingFields.includes(key);
+      }
+      return false;
+    });
+  };
 
   // Course Status
   const [status, setStatus] = useState<'published' | 'draft'>('draft');
@@ -189,22 +435,59 @@ export default function CourseDetailsPage() {
       const file = e.target.files[0];
       setSelectedImage(file);
       setPreviewImage(URL.createObjectURL(file));
+      if (errors.image) {
+        setErrors(prev => {
+          const next = { ...prev };
+          delete next.image;
+          return next;
+        });
+      }
     }
   };
 
   const handleNextFromInfo = () => {
-    if (!courseInfo.title.trim()) {
-      toast.error('عنوان الدورة مطلوب');
+    const newErrors: Record<string, any> = {};
+    if (!courseInfo.title.trim()) newErrors.title = 'عنوان الدورة مطلوب';
+    if (!courseInfo.description.trim() || courseInfo.description === '<p><br></p>') newErrors.description = 'وصف الدورة مطلوب';
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error('يرجى ملء الحقول المطلوبة وتصحيح الأخطاء');
       return;
     }
     setActiveTab('content');
   };
 
+  const handleTabChange = (targetTab: 'info' | 'content' | 'pricing') => {
+    if (targetTab === 'info') {
+      setActiveTab('info');
+      return;
+    }
+
+    if (activeTab === 'info') {
+      const newErrors: Record<string, any> = {};
+      if (!courseInfo.title.trim()) newErrors.title = 'عنوان الدورة مطلوب';
+      if (!courseInfo.description.trim() || courseInfo.description === '<p><br></p>') newErrors.description = 'وصف الدورة مطلوب';
+      
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        toast.error('يرجى ملء الحقول المطلوبة وتصحيح الأخطاء');
+        return;
+      }
+    }
+
+    setActiveTab(targetTab);
+  };
+
   const handleSaveCourseInfo = async () => {
     setErrors({});
-    if (!courseInfo.title.trim()) {
-      setErrors({ title: ['عنوان الدورة مطلوب'] });
-      toast.error('يرجى ملء الحقول المطلوبة');
+    const newErrors: Record<string, any> = {};
+    if (!courseInfo.title.trim()) newErrors.title = 'عنوان الدورة مطلوب';
+    if (!courseInfo.description.trim() || courseInfo.description === '<p><br></p>') newErrors.description = 'وصف الدورة مطلوب';
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error('يرجى ملء الحقول المطلوبة وتصحيح الأخطاء');
       return;
     }
 
@@ -584,7 +867,7 @@ export default function CourseDetailsPage() {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 border-b border-gray-200 px-2 md:px-4">
         <div className="flex items-center justify-start gap-8 overflow-x-auto hide-scrollbar">
           <button
-            onClick={() => setActiveTab('info')}
+            onClick={() => handleTabChange('info')}
             className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
               activeTab === 'info' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
             }`}
@@ -593,7 +876,7 @@ export default function CourseDetailsPage() {
             {activeTab === 'info' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />}
           </button>
           <button
-            onClick={() => setActiveTab('content')}
+            onClick={() => handleTabChange('content')}
             className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
               activeTab === 'content' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
             }`}
@@ -602,7 +885,7 @@ export default function CourseDetailsPage() {
             {activeTab === 'content' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />}
           </button>
           <button
-            onClick={() => setActiveTab('pricing')}
+            onClick={() => handleTabChange('pricing')}
             className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
               activeTab === 'pricing' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
             }`}
@@ -664,7 +947,7 @@ export default function CourseDetailsPage() {
         {activeTab === 'info' && (
           <div className="max-w-4xl space-y-6">
             {/* Server Validation Error Summary */}
-            {Object.keys(errors).length > 0 && (
+            {getActiveTabErrors().length > 0 && (
               <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl p-4 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
                   <X size={14} className="text-red-500" />
@@ -672,9 +955,8 @@ export default function CourseDetailsPage() {
                 <div className="flex-1 space-y-1">
                   <p className="text-sm font-black text-red-700">يرجى تصحيح الأخطاء التالية:</p>
                   <ul className="space-y-0.5">
-                    {Object.entries(errors).map(([key, msg]) => {
+                    {getActiveTabErrors().map(([key, msg]) => {
                       const val = Array.isArray(msg) ? msg[0] : msg;
-                      if (!val) return null;
                       return (
                         <li key={key} className="text-xs font-bold text-red-600 flex items-center gap-1.5">
                           <span className="w-1 h-1 bg-red-400 rounded-full inline-block" />
@@ -697,7 +979,13 @@ export default function CourseDetailsPage() {
                 value={courseInfo.title}
                 onChange={(e) => {
                   setCourseInfo({ ...courseInfo, title: e.target.value });
-                  if (errors.title) setErrors(prev => ({ ...prev, title: null }));
+                  if (errors.title) {
+                    setErrors(prev => {
+                      const next = { ...prev };
+                      delete next.title;
+                      return next;
+                    });
+                  }
                 }}
                 placeholder="ادخل اسم الدورة"
                 className={`w-full p-4 bg-white border ${errors.title ? 'border-red-500 bg-red-50/30' : 'border-gray-200'} rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all text-gray-900`}
@@ -710,46 +998,83 @@ export default function CourseDetailsPage() {
               )}
             </div>
 
-            {/* Category Dropdown */}
-            <div className="space-y-2">
-              <label className="flex items-center gap-1 text-sm font-black text-gray-900">
-                الفئة
-              </label>
-              <select
-                value={courseInfo.category_id}
-                onChange={(e) => setCourseInfo({ ...courseInfo, category_id: e.target.value })}
-                className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all appearance-none text-gray-900"
-              >
-                <option value="">اختر فئة (اختياري)</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Instructor Dropdown (Admin Only) */}
-            {currentUser?.role === 'admin' && (
-              <div className="space-y-2">
-                <label className="flex items-center gap-1 text-sm font-black text-gray-900">المدرب</label>
-                <select
-                  value={courseInfo.user_id}
-                  onChange={(e) => setCourseInfo({ ...courseInfo, user_id: e.target.value })}
-                  className="w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-blue-600 font-bold text-sm transition-all appearance-none text-gray-900"
-                >
-                  <option value="">اختر مدرب</option>
-                  {instructors.map((inst) => (
-                    <option key={inst.id} value={inst.id}>
-                      {inst.name}
-                    </option>
-                  ))}
-                </select>
+            {/* Category & Coach Dropdowns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className={(currentUser?.role === 'admin' || currentUser?.role === 'academy') ? "" : "md:col-span-2"}>
+                <EntitySelectWithCreate
+                  label="الفئة"
+                  options={categories.map(c => ({ id: c.id, name: c.name }))}
+                  value={courseInfo.category_id}
+                  onChange={(val) => {
+                    setCourseInfo({ ...courseInfo, category_id: val ? val.toString() : '' });
+                    if (errors.category_id) {
+                      setErrors(prev => {
+                        const next = { ...prev };
+                        delete next.category_id;
+                        return next;
+                      });
+                    }
+                  }}
+                  placeholder="اختر فئة (اختياري)"
+                  error={errors.category_id ? translateErrorToArabic(Array.isArray(errors.category_id) ? errors.category_id[0] : String(errors.category_id)) : undefined}
+                  modalTitle="إضافة فئة جديدة"
+                  modalDescription="أضف فئة جديدة لتنظيم دوراتك"
+                  modalIcon={<Landmark size={28} />}
+                  fetchOptions={async () => {
+                    const cats = await getCategories();
+                    setCategories(cats);
+                    return cats;
+                  }}
+                  createEntity={async (payload) => {
+                    return await createCategory(payload.name, payload.is_active);
+                  }}
+                  onCreated={() => {}}
+                  renderForm={(props) => (
+                    <CategoryFormInline {...props} />
+                  )}
+                />
               </div>
-            )}
 
-            {/* Coach Field */}
-            <CoachField value={coachName} onChange={setCoachName} />
+              {/* Instructor Dropdown (Admin/Academy Only) */}
+              {(currentUser?.role === 'admin' || currentUser?.role === 'academy') && (
+                <EntitySelectWithCreate
+                  label="المدرب"
+                  options={instructors.map(i => ({ id: i.id, name: i.name }))}
+                  value={courseInfo.user_id}
+                  onChange={(val) => {
+                    setCourseInfo({ ...courseInfo, user_id: val ? val.toString() : '' });
+                    if (val) {
+                      const selectedInst = instructors.find(i => i.id.toString() === val.toString());
+                      if (selectedInst) {
+                        setCoachName(selectedInst.name || selectedInst.fullName || '');
+                      }
+                    } else {
+                      setCoachName('');
+                    }
+                    if (errors.user_id) setErrors(prev => ({ ...prev, user_id: null }));
+                  }}
+                  placeholder="اختر مدرب"
+                  error={errors.user_id ? translateErrorToArabic(Array.isArray(errors.user_id) ? errors.user_id[0] : String(errors.user_id)) : undefined}
+                  modalTitle="إضافة مدرب جديد"
+                  modalDescription="أضف مدرباً جديداً لتسجيل حسابه"
+                  modalIcon={<UserIcon size={28} />}
+                  fetchOptions={async () => {
+                    const coaches = await getUsers('academy');
+                    setInstructors(coaches);
+                    return coaches;
+                  }}
+                  createEntity={async (payload) => {
+                    return await createUser(payload);
+                  }}
+                  onCreated={(newCoach) => {
+                    setCoachName(newCoach.name || newCoach.fullName || '');
+                  }}
+                  renderForm={(props) => (
+                    <CoachFormInline {...props} />
+                  )}
+                />
+              )}
+            </div>
 
             {/* Course Image */}
             <div className="space-y-2">
@@ -800,7 +1125,16 @@ export default function CourseDetailsPage() {
                   <div className="p-5 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
                     <QuillEditor
                       value={courseInfo.description}
-                      onChange={(val) => setCourseInfo({ ...courseInfo, description: val })}
+                      onChange={(val) => {
+                        setCourseInfo({ ...courseInfo, description: val });
+                        if (errors.description) {
+                          setErrors(prev => {
+                            const next = { ...prev };
+                            delete next.description;
+                            return next;
+                          });
+                        }
+                      }}
                       placeholder="ادخل وصف الدورة"
                     />
                   </div>
@@ -820,7 +1154,16 @@ export default function CourseDetailsPage() {
                   <div className="p-5 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
                     <QuillEditor
                       value={courseInfo.target_audience}
-                      onChange={(val) => setCourseInfo({ ...courseInfo, target_audience: val })}
+                      onChange={(val) => {
+                        setCourseInfo({ ...courseInfo, target_audience: val });
+                        if (errors.who_is_this_for) {
+                          setErrors(prev => {
+                            const next = { ...prev };
+                            delete next.who_is_this_for;
+                            return next;
+                          });
+                        }
+                      }}
                       placeholder="الفئة المستهدفة من الدورة"
                     />
                   </div>
@@ -1128,7 +1471,7 @@ export default function CourseDetailsPage() {
             </div>
 
             {/* Server Validation Error Summary */}
-            {Object.keys(errors).length > 0 && (
+            {getActiveTabErrors().length > 0 && (
               <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl p-4 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
                   <X size={14} className="text-red-500" />
@@ -1136,9 +1479,8 @@ export default function CourseDetailsPage() {
                 <div className="flex-1 space-y-1">
                   <p className="text-sm font-black text-red-700">يرجى تصحيح الأخطاء التالية:</p>
                   <ul className="space-y-0.5">
-                    {Object.entries(errors).map(([key, msg]) => {
+                    {getActiveTabErrors().map(([key, msg]) => {
                       const val = Array.isArray(msg) ? msg[0] : msg;
-                      if (!val) return null;
                       return (
                         <li key={key} className="text-xs font-bold text-red-600 flex items-center gap-1.5">
                           <span className="w-1 h-1 bg-red-400 rounded-full inline-block" />

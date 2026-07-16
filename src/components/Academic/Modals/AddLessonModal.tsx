@@ -191,10 +191,10 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, courseTit
 
         if (storageLimitObj) {
           const totalGB = parseFloat(storageLimitObj.total_limit || '0');
-          const usedMB = parseFloat(storageLimitObj.used_amount || '0');
+          const usedGB = parseFloat(storageLimitObj.used_amount || '0');
 
-          // Calculate remaining storage in MB (total is in GB, used is in MB)
-          const remainingMB = (totalGB * 1024) - usedMB;
+          // Calculate remaining storage in MB (total/used are in GB and files are uploaded/recorded in MB)
+          const remainingMB = (totalGB - usedGB) * 1024;
           const fileSizeMB = parseFloat((selectedFile.size / (1024 * 1024)).toFixed(2));
 
           if (remainingMB <= 0 || fileSizeMB > remainingMB) {
@@ -316,13 +316,13 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, courseTit
 
 <!--LIVE_METADATA:${JSON.stringify({ sessionLink, dateTime: sessionDateTime })}-->`
         : isPhysical
-        ? `تفاصيل المحاضرة الحضورية:
+          ? `تفاصيل المحاضرة الحضورية:
 📍 الموقع: ${locationLink || 'غير محدد'}
 📅 تاريخ البداية: ${startDate || 'غير محدد'}
 📅 تاريخ النهاية: ${endDate || 'غير محدد'}
 
 <!--OFFLINE_METADATA:${JSON.stringify({ locationLink, startDate, endDate })}-->`
-        : description;
+          : description;
 
       // Create Lesson in Backend — route to correct endpoint based on course type
       if (isPhysical) {
@@ -386,7 +386,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, courseTit
     } catch (error: any) {
       console.error(error);
       setUploadStatus('error');
-      
+
       let errorMsg = 'فشل حفظ الدرس';
       if (error?.errors) {
         const msgs = Object.values(error.errors).flat();
@@ -497,9 +497,8 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, courseTit
                     <button
                       type="button"
                       onClick={() => setUploadFileToggle(!uploadFileToggle)}
-                      className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none flex items-center ${
-                        uploadFileToggle ? 'bg-blue-600 justify-start' : 'bg-zinc-200 justify-end'
-                      }`}
+                      className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none flex items-center ${uploadFileToggle ? 'bg-blue-600 justify-start' : 'bg-zinc-200 justify-end'
+                        }`}
                     >
                       <div className="w-4 h-4 rounded-full bg-white shadow-md animate-in fade-in duration-200" />
                     </button>

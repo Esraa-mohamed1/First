@@ -1,7 +1,7 @@
 import React from 'react';
 import * as LucideIcons from 'lucide-react';
 import { ComponentRegistryEntry } from '../interfaces';
-import { buildStyles, extractContentProps, extractStyleProps } from '../utils/typography';
+import { buildStyles, extractContentProps, extractStyleProps, getTypographyStyle } from '../utils/typography';
 import { useDeviceMode } from '../context/DeviceModeContext';
 import { useBuilderStore } from '../store/builderStore';
 
@@ -39,6 +39,17 @@ function getResponsiveGridClass(cols: number) {
 // ─── Dynamic Component Implementations (using React.createElement for pure .ts compliance) ───
 
 export const HeroSection = React.memo((props: any) => {
+  const isVideoUrl = (url: string) => {
+    return url && (
+      url.startsWith('data:video/') || 
+      url.includes('video/mp4') || 
+      url.endsWith('.mp4') || 
+      url.endsWith('.webm') || 
+      url.endsWith('.ogg') ||
+      url.includes('/uploads/video')
+    );
+  };
+
   const {
     isEditing,
     selectedNodeId,
@@ -56,6 +67,7 @@ export const HeroSection = React.memo((props: any) => {
     // Fallback if rendered outside the store context
   }
   const isUdemy = currentTemplate?.id === 'template_2';
+  const isEdx = currentTemplate?.id === 'template_3';
 
   const styles = buildStyles(props);
   const content = extractContentProps(props);
@@ -80,123 +92,258 @@ export const HeroSection = React.memo((props: any) => {
     goTo((current + 1) % items.length);
   }, [current, items.length, goTo]);
 
+  // When in editing mode, jump display to whichever slide is selected in the inspector
   React.useEffect(() => {
-    if (items.length <= 1) return;
+    if (isEditing && selectedItemIndex !== null && selectedItemIndex < items.length) {
+      setCurrent(selectedItemIndex);
+    }
+  }, [selectedItemIndex, isEditing, items.length]);
+
+  // Auto-advance slides when not in editing mode
+  React.useEffect(() => {
+    if (isEditing || items.length <= 1) return;
     const speed = props.slider_speed !== undefined ? Number(props.slider_speed) : 4;
     if (speed <= 0) return;
     const timer = setInterval(next, speed * 1000);
     return () => clearInterval(timer);
-  }, [next, items.length, props.slider_speed]);
+  }, [next, items.length, props.slider_speed, isEditing]);
 
   if (items.length > 0) {
     const slide = items[current] || {};
     const slideProps = slide.props || {};
-    const slideAlign = slideProps.align || 'center';
-    const alignClass = slideAlign === 'left' ? 'text-left items-start' : slideAlign === 'center' ? 'text-center items-center' : 'text-right items-end';
 
+    // Text alignment classes for the current slide
+    const slideAlign = slideProps.align || 'right';
+    const alignClass =
+      slideAlign === 'left' ? 'text-left items-start' :
+      slideAlign === 'center' ? 'text-center items-center' :
+      'text-right items-end';
+
+    // Selection ring for builder editing UI
     const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === current;
-    const isHovered = isEditing && hoveredItemIndex === current;
+    const isHovered  = isEditing && hoveredItemIndex === current;
 
+    // Detect video vs image background / side media for this slide
+    const isVideoBg   = isVideoUrl(slideProps.bg_image);
+    const isVideoSide = isVideoUrl(slideProps.side_image);
+
+    // Background style — only set CSS backgroundImage when it's an image URL
     const slideStyle: React.CSSProperties = {
-      backgroundColor: slideProps.bg_image ? undefined : slideProps.background_color || '#1e40af',
-      backgroundImage: slideProps.bg_image ? `url(${slideProps.bg_image})` : undefined,
+      backgroundColor: slideProps.background_color || (isUdemy ? '#f8fafc' : '#1e40af'),
+      backgroundImage: (slideProps.bg_image && !isVideoBg) ? `url(${slideProps.bg_image})` : undefined,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
-      transition: 'opacity 0.3s ease-in-out',
     };
 
-    if (isUdemy) {
-      return React.createElement(
-        'div',
-        {
-          className: `relative overflow-hidden w-full select-none min-h-[320px] md:min-h-[400px] transition-all duration-300 ${isSelected ? 'ring-4 ring-[#a435f0] ring-inset' : isHovered ? 'ring-4 ring-purple-300 ring-inset' : ''
-            }`,
-          onClick: (e: any) => {
-            if (isEditing) {
-              e.stopPropagation();
-              setSelectedNodeId(props.id);
-              setSelectedItemIndex(current);
+    // Show optional white card overlay behind text
+    const showOverlay = slideProps.show_card_overlay ?? false;
+
+    // Side media configuration
+    const sideImage       = slideProps.side_image;
+    const hasSideImage    = !!sideImage;
+    const sideImageShape  = slideProps.side_image_shape || 'rounded';
+    const sideShapeClass  =
+      sideImageShape === 'circle' ? 'rounded-full' :
+      sideImageShape === 'square' ? 'rounded-none' :
+      sideImageShape === 'leaf'   ? 'rounded-3xl rounded-tr-none rounded-bl-none' : 'rounded-2xl';
+
+    // Build the side-media element (image or video)
+    const sideMediaEl = hasSideImage ? React.createElement(
+      'div',
+      { className: `relative z-10 flex-1 flex items-center ${slideProps.side_image_position === 'right' ? 'justify-end' : 'justify-start'} animate-[float_5s_ease-in-out_infinite]` },
+      React.createElement('style', {
+        dangerouslySetInnerHTML: {
+          __html: `
+            @keyframes float {
+              0%, 100% { transform: translateY(0) scale(1); }
+              50% { transform: translateY(-12px) scale(1.01); }
             }
-          },
-          onMouseEnter: () => isEditing && setHoveredItemIndex(current),
-          onMouseLeave: () => isEditing && setHoveredItemIndex(null),
-        },
-        React.createElement(
-          'div',
-          {
+          `
+        }
+      }),
+      isVideoSide
+        ? React.createElement('video', {
+            src: sideImage, controls: true,
+            className: `${sideShapeClass} shadow-2xl transition-all duration-500 hover:rotate-1 hover:scale-[1.02]`,
             style: {
-              backgroundImage: slideProps.bg_image ? `url(${slideProps.bg_image})` : 'none',
-              backgroundColor: slideProps.bg_image ? undefined : '#f8fafc',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              minHeight: '360px',
-              position: 'relative',
-              width: '100%'
-            },
-            className: 'flex items-center justify-start md:px-16 px-4 py-8'
-          },
-          slideProps.bg_image ? React.createElement('div', { className: 'absolute inset-0 bg-slate-900/10' }) : null,
-          React.createElement(
-            'div',
-            {
-              className: 'relative z-10 bg-white p-8 max-w-md w-full shadow-2xl border border-slate-100 flex flex-col gap-3 rounded-lg text-right md:mr-10'
-            },
-            slideProps.title ? React.createElement('h1', { className: 'font-black text-slate-800 leading-tight text-xl sm:text-2xl lg:text-3xl' }, slideProps.title) : null,
-            slideProps.subtitle ? React.createElement('p', { className: 'text-slate-600 leading-relaxed text-xs sm:text-sm font-bold' }, slideProps.subtitle) : null,
-            slideProps.button_text
-              ? React.createElement(
-                'a',
-                {
-                  href: slideProps.button_link || '#',
-                  style: { backgroundColor: '#1c1d1f', color: '#ffffff' },
-                  className: 'px-5 py-2.5 rounded-sm font-bold text-xs hover:bg-[#2d2f31] transition-all text-center inline-block w-fit mt-2 shadow-sm'
-                },
-                slideProps.button_text
-              )
-              : null
-          )
-        ),
-        props.show_arrows !== false && items.length > 1
-          ? React.createElement(
-            'button',
-            {
-              onClick: (e: any) => { e.stopPropagation(); if (transitioning) return; goTo((current - 1 + items.length) % items.length); },
-              className: 'absolute right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-slate-950/40 hover:bg-slate-950/60 text-white flex items-center justify-center transition-all pointer-events-auto'
-            },
-            React.createElement(LucideIcons.ChevronRight, { className: 'w-4 h-4' })
-          )
-          : null,
-        props.show_arrows !== false && items.length > 1
-          ? React.createElement(
-            'button',
-            {
-              onClick: (e: any) => { e.stopPropagation(); if (transitioning) return; goTo((current + 1) % items.length); },
-              className: 'absolute left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-slate-950/40 hover:bg-slate-950/60 text-white flex items-center justify-center transition-all pointer-events-auto'
-            },
-            React.createElement(LucideIcons.ChevronLeft, { className: 'w-4 h-4' })
-          )
-          : null,
-        items.length > 1
-          ? React.createElement(
-            'div',
-            { className: 'absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-2' },
-            items.map((_: any, i: number) =>
-              React.createElement('button', {
-                key: i,
-                onClick: (e: any) => { e.stopPropagation(); goTo(i); },
-                className: `rounded-full transition-all duration-300 pointer-events-auto ${i === current ? 'bg-white w-5 h-2' : 'bg-white/40 hover:bg-white/70 w-2 h-2'}`
+              maxWidth: '100%',
+              width:  slideProps.side_image_width  ? `${slideProps.side_image_width}px`  : 'auto',
+              height: slideProps.side_image_height ? `${slideProps.side_image_height}px` : 'auto',
+              objectFit: slideProps.side_image_fit || 'contain'
+            }
+          })
+        : (!isEditing && slideProps.image_link)
+          ? React.createElement('a',
+              { href: slideProps.image_link, target: '_blank', rel: 'noopener noreferrer',
+                className: 'block cursor-pointer transition-transform hover:scale-[1.01]' },
+              React.createElement('img', {
+                src: sideImage, alt: slideProps.title || 'Slide Image',
+                className: `${sideShapeClass} shadow-2xl transition-all duration-500 hover:rotate-1 hover:scale-[1.02]`,
+                style: {
+                  maxWidth: '100%',
+                  width:  slideProps.side_image_width  ? `${slideProps.side_image_width}px`  : 'auto',
+                  height: slideProps.side_image_height ? `${slideProps.side_image_height}px` : 'auto',
+                  objectFit: slideProps.side_image_fit || 'contain'
+                }
               })
             )
-          )
-          : null
-      );
-    }
+          : React.createElement('img', {
+              src: sideImage, alt: slideProps.title || 'Slide Image',
+              className: `${sideShapeClass} shadow-2xl transition-all duration-500 hover:rotate-1 hover:scale-[1.02]`,
+              style: {
+                maxWidth: '100%',
+                width:  slideProps.side_image_width  ? `${slideProps.side_image_width}px`  : 'auto',
+                height: slideProps.side_image_height ? `${slideProps.side_image_height}px` : 'auto',
+                objectFit: slideProps.side_image_fit || 'contain'
+              }
+            })
+    ) : null;
 
+    // ─── TEMPLATE-SPECIFIC UI VARIANTS ───
+    const isAcademy = currentTemplate?.id === 'academy-dashboard' || currentTemplate?.id === 'template_1';
+    
+    // Text + button block
+    const textEl = isUdemy ? React.createElement(
+      'div',
+      {
+        className: `relative z-10 flex flex-col gap-6 ${alignClass} max-w-3xl ml-auto mr-auto lg:mr-10 font-['Inter'] t2-animate-on-scroll`
+      },
+      React.createElement('div', { className: 'flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--t2-indigo-3)] border border-[var(--t2-gold)]/20 w-fit' },
+        React.createElement('span', { className: 'w-2 h-2 rounded-full bg-[var(--t2-gold)] animate-pulse' }),
+        React.createElement('span', { className: 'text-xs text-[var(--t2-canvas-2)] font-["IBM_Plex_Mono"] font-medium tracking-wide uppercase' }, 'أكاديمية رائدة')
+      ),
+      slideProps.title ? React.createElement('h1', {
+        className: 'font-black leading-tight tracking-tight text-4xl sm:text-5xl lg:text-6xl text-[var(--t2-white)] font-["Fraunces"] drop-shadow-sm'
+      }, slideProps.title.split(' ').map((word: string, i: number, arr: string[]) => {
+        if (i >= arr.length - 2) return React.createElement('em', { key: i, className: 'text-[var(--t2-gold)] italic px-1 drop-shadow-[0_2px_15px_rgba(232,163,61,0.3)]' }, word + ' ');
+        return word + ' ';
+      })) : null,
+      slideProps.subtitle ? React.createElement('p', {
+        className: 'leading-relaxed text-base sm:text-lg text-[var(--t2-canvas-3)] max-w-2xl'
+      }, slideProps.subtitle) : null,
+      React.createElement('div', { className: 'flex flex-col sm:flex-row items-center gap-4 mt-2' },
+        slideProps.button_text ? React.createElement('a', {
+          href: slideProps.button_link || '#',
+          className: 'px-8 py-3.5 rounded-full bg-[var(--t2-gold)] text-[var(--t2-ink)] font-bold text-sm hover:brightness-110 hover:shadow-[0_4px_20px_rgba(232,163,61,0.35)] active:-translate-y-0.5 transition-all w-full sm:w-auto text-center'
+        }, slideProps.button_text) : null,
+        React.createElement('a', {
+          href: '#',
+          className: 'px-8 py-3.5 rounded-full border-[1.5px] border-[var(--t2-canvas-3)] text-[var(--t2-canvas)] font-bold text-sm hover:bg-[var(--t2-canvas-3)] hover:text-[var(--t2-ink)] transition-all w-full sm:w-auto text-center'
+        }, 'تصفح الدورات')
+      ),
+      React.createElement('div', { className: 'flex items-center gap-6 mt-6 pt-6 border-t border-[var(--t2-indigo-3)]/50 font-["IBM_Plex_Mono"] text-[var(--t2-canvas-3)] text-xs uppercase tracking-widest' },
+        React.createElement('div', null, React.createElement('strong', { className: 'text-[var(--t2-gold)] block text-base' }, '50K+'), 'طالب نشط'),
+        React.createElement('div', { className: 'w-px h-8 bg-[var(--t2-indigo-3)]' }),
+        React.createElement('div', null, React.createElement('strong', { className: 'text-[var(--t2-gold)] block text-base' }, '200+'), 'دورة تدريبية')
+      )
+    ) : React.createElement(
+      'div',
+      {
+        className: `relative z-10 flex flex-col gap-5 ${alignClass} ${
+          isEdx ? 'max-w-4xl mx-auto text-center items-center bg-slate-900/40 backdrop-blur-md p-12 rounded-3xl border border-slate-700/50 shadow-2xl' :
+          (showOverlay ? 'max-w-xl backdrop-blur-md bg-white/90 p-8 sm:p-10 rounded-3xl shadow-2xl border border-white/40' : 'max-w-xl')
+        }`
+      },
+      slideProps.title ? React.createElement('h1', {
+        style: { color: slideProps.title_color || (isEdx ? '#f8fafc' : showOverlay ? '#1f2937' : '#ffffff') },
+        className: `font-black leading-tight tracking-tight ${isEdx ? 'text-4xl sm:text-5xl lg:text-6xl drop-shadow-lg' : 'text-3xl sm:text-4xl lg:text-5xl'}`
+      }, slideProps.title) : null,
+      slideProps.subtitle ? React.createElement('p', {
+        style: { color: slideProps.text_color || (isEdx ? '#cbd5e1' : showOverlay ? '#4b5563' : '#e2e8f0') },
+        className: `leading-relaxed font-semibold ${isEdx ? 'text-lg sm:text-xl drop-shadow-md' : 'text-xs sm:text-sm lg:text-base'}`
+      }, slideProps.subtitle) : null,
+      slideProps.button_text ? React.createElement('a', {
+        href: slideProps.button_link || '#',
+        style: {
+          backgroundColor: slideProps.button_color || (isEdx ? '#10b981' : '#ffffff'),
+          color: slideProps.button_text_color || (isEdx ? '#ffffff' : '#1e40af')
+        },
+        className: `px-8 py-4 rounded-2xl font-black text-sm hover:brightness-110 active:scale-95 transition-all shadow-lg inline-block w-fit mt-4 ${isEdx ? 'hover:shadow-emerald-500/30 ring-1 ring-emerald-400/50' : ''}`
+      }, slideProps.button_text) : null
+    );
+
+    // Full slide content wrapper — uses relative positioning so arrows can overlay it
+    const slideContent = React.createElement(
+      'section',
+      {
+        key: current,
+        style: slideStyle,
+        className: `relative w-full ${py} ${px} flex items-center transition-opacity duration-500 ${transitioning ? 'opacity-0' : 'opacity-100'} ${
+          isUdemy ? 'min-h-[600px] lg:min-h-[700px] flex-col lg:flex-row gap-12 justify-center bg-gradient-to-br from-[var(--t2-indigo)] to-[var(--t2-ink)] overflow-hidden' :
+          isEdx ? 'min-h-[600px] lg:min-h-[700px] flex-col justify-center' :
+          (hasSideImage ? 'min-h-[320px] sm:min-h-[420px] flex-row gap-10 justify-center' : 'min-h-[320px] sm:min-h-[420px] justify-center')
+        }`
+      },
+      // Floating creative blobs in dynamic slider when no background image is set
+      !slideProps.bg_image ? React.createElement(React.Fragment, null,
+        React.createElement('div', {
+          className: `absolute top-[-30%] left-[-10%] w-80 h-80 rounded-full blur-[90px] animate-pulse pointer-events-none z-0 ${isEdx ? 'bg-emerald-500/20' : 'bg-blue-500/10'}`,
+          style: { animationDuration: '6s' }
+        }),
+        React.createElement('div', {
+          className: `absolute bottom-[-30%] right-[-10%] w-96 h-96 rounded-full blur-[100px] animate-pulse pointer-events-none z-0 ${isEdx ? 'bg-indigo-500/20' : 'bg-purple-500/10'}`,
+          style: { animationDuration: '8s' }
+        })
+      ) : null,
+      // Video background player (sits behind all content)
+      slideProps.bg_image && isVideoBg ? React.createElement('video', {
+        src: slideProps.bg_image, autoPlay: true, loop: true, muted: true, playsInline: true,
+        className: 'absolute inset-0 w-full h-full object-cover z-0'
+      }) : null,
+      // Subtle overlay for readability
+      slideProps.bg_image ? React.createElement('div', {
+        className: `absolute inset-0 z-0 ${isEdx ? 'bg-gradient-to-r from-slate-900/90 to-slate-900/60' : 'bg-slate-900/20'}`
+      }) : null,
+      
+      // Structure blocks based on layout
+      isUdemy 
+        ? React.createElement(React.Fragment, null, textEl, sideMediaEl)
+        : isEdx
+          ? React.createElement(React.Fragment, null, textEl) // EDX uses full bleed cinematic background, side image hidden if present or used elsewhere
+          : React.createElement(React.Fragment, null, 
+              hasSideImage && slideProps.side_image_position !== 'right' ? sideMediaEl : null,
+              textEl,
+              hasSideImage && slideProps.side_image_position === 'right' ? sideMediaEl : null
+            )
+    );
+
+    // Dot indicator strip
+    const dotsEl = items.length > 1 ? React.createElement(
+      'div',
+      { className: 'absolute bottom-3 left-1/2 -translate-x-1/2 z-30 flex gap-2 pointer-events-auto' },
+      items.map((_: any, i: number) => React.createElement('button', {
+        key: i,
+        onClick: (e: any) => { e.stopPropagation(); goTo(i); },
+        className: `rounded-full transition-all duration-300 ${
+          i === current ? 'bg-white w-5 h-2' : 'bg-white/40 hover:bg-white/70 w-2 h-2'
+        }`
+      }))
+    ) : null;
+
+    // Navigation arrow buttons
+    const arrowPrev = props.show_arrows !== false && items.length > 1
+      ? React.createElement('button', {
+          onClick: (e: any) => { e.stopPropagation(); if (!transitioning) goTo((current - 1 + items.length) % items.length); },
+          className: 'absolute right-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-slate-900/50 hover:bg-slate-900/70 text-white flex items-center justify-center shadow-lg transition-all pointer-events-auto'
+        }, React.createElement(LucideIcons.ChevronRight, { className: 'w-5 h-5' }))
+      : null;
+
+    const arrowNext = props.show_arrows !== false && items.length > 1
+      ? React.createElement('button', {
+          onClick: (e: any) => { e.stopPropagation(); if (!transitioning) goTo((current + 1) % items.length); },
+          className: 'absolute left-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-slate-900/50 hover:bg-slate-900/70 text-white flex items-center justify-center shadow-lg transition-all pointer-events-auto'
+        }, React.createElement(LucideIcons.ChevronLeft, { className: 'w-5 h-5' }))
+      : null;
+
+    // Outer wrapper — `relative` with NO `overflow-hidden` so arrows are not clipped
     return React.createElement(
       'div',
       {
-        className: `relative overflow-hidden w-full select-none min-h-[220px] sm:min-h-[280px] transition-all duration-300 ${isSelected ? 'ring-4 ring-blue-500 ring-inset' : isHovered ? 'ring-4 ring-blue-300 ring-inset' : ''
-          }`,
+        className: `relative w-full select-none transition-all duration-300 rounded-sm ${
+          isSelected ? (isUdemy ? 'ring-4 ring-[#2FA8E0] ring-inset' : 'ring-4 ring-blue-500 ring-inset')
+          : isHovered ? (isUdemy ? 'ring-4 ring-sky-300 ring-inset' : 'ring-4 ring-blue-300 ring-inset')
+          : ''
+        }`,
         onClick: (e: any) => {
           if (isEditing) {
             e.stopPropagation();
@@ -207,119 +354,203 @@ export const HeroSection = React.memo((props: any) => {
         onMouseEnter: () => isEditing && setHoveredItemIndex(current),
         onMouseLeave: () => isEditing && setHoveredItemIndex(null),
       },
-      React.createElement(
-        'section',
-        {
-          style: { ...styles, ...slideStyle },
-          className: `relative w-full ${py} ${px} flex flex-col justify-center ${alignClass} ${transitioning ? 'opacity-0' : 'opacity-100'}`
-        },
-        slideProps.bg_image ? React.createElement('div', { className: 'absolute inset-0 bg-slate-950/40' }) : null,
-        React.createElement(
-          'div',
-          { className: `relative z-10 w-full flex flex-col gap-3 ${alignClass}` },
-          slideProps.title ? React.createElement('h1', { className: 'font-black mb-2 leading-tight text-white text-2xl sm:text-3xl lg:text-5xl' }, slideProps.title) : null,
-          slideProps.subtitle ? React.createElement('p', { className: 'opacity-90 mb-4 leading-relaxed text-slate-100 text-xs sm:text-sm lg:text-base' }, slideProps.subtitle) : null,
-          slideProps.button_text
-            ? React.createElement(
-              'a',
-              {
-                href: slideProps.button_link || '#',
-                style: { backgroundColor: slideProps.button_color || '#ffffff', color: '#1e40af' },
-                className: 'px-5 py-2 rounded-xl font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md inline-block w-fit'
-              },
-              slideProps.button_text
-            )
-            : null
-        )
-      ),
-      props.show_arrows !== false && items.length > 1
-        ? React.createElement(
-          'button',
-          {
-            onClick: (e: any) => { e.stopPropagation(); if (transitioning) return; goTo((current - 1 + items.length) % items.length); },
-            className: 'absolute right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-slate-950/40 hover:bg-slate-950/60 text-white flex items-center justify-center transition-all pointer-events-auto'
-          },
-          React.createElement(LucideIcons.ChevronRight, { className: 'w-4 h-4' })
-        )
-        : null,
-      props.show_arrows !== false && items.length > 1
-        ? React.createElement(
-          'button',
-          {
-            onClick: (e: any) => { e.stopPropagation(); if (transitioning) return; goTo((current + 1) % items.length); },
-            className: 'absolute left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-slate-950/40 hover:bg-slate-950/60 text-white flex items-center justify-center transition-all pointer-events-auto'
-          },
-          React.createElement(LucideIcons.ChevronLeft, { className: 'w-4 h-4' })
-        )
-        : null,
-      items.length > 1
-        ? React.createElement(
-          'div',
-          { className: 'absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-2' },
-          items.map((_: any, i: number) =>
-            React.createElement('button', {
-              key: i,
-              onClick: (e: any) => { e.stopPropagation(); goTo(i); },
-              className: `rounded-full transition-all duration-300 pointer-events-auto ${i === current ? 'bg-white w-5 h-2' : 'bg-white/40 hover:bg-white/70 w-2 h-2'}`
-            })
-          )
-        )
-        : null
+      slideContent,
+      arrowPrev,
+      arrowNext,
+      dotsEl
     );
   }
 
+  // Fallback rendering when no items/slides exist
+  const isVideoBg = isVideoUrl(props.bg_image);
+  const isVideoSide = isVideoUrl(props.side_image);
+
+  const showOverlay = props.show_card_overlay ?? (isUdemy ? true : false);
+  const sideImage = props.side_image;
+  const hasSideImage = !!sideImage;
+  const sideImageShape = props.side_image_shape || 'rounded';
+  const sideImageShapeClass =
+    sideImageShape === 'circle' ? 'rounded-full' :
+    sideImageShape === 'square' ? 'rounded-none' :
+    sideImageShape === 'leaf' ? 'rounded-3xl rounded-tr-none rounded-bl-none' : 'rounded-2xl';
+
+  const sideImageBlock = hasSideImage ? React.createElement(
+    'div',
+    { className: `relative z-10 flex-1 flex items-center ${props.side_image_position === 'right' ? 'justify-end' : 'justify-start'}` },
+    isVideoSide
+      ? React.createElement('video', {
+          src: sideImage,
+          controls: true,
+          className: `${sideImageShapeClass} shadow-2xl`,
+          style: {
+            maxWidth: '100%',
+            width: props.side_image_width ? `${props.side_image_width}px` : 'auto',
+            height: props.side_image_height ? `${props.side_image_height}px` : 'auto',
+            objectFit: props.side_image_fit || 'contain'
+          }
+        })
+      : (!isEditing && props.image_link)
+        ? React.createElement(
+            'a',
+            { href: props.image_link, target: '_blank', rel: 'noopener noreferrer', className: 'block cursor-pointer transition-all hover:scale-[1.01] active:scale-99' },
+            React.createElement('img', {
+              src: sideImage,
+              alt: content.title || 'Banner Image',
+              className: `${sideImageShapeClass} shadow-2xl`,
+              style: {
+                maxWidth: '100%',
+                width: props.side_image_width ? `${props.side_image_width}px` : 'auto',
+                height: props.side_image_height ? `${props.side_image_height}px` : 'auto',
+                objectFit: props.side_image_fit || 'contain'
+              }
+            })
+          )
+        : React.createElement('img', {
+            src: sideImage,
+            alt: content.title || 'Banner Image',
+            className: `${sideImageShapeClass} shadow-2xl`,
+            style: {
+              maxWidth: '100%',
+              width: props.side_image_width ? `${props.side_image_width}px` : 'auto',
+              height: props.side_image_height ? `${props.side_image_height}px` : 'auto',
+              objectFit: props.side_image_fit || 'contain'
+            }
+          })
+  ) : null;
+
   if (isUdemy) {
+    const titleStyles = getTypographyStyle(props, 'title', { size: 'text-4xl sm:text-5xl lg:text-6xl', weight: 'font-black', color: 'var(--t2-white)', font: 'Fraunces' });
+    const subtitleStyles = getTypographyStyle(props, 'subtitle', { size: 'text-base sm:text-lg', weight: 'font-normal', color: 'var(--t2-canvas-3)', font: 'Inter' });
+
+    const textBlock = React.createElement(
+      'div',
+      {
+        className: `relative z-10 p-8 flex flex-col gap-6 text-right max-w-3xl ml-auto mr-auto lg:mr-10 font-['Inter'] t2-animate-on-scroll`
+      },
+      React.createElement('div', { className: 'flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--t2-indigo-3)] border border-[var(--t2-gold)]/20 w-fit' },
+        React.createElement('span', { className: 'w-2 h-2 rounded-full bg-[var(--t2-gold)] animate-pulse' }),
+        React.createElement('span', { className: 'text-xs text-[var(--t2-canvas-2)] font-["IBM_Plex_Mono"] font-medium tracking-wide uppercase' }, 'أكاديمية رائدة')
+      ),
+      content.title ? React.createElement('h1', { 
+        className: `leading-tight tracking-tight drop-shadow-sm ${titleStyles.className}`,
+        style: titleStyles.style
+      }, content.title.split(' ').map((word: string, i: number, arr: string[]) => {
+        if (i >= arr.length - 2) return React.createElement('em', { key: i, className: 'text-[var(--t2-gold)] italic px-1 drop-shadow-[0_2px_15px_rgba(232,163,61,0.3)]' }, word + ' ');
+        return word + ' ';
+      })) : null,
+      content.subtitle ? React.createElement('p', { 
+        className: `leading-relaxed max-w-2xl ${subtitleStyles.className}`,
+        style: subtitleStyles.style
+      }, content.subtitle) : null,
+      React.createElement('div', { className: 'flex flex-col sm:flex-row items-center gap-4 mt-2' },
+        props.show_button && content.button_text
+          ? React.createElement('a', {
+            href: content.button_link || '#',
+            className: 'px-8 py-3.5 rounded-full bg-[var(--t2-gold)] text-[var(--t2-ink)] font-bold text-sm hover:brightness-110 hover:shadow-[0_4px_20px_rgba(232,163,61,0.35)] active:-translate-y-0.5 transition-all w-full sm:w-auto text-center'
+          }, content.button_text)
+          : null,
+        React.createElement('a', {
+          href: '#',
+          className: 'px-8 py-3.5 rounded-full border-[1.5px] border-[var(--t2-canvas-3)] text-[var(--t2-canvas)] font-bold text-sm hover:bg-[var(--t2-canvas-3)] hover:text-[var(--t2-ink)] transition-all w-full sm:w-auto text-center'
+        }, 'تصفح الدورات')
+      ),
+      React.createElement('div', { className: 'flex items-center gap-6 mt-6 pt-6 border-t border-[var(--t2-indigo-3)]/50 font-["IBM_Plex_Mono"] text-[var(--t2-canvas-3)] text-xs uppercase tracking-widest' },
+        React.createElement('div', null, React.createElement('strong', { className: 'text-[var(--t2-gold)] block text-base' }, '50K+'), 'طالب نشط'),
+        React.createElement('div', { className: 'w-px h-8 bg-[var(--t2-indigo-3)]' }),
+        React.createElement('div', null, React.createElement('strong', { className: 'text-[var(--t2-gold)] block text-base' }, '200+'), 'دورة تدريبية')
+      )
+    );
+
+    const sectionBgClass = styles.backgroundColor === 'transparent' ? '' : 'bg-gradient-to-br from-[var(--t2-indigo)] to-[var(--t2-ink)]';
+
     return React.createElement(
       'section',
       {
-        style: { ...styles, backgroundColor: props.background_color || '#ffffff' },
-        className: `relative overflow-hidden w-full min-h-[300px] md:min-h-[400px] flex items-center justify-start md:px-16 px-4 py-12 transition-all duration-300`
+        style: { ...styles },
+        className: `relative overflow-hidden w-full min-h-[600px] md:min-h-[700px] flex items-center md:px-16 px-4 py-12 transition-all duration-300 ${sectionBgClass} ${
+          hasSideImage ? 'flex-row gap-10' : 'justify-start'
+        }`
       },
-      props.bg_image ? React.createElement('div', {
-        style: { backgroundImage: `url(${props.bg_image})`, backgroundSize: 'cover', backgroundPosition: 'center' },
-        className: 'absolute inset-0 z-0'
+      props.bg_image && isVideoBg ? React.createElement('video', {
+        src: props.bg_image,
+        autoPlay: true,
+        loop: true,
+        muted: true,
+        playsInline: true,
+        className: 'absolute inset-0 w-full h-full object-cover z-0 opacity-40'
       }) : null,
-      props.bg_image ? React.createElement('div', { className: 'absolute inset-0 bg-slate-900/10 z-0' }) : null,
-      React.createElement(
-        'div',
-        {
-          className: 'relative z-10 bg-white p-8 max-w-md w-full shadow-2xl border border-slate-100 flex flex-col gap-3 rounded-lg text-right md:mr-10'
-        },
-        content.title ? React.createElement('h1', { className: 'font-black text-slate-800 leading-tight text-xl sm:text-2xl lg:text-3xl' }, content.title) : null,
-        content.subtitle ? React.createElement('p', { className: 'text-slate-600 leading-relaxed text-xs sm:text-sm font-bold' }, content.subtitle) : null,
-        props.show_button && content.button_text
-          ? React.createElement(
-            'a',
-            {
-              href: content.button_link || '#',
-              style: { backgroundColor: '#1c1d1f', color: '#ffffff' },
-              className: 'px-5 py-2.5 rounded-sm font-bold text-xs hover:bg-[#2d2f31] transition-all text-center inline-block w-fit mt-2 shadow-sm'
-            },
-            content.button_text
-          )
-          : null
-      )
+      props.bg_image && !isVideoBg ? React.createElement('div', {
+        style: { backgroundImage: `url(${props.bg_image})`, backgroundSize: 'cover', backgroundPosition: 'center' },
+        className: 'absolute inset-0 z-0 opacity-40'
+      }) : null,
+      hasSideImage && props.side_image_position === 'left' ? sideImageBlock : null,
+      textBlock,
+      hasSideImage && props.side_image_position !== 'left' ? sideImageBlock : null
     );
   }
 
   const align = props.align || 'center';
   const alignClass = align === 'left' ? 'text-left items-start' : align === 'center' ? 'text-center items-center' : 'text-right items-end';
-  return React.createElement(
-    'section',
-    { style: styles, className: `${py} ${px} w-full flex flex-col justify-center ${alignClass} transition-all duration-300 shadow-sm` },
-    content.title ? React.createElement('h1', { className: 'font-black mb-4 leading-tight text-2xl sm:text-3xl lg:text-4xl' }, content.title) : null,
-    content.subtitle ? React.createElement('p', { className: 'opacity-85 mb-8 leading-relaxed text-xs sm:text-sm lg:text-lg max-w-full sm:max-w-2xl' }, content.subtitle) : null,
+
+  const fallbackTextBlock = React.createElement(
+    'div',
+    {
+      className: `relative z-10 max-w-xl flex flex-col gap-3 ${alignClass} ${
+        showOverlay ? 'bg-white p-8 rounded-lg shadow-xl border border-slate-100' : ''
+      }`
+    },
+    content.title ? React.createElement('h1', { 
+      style: { color: props.title_color || (showOverlay ? '#1f2937' : '#ffffff') },
+      className: 'font-black mb-4 leading-tight text-2xl sm:text-3xl lg:text-4xl' 
+    }, content.title) : null,
+    content.subtitle ? React.createElement('p', { 
+      style: { color: props.text_color || (showOverlay ? '#6b7280' : '#f8fafc') },
+      className: 'leading-relaxed text-xs sm:text-sm lg:text-base' 
+    }, content.subtitle) : null,
     props.show_button && content.button_text
       ? React.createElement(
         'a',
         {
           href: content.button_link || '#',
-          style: { backgroundColor: props.button_color || 'var(--theme-primary)', color: '#ffffff' },
-          className: 'px-6 py-3 rounded-xl font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md inline-block'
+          style: { 
+            backgroundColor: props.button_color || 'var(--theme-primary)', 
+            color: props.button_text_color || '#ffffff' 
+          },
+          className: 'px-6 py-3 rounded-xl font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md inline-block w-fit'
         },
         content.button_text
       )
       : null
+  );
+
+  const fallbackStyles = {
+    ...styles,
+    backgroundColor: (props.bg_image && !isVideoBg) ? undefined : props.background_color || '#ffffff',
+    backgroundImage: (props.bg_image && !isVideoBg) ? `url(${props.bg_image})` : undefined,
+    backgroundSize: (props.bg_image && !isVideoBg) ? 'cover' : undefined,
+    backgroundPosition: (props.bg_image && !isVideoBg) ? 'center' : undefined,
+  };
+
+  return React.createElement(
+    'section',
+    {
+      style: fallbackStyles,
+      className: `relative w-full ${py} ${px} flex items-center ${
+        hasSideImage ? 'flex-row gap-10' : 'justify-center'
+      } transition-all duration-300 shadow-sm`
+    },
+    props.bg_image && isVideoBg ? React.createElement('video', {
+      src: props.bg_image,
+      autoPlay: true,
+      loop: true,
+      muted: true,
+      playsInline: true,
+      className: 'absolute inset-0 w-full h-full object-cover z-0'
+    }) : null,
+    props.bg_image ? React.createElement('div', { className: 'absolute inset-0 bg-slate-900/10 z-0' }) : null,
+    hasSideImage && props.side_image_position === 'left' ? sideImageBlock : null,
+    fallbackTextBlock,
+    hasSideImage && props.side_image_position !== 'left' ? sideImageBlock : null
   );
 });
 HeroSection.displayName = 'HeroSection';
@@ -352,20 +583,24 @@ export const FeaturesSection = React.memo((props: any) => {
   const gridClass = getResponsiveGridClass(cols);
 
   if (isUdemy) {
+    const sectionBgClass = styles.backgroundColor === 'transparent' ? '' : 'bg-[var(--t2-canvas)]';
+    const titleStyles = getTypographyStyle(props, 'title', { size: 'text-3xl sm:text-4xl lg:text-5xl', weight: 'font-black', color: 'var(--t2-ink)', font: 'Fraunces' });
+    const subtitleStyles = getTypographyStyle(props, 'subtitle', { size: 'text-base sm:text-lg', weight: 'font-medium', color: 'rgba(22,21,44,0.8)', font: 'Inter' });
+
     return React.createElement(
       'section',
       {
-        style: { ...styles, backgroundColor: props.background_color || '#f7f9fa', color: '#1c1d1f' },
-        className: `${py} ${px} w-full transition-all duration-300 text-right`
+        style: { ...styles },
+        className: `${py} ${px} w-full transition-all duration-300 text-right ${sectionBgClass} t2-animate-on-scroll`
       },
       React.createElement(
         'div',
-        { className: 'max-w-6xl mx-auto' },
+        { className: 'max-w-7xl mx-auto' },
         React.createElement(
           'div',
-          { className: 'text-right mb-8' },
-          content.title ? React.createElement('h2', { className: 'font-black mb-3 text-xl sm:text-2xl lg:text-3xl text-slate-800' }, content.title) : null,
-          content.subtitle ? React.createElement('p', { className: 'text-sm text-slate-500 max-w-xl font-bold' }, content.subtitle) : null
+          { className: 'text-center mb-12' },
+          content.title ? React.createElement('h2', { className: `mb-4 ${titleStyles.className}`, style: titleStyles.style }, content.title) : null,
+          content.subtitle ? React.createElement('p', { className: `max-w-2xl mx-auto ${subtitleStyles.className}`, style: subtitleStyles.style }, content.subtitle) : null
         ),
         React.createElement(
           'div',
@@ -379,7 +614,7 @@ export const FeaturesSection = React.memo((props: any) => {
               'div',
               {
                 key: idx,
-                className: `relative p-6 bg-white border border-slate-200 rounded-sm flex items-start gap-4 transition-all duration-300 hover:shadow-md cursor-pointer ${isSelected ? 'ring-2 ring-[#a435f0] ring-offset-2' : isHovered ? 'ring-2 ring-purple-200' : ''
+                className: `relative p-8 bg-[var(--t2-white)] rounded-[20px] flex flex-col items-start gap-4 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(31,111,99,0.15)] group overflow-hidden cursor-pointer ${isSelected ? 'ring-2 ring-[var(--t2-gold)] ring-offset-2 ring-offset-[var(--t2-canvas)]' : isHovered ? 'ring-2 ring-[var(--t2-teal)] ring-offset-2 ring-offset-[var(--t2-canvas)]' : ''
                   }`,
                 onClick: (e: any) => {
                   if (isEditing) {
@@ -391,20 +626,26 @@ export const FeaturesSection = React.memo((props: any) => {
                 onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
                 onMouseLeave: () => isEditing && setHoveredItemIndex(null),
               },
+              React.createElement('div', { className: 'absolute inset-0 bg-gradient-to-br from-[var(--t2-teal)] to-[var(--t2-indigo)] opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0' }),
               itemProps.icon
                 ? React.createElement(
                   'div',
                   {
-                    className: 'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-purple-50 text-[#a435f0]'
+                    className: 'w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-[var(--t2-canvas)] text-[var(--t2-teal)] group-hover:bg-[var(--t2-gold)] group-hover:text-[var(--t2-ink)] transition-all duration-500 z-10 relative'
                   },
-                  React.createElement(DynamicIcon, { name: itemProps.icon, className: 'w-5 h-5' })
+                  React.createElement(DynamicIcon, { name: itemProps.icon, className: 'w-6 h-6' })
                 )
                 : null,
               React.createElement(
                 'div',
-                { className: 'space-y-1 text-right flex-1 min-w-0' },
-                React.createElement('h3', { className: 'text-sm font-bold text-slate-800 break-words leading-snug' }, itemProps.title || `ميزة ${idx + 1}`),
-                itemProps.description ? React.createElement('p', { className: 'text-xs text-slate-500 leading-relaxed break-words font-semibold' }, itemProps.description) : null
+                { className: 'space-y-2 text-right flex-1 min-w-0 z-10 relative' },
+                React.createElement('h3', { className: 'text-lg font-black text-[var(--t2-ink)] group-hover:text-[var(--t2-white)] transition-colors duration-500 font-["Fraunces"] break-words leading-snug' }, itemProps.title || `ميزة ${idx + 1}`),
+                itemProps.description ? React.createElement('p', { className: 'text-sm text-[var(--t2-ink)]/70 group-hover:text-[var(--t2-canvas)] transition-colors duration-500 font-medium font-["Inter"] leading-relaxed break-words' }, itemProps.description) : null
+              ),
+              React.createElement(
+                'div',
+                { className: 'mt-auto w-full flex justify-end z-10 relative pt-4' },
+                React.createElement(LucideIcons.ArrowLeft, { className: 'w-5 h-5 text-[var(--t2-teal)] group-hover:text-[var(--t2-gold)] transition-all duration-500 transform group-hover:rotate-45' })
               )
             );
           })
@@ -493,6 +734,15 @@ export const FaqSection = React.memo((props: any) => {
     setHoveredItemIndex
   } = useBuilderStore();
 
+  let currentTemplate: any = null;
+  try {
+    currentTemplate = useBuilderStore((state) => state.currentTemplate);
+  } catch (e) {
+    // Fallback if rendered outside the store context
+  }
+  const isUdemy = currentTemplate?.id === 'template_2';
+  const isEdx = currentTemplate?.id === 'template_3';
+
   const styles = buildStyles(props);
   const content = extractContentProps(props);
   const items = props.items || [];
@@ -500,6 +750,130 @@ export const FaqSection = React.memo((props: any) => {
   const px = 'px-4 sm:px-8';
   const py = 'py-8 sm:py-16';
 
+  // ─── TEMPLATE 2 (SMART PLATFORM): GRID OF CARDS ───
+  if (isUdemy) {
+    return React.createElement(
+      'section',
+      { style: styles, className: `${py} ${px} w-full transition-all duration-300 bg-slate-50` },
+      React.createElement(
+        'div',
+        { className: 'max-w-6xl mx-auto' },
+        React.createElement(
+          'div',
+          { className: 'text-center mb-10' },
+          content.title ? React.createElement('h2', { className: 'font-black mb-3 text-2xl lg:text-4xl text-slate-900 tracking-tight' }, content.title) : null,
+          content.subtitle ? React.createElement('p', { className: 'text-base text-slate-500 font-medium' }, content.subtitle) : null
+        ),
+        React.createElement(
+          'div',
+          { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+          items.map((item: any, idx: number) => {
+            const itemProps = item.props || {};
+            const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
+            const isHovered = isEditing && hoveredItemIndex === idx;
+
+            return React.createElement(
+              'div',
+              {
+                key: idx,
+                className: `p-6 bg-white border rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col gap-2 ${isSelected ? 'ring-2 ring-sky-500 ring-offset-2' : isHovered ? 'ring-2 ring-sky-200' : 'border-slate-200'}`,
+                onClick: (e: any) => {
+                  if (isEditing) {
+                    e.stopPropagation();
+                    setSelectedNodeId(props.id);
+                    setSelectedItemIndex(idx);
+                  }
+                },
+                onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
+                onMouseLeave: () => isEditing && setHoveredItemIndex(null),
+              },
+              React.createElement('h3', { className: 'text-sm font-black text-slate-800 flex items-start gap-2' }, 
+                React.createElement(LucideIcons.HelpCircle, { className: 'w-5 h-5 text-sky-600 flex-shrink-0' }),
+                itemProps.question || `سؤال ${idx + 1}`
+              ),
+              React.createElement('p', { className: 'text-xs text-slate-600 leading-relaxed font-semibold' }, itemProps.answer)
+            );
+          })
+        )
+      )
+    );
+  }
+
+  // ─── TEMPLATE 3 (ACADEMY): SPLIT SCREEN LAYOUT ───
+  if (isEdx) {
+    return React.createElement(
+      'section',
+      { style: styles, className: `${py} ${px} w-full transition-all duration-300` },
+      React.createElement(
+        'div',
+        { className: 'max-w-7xl mx-auto flex flex-col lg:flex-row gap-12 lg:gap-24 items-start' },
+        // Left side: Title
+        React.createElement(
+          'div',
+          { className: 'w-full lg:w-1/3 lg:sticky lg:top-32 text-right' },
+          content.title ? React.createElement('h2', { className: 'font-extrabold mb-4 text-3xl lg:text-4xl text-slate-900 leading-tight' }, content.title) : null,
+          content.subtitle ? React.createElement('p', { className: 'text-base text-slate-600 font-medium leading-relaxed' }, content.subtitle) : null
+        ),
+        // Right side: Accordion list (sleek underline style)
+        React.createElement(
+          'div',
+          { className: 'w-full lg:w-2/3 flex flex-col gap-4' },
+          items.map((item: any, idx: number) => {
+            const itemProps = item.props || {};
+            const isOpen = openIdx === idx;
+            const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
+            const isHovered = isEditing && hoveredItemIndex === idx;
+
+            return React.createElement(
+              'div',
+              {
+                key: idx,
+                className: `border-b border-slate-200 transition-all duration-300 ${isSelected ? 'bg-slate-50 ring-2 ring-emerald-500 rounded-lg p-2' : isHovered ? 'bg-slate-50 rounded-lg p-2' : 'py-2'}`,
+                onClick: (e: any) => {
+                  if (isEditing) {
+                    e.stopPropagation();
+                    setSelectedNodeId(props.id);
+                    setSelectedItemIndex(idx);
+                  }
+                },
+                onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
+                onMouseLeave: () => isEditing && setHoveredItemIndex(null),
+              },
+              React.createElement(
+                'button',
+                {
+                  type: 'button',
+                  onClick: (e: any) => {
+                    if (isEditing) {
+                      setOpenIdx(isOpen ? null : idx);
+                    } else {
+                      setOpenIdx(isOpen ? null : idx);
+                    }
+                  },
+                  className: 'w-full py-4 flex justify-between items-center text-right group gap-4'
+                },
+                React.createElement('span', { className: `text-sm font-bold transition-colors ${isOpen ? 'text-emerald-700' : 'text-slate-800 group-hover:text-emerald-600'}` }, itemProps.question || `سؤال ${idx + 1}`),
+                React.createElement(
+                  'div',
+                  { className: `w-8 h-8 rounded-full border flex items-center justify-center flex-shrink-0 transition-all duration-300 ${isOpen ? 'border-emerald-600 bg-emerald-600 text-white rotate-45' : 'border-slate-300 text-slate-500 group-hover:border-emerald-500 group-hover:text-emerald-600'}` },
+                  React.createElement(LucideIcons.Plus, { className: 'w-4 h-4' })
+                )
+              ),
+              React.createElement(
+                'div',
+                {
+                  className: `transition-all duration-500 ease-in-out overflow-hidden ${isOpen ? 'max-h-[400px] opacity-100 pb-6' : 'max-h-0 opacity-0'}`
+                },
+                React.createElement('p', { className: 'text-sm text-slate-600 font-semibold leading-relaxed w-11/12 pr-4 border-r-2 border-emerald-500' }, itemProps.answer)
+              )
+            );
+          })
+        )
+      )
+    );
+  }
+
+  // ─── TEMPLATE 1 (CLASSIC): STANDARD ACCORDION ───
   return React.createElement(
     'section',
     { style: styles, className: `${py} ${px} w-full transition-all duration-300` },
@@ -511,7 +885,7 @@ export const FaqSection = React.memo((props: any) => {
     ),
     React.createElement(
       'div',
-      { className: 'w-full space-y-3' },
+      { className: 'w-full space-y-3 max-w-4xl mx-auto' },
       items.map((item: any, idx: number) => {
         const itemProps = item.props || {};
         const isOpen = openIdx === idx;
@@ -522,8 +896,7 @@ export const FaqSection = React.memo((props: any) => {
           'div',
           {
             key: idx,
-            className: `border rounded-2xl bg-white/60 backdrop-blur-sm overflow-hidden transition-all duration-300 ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100'
-              }`,
+            className: `border rounded-2xl bg-white/60 backdrop-blur-sm overflow-hidden transition-all duration-300 ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100'}`,
             onClick: (e: any) => {
               if (isEditing) {
                 e.stopPropagation();
@@ -540,8 +913,6 @@ export const FaqSection = React.memo((props: any) => {
               type: 'button',
               onClick: (e: any) => {
                 if (isEditing) {
-                  // If editing, click selects, double click or toggle button might be needed for actual FAQ toggle
-                  // but for now let's keep it simple
                   setOpenIdx(isOpen ? null : idx);
                 } else {
                   setOpenIdx(isOpen ? null : idx);
@@ -555,8 +926,7 @@ export const FaqSection = React.memo((props: any) => {
           React.createElement(
             'div',
             {
-              className: `transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-[300px] border-t border-slate-100 p-4 bg-white/30' : 'max-h-0'
-                }`
+              className: `transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-[300px] border-t border-slate-100 p-4 bg-white/30' : 'max-h-0'}`
             },
             React.createElement('p', { className: 'text-xs text-slate-500 font-bold leading-relaxed break-words' }, itemProps.answer)
           )
@@ -592,25 +962,56 @@ export const TestimonialsSection = React.memo((props: any) => {
   const px = 'px-4 sm:px-8';
   const py = 'py-8 sm:py-16';
 
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const isCarousel = items.length > 3;
+
+  const handleScroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const container = scrollRef.current;
+      const cardWidth = container.firstElementChild?.getBoundingClientRect().width || 300;
+      const offset = cardWidth + 24;
+      const scrollAmount = direction === 'left' ? -offset : offset;
+      container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
   if (isUdemy) {
+    const sectionBgClass = styles.backgroundColor === 'transparent' ? '' : 'bg-[var(--t2-canvas-2)]';
+    const titleStyles = getTypographyStyle(props, 'title', { size: 'text-3xl sm:text-4xl lg:text-5xl', weight: 'font-black', color: 'var(--t2-ink)', font: 'Fraunces' });
+    const subtitleStyles = getTypographyStyle(props, 'subtitle', { size: 'text-base sm:text-lg', weight: 'font-medium', color: 'rgba(22,21,44,0.8)', font: 'Inter' });
+
     return React.createElement(
       'section',
       {
-        style: { ...styles, backgroundColor: props.background_color || '#f7f9fa', color: '#1c1d1f' },
-        className: `${py} ${px} w-full transition-all duration-300 text-right`
+        style: { ...styles },
+        className: `${py} ${px} w-full transition-all duration-300 text-right ${sectionBgClass} t2-animate-on-scroll relative overflow-hidden`
       },
+      React.createElement('div', { className: 'absolute inset-0 opacity-5 pointer-events-none' },
+        React.createElement('div', { className: 'absolute -top-[10%] -right-[10%] w-[50%] h-[50%] rounded-full bg-[var(--t2-indigo)] blur-3xl' })
+      ),
       React.createElement(
         'div',
-        { className: 'max-w-6xl mx-auto' },
+        { className: 'max-w-7xl mx-auto relative z-10' },
         React.createElement(
           'div',
-          { className: 'text-right mb-8' },
-          content.title ? React.createElement('h2', { className: 'font-black mb-3 text-xl sm:text-2xl lg:text-3xl text-slate-800' }, content.title) : null,
-          content.subtitle ? React.createElement('p', { className: 'text-sm text-slate-500 max-w-xl font-semibold' }, content.subtitle) : null
+          { className: 'text-center mb-16' },
+          content.title ? React.createElement('h2', { className: `mb-4 ${titleStyles.className}`, style: titleStyles.style }, content.title) : null,
+          content.subtitle ? React.createElement('p', { className: `max-w-2xl mx-auto ${subtitleStyles.className}`, style: subtitleStyles.style }, content.subtitle) : null
         ),
+        React.createElement('style', null, `
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+        `),
         React.createElement(
           'div',
-          { className: 'grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3' },
+          {
+            ref: scrollRef,
+            className: isCarousel 
+              ? 'flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-4 px-2 -mx-2 scrollbar-hide' 
+              : 'grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
+            style: isCarousel ? { scrollbarWidth: 'none', msOverflowStyle: 'none' } : undefined
+          },
           items.map((item: any, idx: number) => {
             const itemProps = item.props || {};
             const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
@@ -620,8 +1021,9 @@ export const TestimonialsSection = React.memo((props: any) => {
               'div',
               {
                 key: idx,
-                className: `relative p-6 bg-white border border-slate-200 rounded-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 cursor-pointer ${isSelected ? 'ring-2 ring-[#a435f0] ring-offset-2' : isHovered ? 'ring-2 ring-purple-200' : ''
-                  }`,
+                className: `relative p-8 bg-[var(--t2-white)] rounded-[20px] flex flex-col justify-between hover:shadow-[0_15px_30px_rgba(27,26,58,0.06)] hover:-translate-y-2 transition-all duration-500 cursor-pointer ${
+                  isCarousel ? 'snap-start shrink-0 w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]' : ''
+                } ${isSelected ? 'ring-2 ring-[var(--t2-gold)] ring-offset-2 ring-offset-[var(--t2-canvas-2)]' : isHovered ? 'ring-2 ring-[var(--t2-teal)] ring-offset-2 ring-offset-[var(--t2-canvas-2)]' : ''}`,
                 onClick: (e: any) => {
                   if (isEditing) {
                     e.stopPropagation();
@@ -634,43 +1036,63 @@ export const TestimonialsSection = React.memo((props: any) => {
               },
               React.createElement(
                 'div',
-                { className: 'space-y-3' },
-                // Star ratings
+                { className: 'space-y-4' },
+                React.createElement(LucideIcons.Quote, { className: 'w-10 h-10 text-[var(--t2-coral)]/40 rotate-180 mb-2' }),
                 React.createElement(
                   'div',
-                  { className: 'flex gap-0.5 text-amber-500' },
+                  { className: 'flex gap-1 text-[var(--t2-gold)]' },
                   Array.from({ length: itemProps.rating || 5 }).map((_, i) =>
                     React.createElement('span', { key: i, className: 'text-sm' }, '★')
                   )
                 ),
                 React.createElement(
                   'p',
-                  { className: 'text-xs text-slate-600 leading-relaxed font-semibold break-words' },
+                  { className: 'text-sm sm:text-base text-[var(--t2-ink)] leading-relaxed font-semibold break-words font-["Inter"]' },
                   `"${itemProps.quote || 'تعليق متميز للعميل'}"`
                 )
               ),
               React.createElement(
                 'div',
-                { className: 'flex items-center gap-3 mt-6 pt-4 border-t border-slate-100' },
+                { className: 'flex items-center gap-4 mt-8 pt-6 border-t border-[var(--t2-indigo-3)]/10' },
                 React.createElement(
                   'div',
                   {
-                    className: 'w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-sm font-black text-white bg-purple-100 flex-shrink-0'
+                    className: 'w-12 h-12 rounded-full overflow-hidden flex items-center justify-center text-base font-black text-[var(--t2-ink)] bg-[var(--t2-gold-light)] flex-shrink-0'
                   },
                   itemProps.avatar
                     ? React.createElement('img', { src: itemProps.avatar, alt: itemProps.author, className: 'w-full h-full object-cover' })
-                    : React.createElement('span', { className: 'text-[#a435f0] font-bold text-xs' }, itemProps.author?.[0] || 'U')
+                    : React.createElement('span', { className: 'font-["Fraunces"]' }, itemProps.author?.[0] || 'U')
                 ),
                 React.createElement(
                   'div',
                   { className: 'text-right min-w-0 flex-1' },
-                  React.createElement('h4', { className: 'text-xs font-bold text-slate-800 truncate' }, itemProps.author || 'اسم العميل'),
-                  itemProps.role ? React.createElement('p', { className: 'text-[10px] text-slate-400 font-semibold mt-0.5' }, itemProps.role) : null
+                  React.createElement('h4', { className: 'text-sm font-black text-[var(--t2-ink)] truncate font-["IBM_Plex_Mono"] tracking-wide' }, itemProps.author || 'اسم العميل'),
+                  itemProps.role ? React.createElement('p', { className: 'text-[11px] text-[var(--t2-teal)] font-bold mt-1 font-["IBM_Plex_Mono"] uppercase tracking-wider' }, itemProps.role) : null
                 )
               )
             );
           })
-        )
+        ),
+        isCarousel ? React.createElement(
+          'div',
+          { className: 'flex justify-center gap-3 mt-10' },
+          React.createElement(
+            'button',
+            {
+              onClick: () => handleScroll('right'),
+              className: 'w-12 h-12 rounded-full border border-[var(--t2-indigo-3)]/20 bg-[var(--t2-white)] flex items-center justify-center text-[var(--t2-ink)] hover:bg-[var(--t2-gold)] hover:border-[var(--t2-gold)] hover:text-[var(--t2-ink)] transition-all shadow-sm'
+            },
+            React.createElement(LucideIcons.ChevronRight, { className: 'w-6 h-6' })
+          ),
+          React.createElement(
+            'button',
+            {
+              onClick: () => handleScroll('left'),
+              className: 'w-12 h-12 rounded-full border border-[var(--t2-indigo-3)]/20 bg-[var(--t2-white)] flex items-center justify-center text-[var(--t2-ink)] hover:bg-[var(--t2-gold)] hover:border-[var(--t2-gold)] hover:text-[var(--t2-ink)] transition-all shadow-sm'
+            },
+            React.createElement(LucideIcons.ChevronLeft, { className: 'w-6 h-6' })
+          )
+        ) : null
       )
     );
   }
@@ -684,9 +1106,20 @@ export const TestimonialsSection = React.memo((props: any) => {
       content.title ? React.createElement('h2', { className: 'font-black mb-3 text-xl sm:text-2xl lg:text-3xl' }, content.title) : null,
       content.subtitle ? React.createElement('p', { className: 'text-sm opacity-75 max-w-xl mx-auto' }, content.subtitle) : null
     ),
+    React.createElement('style', null, `
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+    `),
     React.createElement(
       'div',
-      { className: 'grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3' },
+      {
+        ref: scrollRef,
+        className: isCarousel 
+          ? 'flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-4 px-2 -mx-2 scrollbar-hide' 
+          : 'grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
+        style: isCarousel ? { scrollbarWidth: 'none', msOverflowStyle: 'none' } : undefined
+      },
       items.map((item: any, idx: number) => {
         const itemProps = item.props || {};
         const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
@@ -696,8 +1129,9 @@ export const TestimonialsSection = React.memo((props: any) => {
           'div',
           {
             key: idx,
-            className: `relative p-6 bg-white border rounded-2xl flex flex-col justify-between shadow-sm transition-all duration-300 overflow-hidden ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100 hover:shadow-lg hover:-translate-y-1'
-              }`,
+            className: `relative p-6 bg-white border rounded-2xl flex flex-col justify-between shadow-sm transition-all duration-300 overflow-hidden ${
+              isCarousel ? 'snap-start shrink-0 w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]' : ''
+            } ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100 hover:shadow-lg hover:-translate-y-1'}`,
             onClick: (e: any) => {
               if (isEditing) {
                 e.stopPropagation();
@@ -755,7 +1189,27 @@ export const TestimonialsSection = React.memo((props: any) => {
           )
         );
       })
-    )
+    ),
+    isCarousel ? React.createElement(
+      'div',
+      { className: 'flex justify-center gap-3 mt-8' },
+      React.createElement(
+        'button',
+        {
+          onClick: () => handleScroll('right'),
+          className: 'w-10 h-10 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 hover:border-slate-350 transition-colors shadow-sm'
+        },
+        React.createElement(LucideIcons.ChevronRight, { className: 'w-5 h-5' })
+      ),
+      React.createElement(
+        'button',
+        {
+          onClick: () => handleScroll('left'),
+          className: 'w-10 h-10 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 hover:border-slate-350 transition-colors shadow-sm'
+        },
+        React.createElement(LucideIcons.ChevronLeft, { className: 'w-5 h-5' })
+      )
+    ) : null
   );
 });
 TestimonialsSection.displayName = 'TestimonialsSection';
@@ -837,11 +1291,23 @@ export const GallerySection = React.memo((props: any) => {
             onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
             onMouseLeave: () => isEditing && setHoveredItemIndex(null),
           },
-          React.createElement('img', {
-            src: itemProps.image_url || 'https://images.unsplash.com/photo-1498050108023-c5249f4df085',
-            alt: itemProps.caption || '',
-            className: 'w-full h-full object-cover transition-transform duration-500 group-hover:scale-110'
-          }),
+          // Wrap the image element in an anchor tag if a navigation link is configured and the builder is in view mode.
+          React.createElement(
+            (!isEditing && itemProps.image_link) ? 'a' : 'div',
+            (!isEditing && itemProps.image_link)
+              ? {
+                  href: itemProps.image_link,
+                  target: '_blank',
+                  rel: 'noopener noreferrer',
+                  className: 'block w-full h-full cursor-pointer'
+                }
+              : { className: 'w-full h-full' },
+            React.createElement('img', {
+              src: itemProps.image_url || 'https://images.unsplash.com/photo-1498050108023-c5249f4df085',
+              alt: itemProps.caption || '',
+              className: 'w-full h-full object-cover transition-transform duration-500 group-hover:scale-110'
+            })
+          ),
           itemProps.caption
             ? React.createElement(
               'div',
@@ -873,6 +1339,135 @@ export const PricingSection = React.memo((props: any) => {
   const px = 'px-4 sm:px-8 lg:px-16';
   const py = 'py-8 sm:py-16';
 
+  let currentTemplate: any = null;
+  try {
+    currentTemplate = useBuilderStore((state) => state.currentTemplate);
+  } catch (e) {
+    // Fallback if rendered outside the store context
+  }
+  const isUdemy = currentTemplate?.id === 'template_2';
+
+  const [isYearly, setIsYearly] = React.useState(true);
+
+  if (isUdemy) {
+    const sectionBgClass = styles.backgroundColor === 'transparent' ? '' : 'bg-[var(--t2-indigo)]';
+    const titleStyles = getTypographyStyle(props, 'title', { size: 'text-3xl sm:text-4xl lg:text-5xl', weight: 'font-black', color: 'var(--t2-white)', font: 'Fraunces' });
+    const subtitleStyles = getTypographyStyle(props, 'subtitle', { size: 'text-base sm:text-lg', weight: 'font-medium', color: 'var(--t2-canvas-2)', font: 'Inter' });
+
+    return React.createElement(
+      'section',
+      {
+        style: { ...styles },
+        className: `${py} ${px} w-full transition-all duration-300 text-right ${sectionBgClass} t2-animate-on-scroll`
+      },
+      React.createElement(
+        'div',
+        { className: 'max-w-5xl mx-auto' },
+        React.createElement(
+          'div',
+          { className: 'text-center mb-12' },
+          content.title ? React.createElement('h2', { className: `mb-4 ${titleStyles.className}`, style: titleStyles.style }, content.title) : null,
+          content.subtitle ? React.createElement('p', { className: `max-w-2xl mx-auto ${subtitleStyles.className}`, style: subtitleStyles.style }, content.subtitle) : null
+        ),
+        
+        // Toggle Switch
+        React.createElement(
+          'div',
+          { className: 'flex justify-center items-center gap-4 mb-16' },
+          React.createElement('span', { className: `text-sm font-bold font-["Inter"] transition-colors ${!isYearly ? 'text-[var(--t2-white)]' : 'text-[var(--t2-canvas-3)]/60'}` }, 'شهرياً'),
+          React.createElement(
+            'button',
+            {
+              className: 'w-16 h-8 rounded-full bg-[var(--t2-indigo-3)] relative transition-colors duration-300',
+              onClick: () => setIsYearly(!isYearly)
+            },
+            React.createElement('div', {
+              className: `w-6 h-6 rounded-full bg-[var(--t2-gold)] absolute top-1 transition-all duration-300 ${!isYearly ? 'right-1' : 'right-9'}`
+            })
+          ),
+          React.createElement('span', { className: `text-sm font-bold font-["Inter"] flex items-center gap-2 transition-colors ${isYearly ? 'text-[var(--t2-white)]' : 'text-[var(--t2-canvas-3)]/60'}` }, 
+            'سنوياً',
+            React.createElement('span', { className: 'bg-[var(--t2-coral)] text-[var(--t2-white)] text-[10px] px-2 py-0.5 rounded-full font-["IBM_Plex_Mono"] font-bold' }, 'وفر 20%')
+          )
+        ),
+
+        // Pricing Cards
+        React.createElement(
+          'div',
+          { className: 'grid gap-8 items-center pt-4 grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto' },
+          items.map((item: any, idx: number) => {
+            const itemProps = item.props || {};
+            const isPopular = itemProps.is_popular;
+            const features = itemProps.features_list ? itemProps.features_list.split('\n').filter(Boolean) : (itemProps.features || []);
+            const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
+            const isHovered = isEditing && hoveredItemIndex === idx;
+
+            // Use the toggle to highlight the active plan based on isYearly
+            const isActivePlan = (isYearly && isPopular) || (!isYearly && !isPopular);
+
+            return React.createElement(
+              'div',
+              {
+                key: idx,
+                className: `flex flex-col bg-[var(--t2-indigo-2)] rounded-[24px] p-8 transition-all duration-500 relative border border-[var(--t2-indigo-3)] ${isSelected ? 'ring-2 ring-[var(--t2-gold)] ring-offset-4 ring-offset-[var(--t2-indigo)]' : isHovered ? 'ring-2 ring-[var(--t2-teal)] ring-offset-4 ring-offset-[var(--t2-indigo)]' : ''} ${isActivePlan ? 'shadow-[0_0_40px_rgba(31,111,99,0.3)] scale-105 border-[var(--t2-teal)] z-10' : 'opacity-80 scale-100 z-0'}`,
+                onClick: (e: any) => {
+                  if (isEditing) {
+                    e.stopPropagation();
+                    setSelectedNodeId(props.id);
+                    setSelectedItemIndex(idx);
+                  }
+                },
+                onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
+                onMouseLeave: () => isEditing && setHoveredItemIndex(null),
+              },
+              isPopular
+                ? React.createElement(
+                  'div',
+                  { className: 'absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[var(--t2-coral)] text-[var(--t2-white)] px-4 py-1 rounded-full font-bold text-[11px] shadow-lg uppercase font-["IBM_Plex_Mono"] tracking-widest' },
+                  'الأكثر شعبية'
+                )
+                : null,
+              React.createElement(
+                'div',
+                { className: 'mb-8 text-right' },
+                React.createElement('h3', { className: 'text-2xl font-black text-[var(--t2-white)] font-["Fraunces"] mb-2' }, itemProps.title || itemProps.plan_name || 'اسم الخطة'),
+                React.createElement(
+                  'div',
+                  { className: 'flex items-baseline justify-start gap-2 mt-4 text-[var(--t2-gold)]' },
+                  React.createElement('span', { className: 'text-5xl font-black font-["Inter"] tracking-tight' }, itemProps.price),
+                  React.createElement('span', { className: 'text-sm font-bold text-[var(--t2-canvas-2)] font-["Inter"]' }, `/ ${itemProps.duration || itemProps.period || 'شهري'}`)
+                )
+              ),
+              React.createElement(
+                'ul',
+                { className: 'space-y-4 mb-8 flex-grow text-right' },
+                features.map((feature: string, fIdx: number) =>
+                  React.createElement(
+                    'li',
+                    { key: fIdx, className: 'flex items-center gap-3 text-sm font-medium text-[var(--t2-white)] font-["Inter"]' },
+                    React.createElement('div', { className: 'w-5 h-5 rounded-full bg-[var(--t2-teal)]/20 flex items-center justify-center flex-shrink-0' },
+                      React.createElement(LucideIcons.Check, { className: 'w-3 h-3 text-[var(--t2-teal)]' })
+                    ),
+                    React.createElement('span', { className: 'break-words' }, feature)
+                  )
+                )
+              ),
+              React.createElement(
+                'a',
+                {
+                  href: itemProps.button_link || '#',
+                  className: 'w-full py-4 text-center text-[var(--t2-ink)] font-black text-sm rounded-full transition-all block mt-auto shadow-lg hover:shadow-xl font-["Inter"]',
+                  style: { backgroundColor: 'var(--t2-gold)' }
+                },
+                itemProps.button_text || 'اشترك الآن'
+              )
+            );
+          })
+        )
+      )
+    );
+  }
+
   return React.createElement(
     'section',
     { style: styles, className: `${py} ${px} w-full transition-all duration-300` },
@@ -888,7 +1483,7 @@ export const PricingSection = React.memo((props: any) => {
       items.map((item: any, idx: number) => {
         const itemProps = item.props || {};
         const isPopular = itemProps.is_popular;
-        const features = itemProps.features_list ? itemProps.features_list.split('\n').filter(Boolean) : [];
+        const features = itemProps.features_list ? itemProps.features_list.split('\n').filter(Boolean) : (itemProps.features || []);
         const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
         const isHovered = isEditing && hoveredItemIndex === idx;
 
@@ -918,12 +1513,12 @@ export const PricingSection = React.memo((props: any) => {
           React.createElement(
             'div',
             { className: 'mb-5 text-right' },
-            React.createElement('h3', { className: 'text-sm font-black text-slate-800' }, itemProps.plan_name || 'اسم الخطة'),
+            React.createElement('h3', { className: 'text-sm font-black text-slate-800' }, itemProps.plan_name || itemProps.title || 'اسم الخطة'),
             React.createElement(
               'div',
               { className: 'flex items-baseline justify-start gap-1 mt-2 text-blue-600' },
               React.createElement('span', { className: 'text-2xl font-black' }, itemProps.price),
-              React.createElement('span', { className: 'text-xs font-bold' }, `/ ${itemProps.period || 'شهري'}`)
+              React.createElement('span', { className: 'text-xs font-bold' }, `/ ${itemProps.period || itemProps.duration || 'شهري'}`)
             )
           ),
           React.createElement(
@@ -1011,7 +1606,7 @@ export const CategoriesSection = React.memo((props: any) => {
               'div',
               {
                 key: idx,
-                className: `group relative overflow-hidden border border-slate-200 p-5 bg-[#f7f9fa] hover:bg-[#eff1f2] rounded-sm transition-all duration-300 cursor-pointer flex flex-col items-start text-right ${isSelected ? 'ring-2 ring-[#a435f0] ring-offset-2 bg-white' : isHovered ? 'ring-2 ring-purple-200' : ''
+                className: `group relative overflow-hidden border border-slate-200 p-5 bg-[#f7f9fa] hover:bg-[#eff1f2] rounded-sm transition-all duration-300 cursor-pointer flex flex-col items-start text-right ${isSelected ? 'ring-2 ring-[#2FA8E0] ring-offset-2 bg-white' : isHovered ? 'ring-2 ring-sky-200' : ''
                   }`,
                 onClick: (e: any) => {
                   if (isEditing) {
@@ -1027,7 +1622,7 @@ export const CategoriesSection = React.memo((props: any) => {
                 ? React.createElement(
                   'div',
                   {
-                    className: 'w-10 h-10 rounded-full flex items-center justify-center mb-3 bg-white border border-slate-150 text-[#a435f0]'
+                    className: 'w-10 h-10 rounded-full flex items-center justify-center mb-3 bg-white border border-slate-150 text-[#2FA8E0]'
                   },
                   React.createElement(DynamicIcon, { name: p.icon, className: 'w-5 h-5' })
                 )
@@ -1037,7 +1632,7 @@ export const CategoriesSection = React.memo((props: any) => {
                 { className: 'w-full flex flex-col items-start gap-1 text-right' },
                 React.createElement(
                   'h3',
-                  { className: 'font-bold text-slate-800 text-sm break-words leading-tight group-hover:text-purple-600 transition-colors' },
+                  { className: 'font-bold text-slate-800 text-sm break-words leading-tight group-hover:text-sky-600 transition-colors' },
                   p.name || `فئة ${idx + 1}`
                 ),
                 p.count !== undefined && p.count !== ''
@@ -1158,6 +1753,24 @@ export const CategoriesSection = React.memo((props: any) => {
 });
 CategoriesSection.displayName = 'CategoriesSection';
 
+export const CustomHtmlSection = React.memo((props: any) => {
+  const htmlContent = props.html || '';
+
+  if (!htmlContent.trim()) {
+    return React.createElement(
+      'div',
+      { className: 'py-12 border-2 border-dashed border-slate-200/60 rounded-3xl bg-slate-50/40 text-center text-xs text-slate-400 font-bold select-none' },
+      'قم بكتابة أو لصق كود HTML المخصص في لوحة التحكم الجانبية لعرضه هنا'
+    );
+  }
+
+  return React.createElement('div', {
+    className: 'w-full custom-html-wrapper',
+    dangerouslySetInnerHTML: { __html: htmlContent }
+  });
+});
+CustomHtmlSection.displayName = 'CustomHtmlSection';
+
 export const componentRegistry = {
   hero_section: HeroSection,
   features_section: FeaturesSection,
@@ -1166,6 +1779,7 @@ export const componentRegistry = {
   gallery_section: GallerySection,
   pricing_section: PricingSection,
   categories_section: CategoriesSection,
+  custom_html: CustomHtmlSection,
   // Existing static blocks
   hero: HeroBanner,
   'hero-slider': HeroSlider,
@@ -1229,8 +1843,10 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       { name: 'button_text', label: 'نص الزر', type: 'text', defaultValue: 'Get Started' },
       { name: 'button_link', label: 'رابط الزر', type: 'text', defaultValue: '#' },
       { name: 'background_color', label: 'لون الخلفية', type: 'color', defaultValue: '#ffffff' },
-      { name: 'text_color', label: 'لون النص', type: 'color', defaultValue: '#1f2937' },
+      { name: 'text_color', label: 'لون نص الوصف', type: 'color', defaultValue: '#1f2937' },
+      { name: 'title_color', label: 'لون العنوان الرئيسي', type: 'color', defaultValue: '#111827' },
       { name: 'button_color', label: 'لون الزر', type: 'color', defaultValue: '#2563eb' },
+      { name: 'button_text_color', label: 'لون نص الزر', type: 'color', defaultValue: '#ffffff' },
       { name: 'font_size', label: 'حجم الخط (العنوان)', type: 'number', defaultValue: 48 },
       { name: 'font_weight', label: 'وزن الخط (العنوان)', type: 'number', defaultValue: 700 },
       { name: 'padding_top', label: 'تباعد علوي (px)', type: 'number', defaultValue: 60 },
@@ -1245,6 +1861,33 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       },
       { name: 'slider_speed', label: 'سرعة انتقال السلايدر (بالثواني)', type: 'number', defaultValue: 4 },
       { name: 'show_arrows', label: 'عرض أسهم التنقل', type: 'boolean', defaultValue: true },
+      { name: 'show_card_overlay', label: 'إظهار خلفية النص البيضاء (Box Overlay)', type: 'boolean', defaultValue: false },
+      { name: 'bg_image', label: '📷 صورة/فيديو خلفية الهيرو الأساسي', type: 'image', defaultValue: '' },
+      { name: 'side_image', label: '📷 صورة/فيديو جانبية (Side Media)', type: 'image', defaultValue: '' },
+      {
+        name: 'side_image_position', label: 'موقع الصورة الجانبية', type: 'select', defaultValue: 'left', options: [
+          { label: 'يسار النص', value: 'left' },
+          { label: 'يمين النص', value: 'right' }
+        ]
+      },
+      {
+        name: 'side_image_shape', label: 'شكل الصورة الجانبية', type: 'select', defaultValue: 'rounded', options: [
+          { label: 'زوايا دائرية (Rounded)', value: 'rounded' },
+          { label: 'دائرة (Circle)', value: 'circle' },
+          { label: 'مربع (Square)', value: 'square' },
+          { label: 'ورقة شجر (Leaf)', value: 'leaf' }
+        ]
+      },
+      { name: 'side_image_width', label: 'عرض الصورة الجانبية (px)', type: 'number', defaultValue: 380 },
+      { name: 'side_image_height', label: 'ارتفاع الصورة الجانبية (px)', type: 'number', defaultValue: 380 },
+      {
+        name: 'side_image_fit', label: 'ملاءمة الصورة الجانبية', type: 'select', defaultValue: 'contain', options: [
+          { label: 'ملاءمة (Contain)', value: 'contain' },
+          { label: 'تعبئة (Cover)', value: 'cover' },
+          { label: 'تمطيط (Fill)', value: 'fill' }
+        ]
+      },
+      { name: 'image_link', label: '🔗 رابط الصورة الجانبية (عند الضغط)', type: 'text', defaultValue: '' },
       ...SECTION_STYLE_FIELDS
     ],
     itemLabel: 'شريحة',
@@ -1262,7 +1905,36 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
           { label: 'وسط', value: 'center' },
           { label: 'يسار', value: 'left' }
         ]
-      }
+      },
+      { name: 'show_card_overlay', label: 'إظهار خلفية النص البيضاء (Box Overlay)', type: 'boolean', defaultValue: false },
+      { name: 'title_color', label: 'لون العنوان الرئيسي', type: 'color', defaultValue: '#ffffff' },
+      { name: 'text_color', label: 'لون نص الوصف', type: 'color', defaultValue: '#f8fafc' },
+      { name: 'button_text_color', label: 'لون نص زر التوجيه', type: 'color', defaultValue: '#1e40af' },
+      { name: 'side_image', label: '📷 صورة جانبية (Side Image)', type: 'image', defaultValue: '' },
+      {
+        name: 'side_image_position', label: 'موقع الصورة الجانبية', type: 'select', defaultValue: 'left', options: [
+          { label: 'يسار النص', value: 'left' },
+          { label: 'يمين النص', value: 'right' }
+        ]
+      },
+      {
+        name: 'side_image_shape', label: 'شكل الصورة الجانبية', type: 'select', defaultValue: 'rounded', options: [
+          { label: 'زوايا دائرية (Rounded)', value: 'rounded' },
+          { label: 'دائرة (Circle)', value: 'circle' },
+          { label: 'مربع (Square)', value: 'square' },
+          { label: 'ورقة شجر (Leaf)', value: 'leaf' }
+        ]
+      },
+      { name: 'side_image_width', label: 'عرض الصورة الجانبية (px)', type: 'number', defaultValue: 380 },
+      { name: 'side_image_height', label: 'ارتفاع الصورة الجانبية (px)', type: 'number', defaultValue: 380 },
+      {
+        name: 'side_image_fit', label: 'ملاءمة الصورة الجانبية', type: 'select', defaultValue: 'contain', options: [
+          { label: 'ملاءمة (Contain)', value: 'contain' },
+          { label: 'تعبئة (Cover)', value: 'cover' },
+          { label: 'تمطيط (Fill)', value: 'fill' }
+        ]
+      },
+      { name: 'image_link', label: '🔗 رابط الصورة الجانبية (عند الضغط)', type: 'text', defaultValue: '' }
     ],
     defaultProps: {
       title: 'Welcome',
@@ -1451,7 +2123,9 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
     itemLabel: 'صورة',
     itemFields: [
       { name: 'image_url', label: '📷 رفع الصورة', type: 'image', defaultValue: '' },
-      { name: 'caption', label: 'وصف الصورة', type: 'text', defaultValue: '' }
+      { name: 'caption', label: 'وصف الصورة', type: 'text', defaultValue: '' },
+      // Added clickable navigation link option for individual gallery images
+      { name: 'image_link', label: '🔗 رابط توجيه الصورة عند النقر (رابط تنقل عند الضغط على الصورة)', type: 'text', defaultValue: '' }
     ],
     defaultProps: {
       title: 'معرض الصور',
@@ -1465,9 +2139,9 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       padding_top: 60,
       padding_bottom: 60,
       items: [
-        { order: 1, props: { image_url: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085', caption: 'تصميم مواقع وتطبيقات' } },
-        { order: 2, props: { image_url: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12', caption: 'ورش العمل التفاعلية' } },
-        { order: 3, props: { image_url: 'https://images.unsplash.com/photo-1542744094-3a31f103e35f', caption: 'لقاءات توظيف وتدريب' } }
+        { order: 1, props: { image_url: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085', caption: 'تصميم مواقع وتطبيقات', image_link: '' } },
+        { order: 2, props: { image_url: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12', caption: 'ورش العمل التفاعلية', image_link: '' } },
+        { order: 3, props: { image_url: 'https://images.unsplash.com/photo-1542744094-3a31f103e35f', caption: 'لقاءات توظيف وتدريب', image_link: '' } }
       ]
     }
   },
@@ -1582,7 +2256,9 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
           { label: 'يسار', value: 'left' }
         ]
       },
-      { name: 'heroImage', label: 'صورة جانبية في الهيرو (URL)', type: 'text', defaultValue: '' },
+      { name: 'heroImage', label: '📷 صورة/فيديو جانبية في الهيرو', type: 'image', defaultValue: '' },
+      // Added clickable navigation link option for the side image in the hero banner
+      { name: 'heroImageLink', label: '🔗 رابط توجيه الصورة الجانبية عند النقر (رابط تنقل عند الضغط على الصورة الجانبية)', type: 'text', defaultValue: '' },
       {
         name: 'heroImagePosition', label: 'موقع الصورة الجانبية', type: 'select', defaultValue: 'left', options: [
           { label: 'يسار النص', value: 'left' },
@@ -1614,7 +2290,7 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       { name: 'buttonTextColor', label: 'لون نص الزر', type: 'color', defaultValue: '#ffffff' },
       { name: 'secondButtonColor', label: 'لون خلفية الزر الثانوي', type: 'color', defaultValue: '#f1f5f9' },
       { name: 'backgroundColor', label: 'لون الخلفية', type: 'color', defaultValue: '#f8fafc' },
-      { name: 'bgImage', label: 'رابط صورة خلفية الهيرو (URL)', type: 'text', defaultValue: '' },
+      { name: 'bgImage', label: '📷 صورة/فيديو خلفية الهيرو', type: 'image', defaultValue: '' },
       ...SECTION_STYLE_FIELDS,
     ],
     defaultProps: {
@@ -1631,6 +2307,7 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       backgroundColor: '#f8fafc',
       bgImage: '',
       heroImage: '',
+      heroImageLink: '', // default empty link
       heroImagePosition: 'left',
       heroImageWidth: 384,
       heroImageHeight: 384,
@@ -1906,6 +2583,20 @@ export const COMPONENT_REGISTRY: Record<string, ComponentRegistryEntry> = {
       twitterUrl: '',
       showLogo: true,
       showSocials: true
+    }
+  },
+
+  'custom_html': {
+    type: 'custom_html',
+    name: 'قسم HTML مخصص (Custom HTML)',
+    category: 'content',
+    icon: 'Code',
+    fields: [
+      { name: 'html', label: 'كود HTML المخصص', type: 'textarea', defaultValue: '<div class="p-6 text-center bg-blue-50 text-blue-600 font-bold rounded-2xl">كود HTML مخصص</div>' },
+      ...SECTION_STYLE_FIELDS,
+    ],
+    defaultProps: {
+      html: '<div class="p-6 text-center bg-blue-50 text-blue-600 font-bold rounded-2xl">كود HTML مخصص</div>'
     }
   }
 };

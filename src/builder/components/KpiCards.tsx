@@ -56,9 +56,65 @@ export default function KpiCards(props: KpiCardsProps) {
            gridCols === '6' ? 'grid-cols-6' : 'grid-cols-4';
   };
 
+  let currentTemplate: any = null;
+  try {
+    currentTemplate = useBuilderStore((state) => state.currentTemplate);
+  } catch (e) {
+    // Fallback if rendered outside the store context
+  }
+  const isUdemy = currentTemplate?.id === 'template_2';
+
   const gridClass = getGridClass();
 
   const isTransparentBg = hasSectionBackground(props);
+
+  if (isUdemy) {
+    const sectionBgClass = isTransparentBg ? '' : 'bg-[var(--t2-canvas)]';
+    return (
+      <div className={`relative py-12 px-4 sm:px-8 ${sectionBgClass} t2-animate-on-scroll`} dir="rtl">
+        {/* Connecting line background */}
+        <div className="absolute top-20 right-12 left-12 h-[2px] bg-[var(--t2-indigo-3)]/10 z-0 hidden md:block"></div>
+        {/* Connecting line fill (animated on scroll, here static 100% for preview) */}
+        <div className="absolute top-20 right-12 left-12 h-[2px] bg-gradient-to-l from-[var(--t2-teal)] to-[var(--t2-gold)] z-0 hidden md:block origin-right t2-fill-line"></div>
+        
+        <div className={`grid gap-12 grid-cols-1 md:${gridClass} relative z-10 max-w-6xl mx-auto`}>
+          {cards.map((card, idx) => {
+            const isSelected = isEditing && selectedNodeId === sectionId && selectedItemIndex === idx;
+            const isHovered = isEditing && hoveredItemIndex === idx;
+
+            return (
+              <div 
+                key={card.id}
+                onClick={(e) => {
+                  if (isEditing && sectionId) {
+                    e.stopPropagation();
+                    setSelectedNodeId(sectionId);
+                    setSelectedItemIndex(idx);
+                  }
+                }}
+                onMouseEnter={() => isEditing && setHoveredItemIndex(idx)}
+                onMouseLeave={() => isEditing && setHoveredItemIndex(null)}
+                className={`flex flex-col items-center text-center gap-6 transition-all duration-300 cursor-pointer ${
+                  isSelected ? 'ring-2 ring-[var(--t2-gold)] ring-offset-4 rounded-xl p-2 bg-[var(--t2-white)]' : isHovered ? 'ring-2 ring-[var(--t2-teal)] ring-offset-4 rounded-xl p-2 bg-[var(--t2-white)]' : ''
+                }`}
+              >
+                {/* Step Circle */}
+                <div className="w-16 h-16 rounded-full bg-[var(--t2-white)] border-[6px] border-[var(--t2-canvas)] flex items-center justify-center shadow-md relative z-10 text-[var(--t2-teal)] text-xl font-bold font-['IBM_Plex_Mono']">
+                  0{idx + 1}
+                </div>
+                
+                {/* Text content */}
+                <div className="space-y-3 mt-2">
+                  <h4 className="text-xl font-black text-[var(--t2-ink)] font-['Fraunces']">{card.title}</h4>
+                  <p className="text-[15px] text-[var(--t2-ink)]/70 font-medium max-w-xs font-['Inter']">{card.value}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`grid gap-6 ${gridClass} text-right`} dir="rtl">

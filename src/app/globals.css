@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Cairo:wght@200..1000&family=Tajawal:wght@200..900&family=IBM+Plex+Sans+Arabic:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Cairo:wght@200..1000&family=Tajawal:wght@200..900&family=IBM+Plex+Sans+Arabic:wght@400;700&family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..600&family=Inter:wght@400..700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -10,6 +10,20 @@
   --text-dark: #1f2937;
   --text-light: #6b7280;
   --bg-white: #ffffff;
+
+  /* Template 2 Specific Design Tokens */
+  --t2-ink: #0B2540;
+  --t2-indigo: #0B2540;
+  --t2-indigo-2: #113154;
+  --t2-indigo-3: #1d4670;
+  --t2-canvas: #F3F8FC;
+  --t2-canvas-2: #E6F1FA;
+  --t2-canvas-3: #D3E4F0;
+  --t2-gold: #2FA8E0;
+  --t2-gold-light: #48b9eb;
+  --t2-coral: #FF7A5C;
+  --t2-teal: #2FA8E0;
+  --t2-white: #ffffff;
 }
 
 * {
@@ -91,4 +105,23 @@ body {
   h6 {
     @apply font-black;
   }
+}
+
+/* Template 2 Animations */
+.t2-animate-on-scroll {
+  animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fillLine {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.t2-fill-line {
+  animation: fillLine 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 0.3s;
 }
