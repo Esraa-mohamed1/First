@@ -364,6 +364,8 @@ export default function CourseDetailsPage() {
   const [customSections, setCustomSections] = useState<CustomSection[]>([
     { id: 'what_you_will_learn', title: 'ماذا ستتعلم؟', items: [''] }
   ]);
+  const [courseTemplate, setCourseTemplate] = useState<string>('template_1');
+  const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
   
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -519,6 +521,12 @@ export default function CourseDetailsPage() {
         });
       });
 
+      // Add template info
+      payload[`infos[${infoIndex}][info_key]`] = 'course_template';
+      payload[`infos[${infoIndex}][info_value]`] = courseTemplate;
+      payload[`infos[${infoIndex}][order]`] = 1;
+      infoIndex++;
+
       if (selectedImage) {
         payload.image = selectedImage;
       }
@@ -673,6 +681,7 @@ export default function CourseDetailsPage() {
 
       // Parse custom sections from infos
       let parsedSections: CustomSection[] = [];
+      let resolvedCourseTemplate = 'template_1';
       if (data.infos && Array.isArray(data.infos) && data.infos.length > 0) {
         const grouped = data.infos.reduce((acc: any, info: any) => {
            // Using info_key and info_value based on the new API response structure
@@ -680,6 +689,11 @@ export default function CourseDetailsPage() {
            const value = info.info_value || info.value;
            
            if (!key || !value) return acc;
+
+           if (key === 'course_template') {
+             resolvedCourseTemplate = value;
+             return acc;
+           }
 
            if (!acc[key]) {
              acc[key] = {
@@ -716,6 +730,7 @@ export default function CourseDetailsPage() {
       }
       
       setCustomSections(parsedSections);
+      setCourseTemplate(resolvedCourseTemplate);
 
       if (data.image) {
         setPreviewImage(data.image);
@@ -897,48 +912,98 @@ export default function CourseDetailsPage() {
 
         <div className="flex items-center gap-3 w-full lg:w-auto pb-4 lg:pb-3">
           <button 
-            onClick={() => router.push(`/academic/courses/${id}/student`)}
+            onClick={() => {
+              if (course?.slug) {
+                router.push(`/user/courses/${course.slug}`);
+              } else {
+                router.push(`/academic/courses/${id}/student`);
+              }
+            }}
             className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-6 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm"
           >
             <Eye size={18} />
             <span>معاينة</span>
           </button>
-          <button
-            onClick={async () => {
-              const isPublished = status === 'published';
-              const actionText = isPublished ? 'تحويل إلى مسودة' : 'نشر الدورة';
-              const confirmText = isPublished ? 'نعم، اجعلها مسودة' : 'نعم، انشرها';
-              
-              const result = await MySwal.fire({
-                title: `هل أنت متأكد من ${actionText}؟`,
-                text: isPublished ? "سيتم إخفاء الدورة عن الطلاب" : "ستصبح الدورة متاحة لجميع الطلاب",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: isPublished ? '#f59e0b' : '#10b981',
-                cancelButtonColor: '#d33',
-                confirmButtonText: confirmText,
-                cancelButtonText: 'إلغاء'
-              });
-
-              if (result.isConfirmed) {
-                const newStatus = isPublished ? 'draft' : 'published';
-                try {
-                  await updateCourse(Number(id), { status: newStatus });
-                  setStatus(newStatus);
-                  toast.success(`تم ${isPublished ? 'تحويل الدورة لمسودة' : 'نشر الدورة'} بنجاح`);
-                } catch (err) {
-                  toast.error('فشل تحديث حالة الدورة');
+          <div className="flex items-center bg-gray-100 p-1 rounded-full border border-gray-200 shadow-inner">
+            <button
+              type="button"
+              onClick={async () => {
+                if (status === 'draft') return;
+                const result = await MySwal.fire({
+                  title: 'هل أنت متأكد من تحويل الدورة إلى مسودة؟',
+                  text: 'سيتم إخفاء الدورة عن الطلاب ولن يتمكنوا من التسجيل أو العثور عليها.',
+                  icon: 'warning',
+                  showCancelButton: true,
+                  confirmButtonColor: '#f59e0b',
+                  cancelButtonColor: '#3085d6',
+                  confirmButtonText: 'نعم، اجعلها مسودة',
+                  cancelButtonText: 'إلغاء'
+                });
+                if (result.isConfirmed) {
+                  try {
+                    await updateCourse(Number(id), { status: 'draft' });
+                    setStatus('draft');
+                    toast.success('تم تحويل الدورة لمسودة بنجاح');
+                  } catch (err) {
+                    toast.error('فشل تحديث حالة الدورة');
+                  }
                 }
-              }
-            }}
-            className={`flex-1 lg:flex-none flex items-center justify-center gap-2 px-8 py-2.5 rounded-full font-bold text-sm transition-all shadow-md ${
-              status === 'published' 
-                ? 'bg-green-500 hover:bg-green-600 text-white shadow-green-100' 
-                : 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-100'
-            }`}
-          >
-            <span>{status === 'published' ? 'نشر' : 'مسودة'}</span>
-          </button>
+              }}
+              className={`px-6 py-2 rounded-full font-black text-xs transition-all ${
+                status === 'draft'
+                  ? 'bg-amber-500 text-white shadow-sm shadow-amber-100'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              مسودة
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                if (status === 'published') return;
+                
+                // Validate required fields before publishing
+                const missing = [];
+                if (!courseInfo.title) missing.push('عنوان الدورة');
+                if (!courseInfo.description || courseInfo.description === '<p><br></p>') missing.push('وصف الدورة');
+                if (pricingType === 'paid' && !price) missing.push('سعر الدورة');
+                if (pricingType === 'paid' && selectedPaymentMethods.length === 0) missing.push('وسيلة دفع واحدة على الأقل');
+                if (course?.units?.length === 0) missing.push('محتوى الدورة (وحدة واحدة على الأقل)');
+
+                if (missing.length > 0) {
+                  showAlert.warning('لا يمكن النشر الآن', `يرجى إكمال الحقول التالية أولاً: \n ${missing.join('، ')}`);
+                  return;
+                }
+
+                const result = await MySwal.fire({
+                  title: 'هل أنت متأكد من نشر الدورة؟',
+                  text: 'ستصبح الدورة نشطة ومتاحة للطلاب للتسجيل والاشتراك والتعلم.',
+                  icon: 'question',
+                  showCancelButton: true,
+                  confirmButtonColor: '#10b981',
+                  cancelButtonColor: '#3085d6',
+                  confirmButtonText: 'نعم، انشر الدورة',
+                  cancelButtonText: 'إلغاء'
+                });
+                if (result.isConfirmed) {
+                  try {
+                    await updateCourse(Number(id), { status: 'published' });
+                    setStatus('published');
+                    toast.success('تم نشر الدورة بنجاح');
+                  } catch (err) {
+                    toast.error('فشل تحديث حالة الدورة');
+                  }
+                }
+              }}
+              className={`px-6 py-2 rounded-full font-black text-xs transition-all ${
+                status === 'published'
+                  ? 'bg-green-500 text-white shadow-sm shadow-green-100'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              منشور
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1074,6 +1139,81 @@ export default function CourseDetailsPage() {
                   )}
                 />
               )}
+            </div>
+
+            {/* Course Landing Page Template Selection */}
+            <div className="space-y-3 bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm text-right">
+              <label className="block text-sm font-black text-gray-900 pr-1">
+                قالب صفحة هبوط الدورة
+              </label>
+              <p className="text-xs font-bold text-gray-400">اختر التصميم المناسب لعرض تفاصيل الدورة للطلاب</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setCourseTemplate('template_1')}
+                  className={`p-5 border rounded-3xl text-right transition-all flex flex-col gap-3 relative ${
+                    courseTemplate === 'template_1'
+                      ? 'border-blue-600 bg-blue-50/20 ring-2 ring-blue-600/10'
+                      : 'border-gray-150 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-sm font-black text-gray-900">القالب الأول (الكلاسيكي الملكي)</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewTemplateId('template_1');
+                        }}
+                        className="text-[10px] text-blue-600 hover:text-blue-700 font-bold bg-blue-50/80 px-2.5 py-1 rounded-lg border border-blue-100 hover:bg-blue-100/50 transition-colors flex items-center gap-1"
+                      >
+                        <Eye size={10} />
+                        معاينة التصميم
+                      </button>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${courseTemplate === 'template_1' ? 'border-blue-600 bg-blue-600' : 'border-gray-300'}`}>
+                        {courseTemplate === 'template_1' && <div className="w-2 h-2 bg-white rounded-full" />}
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-400 font-bold leading-relaxed">
+                    يتميز بتصميم زمردي دافئ، أركان مزخرفة، شريط أرقام الإحصائيات، فوائد الدورة ومحاضرها، وكاروسيل آراء الطلاب.
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCourseTemplate('template_2')}
+                  className={`p-5 border rounded-3xl text-right transition-all flex flex-col gap-3 relative ${
+                    courseTemplate === 'template_2'
+                      ? 'border-blue-600 bg-blue-50/20 ring-2 ring-blue-600/10'
+                      : 'border-gray-150 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-sm font-black text-gray-900">قالب صفحة الدروس التفاعلية (الافتراضي)</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewTemplateId('template_2');
+                        }}
+                        className="text-[10px] text-blue-600 hover:text-blue-700 font-bold bg-blue-50/80 px-2.5 py-1 rounded-lg border border-blue-100 hover:bg-blue-100/50 transition-colors flex items-center gap-1"
+                      >
+                        <Eye size={10} />
+                        معاينة التصميم
+                      </button>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${courseTemplate === 'template_2' ? 'border-blue-600 bg-blue-600' : 'border-gray-300'}`}>
+                        {courseTemplate === 'template_2' && <div className="w-2 h-2 bg-white rounded-full" />}
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-400 font-bold leading-relaxed">
+                    تصميم تعليمي كلاسيكي مع مشغل فيديو بارز في الهيدر، وعرض تفاعلي للأقسام والدروس، وجدول المخرجات بلمسات عصرية.
+                  </span>
+                </button>
+              </div>
             </div>
 
             {/* Course Image */}
@@ -1728,6 +1868,226 @@ export default function CourseDetailsPage() {
         onLessonUpdated={fetchCourse}
         courseType={course.type}
       />
+
+      {/* Template Preview Modal */}
+      {previewTemplateId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" dir="rtl">
+          <div 
+            className="bg-white rounded-[2.5rem] w-full max-w-4xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 bg-slate-50/50">
+              <div>
+                <h3 className="text-lg font-black text-slate-900">
+                  {previewTemplateId === 'template_1' ? 'معاينة القالب الأول (الكلاسيكي الملكي)' : 'معاينة قالب صفحة الدروس التفاعلية (الافتراضي)'}
+                </h3>
+                <p className="text-xs text-slate-400 font-bold mt-1">عرض الهيكل التنظيمي والمظهر العام للتصميم</p>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setPreviewTemplateId(null)}
+                className="w-10 h-10 bg-white hover:bg-slate-100 text-slate-500 rounded-full flex items-center justify-center border border-slate-200 hover:text-slate-900 transition-all active:scale-95"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-8 space-y-8">
+              {/* Miniature Dynamic Wireframe Mockup */}
+              <div className="border border-slate-200/60 rounded-[2rem] p-6 bg-slate-50 shadow-inner flex flex-col gap-4">
+                <span className="text-xs font-black text-slate-400 tracking-wide block text-right">رسم تخطيطي لهيكل الصفحة:</span>
+                
+                {previewTemplateId === 'template_1' ? (
+                  /* Template 1 Mockup */
+                  <div className="w-full flex flex-col gap-3 text-xs font-bold text-slate-700">
+                    {/* Header Banner */}
+                    <div className="bg-[#0D3B33] text-white p-6 rounded-2xl border-r-8 border-[#C9A24B] text-center space-y-2">
+                      <div className="bg-white/10 h-3 w-1/4 mx-auto rounded" />
+                      <div className="bg-white/20 h-5 w-2/3 mx-auto rounded" />
+                      <div className="bg-white/10 h-3 w-1/2 mx-auto rounded" />
+                    </div>
+                    {/* Stats Bar */}
+                    <div className="grid grid-cols-4 gap-2 text-center">
+                      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-1">
+                        <span className="text-[#C9A24B] font-black text-sm block">+٤٠</span>
+                        <span className="text-[9px] text-slate-400 block">ساعة تدريبية</span>
+                      </div>
+                      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-1">
+                        <span className="text-[#C9A24B] font-black text-sm block">١٢</span>
+                        <span className="text-[9px] text-slate-400 block">وحدة دراسية</span>
+                      </div>
+                      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-1">
+                        <span className="text-[#C9A24B] font-black text-sm block">١٠٠٪</span>
+                        <span className="text-[9px] text-slate-400 block">محتوى عملي</span>
+                      </div>
+                      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-1">
+                        <span className="text-[#C9A24B] font-black text-sm block">مفعل</span>
+                        <span className="text-[9px] text-slate-400 block">شهادة معتمدة</span>
+                      </div>
+                    </div>
+                    {/* Content Section Split */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {/* Course Details (Left side / main) */}
+                      <div className="md:col-span-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                        <div className="h-4 bg-slate-100 rounded w-1/3" />
+                        <div className="space-y-1.5">
+                          <div className="h-3 bg-slate-100 rounded w-full" />
+                          <div className="h-3 bg-slate-100 rounded w-full" />
+                          <div className="h-3 bg-slate-100 rounded w-3/4" />
+                        </div>
+                        {/* Accordion mockup */}
+                        <div className="space-y-2 pt-2">
+                          <div className="h-9 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-between px-3">
+                            <div className="h-3 bg-slate-200 rounded w-1/2" />
+                            <div className="h-3 bg-slate-200 rounded w-4" />
+                          </div>
+                          <div className="h-9 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-between px-3">
+                            <div className="h-3 bg-slate-200 rounded w-1/3" />
+                            <div className="h-3 bg-slate-200 rounded w-4" />
+                          </div>
+                        </div>
+                      </div>
+                      {/* Subscription Box (Right side) */}
+                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3 justify-between">
+                        <div className="space-y-1">
+                          <span className="text-[10px] text-slate-400 block">سعر الدورة</span>
+                          <span className="text-lg font-black text-slate-900">١٩٩ SAR</span>
+                        </div>
+                        <div className="h-9 bg-[#C9A24B] text-white rounded-lg flex items-center justify-center font-black text-xs">
+                          اشترك الآن
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Template 2 Mockup */
+                  <div className="w-full flex flex-col gap-3 text-xs font-bold text-slate-700">
+                    {/* Header bar */}
+                    <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                      <div className="h-3 bg-slate-200 rounded w-1/4" />
+                      <div className="h-4 bg-slate-100 rounded w-8" />
+                    </div>
+                    {/* Main Content & Right payment card */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {/* Right payment card (Floating) */}
+                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3 flex flex-col justify-between">
+                        <div className="aspect-video bg-slate-900 rounded-lg flex items-center justify-center text-white">
+                          <Play size={20} className="opacity-60" />
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-[10px] text-slate-400 block">سعر الاشتراك</span>
+                          <span className="text-lg font-black text-slate-900">١٩٩ SAR</span>
+                        </div>
+                        <div className="h-9 bg-blue-600 text-white rounded-lg flex items-center justify-center font-black text-xs">
+                          سجل الآن في الدورة
+                        </div>
+                      </div>
+                      {/* Left main contents */}
+                      <div className="md:col-span-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                        <div className="h-5 bg-slate-100 rounded w-1/2" />
+                        {/* Tab header */}
+                        <div className="flex border-b border-slate-100 pb-1 gap-4">
+                          <span className="text-blue-600 border-b-2 border-blue-600 pb-1">عن الدورة</span>
+                          <span className="text-slate-400">المنهج الدراسي</span>
+                          <span className="text-slate-400">التقييمات</span>
+                        </div>
+                        <div className="space-y-1.5 pt-2">
+                          <div className="h-3 bg-slate-100 rounded w-full" />
+                          <div className="h-3 bg-slate-100 rounded w-full" />
+                          <div className="h-3 bg-slate-100 rounded w-2/3" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Feature Details List */}
+              <div className="space-y-3 text-right">
+                <h4 className="font-black text-slate-900 text-sm">أبرز مميزات هذا القالب:</h4>
+                <ul className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  {previewTemplateId === 'template_1' ? (
+                    <>
+                      <li className="flex items-start gap-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                        <span className="w-2 h-2 bg-[#C9A24B] rounded-full shrink-0 mt-2" />
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-black text-slate-800">الألوان الملكية الفاخرة</p>
+                          <p className="text-[10px] text-slate-400 font-bold">توليفة مميزة تجمع بين الزمردي الداكن والذهبي لتصميم راقٍ.</p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                        <span className="w-2 h-2 bg-[#C9A24B] rounded-full shrink-0 mt-2" />
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-black text-slate-800">شريط الإحصائيات والأرقام</p>
+                          <p className="text-[10px] text-slate-400 font-bold">شريط تفاعلي يعرض مجموع الساعات، الدروس والشهادة بوضوح.</p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                        <span className="w-2 h-2 bg-[#C9A24B] rounded-full shrink-0 mt-2" />
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-black text-slate-800">كاروسيل آراء الطلاب والتقييمات</p>
+                          <p className="text-[10px] text-slate-400 font-bold">شريط تمرير أفقي سلس لعرض شهادات وآراء خريجي الدورة.</p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                        <span className="w-2 h-2 bg-[#C9A24B] rounded-full shrink-0 mt-2" />
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-black text-slate-800">شات محاكاة واتساب ونافذة تواصل</p>
+                          <p className="text-[10px] text-slate-400 font-bold">أيقونة واتساب عائمة ونماذج اتصال مباشرة لزيادة اشتراك الطلاب.</p>
+                        </div>
+                      </li>
+                    </>
+                  ) : (
+                    <>
+                      <li className="flex items-start gap-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                        <span className="w-2 h-2 bg-blue-600 rounded-full shrink-0 mt-2" />
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-black text-slate-800">مشغل الفيديو البارز</p>
+                          <p className="text-[10px] text-slate-400 font-bold">فيديو تعريفي كبير يجذب انتباه الطالب فور دخول الصفحة.</p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                        <span className="w-2 h-2 bg-blue-600 rounded-full shrink-0 mt-2" />
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-black text-slate-800">نظام التبويبات التفاعلي</p>
+                          <p className="text-[10px] text-slate-400 font-bold">تقسيم محتوى الدورة، تفاصيلها، والتقييمات في تبويبات سهلة التنقل.</p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                        <span className="w-2 h-2 bg-blue-600 rounded-full shrink-0 mt-2" />
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-black text-slate-800">منهج دراسي مرن</p>
+                          <p className="text-[10px] text-slate-400 font-bold">قائمة منسدلة أنيقة للمنهج والدروس بترميز بصري مريح للمستخدم.</p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2.5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                        <span className="w-2 h-2 bg-blue-600 rounded-full shrink-0 mt-2" />
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-black text-slate-800">كارت التسعير والاشتراك العائم</p>
+                          <p className="text-[10px] text-slate-400 font-bold">بطاقة جانبية مميزة تثبت عند التمرير لتسهيل الوصول لزر الدفع.</p>
+                        </div>
+                      </li>
+                    </>
+                  )}
+                </ul>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-8 py-5 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+              <button 
+                type="button"
+                onClick={() => setPreviewTemplateId(null)}
+                className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-full font-black text-xs transition-all active:scale-95 shadow-lg shadow-slate-900/10"
+              >
+                إغلاق المعاينة
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

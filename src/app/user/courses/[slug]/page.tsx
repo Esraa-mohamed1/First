@@ -19,6 +19,12 @@ import { PaymentMethodCard } from '@/components/payment/PaymentMethodCard';
 import { PaymentMethodModal } from '@/components/payment/PaymentMethodModal';
 import { AcademyPaymentMethod } from '@/types/payment';
 import { showAlert } from '@/lib/sweetalert';
+import axios from 'axios';
+import { unwrapEncryptedResponseData } from '@/lib/decryption';
+import CourseLandingTemplate1 from './CourseLandingTemplate1';
+import NavbarBlock, { FooterBlock } from '@/builder/components/NavbarBlock';
+import { TenantFooter } from '@/builder/templates/classic/ClassicTemplate';
+import { getThemeBySlug } from '@/builder/templates/themeStyles';
 
 const MySwal = withReactContent(Swal);
 
@@ -56,6 +62,9 @@ export default function CourseStudentViewPage() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<AcademyPaymentMethod | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [showFloatingWidget, setShowFloatingWidget] = useState(true);
+  const [activeTemplateId, setActiveTemplateId] = useState<string>('template_1');
+  const [navbarNode, setNavbarNode] = useState<any | null>(null);
+  const [footerNode, setFooterNode] = useState<any | null>(null);
   const [isRetrying, setIsRetrying] = useState(() => {
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
@@ -247,8 +256,42 @@ export default function CourseStudentViewPage() {
   if (loading) return <div className="min-h-screen flex items-center justify-center font-bold text-slate-900">جاري التحميل...</div>;
   if (!course) return <div className="min-h-screen flex items-center justify-center font-bold text-slate-900">لم يتم العثور على الدورة</div>;
 
+  const theme = getThemeBySlug(activeTemplateId);
+  const cssVariables = {
+    '--theme-primary': theme.primaryColor,
+    '--theme-primary-rgb': theme.primaryRgb,
+    '--theme-secondary': theme.secondaryColor,
+    '--theme-accent': theme.accentColor,
+    '--theme-bg': theme.backgroundColor,
+    '--theme-text': theme.textColor,
+    fontFamily: `'${theme.fontFamily}', sans-serif`,
+  } as React.CSSProperties;
+
   return (
-    <div className="bg-slate-50/50 pb-20 font-sans" dir="rtl">
+    <div style={cssVariables} className="min-h-screen w-full transition-all duration-300 flex flex-col justify-between" dir="rtl">
+      {/* Dynamic Navbar */}
+      {navbarNode ? (
+        <NavbarBlock {...navbarNode.props} isLandingPage={true} />
+      ) : (
+        <NavbarBlock isLandingPage={true} />
+      )}
+
+      {/* Main Course Content */}
+      <div className="w-full flex-grow">
+        {activeTemplateId === 'template_1' ? (
+          <CourseLandingTemplate1
+            course={course}
+            onSubscribe={handleSubscribe}
+            isSubscribing={isSubscribing}
+            selectedPaymentMethod={selectedPaymentMethod}
+            setSelectedPaymentMethod={setSelectedPaymentMethod}
+            isPaymentModalOpen={isPaymentModalOpen}
+            setIsPaymentModalOpen={setIsPaymentModalOpen}
+            isRetrying={isRetrying}
+            setIsRetrying={setIsRetrying}
+          />
+        ) : (
+          <div className="bg-slate-50/50 pb-20 font-sans" dir="rtl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16">
         <div className="flex flex-col xl:flex-row gap-8 xl:gap-12 items-start">
           {/* 1. RIGHT COLUMN: Main Course Content */}
@@ -656,6 +699,16 @@ export default function CourseStudentViewPage() {
             </button>
           )}
         </div>
+      )}
+          </div>
+        )}
+      </div>
+
+      {/* Dynamic Footer */}
+      {footerNode ? (
+        <FooterBlock {...footerNode.props} />
+      ) : (
+        <TenantFooter />
       )}
     </div>
   );

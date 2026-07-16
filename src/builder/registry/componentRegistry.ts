@@ -41,10 +41,10 @@ function getResponsiveGridClass(cols: number) {
 export const HeroSection = React.memo((props: any) => {
   const isVideoUrl = (url: string) => {
     return url && (
-      url.startsWith('data:video/') || 
-      url.includes('video/mp4') || 
-      url.endsWith('.mp4') || 
-      url.endsWith('.webm') || 
+      url.startsWith('data:video/') ||
+      url.includes('video/mp4') ||
+      url.endsWith('.mp4') ||
+      url.endsWith('.webm') ||
       url.endsWith('.ogg') ||
       url.includes('/uploads/video')
     );
@@ -116,15 +116,15 @@ export const HeroSection = React.memo((props: any) => {
     const slideAlign = slideProps.align || 'right';
     const alignClass =
       slideAlign === 'left' ? 'text-left items-start' :
-      slideAlign === 'center' ? 'text-center items-center' :
-      'text-right items-end';
+        slideAlign === 'center' ? 'text-center items-center' :
+          'text-right items-end';
 
     // Selection ring for builder editing UI
     const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === current;
-    const isHovered  = isEditing && hoveredItemIndex === current;
+    const isHovered = isEditing && hoveredItemIndex === current;
 
     // Detect video vs image background / side media for this slide
-    const isVideoBg   = isVideoUrl(slideProps.bg_image);
+    const isVideoBg = isVideoUrl(slideProps.bg_image);
     const isVideoSide = isVideoUrl(slideProps.side_image);
 
     // Background style — only set CSS backgroundImage when it's an image URL
@@ -139,13 +139,13 @@ export const HeroSection = React.memo((props: any) => {
     const showOverlay = slideProps.show_card_overlay ?? false;
 
     // Side media configuration
-    const sideImage       = slideProps.side_image;
-    const hasSideImage    = !!sideImage;
-    const sideImageShape  = slideProps.side_image_shape || 'rounded';
-    const sideShapeClass  =
+    const sideImage = slideProps.side_image;
+    const hasSideImage = !!sideImage;
+    const sideImageShape = slideProps.side_image_shape || 'rounded';
+    const sideShapeClass =
       sideImageShape === 'circle' ? 'rounded-full' :
-      sideImageShape === 'square' ? 'rounded-none' :
-      sideImageShape === 'leaf'   ? 'rounded-3xl rounded-tr-none rounded-bl-none' : 'rounded-2xl';
+        sideImageShape === 'square' ? 'rounded-none' :
+          sideImageShape === 'leaf' ? 'rounded-3xl rounded-tr-none rounded-bl-none' : 'rounded-2xl';
 
     // Build the side-media element (image or video)
     const sideMediaEl = hasSideImage ? React.createElement(
@@ -163,45 +163,47 @@ export const HeroSection = React.memo((props: any) => {
       }),
       isVideoSide
         ? React.createElement('video', {
-            src: sideImage, controls: true,
-            className: `${sideShapeClass} shadow-2xl transition-all duration-500 hover:rotate-1 hover:scale-[1.02]`,
-            style: {
-              maxWidth: '100%',
-              width:  slideProps.side_image_width  ? `${slideProps.side_image_width}px`  : 'auto',
-              height: slideProps.side_image_height ? `${slideProps.side_image_height}px` : 'auto',
-              objectFit: slideProps.side_image_fit || 'contain'
-            }
-          })
+          src: sideImage, controls: true,
+          className: `${sideShapeClass} shadow-2xl transition-all duration-500 hover:rotate-1 hover:scale-[1.02]`,
+          style: {
+            maxWidth: '100%',
+            width: slideProps.side_image_width ? `${slideProps.side_image_width}px` : 'auto',
+            height: slideProps.side_image_height ? `${slideProps.side_image_height}px` : 'auto',
+            objectFit: slideProps.side_image_fit || 'contain'
+          }
+        })
         : (!isEditing && slideProps.image_link)
           ? React.createElement('a',
-              { href: slideProps.image_link, target: '_blank', rel: 'noopener noreferrer',
-                className: 'block cursor-pointer transition-transform hover:scale-[1.01]' },
-              React.createElement('img', {
-                src: sideImage, alt: slideProps.title || 'Slide Image',
-                className: `${sideShapeClass} shadow-2xl transition-all duration-500 hover:rotate-1 hover:scale-[1.02]`,
-                style: {
-                  maxWidth: '100%',
-                  width:  slideProps.side_image_width  ? `${slideProps.side_image_width}px`  : 'auto',
-                  height: slideProps.side_image_height ? `${slideProps.side_image_height}px` : 'auto',
-                  objectFit: slideProps.side_image_fit || 'contain'
-                }
-              })
-            )
-          : React.createElement('img', {
+            {
+              href: slideProps.image_link, target: '_blank', rel: 'noopener noreferrer',
+              className: 'block cursor-pointer transition-transform hover:scale-[1.01]'
+            },
+            React.createElement('img', {
               src: sideImage, alt: slideProps.title || 'Slide Image',
               className: `${sideShapeClass} shadow-2xl transition-all duration-500 hover:rotate-1 hover:scale-[1.02]`,
               style: {
                 maxWidth: '100%',
-                width:  slideProps.side_image_width  ? `${slideProps.side_image_width}px`  : 'auto',
+                width: slideProps.side_image_width ? `${slideProps.side_image_width}px` : 'auto',
                 height: slideProps.side_image_height ? `${slideProps.side_image_height}px` : 'auto',
                 objectFit: slideProps.side_image_fit || 'contain'
               }
             })
+          )
+          : React.createElement('img', {
+            src: sideImage, alt: slideProps.title || 'Slide Image',
+            className: `${sideShapeClass} shadow-2xl transition-all duration-500 hover:rotate-1 hover:scale-[1.02]`,
+            style: {
+              maxWidth: '100%',
+              width: slideProps.side_image_width ? `${slideProps.side_image_width}px` : 'auto',
+              height: slideProps.side_image_height ? `${slideProps.side_image_height}px` : 'auto',
+              objectFit: slideProps.side_image_fit || 'contain'
+            }
+          })
     ) : null;
 
     // ─── TEMPLATE-SPECIFIC UI VARIANTS ───
     const isAcademy = currentTemplate?.id === 'academy-dashboard' || currentTemplate?.id === 'template_1';
-    
+
     // Text + button block
     const textEl = isUdemy ? React.createElement(
       'div',
@@ -239,10 +241,9 @@ export const HeroSection = React.memo((props: any) => {
     ) : React.createElement(
       'div',
       {
-        className: `relative z-10 flex flex-col gap-5 ${alignClass} ${
-          isEdx ? 'max-w-4xl mx-auto text-center items-center bg-slate-900/40 backdrop-blur-md p-12 rounded-3xl border border-slate-700/50 shadow-2xl' :
-          (showOverlay ? 'max-w-xl backdrop-blur-md bg-white/90 p-8 sm:p-10 rounded-3xl shadow-2xl border border-white/40' : 'max-w-xl')
-        }`
+        className: `relative z-10 flex flex-col gap-5 ${alignClass} ${isEdx ? 'max-w-4xl mx-auto text-center items-center bg-slate-900/40 backdrop-blur-md p-12 rounded-3xl border border-slate-700/50 shadow-2xl' :
+            (showOverlay ? 'max-w-xl backdrop-blur-md bg-white/90 p-8 sm:p-10 rounded-3xl shadow-2xl border border-white/40' : 'max-w-xl')
+          }`
       },
       slideProps.title ? React.createElement('h1', {
         style: { color: slideProps.title_color || (isEdx ? '#f8fafc' : showOverlay ? '#1f2937' : '#ffffff') },
@@ -268,11 +269,10 @@ export const HeroSection = React.memo((props: any) => {
       {
         key: current,
         style: slideStyle,
-        className: `relative w-full ${py} ${px} flex items-center transition-opacity duration-500 ${transitioning ? 'opacity-0' : 'opacity-100'} ${
-          isUdemy ? 'min-h-[600px] lg:min-h-[700px] flex-col lg:flex-row gap-12 justify-center bg-gradient-to-br from-[var(--t2-indigo)] to-[var(--t2-ink)] overflow-hidden' :
-          isEdx ? 'min-h-[600px] lg:min-h-[700px] flex-col justify-center' :
-          (hasSideImage ? 'min-h-[320px] sm:min-h-[420px] flex-row gap-10 justify-center' : 'min-h-[320px] sm:min-h-[420px] justify-center')
-        }`
+        className: `relative w-full ${py} ${px} flex items-center transition-opacity duration-500 ${transitioning ? 'opacity-0' : 'opacity-100'} ${isUdemy ? 'min-h-[600px] lg:min-h-[700px] flex-col lg:flex-row gap-12 justify-center bg-gradient-to-br from-[var(--t2-indigo)] to-[var(--t2-ink)] overflow-hidden' :
+            isEdx ? 'min-h-[600px] lg:min-h-[700px] flex-col justify-center' :
+              (hasSideImage ? 'min-h-[320px] sm:min-h-[420px] flex-row gap-10 justify-center' : 'min-h-[320px] sm:min-h-[420px] justify-center')
+          }`
       },
       // Floating creative blobs in dynamic slider when no background image is set
       !slideProps.bg_image ? React.createElement(React.Fragment, null,
@@ -294,17 +294,17 @@ export const HeroSection = React.memo((props: any) => {
       slideProps.bg_image ? React.createElement('div', {
         className: `absolute inset-0 z-0 ${isEdx ? 'bg-gradient-to-r from-slate-900/90 to-slate-900/60' : 'bg-slate-900/20'}`
       }) : null,
-      
+
       // Structure blocks based on layout
-      isUdemy 
+      isUdemy
         ? React.createElement(React.Fragment, null, textEl, sideMediaEl)
         : isEdx
           ? React.createElement(React.Fragment, null, textEl) // EDX uses full bleed cinematic background, side image hidden if present or used elsewhere
-          : React.createElement(React.Fragment, null, 
-              hasSideImage && slideProps.side_image_position !== 'right' ? sideMediaEl : null,
-              textEl,
-              hasSideImage && slideProps.side_image_position === 'right' ? sideMediaEl : null
-            )
+          : React.createElement(React.Fragment, null,
+            hasSideImage && slideProps.side_image_position !== 'right' ? sideMediaEl : null,
+            textEl,
+            hasSideImage && slideProps.side_image_position === 'right' ? sideMediaEl : null
+          )
     );
 
     // Dot indicator strip
@@ -314,36 +314,34 @@ export const HeroSection = React.memo((props: any) => {
       items.map((_: any, i: number) => React.createElement('button', {
         key: i,
         onClick: (e: any) => { e.stopPropagation(); goTo(i); },
-        className: `rounded-full transition-all duration-300 ${
-          i === current ? 'bg-white w-5 h-2' : 'bg-white/40 hover:bg-white/70 w-2 h-2'
-        }`
+        className: `rounded-full transition-all duration-300 ${i === current ? 'bg-white w-5 h-2' : 'bg-white/40 hover:bg-white/70 w-2 h-2'
+          }`
       }))
     ) : null;
 
     // Navigation arrow buttons
     const arrowPrev = props.show_arrows !== false && items.length > 1
       ? React.createElement('button', {
-          onClick: (e: any) => { e.stopPropagation(); if (!transitioning) goTo((current - 1 + items.length) % items.length); },
-          className: 'absolute right-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-slate-900/50 hover:bg-slate-900/70 text-white flex items-center justify-center shadow-lg transition-all pointer-events-auto'
-        }, React.createElement(LucideIcons.ChevronRight, { className: 'w-5 h-5' }))
+        onClick: (e: any) => { e.stopPropagation(); if (!transitioning) goTo((current - 1 + items.length) % items.length); },
+        className: 'absolute right-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-slate-900/50 hover:bg-slate-900/70 text-white flex items-center justify-center shadow-lg transition-all pointer-events-auto'
+      }, React.createElement(LucideIcons.ChevronRight, { className: 'w-5 h-5' }))
       : null;
 
     const arrowNext = props.show_arrows !== false && items.length > 1
       ? React.createElement('button', {
-          onClick: (e: any) => { e.stopPropagation(); if (!transitioning) goTo((current + 1) % items.length); },
-          className: 'absolute left-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-slate-900/50 hover:bg-slate-900/70 text-white flex items-center justify-center shadow-lg transition-all pointer-events-auto'
-        }, React.createElement(LucideIcons.ChevronLeft, { className: 'w-5 h-5' }))
+        onClick: (e: any) => { e.stopPropagation(); if (!transitioning) goTo((current + 1) % items.length); },
+        className: 'absolute left-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-slate-900/50 hover:bg-slate-900/70 text-white flex items-center justify-center shadow-lg transition-all pointer-events-auto'
+      }, React.createElement(LucideIcons.ChevronLeft, { className: 'w-5 h-5' }))
       : null;
 
     // Outer wrapper — `relative` with NO `overflow-hidden` so arrows are not clipped
     return React.createElement(
       'div',
       {
-        className: `relative w-full select-none transition-all duration-300 rounded-sm ${
-          isSelected ? (isUdemy ? 'ring-4 ring-[#2FA8E0] ring-inset' : 'ring-4 ring-blue-500 ring-inset')
-          : isHovered ? (isUdemy ? 'ring-4 ring-sky-300 ring-inset' : 'ring-4 ring-blue-300 ring-inset')
-          : ''
-        }`,
+        className: `relative w-full select-none transition-all duration-300 rounded-sm ${isSelected ? (isUdemy ? 'ring-4 ring-[#2FA8E0] ring-inset' : 'ring-4 ring-blue-500 ring-inset')
+            : isHovered ? (isUdemy ? 'ring-4 ring-sky-300 ring-inset' : 'ring-4 ring-blue-300 ring-inset')
+              : ''
+          }`,
         onClick: (e: any) => {
           if (isEditing) {
             e.stopPropagation();
@@ -371,41 +369,29 @@ export const HeroSection = React.memo((props: any) => {
   const sideImageShape = props.side_image_shape || 'rounded';
   const sideImageShapeClass =
     sideImageShape === 'circle' ? 'rounded-full' :
-    sideImageShape === 'square' ? 'rounded-none' :
-    sideImageShape === 'leaf' ? 'rounded-3xl rounded-tr-none rounded-bl-none' : 'rounded-2xl';
+      sideImageShape === 'square' ? 'rounded-none' :
+        sideImageShape === 'leaf' ? 'rounded-3xl rounded-tr-none rounded-bl-none' : 'rounded-2xl';
 
   const sideImageBlock = hasSideImage ? React.createElement(
     'div',
     { className: `relative z-10 flex-1 flex items-center ${props.side_image_position === 'right' ? 'justify-end' : 'justify-start'}` },
     isVideoSide
       ? React.createElement('video', {
-          src: sideImage,
-          controls: true,
-          className: `${sideImageShapeClass} shadow-2xl`,
-          style: {
-            maxWidth: '100%',
-            width: props.side_image_width ? `${props.side_image_width}px` : 'auto',
-            height: props.side_image_height ? `${props.side_image_height}px` : 'auto',
-            objectFit: props.side_image_fit || 'contain'
-          }
-        })
+        src: sideImage,
+        controls: true,
+        className: `${sideImageShapeClass} shadow-2xl`,
+        style: {
+          maxWidth: '100%',
+          width: props.side_image_width ? `${props.side_image_width}px` : 'auto',
+          height: props.side_image_height ? `${props.side_image_height}px` : 'auto',
+          objectFit: props.side_image_fit || 'contain'
+        }
+      })
       : (!isEditing && props.image_link)
         ? React.createElement(
-            'a',
-            { href: props.image_link, target: '_blank', rel: 'noopener noreferrer', className: 'block cursor-pointer transition-all hover:scale-[1.01] active:scale-99' },
-            React.createElement('img', {
-              src: sideImage,
-              alt: content.title || 'Banner Image',
-              className: `${sideImageShapeClass} shadow-2xl`,
-              style: {
-                maxWidth: '100%',
-                width: props.side_image_width ? `${props.side_image_width}px` : 'auto',
-                height: props.side_image_height ? `${props.side_image_height}px` : 'auto',
-                objectFit: props.side_image_fit || 'contain'
-              }
-            })
-          )
-        : React.createElement('img', {
+          'a',
+          { href: props.image_link, target: '_blank', rel: 'noopener noreferrer', className: 'block cursor-pointer transition-all hover:scale-[1.01] active:scale-99' },
+          React.createElement('img', {
             src: sideImage,
             alt: content.title || 'Banner Image',
             className: `${sideImageShapeClass} shadow-2xl`,
@@ -416,6 +402,18 @@ export const HeroSection = React.memo((props: any) => {
               objectFit: props.side_image_fit || 'contain'
             }
           })
+        )
+        : React.createElement('img', {
+          src: sideImage,
+          alt: content.title || 'Banner Image',
+          className: `${sideImageShapeClass} shadow-2xl`,
+          style: {
+            maxWidth: '100%',
+            width: props.side_image_width ? `${props.side_image_width}px` : 'auto',
+            height: props.side_image_height ? `${props.side_image_height}px` : 'auto',
+            objectFit: props.side_image_fit || 'contain'
+          }
+        })
   ) : null;
 
   if (isUdemy) {
@@ -431,14 +429,14 @@ export const HeroSection = React.memo((props: any) => {
         React.createElement('span', { className: 'w-2 h-2 rounded-full bg-[var(--t2-gold)] animate-pulse' }),
         React.createElement('span', { className: 'text-xs text-[var(--t2-canvas-2)] font-["IBM_Plex_Mono"] font-medium tracking-wide uppercase' }, 'أكاديمية رائدة')
       ),
-      content.title ? React.createElement('h1', { 
+      content.title ? React.createElement('h1', {
         className: `leading-tight tracking-tight drop-shadow-sm ${titleStyles.className}`,
         style: titleStyles.style
       }, content.title.split(' ').map((word: string, i: number, arr: string[]) => {
         if (i >= arr.length - 2) return React.createElement('em', { key: i, className: 'text-[var(--t2-gold)] italic px-1 drop-shadow-[0_2px_15px_rgba(232,163,61,0.3)]' }, word + ' ');
         return word + ' ';
       })) : null,
-      content.subtitle ? React.createElement('p', { 
+      content.subtitle ? React.createElement('p', {
         className: `leading-relaxed max-w-2xl ${subtitleStyles.className}`,
         style: subtitleStyles.style
       }, content.subtitle) : null,
@@ -467,9 +465,8 @@ export const HeroSection = React.memo((props: any) => {
       'section',
       {
         style: { ...styles },
-        className: `relative overflow-hidden w-full min-h-[600px] md:min-h-[700px] flex items-center md:px-16 px-4 py-12 transition-all duration-300 ${sectionBgClass} ${
-          hasSideImage ? 'flex-row gap-10' : 'justify-start'
-        }`
+        className: `relative overflow-hidden w-full min-h-[600px] md:min-h-[700px] flex items-center md:px-16 px-4 py-12 transition-all duration-300 ${sectionBgClass} ${hasSideImage ? 'flex-row gap-10' : 'justify-start'
+          }`
       },
       props.bg_image && isVideoBg ? React.createElement('video', {
         src: props.bg_image,
@@ -495,26 +492,25 @@ export const HeroSection = React.memo((props: any) => {
   const fallbackTextBlock = React.createElement(
     'div',
     {
-      className: `relative z-10 max-w-xl flex flex-col gap-3 ${alignClass} ${
-        showOverlay ? 'bg-white p-8 rounded-lg shadow-xl border border-slate-100' : ''
-      }`
+      className: `relative z-10 max-w-xl flex flex-col gap-3 ${alignClass} ${showOverlay ? 'bg-white p-8 rounded-lg shadow-xl border border-slate-100' : ''
+        }`
     },
-    content.title ? React.createElement('h1', { 
+    content.title ? React.createElement('h1', {
       style: { color: props.title_color || (showOverlay ? '#1f2937' : '#ffffff') },
-      className: 'font-black mb-4 leading-tight text-2xl sm:text-3xl lg:text-4xl' 
+      className: 'font-black mb-4 leading-tight text-2xl sm:text-3xl lg:text-4xl'
     }, content.title) : null,
-    content.subtitle ? React.createElement('p', { 
+    content.subtitle ? React.createElement('p', {
       style: { color: props.text_color || (showOverlay ? '#6b7280' : '#f8fafc') },
-      className: 'leading-relaxed text-xs sm:text-sm lg:text-base' 
+      className: 'leading-relaxed text-xs sm:text-sm lg:text-base'
     }, content.subtitle) : null,
     props.show_button && content.button_text
       ? React.createElement(
         'a',
         {
           href: content.button_link || '#',
-          style: { 
-            backgroundColor: props.button_color || 'var(--theme-primary)', 
-            color: props.button_text_color || '#ffffff' 
+          style: {
+            backgroundColor: props.button_color || 'var(--theme-primary)',
+            color: props.button_text_color || '#ffffff'
           },
           className: 'px-6 py-3 rounded-xl font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md inline-block w-fit'
         },
@@ -535,9 +531,8 @@ export const HeroSection = React.memo((props: any) => {
     'section',
     {
       style: fallbackStyles,
-      className: `relative w-full ${py} ${px} flex items-center ${
-        hasSideImage ? 'flex-row gap-10' : 'justify-center'
-      } transition-all duration-300 shadow-sm`
+      className: `relative w-full ${py} ${px} flex items-center ${hasSideImage ? 'flex-row gap-10' : 'justify-center'
+        } transition-all duration-300 shadow-sm`
     },
     props.bg_image && isVideoBg ? React.createElement('video', {
       src: props.bg_image,
@@ -787,7 +782,7 @@ export const FaqSection = React.memo((props: any) => {
                 onMouseEnter: () => isEditing && setHoveredItemIndex(idx),
                 onMouseLeave: () => isEditing && setHoveredItemIndex(null),
               },
-              React.createElement('h3', { className: 'text-sm font-black text-slate-800 flex items-start gap-2' }, 
+              React.createElement('h3', { className: 'text-sm font-black text-slate-800 flex items-start gap-2' },
                 React.createElement(LucideIcons.HelpCircle, { className: 'w-5 h-5 text-sky-600 flex-shrink-0' }),
                 itemProps.question || `سؤال ${idx + 1}`
               ),
@@ -1007,8 +1002,8 @@ export const TestimonialsSection = React.memo((props: any) => {
           'div',
           {
             ref: scrollRef,
-            className: isCarousel 
-              ? 'flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-4 px-2 -mx-2 scrollbar-hide' 
+            className: isCarousel
+              ? 'flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-4 px-2 -mx-2 scrollbar-hide'
               : 'grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
             style: isCarousel ? { scrollbarWidth: 'none', msOverflowStyle: 'none' } : undefined
           },
@@ -1021,9 +1016,8 @@ export const TestimonialsSection = React.memo((props: any) => {
               'div',
               {
                 key: idx,
-                className: `relative p-8 bg-[var(--t2-white)] rounded-[20px] flex flex-col justify-between hover:shadow-[0_15px_30px_rgba(27,26,58,0.06)] hover:-translate-y-2 transition-all duration-500 cursor-pointer ${
-                  isCarousel ? 'snap-start shrink-0 w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]' : ''
-                } ${isSelected ? 'ring-2 ring-[var(--t2-gold)] ring-offset-2 ring-offset-[var(--t2-canvas-2)]' : isHovered ? 'ring-2 ring-[var(--t2-teal)] ring-offset-2 ring-offset-[var(--t2-canvas-2)]' : ''}`,
+                className: `relative p-8 bg-[var(--t2-white)] rounded-[20px] flex flex-col justify-between hover:shadow-[0_15px_30px_rgba(27,26,58,0.06)] hover:-translate-y-2 transition-all duration-500 cursor-pointer ${isCarousel ? 'snap-start shrink-0 w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]' : ''
+                  } ${isSelected ? 'ring-2 ring-[var(--t2-gold)] ring-offset-2 ring-offset-[var(--t2-canvas-2)]' : isHovered ? 'ring-2 ring-[var(--t2-teal)] ring-offset-2 ring-offset-[var(--t2-canvas-2)]' : ''}`,
                 onClick: (e: any) => {
                   if (isEditing) {
                     e.stopPropagation();
@@ -1115,8 +1109,8 @@ export const TestimonialsSection = React.memo((props: any) => {
       'div',
       {
         ref: scrollRef,
-        className: isCarousel 
-          ? 'flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-4 px-2 -mx-2 scrollbar-hide' 
+        className: isCarousel
+          ? 'flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-4 px-2 -mx-2 scrollbar-hide'
           : 'grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
         style: isCarousel ? { scrollbarWidth: 'none', msOverflowStyle: 'none' } : undefined
       },
@@ -1129,9 +1123,8 @@ export const TestimonialsSection = React.memo((props: any) => {
           'div',
           {
             key: idx,
-            className: `relative p-6 bg-white border rounded-2xl flex flex-col justify-between shadow-sm transition-all duration-300 overflow-hidden ${
-              isCarousel ? 'snap-start shrink-0 w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]' : ''
-            } ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100 hover:shadow-lg hover:-translate-y-1'}`,
+            className: `relative p-6 bg-white border rounded-2xl flex flex-col justify-between shadow-sm transition-all duration-300 overflow-hidden ${isCarousel ? 'snap-start shrink-0 w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]' : ''
+              } ${isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : isHovered ? 'ring-2 ring-blue-300 ring-offset-1' : 'border-slate-100 hover:shadow-lg hover:-translate-y-1'}`,
             onClick: (e: any) => {
               if (isEditing) {
                 e.stopPropagation();
@@ -1167,8 +1160,8 @@ export const TestimonialsSection = React.memo((props: any) => {
               'div',
               {
                 className: `${(props.avatar_shape || 'circle') === 'rounded' ? 'rounded-xl' :
-                    (props.avatar_shape || 'circle') === 'square' ? 'rounded-none' :
-                      (props.avatar_shape || 'circle') === 'leaf' ? 'rounded-3xl rounded-tr-none rounded-bl-none' : 'rounded-full'
+                  (props.avatar_shape || 'circle') === 'square' ? 'rounded-none' :
+                    (props.avatar_shape || 'circle') === 'leaf' ? 'rounded-3xl rounded-tr-none rounded-bl-none' : 'rounded-full'
                   } overflow-hidden flex items-center justify-center text-sm font-black text-white flex-shrink-0`,
                 style: {
                   background: 'linear-gradient(135deg, var(--theme-primary), var(--theme-secondary, #10b981))',
@@ -1296,11 +1289,11 @@ export const GallerySection = React.memo((props: any) => {
             (!isEditing && itemProps.image_link) ? 'a' : 'div',
             (!isEditing && itemProps.image_link)
               ? {
-                  href: itemProps.image_link,
-                  target: '_blank',
-                  rel: 'noopener noreferrer',
-                  className: 'block w-full h-full cursor-pointer'
-                }
+                href: itemProps.image_link,
+                target: '_blank',
+                rel: 'noopener noreferrer',
+                className: 'block w-full h-full cursor-pointer'
+              }
               : { className: 'w-full h-full' },
             React.createElement('img', {
               src: itemProps.image_url || 'https://images.unsplash.com/photo-1498050108023-c5249f4df085',
@@ -1369,7 +1362,7 @@ export const PricingSection = React.memo((props: any) => {
           content.title ? React.createElement('h2', { className: `mb-4 ${titleStyles.className}`, style: titleStyles.style }, content.title) : null,
           content.subtitle ? React.createElement('p', { className: `max-w-2xl mx-auto ${subtitleStyles.className}`, style: subtitleStyles.style }, content.subtitle) : null
         ),
-        
+
         // Toggle Switch
         React.createElement(
           'div',
@@ -1385,7 +1378,7 @@ export const PricingSection = React.memo((props: any) => {
               className: `w-6 h-6 rounded-full bg-[var(--t2-gold)] absolute top-1 transition-all duration-300 ${!isYearly ? 'right-1' : 'right-9'}`
             })
           ),
-          React.createElement('span', { className: `text-sm font-bold font-["Inter"] flex items-center gap-2 transition-colors ${isYearly ? 'text-[var(--t2-white)]' : 'text-[var(--t2-canvas-3)]/60'}` }, 
+          React.createElement('span', { className: `text-sm font-bold font-["Inter"] flex items-center gap-2 transition-colors ${isYearly ? 'text-[var(--t2-white)]' : 'text-[var(--t2-canvas-3)]/60'}` },
             'سنوياً',
             React.createElement('span', { className: 'bg-[var(--t2-coral)] text-[var(--t2-white)] text-[10px] px-2 py-0.5 rounded-full font-["IBM_Plex_Mono"] font-bold' }, 'وفر 20%')
           )

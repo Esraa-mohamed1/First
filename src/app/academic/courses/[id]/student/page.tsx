@@ -26,6 +26,10 @@ export default function CourseStudentViewPage() {
     const fetchCourse = async () => {
       try {
         const data = await getCourse(id);
+        if (data && data.slug) {
+          router.replace(`/user/courses/${data.slug}`);
+          return;
+        }
         if ((data as any).chapters) {
           data.units = (data as any).chapters;
         }

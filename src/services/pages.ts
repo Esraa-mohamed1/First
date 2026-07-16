@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { BuilderNode } from '@/builder/interfaces';
+import academyApi from '@/lib/academy-api';
 
 // -----------------------------------------------------------------------
 // Types
@@ -83,36 +84,7 @@ const SECTION_DEFAULT_PROPS: Record<string, Record<string, any>> = {
 // Axios instance
 // -----------------------------------------------------------------------
 
-const academyApi = axios.create({
-  baseURL: 'https://api.darab.academy/api/academy',
-  headers: {
-    'Content-Type': 'application/x-www-form-urlencoded',
-  },
-});
-
-academyApi.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('token');
-    let tenantKey = localStorage.getItem('academy_link_name');
-    if (!tenantKey) {
-      let hostname = window.location.hostname;
-      if (hostname.endsWith('.localhost')) {
-        hostname = hostname.replace('.localhost', '');
-      }
-      if (hostname && hostname !== 'localhost') {
-        tenantKey = hostname;
-      }
-    }
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    if (tenantKey) {
-      const lowerKey = tenantKey.toLowerCase();
-      config.headers['X-Tenant-Key'] = lowerKey;
-      config.headers['X-Tenant'] = lowerKey;
-      config.headers['x-tenant-name'] = lowerKey;
-    }
-  }
-  return config;
-});
+// academyApi is imported from '@/lib/academy-api' above
 
 // -----------------------------------------------------------------------
 // getPages

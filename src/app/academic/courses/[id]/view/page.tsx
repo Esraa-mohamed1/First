@@ -320,7 +320,7 @@ export default function OwnerCourseViewDetailsPage() {
                 تعديل الدورة ومحتواها
               </Link>
               <Link
-                href={`/academic/courses/${id}/student`}
+                href={`/user/courses/${course?.slug}`}
                 className="w-full flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-black py-4 rounded-2xl transition-all border border-slate-100 hover:-translate-y-0.5 active:scale-95 text-center text-base"
               >
                 <Eye size={18} className="text-slate-500" />
