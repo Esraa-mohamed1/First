@@ -1944,7 +1944,7 @@ export default function CourseDetailsPage() {
             </div>
 
             {/* Split Content Viewport */}
-            <div className="flex-1 overflow-y-auto md:overflow-hidden flex flex-col md:flex-row h-auto md:h-[70vh]">
+            <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
               {/* Left Column: Editor inspector Panel (350px width) */}
               <div className="w-full md:w-[350px] border-b md:border-b-0 md:border-l border-slate-100 overflow-y-auto p-6 bg-slate-50/50 shrink-0 h-auto md:h-full flex flex-col gap-6">
                 
@@ -1986,12 +1986,14 @@ export default function CourseDetailsPage() {
               </div>
 
               {/* Right Column: Live Interactive Preview (Flex fill) */}
-              <div className="flex-1 overflow-y-auto bg-slate-100 p-4 h-[500px] md:h-full">
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200/50 overflow-hidden min-h-[500px]">
-                  <LandingRenderer
-                    courseId={id}
-                    isEditable={true}
-                  />
+              <div className="flex-1 bg-slate-100 p-4 flex flex-col h-full overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200/50 overflow-hidden flex-1 flex flex-col relative h-full">
+                  <div className="flex-grow flex-1 overflow-y-auto h-full">
+                    <LandingRenderer
+                      courseId={id}
+                      isEditable={true}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

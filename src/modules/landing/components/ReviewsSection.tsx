@@ -242,7 +242,7 @@ export default function ReviewsSection({
     );
   }
 
-  // Carousel layout (Default mixed carousel mode)
+  // Carousel layout 
   // Group reviews into pairs of 2 for slides
   const slides: any[][] = [];
   for (let i = 0; i < reviews.length; i += 2) {
@@ -341,8 +341,8 @@ export default function ReviewsSection({
                       key={idx}
                       onClick={() => setActiveIndex(idx)}
                       className={`h-2 rounded-full transition-all duration-300 ${idx === activeIndex
-                          ? 'bg-amber-500 w-6'
-                          : 'bg-amber-200 w-2 hover:bg-amber-300'
+                        ? 'bg-amber-500 w-6'
+                        : 'bg-amber-200 w-2 hover:bg-amber-300'
                         }`}
                     />
                   ))}

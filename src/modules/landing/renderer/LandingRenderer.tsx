@@ -128,20 +128,20 @@ export default function LandingRenderer({
         onEdit={() => setActiveSectionId('reviews')}
       />
 
-      {/* 6. Footer Section */}
-      <FooterSection
-        data={content.footer}
-        templateId={templateName}
-        isEditable={isEditable}
-        onEdit={() => setActiveSectionId('footer')}
-      />
-
-      {/* 7. WhatsApp Section and Widget */}
+      {/* 6. WhatsApp Section and Widget */}
       <WhatsAppSection
         data={content.whatsapp}
         templateId={templateName}
         isEditable={isEditable}
         onEdit={() => setActiveSectionId('whatsapp')}
+      />
+
+      {/* 7. Footer Section */}
+      <FooterSection
+        data={content.footer}
+        templateId={templateName}
+        isEditable={isEditable}
+        onEdit={() => setActiveSectionId('footer')}
       />
     </div>
   );
