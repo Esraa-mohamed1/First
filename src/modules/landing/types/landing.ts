@@ -57,11 +57,20 @@ export interface FAQSectionData {
 
 export interface ReviewItem {
   id: string;
-  name: string;
-  role: string;
-  comment: string;
-  rating: number;
+  name?: string;
+  role?: string;
+  comment?: string;
+  rating?: number;
   avatar?: string;
+  type?: 'manual' | 'whatsapp' | 'image';
+  waSenderName?: string;
+  waBubble1In?: string;
+  waBubble1Time?: string;
+  waBubble2Out?: string;
+  waBubble2Time?: string;
+  waBubble3In?: string;
+  waBubble3Time?: string;
+  image?: string;
 }
 
 export interface ReviewsSectionData {
@@ -70,6 +79,8 @@ export interface ReviewsSectionData {
   showSection: boolean;
   backgroundColor?: string;
   textColor?: string;
+  reviewType?: 'manual' | 'screenshots' | 'carousel';
+  screenshots?: string[];
 }
 
 export interface WhatsAppSectionData {

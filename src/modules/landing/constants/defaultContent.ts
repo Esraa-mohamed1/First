@@ -87,24 +87,45 @@ export const getTemplateDefaultContent = (course: any, templateName: string): La
     reviews: {
       title: 'آراء وتجارب طلابنا المتميزين',
       showSection: true,
+      reviewType: 'carousel',
       backgroundColor: isTemplate1 ? '#ffffff' : '#ffffff',
       textColor: '#1f2937',
       items: [
         {
           id: 'rev-1',
-          name: 'محمد العتيبي',
-          role: 'مصمم واجهات مستقل',
-          comment: 'الدورة كانت نقطة تحول في مسيرتي المهنية. التطبيق العملي والمتابعة ساعدتني جداً في بناء بورتفوليو قوي.',
+          type: 'manual',
+          name: 'محمد السيد',
+          role: 'صاحب متجر إلكتروني — القاهرة',
+          comment: 'كنت خايف تكون زي أي كورس نظري، لكن من تاني أسبوع كنت مطلّق أول حملة إعلانية لمشروعي وجبت مبيعات فعلية. أحسن استثمار عملته في نفسي.',
           rating: 5,
           avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150'
         },
         {
           id: 'rev-2',
-          name: 'سارة الشمري',
-          role: 'مطورة ويب',
-          comment: 'شرح رائع ومنظم، أنصح بالاشتراك بشدة لكل من يريد فهم مبادئ التصميم الحقيقية وتطبيقها برمجياً.',
+          type: 'whatsapp',
+          waSenderName: 'واتساب — رسالة من مشتركة',
+          waBubble1In: 'أستاذ أحمد أنا قفلت أول عميل فريلانس بـ 4,000 ريال 🎉 كل اللي عملته طبقت اللي في الأسبوع الخامس حرفيًا',
+          waBubble1Time: '9:42 م',
+          waBubble2Out: 'ألف مبروك يا سارة 👏 دي بداية بس، كملي على نفس الخطة',
+          waBubble2Time: '9:45 م'
+        },
+        {
+          id: 'rev-3',
+          type: 'manual',
+          name: 'عبدالله القحطاني',
+          role: 'مسوّق مستقل — الرياض',
+          comment: 'المحتوى بالعربي وبأمثلة من السوق السعودي، وهذا الشيء ما لقيته في أي دورة ثانية. القوالب الجاهزة وحدها تسوى سعر الدورة.',
           rating: 5,
-          avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150'
+          avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150'
+        },
+        {
+          id: 'rev-4',
+          type: 'whatsapp',
+          waSenderName: 'واتساب — رسالة من مشترك',
+          waBubble1In: 'حبيت أشكرك، اترقيت في شغلي بعد ما طبقت خطة الحملات اللي في الدورة على براند الشركة 🙏',
+          waBubble1Time: '3:18 م',
+          waBubble2Out: 'المدير طلب مني أدرّب الفريق كله عليها 😂',
+          waBubble2Time: '3:19 م'
         }
       ]
     },
@@ -116,7 +137,7 @@ export const getTemplateDefaultContent = (course: any, templateName: string): La
       title: 'هل لديك أي استفسار آخر؟',
       subtitle: 'تواصل معنا مباشرة عبر واتساب وسيجيب فريق الدعم على كافة أسئلتك واستفساراتك في أقرب وقت.',
       buttonText: 'تواصل معنا عبر واتساب',
-      backgroundColor: '#25D366',
+      backgroundColor: '#499A13',
       textColor: '#ffffff'
     },
     footer: {

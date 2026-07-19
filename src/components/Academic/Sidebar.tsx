@@ -124,6 +124,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       ],
     },
     {
+      label: 'صفحات الهبوط',
+      icon: FileText,
+      href: '/academic/landing-pages',
+    },
+    {
       label: 'الطلاب',
       icon: Users,
       href: '/academic/students',
