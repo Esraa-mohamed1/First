@@ -75,12 +75,26 @@ async function fetchTenantHomepage(tenantKey: string, token?: string) {
             headers: reqHeaders
         });
 
-        const pagesResponse = await api.get('/pages');
-        const unwrappedPages = unwrapEncryptedResponseData(pagesResponse.data) as any;
-        const pages = unwrappedPages?.data ?? unwrappedPages;
+        let pages: any[] = [];
+        try {
+            const landingPagesResponse = await api.get('/landing_pages');
+            const unwrappedLanding = unwrapEncryptedResponseData(landingPagesResponse.data) as any;
+            const landingData = unwrappedLanding?.data ?? unwrappedLanding;
+            if (Array.isArray(landingData) && landingData.length > 0) {
+                pages = landingData;
+            }
+        } catch (e: any) {
+            console.warn(`Failed to fetch /landing_pages for tenant ${tenantKey}, trying /pages fallback:`, e.message);
+        }
+
+        if (pages.length === 0) {
+            const pagesResponse = await api.get('/pages');
+            const unwrappedPages = unwrapEncryptedResponseData(pagesResponse.data) as any;
+            pages = (unwrappedPages?.data ?? unwrappedPages) || [];
+        }
 
         if (!Array.isArray(pages) || pages.length === 0) {
-            console.warn(`No pages found for tenant: ${tenantKey}`);
+            console.warn(`No pages or landing_pages found for tenant: ${tenantKey}`);
             return null;
         }
 
@@ -88,8 +102,8 @@ async function fetchTenantHomepage(tenantKey: string, token?: string) {
 
         let homePage = pages.find((p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true');
         if (!homePage) {
-            const templatePages = pages.filter((p: any) => TEMPLATE_SLUGS.includes(p.title));
-            homePage = templatePages.sort((a: any, b: any) => Number(b.id) - Number(a.id))[0];
+            const templatePages = pages.filter((p: any) => TEMPLATE_SLUGS.includes(p.template_name || p.template || p.title));
+            homePage = templatePages.sort((a: any, b: any) => Number(b.id || 0) - Number(a.id || 0))[0];
         }
 
         if (!homePage) {
@@ -98,14 +112,23 @@ async function fetchTenantHomepage(tenantKey: string, token?: string) {
 
         if (!homePage) return null;
 
-        const sectionsResponse = await api.get('/sections', {
-            params: { page_id: homePage.id }
-        });
-        const unwrappedSections = unwrapEncryptedResponseData(sectionsResponse.data) as any;
-        const sectionsData = unwrappedSections?.data ?? unwrappedSections;
+        let sectionsData = homePage.sections || homePage.content?.sections;
+        if (!Array.isArray(sectionsData) || sectionsData.length === 0) {
+            if (homePage.id) {
+                try {
+                    const sectionsResponse = await api.get('/sections', {
+                        params: { page_id: homePage.id }
+                    });
+                    const unwrappedSections = unwrapEncryptedResponseData(sectionsResponse.data) as any;
+                    sectionsData = unwrappedSections?.data ?? unwrappedSections;
+                } catch (secErr: any) {
+                    console.warn(`Failed to fetch sections for page_id ${homePage.id}:`, secErr.message);
+                }
+            }
+        }
 
         const resultData = {
-            templateId: homePage.template || homePage.template_id || homePage.title || homePage.slug || 'template_1',
+            templateId: homePage.template_name || homePage.template || homePage.template_id || homePage.title || homePage.slug || 'template_1',
             sections: Array.isArray(sectionsData) ? sectionsData : []
         };
 

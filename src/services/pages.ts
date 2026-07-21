@@ -91,6 +91,16 @@ const SECTION_DEFAULT_PROPS: Record<string, Record<string, any>> = {
 // -----------------------------------------------------------------------
 
 export const getPages = async (): Promise<any[]> => {
+  try {
+    const response = await academyApi.get<any>('/landing_pages');
+    const data = response.data?.data ?? response.data;
+    if (Array.isArray(data) && data.length > 0) {
+      return data as any[];
+    }
+  } catch (error) {
+    console.warn('Failed to fetch /landing_pages, falling back to /pages:', error);
+  }
+
   const response = await academyApi.get<any>('/pages');
   const data = response.data?.data ?? response.data;
   return (Array.isArray(data) ? data : []) as any[];

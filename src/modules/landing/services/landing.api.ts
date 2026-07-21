@@ -56,7 +56,23 @@ export const getStudentLandingPageByCourseSlug = async (slug: string, courseId?:
   return null;
 };
 
-export const saveLandingPage = async (payload: {
+export const createLandingPage = async (payload: {
+  template_name: string;
+  content: any;
+  is_active: boolean;
+  course_id: number;
+  user_id: number;
+}): Promise<any> => {
+  try {
+    const response = await academyApi.post('landing_pages', payload);
+    return response.data.data || response.data;
+  } catch (error: any) {
+    console.error('Failed to create landing page:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const updateLandingPage = async (payload: {
   template_name: string;
   content: any;
   is_active: boolean;
@@ -67,7 +83,31 @@ export const saveLandingPage = async (payload: {
     const response = await academyApi.put('landing_pages', payload);
     return response.data.data || response.data;
   } catch (error: any) {
-    console.error('Failed to save landing page:', error);
+    console.error('Failed to update landing page:', error);
     throw error.response?.data || error;
   }
 };
+
+export const saveLandingPage = updateLandingPage;
+
+export const getLandingPagesList = async (): Promise<any[]> => {
+  try {
+    const response = await academyApi.get('landing_pages');
+    const data = response.data?.data ?? response.data;
+    return Array.isArray(data) ? data : [];
+  } catch (error: any) {
+    console.error('Failed to fetch landing pages list:', error);
+    return [];
+  }
+};
+
+export const deleteLandingPage = async (id: string | number): Promise<any> => {
+  try {
+    const response = await academyApi.delete(`landing_pages/${id}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to delete landing page via API:', error);
+    throw error.response?.data || error;
+  }
+};
+

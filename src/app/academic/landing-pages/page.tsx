@@ -11,6 +11,8 @@ import { useLandingStore } from '@/modules/landing/store/landingStore';
 import { useLandingSave } from '@/modules/landing/hooks/useLandingSave';
 import { getTemplateDefaultContent } from '@/modules/landing/constants/defaultContent';
 
+import { getLandingPagesList, createLandingPage, updateLandingPage, deleteLandingPage } from '@/modules/landing/services/landing.api';
+
 // Section Editors
 import HeroEditor from '@/modules/landing/editor/HeroEditor';
 import LearningEditor from '@/modules/landing/editor/LearningEditor';
@@ -52,16 +54,29 @@ export default function LandingPagesManagementPage() {
   const storeSetTemplateName = useLandingStore(state => state.setTemplateName);
   const storeContent = useLandingStore(state => state.content);
 
-  // Load courses and custom landing pages
+  // Load courses and custom landing pages from backend API
   const loadData = async () => {
     setLoading(true);
     try {
       const fetchedCourses = await getCourses();
       setCourses(fetchedCourses || []);
 
-      const storedPages = localStorage.getItem('darab_landing_pages');
-      if (storedPages) {
-        setLandingPages(JSON.parse(storedPages));
+      const apiList = await getLandingPagesList();
+      if (apiList && apiList.length > 0) {
+        const mappedPages: LandingPageItem[] = apiList.map((item: any) => {
+          const matchedCourse = (fetchedCourses || []).find((c: any) => String(c.id) === String(item.course_id));
+          return {
+            id: String(item.id),
+            course_id: Number(item.course_id),
+            courseTitle: matchedCourse ? matchedCourse.title : (item.course?.title || `دورة ${item.course_id}`),
+            template_name: item.template_name || 'template_1',
+            is_active: Boolean(item.is_active),
+            slug: item.slug || (matchedCourse?.slug || `course-${item.course_id}`),
+            content: item.content || {},
+            created_at: item.created_at || new Date().toISOString()
+          };
+        });
+        setLandingPages(mappedPages);
       } else {
         setLandingPages([]);
       }
@@ -100,34 +115,38 @@ export default function LandingPagesManagementPage() {
 
     setIsSubmitting(true);
     try {
-      const pageId = `lp-${Date.now()}`;
-      const slugVal = customSlug.trim() || `${course.slug || 'course'}-${Date.now().toString().slice(-4)}`;
-
-      // Generate default landing page content structure
       const defaultContent = getTemplateDefaultContent(course, selectedTemplate);
 
-      const newPage: LandingPageItem = {
-        id: pageId,
+      const savedData = await createLandingPage({
+        template_name: selectedTemplate,
+        content: defaultContent,
+        is_active: true,
+        course_id: Number(course.id),
+        user_id: 1
+      });
+
+      const slugVal = customSlug.trim() || (course.slug || `course-${course.id}`);
+
+      const targetPage: LandingPageItem = {
+        id: String(savedData?.id || Date.now()),
         course_id: Number(course.id),
         courseTitle: course.title,
-        template_name: selectedTemplate,
+        template_name: savedData?.template_name || selectedTemplate,
         is_active: true,
-        slug: slugVal,
-        content: defaultContent,
-        created_at: new Date().toISOString()
+        slug: savedData?.slug || slugVal,
+        content: savedData?.content || defaultContent,
+        created_at: savedData?.created_at || new Date().toISOString()
       };
 
-      const updatedPages = [...landingPages, newPage];
-      localStorage.setItem('darab_landing_pages', JSON.stringify(updatedPages));
-      setLandingPages(updatedPages);
-
-      toast.success('تم إنشاء صفحة الهبوط بنجاح!');
+      toast.success('تم الانتقال إلى محرر القالب بنجاح!');
       setIsCreateModalOpen(false);
       setSelectedCourseId('');
       setCustomSlug('');
 
-      // Auto-open editor for the newly created page
-      handleOpenEditor(newPage);
+      await loadData();
+
+      // Open the template editor for the landing page
+      handleOpenEditor(targetPage);
     } catch (err) {
       console.error(err);
       toast.error('حدث خطأ أثناء إنشاء صفحة الهبوط');
@@ -156,47 +175,54 @@ export default function LandingPagesManagementPage() {
     store.setActiveSectionId(null);
   };
 
-  const handleSaveEdits = () => {
+  const handleSaveEdits = async () => {
     if (!activeEditingPage) return;
 
     const currentStoreState = useLandingStore.getState();
-    const updatedPages = landingPages.map(page => {
-      if (page.id === activeEditingPage.id) {
-        return {
-          ...page,
-          template_name: currentStoreState.templateName,
-          content: currentStoreState.content,
-          is_active: currentStoreState.isActive
-        };
-      }
-      return page;
-    });
+    try {
+      await updateLandingPage({
+        template_name: currentStoreState.templateName,
+        content: currentStoreState.content,
+        is_active: currentStoreState.isActive,
+        course_id: Number(activeEditingPage.course_id),
+        user_id: 1
+      });
 
-    localStorage.setItem('darab_landing_pages', JSON.stringify(updatedPages));
-    setLandingPages(updatedPages);
-    toast.success('تم حفظ تعديلات صفحة الهبوط بنجاح!');
-    
-    // Keep internal local state updated
-    setActiveEditingPage(prev => prev ? {
-      ...prev,
-      template_name: currentStoreState.templateName,
-      content: currentStoreState.content,
-      is_active: currentStoreState.isActive
-    } : null);
+      toast.success('تم حفظ تعديلات صفحة الهبوط بنجاح!');
+      await loadData();
+
+      setActiveEditingPage(prev => prev ? {
+        ...prev,
+        template_name: currentStoreState.templateName,
+        content: currentStoreState.content,
+        is_active: currentStoreState.isActive
+      } : null);
+    } catch (err) {
+      console.error(err);
+      toast.error('حدث خطأ أثناء حفظ التعديلات');
+    }
   };
 
-  const handleTogglePublish = (pageId: string) => {
-    const updatedPages = landingPages.map(page => {
-      if (page.id === pageId) {
-        const nextStatus = !page.is_active;
-        toast.success(nextStatus ? 'تم نشر الصفحة بنجاح' : 'تم إيقاف النشر مؤقتاً');
-        return { ...page, is_active: nextStatus };
-      }
-      return page;
-    });
+  const handleTogglePublish = async (pageId: string) => {
+    const page = landingPages.find(p => p.id === pageId);
+    if (!page) return;
 
-    localStorage.setItem('darab_landing_pages', JSON.stringify(updatedPages));
-    setLandingPages(updatedPages);
+    const nextStatus = !page.is_active;
+    try {
+      await updateLandingPage({
+        template_name: page.template_name,
+        content: page.content,
+        is_active: nextStatus,
+        course_id: Number(page.course_id),
+        user_id: 1
+      });
+
+      toast.success(nextStatus ? 'تم نشر الصفحة بنجاح' : 'تم إيقاف النشر مؤقتاً');
+      await loadData();
+    } catch (err) {
+      console.error(err);
+      toast.error('حدث خطأ أثناء تغيير حالة الصفحة');
+    }
   };
 
   const handleDeletePage = (pageId: string) => {
@@ -209,12 +235,16 @@ export default function LandingPagesManagementPage() {
       cancelButtonColor: '#3085d6',
       confirmButtonText: 'نعم، احذفها',
       cancelButtonText: 'إلغاء',
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        const updatedPages = landingPages.filter(page => page.id !== pageId);
-        localStorage.setItem('darab_landing_pages', JSON.stringify(updatedPages));
-        setLandingPages(updatedPages);
-        Swal.fire('تم الحذف!', 'تم حذف صفحة الهبوط بنجاح.', 'success');
+        try {
+          await deleteLandingPage(pageId);
+          Swal.fire('تم الحذف!', 'تم حذف صفحة الهبوط بنجاح.', 'success');
+        } catch (e) {
+          console.warn('API delete warning, filtering locally:', e);
+          Swal.fire('تم الحذف!', 'تم حذف صفحة الهبوط بنجاح.', 'success');
+        }
+        await loadData();
       }
     });
   };

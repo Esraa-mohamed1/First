@@ -27,8 +27,8 @@ export default function WhatsAppSection({
   const isTemplate1 = templateId === 'template_1' || templateId === 'Modern Course';
 
   const encodedMessage = encodeURIComponent(data.message || 'مرحباً، أود الاستفسار عن الدورة');
-  const cleanPhone = data.phoneNumber ? data.phoneNumber.replace('+', '').trim() : '';
-  const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`;
+  const cleanPhone = data.phoneNumber ? data.phoneNumber.replace(/[^0-9]/g, '').trim() : '';
+  const whatsappUrl = cleanPhone ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}` : '#';
 
   const handleLinkClick = (e: React.MouseEvent) => {
     if (isEditable) {
@@ -75,7 +75,7 @@ export default function WhatsAppSection({
   return (
     <>
       {/* 1. Inline WhatsApp & Lead Contact Section */}
-      {data.showInlineSection && data.phoneNumber && (
+      {data.showInlineSection && (
         <section
           style={sectionStyle}
           className={twMerge(
@@ -199,7 +199,7 @@ export default function WhatsAppSection({
       )}
 
       {/* 2. Floating WhatsApp widget */}
-      {data.showFloatingButton && data.phoneNumber && (
+      {data.showFloatingButton && (
         <div className="fixed bottom-6 right-6 z-[999] pointer-events-auto" style={{ direction: 'rtl' }}>
           <a
             href={whatsappUrl}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { saveLandingPage } from '../services/landing.api';
+import { updateLandingPage } from '../services/landing.api';
 import { useLandingStore } from '../store/landingStore';
 
 export function useLandingSave() {
@@ -30,7 +30,7 @@ export function useLandingSave() {
         course_id: Number(courseId),
         user_id: Number(userId || customUserId || 3) // Fallback to 3 if user_id is missing
       };
-      await saveLandingPage(payload);
+      await updateLandingPage(payload);
       toast.success('تم حفظ تعديلات صفحة الهبوط بنجاح!');
       return true;
     } catch (error: any) {

@@ -57,14 +57,15 @@ export default function WhatsAppEditor() {
 
         {/* Phone Number */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold text-slate-700">رقم الهاتف (مع رمز الدولة بدون + أو أصفار)</label>
+          <label className="text-xs font-bold text-slate-700">رقم واتساب الأكاديمية (مع مفتاح الدولة بدون + أو أصفار)</label>
           <input
             type="text"
-            className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
-            placeholder="مثال: 966500000000"
-            value={data.phoneNumber}
+            className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left font-bold text-slate-800"
+            placeholder="مثال: 966500000000 أو 201000000000"
+            value={data.phoneNumber || ''}
             onChange={(e) => handleChange('phoneNumber', e.target.value)}
           />
+          <span className="text-[9px] text-slate-400 font-bold">هذا الرقم هو الذي يتم توجيه الطلاب إليه مباشرة عبر تطبيق واتساب عند الضغط على زر التواصل</span>
         </div>
 
         {/* Button Text */}
