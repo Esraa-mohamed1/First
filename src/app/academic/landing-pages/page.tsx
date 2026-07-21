@@ -168,9 +168,11 @@ export default function LandingPagesManagementPage() {
     
     store.setCourseData(course);
     store.setLandingPageData({
+      id: page.id,
       template_name: page.template_name,
       is_active: page.is_active,
-      content: page.content
+      content: page.content,
+      course_id: page.course_id
     });
     store.setActiveSectionId(null);
   };
@@ -181,6 +183,7 @@ export default function LandingPagesManagementPage() {
     const currentStoreState = useLandingStore.getState();
     try {
       await updateLandingPage({
+        ...(activeEditingPage.id ? { id: activeEditingPage.id } : {}),
         template_name: currentStoreState.templateName,
         content: currentStoreState.content,
         is_active: currentStoreState.isActive,
@@ -210,6 +213,7 @@ export default function LandingPagesManagementPage() {
     const nextStatus = !page.is_active;
     try {
       await updateLandingPage({
+        ...(page.id ? { id: page.id } : {}),
         template_name: page.template_name,
         content: page.content,
         is_active: nextStatus,

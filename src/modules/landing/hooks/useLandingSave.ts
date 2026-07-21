@@ -5,6 +5,7 @@ import { useLandingStore } from '../store/landingStore';
 
 export function useLandingSave() {
   const [saving, setSaving] = useState(false);
+  const landingPageId = useLandingStore(state => state.landingPageId);
   const content = useLandingStore(state => state.content);
   const courseId = useLandingStore(state => state.courseId);
   const templateName = useLandingStore(state => state.templateName);
@@ -24,6 +25,7 @@ export function useLandingSave() {
     setSaving(true);
     try {
       const payload = {
+        ...(landingPageId ? { id: landingPageId } : {}),
         template_name: templateName,
         content: content,
         is_active: isActive,

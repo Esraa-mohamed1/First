@@ -3,6 +3,7 @@ import { LandingPageContent } from '../types/landing';
 import { getTemplateDefaultContent } from '../constants/defaultContent';
 
 export interface LandingState {
+  landingPageId: number | string | null;
   courseId: number | null;
   templateName: string;
   isActive: boolean;
@@ -11,7 +12,7 @@ export interface LandingState {
   isEditable: boolean;
   activeSectionId: string | null;
   courseData: any | null;
-  
+
   setCourseData: (course: any) => void;
   setLandingPageData: (data: any) => void;
   updateSectionContent: <K extends keyof LandingPageContent>(section: K, data: Partial<LandingPageContent[K]>) => void;
@@ -23,6 +24,7 @@ export interface LandingState {
 }
 
 export const useLandingStore = create<LandingState>((set, get) => ({
+  landingPageId: null,
   courseId: null,
   templateName: 'template_1',
   isActive: true,
@@ -35,7 +37,7 @@ export const useLandingStore = create<LandingState>((set, get) => ({
   setCourseData: (course) => {
     const currentContent = get().content;
     const templateName = get().templateName;
-    set({ 
+    set({
       courseData: course,
       courseId: course?.id ? Number(course.id) : null,
       content: currentContent || getTemplateDefaultContent(course, templateName)
@@ -45,6 +47,7 @@ export const useLandingStore = create<LandingState>((set, get) => ({
   setLandingPageData: (data) => {
     if (!data) return;
     set({
+      landingPageId: data.id !== undefined ? data.id : get().landingPageId,
       templateName: data.template_name || get().templateName,
       isActive: typeof data.is_active === 'boolean' ? data.is_active : get().isActive,
       courseId: data.course_id ? Number(data.course_id) : get().courseId,
@@ -75,7 +78,7 @@ export const useLandingStore = create<LandingState>((set, get) => ({
     const courseData = get().courseData;
     const oldContent = get().content;
     const defaultForNewTemplate = getTemplateDefaultContent(courseData, name);
-    
+
     if (oldContent) {
       const mergedContent = {
         hero: {
@@ -86,11 +89,11 @@ export const useLandingStore = create<LandingState>((set, get) => ({
           image: oldContent.hero.image || defaultForNewTemplate.hero.image,
           buttonText: oldContent.hero.buttonText || defaultForNewTemplate.hero.buttonText,
           buttonLink: oldContent.hero.buttonLink || defaultForNewTemplate.hero.buttonLink,
-          backgroundColor: oldContent.hero.backgroundColor !== '#082A24' && oldContent.hero.backgroundColor !== '#ffffff' 
-            ? oldContent.hero.backgroundColor 
+          backgroundColor: oldContent.hero.backgroundColor !== '#082A24' && oldContent.hero.backgroundColor !== '#ffffff'
+            ? oldContent.hero.backgroundColor
             : defaultForNewTemplate.hero.backgroundColor,
-          textColor: oldContent.hero.textColor !== '#FBF7EE' && oldContent.hero.textColor !== '#1f2937' 
-            ? oldContent.hero.textColor 
+          textColor: oldContent.hero.textColor !== '#FBF7EE' && oldContent.hero.textColor !== '#1f2937'
+            ? oldContent.hero.textColor
             : defaultForNewTemplate.hero.textColor,
           typography: oldContent.hero.typography || defaultForNewTemplate.hero.typography,
         },
@@ -138,7 +141,7 @@ export const useLandingStore = create<LandingState>((set, get) => ({
           links: oldContent.footer.links && oldContent.footer.links.length > 0 ? oldContent.footer.links : defaultForNewTemplate.footer.links,
         }
       };
-      
+
       set({
         templateName: name,
         content: mergedContent as LandingPageContent

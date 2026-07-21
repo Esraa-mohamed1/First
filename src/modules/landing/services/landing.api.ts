@@ -3,17 +3,8 @@ import studentApi from '@/lib/student-api';
 
 export const getLandingPageByCourseSlug = async (slug: string, courseId?: number | string): Promise<any> => {
   try {
-    const response = await academyApi.get(`landing_pages/${slug}`);
-    if (response.data.data) {
-      return response.data.data;
-    }
-  } catch (error) {
-    console.warn('Failed direct get by slug, trying fallback list query:', error);
-  }
-
-  try {
     const response = await academyApi.get(`landing_pages`);
-    const list = response.data.data || response.data;
+    const list = response.data?.data || response.data;
     if (Array.isArray(list)) {
       if (courseId) {
         const found = list.find((item: any) => String(item.course_id) === String(courseId));
@@ -24,24 +15,15 @@ export const getLandingPageByCourseSlug = async (slug: string, courseId?: number
       if (list.length > 0) return list[0];
     }
   } catch (e) {
-    console.error('Fallback query failed:', e);
+    console.error('Failed to get landing page by slug:', e);
   }
   return null;
 };
 
 export const getStudentLandingPageByCourseSlug = async (slug: string, courseId?: number | string): Promise<any> => {
   try {
-    const response = await studentApi.get(`landing_pages/${slug}`);
-    if (response.data.data) {
-      return response.data.data;
-    }
-  } catch (error) {
-    console.warn('Failed student direct get by slug, trying fallback list query:', error);
-  }
-
-  try {
-    const response = await academyApi.get(`landing_pages`);
-    const list = response.data.data || response.data;
+    const response = await studentApi.get(`landing_pages`);
+    const list = response.data?.data || response.data;
     if (Array.isArray(list)) {
       if (courseId) {
         const found = list.find((item: any) => String(item.course_id) === String(courseId));
@@ -51,7 +33,7 @@ export const getStudentLandingPageByCourseSlug = async (slug: string, courseId?:
       if (foundBySlug) return foundBySlug;
     }
   } catch (e) {
-    console.error('Fallback student query failed:', e);
+    console.error('Failed to get student landing page by slug:', e);
   }
   return null;
 };
@@ -73,14 +55,17 @@ export const createLandingPage = async (payload: {
 };
 
 export const updateLandingPage = async (payload: {
+  id?: number | string;
   template_name: string;
   content: any;
   is_active: boolean;
   course_id: number;
   user_id: number;
 }): Promise<any> => {
+  const { id, ...body } = payload;
+  if (!id) throw new Error('Landing page ID is required for update');
   try {
-    const response = await academyApi.put('landing_pages', payload);
+    const response = await academyApi.put(`landing_pages/${id}`, body);
     return response.data.data || response.data;
   } catch (error: any) {
     console.error('Failed to update landing page:', error);
