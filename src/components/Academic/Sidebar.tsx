@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutGrid, GraduationCap, Users, FileText, Package, TrendingUp, Settings, LogOut, ChevronLeft, X, LayoutDashboard, Plus, Wallet, Landmark, ReceiptText, Megaphone, Ticket, Award, Star, User, Globe } from 'lucide-react';
+import { LayoutGrid, GraduationCap, Users, FileText, Package, TrendingUp, Settings, LogOut, ChevronLeft, X, LayoutDashboard, Plus, Wallet, Landmark, ReceiptText, Megaphone, Ticket, Award, Star, User, Globe, ShoppingBag } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Image from 'next/image';
@@ -127,6 +127,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       label: 'صفحات الهبوط',
       icon: FileText,
       href: '/academic/landing-pages',
+    },
+    {
+      label: 'المتجر',
+      icon: ShoppingBag,
+      href: '/academic/market',
     },
     {
       label: 'الطلاب',
