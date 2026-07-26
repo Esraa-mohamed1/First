@@ -24,14 +24,46 @@ import {
   Edit,
   Video,
   X,
-  PhoneCall,
-  QrCode,
+  FileCode,
+  FileType,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getBag, BagApiItem } from '@/services/bags';
+import { getBag, BagApiItem, BagItemDetail } from '@/services/bags';
 import { getCourses } from '@/services/courses';
 import { getUserPaymentInfos } from '@/services/finance';
 import { Course } from '@/types/api';
+
+/** Helper to format clean display filename from raw backend path */
+function getFileNameFromPath(path: string): string {
+  if (!path) return 'ملف مرفق';
+  try {
+    const rawName = path.split('/').pop() || path;
+    const cleaned = rawName.replace(/^\d+_\d+_/, '').replace(/^\d+_/, '');
+    return decodeURIComponent(cleaned) || rawName;
+  } catch (e) {
+    return path;
+  }
+}
+
+/** Helper to get badge styling and icon according to item type or file extension */
+function getItemTypeBadge(type?: string, path?: string) {
+  const ext = path ? path.split('.').pop()?.toLowerCase() : '';
+  const t = (type || ext || 'file').toLowerCase();
+
+  if (t === 'pdf' || ext === 'pdf') {
+    return { label: 'PDF', bg: 'bg-red-50 text-red-600 border-red-100', icon: FileType };
+  }
+  if (t === 'video' || ext === 'mp4' || ext === 'webm' || ext === 'mov') {
+    return { label: 'فيديو', bg: 'bg-purple-50 text-purple-600 border-purple-100', icon: Video };
+  }
+  if (t === 'image' || ext === 'jpg' || ext === 'jpeg' || ext === 'png' || ext === 'webp') {
+    return { label: 'صورة', bg: 'bg-emerald-50 text-emerald-600 border-emerald-100', icon: Layers };
+  }
+  if (ext === 'html' || ext === 'js' || ext === 'css') {
+    return { label: 'ملف كود', bg: 'bg-indigo-50 text-indigo-600 border-indigo-100', icon: FileCode };
+  }
+  return { label: type || 'ملف', bg: 'bg-blue-50 text-blue-600 border-blue-100', icon: FileText };
+}
 
 export default function BagDetailsPage() {
   const params = useParams();
@@ -40,6 +72,7 @@ export default function BagDetailsPage() {
 
   const [bag, setBag] = useState<BagApiItem | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeImage, setActiveImage] = useState<string | null>(null);
   const [includedCourses, setIncludedCourses] = useState<Course[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<Array<{ id: number; name: string; logo?: string; account_number?: string }>>([]);
 
@@ -59,21 +92,23 @@ export default function BagDetailsPage() {
         const bagData = await getBag(bagId);
         if (bagData) {
           setBag(bagData);
+          if (bagData.image) setActiveImage(bagData.image);
 
-          // Fetch all courses to match included course IDs
-          try {
-            const allCourses = await getCourses();
-            if (Array.isArray(bagData.items) && bagData.items.length > 0) {
-              const matched = allCourses.filter((c) => bagData.items?.includes(c.id));
-              setIncludedCourses(matched);
-            } else {
-              setIncludedCourses(allCourses.slice(0, 3)); // Fallback mock courses display
+          // Check if items are numbers (course IDs) or objects (file items)
+          if (Array.isArray(bagData.items) && bagData.items.length > 0) {
+            const firstItem = bagData.items[0];
+            if (typeof firstItem === 'number' || typeof firstItem === 'string') {
+              try {
+                const allCourses = await getCourses();
+                const matched = allCourses.filter((c) => bagData.items?.includes(c.id));
+                setIncludedCourses(matched);
+              } catch (err) {
+                console.error('Failed to load courses for bag:', err);
+              }
             }
-          } catch (err) {
-            console.error('Failed to load courses for bag:', err);
           }
 
-          // Fetch payment infos
+          // Fetch payment infos if available
           try {
             const infos = await getUserPaymentInfos();
             if (Array.isArray(infos) && infos.length > 0) {
@@ -118,7 +153,7 @@ export default function BagDetailsPage() {
     setTimeout(() => {
       setIsProcessingPurchase(false);
       setPurchaseSuccess(true);
-      toast.success('تمت عملية الشراء بنجاح! شكراً لك.');
+      toast.success('تمت عملية الشراء بنجاح! يمكنك الآن تنزيل جميع محتويات الحقيبة.');
     }, 1500);
   };
 
@@ -152,9 +187,34 @@ export default function BagDetailsPage() {
     );
   }
 
+  // Price checks
   const isFree = bag.type_price === 'free' || (!bag.price && !bag.discount_price);
-  const displayPrice = bag.discount_price && bag.discount_price > 0 ? bag.discount_price : bag.price || 0;
-  const originalPrice = bag.price && bag.discount_price && bag.price > bag.discount_price ? bag.price : null;
+  const numericPrice = typeof bag.price === 'string' ? parseFloat(bag.price) : bag.price || 0;
+  const numericDiscount = typeof bag.discount_price === 'string' ? parseFloat(bag.discount_price) : bag.discount_price || 0;
+
+  const displayPrice = numericDiscount > 0 ? numericDiscount : numericPrice;
+  const originalPrice = numericPrice > numericDiscount && numericDiscount > 0 ? numericPrice : null;
+
+  // Extract bag items (support both object items and course IDs)
+  const itemsList: BagItemDetail[] = Array.isArray(bag.items)
+    ? bag.items.filter((item): item is BagItemDetail => typeof item === 'object' && item !== null && 'path' in item)
+    : [];
+
+  const totalItemsCount = itemsList.length > 0 ? itemsList.length : includedCourses.length > 0 ? includedCourses.length : 0;
+
+  // Extract gallery photos list
+  const allGalleryUrls: string[] = [];
+  if (bag.image) allGalleryUrls.push(bag.image);
+  if (Array.isArray(bag.gallery)) {
+    bag.gallery.forEach((g: any) => {
+      const url = typeof g === 'string' ? g : g?.path || g?.url;
+      if (url && !allGalleryUrls.includes(url)) {
+        allGalleryUrls.push(url);
+      }
+    });
+  }
+
+  const currentDisplayImage = activeImage || bag.image;
 
   return (
     <div className="space-y-8 pb-16" dir="rtl">
@@ -214,32 +274,54 @@ export default function BagDetailsPage() {
 
       {/* Main Grid Content */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Right Column: Bag Details & Course Content (8 Cols) */}
+        {/* Right Column: Bag Details & Items List (8 Cols) */}
         <div className="lg:col-span-8 space-y-8">
-          {/* Main Cover Banner */}
-          <div className="relative w-full h-72 lg:h-96 rounded-3xl overflow-hidden bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 shadow-lg border border-gray-100">
-            {bag.image ? (
-              <img src={bag.image} alt={bag.title} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center text-white/50 gap-4">
-                <Layers size={64} />
-                <span className="text-sm font-bold text-white/60">غلاف الحقيبة التدريبية</span>
+          {/* Main Cover Banner & Gallery Selector */}
+          <div className="space-y-4">
+            <div className="relative w-full h-72 lg:h-96 rounded-3xl overflow-hidden bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 shadow-lg border border-gray-100">
+              {currentDisplayImage ? (
+                <img src={currentDisplayImage} alt={bag.title} className="w-full h-full object-cover transition-all duration-300" />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-white/50 gap-4">
+                  <Layers size={64} />
+                  <span className="text-sm font-bold text-white/60">غلاف الحقيبة التدريبية</span>
+                </div>
+              )}
+              <div className="absolute top-4 right-4 flex items-center gap-2">
+                <span className="bg-blue-600/90 backdrop-blur-md text-white text-xs font-black px-4 py-2 rounded-xl shadow-md">
+                  {bag.category_name || 'حقيبة رقمية'}
+                </span>
+                {isFree ? (
+                  <span className="bg-emerald-500/90 backdrop-blur-md text-white text-xs font-black px-4 py-2 rounded-xl shadow-md">
+                    مجانية
+                  </span>
+                ) : (
+                  <span className="bg-amber-500/90 backdrop-blur-md text-white text-xs font-black px-4 py-2 rounded-xl shadow-md">
+                    مدفوعة
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Gallery Thumbnails Carousel Row */}
+            {allGalleryUrls.length > 1 && (
+              <div className="flex items-center gap-3 overflow-x-auto pb-2 pt-1 scrollbar-thin">
+                {allGalleryUrls.map((imgUrl, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveImage(imgUrl)}
+                    className={`w-20 h-20 rounded-2xl overflow-hidden border-2 flex-shrink-0 transition-all ${
+                      currentDisplayImage === imgUrl
+                        ? 'border-blue-600 ring-2 ring-blue-100 scale-105 shadow-md'
+                        : 'border-gray-200 opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={imgUrl} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
               </div>
             )}
-            <div className="absolute top-4 right-4 flex items-center gap-2">
-              <span className="bg-blue-600/90 backdrop-blur-md text-white text-xs font-black px-4 py-2 rounded-xl shadow-md">
-                {bag.category_name || 'حقيبة رقمية'}
-              </span>
-              {isFree ? (
-                <span className="bg-emerald-500/90 backdrop-blur-md text-white text-xs font-black px-4 py-2 rounded-xl shadow-md">
-                  مجانية
-                </span>
-              ) : (
-                <span className="bg-amber-500/90 backdrop-blur-md text-white text-xs font-black px-4 py-2 rounded-xl shadow-md">
-                  مدفوعة
-                </span>
-              )}
-            </div>
           </div>
 
           {/* Description Section */}
@@ -259,17 +341,15 @@ export default function BagDetailsPage() {
             <p className="text-gray-600 text-sm font-medium leading-relaxed whitespace-pre-line">
               {bag.description ||
                 bag.short_description ||
-                'تتضمن هذه الحقيبة مجموعة متكاملة من الدروس والدورات التدريبية المجهزة بعناية لمساعدتك على إتقان كافة المهارات المطلوبة.'}
+                'تتضمن هذه الحقيبة مجموعة متكاملة من الدروس والملفات المجهزة بعناية لمساعدتك على إتقان كافة المهارات المطلوبة.'}
             </p>
 
             {/* Highlights Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
               <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex flex-col items-center text-center space-y-1">
                 <BookOpen size={22} className="text-blue-600" />
-                <span className="text-xs font-bold text-gray-400">المحتويات</span>
-                <span className="text-sm font-black text-gray-900">
-                  {includedCourses.length || bag.items?.length || 1} دورة ومصدر
-                </span>
+                <span className="text-xs font-bold text-gray-400">إجمالي العناصر</span>
+                <span className="text-sm font-black text-gray-900">{totalItemsCount} ملفات ومصادر</span>
               </div>
 
               <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex flex-col items-center text-center space-y-1">
@@ -292,21 +372,67 @@ export default function BagDetailsPage() {
             </div>
           </div>
 
-          {/* Included Content / Courses List */}
+          {/* Items Section: Display items from API response */}
           <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm space-y-6">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <div>
                 <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
                   <Layers size={22} className="text-purple-600" />
-                  <span>محتويات الحقيبة (الدورات والملفات المرفقة)</span>
+                  <span>محتويات وملفات الحقيبة (Items)</span>
                 </h2>
                 <p className="text-xs font-bold text-gray-400 mt-1">
-                  تحتوي هذه الحقيبة على {includedCourses.length} دورة تدريبية مجهزة بالكامل
+                  تحتوي هذه الحقيبة على {totalItemsCount} ملفات ومواد قابلة للتنزيل والوصول
                 </p>
               </div>
             </div>
 
-            {includedCourses.length > 0 ? (
+            {/* Display list of item objects from API response */}
+            {itemsList.length > 0 ? (
+              <div className="space-y-4">
+                {itemsList.map((item, idx) => {
+                  const badge = getItemTypeBadge(item.type, item.path);
+                  const BadgeIcon = badge.icon;
+                  const fileName = getFileNameFromPath(item.path);
+
+                  return (
+                    <div
+                      key={item.id || idx}
+                      className="p-5 rounded-2xl border border-gray-100 bg-gray-50/60 hover:bg-white hover:shadow-md transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                    >
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className={`w-12 h-12 rounded-2xl border ${badge.bg} flex items-center justify-center flex-shrink-0 font-black text-base`}>
+                          <BadgeIcon size={22} />
+                        </div>
+                        <div className="space-y-1 flex-1">
+                          <h4 className="text-base font-black text-gray-900 dir-ltr text-right line-clamp-1">
+                            {fileName}
+                          </h4>
+                          <div className="flex items-center gap-3 text-xs font-bold text-gray-400">
+                            <span className={`px-2.5 py-0.5 rounded-lg border font-black ${badge.bg}`}>
+                              {badge.label}
+                            </span>
+                            <span>•</span>
+                            <span>رقم العنصر #{item.id}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-200">
+                        <a
+                          href={item.path}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-black text-xs shadow-sm shadow-blue-200 transition-all"
+                        >
+                          <Download size={15} />
+                          <span>تنزيل / فتح الملف</span>
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : includedCourses.length > 0 ? (
               <div className="space-y-4">
                 {includedCourses.map((course, idx) => (
                   <div
@@ -344,7 +470,7 @@ export default function BagDetailsPage() {
               </div>
             ) : (
               <div className="p-8 text-center bg-gray-50 rounded-2xl text-gray-400 font-bold text-sm">
-                تحتوي الحقيبة على دورات ومواد تدريبية متكاملة تفتح فور الشراء.
+                تحتوي الحقيبة على مواد تدريبية متكاملة تفتح فور الشراء.
               </div>
             )}
           </div>
@@ -407,7 +533,7 @@ export default function BagDetailsPage() {
                 </li>
                 <li className="flex items-center gap-2.5">
                   <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
-                  <span>تحميل مباشر لملفات الكورس والمشاريع</span>
+                  <span>تحميل مباشر لجميع ملفات الحقيبة</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
@@ -501,6 +627,26 @@ export default function BagDetailsPage() {
                       مبروك! تم إضافة حقيبة "{bag.title}" إلى حسابك ويمكنك الآن الوصول لجميع محتوياتها وتنزيلها.
                     </p>
                   </div>
+
+                  {/* List items for direct download right after purchase */}
+                  {itemsList.length > 0 && (
+                    <div className="space-y-2 text-right pt-2 border-t border-gray-100">
+                      <span className="text-xs font-black text-gray-600 block">ملفات الحقيبة الجاهزة للتنزيل:</span>
+                      {itemsList.map((item, idx) => (
+                        <a
+                          key={item.id || idx}
+                          href={item.path}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-gray-100 border border-gray-200 text-xs font-bold text-blue-600 transition-colors"
+                        >
+                          <span className="truncate">{getFileNameFromPath(item.path)}</span>
+                          <Download size={14} />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+
                   <button
                     onClick={() => {
                       setShowBuyModal(false);
@@ -508,7 +654,7 @@ export default function BagDetailsPage() {
                     }}
                     className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm shadow-md transition-all mt-4"
                   >
-                    بدء مشاهدة المحتوى الآن
+                    إغلاق المودال
                   </button>
                 </div>
               ) : (
@@ -525,7 +671,7 @@ export default function BagDetailsPage() {
                     <div className="flex-1 space-y-1">
                       <h4 className="text-sm font-black text-gray-900 line-clamp-1">{bag.title}</h4>
                       <span className="text-xs font-bold text-gray-400 block">
-                        {includedCourses.length || 1} دورات ومحتوى تدريبي
+                        {totalItemsCount} ملفات ومحتوى تدريبي
                       </span>
                     </div>
                     <div className="text-right">

@@ -28,6 +28,8 @@ import {
   CheckCircle2,
   File,
   Sparkles,
+  Star,
+  Plus,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import BagPreviewCard from './BagPreviewCard';
@@ -107,6 +109,13 @@ const initialFormState: BagFormState = {
  * Dedicated full page implementation for creating & editing digital bags.
  * Guarantees zero crashes when navigating between Step 1, Step 2, and Step 3.
  */
+export interface BagPhotoItem {
+  id: string;
+  url: string;
+  file?: File;
+  isMain: boolean;
+}
+
 export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
   const router = useRouter();
 
@@ -115,11 +124,107 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
   const [formData, setFormData] = useState<BagFormState>(initialFormState);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Cover Image File State
+  // Bag Photos State (Main Cover + Gallery Photos)
+  const [bagPhotos, setBagPhotos] = useState<BagPhotoItem[]>([]);
+  const [imageUrlInput, setImageUrlInput] = useState<string>('');
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [imageUploadMode, setImageUploadMode] = useState<'file' | 'url'>('file');
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  /** Helper to add multiple photo files */
+  const handleAddBagPhotos = (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    if (fileArray.length === 0) return;
+
+    setBagPhotos((prev) => {
+      let hasMain = prev.some((p) => p.isMain);
+      const newItems: BagPhotoItem[] = [];
+
+      fileArray.forEach((file, idx) => {
+        if (file.size > 10 * 1024 * 1024) {
+          toast.error(`حجم الصورة ${file.name} يفضل أن لا يتجاوز 10 ميجابايت`);
+          return;
+        }
+        const localUrl = URL.createObjectURL(file);
+        const isMainPhoto = !hasMain && idx === 0;
+        if (isMainPhoto) hasMain = true;
+
+        newItems.push({
+          id: `photo-${Date.now()}-${Math.random()}`,
+          url: localUrl,
+          file: file,
+          isMain: isMainPhoto,
+        });
+      });
+
+      const updated = [...prev, ...newItems];
+      const main = updated.find((p) => p.isMain) || updated[0];
+      if (main) {
+        setFormData((fd) => ({ ...fd, coverImage: main.url }));
+        setCoverImageFile(main.file || null);
+      }
+      return updated;
+    });
+  };
+
+  /** Set a photo as the main cover photo */
+  const setPhotoAsMain = (id: string) => {
+    setBagPhotos((prev) => {
+      const updated = prev.map((p) => ({
+        ...p,
+        isMain: p.id === id,
+      }));
+      const main = updated.find((p) => p.isMain);
+      if (main) {
+        setFormData((fd) => ({ ...fd, coverImage: main.url }));
+        setCoverImageFile(main.file || null);
+      }
+      return updated;
+    });
+    toast.success('تم تعيين الصورة كغلاف رئيسي للحقيبة');
+  };
+
+  /** Delete a photo from bag photos */
+  const removePhoto = (id: string) => {
+    setBagPhotos((prev) => {
+      const photoToRemove = prev.find((p) => p.id === id);
+      const filtered = prev.filter((p) => p.id !== id);
+
+      if (photoToRemove?.isMain && filtered.length > 0) {
+        filtered[0].isMain = true;
+        setFormData((fd) => ({ ...fd, coverImage: filtered[0].url }));
+        setCoverImageFile(filtered[0].file || null);
+      } else if (filtered.length === 0) {
+        setFormData((fd) => ({ ...fd, coverImage: '' }));
+        setCoverImageFile(null);
+      }
+      return filtered;
+    });
+  };
+
+  /** Add photo by URL */
+  const handleAddImageUrl = () => {
+    if (!imageUrlInput.trim()) return;
+    const url = imageUrlInput.trim();
+
+    setBagPhotos((prev) => {
+      const isMainPhoto = prev.length === 0 || !prev.some((p) => p.isMain);
+      const newPhoto: BagPhotoItem = {
+        id: `photo-url-${Date.now()}`,
+        url: url,
+        isMain: isMainPhoto,
+      };
+      const updated = [...prev, newPhoto];
+      if (isMainPhoto) {
+        setFormData((fd) => ({ ...fd, coverImage: url }));
+        setCoverImageFile(null);
+      }
+      return updated;
+    });
+    setImageUrlInput('');
+    toast.success('تم إضافة الصورة للمعرض بنجاح');
+  };
 
   // Step 2 Content Uploaded Files State (Dynamic, not static)
   const [uploadedBagFiles, setUploadedBagFiles] = useState<
@@ -147,6 +252,28 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
     if (editBagId) {
       getBag(editBagId).then((apiBag: BagApiItem | null) => {
         if (apiBag) {
+          const loadedPhotos: BagPhotoItem[] = [];
+          if (apiBag.image) {
+            loadedPhotos.push({
+              id: 'main-' + Date.now(),
+              url: apiBag.image,
+              isMain: true,
+            });
+          }
+          if (Array.isArray(apiBag.gallery)) {
+            apiBag.gallery.forEach((g: any, i: number) => {
+              const gUrl = typeof g === 'string' ? g : g?.path || g?.url;
+              if (gUrl && gUrl !== apiBag.image) {
+                loadedPhotos.push({
+                  id: `gallery-${i}-${Date.now()}`,
+                  url: gUrl,
+                  isMain: false,
+                });
+              }
+            });
+          }
+          setBagPhotos(loadedPhotos);
+
           setFormData({
             title: apiBag.title || '',
             description: apiBag.description || apiBag.short_description || '',
@@ -294,6 +421,24 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
 
       const itemsPayload: BagItemInput[] = [...fileItemsPayload, ...courseItemsPayload];
 
+      // Determine main image and gallery images from bagPhotos
+      const mainPhoto = bagPhotos.find((p) => p.isMain) || bagPhotos[0];
+      const galleryPhotos = bagPhotos.filter((p) => p.id !== mainPhoto?.id);
+
+      const mainImagePayload = mainPhoto?.file
+        ? mainPhoto.file
+        : mainPhoto?.url && !mainPhoto.url.startsWith('blob:') && !mainPhoto.url.startsWith('data:')
+        ? mainPhoto.url
+        : coverImageFile || (formData.coverImage && !formData.coverImage.startsWith('blob:') ? formData.coverImage : undefined);
+
+      const galleryPayload: Array<File | string> = galleryPhotos
+        .map((p) => {
+          if (p.file) return p.file;
+          if (p.url && !p.url.startsWith('blob:') && !p.url.startsWith('data:')) return p.url;
+          return null;
+        })
+        .filter((x): x is File | string => x !== null);
+
       const payload = {
         title: formData.title.trim(),
         short_description: formData.description || undefined,
@@ -305,10 +450,12 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
         is_active: formData.visibility === 'published' ? 1 : 0,
         // Only include payment_info_ids when non-empty (omitting avoids backend 422)
         payment_info_ids: validPaymentIds.length > 0 ? validPaymentIds : undefined,
-        // Include items array with type and file for each selected course
+        // Include items array with type and file for each selected course/file
         items: itemsPayload.length > 0 ? itemsPayload : undefined,
-        // Send coverImageFile if user uploaded a file, otherwise send the coverImage string URL
-        image: coverImageFile || (formData.coverImage.startsWith('blob:') || formData.coverImage.startsWith('data:') ? undefined : formData.coverImage || undefined),
+        // Main Cover Image
+        image: mainImagePayload,
+        // Gallery Images Array
+        gallery: galleryPayload.length > 0 ? galleryPayload : undefined,
       };
 
       if (editBagId) {
@@ -458,169 +605,216 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
               />
             </div>
 
-            {/* Cover Image Upload Section */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-black text-gray-700 block">
-                  صورة غلاف الحقيبة
-                </label>
+            {/* Cover Image & Gallery Upload Section */}
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between border-t border-gray-100 pt-4">
+                <div>
+                  <label className="text-sm font-black text-gray-900 block">
+                    صور ومعرض الحقيبة التدريبية
+                  </label>
+                  <p className="text-xs font-bold text-gray-400 mt-0.5">
+                    يمكنك رفع عدة صور للحقيبة. حدد صورة واحدة كـ <span className="text-blue-600 font-black">غلاف رئيسي</span>، والباقي سينتقل تلقائياً إلى <span className="text-purple-600 font-black">معرض الصور (Gallery)</span>.
+                  </p>
+                </div>
 
                 {/* Upload Mode Selector */}
                 <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl text-xs font-bold">
                   <button
                     type="button"
                     onClick={() => setImageUploadMode('file')}
-                    className={`px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
                       imageUploadMode === 'file'
                         ? 'bg-white text-blue-600 shadow-sm font-black'
                         : 'text-gray-500 hover:text-gray-800'
                     }`}
                   >
-                    <Upload size={13} />
-                    <span>رفع ملف</span>
+                    <Upload size={14} />
+                    <span>رفع صور</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setImageUploadMode('url')}
-                    className={`px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
                       imageUploadMode === 'url'
                         ? 'bg-white text-blue-600 shadow-sm font-black'
                         : 'text-gray-500 hover:text-gray-800'
                     }`}
                   >
-                    <Link2 size={13} />
+                    <Link2 size={14} />
                     <span>رابط صورة</span>
                   </button>
                 </div>
               </div>
 
               {imageUploadMode === 'file' ? (
-                /* File Upload Dropzone & Preview */
-                <div className="space-y-3">
+                /* Multi File Upload Dropzone */
+                <div className="space-y-4">
                   <input
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
+                    multiple
                     className="hidden"
                     onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        if (file.size > 10 * 1024 * 1024) {
-                          toast.error('حجم الصورة يجب أن لا يتجاوز 10 ميجابايت');
-                          return;
-                        }
-                        setCoverImageFile(file);
-                        const localUrl = URL.createObjectURL(file);
-                        setFormData((prev) => ({ ...prev, coverImage: localUrl }));
+                      if (e.target.files && e.target.files.length > 0) {
+                        handleAddBagPhotos(e.target.files);
+                        if (fileInputRef.current) fileInputRef.current.value = '';
                       }
                     }}
                   />
 
-                  {formData.coverImage ? (
-                    /* Image Selected / Preview Banner */
-                    <div className="relative rounded-2xl overflow-hidden border border-gray-200 bg-gray-50 group">
-                      <div className="h-44 w-full relative overflow-hidden bg-gray-900/5">
-                        <img
-                          src={formData.coverImage}
-                          alt="Cover Preview"
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src =
-                              'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80';
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                          <button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="px-4 py-2 bg-white text-gray-900 rounded-xl text-xs font-black shadow-lg hover:bg-gray-100 transition-all flex items-center gap-1.5"
-                          >
-                            <Upload size={14} />
-                            <span>تغيير الصورة</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setCoverImageFile(null);
-                              setFormData((prev) => ({ ...prev, coverImage: '' }));
-                              if (fileInputRef.current) fileInputRef.current.value = '';
-                            }}
-                            className="px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-black shadow-lg hover:bg-red-700 transition-all flex items-center gap-1.5"
-                          >
-                            <Trash2 size={14} />
-                            <span>حذف</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="p-3 flex items-center justify-between text-xs font-bold text-gray-600 bg-white border-t border-gray-100">
-                        <div className="flex items-center gap-2 truncate">
-                          <ImageIcon size={16} className="text-blue-600 flex-shrink-0" />
-                          <span className="truncate">
-                            {coverImageFile ? coverImageFile.name : 'صورة الغلاف الحالية'}
-                          </span>
-                        </div>
-                        {coverImageFile && (
-                          <span className="text-[11px] text-gray-400 font-mono">
-                            {(coverImageFile.size / (1024 * 1024)).toFixed(2)} MB
-                          </span>
-                        )}
-                      </div>
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragging(true);
+                    }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDragging(false);
+                      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                        handleAddBagPhotos(e.dataTransfer.files);
+                      }
+                    }}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center space-y-3 ${
+                      isDragging
+                        ? 'border-blue-600 bg-blue-50/50 scale-[0.99]'
+                        : 'border-gray-200 bg-gray-50/70 hover:border-blue-400 hover:bg-blue-50/20'
+                    }`}
+                  >
+                    <div className="w-14 h-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center shadow-inner">
+                      <UploadCloud size={28} />
                     </div>
-                  ) : (
-                    /* Empty Dropzone State */
-                    <div
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        setIsDragging(true);
-                      }}
-                      onDragLeave={() => setIsDragging(false)}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        setIsDragging(false);
-                        const file = e.dataTransfer.files?.[0];
-                        if (file && file.type.startsWith('image/')) {
-                          if (file.size > 10 * 1024 * 1024) {
-                            toast.error('حجم الصورة يجب أن لا يتجاوز 10 ميجابايت');
-                            return;
-                          }
-                          setCoverImageFile(file);
-                          const localUrl = URL.createObjectURL(file);
-                          setFormData((prev) => ({ ...prev, coverImage: localUrl }));
-                        }
-                      }}
-                      onClick={() => fileInputRef.current?.click()}
-                      className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center space-y-3 ${
-                        isDragging
-                          ? 'border-blue-600 bg-blue-50/50 scale-[0.99]'
-                          : 'border-gray-200 bg-gray-50/70 hover:border-blue-400 hover:bg-blue-50/20'
-                      }`}
+                    <div>
+                      <p className="text-sm font-black text-gray-900">
+                        اضغط هنا لرفع صور الحقيبة أو اسحب الصور إلى هنا
+                      </p>
+                      <p className="text-xs font-bold text-gray-400 mt-1">
+                        يمكنك تحديد صورة أو عدة صور معاً (PNG, JPG, WEBP) حتى 10 ميجابايت للصورة
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-black text-xs shadow-md shadow-blue-200 hover:bg-blue-700 transition-all flex items-center gap-2"
                     >
-                      <div className="w-12 h-12 rounded-2xl bg-blue-100/70 text-blue-600 flex items-center justify-center shadow-inner">
-                        <UploadCloud size={24} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-black text-gray-900">
-                          اضغط هنا لرفع صورة الغلاف أو اسحب الملف إلى هنا
-                        </p>
-                        <p className="text-xs font-bold text-gray-400 mt-1">
-                          PNG, JPG, WEBP, GIF حتى 10 ميجابايت
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                      <Plus size={16} />
+                      <span>إضافة صور للحقيبة والمعرض</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
                 /* Direct URL Input Mode */
-                <input
-                  type="text"
-                  placeholder="https://images.unsplash.com/photo-1555066931-4365d14bab8c"
-                  value={formData.coverImage}
-                  onChange={(e) =>
-                    setFormData({ ...formData, coverImage: e.target.value })
-                  }
-                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:border-blue-500 transition-all text-gray-900"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="أدخل رابط الصورة (https://example.com/image.jpg)..."
+                    value={imageUrlInput}
+                    onChange={(e) => setImageUrlInput(e.target.value)}
+                    className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:border-blue-500 transition-all text-gray-900"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddImageUrl}
+                    className="px-6 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm transition-all shadow-md shadow-blue-200 flex-shrink-0"
+                  >
+                    إضافة للمعرض
+                  </button>
+                </div>
+              )}
+
+              {/* Uploaded Bag Photos Grid */}
+              {bagPhotos.length > 0 && (
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-gray-700">
+                      الصور المرفوعة ({bagPhotos.length} صورة)
+                    </span>
+                    <span className="text-xs font-bold text-gray-400">
+                      الصورة المميزة بالنجمة هي صورة الغلاف الرئيسية
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {bagPhotos.map((photo) => (
+                      <div
+                        key={photo.id}
+                        className={`relative rounded-2xl overflow-hidden border-2 transition-all group bg-gray-50 flex flex-col justify-between ${
+                          photo.isMain
+                            ? 'border-blue-600 shadow-md ring-2 ring-blue-100'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        {/* Image Preview */}
+                        <div className="h-36 w-full relative bg-gray-900/5">
+                          <img
+                            src={photo.url}
+                            alt="Bag Photo"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src =
+                                'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80';
+                            }}
+                          />
+
+                          {/* Top Status Badge */}
+                          <div className="absolute top-2 right-2">
+                            {photo.isMain ? (
+                              <span className="bg-blue-600 text-white text-[11px] font-black px-2.5 py-1 rounded-xl shadow-md flex items-center gap-1">
+                                <Star size={12} fill="currentColor" />
+                                <span>الغلاف الرئيسي</span>
+                              </span>
+                            ) : (
+                              <span className="bg-black/60 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-1 rounded-xl">
+                                معرض الصور
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Overlay Buttons */}
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
+                            {!photo.isMain && (
+                              <button
+                                type="button"
+                                onClick={() => setPhotoAsMain(photo.id)}
+                                className="p-2 bg-blue-600 text-white rounded-xl text-xs font-black shadow-lg hover:bg-blue-700 transition-all flex items-center gap-1"
+                                title="تعيين كغلاف رئيسي"
+                              >
+                                <Star size={14} fill="currentColor" />
+                                <span>غلاف</span>
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => removePhoto(photo.id)}
+                              className="p-2 bg-red-600 text-white rounded-xl text-xs font-black shadow-lg hover:bg-red-700 transition-all flex items-center gap-1"
+                              title="حذف الصورة"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Footer Details */}
+                        <div className="p-2.5 bg-white border-t border-gray-100 flex items-center justify-between text-[11px] font-bold text-gray-500">
+                          <span className="truncate max-w-[100px]">
+                            {photo.file ? photo.file.name : 'صورة'}
+                          </span>
+                          {!photo.isMain && (
+                            <button
+                              type="button"
+                              onClick={() => setPhotoAsMain(photo.id)}
+                              className="text-blue-600 hover:underline font-black"
+                            >
+                              تعيين كغلاف
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
 

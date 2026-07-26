@@ -10,8 +10,18 @@ import { ApiResponse } from '@/types/api';
               items[], payment_info_ids[]
 ───────────────────────────────────────────────────────── */
 
+export interface BagItemDetail {
+  id: number;
+  bag_id?: number;
+  path: string;
+  type: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface BagApiItem {
   id: number;
+  user_id?: number;
   title: string;
   short_description?: string;
   description?: string;
@@ -19,14 +29,19 @@ export interface BagApiItem {
   category_name?: string;
   /** "free" | "paid" */
   type_price?: string;
-  price?: number;
-  discount_price?: number;
-  /** 1 = active (published), 0 = inactive (draft) */
-  is_active?: number;
-  /** Array of course/item IDs included in this bag */
-  items?: number[];
+  price?: number | string;
+  discount_price?: number | string | null;
+  count_download?: number | null;
+  count_view?: number | null;
+  /** 1/true = active (published), 0/false = inactive (draft) */
+  is_active?: number | boolean;
+  /** Array of item objects or course IDs included in this bag */
+  items?: BagItemDetail[] | any[];
+  /** Array of gallery images */
+  gallery?: string[] | any[];
   /** Array of instructor_receiver_account IDs for accepted payment methods */
   payment_info_ids?: number[];
+  payment_infos?: any[];
   created_at?: string;
   updated_at?: string;
 }
@@ -40,8 +55,10 @@ export interface CreateBagPayload {
   title: string;
   short_description?: string;
   description?: string;
-  /** File object for image upload, or URL string for existing image */
+  /** File object for main image upload, or URL string for existing image */
   image?: File | string | null;
+  /** Array of File objects or URL strings for the bag gallery */
+  gallery?: Array<File | string>;
   category_name?: string;
   /** "free" | "paid" */
   type_price?: string;
@@ -91,11 +108,22 @@ function buildBagFormData(payload: CreateBagPayload): FormData {
   if (payload.is_active != null)
     fd.append('is_active', String(payload.is_active));
 
-  // Image: File object = upload binary file; string = existing URL
+  // Main Cover Image: File object = upload binary file; string = existing URL
   if (payload.image instanceof File) {
     fd.append('image', payload.image);
   } else if (typeof payload.image === 'string' && payload.image && !payload.image.startsWith('blob:') && !payload.image.startsWith('data:')) {
     fd.append('image', payload.image);
+  }
+
+  // Bag Gallery Images: array of File objects or URL strings
+  if (Array.isArray(payload.gallery) && payload.gallery.length > 0) {
+    payload.gallery.forEach((gItem, idx) => {
+      if (gItem instanceof File) {
+        fd.append(`gallery[${idx}]`, gItem);
+      } else if (typeof gItem === 'string' && gItem && !gItem.startsWith('blob:') && !gItem.startsWith('data:')) {
+        fd.append(`gallery[${idx}]`, gItem);
+      }
+    });
   }
 
   // payment_info_ids[] — only sent when non-empty to avoid backend validation errors

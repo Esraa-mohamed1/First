@@ -28,6 +28,7 @@ export interface BagItem {
   downloadExpiry?: string; // Expiry date if limited
   visibility: BagVisibility;
   createdAt: string;
+  gallery?: string[];
 }
 
 // Form State used in the 3-step creation modal
@@ -46,4 +47,5 @@ export interface BagFormState {
   downloadExpiry: string;
   visibility: BagVisibility;
   selectedCourseIds: number[];
+  gallery?: string[];
 }
