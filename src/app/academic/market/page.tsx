@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -95,7 +95,7 @@ export default function MarketPage() {
     }
   };
 
-  const handlePreviewBag = (bag: BagItem) => router.push(`/academic/market/edit/${bag.id}`);
+  const handlePreviewBag = (bag: BagItem) => router.push(`/academic/market/${bag.id}`);
 
   const totalBagsCount = bags.length;
   const totalSalesCount = totalBagsCount > 0 ? 6540 : 0;

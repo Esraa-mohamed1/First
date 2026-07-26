@@ -46,7 +46,10 @@ export default function BagCard({ bag, onEdit, onDelete, onPreview }: BagCardPro
   return (
     <div className="bg-white rounded-[28px] border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between group">
       {/* Cover Image Header */}
-      <div className="relative w-full h-44 bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 overflow-hidden">
+      <div 
+        onClick={() => onPreview(bag)}
+        className="relative w-full h-44 bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 overflow-hidden cursor-pointer"
+      >
         {bag.coverImage ? (
           <img
             src={bag.coverImage}
@@ -68,7 +71,10 @@ export default function BagCard({ bag, onEdit, onDelete, onPreview }: BagCardPro
             <div className={`w-7 h-7 rounded-lg ${badgeInfo.bg} flex items-center justify-center flex-shrink-0 font-bold text-xs`}>
               <BadgeIcon size={16} />
             </div>
-            <h3 className="text-lg font-black text-gray-900 line-clamp-1">
+            <h3 
+              onClick={() => onPreview(bag)}
+              className="text-lg font-black text-gray-900 line-clamp-1 cursor-pointer hover:text-blue-600 transition-colors"
+            >
               {bag.title}
             </h3>
           </div>
