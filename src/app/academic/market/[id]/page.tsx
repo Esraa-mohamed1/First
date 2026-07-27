@@ -100,7 +100,7 @@ export default function BagDetailsPage() {
             if (typeof firstItem === 'number' || typeof firstItem === 'string') {
               try {
                 const allCourses = await getCourses();
-                const matched = allCourses.filter((c) => bagData.items?.includes(c.id));
+                const matched = allCourses.filter((c) => (bagData.items as any[])?.includes(c.id));
                 setIncludedCourses(matched);
               } catch (err) {
                 console.error('Failed to load courses for bag:', err);
