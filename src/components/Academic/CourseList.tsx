@@ -151,8 +151,8 @@ export default function CourseList({ typeFilter, title, description, createType 
                         </span>
                       </div>
                     </td>
-                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.category || 'غير مصنف'}</td>
-                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.instructor || 'أحمد محمد'}</td>
+                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">{typeof course.category === 'object' && course.category !== null ? (course.category as any).name : (course.category || 'غير مصنف')}</td>
+                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">{(course as any).user?.name || course.instructor_name || (typeof course.instructor === 'object' && course.instructor !== null ? (course.instructor as any).name : (course.instructor || 'أحمد محمد'))}</td>
                     <td className="px-8 py-8 whitespace-nowrap font-black">
                       {Number(course.price) === 0 ? 'مجاني' : `${course.price} ر.س`}
                     </td>

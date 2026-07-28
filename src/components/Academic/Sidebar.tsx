@@ -8,7 +8,6 @@ import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Image from 'next/image';
 import SelectCourseTypeModal from './Modals/SelectCourseTypeModal';
-import { getPages } from '@/services/pages';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -42,43 +41,23 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       }
     }
 
-    // 1. Initial synchronous fallback to localStorage
-    const cachedTemplate = localStorage.getItem('darab_active_template');
-    if (cachedTemplate) {
-      setActiveTemplate(cachedTemplate);
-    }
-    const cachedPageId = localStorage.getItem('darab_active_page_id');
-    if (cachedPageId) {
-      setActivePage(cachedPageId);
-    }
-
-    // 2. Fetch pages dynamically to resolve the active template
-    const fetchActiveTemplate = async () => {
-      try {
-        const pagesData = await getPages();
-        const TEMPLATE_SLUGS = ['academy-dashboard', 'template_1', 'template_2', 'template_3', 'template_4', 'template_courses_1'];
-
-        let active = pagesData.find((p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true');
-        if (!active) {
-          const templatePages = pagesData.filter((p: any) => TEMPLATE_SLUGS.includes(p.title));
-          active = templatePages.sort((a: any, b: any) => Number(b.id) - Number(a.id))[0];
-        }
-
-        if (active) {
-          const activeSlug = active.title || active.slug;
-          const activeId = String(active.id);
-          setActiveTemplate(activeSlug);
-          setActivePage(activeId);
-
-          // Keep localStorage in sync for other pages/stores
-          localStorage.setItem('darab_active_template', activeSlug);
-          localStorage.setItem('darab_active_page_id', activeId);
-        }
-      } catch (err) {
-        console.error('Failed to load active template in Sidebar:', err);
+    // Synchronous sync from localStorage
+    const updateActiveTemplateFromStorage = () => {
+      const cachedTemplate = localStorage.getItem('darab_active_template');
+      if (cachedTemplate) {
+        setActiveTemplate(cachedTemplate);
+      }
+      const cachedPageId = localStorage.getItem('darab_active_page_id');
+      if (cachedPageId) {
+        setActivePage(cachedPageId);
       }
     };
-    fetchActiveTemplate();
+    updateActiveTemplateFromStorage();
+
+    window.addEventListener('storage', updateActiveTemplateFromStorage);
+    return () => {
+      window.removeEventListener('storage', updateActiveTemplateFromStorage);
+    };
   }, [pathname]);
 
   // Keep "الدورات" expanded while inside any courses page

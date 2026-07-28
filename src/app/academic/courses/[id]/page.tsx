@@ -22,7 +22,7 @@ import { PaymentMethodValueInput } from '@/components/payment/PaymentMethodValue
 import { showAlert } from '@/lib/sweetalert';
 import { getUserPaymentInfos, UserPaymentInfo } from '@/services/finance';
 import { getLogoUrl } from '@/lib/utils';
-import { EntitySelectWithCreate } from '@/components/Academic/Common/EntitySelectWithCreate';
+import { SearchableSelect } from '@/components/Academic/Common/SearchableSelect';
 import LandingRenderer from '@/modules/landing/renderer/LandingRenderer';
 import { useLandingStore } from '@/modules/landing/store/landingStore';
 import { useLandingSave } from '@/modules/landing/hooks/useLandingSave';
@@ -670,6 +670,9 @@ export default function CourseDetailsPage() {
       }
       
       setCourse(data);
+      if (data.image || (data as any).cover_image) {
+        setPreviewImage(data.image || (data as any).cover_image);
+      }
       setAcademyPaymentMethods(paymentInfos || []);
       setCourseInfo({
         title: data.title || '',
@@ -1110,7 +1113,7 @@ export default function CourseDetailsPage() {
             {/* Category & Coach Dropdowns */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className={(currentUser?.role === 'admin' || currentUser?.role === 'academy') ? "" : "md:col-span-2"}>
-                <EntitySelectWithCreate
+                <SearchableSelect
                   label="الفئة"
                   options={categories.map(c => ({ id: c.id, name: c.name }))}
                   value={courseInfo.category_id}
@@ -1126,27 +1129,12 @@ export default function CourseDetailsPage() {
                   }}
                   placeholder="اختر فئة (اختياري)"
                   error={errors.category_id ? translateErrorToArabic(Array.isArray(errors.category_id) ? errors.category_id[0] : String(errors.category_id)) : undefined}
-                  modalTitle="إضافة فئة جديدة"
-                  modalDescription="أضف فئة جديدة لتنظيم دوراتك"
-                  modalIcon={<Landmark size={28} />}
-                  fetchOptions={async () => {
-                    const cats = await getCategories();
-                    setCategories(cats);
-                    return cats;
-                  }}
-                  createEntity={async (payload) => {
-                    return await createCategory(payload.name, payload.is_active);
-                  }}
-                  onCreated={() => {}}
-                  renderForm={(props) => (
-                    <CategoryFormInline {...props} />
-                  )}
                 />
               </div>
 
               {/* Instructor Dropdown (Admin/Academy Only) */}
               {(currentUser?.role === 'admin' || currentUser?.role === 'academy') && (
-                <EntitySelectWithCreate
+                <SearchableSelect
                   label="المدرب"
                   options={instructors.map(i => ({ id: i.id, name: i.name }))}
                   value={courseInfo.user_id}
@@ -1164,23 +1152,7 @@ export default function CourseDetailsPage() {
                   }}
                   placeholder="اختر مدرب"
                   error={errors.user_id ? translateErrorToArabic(Array.isArray(errors.user_id) ? errors.user_id[0] : String(errors.user_id)) : undefined}
-                  modalTitle="إضافة مدرب جديد"
-                  modalDescription="أضف مدرباً جديداً لتسجيل حسابه"
-                  modalIcon={<UserIcon size={28} />}
-                  fetchOptions={async () => {
-                    const coaches = await getUsers('academy');
-                    setInstructors(coaches);
-                    return coaches;
-                  }}
-                  createEntity={async (payload) => {
-                    return await createUser(payload);
-                  }}
-                  onCreated={(newCoach) => {
-                    setCoachName(newCoach.name || newCoach.fullName || '');
-                  }}
-                  renderForm={(props) => (
-                    <CoachFormInline {...props} />
-                  )}
+                  required
                 />
               )}
             </div>

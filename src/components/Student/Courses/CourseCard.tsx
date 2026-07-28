@@ -38,7 +38,7 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
         {/* Category Badge */}
         <div className="absolute top-4 left-4 z-20 flex gap-2 flex-wrap">
           <span className="bg-blue-50 text-blue-600 text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-lg border border-blue-100/50">
-            {course.category}
+            {typeof course.category === 'object' && course.category !== null ? (course.category as any).name : (course.category || 'عام')}
           </span>
           {(course.subscription_status === 'pending' || course.subscription_status === 'penidng' || course.enrollment_status === 'pending') && (
             <span className="text-white text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-lg shadow-sm animate-pulse" style={{ backgroundColor: '#f6c05cff' }}>
@@ -63,7 +63,7 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
             <User size={12} className="text-blue-500" />
           </div>
           <span className="text-gray-700 text-[11px] font-bold bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded-md border border-white/50">
-            {course.instructor}
+            {(course as any).user?.name || (course as any).instructor_name || (typeof course.instructor === 'object' && course.instructor !== null ? (course.instructor as any).name : (course.instructor || 'أحمد محمد'))}
           </span>
         </div>
 

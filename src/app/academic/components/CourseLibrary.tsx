@@ -39,49 +39,53 @@ export const CourseLibrary = ({
     );
   }
 
+  // Display max 2 courses on dashboard
+  const displayedCourses = courses.slice(0, 2);
+
   return (
     <div className="space-y-4 text-right">
-      <h3 className="text-base sm:text-lg font-black text-gray-900">أحدث دورة مضافة</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+      <h3 className="text-base sm:text-lg font-black text-gray-900">أحدث الدورات المضافة</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
         
-        {/* 1. Latest Course Item Card */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-all duration-300">
-          <div className="relative h-36 sm:h-44 w-full bg-slate-50 border-b border-gray-50">
-            <Image
-              src={courses[0].image_url || courses[0].image || "/assets/course3.jpg"}
-              alt={courses[0].name || courses[0].title || "Course Thumbnail"}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 300px"
-            />
-          </div>
-          <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
-            <div className="space-y-1">
-              <h4 className="font-black text-gray-900 text-sm sm:text-base">{courses[0].name || courses[0].title}</h4>
-              <p className="text-[11px] sm:text-xs text-gray-400 font-bold leading-relaxed line-clamp-2">
-                {courses[0].description 
-                  ? courses[0].description.replace(/<\/?[^>]+(>|$)/g, "").replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-                  : "شرح مبسط يساعدك على فهم أساسيات المادة العلمية خطوة بخطوة."}
-              </p>
+        {displayedCourses.map((course, idx) => (
+          <div key={course.id || idx} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-all duration-300">
+            <div className="relative h-36 sm:h-44 w-full bg-slate-50 border-b border-gray-50">
+              <Image
+                src={course.image_url || course.image || "/assets/course3.jpg"}
+                alt={course.name || course.title || "Course Thumbnail"}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 300px"
+              />
             </div>
-            <div className="flex items-center gap-2 sm:gap-3 pt-2">
-              <button 
-                onClick={() => router.push(`/academic/courses`)}
-                className="flex-1 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs transition-all active:scale-95 text-center shadow-md shadow-blue-600/10"
-              >
-                تعديل الدورة
-              </button>
-              <button 
-                onClick={() => router.push(`/academic/courses/stats`)}
-                className="flex-1 py-2 sm:py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs transition-all active:scale-95 text-center"
-              >
-                احصائيات الدورة
-              </button>
+            <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
+              <div className="space-y-1">
+                <h4 className="font-black text-gray-900 text-sm sm:text-base">{course.name || course.title}</h4>
+                <p className="text-[11px] sm:text-xs text-gray-400 font-bold leading-relaxed line-clamp-2">
+                  {course.description 
+                    ? course.description.replace(/<\/?[^>]+(>|$)/g, "").replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+                    : "شرح مبسط يساعدك على فهم أساسيات المادة العلمية خطوة بخطوة."}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 sm:gap-3 pt-2">
+                <button 
+                  onClick={() => router.push(`/academic/courses/${course.id}`)}
+                  className="flex-1 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs transition-all active:scale-95 text-center shadow-md shadow-blue-600/10"
+                >
+                  تعديل الدورة
+                </button>
+                <button 
+                  onClick={() => router.push(`/academic/courses/stats`)}
+                  className="flex-1 py-2 sm:py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs transition-all active:scale-95 text-center"
+                >
+                  احصائيات الدورة
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        ))}
  
-        {/* 2. Dashed Add Course Card */}
+        {/* Dashed Add Course Card */}
         <button 
           onClick={() => setIsSelectTypeModalOpen(true)}
           className="border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center p-6 sm:p-8 hover:border-blue-300 hover:bg-blue-50/10 group transition-all duration-300 min-h-[220px] sm:min-h-[280px]"
