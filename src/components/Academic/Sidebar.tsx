@@ -57,7 +57,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       try {
         const pagesData = await getPages();
         const TEMPLATE_SLUGS = ['academy-dashboard', 'template_1', 'template_2', 'template_3', 'template_4', 'template_courses_1'];
-        
+
         let active = pagesData.find((p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true');
         if (!active) {
           const templatePages = pagesData.filter((p: any) => TEMPLATE_SLUGS.includes(p.title));
@@ -83,6 +83,9 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
   // Keep "الدورات" expanded while inside any courses page
   useEffect(() => {
+    if (pathname.startsWith('/academic/students')) {
+      setExpandedItems(prev => (prev.includes('الطلاب') ? prev : [...prev, 'الطلاب']));
+    }
     if (pathname.startsWith('/academic/courses')) {
       setExpandedItems(prev => (prev.includes('الدورات') ? prev : [...prev, 'الدورات']));
     }
@@ -137,6 +140,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       label: 'الطلاب',
       icon: Users,
       href: '/academic/students',
+      subItems: [
+        { label: 'قائمة الطلاب', href: '/academic/students' },
+        { label: 'إدارة المشتركين والتقارير', href: '/academic/students/subscribers' },
+      ],
     },
     {
       label: 'الموقع',
@@ -146,10 +153,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         { label: 'اختيار القوالب', href: '/academic/templates' },
         { label: 'القالب النشط', href: '/academic/website/active-template' },
         { label: 'باني الصفحات', href: `/academic/website/builder?templateId=${activeTemplate}&pageId=${activePage}` },
-        { label: 'الهوية والألوان', href: '/academic/website/colors' },
+        // { label: 'الهوية والألوان', href: '/academic/website/colors' },
         { label: 'الدومين المخصص', href: '/academic/domain' },
-        { label: 'الصفحات', href: '/academic/website/pages' },
-        { label: 'القوائم', href: '/academic/website/menus' },
+        // { label: 'الصفحات', href: '/academic/website/pages' },
+        // { label: 'القوائم', href: '/academic/website/menus' },
       ]
     },
     {

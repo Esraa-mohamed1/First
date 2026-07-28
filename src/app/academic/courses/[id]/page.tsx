@@ -34,6 +34,7 @@ import FAQEditor from '@/modules/landing/editor/FAQEditor';
 import FooterEditor from '@/modules/landing/editor/FooterEditor';
 import ReviewsEditor from '@/modules/landing/editor/ReviewsEditor';
 import WhatsAppEditor from '@/modules/landing/editor/WhatsAppEditor';
+import ManageSubscribersView from '@/components/Academic/Subscribers/ManageSubscribersView';
 
 const MySwal = withReactContent(Swal);
 
@@ -320,7 +321,6 @@ export default function CourseDetailsPage() {
   const [newUnitTitle, setNewUnitTitle] = useState('');
   const [newUnitDescription, setNewUnitDescription] = useState('');
   const [isSavingUnit, setIsSavingUnit] = useState(false);
-
   // Modals State
   const [isAddLessonOpen, setIsAddLessonOpen] = useState(false);
   const [selectedUnitId, setSelectedUnitId] = useState<number | null>(null);
@@ -333,7 +333,7 @@ export default function CourseDetailsPage() {
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
 
   // Tabs State
-  const [activeTab, setActiveTab] = useState<'info' | 'content' | 'pricing'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'content' | 'pricing' | 'subscribers'>('info');
 
   const getActiveTabErrors = () => {
     const infoFields = ['title', 'category_id', 'description', 'image', 'user_id', 'coach'];
@@ -492,7 +492,7 @@ export default function CourseDetailsPage() {
     setActiveTab('content');
   };
 
-  const handleTabChange = (targetTab: 'info' | 'content' | 'pricing') => {
+  const handleTabChange = (targetTab: 'info' | 'content' | 'pricing' | 'subscribers') => {
     if (targetTab === 'info') {
       setActiveTab('info');
       return;
@@ -942,6 +942,15 @@ export default function CourseDetailsPage() {
           >
             التسعير
             {activeTab === 'pricing' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />}
+          </button>
+          <button
+            onClick={() => handleTabChange('subscribers')}
+            className={`pb-4 font-black text-sm whitespace-nowrap relative transition-all ${
+              activeTab === 'subscribers' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            المشتركون
+            {activeTab === 'subscribers' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />}
           </button>
         </div>
 
@@ -1873,6 +1882,12 @@ export default function CourseDetailsPage() {
                 {isSavingPricing ? 'جاري الحفظ...' : 'حفظ بيانات التسعير'}
               </button>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'subscribers' && (
+          <div className="mt-4">
+            <ManageSubscribersView showTopHeader={false} courseId={id} />
           </div>
         )}
 
