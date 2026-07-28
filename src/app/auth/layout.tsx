@@ -1,11 +1,21 @@
+'use client';
+
 import Image from "next/image";
 import paymentbg from "@/assets/paymentbg.jpg";
+import { usePathname } from "next/navigation";
 
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const isSetupPage = pathname === '/auth/setup';
+
+  if (isSetupPage) {
+    return <div className="w-full min-h-screen">{children}</div>;
+  }
+
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 font-sans">
       {/* Background Image with Blur */}
@@ -28,3 +38,4 @@ export default function AuthLayout({
     </div>
   );
 }
+
