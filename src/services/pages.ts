@@ -90,20 +90,48 @@ const SECTION_DEFAULT_PROPS: Record<string, Record<string, any>> = {
 // getPages
 // -----------------------------------------------------------------------
 
+let pagesCache: { data: any[]; timestamp: number } | null = null;
+let pagesPromise: Promise<any[]> | null = null;
+const CACHE_TTL_MS = 10000; // 10s cache to prevent redundant simultaneous calls
+
+export const clearPagesCache = () => {
+  pagesCache = null;
+  pagesPromise = null;
+};
+
 export const getPages = async (): Promise<any[]> => {
-  try {
-    const response = await academyApi.get<any>('/landing_pages');
-    const data = response.data?.data ?? response.data;
-    if (Array.isArray(data) && data.length > 0) {
-      return data as any[];
-    }
-  } catch (error) {
-    console.warn('Failed to fetch /landing_pages, falling back to /pages:', error);
+  const now = Date.now();
+  if (pagesCache && now - pagesCache.timestamp < CACHE_TTL_MS) {
+    return pagesCache.data;
+  }
+  if (pagesPromise) {
+    return pagesPromise;
   }
 
-  const response = await academyApi.get<any>('/pages');
-  const data = response.data?.data ?? response.data;
-  return (Array.isArray(data) ? data : []) as any[];
+  pagesPromise = (async () => {
+    try {
+      try {
+        const response = await academyApi.get<any>('/landing_pages');
+        const data = response.data?.data ?? response.data;
+        if (Array.isArray(data) && data.length > 0) {
+          pagesCache = { data, timestamp: Date.now() };
+          return data as any[];
+        }
+      } catch (error) {
+        console.warn('Failed to fetch /landing_pages, falling back to /pages:', error);
+      }
+
+      const response = await academyApi.get<any>('/pages');
+      const data = response.data?.data ?? response.data;
+      const result = (Array.isArray(data) ? data : []) as any[];
+      pagesCache = { data: result, timestamp: Date.now() };
+      return result;
+    } finally {
+      pagesPromise = null;
+    }
+  })();
+
+  return pagesPromise;
 };
 
 // -----------------------------------------------------------------------
@@ -125,6 +153,7 @@ export const createPage = async (
     formData.append('is_active', String(payload.is_active));
   }
 
+  clearPagesCache();
   const response = await academyApi.post<any>('/pages', formData);
   const data = response.data?.data ?? response.data;
   if (!data) throw new Error('No data returned from pages API');
@@ -139,6 +168,7 @@ export const updatePage = async (
   pageId: string | number,
   payload: Partial<CreatePagePayload>
 ): Promise<CreatedPageResponse> => {
+  clearPagesCache();
   const formData = new URLSearchParams();
   if (payload.title !== undefined) formData.append('title', payload.title);
   if (payload.slug !== undefined) formData.append('slug', payload.slug);

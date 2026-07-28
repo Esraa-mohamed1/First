@@ -1,11 +1,10 @@
 import React from 'react';
-import { Clock, Users, BookOpen } from 'lucide-react';
+import { Clock, Users, BookOpen, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useBuilderStore } from '../store/builderStore';
 import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
 import { getCourses } from '@/services/courses';
 import { getStudentCourses } from '@/services/student-courses';
-
 
 interface CourseCardsProps {
   id?: string;
@@ -37,6 +36,8 @@ export default function CourseCards(props: CourseCardsProps) {
     buttonBg = 'var(--theme-primary)',
     courses = MOCK_COURSES,
   } = props;
+
+  const [searchTerm, setSearchTerm] = React.useState('');
 
   const { 
     isEditing, 
@@ -86,6 +87,14 @@ export default function CourseCards(props: CourseCardsProps) {
     }));
   }, [realCourses, courses]);
 
+  const filteredCourses = React.useMemo(() => {
+    if (!searchTerm.trim()) return formattedCourses;
+    return formattedCourses.filter(c =>
+      c.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.instructor?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [formattedCourses, searchTerm]);
+
   // Read deviceMode with a fail-safe fallback
   let deviceMode = 'desktop';
   try {
@@ -107,7 +116,7 @@ export default function CourseCards(props: CourseCardsProps) {
   const gridClass = getGridClass();
 
   // Limit course display for grid mapping
-  const coursesToRender = formattedCourses.slice(0, limit);
+  const coursesToRender = filteredCourses.slice(0, limit);
 
   const titleTypography = getTypographyStyle(props, 'title', {
     font: 'IBM Plex Sans Arabic',
@@ -149,7 +158,7 @@ export default function CourseCards(props: CourseCardsProps) {
         </div>
         );
       })() : (
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="flex flex-wrap items-center justify-between border-b border-slate-100 pb-4 gap-3">
           <h3 
             style={titleTypography.style}
             className={`flex items-center gap-2.5 ${titleTypography.className}`}
@@ -158,9 +167,21 @@ export default function CourseCards(props: CourseCardsProps) {
             {title}
           </h3>
           
-          <span className="text-xs font-bold text-slate-400 cursor-pointer hover:text-slate-600 transition-colors">
-            عرض الكل
-          </span>
+          <div className="flex items-center gap-3">
+            <div className="relative w-44 sm:w-60">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
+              <input
+                type="text"
+                placeholder="البحث باسم الدورة..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-1.5 pr-8 pl-3 text-xs font-bold outline-none focus:border-blue-500 transition-all text-slate-900"
+              />
+            </div>
+            <span className="text-xs font-bold text-slate-400 cursor-pointer hover:text-slate-600 transition-colors">
+              عرض الكل
+            </span>
+          </div>
         </div>
       )}
 

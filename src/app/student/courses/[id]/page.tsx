@@ -90,7 +90,7 @@ export default function StudentCourseDetailsPage() {
   const totalLessons = course.units?.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0) || 0;
   const progress = course.progress ?? 0;
   const courseImage = course.image || course.cover_image || course.thumbnail || 'https://images.unsplash.com/photo-1586717791821-3f44a563de4c?auto=format&fit=crop&q=80&w=1200';
-  const instructorName = course.instructor_name || course.instructor || 'المدرب المعتمد';
+  const instructorName = (course as any).user?.name || course.instructor_name || (typeof course.instructor === 'object' && course.instructor !== null ? (course.instructor as any).name : (course.instructor || 'المدرب المعتمد'));
 
   return (
     <div className="space-y-8 animate-fade-in" dir="rtl">
@@ -118,7 +118,7 @@ export default function StudentCourseDetailsPage() {
             <div className="space-y-4 relative z-10">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="bg-blue-50 text-blue-600 text-[10px] uppercase tracking-wider font-extrabold px-3 py-1 rounded-lg border border-blue-100/50">
-                  {course.category?.name || course.category || 'عام'}
+                  {typeof course.category === 'object' && course.category !== null ? (course.category as any).name : (course.category || 'عام')}
                 </span>
                 <span className="bg-green-50 text-green-600 text-[10px] uppercase tracking-wider font-extrabold px-3 py-1 rounded-lg border border-green-100/50">
                   دورة مفعلة ومقبولة

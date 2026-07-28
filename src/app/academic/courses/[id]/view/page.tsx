@@ -164,7 +164,7 @@ export default function OwnerCourseViewDetailsPage() {
             <div className="space-y-4 relative z-10">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="bg-blue-50 text-blue-600 text-[10px] uppercase tracking-wider font-extrabold px-3 py-1 rounded-lg border border-blue-100/50">
-                  {course.category || 'عام'}
+                  {typeof course.category === 'object' && course.category !== null ? (course.category as any).name : (course.category || 'عام')}
                 </span>
                 
                 {course.status === 'published' ? (
@@ -191,7 +191,7 @@ export default function OwnerCourseViewDetailsPage() {
                   <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
                     <User size={14} className="text-slate-600" />
                   </div>
-                  <span>المدرب: {course.instructor || 'أحمد محمد'}</span>
+                  <span>المدرب: {(course as any).user?.name || course.instructor_name || (typeof course.instructor === 'object' && course.instructor !== null ? (course.instructor as any).name : (course.instructor || 'أحمد محمد'))}</span>
                 </div>
                 <div className="w-1.5 h-1.5 bg-slate-300 rounded-full"></div>
                 <div className="flex items-center gap-2">

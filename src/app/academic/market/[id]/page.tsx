@@ -446,9 +446,9 @@ export default function BagDetailsPage() {
                       <div className="space-y-1">
                         <h4 className="text-base font-black text-gray-900">{course.title}</h4>
                         <div className="flex items-center gap-3 text-xs font-bold text-gray-400">
-                          <span>{course.category || 'دورة تدريبية'}</span>
+                          <span>{typeof course.category === 'object' && course.category !== null ? (course.category as any).name : (course.category || 'دورة تدريبية')}</span>
                           <span>•</span>
-                          <span>{course.instructor || 'أحمد محمد'}</span>
+                          <span>{(course as any).user?.name || course.instructor_name || (typeof course.instructor === 'object' && course.instructor !== null ? (course.instructor as any).name : (course.instructor || 'أحمد محمد'))}</span>
                         </div>
                       </div>
                     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, X, BarChart3, Eye } from 'lucide-react';
+import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, X, BarChart3, Eye, Plus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCourses, deleteCourse } from '@/services/courses';
@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import CreateCourseModal from '@/components/Academic/Modals/CreateCourseModal';
+import SelectCourseTypeModal from '@/components/Academic/Modals/SelectCourseTypeModal';
 
 const MySwal = withReactContent(Swal);
 
@@ -21,8 +22,9 @@ export default function CoursesPage() {
   const [activeDropdownId, setActiveDropdownId] = useState<number | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
-  // Edit Modal States
+  // Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSelectTypeModalOpen, setIsSelectTypeModalOpen] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -146,11 +148,19 @@ export default function CoursesPage() {
         </div>
       </div>
 
-      {/* Export Button */}
-      <div className="flex justify-start">
-        <button className="flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl font-black text-base shadow-lg shadow-blue-200 transition-all">
-          <Download size={20} />
+      {/* Action Buttons */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <button className="flex items-center gap-3 bg-white border border-gray-100 hover:bg-gray-50 text-gray-700 px-6 py-3.5 rounded-2xl font-black text-sm shadow-sm transition-all">
+          <Download size={18} />
           <span>تصدير Excel</span>
+        </button>
+
+        <button
+          onClick={() => setIsSelectTypeModalOpen(true)}
+          className="flex items-center gap-2.5 bg-blue-600 hover:bg-blue-700 text-white px-7 py-3.5 rounded-2xl font-black text-sm shadow-lg shadow-blue-500/20 active:scale-95 transition-all cursor-pointer"
+        >
+          <Plus size={18} strokeWidth={3} />
+          <span>إضافة دورة جديدة</span>
         </button>
       </div>
 
@@ -197,8 +207,8 @@ export default function CoursesPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.category || 'غير مصنف'}</td>
-                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">{course.instructor || 'أحمد محمد'}</td>
+                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">{typeof course.category === 'object' && course.category !== null ? (course.category as any).name : (course.category || 'غير مصنف')}</td>
+                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">{(course as any).user?.name || course.instructor_name || (typeof course.instructor === 'object' && course.instructor !== null ? (course.instructor as any).name : (course.instructor || 'أحمد محمد'))}</td>
                     <td className="px-8 py-8 whitespace-nowrap font-black">
                       {Number(course.price) === 0 ? (
                         <span className="text-green-600">مجاني</span>
@@ -344,6 +354,11 @@ export default function CoursesPage() {
           setSelectedCourseId(null);
         }}
         courseId={selectedCourseId}
+      />
+
+      <SelectCourseTypeModal
+        isOpen={isSelectTypeModalOpen}
+        onClose={() => setIsSelectTypeModalOpen(false)}
       />
 
       <style jsx global>{`
