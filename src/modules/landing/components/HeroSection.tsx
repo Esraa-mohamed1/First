@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { Play, PlayCircle, Video, Award, Clock, Users, Pen } from 'lucide-react';
 import { HeroSectionData } from '../types/landing';
@@ -73,7 +75,7 @@ export default function HeroSection({
       <header 
         style={sectionStyle}
         className={twMerge(
-          "hero relative py-14 pb-20 overflow-hidden group",
+          "hero relative overflow-hidden group",
           isEditable && "hover:ring-2 hover:ring-blue-500/50 hover:bg-blue-900/5 transition-all"
         )}
       >
@@ -90,7 +92,92 @@ export default function HeroSection({
           </button>
         )}
 
-        <div className="container max-w-[1120px] mx-auto px-4">
+        {/* ─── MOBILE layout (< md) ─── */}
+        <div className="md:hidden px-4 pt-8 pb-6 flex flex-col gap-5 text-right">
+          {/* Badge */}
+          <div className="flex justify-center">
+            <span
+              style={{ backgroundColor: `rgba(${primaryRgbTriplet}, 0.2)`, borderColor: `rgba(${primaryRgbTriplet}, 0.4)`, color: `rgb(${primaryRgbTriplet})` }}
+              className="hero-badge border rounded-full px-3 py-1 text-[10px] font-semibold"
+            >
+              {data.subtitle || '✦ الدفعة الجديدة — التسجيل مفتوح الآن'}
+            </span>
+          </div>
+
+          {/* Hero image / video */}
+          <div
+            style={{ borderColor: `rgba(${primaryRgbTriplet}, 0.6)` }}
+            className="relative aspect-video w-full rounded-2xl overflow-hidden border-2 shadow-xl"
+          >
+            <img src={data.image || course?.image} alt="Course" className="absolute inset-0 w-full h-full object-cover opacity-50" />
+            <div style={{ color: `rgb(${primaryRgbTriplet})` }} className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+              <div style={{ backgroundColor: `rgba(${primaryRgbTriplet}, 0.25)`, borderColor: `rgb(${primaryRgbTriplet})` }} className="w-14 h-14 rounded-full border-2 flex items-center justify-center text-xl font-bold shadow-lg">▶</div>
+              <span className="text-white text-xs font-bold drop-shadow">مشاهدة الإعلان</span>
+            </div>
+          </div>
+
+          {/* Title */}
+          <h1 style={{ color: localText }} className="text-xl font-black leading-snug text-right">
+            {data.title || course?.title}
+          </h1>
+
+          {/* Description */}
+          <div
+            style={{ ...bodySizeStyle, color: `rgba(${textRgb}, 0.75)` }}
+            className="text-xs leading-relaxed ql-editor !p-0"
+            dangerouslySetInnerHTML={{ __html: data.description || course?.description || '' }}
+          />
+
+          {/* Stats strip */}
+          <div style={{ borderColor: `rgba(${primaryRgbTriplet}, 0.3)` }} className="border-t border-b py-3 flex items-center justify-around text-center gap-2">
+            {[
+              { icon: '🎥', val: `${(totalLessons * 1.5).toFixed(0)} ساعة`, label: 'محتوى فيديو' },
+              { icon: '👥', val: `+${course?.students_count || '2,450'}`, label: 'طالب مسجل' },
+              { icon: '⭐', val: '4.8', label: 'متوسط التقييم' },
+            ].map((s, i) => (
+              <div key={i} className="flex flex-col items-center gap-0.5">
+                <span className="text-base">{s.icon}</span>
+                <span style={{ color: `rgb(${primaryRgbTriplet})` }} className="text-xs font-black">{s.val}</span>
+                <span style={{ color: `rgba(${textRgb}, 0.55)` }} className="text-[9px] font-bold">{s.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Instructor row */}
+          <div className="flex items-center gap-3">
+            <img src={instructorImage} alt={instructorName} className="w-10 h-10 rounded-full object-cover border-2 shrink-0" style={{ borderColor: `rgba(${primaryRgbTriplet},0.5)` }} />
+            <div className="text-right">
+              <p style={{ color: `rgba(${textRgb}, 0.5)` }} className="text-[9px] font-bold uppercase">المدرب المعتمد</p>
+              <p style={{ color: localText }} className="text-xs font-black">{instructorName}</p>
+            </div>
+          </div>
+
+          {/* Price + CTA */}
+          <div style={{ backgroundColor: '#FBF7EE', borderColor: '#F1E8D6' }} className="border rounded-2xl p-4 flex flex-col gap-3">
+            <div className="flex items-baseline justify-between">
+              <span className="text-[10px] text-slate-400 font-bold">استثمار الدورة</span>
+              {isFree ? (
+                <span className="text-lg font-black text-emerald-600">مجاني</span>
+              ) : (
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-black text-[#0D3B33]">{course?.final_price || course?.price}</span>
+                  <span className="text-xs font-bold text-[#0D3B33]">{course?.currency || 'SAR'}</span>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={onSubscribe}
+              disabled={isSubscribing}
+              className="w-full py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-all cursor-pointer"
+              style={{ background: `linear-gradient(90deg, #E7CE8F, #C9A24B)`, color: '#082A24' }}
+            >
+              {isSubscribing ? 'جاري التحميل...' : course?.is_subscribed ? 'ابدأ التعلم الآن ←' : 'اشترك في الدورة الآن ←'}
+            </button>
+          </div>
+        </div>
+
+        {/* ─── DESKTOP layout (≥ md) ─── */}
+        <div className="hidden md:block container max-w-[1120px] mx-auto px-4 py-14 pb-20">
           <div className="text-center mb-6">
             <span 
               style={{ backgroundColor: `rgba(${primaryRgbTriplet}, 0.2)`, borderColor: `rgba(${primaryRgbTriplet}, 0.4)`, color: `rgb(${primaryRgbTriplet})` }}
@@ -174,7 +261,6 @@ export default function HeroSection({
                 <span className="text-[10px] text-[#C9A24B] font-bold block mt-1">⏳ الخصم ساري لفترة محدودة</span>
               </div>
 
-              {/* Payment Methods selector in public non-enrolled views */}
               {!isFree && !course?.is_subscribed && setSelectedPaymentMethod && (
                 <div className="space-y-2 w-full">
                   <div className="text-right">
@@ -228,7 +314,7 @@ export default function HeroSection({
     <header 
       style={sectionStyle}
       className={twMerge(
-        "py-12 lg:py-16 border-b border-slate-100 group relative",
+        "border-b border-slate-100 group relative",
         isEditable && "hover:ring-2 hover:ring-blue-500/50 hover:bg-slate-50 transition-all"
       )}
     >
@@ -245,7 +331,78 @@ export default function HeroSection({
         </button>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* ─── MOBILE layout (< md) ─── */}
+      <div className="md:hidden px-4 pt-6 pb-5 flex flex-col gap-5 text-right">
+        {/* Badge */}
+        <span
+          style={{ backgroundColor: `rgba(${primaryRgbTriplet}, 0.1)`, color: `rgb(${primaryRgbTriplet})` }}
+          className="self-start inline-flex px-3 py-1 rounded-full text-[10px] font-bold"
+        >
+          {data.subtitle || 'الدورة التدريبية الأكثر طلباً'}
+        </span>
+
+        {/* Title */}
+        <h1 style={{ ...titleSizeStyle, color: localText }} className="text-xl font-black leading-snug">
+          {data.title || course?.title}
+        </h1>
+
+        {/* Video */}
+        <div className="relative aspect-video w-full rounded-2xl overflow-hidden shadow-xl border-2 border-white bg-slate-900">
+          {videoUrl ? (
+            <video src={videoUrl} controls className="w-full h-full object-cover" poster={data.image || course?.image} />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center text-white gap-3 bg-slate-950">
+              <img src={data.image || course?.image} alt="Course" className="absolute inset-0 w-full h-full object-cover opacity-50" />
+              <Video size={28} className="text-slate-400 z-10" />
+              <span className="font-bold text-xs z-10">فيديو تعريفي بالدورة</span>
+            </div>
+          )}
+        </div>
+
+        {/* Description */}
+        <div
+          style={{ ...bodySizeStyle, color: `rgba(${textRgb}, 0.72)` }}
+          className="text-xs leading-relaxed ql-editor !p-0 line-clamp-4"
+          dangerouslySetInnerHTML={{ __html: data.description || course?.description }}
+        />
+
+        {/* Instructor strip */}
+        <div style={{ borderColor: `rgba(${textRgb}, 0.1)` }} className="flex items-center gap-3 border-t pt-3">
+          <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white shadow shrink-0">
+            <img src={instructorImage} alt="Instructor" className="w-full h-full object-cover" />
+          </div>
+          <div className="text-right">
+            <p className="text-slate-400 font-bold text-[9px] uppercase">المدرب المعتمد</p>
+            <p style={{ color: localText }} className="font-extrabold text-xs">{instructorName}</p>
+          </div>
+        </div>
+
+        {/* Compact price + CTA */}
+        <div style={{ backgroundColor: `rgba(${textRgb}, 0.03)`, borderColor: `rgba(${textRgb}, 0.08)` }} className="border rounded-2xl p-4 flex flex-col gap-3">
+          <div className="flex items-baseline justify-between">
+            <span className="text-[10px] text-slate-400 font-bold">الرسوم المطلوبة:</span>
+            {isFree ? (
+              <span className="text-lg font-extrabold text-green-600">مجاني</span>
+            ) : (
+              <div className="flex items-baseline gap-1">
+                <span style={{ color: localText }} className="text-2xl font-black">{course?.final_price || course?.price}</span>
+                <span style={{ color: `rgb(${primaryRgbTriplet})` }} className="text-xs font-bold">{course?.currency || 'SAR'}</span>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={onSubscribe}
+            disabled={isSubscribing}
+            style={{ backgroundColor: `rgb(${primaryRgbTriplet})` }}
+            className="w-full py-3 text-white rounded-xl font-bold text-sm shadow-md active:scale-95 transition-all cursor-pointer"
+          >
+            {isSubscribing ? 'جاري التحميل...' : course?.is_subscribed ? 'ابدأ التعلم الآن ←' : 'سجل الآن في الدورة ←'}
+          </button>
+        </div>
+      </div>
+
+      {/* ─── DESKTOP layout (≥ md) ─── */}
+      <div className="hidden md:block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="flex flex-col lg:flex-row gap-12 items-center">
           
           <div className="flex-1 space-y-6 text-right w-full">
@@ -310,7 +467,6 @@ export default function HeroSection({
               )}
             </div>
 
-            {/* Quick Pricing & Checkout block for public views in Template 2 */}
             {!isEditable && (
               <div 
                 style={{ backgroundColor: `rgba(${textRgb}, 0.03)`, borderColor: `rgba(${textRgb}, 0.08)` }}

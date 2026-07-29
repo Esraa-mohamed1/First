@@ -3,6 +3,60 @@ import { getCourse } from '@/services/courses';
 import { getStudentCourse } from '@/services/student-courses';
 import { getLandingPageByCourseSlug, getStudentLandingPageByCourseSlug, getLandingPagesList } from '../services/landing.api';
 import { useLandingStore } from '../store/landingStore';
+import { getTemplateDefaultContent } from '../constants/defaultContent';
+
+const DEMO_COURSE_DATA = {
+  id: "demo",
+  title: "إتقان تصميم واجهات وتجربة المستخدم (UI/UX) - من الصفر للاحتراف",
+  description: "البرنامج التدريبي الأقوى في الوطن العربي لبناء المنتجات الرقمية وتصميم الواجهات التفاعلية. ستتعلم التفكير التصميمي، أبحاث المستخدمين، رحلة العميل، هندسة المعلومات، والتحريك المتقدم باستخدام Figma مع بناء ملف أعمال حقيقي يجذب الشركات والعملاء.",
+  instructor: {
+    name: "م. إياد الموصلي",
+    title: "خبير تصميم واجهات أقدم في Google سابقاً",
+    bio: "مصمم منتجات رقمية بخبرة تزيد عن 10 سنوات، قام بتدريب أكثر من 15,000 طالب وطالبة في مجالات التصميم والبرمجة وريادة الأعمال.",
+    profile_image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+  },
+  category: "تصميم واجهات",
+  price: 299,
+  price_before_discount: 899,
+  original_price: 899,
+  currency: "SAR",
+  preview_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  image: "https://images.unsplash.com/photo-1586717791821-3f44a563de4c?auto=format&fit=crop&q=80&w=1200",
+  requirements: [
+    "لا توجد متطلبات سابقة - سنبدأ معك من الصفر تماماً.",
+    "جهاز حاسوب (Windows أو macOS) واتصال مستقر بالإنترنت.",
+    "شغف حقيقي بالتعلم والتصميم والتطوير المستمر."
+  ],
+  chapters: [
+    {
+      id: 1,
+      title: "الوحدة الأولى: أساسيات تجربة المستخدم (UX Foundation)",
+      lessons: [
+        { id: 101, title: "مقدمة عامة في عالم المنتجات الرقمية", duration: "10:45", isPreview: true },
+        { id: 102, title: "الفرق الجوهري بين UI و UX والتصميم التقليدي", duration: "18:20", isPreview: true },
+        { id: 103, title: "مراحل التفكير التصميمي (Design Thinking Process)", duration: "22:15" }
+      ]
+    },
+    {
+      id: 2,
+      title: "الوحدة الثانية: أبحاث المستخدمين وهندسة المعلومات (Research & IA)",
+      lessons: [
+        { id: 201, title: "كيف تجري مقابلة مستخدمين ناجحة؟", duration: "15:40" },
+        { id: 202, title: "بناء ملفات المستخدمين (User Personas)", duration: "12:10" },
+        { id: 203, title: "تصميم خرائط التدفق (User Flow Diagrams)", duration: "25:30" }
+      ]
+    },
+    {
+      id: 3,
+      title: "الوحدة الثالثة: واجهة المستخدم وأنظمة التصميم (UI & Design Systems)",
+      lessons: [
+        { id: 301, title: "مبادئ الجاذبية البصرية وتوزيع الكتل", duration: "14:20" },
+        { id: 302, title: "الألوان والخطوط والتأثيرات النفسية", duration: "19:50" },
+        { id: 303, title: "إنشاء مكتبة عناصر تفاعلية (Figma Components)", duration: "32:10" }
+      ]
+    }
+  ]
+};
 
 export function useLandingContent(options: { courseId?: string | number; courseSlug?: string; landingPageId?: string }) {
   const [loading, setLoading] = useState(true);
@@ -18,6 +72,20 @@ export function useLandingContent(options: { courseId?: string | number; courseS
       setLoading(true);
       setError(null);
       try {
+        if (options.courseId === 'demo' || options.landingPageId === 'demo') {
+          const demoCourse = DEMO_COURSE_DATA;
+          const targetTemplate = options.landingPageId && options.landingPageId !== 'demo' ? options.landingPageId : 'template_1';
+          const demoContent = getTemplateDefaultContent(demoCourse, targetTemplate);
+          setCourseData(demoCourse);
+          setLandingPageData({
+            id: 'demo',
+            course_id: 'demo',
+            template_name: targetTemplate,
+            content: demoContent
+          });
+          setLoading(false);
+          return;
+        }
         let course: any = null;
         let landingPage: any = null;
 

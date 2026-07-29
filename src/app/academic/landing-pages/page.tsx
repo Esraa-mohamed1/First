@@ -12,6 +12,7 @@ import { useLandingSave } from '@/modules/landing/hooks/useLandingSave';
 import { getTemplateDefaultContent } from '@/modules/landing/constants/defaultContent';
 
 import { getLandingPagesList, createLandingPage, updateLandingPage, deleteLandingPage } from '@/modules/landing/services/landing.api';
+import TemplatePreviewModal from '@/modules/landing/components/TemplatePreviewModal';
 
 // Section Editors
 import HeroEditor from '@/modules/landing/editor/HeroEditor';
@@ -44,6 +45,7 @@ export default function LandingPagesManagementPage() {
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
   const [selectedTemplate, setSelectedTemplate] = useState<string>('template_1');
   const [customSlug, setCustomSlug] = useState<string>('');
+  const [previewTemplate, setPreviewTemplate] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Editor State
@@ -314,7 +316,7 @@ export default function LandingPagesManagementPage() {
                     {page.is_active ? '● منشورة ومباشرة' : '○ موقوفة مؤقتاً'}
                   </span>
                   <span className="text-[10px] text-gray-400 font-bold">
-                    {page.template_name === 'template_1' ? 'قالب الكلاسيكي' : 'قالب التفاعلي'}
+                    {page.template_name === 'template_1' ? 'قالب الكلاسيكي' : page.template_name === 'template_3' ? 'قالب تجربة المستخدم UI/UX' : 'قالب التفاعلي'}
                   </span>
                 </div>
 
@@ -374,7 +376,7 @@ export default function LandingPagesManagementPage() {
       {/* Creation Dialog Modal */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-250">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl p-8 border border-slate-100 animate-in zoom-in-95 duration-250 relative">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl p-8 border border-slate-100 animate-in zoom-in-95 duration-250 relative">
             <button
               onClick={() => setIsCreateModalOpen(false)}
               className="absolute top-6 left-6 text-slate-400 hover:text-slate-700 transition-colors"
@@ -401,33 +403,187 @@ export default function LandingPagesManagementPage() {
                 </select>
               </div>
 
-              <div className="space-y-2">
-                <label className="block text-xs font-black text-slate-700">اختر قالب التصميم *</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
+               <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-black text-slate-800">اختر قالب التصميم المطلوب *</label>
+                  <span className="text-[10px] text-blue-600 font-bold">يمكنك معاينة كل قالب بتصميمه المكتمل قبل الاعتماد</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  {/* Template 1 Choice */}
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setSelectedTemplate('template_1')}
-                    className={`p-4 border rounded-2xl text-right transition-all flex flex-col gap-1.5 cursor-pointer ${
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedTemplate('template_1'); }}
+                    className={`p-5 border-2 rounded-2xl text-right transition-all flex flex-col gap-3.5 cursor-pointer relative group/card ${
                       selectedTemplate === 'template_1'
-                        ? 'border-blue-600 bg-blue-50/20'
-                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                        ? 'border-blue-600 bg-blue-50/20 shadow-md ring-2 ring-blue-600/10'
+                        : 'border-slate-200 hover:border-slate-300 bg-white shadow-xs'
                     }`}
                   >
-                    <span className="text-xs font-black text-slate-900">الكلاسيكي الملكي</span>
-                    <span className="text-[9px] text-slate-400 font-bold leading-normal">تصميم زمردي دافئ وعروض إحصائيات</span>
-                  </button>
-                  <button
-                    type="button"
+                    {/* CSS Mockup */}
+                    <div className="w-full h-32 bg-[#082A24] rounded-xl border border-slate-700/50 overflow-hidden flex flex-col relative select-none shadow-sm">
+                      {/* Preview Button */}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewTemplate('template_1');
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.stopPropagation();
+                            setPreviewTemplate('template_1');
+                          }
+                        }}
+                        className="absolute top-2 left-2 z-20 bg-white/95 hover:bg-white text-blue-700 hover:text-blue-800 px-3 py-1.5 rounded-lg shadow-md flex items-center gap-1.5 text-xs font-black border border-slate-200 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                      >
+                        <Eye size={12} />
+                        معاينة الشاشة
+                      </div>
+                      
+                      <div className="h-10 bg-[#06201b] p-2 flex flex-col gap-1 justify-center border-b border-white/10">
+                        <div className="w-16 h-1 bg-[#C9A24B] rounded"></div>
+                        <div className="w-24 h-1.5 bg-white/40 rounded"></div>
+                      </div>
+                      <div className="flex-grow p-2 flex gap-2">
+                        <div className="flex-1 bg-white/10 rounded-lg p-1.5 flex flex-col gap-1.5">
+                          <div className="w-12 h-1 bg-white/80 rounded"></div>
+                          <div className="w-full h-1 bg-white/30 rounded"></div>
+                          <div className="w-2/3 h-1 bg-white/20 rounded"></div>
+                        </div>
+                        <div className="w-12 bg-[#C9A24B]/20 border border-[#C9A24B]/40 rounded-lg p-1 flex flex-col justify-between">
+                          <div className="w-full h-3 bg-[#C9A24B] rounded"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1 text-right">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-black text-slate-900">الكلاسيكي الملكي (افتراضي)</span>
+                        {selectedTemplate === 'template_1' && (
+                          <span className="text-[10px] bg-blue-600 text-white font-black px-2 py-0.5 rounded-full">محدد</span>
+                        )}
+                      </div>
+                      <span className="text-xs text-slate-500 font-bold leading-relaxed">تصميم زمردي فخم مع عروض إحصائيات وبطاقات المخرجات</span>
+                    </div>
+                  </div>
+
+                  {/* Template 2 Choice */}
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setSelectedTemplate('template_2')}
-                    className={`p-4 border rounded-2xl text-right transition-all flex flex-col gap-1.5 cursor-pointer ${
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedTemplate('template_2'); }}
+                    className={`p-5 border-2 rounded-2xl text-right transition-all flex flex-col gap-3.5 cursor-pointer relative group/card ${
                       selectedTemplate === 'template_2'
-                        ? 'border-blue-600 bg-blue-50/20'
-                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                        ? 'border-blue-600 bg-blue-50/20 shadow-md ring-2 ring-blue-600/10'
+                        : 'border-slate-200 hover:border-slate-300 bg-white shadow-xs'
                     }`}
                   >
-                    <span className="text-xs font-black text-slate-900">الافتراضي التفاعلي</span>
-                    <span className="text-[9px] text-slate-400 font-bold leading-normal">مشغل فيديو وجداول دروس متقدمة</span>
-                  </button>
+                    {/* CSS Mockup */}
+                    <div className="w-full h-32 bg-[#0040a7] rounded-xl border border-blue-900/50 overflow-hidden flex flex-col relative select-none shadow-sm">
+                      {/* Preview Button */}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewTemplate('template_2');
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.stopPropagation();
+                            setPreviewTemplate('template_2');
+                          }
+                        }}
+                        className="absolute top-2 left-2 z-20 bg-white/95 hover:bg-white text-blue-700 hover:text-blue-800 px-3 py-1.5 rounded-lg shadow-md flex items-center gap-1.5 text-xs font-black border border-slate-200 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                      >
+                        <Eye size={12} />
+                        معاينة الشاشة
+                      </div>
+                      
+                      <div className="h-10 bg-[#002f7a] p-2 flex items-center justify-between border-b border-white/10">
+                        <div className="w-14 h-1.5 bg-white/90 rounded"></div>
+                        <div className="w-10 h-3 bg-[#84f5c2] rounded-full"></div>
+                      </div>
+                      <div className="flex-grow p-2 flex flex-col justify-center items-center gap-1.5 text-center">
+                        <div className="w-28 h-2 bg-white rounded"></div>
+                        <div className="w-36 h-1 bg-white/60 rounded"></div>
+                        <div className="w-16 h-4 bg-[#0055d9] border border-white/30 rounded-full mt-1"></div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1 text-right">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-black text-slate-900">الافتراضي التفاعلي (Modern)</span>
+                        {selectedTemplate === 'template_2' && (
+                          <span className="text-[10px] bg-blue-600 text-white font-black px-2 py-0.5 rounded-full">محدد</span>
+                        )}
+                      </div>
+                      <span className="text-xs text-slate-500 font-bold leading-relaxed">تصميم أزرق تفاعلي مع فيديو غامر وهيكلية دروس متقدمة</span>
+                    </div>
+                  </div>
+
+                  {/* Template 3 Choice */}
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelectedTemplate('template_3')}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedTemplate('template_3'); }}
+                    className={`p-5 border-2 rounded-2xl text-right transition-all flex flex-col gap-3.5 cursor-pointer relative group/card ${
+                      selectedTemplate === 'template_3'
+                        ? 'border-blue-600 bg-blue-50/20 shadow-md ring-2 ring-blue-600/10'
+                        : 'border-slate-200 hover:border-slate-300 bg-white shadow-xs'
+                    }`}
+                  >
+                    {/* CSS Mockup */}
+                    <div className="w-full h-32 bg-[#f0f2f5] rounded-xl border border-slate-300/80 overflow-hidden flex flex-col relative select-none shadow-sm">
+                      {/* Preview Button */}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewTemplate('template_3');
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.stopPropagation();
+                            setPreviewTemplate('template_3');
+                          }
+                        }}
+                        className="absolute top-2 left-2 z-20 bg-white/95 hover:bg-white text-blue-700 hover:text-blue-800 px-3 py-1.5 rounded-lg shadow-md flex items-center gap-1.5 text-xs font-black border border-slate-200 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                      >
+                        <Eye size={12} />
+                        معاينة الشاشة
+                      </div>
+                      
+                      <div className="h-8 bg-white border-b border-slate-200 p-2 flex items-center justify-between">
+                        <div className="w-12 h-1.5 bg-slate-800 rounded"></div>
+                      </div>
+                      <div className="flex-grow p-2 flex gap-2">
+                        <div className="flex-1 bg-white border border-slate-200 rounded-lg p-1.5 flex flex-col gap-1">
+                          <div className="w-14 h-1.5 bg-blue-600 rounded"></div>
+                          <div className="w-full h-1 bg-slate-300 rounded"></div>
+                        </div>
+                        <div className="w-12 bg-white border border-blue-200 rounded-lg p-1 flex flex-col gap-1">
+                          <div className="w-full h-2 bg-blue-600 rounded"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1 text-right">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-black text-slate-900">تجربة المستخدم (UI/UX)</span>
+                        {selectedTemplate === 'template_3' && (
+                          <span className="text-[10px] bg-blue-600 text-white font-black px-2 py-0.5 rounded-full">محدد</span>
+                        )}
+                      </div>
+                      <span className="text-xs text-slate-500 font-bold leading-relaxed">قائمة عصرية مع شريط جانبية وسعر مثبت بالجانب</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -577,6 +733,17 @@ export default function LandingPagesManagementPage() {
             </div>
           </div>
         </div>
+      )}
+      {/* Template Preview Modal */}
+      {previewTemplate && (
+        <TemplatePreviewModal
+          templateId={previewTemplate}
+          onClose={() => setPreviewTemplate(null)}
+          onSelect={() => {
+            setSelectedTemplate(previewTemplate);
+            setPreviewTemplate(null);
+          }}
+        />
       )}
     </div>
   );
