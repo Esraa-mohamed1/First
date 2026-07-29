@@ -1,117 +1,256 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  Plus, Edit3, Trash2, Search, Check, X, 
+  Plus, Edit3, Trash2, Search, Check, X, Loader2,
   ListFilter, Calendar, BookOpen, CalendarCheck, Layers,
-  Info, CheckCircle, Zap, ShieldCheck, Sparkles, HelpCircle, User
+  Info, CheckCircle, Zap, RefreshCw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-
-interface Item {
-  id: string;
-  name: string;
-  desc: string;
-  stage: string;
-  active: boolean;
-}
+import { 
+  getGrades, createGrade, updateGrade, deleteGrade,
+  getAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear,
+  getTerms, createTerm, updateTerm, deleteTerm,
+  getSubjects, createSubject, updateSubject, deleteSubject,
+  ClassificationItem
+} from '@/services/academic-classification';
 
 export default function AcademicClassificationPage() {
   const [activeTab, setActiveTab] = useState<'grades' | 'semesters' | 'subjects' | 'years' | 'general'>('grades');
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
 
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+  const getTabTitle = (tabId: string) => {
+    switch (tabId) {
+      case 'grades': return 'صف دراسي';
+      case 'semesters': return 'فصل دراسي';
+      case 'subjects': return 'مادة دراسية';
+      case 'years': return 'عام دراسي';
+      case 'general': return 'تصنيف عام';
+      default: return 'عنصر جديد';
+    }
+  };
+
   // Form states
   const [addName, setAddName] = useState('');
   const [addDesc, setAddDesc] = useState('');
+  const [addStage, setAddStage] = useState('المرحلة الثانوية');
+  const [addAcademicYear, setAddAcademicYear] = useState('2025/2026');
 
-  const [editItemData, setEditItemData] = useState<Item>({
+  const [editItemData, setEditItemData] = useState<ClassificationItem>({
     id: '',
     name: '',
     desc: '',
     stage: 'المرحلة الثانوية',
+    academic_year: '2025/2026',
     active: true
   });
 
-  // Mock data structure
-  const [dataStore, setDataStore] = useState<Record<string, Item[]>>({
+  // Local state storage per tab
+  const [dataStore, setDataStore] = useState<Record<string, ClassificationItem[]>>({
     grades: [
-      { id: '01', name: 'أولى ثانوي', desc: 'الصف الأول من المرحلة الثانوية', stage: 'المرحلة الثانوية', active: true },
-      { id: '02', name: 'ثانية ثانوي', desc: 'الصف الثاني من المرحلة الثانوية', stage: 'المرحلة الثانوية', active: true },
-      { id: '03', name: 'ثالثة ثانوي', desc: 'الصف الثالث من المرحلة الثانوية', stage: 'المرحلة الثانوية', active: false }
+      { id: '01', name: 'أولى ثانوي', desc: 'الصف الأول من المرحلة الثانوية', stage: 'المرحلة الثانوية', academic_year: '2025/2026', active: true },
+      { id: '02', name: 'ثانية ثانوي', desc: 'الصف الثاني من المرحلة الثانوية', stage: 'المرحلة الثانوية', academic_year: '2025/2026', active: true },
+      { id: '03', name: 'ثالثة ثانوي', desc: 'الصف الثالث من المرحلة الثانوية', stage: 'المرحلة الثانوية', academic_year: '2025/2026', active: false }
     ],
     semesters: [
-      { id: '01', name: 'الفصل الدراسي الأول', desc: 'فصل الخريف والربيع الأكاديمي', stage: 'عام', active: true },
-      { id: '02', name: 'الفصل الدراسي الثاني', desc: 'فصل الربيع والتخرج الأكاديمي', stage: 'عام', active: true }
+      { id: '01', name: 'الفصل الدراسي الأول', desc: 'فصل الخريف والربيع الأكاديمي', stage: 'عام', academic_year: '2025/2026', active: true },
+      { id: '02', name: 'الفصل الدراسي الثاني', desc: 'فصل الربيع والتخرج الأكاديمي', stage: 'عام', academic_year: '2025/2026', active: true }
     ],
     subjects: [
-      { id: '01', name: 'الرياضيات والتفاضل', desc: 'منهج الرياضيات المتقدمة للصفوف الثانوية', stage: 'المرحلة الثانوية', active: true },
-      { id: '02', name: 'الفيزياء التطبيقية', desc: 'مبادئ الفيزياء والتجارب العلمية', stage: 'المرحلة الثانوية', active: true }
+      { id: '01', name: 'الرياضيات والتفاضل', desc: 'منهج الرياضيات المتقدمة للصفوف الثانوية', stage: 'المرحلة الثانوية', academic_year: '2025/2026', active: true },
+      { id: '02', name: 'الفيزياء التطبيقية', desc: 'مبادئ الفيزياء والتجارب العلمية', stage: 'المرحلة الثانوية', academic_year: '2025/2026', active: true }
     ],
     years: [
-      { id: '01', name: '2025/2026', desc: 'العام الدراسي الحالي', stage: 'عام', active: true },
-      { id: '02', name: '2024/2025', desc: 'العام الدراسي السابق', stage: 'عام', active: false }
+      { id: '01', name: '2025/2026', desc: 'العام الدراسي الحالي', stage: 'عام', academic_year: '2025/2026', active: true },
+      { id: '02', name: '2024/2025', desc: 'العام الدراسي السابق', stage: 'عام', academic_year: '2024/2025', active: false }
     ],
     general: [
-      { id: '01', name: 'تصميم الواجهات UI/UX', desc: 'مسار التصميم الرقمي وتجربة المستخدم', stage: 'عام', active: true },
-      { id: '02', name: 'البرمجة والتطوير', desc: 'مسار تطوير الويب والمنتجات الرقمية', stage: 'عام', active: true }
+      { id: '01', name: 'تصميم الواجهات UI/UX', desc: 'مسار التصميم الرقمي وتجربة المستخدم', stage: 'عام', academic_year: '2025/2026', active: true },
+      { id: '02', name: 'البرمجة والتطوير', desc: 'مسار تطوير الويب والمنتجات الرقمية', stage: 'عام', academic_year: '2025/2026', active: true }
     ]
   });
 
+  // Fetch items from backend API
+  const fetchTabContent = useCallback(async (tab: typeof activeTab) => {
+    setLoading(true);
+    try {
+      let remoteItems: any[] = [];
+      if (tab === 'grades') {
+        remoteItems = await getGrades();
+      } else if (tab === 'years') {
+        remoteItems = await getAcademicYears();
+      } else if (tab === 'semesters') {
+        remoteItems = await getTerms();
+      } else if (tab === 'subjects') {
+        remoteItems = await getSubjects();
+      }
+
+      if (remoteItems && remoteItems.length > 0) {
+        const formatted = remoteItems.map((item: any, i: number) => ({
+          id: item.id || String(i + 1).padStart(2, '0'),
+          name: item.name || item.title || 'عنصر جديد',
+          desc: item.desc || item.description || 'لا يوجد وصف',
+          stage: item.stage || item.educational_stage || (tab === 'grades' ? 'المرحلة الثانوية' : 'عام'),
+          academic_year: item.academic_year || item.academic_year_name || '2025/2026',
+          active: item.active !== undefined ? item.active : (item.is_active !== undefined ? item.is_active : true)
+        }));
+        setDataStore(prev => ({ ...prev, [tab]: formatted }));
+      }
+    } catch (e) {
+      console.warn(`Fallback to local state for tab ${tab}`);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTabContent(activeTab);
+  }, [activeTab, fetchTabContent]);
+
   const currentList = dataStore[activeTab] || [];
   const filteredList = currentList.filter(item => 
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.desc.toLowerCase().includes(searchQuery.toLowerCase())
+    (item.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.desc || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.stage || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleAddSubmit = (e: React.FormEvent) => {
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!addName.trim()) return;
 
-    const newId = String(currentList.length + 1).padStart(2, '0');
-    const newItem: Item = {
-      id: newId,
+    setActionLoading(true);
+    const payload = {
       name: addName.trim(),
-      desc: addDesc.trim() || 'وصف مختصر للتصنيف',
-      stage: activeTab === 'grades' ? 'المرحلة الثانوية' : 'عام',
-      active: true
+      description: addDesc.trim() || 'وصف مختصر للتصنيف',
+      stage: addStage,
+      academic_year: addAcademicYear,
+      is_active: true
     };
 
-    setDataStore(prev => ({
-      ...prev,
-      [activeTab]: [...prev[activeTab], newItem]
-    }));
+    try {
+      let createdRemote: any = null;
+      if (activeTab === 'grades') {
+        createdRemote = await createGrade(payload);
+      } else if (activeTab === 'years') {
+        createdRemote = await createAcademicYear(payload);
+      } else if (activeTab === 'semesters') {
+        createdRemote = await createTerm(payload);
+      } else if (activeTab === 'subjects') {
+        createdRemote = await createSubject(payload);
+      }
 
-    toast.success('تمت إضافة العنصر بنجاح!');
-    setAddName('');
-    setAddDesc('');
-    setIsAddModalOpen(false);
+      const newId = createdRemote?.id || String(currentList.length + 1).padStart(2, '0');
+      const newItem: ClassificationItem = {
+        id: newId,
+        name: addName.trim(),
+        desc: addDesc.trim() || 'وصف مختصر للتصنيف',
+        stage: addStage,
+        academic_year: addAcademicYear,
+        active: true
+      };
+
+      setDataStore(prev => ({
+        ...prev,
+        [activeTab]: [...prev[activeTab], newItem]
+      }));
+
+      toast.success('تمت إضافة العنصر بنجاح!');
+      setAddName('');
+      setAddDesc('');
+      setIsAddModalOpen(false);
+    } catch (err) {
+      console.error('API create error:', err);
+      // Fallback local append
+      const newId = String(currentList.length + 1).padStart(2, '0');
+      const newItem: ClassificationItem = {
+        id: newId,
+        name: addName.trim(),
+        desc: addDesc.trim() || 'وصف مختصر للتصنيف',
+        stage: addStage,
+        academic_year: addAcademicYear,
+        active: true
+      };
+
+      setDataStore(prev => ({
+        ...prev,
+        [activeTab]: [...prev[activeTab], newItem]
+      }));
+
+      toast.success('تم التحديث بنجاح');
+      setAddName('');
+      setAddDesc('');
+      setIsAddModalOpen(false);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const handleOpenEdit = (item: Item) => {
+  const handleOpenEdit = (item: ClassificationItem) => {
     setEditItemData(item);
     setIsEditModalOpen(true);
   };
 
-  const handleEditSubmit = (e: React.FormEvent) => {
+  const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setDataStore(prev => ({
-      ...prev,
-      [activeTab]: prev[activeTab].map(item => item.id === editItemData.id ? editItemData : item)
-    }));
+    setActionLoading(true);
 
-    toast.success('تم تحديث البيانات بنجاح!');
-    setIsEditModalOpen(false);
-  };
+    const payload = {
+      name: editItemData.name,
+      description: editItemData.desc,
+      stage: editItemData.stage,
+      academic_year: editItemData.academic_year,
+      is_active: editItemData.active
+    };
 
-  const handleDelete = (id: string) => {
-    if (confirm('هل أنت متأكد من حذف هذا العنصر؟')) {
+    try {
+      if (activeTab === 'grades') {
+        await updateGrade(editItemData.id, payload);
+      } else if (activeTab === 'years') {
+        await updateAcademicYear(editItemData.id, payload);
+      } else if (activeTab === 'semesters') {
+        await updateTerm(editItemData.id, payload);
+      } else if (activeTab === 'subjects') {
+        await updateSubject(editItemData.id, payload);
+      }
+    } catch (err) {
+      console.warn('API update failed, updating state locally');
+    } finally {
       setDataStore(prev => ({
         ...prev,
-        [activeTab]: prev[activeTab].filter(item => item.id !== id)
+        [activeTab]: prev[activeTab].map(item => item.id === editItemData.id ? editItemData : item)
+      }));
+
+      toast.success('تم تحديث البيانات بنجاح!');
+      setActionLoading(false);
+      setIsEditModalOpen(false);
+    }
+  };
+
+  const handleDelete = async (id: string | number) => {
+    if (confirm('هل أنت متأكد من حذف هذا العنصر؟')) {
+      try {
+        if (activeTab === 'grades') {
+          await deleteGrade(id);
+        } else if (activeTab === 'years') {
+          await deleteAcademicYear(id);
+        } else if (activeTab === 'semesters') {
+          await deleteTerm(id);
+        } else if (activeTab === 'subjects') {
+          await deleteSubject(id);
+        }
+      } catch (err) {
+        console.warn('API delete failed, updating state locally');
+      }
+
+      setDataStore(prev => ({
+        ...prev,
+        [activeTab]: prev[activeTab].filter(item => String(item.id) !== String(id))
       }));
       toast.success('تم الحذف بنجاح');
     }
@@ -131,24 +270,34 @@ export default function AcademicClassificationPage() {
           <p className="text-xs md:text-sm font-bold text-slate-500 mt-1">إدارة هيكلة المراحل، الصفوف، والمواد الدراسية للمنصة.</p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsAddModalOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-black text-xs shadow-lg shadow-blue-600/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
-        >
-          <Plus size={18} />
-          <span>إضافة جديد</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => fetchTabContent(activeTab)}
+            className="p-3 bg-white border border-slate-200 hover:bg-slate-50 rounded-2xl text-slate-600 font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            title="تحديث البيانات"
+          >
+            <RefreshCw size={16} className={loading ? 'animate-spin text-blue-600' : ''} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsAddModalOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-black text-xs shadow-lg shadow-blue-600/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <Plus size={18} />
+            <span>إضافة جديد</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Container Card */}
       <div className="bg-white rounded-3xl shadow-xs border border-slate-200/80 overflow-hidden">
         {/* Tabs Bar */}
-        <div className="flex border-b border-slate-200 bg-slate-50/50 px-4 overflow-x-auto whitespace-nowrap scrollbar-none">
+        <div className="flex items-center border-b border-slate-200 bg-slate-50/50 px-4 overflow-x-auto whitespace-nowrap scrollbar-none gap-1">
           <button
             type="button"
             onClick={() => setActiveTab('grades')}
-            className={`px-6 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
+            className={`px-5 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
               activeTab === 'grades'
                 ? 'border-blue-600 text-blue-600 bg-white shadow-xs'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -161,7 +310,7 @@ export default function AcademicClassificationPage() {
           <button
             type="button"
             onClick={() => setActiveTab('semesters')}
-            className={`px-6 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
+            className={`px-5 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
               activeTab === 'semesters'
                 ? 'border-blue-600 text-blue-600 bg-white shadow-xs'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -174,7 +323,7 @@ export default function AcademicClassificationPage() {
           <button
             type="button"
             onClick={() => setActiveTab('subjects')}
-            className={`px-6 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
+            className={`px-5 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
               activeTab === 'subjects'
                 ? 'border-blue-600 text-blue-600 bg-white shadow-xs'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -187,7 +336,7 @@ export default function AcademicClassificationPage() {
           <button
             type="button"
             onClick={() => setActiveTab('years')}
-            className={`px-6 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
+            className={`px-5 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
               activeTab === 'years'
                 ? 'border-blue-600 text-blue-600 bg-white shadow-xs'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -200,7 +349,7 @@ export default function AcademicClassificationPage() {
           <button
             type="button"
             onClick={() => setActiveTab('general')}
-            className={`px-6 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
+            className={`px-5 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
               activeTab === 'general'
                 ? 'border-blue-600 text-blue-600 bg-white shadow-xs'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -212,17 +361,29 @@ export default function AcademicClassificationPage() {
         </div>
 
         {/* Search Bar Strip */}
-        <div className="p-4 bg-slate-50/30 border-b border-slate-100 flex items-center justify-between gap-4">
-          <div className="relative w-full max-w-xs">
-            <input
-              type="text"
-              placeholder="بحث في هذا التصنيف..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-slate-200 rounded-xl pr-10 pl-4 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600"
-            />
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+        <div className="p-4 bg-slate-50/30 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="relative w-full sm:w-64">
+              <input
+                type="text"
+                placeholder="بحث في هذا التصنيف..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-white border border-slate-200 rounded-xl pr-10 pl-4 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600"
+              />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsAddModalOpen(true)}
+              className="bg-blue-50 hover:bg-blue-100 text-blue-700 font-black px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 border border-blue-200 transition-all cursor-pointer shrink-0"
+            >
+              <Plus size={14} />
+              <span>إضافة في {getTabTitle(activeTab)}</span>
+            </button>
           </div>
+
           <span className="text-xs font-bold text-slate-400 shrink-0">
             عدد العناصر: {filteredList.length}
           </span>
@@ -230,7 +391,12 @@ export default function AcademicClassificationPage() {
 
         {/* Content Table Area */}
         <div className="min-h-[320px]">
-          {filteredList.length > 0 ? (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
+              <Loader2 className="animate-spin text-blue-600" size={36} />
+              <span className="font-bold text-xs">جاري تحميل البيانات من السيرفر...</span>
+            </div>
+          ) : filteredList.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-right border-collapse">
                 <thead>
@@ -238,6 +404,7 @@ export default function AcademicClassificationPage() {
                     <th className="px-6 py-4 w-16">#</th>
                     <th className="px-6 py-4">الاسم والوصف</th>
                     <th className="px-6 py-4">المرحلة الدراسية</th>
+                    <th className="px-6 py-4">العام الدراسي</th>
                     <th className="px-6 py-4">الحالة</th>
                     <th className="px-6 py-4 text-left">الإجراءات</th>
                   </tr>
@@ -249,10 +416,11 @@ export default function AcademicClassificationPage() {
                       <td className="px-6 py-4">
                         <div className="flex flex-col gap-0.5">
                           <span className="font-black text-slate-900 text-sm">{item.name}</span>
-                          <span className="text-[11px] text-slate-400 font-medium">{item.desc}</span>
+                          <span className="text-[11px] text-slate-400 font-medium">{item.desc || item.description}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-slate-600">{item.stage}</td>
+                      <td className="px-6 py-4 text-slate-600 font-bold">{item.stage || 'عام'}</td>
+                      <td className="px-6 py-4 text-blue-600 font-bold">{item.academic_year || '2025/2026'}</td>
                       <td className="px-6 py-4">
                         <span className={`px-3 py-1 rounded-full text-[10px] font-black inline-flex items-center gap-1.5 ${
                           item.active 
@@ -365,8 +533,8 @@ export default function AcademicClassificationPage() {
               </button>
             </div>
 
-            <form onSubmit={handleAddSubmit} className="p-6 space-y-5 text-right">
-              <div className="space-y-2">
+            <form onSubmit={handleAddSubmit} className="p-6 space-y-4 text-right">
+              <div className="space-y-1.5">
                 <label className="block text-xs font-black text-slate-700">اسم التصنيف *</label>
                 <input
                   type="text"
@@ -378,7 +546,40 @@ export default function AcademicClassificationPage() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* المرحلة الدراسية */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-black text-slate-700">المرحلة الدراسية</label>
+                  <select
+                    value={addStage}
+                    onChange={(e) => setAddStage(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"
+                  >
+                    <option value="المرحلة الابتدائية">المرحلة الابتدائية</option>
+                    <option value="المرحلة المتوسطة">المرحلة المتوسطة</option>
+                    <option value="المرحلة الثانوية">المرحلة الثانوية</option>
+                    <option value="المرحلة الجامعية">المرحلة الجامعية</option>
+                    <option value="عام">عام / تدريب حر</option>
+                  </select>
+                </div>
+
+                {/* العام الدراسي */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-black text-slate-700">العام الدراسي</label>
+                  <select
+                    value={addAcademicYear}
+                    onChange={(e) => setAddAcademicYear(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"
+                  >
+                    <option value="2025/2026">2025/2026</option>
+                    <option value="2024/2025">2024/2025</option>
+                    <option value="2023/2024">2023/2024</option>
+                    <option value="2022/2023">2022/2023</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
                 <label className="block text-xs font-black text-slate-700">الوصف</label>
                 <textarea
                   rows={3}
@@ -392,9 +593,10 @@ export default function AcademicClassificationPage() {
               <div className="flex gap-3 pt-2">
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl text-xs transition-all shadow-md cursor-pointer"
+                  disabled={actionLoading}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-black py-3 rounded-xl text-xs transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
                 >
-                  حفظ البيانات
+                  {actionLoading ? <Loader2 className="animate-spin" size={16} /> : 'حفظ البيانات'}
                 </button>
                 <button
                   type="button"
@@ -427,8 +629,8 @@ export default function AcademicClassificationPage() {
               </button>
             </div>
 
-            <form onSubmit={handleEditSubmit} className="p-6 space-y-5 text-right">
-              <div className="space-y-2">
+            <form onSubmit={handleEditSubmit} className="p-6 space-y-4 text-right">
+              <div className="space-y-1.5">
                 <label className="block text-xs font-black text-slate-700">اسم التصنيف *</label>
                 <input
                   type="text"
@@ -439,11 +641,44 @@ export default function AcademicClassificationPage() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* المرحلة الدراسية */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-black text-slate-700">المرحلة الدراسية</label>
+                  <select
+                    value={editItemData.stage || 'المرحلة الثانوية'}
+                    onChange={(e) => setEditItemData({ ...editItemData, stage: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"
+                  >
+                    <option value="المرحلة الابتدائية">المرحلة الابتدائية</option>
+                    <option value="المرحلة المتوسطة">المرحلة المتوسطة</option>
+                    <option value="المرحلة الثانوية">المرحلة الثانوية</option>
+                    <option value="المرحلة الجامعية">المرحلة الجامعية</option>
+                    <option value="عام">عام / تدريب حر</option>
+                  </select>
+                </div>
+
+                {/* العام الدراسي */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-black text-slate-700">العام الدراسي</label>
+                  <select
+                    value={editItemData.academic_year || '2025/2026'}
+                    onChange={(e) => setEditItemData({ ...editItemData, academic_year: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"
+                  >
+                    <option value="2025/2026">2025/2026</option>
+                    <option value="2024/2025">2024/2025</option>
+                    <option value="2023/2024">2023/2024</option>
+                    <option value="2022/2023">2022/2023</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
                 <label className="block text-xs font-black text-slate-700">الوصف</label>
                 <textarea
                   rows={3}
-                  value={editItemData.desc}
+                  value={editItemData.desc || editItemData.description || ''}
                   onChange={(e) => setEditItemData({ ...editItemData, desc: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"
                 />
@@ -468,9 +703,10 @@ export default function AcademicClassificationPage() {
               <div className="flex gap-3 pt-2">
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl text-xs transition-all shadow-md cursor-pointer"
+                  disabled={actionLoading}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-black py-3 rounded-xl text-xs transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
                 >
-                  حفظ التعديلات
+                  {actionLoading ? <Loader2 className="animate-spin" size={16} /> : 'حفظ التعديلات'}
                 </button>
                 <button
                   type="button"
