@@ -15,6 +15,7 @@ interface LandingRendererProps {
   courseId?: string | number;
   courseSlug?: string;
   isEditable?: boolean;
+  landingPageId?: string | number;
   onSubscribe?: () => Promise<void> | void;
   isSubscribing?: boolean;
   selectedPaymentMethod?: any;
@@ -27,6 +28,7 @@ export default function LandingRenderer({
   courseId,
   courseSlug,
   isEditable = false,
+  landingPageId,
   onSubscribe = () => {},
   isSubscribing = false,
   selectedPaymentMethod,
@@ -34,7 +36,7 @@ export default function LandingRenderer({
   isPaymentModalOpen,
   setIsPaymentModalOpen,
 }: LandingRendererProps) {
-  const { loading, error } = useLandingContent({ courseId, courseSlug });
+  const { loading, error } = useLandingContent({ courseId, courseSlug, landingPageId: landingPageId ? String(landingPageId) : undefined });
   
   const content = useLandingStore(state => state.content);
   const courseData = useLandingStore(state => state.courseData);

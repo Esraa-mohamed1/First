@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getCourse } from '@/services/courses';
 import { getStudentCourse } from '@/services/student-courses';
-import { getLandingPageByCourseSlug, getStudentLandingPageByCourseSlug } from '../services/landing.api';
+import { getLandingPageByCourseSlug, getStudentLandingPageByCourseSlug, getLandingPagesList } from '../services/landing.api';
 import { useLandingStore } from '../store/landingStore';
 
 export function useLandingContent(options: { courseId?: string | number; courseSlug?: string; landingPageId?: string }) {
@@ -30,20 +30,32 @@ export function useLandingContent(options: { courseId?: string | number; courseS
 
         if (targetLpId && typeof window !== 'undefined') {
           const stored = localStorage.getItem('darab_landing_pages');
+          let found: any = null;
           if (stored) {
             const pages = JSON.parse(stored);
-            const found = pages.find((p: any) => String(p.id) === String(targetLpId));
-            if (found) {
-              landingPage = found;
-              // Attempt to fetch real course, fallback to stored course data
-              try {
-                course = await getCourse(String(found.course_id));
-                if (course && course.chapters && !course.units) {
-                  course.units = course.chapters;
-                }
-              } catch (e) {
-                course = found.courseData;
+            found = pages.find((p: any) => String(p.id) === String(targetLpId));
+          }
+
+          if (!found) {
+            try {
+              const apiList = await getLandingPagesList();
+              localStorage.setItem('darab_landing_pages', JSON.stringify(apiList));
+              found = apiList.find((p: any) => String(p.id) === String(targetLpId));
+            } catch (e) {
+              console.error('Failed to self-heal fetch landing page:', e);
+            }
+          }
+
+          if (found) {
+            landingPage = found;
+            // Attempt to fetch real course, fallback to stored course data
+            try {
+              course = await getCourse(String(found.course_id));
+              if (course && course.chapters && !course.units) {
+                course.units = course.chapters;
               }
+            } catch (e) {
+              course = found.courseData;
             }
           }
         }

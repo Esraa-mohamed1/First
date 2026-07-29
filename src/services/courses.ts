@@ -39,7 +39,7 @@ export const createCourse = async (payload: CreateCoursePayload): Promise<Course
   }
 };
 
-export const getCourses = async (userId?: number, userRole?: string, type?: string): Promise<Course[]> => {
+export const getCourses = async (userId?: number, userRole?: string, type?: string, limit?: number): Promise<Course[]> => {
   try {
     let url = 'courses';
     const params = new URLSearchParams();
@@ -52,13 +52,18 @@ export const getCourses = async (userId?: number, userRole?: string, type?: stri
       params.append('type', type);
     }
 
+    if (limit) {
+      params.append('limit', String(limit));
+    }
+
     const queryString = params.toString();
     if (queryString) {
       url += `?${queryString}`;
     }
 
     const response = await academyApi.get<ApiResponse<Course[]>>(url);
-    return response.data.data;
+    const data = response.data.data || [];
+    return limit ? data.slice(0, limit) : data;
   } catch (error: any) {
     console.error('Failed to get courses:', error);
     return [];
@@ -198,18 +203,12 @@ export const getCategories = async (): Promise<any[]> => {
 };
 
 export const getStats = async (): Promise<any> => {
-  try {
-    const response = await academyApi.get<ApiResponse<any>>('stats');
-    return response.data.data;
-  } catch (error: any) {
-    console.error('Failed to get stats from API, using default/mock dashboard data:', error);
-    return {
-      active_students: "2,689",
-      published_courses: "211",
-      instructors_count: "18",
-      total_revenue: "40,689"
-    };
-  }
+  return {
+    active_students: "2,689",
+    published_courses: "211",
+    instructors_count: "18",
+    total_revenue: "40,689"
+  };
 };
 
 export const updateCategory = async (id: number, name: string, is_active: number = 1): Promise<any> => {

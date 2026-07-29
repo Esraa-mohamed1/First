@@ -22,8 +22,8 @@ export const useAcademicDashboard = () => {
   const fetchData = async () => {
     try {
       const [coursesData, studentsData, statsData, usageResponse] = await Promise.all([
-        getCourses(),
-        getUsers('student'),
+        getCourses(undefined, undefined, undefined, 2),
+        getUsers('student', 5),
         getStats().catch(() => null),
         getMyUsageLimit().catch(() => null)
       ]);

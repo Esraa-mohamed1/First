@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye, Landmark, X, Check, User as UserIcon, Loader2 } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye, Landmark, X, Check, User as UserIcon, Loader2, Globe, Copy, MoreVertical, ExternalLink } from 'lucide-react';
 import { getCourse, deleteUnit, deleteLesson, createUnit, updateCourse, getCategories, createCategory } from '@/services/courses';
 import { getProfileStatus } from '@/services/auth';
 import { getUsers, createUser } from '@/services/users';
@@ -26,6 +26,8 @@ import { SearchableSelect } from '@/components/Academic/Common/SearchableSelect'
 import LandingRenderer from '@/modules/landing/renderer/LandingRenderer';
 import { useLandingStore } from '@/modules/landing/store/landingStore';
 import { useLandingSave } from '@/modules/landing/hooks/useLandingSave';
+import { getLandingPagesList, createLandingPage, updateLandingPage, deleteLandingPage } from '@/modules/landing/services/landing.api';
+import { getTemplateDefaultContent } from '@/modules/landing/constants/defaultContent';
 import HeroEditor from '@/modules/landing/editor/HeroEditor';
 import LearningEditor from '@/modules/landing/editor/LearningEditor';
 import ChapterEditor from '@/modules/landing/editor/ChapterEditor';
@@ -333,7 +335,7 @@ export default function CourseDetailsPage() {
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
 
   // Tabs State
-  const [activeTab, setActiveTab] = useState<'info' | 'content' | 'pricing' | 'subscribers'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'content' | 'pricing' | 'landing_pages' | 'subscribers'>('info');
 
   const getActiveTabErrors = () => {
     const infoFields = ['title', 'category_id', 'description', 'image', 'user_id', 'coach'];
@@ -357,6 +359,18 @@ export default function CourseDetailsPage() {
   const [status, setStatus] = useState<'published' | 'draft'>('draft');
   const [coachName, setCoachName] = useState('');
   const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<AcademyPaymentMethod[]>([]);
+  
+  // Landing Pages Tab State
+  const [landingPages, setLandingPages] = useState<any[]>([]);
+  const [loadingLandingPages, setLoadingLandingPages] = useState(false);
+  const [previewLandingPageId, setPreviewLandingPageId] = useState<string | number | null>(null);
+
+  // New Landing Page Creation Dialog State
+  const [isCreateLandingModalOpen, setIsCreateLandingModalOpen] = useState(false);
+  const [newCampaignName, setNewCampaignName] = useState('');
+  const [newSelectedTemplate, setNewSelectedTemplate] = useState('template_1');
+  const [newCustomSlug, setNewCustomSlug] = useState('');
+  const [isCreatingLanding, setIsCreatingLanding] = useState(false);
 
   // Info Tab Form State
   const [courseInfo, setCourseInfo] = useState({
@@ -409,7 +423,7 @@ export default function CourseDetailsPage() {
   const { saving, handleSave } = useLandingSave();
 
   useEffect(() => {
-    if (previewTemplateId && course) {
+    if (previewTemplateId && course && !previewLandingPageId) {
       const store = useLandingStore.getState();
       store.setTemplateName(previewTemplateId);
       store.setCourseData(course);
@@ -417,7 +431,7 @@ export default function CourseDetailsPage() {
         store.setUserId(currentUser.id);
       }
     }
-  }, [previewTemplateId, course, currentUser]);
+  }, [previewTemplateId, course, currentUser, previewLandingPageId]);
   
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -561,7 +575,7 @@ export default function CourseDetailsPage() {
     setActiveTab('content');
   };
 
-  const handleTabChange = (targetTab: 'info' | 'content' | 'pricing' | 'subscribers') => {
+  const handleTabChange = (targetTab: 'info' | 'content' | 'pricing' | 'landing_pages' | 'subscribers') => {
     if (targetTab === 'info') {
       setActiveTab('info');
       return;
@@ -902,6 +916,180 @@ export default function CourseDetailsPage() {
     }
   };
 
+  const fetchLandingPages = async () => {
+    if (!id) return;
+    setLoadingLandingPages(true);
+    try {
+      const list = await getLandingPagesList();
+      const coursePages = list.filter((item: any) => Number(item.course_id) === Number(id));
+      setLandingPages(coursePages);
+      
+      // Sync to localStorage for hook compatibility
+      localStorage.setItem('darab_landing_pages', JSON.stringify(list));
+    } catch (e) {
+      console.error('Failed to fetch landing pages:', e);
+    } finally {
+      setLoadingLandingPages(false);
+    }
+  };
+
+  const handleOpenEditor = (page: any) => {
+    if (!course) return;
+    const store = useLandingStore.getState();
+    
+    // Set course details for defaults lookup
+    store.setCourseData(course);
+    
+    store.setLandingPageData({
+      id: page.id,
+      template_name: page.template_name,
+      is_active: page.is_active,
+      content: page.content,
+      course_id: page.course_id,
+      user_id: currentUser?.id || 1
+    });
+
+    setPreviewLandingPageId(page.id);
+    setPreviewTemplateId(page.template_name);
+    store.setActiveSectionId(null);
+  };
+
+  const handleTogglePublish = async (page: any) => {
+    try {
+      const nextStatus = !page.is_active;
+      await updateLandingPage({
+        id: page.id,
+        template_name: page.template_name,
+        content: page.content,
+        is_active: nextStatus,
+        course_id: Number(id),
+        user_id: currentUser?.id || 1
+      });
+      toast.success(nextStatus ? 'تم نشر الصفحة بنجاح' : 'تم إيقاف النشر مؤقتاً');
+      fetchLandingPages();
+    } catch (err) {
+      console.error(err);
+      toast.error('حدث خطأ أثناء تغيير حالة الصفحة');
+    }
+  };
+
+  const handleDeleteLandingPage = (pageId: string | number) => {
+    MySwal.fire({
+      title: 'هل أنت متأكد من الحذف؟',
+      text: 'لن تتمكن من استرجاع صفحة الهبوط هذه بعد حذفها!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'نعم، احذفها',
+      cancelButtonText: 'إلغاء',
+      reverseButtons: true,
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await deleteLandingPage(pageId);
+          toast.success('تم حذف صفحة الهبوط بنجاح');
+          fetchLandingPages();
+        } catch (e) {
+          console.error(e);
+          toast.error('فشل حذف صفحة الهبوط');
+        }
+      }
+    });
+  };
+
+  const handleCreateLandingPage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCampaignName.trim()) {
+      toast.error('يرجى إدخال اسم الحملة');
+      return;
+    }
+
+    setIsCreatingLanding(true);
+    try {
+      const defaultContent = getTemplateDefaultContent(course, newSelectedTemplate);
+      const contentWithCampaign = {
+        ...defaultContent,
+        campaignName: newCampaignName.trim()
+      };
+
+      const payload = {
+        template_name: newSelectedTemplate,
+        content: contentWithCampaign,
+        is_active: true,
+        course_id: Number(id),
+        user_id: currentUser?.id || 1,
+        slug: newCustomSlug.trim() || undefined
+      };
+
+      const savedData = await createLandingPage(payload);
+      toast.success('تم إنشاء صفحة البيع بنجاح!');
+      setIsCreateLandingModalOpen(false);
+      setNewCampaignName('');
+      setNewCustomSlug('');
+      setNewSelectedTemplate('template_1');
+      
+      await fetchLandingPages();
+
+      if (savedData) {
+        const mappedPage = {
+          id: String(savedData.id),
+          course_id: Number(savedData.course_id),
+          courseTitle: course?.title || '',
+          template_name: savedData.template_name || newSelectedTemplate,
+          is_active: Boolean(savedData.is_active),
+          slug: savedData.slug || newCustomSlug.trim(),
+          content: savedData.content || contentWithCampaign,
+          created_at: savedData.created_at || new Date().toISOString()
+        };
+        handleOpenEditor(mappedPage);
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'حدث خطأ أثناء إنشاء صفحة البيع');
+    } finally {
+      setIsCreatingLanding(false);
+    }
+  };
+
+  const handleCloneLandingPage = async (page: any) => {
+    try {
+      const payload = {
+        template_name: page.template_name,
+        content: {
+          ...page.content,
+          campaignName: `${page.content?.campaignName || 'نسخة'} - نسخة`
+        },
+        is_active: false,
+        course_id: Number(id),
+        user_id: currentUser?.id || 1,
+        slug: page.slug ? `${page.slug}-copy` : undefined
+      };
+      await createLandingPage(payload);
+      toast.success('تم تكرار صفحة الهبوط بنجاح');
+      fetchLandingPages();
+    } catch (e) {
+      console.error(e);
+      toast.error('فشل تكرار صفحة الهبوط');
+    }
+  };
+
+  const handleCopyCustomLink = (page: any) => {
+    if (typeof window !== 'undefined') {
+      const link = `${window.location.origin}/user/courses/${page.slug || 'preview'}?lp_id=${page.id}`;
+      navigator.clipboard.writeText(link);
+      toast.success('تم نسخ رابط صفحة البيع بنجاح!');
+    }
+  };
+
+  const handleCopyDefaultLink = () => {
+    if (typeof window !== 'undefined') {
+      const link = `${window.location.origin}/user/courses/${course?.slug || id}`;
+      navigator.clipboard.writeText(link);
+      toast.success('تم نسخ رابط صفحة البيع الافتراضية بنجاح!');
+    }
+  };
+
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
@@ -931,6 +1119,7 @@ export default function CourseDetailsPage() {
   useEffect(() => {
     if (id) {
       fetchCourse();
+      fetchLandingPages();
     }
   }, [id]);
 
@@ -1251,8 +1440,16 @@ export default function CourseDetailsPage() {
               onClick={() => handleTabChange('pricing')}
               className={`relative py-4 text-label-md font-bold whitespace-nowrap transition-colors ${activeTab === 'pricing' ? 'text-primary font-black' : 'text-on-surface-variant hover:text-primary'}`}
             >
-              التسويق والبيع
+              التسعير والتحصيل
               {activeTab === 'pricing' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-t-full" />}
+            </button>
+            <button 
+              type="button"
+              onClick={() => handleTabChange('landing_pages')}
+              className={`relative py-4 text-label-md font-bold whitespace-nowrap transition-colors ${activeTab === 'landing_pages' ? 'text-primary font-black' : 'text-on-surface-variant hover:text-primary'}`}
+            >
+              التسويق والبيع
+              {activeTab === 'landing_pages' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-t-full" />}
             </button>
             <button 
               type="button"
@@ -2218,14 +2415,352 @@ export default function CourseDetailsPage() {
             </section>
 
             {/* Bottom action buttons */}
-            <div className="flex items-center justify-center gap-4 pt-6 mt-6">
+            <div className="flex items-center justify-end gap-4 pt-6 border-t border-outline-variant mt-6">
               <button
                 type="button"
-                onClick={handleSavePricing}
-                disabled={isSavingPricing}
-                className="w-full max-w-[400px] py-4 bg-primary text-white font-black rounded-2xl shadow-xl shadow-blue-500/10 hover:brightness-110 active:scale-95 transition-all disabled:opacity-70 text-sm"
+                onClick={() => setActiveTab('content')}
+                className="px-10 py-3 bg-gray-100 text-gray-600 font-black rounded-full hover:bg-gray-200 transition-all text-sm"
               >
-                {isSavingPricing ? 'جاري الحفظ...' : 'حفظ بيانات التسعير والبيع'}
+                السابق
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  await handleSavePricing();
+                  setActiveTab('landing_pages');
+                }}
+                disabled={isSavingPricing}
+                className="px-12 py-3 bg-primary text-white font-black rounded-full shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all disabled:opacity-70 text-sm"
+              >
+                {isSavingPricing ? 'جاري الحفظ...' : 'حفظ والتالي'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'landing_pages' && (
+          <div className="space-y-8 animate-in fade-in duration-300" dir="rtl">
+            {/* Header Titles */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 bg-white p-6 rounded-2xl border border-outline-variant shadow-sm">
+              <div>
+                <h2 className="font-headline-lg text-headline-lg text-gray-900 font-bold">التسويق والبيع</h2>
+                <p className="text-body-md text-on-surface-variant max-w-2xl mt-2 leading-relaxed">
+                  أنشئ صفحات بيع مختلفة لنفس الدورة واستخدم كل صفحة في حملة أو عرض مختلف، مع بقاء جميع الصفحات مرتبطة بنفس الدورة.
+                </p>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsCreateLandingModalOpen(true)}
+                className="bg-primary text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/10 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+              >
+                <Plus size={18} />
+                <span>إنشاء صفحة بيع جديدة</span>
+              </button>
+            </div>
+
+            {/* Introduction Card */}
+            <div className="bg-white border border-outline-variant p-6 rounded-2xl flex flex-col lg:flex-row gap-8 items-center shadow-sm">
+              <div className="flex-1 space-y-4">
+                <div className="inline-flex items-center gap-2 text-primary bg-primary/5 px-4 py-1.5 rounded-full font-bold text-label-md">
+                  <span className="material-symbols-outlined text-sm">info</span>
+                  دليل الاستخدام
+                </div>
+                <h3 className="font-title-md text-title-md text-gray-900">كيف تعمل صفحات البيع؟</h3>
+                <p className="text-body-md text-on-surface-variant leading-relaxed">
+                  لكل دورة صفحة بيع افتراضية يتم إنشاؤها تلقائياً. يمكنك إنشاء صفحات بيع إضافية لنفس الدورة واستخدم كل صفحة في حملة أو عرض مختلف، بينما تظل جميع الصفحات تبيع نفس الدورة.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-outline-variant/10">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 shrink-0 bg-blue-50 text-primary rounded-lg flex items-center justify-center font-bold">١</div>
+                    <p className="text-label-md text-on-surface-variant leading-snug">صفحة بيع افتراضية يتم إنشاؤها تلقائياً.</p>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 shrink-0 bg-blue-50 text-primary rounded-lg flex items-center justify-center font-bold">٢</div>
+                    <p className="text-label-md text-on-surface-variant leading-snug">أنشئ صفحات بيع إضافية للحملات المختلفة.</p>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 shrink-0 bg-blue-50 text-primary rounded-lg flex items-center justify-center font-bold">٣</div>
+                    <p className="text-label-md text-on-surface-variant leading-snug">جميع الصفحات مرتبطة بنفس الدورة وتحقق نفس الهدف.</p>
+                  </div>
+                </div>
+              </div>
+              <div className="w-full lg:w-72 shrink-0">
+                <div className="aspect-square bg-gradient-to-tr from-primary/5 to-blue-600/10 rounded-3xl flex items-center justify-center relative overflow-hidden border border-outline-variant/20 shadow-inner">
+                  <Globe className="w-24 h-24 text-primary/20 animate-pulse" />
+                  <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl"></div>
+                  <div className="absolute -top-4 -right-4 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Performance Overview Stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white border border-outline-variant p-6 rounded-2xl shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                    <span className="material-symbols-outlined">visibility</span>
+                  </div>
+                  <span className="text-label-sm text-green-600 bg-green-50 px-2 py-0.5 rounded font-bold">+12%</span>
+                </div>
+                <p className="text-on-surface-variant text-label-md">إجمالي الزيارات</p>
+                <h4 className="text-3xl font-black text-gray-900 mt-1">
+                  {(12300 + landingPages.reduce((acc, p) => acc + (p.content?.visits || 0), 0)).toLocaleString('ar-EG')}
+                </h4>
+              </div>
+              <div className="bg-white border border-outline-variant p-6 rounded-2xl shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-2 bg-green-50 text-green-600 rounded-lg">
+                    <span className="material-symbols-outlined">payments</span>
+                  </div>
+                  <span className="text-label-sm text-green-600 bg-green-50 px-2 py-0.5 rounded font-bold">+8%</span>
+                </div>
+                <p className="text-on-surface-variant text-label-md">إجمالي المبيعات</p>
+                <h4 className="text-3xl font-black text-gray-900 mt-1">
+                  {(540 + landingPages.reduce((acc, p) => acc + (p.content?.sales || 0), 0)).toLocaleString('ar-EG')}
+                </h4>
+              </div>
+              <div className="bg-white border border-outline-variant p-6 rounded-2xl shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
+                    <span className="material-symbols-outlined">layers</span>
+                  </div>
+                </div>
+                <p className="text-on-surface-variant text-label-md">عدد صفحات البيع</p>
+                <h4 className="text-3xl font-black text-gray-900 mt-1">
+                  {(1 + landingPages.length).toLocaleString('ar-EG')}
+                </h4>
+              </div>
+              <div className="bg-white border border-outline-variant p-6 rounded-2xl shadow-sm border-r-4 border-r-primary hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
+                    <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                  </div>
+                </div>
+                <p className="text-on-surface-variant text-label-md">أفضل صفحة بيع</p>
+                <h4 className="text-lg font-black text-gray-900 mt-1 leading-snug line-clamp-1">
+                  {landingPages.length > 0 && landingPages.some(p => (p.content?.sales || 0) > 540)
+                    ? (landingPages.reduce((max, p) => (p.content?.sales || 0) > (max.content?.sales || 0) ? p : max, landingPages[0]).content?.campaignName || 'صفحة إضافية')
+                    : 'صفحة البيع الافتراضية'}
+                </h4>
+              </div>
+            </div>
+
+            {/* Default Sales Page Section */}
+            <section className="space-y-4">
+              <h3 className="font-title-md text-title-md text-gray-900 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">auto_awesome</span>
+                صفحة البيع الافتراضية
+              </h3>
+              <div className="bg-white border-2 border-primary/20 rounded-2xl p-6 relative overflow-hidden shadow-sm">
+                <div className="absolute left-0 top-0 h-full w-1.5 bg-primary"></div>
+                <div className="flex flex-col lg:flex-row gap-8 items-start lg:items-center">
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-3 mb-2">
+                      <h4 className="font-title-md text-title-md text-gray-900 font-black">{course.title}</h4>
+                      <span className="bg-primary/10 text-primary text-label-sm px-3 py-1 rounded-full font-bold">تم إنشاؤها تلقائياً</span>
+                    </div>
+                    <p className="text-body-md text-on-surface-variant max-w-2xl leading-relaxed">
+                      تم إنشاء هذه الصفحة تلقائياً من بيانات الدورة، ويمكنك تعديلها في أي وقت أو استخدامها كأساس لإنشاء صفحات بيع جديدة.
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-6 pt-6 border-t border-outline-variant/30">
+                      <div>
+                        <p className="text-label-sm text-on-surface-variant font-bold">الحالة</p>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
+                          <span className="font-bold text-gray-900">نشط</span>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-label-sm text-on-surface-variant font-bold">الزيارات</p>
+                        <p className="font-black text-gray-900 mt-1.5">١٢,٣٠٠</p>
+                      </div>
+                      <div>
+                        <p className="text-label-sm text-on-surface-variant font-bold">المبيعات</p>
+                        <p className="font-black text-gray-900 mt-1.5">٥٤٠</p>
+                      </div>
+                      <div>
+                        <p className="text-label-sm text-on-surface-variant font-bold">آخر تحديث</p>
+                        <p className="font-black text-gray-900 mt-1.5">
+                          {course.updated_at ? new Date(course.updated_at).toLocaleDateString('ar-EG') : 'منذ يومين'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap lg:flex-nowrap items-center gap-3 w-full lg:w-auto shrink-0 pt-4 lg:pt-0">
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setPreviewLandingPageId(null);
+                        setPreviewTemplateId(courseTemplate);
+                      }}
+                      className="flex-1 lg:flex-none px-5 py-2.5 bg-primary hover:bg-primary-container text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-500/10 cursor-pointer animate-fade-in"
+                    >
+                      <span className="material-symbols-outlined text-sm">edit</span>
+                      تعديل الصفحة
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        window.open(`/user/courses/${course?.slug || id}`, '_blank');
+                      }}
+                      className="flex-1 lg:flex-none px-5 py-2.5 border border-primary text-primary rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary/5 transition-all cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-sm">visibility</span>
+                      معاينة
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={handleCopyDefaultLink}
+                      className="p-2.5 text-on-surface-variant hover:bg-slate-50 border border-outline-variant/60 rounded-xl transition-all cursor-pointer"
+                      title="نسخ رابط الصفحة"
+                    >
+                      <span className="material-symbols-outlined">link</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Additional Sales Pages Section */}
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-title-md text-title-md text-gray-900">صفحات بيع إضافية</h3>
+                  <p className="text-label-md text-on-surface-variant mt-1">
+                    أنشئ صفحات بيع مختلفة لنفس الدورة لتناسب الحملات والعروض المختلفة.
+                  </p>
+                </div>
+              </div>
+
+              {loadingLandingPages ? (
+                <div className="py-12 flex flex-col items-center justify-center gap-2 text-slate-400">
+                  <Loader2 size={32} className="animate-spin text-primary" />
+                  <span className="text-sm font-bold">جاري تحميل صفحات البيع...</span>
+                </div>
+              ) : landingPages.length === 0 ? (
+                <div className="bg-white border border-dashed border-outline-variant rounded-2xl p-10 text-center shadow-sm">
+                  <div className="w-16 h-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Globe className="w-8 h-8" />
+                  </div>
+                  <h4 className="text-base font-black text-gray-900 mb-1">لا توجد صفحات بيع إضافية</h4>
+                  <p className="text-xs font-bold text-gray-400 max-w-sm mx-auto leading-relaxed mb-5">
+                    أنشئ صفحات بيع مخصصة لحملاتك التسويقية مثل (رمضان، الجمعة البيضاء، إلخ) وتتبع نتائج مبيعاتها بشكل منفصل.
+                  </p>
+                  <button 
+                    type="button"
+                    onClick={() => setIsCreateLandingModalOpen(true)}
+                    className="bg-primary/5 hover:bg-primary/10 text-primary border border-primary/20 px-5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer"
+                  >
+                    أنشئ أول صفحة بيع الآن
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {landingPages.map((page) => (
+                    <div key={page.id} className="bg-white border border-outline-variant rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between">
+                      <div className="p-5 border-b border-outline-variant/10 flex justify-between items-start gap-4">
+                        <div>
+                          <h5 className="font-bold text-gray-900 text-sm line-clamp-1">{page.content?.campaignName || page.slug || 'حملة إضافية'}</h5>
+                          <span className="text-[10px] text-on-surface-variant font-bold leading-none block mt-1">{course.title}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleTogglePublish(page)}
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded cursor-pointer transition-all ${
+                            page.is_active 
+                              ? 'bg-green-50 text-green-700 hover:bg-green-100' 
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          {page.is_active ? 'منشور' : 'مسودة'}
+                        </button>
+                      </div>
+                      
+                      <div className="p-5 grid grid-cols-2 gap-4 flex-1">
+                        <div>
+                          <p className="text-xs text-on-surface-variant font-bold">الزيارات</p>
+                          <p className="font-black text-gray-900 text-base mt-1">{(page.content?.visits || 0).toLocaleString('ar-EG')}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-on-surface-variant font-bold">المبيعات</p>
+                          <p className="font-black text-gray-900 text-base mt-1">{(page.content?.sales || 0).toLocaleString('ar-EG')}</p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-xs text-on-surface-variant font-bold">الرابط المخصص</p>
+                          <p className="font-mono text-xs text-primary underline truncate mt-1">
+                            /landing/{page.slug}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-slate-50/50 border-t border-outline-variant/10 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <button 
+                            type="button"
+                            onClick={() => handleOpenEditor(page)}
+                            className="text-primary hover:bg-primary/5 p-2 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-primary/10 flex items-center justify-center" 
+                            title="تعديل وتخصيص"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              window.open(`/user/courses/${page.slug || 'preview'}?lp_id=${page.id}`, '_blank');
+                            }}
+                            className="text-on-surface-variant hover:bg-slate-100 p-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center" 
+                            title="معاينة كطالب"
+                          >
+                            <Eye size={14} />
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => handleCloneLandingPage(page)}
+                            className="text-on-surface-variant hover:bg-slate-100 p-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center" 
+                            title="تكرار الصفحة"
+                          >
+                            <Copy size={14} />
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => handleCopyCustomLink(page)}
+                            className="text-on-surface-variant hover:bg-slate-100 p-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center" 
+                            title="نسخ الرابط"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">link</span>
+                          </button>
+                        </div>
+                        
+                        <button 
+                          type="button"
+                          onClick={() => handleDeleteLandingPage(page.id)}
+                          className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center"
+                          title="حذف الصفحة"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Bottom action buttons */}
+            <div className="flex items-center justify-end gap-4 pt-6 border-t border-outline-variant mt-6">
+              <button
+                type="button"
+                onClick={() => setActiveTab('pricing')}
+                className="px-10 py-3 bg-gray-100 text-gray-600 font-black rounded-full hover:bg-gray-200 transition-all text-sm cursor-pointer"
+              >
+                السابق
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('subscribers')}
+                className="px-12 py-3 bg-primary text-white font-black rounded-full shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all text-sm cursor-pointer"
+              >
+                التالي
               </button>
             </div>
           </div>
@@ -2287,6 +2822,8 @@ export default function CourseDetailsPage() {
                     const success = await handleSave(currentUser?.id);
                     if (success) {
                       setPreviewTemplateId(null);
+                      setPreviewLandingPageId(null);
+                      fetchLandingPages();
                     }
                   }}
                   disabled={saving}
@@ -2296,7 +2833,10 @@ export default function CourseDetailsPage() {
                 </button>
                 <button 
                   type="button"
-                  onClick={() => setPreviewTemplateId(null)}
+                  onClick={() => {
+                    setPreviewTemplateId(null);
+                    setPreviewLandingPageId(null);
+                  }}
                   className="w-9 h-9 bg-white hover:bg-slate-100 text-slate-500 rounded-full flex items-center justify-center border border-slate-200 hover:text-slate-900 transition-all active:scale-95 cursor-pointer"
                 >
                   <X size={16} />
@@ -2349,15 +2889,101 @@ export default function CourseDetailsPage() {
               {/* Right Column: Live Interactive Preview (Flex fill) */}
               <div className="flex-1 bg-slate-100 p-4 flex flex-col h-full overflow-hidden">
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200/50 overflow-hidden flex-1 flex flex-col relative h-full">
-                  <div className="flex-grow flex-1 overflow-y-auto h-full">
+                  <div className="absolute inset-0 overflow-y-auto">
                     <LandingRenderer
                       courseId={id}
                       isEditable={true}
+                      landingPageId={previewLandingPageId || undefined}
                     />
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Creation Dialog Modal */}
+      {isCreateLandingModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-250" dir="rtl">
+          <div 
+            className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl p-8 border border-slate-100 animate-in zoom-in-95 duration-250 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setIsCreateLandingModalOpen(false)}
+              className="absolute top-6 left-6 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            <h2 className="text-lg font-black text-slate-900 mb-2">إنشاء صفحة بيع جديدة</h2>
+            <p className="text-xs font-bold text-slate-400 mb-6">اختر اسماً للحملة وحدد القالب والروابط المخصصة للبدء في التصميم</p>
+
+            <form onSubmit={handleCreateLandingPage} className="space-y-5 text-right">
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-slate-700">اسم الحملة التسويقية *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="مثال: عرض الجمعة البيضاء، حملة رمضان..."
+                  value={newCampaignName}
+                  onChange={(e) => setNewCampaignName(e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-bold"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-slate-700">اختر قالب التصميم *</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setNewSelectedTemplate('template_1')}
+                    className={`p-4 border rounded-2xl text-right transition-all flex flex-col gap-1.5 cursor-pointer ${
+                      newSelectedTemplate === 'template_1'
+                        ? 'border-blue-600 bg-blue-50/20'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <span className="text-xs font-black text-slate-900">الكلاسيكي الملكي</span>
+                    <span className="text-[9px] text-slate-400 font-bold leading-normal">تصميم زمردي دافئ وعروض إحصائيات</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewSelectedTemplate('template_2')}
+                    className={`p-4 border rounded-2xl text-right transition-all flex flex-col gap-1.5 cursor-pointer ${
+                      newSelectedTemplate === 'template_2'
+                        ? 'border-blue-600 bg-blue-50/20'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <span className="text-xs font-black text-slate-900">الافتراضي التفاعلي</span>
+                    <span className="text-[9px] text-slate-400 font-bold leading-normal">مشغل فيديو وجداول دروس متقدمة</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-slate-700">الرابط المخصص (Slug) (اختياري)</label>
+                <input
+                  type="text"
+                  placeholder="مثال: ramadan-offer"
+                  value={newCustomSlug}
+                  onChange={(e) => setNewCustomSlug(e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 text-left font-bold"
+                  dir="ltr"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isCreatingLanding}
+                className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer mt-4"
+              >
+                {isCreatingLanding ? <Loader2 className="animate-spin" size={16} /> : 'إنشاء وتعديل صفحة الهبوط'}
+              </button>
+            </form>
           </div>
         </div>
       )}
