@@ -53,16 +53,16 @@ const TEMPLATES: TemplatePreview[] = [
   },
   {
     id: 'template_3',
-    name: 'القالب الأرجواني الإبداعي',
-    description: 'تصميم فني بلمسات أرجوانية ملائم للأكاديميات الفنية والتصميم والتحريك.',
-    badge: 'إبداعي 🎨',
+    name: 'قالب الأكاديمية والتعلم المعتمد 🎓',
+    description: 'تصميم تعليمي متكامل فائق الفخامة مخصص للأكاديميات والجامعات الافتراضية مع 13 قسم معتمد بالكامل باللغة العربية.',
+    badge: 'الأكاديمي الشامل 🏛️',
     colors: {
-      primary: '#8b5cf6',
-      bg: '#FAF5FF',
-      accent: '#581c87',
-      secondary: '#7c3aed',
+      primary: '#10b981',
+      bg: '#ffffff',
+      accent: '#0f172a',
+      secondary: '#6366f1',
     },
-    sections: ['navbar', 'hero', 'KPIs (3)', 'metrics', 'course cards'],
+    sections: ['navbar', 'hero (slider)', 'KPIs', 'announcement', 'features', 'colleges', 'tracks', 'course cards', 'campus gallery', 'testimonials', 'pricing', 'FAQ', 'footer'],
   },
 ];
 

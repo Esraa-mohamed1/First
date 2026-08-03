@@ -492,20 +492,20 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
   'template_3': {
     id: 'template_3',
     name: 'قالب الأكاديمية والتعلم المعتمد',
-    description: 'تصميم تعليمي جامعي مرموق ومثالي لعرض المسارات والبرامج التدريبية المتقدمة بتناسق لوني مميز.',
+    description: 'تصميم تعليمي أكاديمي فائق الفخامة ومبهر مخصص للأكاديميات والمؤسسات التعليمية الرائدة باللغة العربية.',
     status: 'published',
-    version: '1.0',
+    version: '2.0',
     updatedAt: new Date().toISOString(),
     sections: [
       {
         id: 'nav-t3',
         type: 'navbar',
         props: {
-          title: 'درب | الأكاديمية',
+          title: 'أكاديمية درب | التعلم المعتمد',
           showSearch: true,
           showProfile: true,
-          bgColor: '#ffffff',
-          borderColor: '#e2e8f0',
+          bgColor: '#0f172a',
+          borderColor: '#1e293b',
           isLandingPage: true,
           order: 1
         }
@@ -514,18 +514,18 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
         id: 'hero-t3',
         type: 'hero_section',
         props: {
-          title: 'تعليم أكاديمي معتمد من أقوى المؤسسات التعليمية',
-          subtitle: 'طوّر مهاراتك اليوم وحقق أهدافك المهنية مع برامج ودورات مصممة بأعلى المعايير الأكاديمية.',
+          title: 'رحلتك الأكاديمية نحو التميّز والاحتراف مع شهادات معتمدة دولياً',
+          subtitle: 'ادرس أحدث العلوم والمسارات المتقدمة تحت إشراف نخبة من كبار الأكاديميين والخبراء مع تطبيقات عملية مباشرة.',
           show_button: true,
-          button_text: 'تصفح البرامج والشهادات',
-          button_link: '#',
+          button_text: 'استكشف البرامج والدورات',
+          button_link: '#courses-t3',
           background_color: '#0f172a',
           text_color: '#cbd5e1',
           title_color: '#ffffff',
           button_color: '#10b981',
           button_text_color: '#ffffff',
-          font_size: 42,
-          font_weight: 700,
+          font_size: 44,
+          font_weight: 800,
           padding_top: 80,
           padding_bottom: 80,
           align: 'right',
@@ -536,22 +536,22 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
             {
               order: 1,
               props: {
-                title: 'ابدأ رحلة التعلم المعتمد والمهني اليوم',
-                subtitle: 'ادرس مسارات تكنولوجية وتقنية من منزلك، واحصل على شهادات معتمدة تدعم تقدمك الوظيفي والعملي.',
-                button_text: 'تصفح الدورات',
-                button_link: '#',
+                title: 'تعلّم البرمجة والذكاء الاصطناعي وتصنيف البيانات بأعلى المعايير',
+                subtitle: 'مسارات متكاملة تأخذك من الصفر إلى الجاهزية التامة لسوق العمل التكنولوجي الدولي.',
+                button_text: 'تصفح مسارات التكنولوجيا',
+                button_link: '#courses-t3',
                 bg_image: '',
                 background_color: '#0f172a',
                 button_color: '#10b981',
                 button_text_color: '#ffffff',
                 title_color: '#ffffff',
-                text_color: '#cbd5e1',
+                text_color: '#94a3b8',
                 align: 'right',
                 show_card_overlay: false,
-                side_image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&auto=format&fit=crop',
+                side_image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&auto=format&fit=crop',
                 side_image_position: 'left',
-                side_image_shape: 'leaf',
-                side_image_width: 380,
+                side_image_shape: 'rounded',
+                side_image_width: 440,
                 side_image_height: 380,
                 side_image_fit: 'cover'
               }
@@ -559,22 +559,45 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
             {
               order: 2,
               props: {
-                title: 'اكتسب مهارات عملية من قادة الصناعة',
-                subtitle: 'شروحات تطبيقية وورش تفاعلية تصاحبك خطوة بخطوة للتميز والتمكن من مجالك المهني الجديد.',
-                button_text: 'ابدأ الآن',
-                button_link: '#',
+                title: 'احصل على شهادة أكاديمية معتمدة تدعم سيرتك الذاتية',
+                subtitle: 'شهاداتنا موثقة ومقبولة لدى كبرى الشركات والمؤسسات المحلية والعالمية.',
+                button_text: 'الانضمام إلى دفعة اليوم',
+                button_link: '#pricing-t3',
                 bg_image: '',
-                background_color: '#1e293b',
+                background_color: '#1e1b4b',
                 button_color: '#6366f1',
                 button_text_color: '#ffffff',
                 title_color: '#ffffff',
-                text_color: '#cbd5e1',
+                text_color: '#c7d2fe',
                 align: 'right',
                 show_card_overlay: false,
-                side_image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop',
+                side_image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&auto=format&fit=crop',
                 side_image_position: 'left',
                 side_image_shape: 'rounded',
-                side_image_width: 380,
+                side_image_width: 440,
+                side_image_height: 380,
+                side_image_fit: 'cover'
+              }
+            },
+            {
+              order: 3,
+              props: {
+                title: 'تطبيقات عملية ووررش عمل مباشرة ومتابعة شخصية',
+                subtitle: 'لا تكتفِ بالنظريات! قم ببناء مشاريع حقيقية تصقل خبرتك العملية مع توجيه دائم من المحاضرين.',
+                button_text: 'تعرف على نظام الدراسة',
+                button_link: '#features-t3',
+                bg_image: '',
+                background_color: '#064e3b',
+                button_color: '#34d399',
+                button_text_color: '#064e3b',
+                title_color: '#ffffff',
+                text_color: '#a7f3d0',
+                align: 'right',
+                show_card_overlay: false,
+                side_image: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&auto=format&fit=crop',
+                side_image_position: 'left',
+                side_image_shape: 'rounded',
+                side_image_width: 440,
                 side_image_height: 380,
                 side_image_fit: 'cover'
               }
@@ -587,13 +610,80 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
         id: 'kpis-t3',
         type: 'kpi-cards',
         props: {
-          gridCols: '3',
+          gridCols: '4',
           backgroundColor: '#ffffff',
           order: 3,
           cards: [
-            { id: 'kpi-t3-1', title: 'شريك تعليمي ومهني معتمد', value: '+160', change: '', isPositive: true, icon: 'Award', color: '#6366f1' },
-            { id: 'kpi-t3-2', title: 'متعلم نشط حول العالم', value: '45M+', change: '', isPositive: true, icon: 'Users', color: '#10b981' },
-            { id: 'kpi-t3-3', title: 'مسار تعليمي متكامل للتخصص', value: '3,000+', change: '', isPositive: true, icon: 'BookOpen', color: '#6366f1' }
+            { id: 'kpi-t3-1', title: 'خريج متميز في مختلف القطاعات', value: '+48,000', change: 'نمو مستمر', isPositive: true, icon: 'Users', color: '#10b981' },
+            { id: 'kpi-t3-2', title: 'برنامج ومسار أكاديمي معتمد', value: '+350', change: 'محدثة دائماً', isPositive: true, icon: 'BookOpen', color: '#6366f1' },
+            { id: 'kpi-t3-3', title: 'أستاذ خبير ومحاضر دولي', value: '+120', change: 'خبراء صناعة', isPositive: true, icon: 'Award', color: '#0284c7' },
+            { id: 'kpi-t3-4', title: 'نسبة التوظيف والترقي الوظيفي', value: '94.8%', change: 'نتائج مثبتة', isPositive: true, icon: 'TrendingUp', color: '#f59e0b' }
+          ]
+        }
+      },
+      {
+        id: 'announcement-t3',
+        type: 'hero_section',
+        props: {
+          title: '⚡ خصم خاص 40% بمناسبة بدء التسجيل للفصل الدراسي الجديد',
+          subtitle: 'احجز مقعدك الآن في أحد مساراتنا الاحترافية المعتمدة واحصل على وصول كاملاً للمكتبة الرقمية والمشاريع العلمية.',
+          show_button: true,
+          button_text: 'سجّل واضمن خصمك الآن',
+          button_link: '#pricing-t3',
+          background_color: '#0284c7',
+          text_color: '#e0f2fe',
+          title_color: '#ffffff',
+          button_color: '#ffffff',
+          button_text_color: '#0369a1',
+          font_size: 28,
+          font_weight: 800,
+          padding_top: 40,
+          padding_bottom: 40,
+          align: 'center',
+          order: 4
+        }
+      },
+      {
+        id: 'features-t3',
+        type: 'features_section',
+        props: {
+          title: 'لماذا تعتبر أكاديميتنا الخيار الأول للمتعلمين؟',
+          subtitle: 'صممنا بيئة تعليمية ذكية ومتكاملة لتزويدك بالخبرة العملية الحقيقية والتفوق المهني',
+          background_color: '#f8fafc',
+          text_color: '#0f172a',
+          grid_cols: 3,
+          padding_top: 70,
+          padding_bottom: 70,
+          order: 5,
+          items: [
+            { id: 'feat-t3-1', order: 1, props: { icon: 'Award', icon_color: '#10b981', title: 'اعتمادات ومؤهلات دولية', description: 'شهادات موثقة تزيد من قوة سيرتك الذاتية وتفتح لك فرص العمل عالمياً.' } },
+            { id: 'feat-t3-2', order: 2, props: { icon: 'BookOpen', icon_color: '#6366f1', title: 'مناهج تفاعلية متجددة', description: 'محتوى متطور باستمرار يواكب أحدث المتطلبات والتغيرات السريعة في سوق العمل.' } },
+            { id: 'feat-t3-3', order: 3, props: { icon: 'Users', icon_color: '#0284c7', title: 'إرشاد ومتابعة فردية', description: 'جلسات توجيه ومراجعات دورية لكافة المشاريع والواجبات من الأساتذة مباشرة.' } },
+            { id: 'feat-t3-4', order: 4, props: { icon: 'CheckCircle', icon_color: '#10b981', title: 'تطبيقات ومشاريع حقيقية', description: 'ابنِ بورتفوليو احترافي يحتوي على مشاريع فعلية تشهد بمهارتك وقدراتك.' } },
+            { id: 'feat-t3-5', order: 5, props: { icon: 'Clock', icon_color: '#f59e0b', title: 'مرونة كاملة في التعلم', description: 'تعلم في الوقت والسرعة التي تناسب جدول حياتك مع إمكانية الوصول مدى الحياة.' } },
+            { id: 'feat-t3-6', order: 6, props: { icon: 'MessageSquare', icon_color: '#ec4899', title: 'مجتمع خريجين نشط', description: 'شبكة تواصل مع آلاف المطورين والمتخصصين لتبادل الفرص والخبرات.' } }
+          ]
+        }
+      },
+      {
+        id: 'categories-t3',
+        type: 'categories_section',
+        props: {
+          title: 'الأقسام والكليات الأكاديمية المتخصصة',
+          subtitle: 'تصفح البرامج والمسارات الموزعة حسب التخصص المهني والدراسي',
+          background_color: '#ffffff',
+          text_color: '#0f172a',
+          grid_cols: 3,
+          padding_top: 70,
+          padding_bottom: 70,
+          order: 6,
+          items: [
+            { id: 'cat-t3-1', order: 1, props: { name: 'كلية الهندسة وعلوم الحاسب', icon: 'Cpu', count: '14 برنامج معتمد', description: 'هندسة البرمجيات، الحوسبة السحابية، والأنظمة الموزعة.' } },
+            { id: 'cat-t3-2', order: 2, props: { name: 'كلية الذكاء الاصطناعي والبيانات', icon: 'Sparkles', count: '10 برامج متخصصة', description: 'تعلم الآلة، معالجة اللغات الطبيعية، والتحليل الإحصائي.' } },
+            { id: 'cat-t3-3', order: 3, props: { name: 'كلية الأمن السيبراني والحماية', icon: 'Shield', count: '8 برامج مكثفة', description: 'اختبار الاختراق، الأمن الدفاعي، وإدارة المخاطر الرقمية.' } },
+            { id: 'cat-t3-4', order: 4, props: { name: 'كلية إدارة الأعمال والريادة', icon: 'Briefcase', count: '12 برنامج تنفيذي', description: 'إدارة المشاريع الابتكارية، التمويل، والإستراتيجية.' } },
+            { id: 'cat-t3-5', order: 5, props: { name: 'كلية التصميم والتجربة الرقمية', icon: 'PenTool', count: '9 برامج احترافية', description: 'تصميم تجربة المستخدم UI/UX، الهوية البصرية، والغرافيك.' } },
+            { id: 'cat-t3-6', order: 6, props: { name: 'كلية التسويق والنمو الرقمي', icon: 'TrendingUp', count: '7 برامج عملية', description: 'تسويق المحرك، الحملات الإعلانية، وتحليلات البيع.' } }
           ]
         }
       },
@@ -601,26 +691,31 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
         id: 'tabs-t3',
         type: 'tabs',
         props: {
-          title: 'استكشف التخصصات والمهارات الأكثر رواجاً',
-          subtitle: 'اختر المجال المهني الذي ترغب في إتقانه والبدء ببناء بورتفوليو متميز فيه',
+          title: 'استكشف المسارات التعليمية المعتمدة',
+          subtitle: 'مسارات محددة الأهداف تبدأ معك من الأساسيات وتأخذك حتى مرحلة الاحتراف الكامل',
           backgroundColor: '#f8fafc',
           activeTabColor: '#10b981',
-          order: 4,
+          order: 7,
           tabs: [
             {
               id: 'tab-1',
-              title: 'علوم الحاسوب والبرمجة',
-              content: 'تعلّم لغات البرمجة الأكثر انتشاراً مثل Python و JavaScript، وتخصص في تطوير الويب أو بناء الأنظمة.'
+              title: 'تطوير الويب المتكامل (Full-Stack)',
+              content: 'تعلّم بناء تطبيقات الويب الحديثة باستخدام React و Next.js و Node.js وقواعد البيانات الحديثة مع أفضل ممارسات الأمان.'
             },
             {
               id: 'tab-2',
-              title: 'الذكاء الاصطناعي وهندسة البيانات',
-              content: 'مسارات متقدمة لتعلّم الآلة وعلم البيانات وبناء نماذج الذكاء الاصطناعي التوليدي والتحليلات الإحصائية.'
+              title: 'هندسة الذكاء الاصطناعي (AI)',
+              content: 'برنامج مكثف يشمل تعلّم Python والشبكات العصبية وبناء نماذج الذكاء الاصطناعي التوليدي وتطبيقاتها التجارية.'
             },
             {
               id: 'tab-3',
-              title: 'إدارة الأعمال والقيادة المعتمدة',
-              content: 'برامج إدارة المشاريع المهنية، التمويل، والاستشارات الإدارية المعتمدة من أكبر كليات الأعمال الدولية.'
+              title: 'تصميم تجربة المستخدم (UI/UX)',
+              content: 'منهجية شاملة لإجراء البحوث وبناء النماذج التفاعلية باستخدام Figma وتطوير واجهات مريحة وجذابة للمستخدمين.'
+            },
+            {
+              id: 'tab-4',
+              title: 'إدارة المشاريع والتنفيذ (PMP)',
+              content: 'تعلّم منهجيات Agile و Scrum وإدارة الفرق والميزانيات لضمان نجاح المشاريع وإنجازها على أعلى مستوى.'
             }
           ]
         }
@@ -629,18 +724,43 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
         id: 'courses-t3',
         type: 'course-cards',
         props: {
-          title: 'البرامج والدورات الأكاديمية والمهنية',
+          title: 'الدورات التدريبية المتاحة للتسجيل المباشر',
+          subtitle: 'اختر الدورة التي تناسب اهتماماتك وابدأ التعلم فوراً مع نخبة من الأساتذة المميزين',
           gridCols: '3',
           showPrice: true,
           showStudentsCount: true,
           buttonBg: '#10b981',
           background_color: '#ffffff',
-          padding_top: 60,
-          padding_bottom: 60,
-          order: 5,
+          padding_top: 70,
+          padding_bottom: 70,
+          order: 8,
           courses: [
-            { id: 'c1', title: 'الذكاء الاصطناعي التطبيقي لمطوري الويب', instructor: 'د. يوسف سلامة', price: '٥٠٠ ريال', students: '١٢٠ طالب', duration: '٢٤ ساعة', image: '', description: 'كيفية دمج نماذج الذكاء الاصطناعي وبناء تطبيقات تفاعلية متطورة.' },
-            { id: 'c2', title: 'القيادة التنفيذية وإدارة التغيير في المؤسسات', instructor: 'د. ريما العتيبي', price: '٤٥٠ ريال', students: '١٨٠ طالب', duration: '١٦ ساعة', image: '', description: 'إستراتيجيات قيادة فرق العمل وإدارة الأزمات في بيئة الأعمال المعاصرة.' }
+            { id: 'c1', title: 'الاحتراف في تطوير الويب باستخدام Next.js & React', instructor: 'د. يوسف سلامة', price: '٥٠٠ ريال', students: '١,٤٥٠ طالب', duration: '٣٦ ساعة', image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&auto=format&fit=crop', description: 'دورة شاملة لبناء موقع ديناميكي وسريع مع ربطه بقواعد البيانات والواجهات البرمجية.' },
+            { id: 'c2', title: 'أساسيات الذكاء الاصطناعي وبناء النماذج التوليدية', instructor: 'د. ريما العتيبي', price: '٦٥٠ ريال', students: '٩٨٠ طالب', duration: '٤٢ ساعة', image: 'https://images.unsplash.com/photo-1677442136019-21780efad99a?w=600&auto=format&fit=crop', description: 'تعلم كيفية تدريب النماذج البرمجية واستخدام خوارزميات التعلم العميق في بيئة عمل واقعية.' },
+            { id: 'c3', title: 'تصميم واجهات وتجربة المستخدم (UI/UX) المتقدم', instructor: 'أ. خالد الإبراهيم', price: '٤٥٠ ريال', students: '٢,١٠٠ طالب', duration: '٢٨ ساعة', image: 'https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=600&auto=format&fit=crop', description: 'إتقان أدوات Figma وحلول Wireframing والبحوث الميدانية لتحسين تجربة استخدام التطبيقات.' },
+            { id: 'c4', title: 'الأمن السيبراني وااختبار الاختراق الأخلاقي', instructor: 'مهندس عمر الهاشمي', price: '٧٠٠ ريال', students: '٨٥٠ طالب', duration: '٤٨ ساعة', image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600&auto=format&fit=crop', description: 'طرق حماية الشبكات والأنظمة واكتشاف الثغرات وتأمين البنية التحتية للمؤسسات.' },
+            { id: 'c5', title: 'إدارة المشاريع الحديثة وفق منهجية Agile & Scrum', instructor: 'د. سارة المنصور', price: '٤٠٠ ريال', students: '١,٧٥٠ طالب', duration: '٢٠ ساعة', image: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=600&auto=format&fit=crop', description: 'إدارة فرق العمل وتوزيع المهام بكفاءة لضمان تسليم المشاريع في مواعيدها وبأعلى جودة.' },
+            { id: 'c6', title: 'التسويق الرقمي واستراتيجيات النمو القياسي', instructor: 'أ. طارق الشمري', price: '٣٥٠ ريال', students: '٣,٢٠٠ طالب', duration: '٢٢ ساعة', image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop', description: 'إدارة الحملات المدفوعة وتحسين محركات البحث SEO وتحليل سلوك المستهلك الرقمي.' }
+          ]
+        }
+      },
+      {
+        id: 'gallery-t3',
+        type: 'gallery_section',
+        props: {
+          title: 'معرض البيئة التعليمية والشركاء الأكاديميين',
+          subtitle: 'نعمل بالشراكة مع أرقى الجامعات والشركات العالمية لتوفير أفضل الإمكانيات لطلابنا',
+          background_color: '#f8fafc',
+          grid_cols: 3,
+          image_aspect: 'video',
+          image_shape: 'rounded',
+          padding_top: 70,
+          padding_bottom: 70,
+          order: 9,
+          items: [
+            { id: 'g-t3-1', order: 1, props: { image_url: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=700&auto=format&fit=crop', caption: 'الحرم الأكاديمي والتعاون العلمي الدولي', image_link: '#' } },
+            { id: 'g-t3-2', order: 2, props: { image_url: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=700&auto=format&fit=crop', caption: 'مختبرات الأبحاث والحوسبة المتقدمة', image_link: '#' } },
+            { id: 'g-t3-3', order: 3, props: { image_url: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=700&auto=format&fit=crop', caption: 'ورش العمل المباشرة ولقاءات الخبراء والطلاب', image_link: '#' } }
           ]
         }
       },
@@ -648,106 +768,70 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
         id: 'testimonials-t3',
         type: 'testimonials_section',
         props: {
-          title: 'قصص نجاح من قلب مجتمعنا التعليمي',
-          subtitle: 'كيف غيرت شهاداتنا ومساراتنا المعتمدة المستقبل المهني لمتعلمينا',
-          background_color: '#f8fafc',
+          title: 'قصص نجاح وآراء خريجي الأكاديمية',
+          subtitle: 'اكتشف كيف ساهمت دوراتنا وشهاداتنا في تغيير المستقبل المهني لمتعلمينا',
+          background_color: '#ffffff',
           text_color: '#0f172a',
-          padding_top: 60,
-          padding_bottom: 60,
-          avatar_size: 40,
+          padding_top: 70,
+          padding_bottom: 70,
+          avatar_size: 50,
           avatar_shape: 'circle',
+          order: 10,
           items: [
-            { id: 't-t3-1', order: 1, props: { quote: 'الدراسة هنا كانت تجربة فريدة، المناهج مصممة بعناية فائقة وتطابق تماماً ما يبحث عنه أصحاب العمل لتوظيفنا.', author: 'المهندس عبدالله الفيصل', role: 'مهندس برمجيات أول', rating: 5, avatar: '' } }
-          ],
-          order: 6
+            { id: 't-t3-1', order: 1, props: { quote: 'الدراسة في هذه الأكاديمية كانت المحطة الأهم في حياتي المهنية. حصلت على وظيفة مطور برمجيات أول بعد شهر واحد فقط من تخرجي واستلام الشهادة.', author: 'المهندس عبدالله الفيصل', role: 'مطور برمجيات أول في شركة تقنية', rating: 5, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop' } },
+            { id: 't-t3-2', order: 2, props: { quote: 'المناهج مصممة بدقة عالية والشرح عملي للغاية. التطبيقات اليومية والمتابعة مع الأساتذة صنعت الفارق الحقيقي في مستواي.', author: 'أ. نورة الغامدي', role: 'مصممة تجربة مستخدم (UI/UX Lead)', rating: 5, avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&auto=format&fit=crop' } },
+            { id: 't-t3-3', order: 3, props: { quote: 'دورة الذكاء الاصطناعي فتحت لي آفاقاً واسعة في تحليلات البيانات وإدارة المشاريع التكنولوجية. أنصح الجميع بالانضمام بدون تردد.', author: 'د. فيصل السبيعي', role: 'محلل بيانات أول', rating: 5, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop' } }
+          ]
         }
       },
       {
-        id: 'gallery-t3',
-        type: 'gallery_section',
+        id: 'pricing-t3',
+        type: 'pricing_section',
         props: {
-          title: 'شركاؤنا من الأكاديميات والجامعات العريقة',
-          subtitle: 'نعمل يداً بيد مع أفضل الجامعات والشركات لتوفير تعليم متميز وقابل للتطبيق المباشر.',
-          background_color: '#ffffff',
-          grid_cols: 3,
-          image_aspect: 'video',
-          image_shape: 'rounded',
-          padding_top: 60,
-          padding_bottom: 60,
+          title: 'خطط العضوية والاشتراك الأكاديمي',
+          subtitle: 'اختر الخطة المناسبة لاحتياجاتك واستفد من الوصول الشامل والشهادات المعتمدة',
+          background_color: '#f8fafc',
+          text_color: '#0f172a',
+          padding_top: 70,
+          padding_bottom: 70,
+          order: 11,
           items: [
-            { id: 'g-t3-1', order: 1, props: { image_url: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f', caption: 'الحرم الجامعي والتعاون العلمي', image_link: '' } },
-            { id: 'g-t3-2', order: 2, props: { image_url: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1', caption: 'مختبرات الحاسوب والأبحاث التكنولوجية', image_link: '' } },
-            { id: 'g-t3-3', order: 3, props: { image_url: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846', caption: 'قاعات المحاضرات التفاعلية والورش المهنية', image_link: '' } }
-          ],
-          order: 7
+            { id: 'pr-1', order: 1, props: { title: 'الباقة الأساسية', price: '٢٩٩ ريال', period: 'شهرياً', description: 'مثالية للمتعلمين الجدد الذين يودون استكشاف دورة واحدة شهرياً.', features: 'وصول لدورة واحدة شهرياً\nمشاريع تطبيقية أساسية\nشهادة إتمام عالمية\nدعم عبر المنتدى', button_text: 'اشترك الآن', button_link: '#', highlighted: false } },
+            { id: 'pr-2', order: 2, props: { title: 'الباقة الاحترافية (الأكثر طلباً)', price: '٦٩٩ ريال', period: 'سنوياً (توفير 30%)', description: 'الخيار الشامل للوصول لكافة البرامج والدورات مع المتابعة الفردية.', features: 'وصول غير محدود لجميع الدورات\nجلسات توجيه مباشرة مع الأساتذة\nشهادات أكاديمية معتمدة\nمراجعة السيرة الذاتية والبورتفوليو\nدعم مجتمعي وأولوية للإجابات', button_text: 'انضم للباقة الاحترافية', button_link: '#', highlighted: true } },
+            { id: 'pr-3', order: 3, props: { title: 'باقة المؤسسات والفرق', price: '١,٤٩٩ ريال', period: 'سنوياً', description: 'مخصصة للشركات والجهات التي ترغب برفع كفاءة موظفيها.', features: 'حسابات متعددة لفريق العمل\nتقارير أداء ومتابعة إنجاز\nمسارات تعليمية مخصصة للشركة\nشهادات معتمدة للموظفين\nمدير حساب مخصص', button_text: 'تواصل معنا', button_link: '#', highlighted: false } }
+          ]
         }
       },
       {
         id: 'faq-t3',
         type: 'faq_section',
         props: {
-          title: 'الأسئلة الشائعة حول الشهادات والقبول بالمنصة',
-          subtitle: 'إجابات وافية لمساعدتك على اتخاذ القرار الاستثماري الصحيح بمستقبلك',
-          background_color: '#f8fafc',
-          text_color: '#0f172a',
-          padding_top: 60,
-          padding_bottom: 60,
-          items: [
-            { id: 'faq-t3-1', order: 1, props: { question: 'هل الشهادات مقبولة مهنياً؟', answer: 'نعم، تصدر الشهادات بالتعاون مع جهات وجامعات معترف بها وتضيف قيمة حقيقية لسيرتك الذاتية.' } },
-            { id: 'faq-t3-2', order: 2, props: { question: 'ما هو نظام الدراسة المتبع بالدورة؟', answer: 'دراسة مرنة بالكامل عبر الإنترنت مع إمكانية حضور محاضرات مباشرة مسجلة.' } }
-          ],
-          order: 8
-        }
-      },
-      {
-        id: 'features-t3',
-        type: 'features_section',
-        props: {
-          title: 'لماذا تختار برامجنا الأكاديمية؟',
-          subtitle: 'صممنا لك بيئة تعليمية متكاملة لضمان أقصى استفادة وتجربة تفاعلية متميزة',
+          title: 'الأسئلة الشائعة والاستفسارات الأكاديمية',
+          subtitle: 'إجابات شاملة لكافة الاستفسارات المتعلقة بالشهادات والقبول وطريقة التعلم',
           background_color: '#ffffff',
           text_color: '#0f172a',
-          grid_cols: 3,
-          padding_top: 60,
-          padding_bottom: 60,
+          padding_top: 70,
+          padding_bottom: 70,
+          order: 12,
           items: [
-            { id: 'feat-t3-1', order: 1, props: { icon: 'Award', icon_color: '#10b981', title: 'اعتماد دولي', description: 'شهادات مهنية معتمدة من أقوى الهيئات العالمية تزيد من فرص قبولك الوظيفي.' } },
-            { id: 'feat-t3-2', order: 2, props: { icon: 'BookOpen', icon_color: '#10b981', title: 'محتوى حصري ومحدث', description: 'مناهج دراسية متطورة باستمرار لتواكب أحدث التغيرات في سوق العمل التكنولوجي.' } },
-            { id: 'feat-t3-3', order: 3, props: { icon: 'Users', icon_color: '#10b981', title: 'شبكة مهنية وخريجين', description: 'انضم لمجتمع واسع من الخبراء والمختصين وتبادل الخبرات معهم بشكل دوري.' } }
-          ],
-          order: 9
-        }
-      },
-      {
-        id: 'categories-t3',
-        type: 'categories_section',
-        props: {
-          title: 'استكشف الكليات والأقسام الدراسية',
-          subtitle: 'اختر الكلية التي تود الانضمام إليها وتصفح كافة المسارات والبرامج المتعلقة بها',
-          background_color: '#f8fafc',
-          text_color: '#0f172a',
-          grid_cols: 3,
-          padding_top: 60,
-          padding_bottom: 60,
-          items: [
-            { id: 'cat-t3-1', order: 1, props: { name: 'كلية الهندسة وعلوم الحاسب', icon: 'Cpu', count: '12 برنامج', description: 'هندسة البرمجيات، الأمن السيبراني، وشبكات الحاسب.' } },
-            { id: 'cat-t3-2', order: 2, props: { name: 'كلية إدارة الأعمال والريادة', icon: 'Briefcase', count: '8 برامج', description: 'إدارة الابتكار، التمويل، والإدارة التنفيذية المتقدمة.' } },
-            { id: 'cat-t3-3', order: 3, props: { name: 'كلية التصميم والفنون الرقمية', icon: 'PenTool', count: '6 برامج', description: 'تصميم تجربة المستخدم، الرسوم المتحركة، والإنتاج البصري.' } }
-          ],
-          order: 10
+            { id: 'faq-t3-1', order: 1, props: { question: 'هل الشهادات الصادرة من الأكاديمية معتمدة رسمياً؟', answer: 'نعم، تصدر جميع شهاداتنا بالتعاون مع جهات وهيئات تعليمية معتمدة وموثوقة، ويمكن للشركات والجهات التحقق من صحة الشهادة عبر الرمز المباشر (QR Code).' } },
+            { id: 'faq-t3-2', order: 2, props: { question: 'كيف يتم تقديم المناهج والدورات التدريبية؟', answer: 'تتميز دراستنا بالمرونة التامة، حيث تتضمن دراسة مسجلة بجودة عالية ومناهج تفاعلية، بالإضافة إلى جلسات ومحاضرات مباشرة أسبوعية مع المحاضرين للإجابة على التساؤلات.' } },
+            { id: 'faq-t3-3', order: 3, props: { question: 'هل يمكنني التواصل مع الأساتذة والمحاضرين؟', answer: 'بالتأكيد! تتيح المنصة نظام التواصل المباشر ورسائل الاستفسار، بالإضافة إلى مجتمعات النقاش الخاصة بكل دورة لمراجعة الواجبات والمشاريع.' } },
+            { id: 'faq-t3-4', order: 4, props: { question: 'ما هي سياسة الاسترداد وإلغاء الاشتراك؟', answer: 'نقدم ضمان استرداد كامل للأموال خلال 14 يوماً من الاشتراك في حال لم تكن التجربة متوافقة مع توقعاتك بدون أي تعقيدات.' } }
+          ]
         }
       },
       {
         id: 'footer-t3',
         type: 'footer',
         props: {
-          copyright: 'جميع الحقوق محفوظة © درب ٢٠٢٦',
-          logoText: 'درب | الأكاديمية',
+          copyright: 'جميع الحقوق محفوظة © أكاديمية درب للتعلم المعتمد ٢٠٢٦',
+          logoText: 'أكاديمية درب | Darb Academy',
           bgColor: '#0f172a',
           textColor: '#ffffff',
           showLogo: true,
           showSocials: true,
-          order: 11
+          order: 13
         }
       }
     ]

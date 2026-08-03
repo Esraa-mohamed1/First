@@ -529,7 +529,7 @@ const CSS = `
 `;
 
 export default function PurpleTemplate({ sections }: TemplateProps) {
-  const [academyName, setAcademyName] = useState('Lumen');
+  const [academyName, setAcademyName] = useState('أكاديمية درب');
   const [navScrolled, setNavScrolled] = useState(false);
   const [testimonialIdx, setTestimonialIdx] = useState(0);
   const [heroVisible, setHeroVisible] = useState(false);
@@ -599,11 +599,11 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
   const heroProps = heroNode?.props || {};
   const activeSlide = heroProps.items?.[0]?.props || heroProps.items?.[0] || heroProps;
   
-  const heroTitle = activeSlide.title || 'Build a skill that compounds, one module at a time.';
-  const heroSubtitle = activeSlide.subtitle || 'Every module builds on the last. Learn from the world\'s best institutions, track your progress, and earn credentials that actually mean something.';
-  const heroBtnText = activeSlide.button_text || activeSlide.buttonText || 'Browse courses';
+  const heroTitle = activeSlide.title || 'رحلتك الأكاديمية نحو التميّز والاحتراف مع شهادات معتمدة دولياً';
+  const heroSubtitle = activeSlide.subtitle || 'ادرس أحدث العلوم والمسارات المتقدمة تحت إشراف نخبة من كبار الأكاديميين والخبراء مع تطبيقات عملية مباشرة.';
+  const heroBtnText = activeSlide.button_text || activeSlide.buttonText || 'استكشف البرامج والدورات';
   const heroBtnLink = activeSlide.button_link || activeSlide.buttonLink || '#courses';
-  const heroSecBtnText = activeSlide.secondButtonText || 'Watch how it works';
+  const heroSecBtnText = activeSlide.secondButtonText || 'تعرف على طريقة التعلم';
   const heroSecBtnLink = activeSlide.secondButtonLink || '#how-it-works';
   
   // Hero split layout dynamic side image support
@@ -612,7 +612,7 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
 
   // 2. Marquee Partner logos (Gallery Section)
   const galleryNode = sections.find(s => s.type === 'gallery_section');
-  const defaultUniversities = ['Berkeley', 'MIT', 'Sorbonne', 'IIT Delhi', 'Toronto', 'ETH Zürich', 'NUS', 'Oxford', 'Harvard', 'Stanford'];
+  const defaultUniversities = ['جامعة الملك سعود', 'جامعة البترول والمعادن', 'جامعة القاهرة', 'جامعة أكسفورد', 'جامعة هارفارد', 'جامعة ستانفورد', 'جامعة تورنتو'];
   
   const universities = galleryNode?.props?.items?.map((item: any) => {
     const p = item.props || item;
@@ -624,37 +624,37 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
   // 3. Categories
   const catNode = sections.find(s => s.type === 'categories_section');
   const defaultCategories = [
-    { icon: 'BarChart2', label: 'Data & AI', desc: 'Machine learning, analytics, and intelligent systems', count: '142 courses' },
-    { icon: 'Briefcase', label: 'Business', desc: 'Strategy, finance, and entrepreneurship', count: '98 courses' },
-    { icon: 'Code', label: 'Computer Science', desc: 'Algorithms, systems, and software engineering', count: '207 courses' },
-    { icon: 'PenTool', label: 'Design', desc: 'UX, visual design, and creative direction', count: '64 courses' },
-    { icon: 'Globe', label: 'Languages', desc: 'Global communication and linguistics', count: '53 courses' },
-    { icon: 'Target', label: 'Leadership', desc: 'Management, coaching, and org design', count: '77 courses' },
+    { icon: 'BarChart2', label: 'الذكاء الاصطناعي والبيانات', desc: 'تعلّم الآلة، علم البيانات، والتحليل الإحصائي', count: '١٤ دورة' },
+    { icon: 'Briefcase', label: 'إدارة الأعمال والقيادة', desc: 'إستراتيجية الأعمال، التمويل، وريادة الأعمال', count: '٩ دورات' },
+    { icon: 'Code', label: 'علوم الحاسب والبرمجة', desc: 'تطوير الويب، الأنظمة، وهندسة البرمجيات', count: '٢٠ دورة' },
+    { icon: 'PenTool', label: 'التصميم والتجربة الرقمية', desc: 'تصميم تجربة المستخدم UI/UX، والهوية البصرية', count: '٦ دورات' },
+    { icon: 'Globe', label: 'الخدمات الرقمية والنمو', desc: 'تسويق المحرك، الحملات الإعلانية، والتواصل', count: '٥ دورات' },
+    { icon: 'Target', label: 'القيادة والتنفيذ المؤسسي', desc: 'إدارة المشاريع، التوجيه، وتطوير الفرق', count: '٧ دورات' },
   ];
   const categories = catNode?.props?.items?.map((item: any) => {
     const p = item.props || item;
     return {
       icon: p.icon || 'Code',
-      label: p.name || p.title || 'Specialization',
-      desc: p.description || p.desc || 'Explore our dynamic training path programs.',
-      count: p.count || '0'
+      label: p.name || p.title || 'التخصص الأكاديمي',
+      desc: p.description || p.desc || 'استكشف مساراتنا التدريبية المعتمدة والتطبيقية.',
+      count: p.count || '٠'
     };
   }) || defaultCategories;
 
   // 4. Featured Courses
   const courseNode = sections.find(s => s.type === 'course-cards');
   const defaultCourses = [
-    { tag: 'Data & AI', title: 'Applied Machine Learning', duration: '14h', university: 'Berkeley', progress: 72 },
-    { tag: 'CS', title: 'Systems Design at Scale', duration: '10h', university: 'MIT', progress: 45 },
-    { tag: 'Business', title: 'Financial Modelling', duration: '8h', university: 'Toronto', progress: 88 },
-    { tag: 'Design', title: 'Interaction Design Foundations', duration: '12h', university: 'ETH Zürich', progress: 30 },
+    { tag: 'الذكاء الاصطناعي', title: 'الاحتراف في تعلّم الآلة التطبيقي', duration: '١٤ ساعة', university: 'د. يوسف سلامة', progress: 72 },
+    { tag: 'البرمجة', title: 'هندسة الأنظمة وتطبيقات الويب', duration: '١٠ ساعات', university: 'د. ريما العتيبي', progress: 45 },
+    { tag: 'إدارة الأعمال', title: 'النمذجة المالية والتخطيط الإستراتيجي', duration: '٨ ساعات', university: 'أ. خالد الإبراهيم', progress: 88 },
+    { tag: 'التصميم', title: 'أساسيات تصميم واجهات التفاعل UI/UX', duration: '١٢ ساعة', university: 'أ. نورة الغامدي', progress: 30 },
   ];
   const courses = courseNode?.props?.courses?.map((c: any) => {
     return {
-      tag: c.tag || 'Data & AI',
-      title: c.title || 'Course Program',
-      duration: c.duration || '10h',
-      university: c.instructor || c.university || 'Partner',
+      tag: c.tag || 'التكنولوجيا والبيانات',
+      title: c.title || 'برنامج المحاضرات والورش',
+      duration: c.duration || '١٠ ساعات',
+      university: c.instructor || c.university || 'المحاضر المعتمد',
       progress: parseInt(c.students) || 50,
       image: c.image || c.imageUrl || ''
     };
@@ -663,31 +663,31 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
   // 5. Steps (How it works)
   const featNode = sections.find(s => s.type === 'features_section');
   const defaultSteps = [
-    { num: '01', title: 'Enroll in minutes', desc: 'Browse by topic or skill goal. One click to start your first module — no prior experience required.' },
-    { num: '02', title: 'Learn by doing', desc: 'Short, focused modules with hands-on exercises designed to build real muscle memory.' },
-    { num: '03', title: 'Get certified', desc: 'Earn credentials backed by partner institutions and share them directly on your profile.' },
+    { num: '٠١', title: 'الانضمام والتسجيل في دقائق', desc: 'تصفح البرامج والمسارات المعتمدة، وبضغطة زر ابدأ دراستك في أي وقت.' },
+    { num: '٠٢', title: 'التعلم والتطبيق العملي', desc: 'وحدات دراسية مرنة ومكثفة تصاحبها تمارين ومشاريع لتطبيق مهاراتك بشكل عملي.' },
+    { num: '٠٣', title: 'الحصول على شهادة معتمدة', desc: 'احصل على شهادة أكاديمية موثقة يمكنك مشاركتها في سيرتك الذاتية وحساب LinkedIn.' },
   ];
   const steps = featNode?.props?.items?.map((item: any, idx: number) => {
     const p = item.props || item;
     return {
       num: String(idx + 1).padStart(2, '0'),
-      title: p.title || 'Step',
-      desc: p.description || p.desc || 'Details of this learning block step.'
+      title: p.title || 'الخطوة',
+      desc: p.description || p.desc || 'تفاصيل هذه المرحلة التعليمية.'
     };
   }) || defaultSteps;
 
   // 6. Stats band (KPI Cards)
   const kpiNode = sections.find(s => s.type === 'kpi-cards');
   const defaultStats = [
-    { value: '2,400,000', label: 'Active learners', icon: 'Users', color: '#2FA8E0' },
-    { value: '180', label: 'Partner institutions', icon: 'Award', color: '#2FA8E0' },
-    { value: '4,200', label: 'Courses', icon: 'BookOpen', color: '#2FA8E0' },
-    { value: '150', label: 'Countries', icon: 'Globe', color: '#2FA8E0' },
+    { value: '٤٨,٠٠٠+', label: 'متعلم نشط وخريج', icon: 'Users', color: '#2FA8E0' },
+    { value: '١٨0', label: 'مؤسسة وجامعة شريكة', icon: 'Award', color: '#2FA8E0' },
+    { value: '٣٥٠+', label: 'برنامج ومسار أكاديمي', icon: 'BookOpen', color: '#2FA8E0' },
+    { value: '١٥0', label: 'تخصص ودورة معتمدة', icon: 'Globe', color: '#2FA8E0' },
   ];
   const stats = kpiNode?.props?.cards?.map((card: any) => {
     return {
-      value: card.value || '100',
-      label: card.title || 'Metric',
+      value: card.value || '١٠٠',
+      label: card.title || 'المؤشر',
       icon: card.icon || '',
       color: card.color || '#2FA8E0'
     };
@@ -697,24 +697,24 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
   const testNode = sections.find(s => s.type === 'testimonials_section');
   const defaultTestimonials = [
     {
-      quote: '\u201cLumen completely changed how I approach learning. The structured modules kept me consistent for the first time in my life.\u201d',
-      author: 'Amara Chen', role: 'Product Manager, Singapore'
+      quote: 'الدراسة هنا كانت التجربة الأفضل لي على الإطلاق. الوحدات المنظمة والشرح العملي جعلاني ألتزم وأحقق هدفي المهني.',
+      author: 'المهندس عبدالله الفيصل', role: 'مطور برمجيات أول'
     },
     {
-      quote: '\u201cThe progress rings and streak system gave me just enough accountability. I finished my first certificate in 6 weeks.\u201d',
-      author: 'Lucas Ferreira', role: 'Software Engineer, Brazil'
+      quote: 'متابعة المحاضرين والشهادة المعتمدة أعطتني ثقة كبيرة في التقديم على الشركات الحالية وحصلت على ترقية سريعة.',
+      author: 'أ. نورة الغامدي', role: 'مصممة تجربة مستخدم'
     },
     {
-      quote: '\u201cI tried five other platforms. Lumen is the only one where I actually completed what I started. The interface is just calming.\u201d',
-      author: 'Priya Sharma', role: 'Data Analyst, India'
+      quote: 'جربت عدة منصات، ولكن هذه الأكاديمية تميزت بدقة المحتوى وسهولة التفاعل والسرعة في الفهم.',
+      author: 'د. فيصل السبيعي', role: 'محلل بيانات أول'
     },
   ];
   const testimonials = testNode?.props?.items?.map((item: any) => {
     const p = item.props || item;
     return {
-      quote: p.quote || 'Quote body',
-      author: p.author || 'Author',
-      role: p.role || 'Learner Profile'
+      quote: p.quote || 'نص التقييم والتجربة',
+      author: p.author || 'اسم الطالب',
+      role: p.role || 'الملف المهني'
     };
   }) || defaultTestimonials;
 
@@ -727,12 +727,12 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
 
   // 8. CTA Banner
   const pricingNode = sections.find(s => s.type === 'pricing_section');
-  const ctaTitle = pricingNode?.props?.title || 'Your next skill is three clicks away.';
-  const ctaSub = pricingNode?.props?.subtitle || 'Pick a course, enroll in under a minute, and start building something that compounds.';
+  const ctaTitle = pricingNode?.props?.title || 'مهارتك القادمة تبدأ ببضع خطوات بسيطة.';
+  const ctaSub = pricingNode?.props?.subtitle || 'اختر برنامجك الدراسي اليوم، انضم في دقائق، وابدأ بناء مستقبلك المهني مع شهادات معتمدة.';
 
   // 9. Footer
   const footerNode = sections.find(s => s.type === 'footer');
-  const footerCopyright = footerNode?.props?.copyright || `&copy; ${new Date().getFullYear()} ${academyName}. All rights reserved.`;
+  const footerCopyright = footerNode?.props?.copyright || `&copy; ${new Date().getFullYear()} ${academyName}. جميع الحقوق محفوظة.`;
 
   // --- Editable Click Wrapper for Canvas ---
   const renderEditableSection = (typeSlug: string, children: React.ReactNode, className = '') => {
@@ -764,30 +764,30 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
   };
 
   const svgPath = 'M 20,40 C 120,10 180,70 300,40 C 420,10 480,70 600,40 C 720,10 780,70 880,40';
-  const nodePositions: [number, number][] = [[150, 55], [300, 25], [450, 40], [600, 55], [750, 25]];
+  const nodePositions: [number, number][] = [[160, 40], [300, 40], [440, 40], [600, 40], [740, 40]];
 
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
-      <div ref={rootRef} className="lst-root" dir="ltr">
+      <div ref={rootRef} className="lst-root" dir="rtl">
 
         {/* ── NAV ── */}
         {renderEditableSection('navbar', (
           <nav className={`lst-nav${navScrolled ? ' scrolled' : ''}`} role="navigation" aria-label="Main navigation">
             <a href="#" className="lst-logo" aria-label="Home">
-              <span className="lst-logo-icon" aria-hidden="true">L</span>
+              <span className="lst-logo-icon" aria-hidden="true">د</span>
               <span className="lst-logo-name">{academyName}</span>
             </a>
             <div className="lst-nav-center">
-              <a href="#categories" className="lst-nav-link">Explore</a>
-              <a href="#courses" className="lst-nav-link">Courses</a>
-              <a href="#how-it-works" className="lst-nav-link">How it works</a>
-              <a href="#stories" className="lst-nav-link">Stories</a>
+              <a href="#categories" className="lst-nav-link">الأقسام والكليات</a>
+              <a href="#courses" className="lst-nav-link">الدورات التدريبية</a>
+              <a href="#how-it-works" className="lst-nav-link">المسارات والاعتمادات</a>
+              <a href="#stories" className="lst-nav-link">قصص النجاح</a>
             </div>
             <div className="lst-nav-right">
-              <a href="#" className="lst-signin">Sign in</a>
+              <a href="#" className="lst-signin">تسجيل الدخول</a>
               <a href="#" className="lst-btn lst-btn-primary" style={{ height: 40, fontSize: 13, padding: '0 20px' }}>
-                Start learning
+                ابدأ التعلم الآن
               </a>
             </div>
           </nav>
@@ -811,7 +811,7 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
                 <div className="lst-hero-content-col">
                   <div className={`lst-eyebrow lst-hero-item lst-d0${heroVisible ? ' vis' : ''}`}>
                     <span className="lst-pulse" aria-hidden="true" />
-                    Now enrolling &middot; Fall cohort
+                    التسجيل مفتوح الآن &middot; الدفعة الجديدة
                   </div>
                   <h1 className={`lst-h1 lst-hero-item lst-d1${heroVisible ? ' vis' : ''}`}>
                     {heroTitle}
@@ -825,9 +825,9 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
                   </div>
                   <div className={`lst-hero-stats lst-hero-item lst-d4${heroVisible ? ' vis' : ''}`}>
                     {[
-                      { num: '4,200', label: 'live courses' },
-                      { num: '180', label: 'partner universities' },
-                      { num: '92%', label: 'completion rate' },
+                      { num: '4,200', label: 'دورة مباشرة' },
+                      { num: '180', label: 'جامعة ومؤسسة شريكة' },
+                      { num: '92%', label: 'نسبة إكمال الدورات' },
                     ].map((s, i) => (
                       <div key={i} className="lst-stat-pill">
                         <span className="lst-stat-pill-num">{s.num}</span>
@@ -865,11 +865,11 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
                 </svg>
                 <div className="lst-toast lst-toast-l" aria-hidden="true">
                   <span className="lst-toast-ic">✓</span>
-                  Module complete
+                  اكتملت الوحدة
                 </div>
                 <div className="lst-toast lst-toast-r" aria-hidden="true">
                   <span className="lst-toast-ic">🔥</span>
-                  12 day streak
+                  12 يوماً متواصلة
                 </div>
               </div>
             </div>
@@ -885,7 +885,7 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
             setSelectedNodeId={setSelectedNodeId}
           >
             <div className="lst-marquee-band" aria-hidden="true">
-              <p className="lst-marquee-label">{galleryNode.props?.title || 'Curriculum built with'}</p>
+              <p className="lst-marquee-label">{galleryNode.props?.title || 'معرض البيئة التعليمية والشركاء الأكاديميين'}</p>
               <div className="lst-marquee-wrap">
                 <div className="lst-marquee-track">
                   {[...universities, ...universities].map((u: { imageUrl: string; text: string }, i: number) => (
@@ -913,8 +913,8 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
           >
             <section id="categories" className="lst-section" aria-label="Course categories">
               <Reveal className="lst-section-hdr">
-                <h2 className="lst-h2">{catNode.props?.title || 'Six ways in, one destination.'}</h2>
-                <p className="lst-section-sub">{catNode.props?.subtitle || 'Choose a track that fits your goals. Every path leads to a certified, compound skill set.'}</p>
+                <h2 className="lst-h2">{catNode.props?.title || 'مسارات متخصصة تغطي كافة مجالات التكنولوجيا والإدارة'}</h2>
+                <p className="lst-section-sub">{catNode.props?.subtitle || 'اختر المجال الذي يناسب شغفك وتدرّج في التعلم مع شهادات معتمدة.'}</p>
               </Reveal>
               <div className="lst-cat-grid">
                 {categories.map((item: { icon: string; label: string; desc: string; count: string }, i: number) => (
@@ -925,7 +925,7 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
                       </div>
                       <div className="lst-cat-title">{item.label}</div>
                       <div className="lst-cat-desc">{item.desc}</div>
-                      <div className="lst-cat-meta">{item.count} &rarr;</div>
+                      <div className="lst-cat-meta">{item.count} &larr;</div>
                     </div>
                   </Reveal>
                 ))}
@@ -945,8 +945,8 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
             <div id="courses" className="lst-courses-wrap">
               <div className="lst-courses-inner">
                 <Reveal className="lst-section-hdr">
-                  <h2 className="lst-h2">{courseNode.props?.title || 'Featured this semester.'}</h2>
-                  <p className="lst-section-sub">Carefully selected courses from our top partner institutions.</p>
+                  <h2 className="lst-h2">{courseNode.props?.title || 'أبرز الدورات المتاحة لهذا الفصل الدراسي'}</h2>
+                  <p className="lst-section-sub">{courseNode.props?.subtitle || 'دورات مختارة بعناية تحت إشراف أفضل المحاضرين والخبراء.'}</p>
                 </Reveal>
                 <div className="lst-courses-grid">
                   {courses.map((c: { tag: string; title: string; duration: string; university: string; progress: number; image?: string }, i: number) => (
@@ -970,7 +970,7 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
           >
             <section id="how-it-works" className="lst-section" aria-label="How it works">
               <Reveal className="lst-section-hdr">
-                <h2 className="lst-h2">{featNode.props?.title || 'Simple by design. Powerful by practice.'}</h2>
+                <h2 className="lst-h2">{featNode.props?.title || 'منهجية تعليمية بسيطة وتطبيقات عملية مكثفة'}</h2>
                 <p className="lst-section-sub">{featNode.props?.subtitle}</p>
               </Reveal>
               <div className="lst-steps-wrap">
@@ -1019,7 +1019,7 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
           >
             <section id="stories" className="lst-testimonials" aria-label="Learner testimonials">
               <Reveal className="lst-section-hdr">
-                <h2 className="lst-h2">{testNode.props?.title || 'From the learners themselves.'}</h2>
+                <h2 className="lst-h2">{testNode.props?.title || 'قصص نجاح من قلب مجتمعنا التعليمي'}</h2>
                 <p className="lst-section-sub">{testNode.props?.subtitle}</p>
               </Reveal>
               <div className="lst-t-wrap" role="region" aria-live="polite" aria-label="Testimonial rotator">
@@ -1039,7 +1039,7 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
                     onClick={() => setTestimonialIdx(i)}
                     role="tab"
                     aria-selected={i === testimonialIdx}
-                    aria-label={`Testimonial ${i + 1}`}
+                    aria-label={`تقييم ${i + 1}`}
                   />
                 ))}
               </div>
@@ -1061,8 +1061,8 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
                   <h2 className="lst-cta-h2">{ctaTitle}</h2>
                   <p className="lst-cta-sub">{ctaSub}</p>
                   <div className="lst-btn-row">
-                    <a href="#courses" className="lst-btn lst-btn-white">Browse courses</a>
-                    <a href="#how-it-works" className="lst-btn lst-btn-outline-white">How it works</a>
+                    <a href="#courses" className="lst-btn lst-btn-white">تصفح كافة الدورات</a>
+                    <a href="#how-it-works" className="lst-btn lst-btn-outline-white">تعرف على طريقة التعلم</a>
                   </div>
                 </div>
               </Reveal>
@@ -1077,42 +1077,42 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
               <div className="lst-footer-grid">
                 <div className="lst-footer-brand">
                   <div className="lst-footer-logo">
-                    <span className="lst-footer-logo-icon" aria-hidden="true">L</span>
+                    <span className="lst-footer-logo-icon" aria-hidden="true">د</span>
                     <span className="lst-footer-logo-name">{academyName}</span>
                   </div>
-                  <p className="lst-footer-tagline">Learn without limits. Build a skill that compounds, one module at a time.</p>
+                  <p className="lst-footer-tagline">تعلم بلا حدود واكتسب مهارات معتمدة تبني بها مستقبلك المهني.</p>
                 </div>
                 <div className="lst-footer-col">
-                  <h4>Learn</h4>
+                  <h4>التعلم</h4>
                   <ul>
-                    <li><a href="#">Browse courses</a></li>
-                    <li><a href="#">Explore tracks</a></li>
-                    <li><a href="#">Certifications</a></li>
-                    <li><a href="#">For teams</a></li>
+                    <li><a href="#courses">تصفح الدورات</a></li>
+                    <li><a href="#how-it-works">المسارات المعتمدة</a></li>
+                    <li><a href="#categories">الشهادات والاعتمادات</a></li>
+                    <li><a href="#">حلول المؤسسات</a></li>
                   </ul>
                 </div>
                 <div className="lst-footer-col">
-                  <h4>Company</h4>
+                  <h4>عن الأكاديمية</h4>
                   <ul>
-                    <li><a href="#">About us</a></li>
-                    <li><a href="#">Partner universities</a></li>
-                    <li><a href="#">Careers</a></li>
-                    <li><a href="#">Press</a></li>
+                    <li><a href="#">من نحن</a></li>
+                    <li><a href="#">الجامعات الشريكة</a></li>
+                    <li><a href="#">الوظائف والفرص</a></li>
+                    <li><a href="#">المركز الإعلامي</a></li>
                   </ul>
                 </div>
                 <div className="lst-footer-col">
-                  <h4>Support</h4>
+                  <h4>الدعم والمساعدة</h4>
                   <ul>
-                    <li><a href="#">Help center</a></li>
-                    <li><a href="#">Privacy policy</a></li>
-                    <li><a href="#">Terms of service</a></li>
-                    <li><a href="#">Contact us</a></li>
+                    <li><a href="#">مركز المساعدة</a></li>
+                    <li><a href="#">سياسة الخصوصية</a></li>
+                    <li><a href="#">شروط الخدمة</a></li>
+                    <li><a href="#">تواصل معنا</a></li>
                   </ul>
                 </div>
               </div>
               <div className="lst-footer-bottom">
                 <span dangerouslySetInnerHTML={{ __html: footerCopyright }} />
-                <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px' }}>Learn without limits</span>
+                <span style={{ fontFamily: "'Cairo', sans-serif", fontSize: '12px' }}>تعلم بلا حدود · أكاديمية معتمدة</span>
               </div>
             </div>
           </footer>
