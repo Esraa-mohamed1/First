@@ -15,6 +15,7 @@ export interface ClassificationItem {
   academic_year_id?: string | number;
   grade_id?: string | number;
   term_id?: string | number;
+  grade_name?: string;
   created_at?: string;
   updated_at?: string;
 }

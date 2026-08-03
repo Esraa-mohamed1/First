@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye, Landmark, X, Check, User as UserIcon, Loader2, Globe, Copy, MoreVertical, ExternalLink } from 'lucide-react';
 import { getCourse, deleteUnit, deleteLesson, createUnit, updateCourse, getCategories, createCategory } from '@/services/courses';
+import { getGrades, getTerms, getSubjects, getAcademicYears, ClassificationItem } from '@/services/academic-classification';
 import { getProfileStatus } from '@/services/auth';
 import { getUsers, createUser } from '@/services/users';
 import { Course, Unit, Lesson, User } from '@/types/api';
@@ -393,6 +394,12 @@ export default function CourseDetailsPage() {
   const [subject, setSubject] = useState('');
   const [academicYear, setAcademicYear] = useState('2026/2027');
 
+  // Academic Classification Options lists
+  const [gradesList, setGradesList] = useState<ClassificationItem[]>([]);
+  const [semestersList, setSemestersList] = useState<ClassificationItem[]>([]);
+  const [subjectsList, setSubjectsList] = useState<ClassificationItem[]>([]);
+  const [academicYearsList, setAcademicYearsList] = useState<ClassificationItem[]>([]);
+
   const [targetAudienceList, setTargetAudienceList] = useState<string[]>(['']);
   
   const [isDiscounted, setIsDiscounted] = useState(false);
@@ -598,6 +605,37 @@ export default function CourseDetailsPage() {
     setActiveTab(targetTab);
   };
 
+  const activeGrades = gradesList.length > 0 ? gradesList : [
+    { id: 'first_sec', name: 'أولى ثانوي' },
+    { id: 'second_sec', name: 'ثانية ثانوي' },
+    { id: 'third_sec', name: 'ثالثة ثانوي' }
+  ];
+
+  const activeSemesters = semestersList.length > 0 
+    ? semestersList.filter(item => !gradeLevel || String(item.grade_id) === String(gradeLevel))
+    : [
+        { id: 'term_1', name: 'الترم الأول' },
+        { id: 'term_2', name: 'الترم الثاني' },
+        { id: 'full_year', name: 'العام الدراسي كامل' },
+        { id: 'final_review', name: 'مراجعة نهائية' },
+        { id: 'not_linked', name: 'غير مرتبط بترم' }
+      ];
+
+  const activeSubjects = subjectsList.length > 0
+    ? subjectsList.filter(item => !gradeLevel || String(item.grade_id) === String(gradeLevel))
+    : [
+        { id: 'physics', name: 'فيزياء' },
+        { id: 'chemistry', name: 'كيمياء' },
+        { id: 'math', name: 'رياضيات' },
+        { id: 'biology', name: 'أحياء' },
+        { id: 'arabic', name: 'عربي' }
+      ];
+
+  const activeYears = academicYearsList.length > 0 ? academicYearsList : [
+    { id: '2026/2027', name: '2026 / 2027' },
+    { id: '2025/2026', name: '2025 / 2026' }
+  ];
+
   const handleSaveCourseInfo = async (shouldNavigate = false) => {
     setErrors({});
     const newErrors: Record<string, any> = {};
@@ -611,22 +649,46 @@ export default function CourseDetailsPage() {
     }
 
     try {
+      const targetAudienceStr = targetAudienceList.filter(Boolean).join('، ');
+
       const payload: any = {
         title: courseInfo.title,
-        description: courseInfo.description,
-        target_audience: targetAudienceList.filter(Boolean).join('، '),
-        who_is_this_for: targetAudienceList.filter(Boolean).join('، '),
+        description: courseInfo.description || undefined,
+        short_description: shortDescription || undefined,
+        shortDescription: shortDescription || undefined,
+        target_audience: targetAudienceStr || undefined,
+        who_is_this_for: targetAudienceStr || undefined,
         category_id: courseInfo.category_id || undefined,
         user_id: courseInfo.user_id || undefined,
         coach: coachName,
         status: status,
         slug: slug || undefined,
-        short_description: shortDescription || undefined,
         price: pricingType === 'free' ? 0 : Number(price || 0),
         final_price: pricingType === 'free' ? 0 : (isDiscounted && discountPrice ? Number(discountPrice) : Number(price || 0)),
         price_type: pricingType,
         currency: currency,
-        receiver_accounts: selectedPaymentMethods.map(m => Number(m.methodId))
+        receiver_accounts: selectedPaymentMethods.map(m => Number(m.methodId)),
+
+        // Pricing & Access Options
+        is_discounted: isDiscounted ? 1 : 0,
+        isDiscounted: isDiscounted,
+        discount_price: isDiscounted && discountPrice ? Number(discountPrice) : undefined,
+        discountPrice: isDiscounted && discountPrice ? Number(discountPrice) : undefined,
+        discount_end_date: isDiscounted && discountEndDate ? discountEndDate : undefined,
+        access_duration_type: accessDurationType,
+        access_days: accessDurationType === 'days' && accessDays ? Number(accessDays) : undefined,
+        access_until_date: ((accessDurationType as string) === 'until_date' || (accessDurationType as string) === 'date') && accessUntilDate ? accessUntilDate : undefined,
+
+        // Academic Classification Options
+        grade_id: gradeLevel && !isNaN(Number(gradeLevel)) && Number.isInteger(Number(gradeLevel)) && Number(gradeLevel) > 0 ? Number(gradeLevel) : undefined,
+        term_id: semester && !isNaN(Number(semester)) && Number.isInteger(Number(semester)) && Number(semester) > 0 ? Number(semester) : undefined,
+        semester_id: semester && !isNaN(Number(semester)) && Number.isInteger(Number(semester)) && Number(semester) > 0 ? Number(semester) : undefined,
+        subject_id: subject && !isNaN(Number(subject)) && Number.isInteger(Number(subject)) && Number(subject) > 0 ? Number(subject) : undefined,
+        academic_year_id: academicYear && !isNaN(Number(academicYear)) && Number.isInteger(Number(academicYear)) && Number(academicYear) > 0 ? Number(academicYear) : undefined,
+        grade_level: gradeLevel || undefined,
+        semester: semester || undefined,
+        subject: subject || undefined,
+        academic_year: academicYear || undefined,
       };
 
       // Add custom sections
@@ -732,13 +794,23 @@ export default function CourseDetailsPage() {
         }
       }
 
-      const payload = {
+      const payload: any = {
         price: pricingType === 'free' ? 0 : Number(price),
-        final_price: pricingType === 'free' ? 0 : Number(price),
+        final_price: pricingType === 'free' ? 0 : (isDiscounted && discountPrice ? Number(discountPrice) : Number(price)),
         price_type: pricingType,
         currency: currency,
         status: status,
-        receiver_accounts: selectedPaymentMethods.map(m => Number(m.methodId))
+        receiver_accounts: selectedPaymentMethods.map(m => Number(m.methodId)),
+
+        // Pricing & Access Options
+        is_discounted: isDiscounted ? 1 : 0,
+        isDiscounted: isDiscounted,
+        discount_price: isDiscounted && discountPrice ? Number(discountPrice) : undefined,
+        discountPrice: isDiscounted && discountPrice ? Number(discountPrice) : undefined,
+        discount_end_date: isDiscounted && discountEndDate ? discountEndDate : undefined,
+        access_duration_type: accessDurationType,
+        access_days: accessDurationType === 'days' && accessDays ? Number(accessDays) : undefined,
+        access_until_date: ((accessDurationType as string) === 'until_date' || (accessDurationType as string) === 'date') && accessUntilDate ? accessUntilDate : undefined,
       };
 
       await updateCourse(Number(id), payload);
@@ -768,9 +840,13 @@ export default function CourseDetailsPage() {
 
   const fetchCourse = async () => {
     try {
-      const [data, paymentInfos] = await Promise.all([
+      const [data, paymentInfos, grades, terms, subjects, years] = await Promise.all([
         getCourse(id),
-        getUserPaymentInfos()
+        getUserPaymentInfos(),
+        getGrades().catch(e => { console.warn('Failed to fetch grades:', e); return []; }),
+        getTerms().catch(e => { console.warn('Failed to fetch terms:', e); return []; }),
+        getSubjects().catch(e => { console.warn('Failed to fetch subjects:', e); return []; }),
+        getAcademicYears().catch(e => { console.warn('Failed to fetch academic years:', e); return []; }),
       ]);
       
       // Map 'chapters' to 'units' if needed
@@ -783,6 +859,24 @@ export default function CourseDetailsPage() {
         setPreviewImage(data.image || (data as any).cover_image);
       }
       setAcademyPaymentMethods(paymentInfos || []);
+
+      const formatClassification = (items: any[], isGrade = false) => {
+        return (items || []).map((item: any, i: number) => ({
+          id: item.id || String(i + 1).padStart(2, '0'),
+          name: item.name || item.title || 'عنصر جديد',
+          desc: item.desc || item.description || 'لا يوجد وصف',
+          stage: item.stage || item.educational_stage || (isGrade ? 'المرحلة الثانوية' : 'عام'),
+          academic_year: item.academic_year || item.academic_year_name || '2025/2026',
+          active: item.active !== undefined ? item.active : (item.is_active !== undefined ? item.is_active : true),
+          grade_id: item.grade_id || item.grade?.id || '',
+          grade_name: item.grade?.name || ''
+        }));
+      };
+
+      setGradesList(formatClassification(grades, true));
+      setSemestersList(formatClassification(terms));
+      setSubjectsList(formatClassification(subjects));
+      setAcademicYearsList(formatClassification(years));
       setCourseInfo({
         title: data.title || '',
         description: data.description || '',
@@ -1651,63 +1745,73 @@ export default function CourseDetailsPage() {
                 <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>school</span>
                 <h3 className="font-title-md text-title-md text-gray-900">التصنيف الدراسي</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div>
-                  <label className="block text-label-md mb-2 text-gray-900">الصف الدراسي</label>
-                  <select 
-                    value={gradeLevel}
-                    onChange={(e) => setGradeLevel(e.target.value)}
-                    className="w-full border border-outline-variant rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm font-bold text-gray-900 bg-white"
-                  >
-                    <option value="">اختر الصف...</option>
-                    <option value="first_sec">أولى ثانوي</option>
-                    <option value="second_sec">ثانية ثانوي</option>
-                    <option value="third_sec">ثالثة ثانوي</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-label-md mb-2 text-gray-900">الفصل الدراسي</label>
-                  <select 
-                    value={semester}
-                    onChange={(e) => setSemester(e.target.value)}
-                    className="w-full border border-outline-variant rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm font-bold text-gray-900 bg-white"
-                  >
-                    <option value="">اختر الترم...</option>
-                    <option value="term_1">الترم الأول</option>
-                    <option value="term_2">الترم الثاني</option>
-                    <option value="full_year">العام الدراسي كامل</option>
-                    <option value="final_review">مراجعة نهائية</option>
-                    <option value="not_linked">غير مرتبط بترم</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-label-md mb-2 text-gray-900">المادة</label>
-                  <select 
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    className="w-full border border-outline-variant rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm font-bold text-gray-900 bg-white"
-                  >
-                    <option value="">اختر المادة...</option>
-                    <option value="physics">فيزياء</option>
-                    <option value="chemistry">كيمياء</option>
-                    <option value="math">رياضيات</option>
-                    <option value="biology">أحياء</option>
-                    <option value="arabic">عربي</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-label-md mb-2 text-gray-900">العام الدراسي</label>
-                  <select 
-                    value={academicYear}
-                    onChange={(e) => setAcademicYear(e.target.value)}
-                    className="w-full border border-outline-variant rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm font-bold text-gray-900 bg-white"
-                  >
-                    <option value="2026/2027">2026 / 2027</option>
-                    <option value="2025/2026">2025 / 2026</option>
-                  </select>
-                </div>
-              </div>
-            </section>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div>
+                      <label className="block text-label-md mb-2 text-gray-900">الصف الدراسي</label>
+                      <select 
+                        value={gradeLevel}
+                        onChange={(e) => {
+                          setGradeLevel(e.target.value);
+                          setSemester('');
+                          setSubject('');
+                        }}
+                        className="w-full border border-outline-variant rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm font-bold text-gray-900 bg-white"
+                      >
+                        <option value="">اختر الصف...</option>
+                        {activeGrades.map((g) => (
+                          <option key={g.id} value={g.id}>
+                            {g.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-label-md mb-2 text-gray-900">الفصل الدراسي</label>
+                      <select 
+                        value={semester}
+                        onChange={(e) => setSemester(e.target.value)}
+                        className="w-full border border-outline-variant rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm font-bold text-gray-900 bg-white"
+                      >
+                        <option value="">اختر الترم...</option>
+                        {activeSemesters.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-label-md mb-2 text-gray-900">المادة</label>
+                      <select 
+                        value={subject}
+                        onChange={(e) => setSubject(e.target.value)}
+                        className="w-full border border-outline-variant rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm font-bold text-gray-900 bg-white"
+                      >
+                        <option value="">اختر المادة...</option>
+                        {activeSubjects.map((sub) => (
+                          <option key={sub.id} value={sub.id}>
+                            {sub.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-label-md mb-2 text-gray-900">العام الدراسي</label>
+                      <select 
+                        value={academicYear}
+                        onChange={(e) => setAcademicYear(e.target.value)}
+                        className="w-full border border-outline-variant rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm font-bold text-gray-900 bg-white"
+                      >
+                        <option value="">اختر العام الدراسي...</option>
+                        {activeYears.map((y) => (
+                          <option key={y.id} value={y.id}>
+                            {y.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </section>
 
             {/* Section 3: Learning Details */}
             <section className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm space-y-8">
@@ -2319,102 +2423,7 @@ export default function CourseDetailsPage() {
               )}
             </section>
 
-            {/* Section 3: Landing Page Templates selection */}
-            <section className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm text-right">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="material-symbols-outlined text-primary">auto_awesome_motion</span>
-                <div>
-                  <h3 className="font-title-md text-title-md text-gray-900">صفحة هبوط الدورة</h3>
-                  <p className="text-xs text-on-surface-variant font-medium mt-1">اختر التصميم المناسب لعرض صفحة التسويق والبيع لطلابك</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                {/* Template 1 Card */}
-                <div className={`border-2 rounded-[24px] p-5 flex flex-col justify-between transition-all ${courseTemplate === 'template_1' ? 'border-primary bg-primary/5 ring-2 ring-primary/10' : 'border-outline-variant bg-white hover:border-primary/50'}`}>
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-bold text-gray-900 text-sm">القالب الأول (الكلاسيكي الملكي)</h4>
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${courseTemplate === 'template_1' ? 'border-primary bg-primary' : 'border-outline-variant'}`}>
-                        {courseTemplate === 'template_1' && <div className="w-2 h-2 bg-white rounded-full" />}
-                      </div>
-                    </div>
-                    
-                    {/* Full UI Template Mockup */}
-                    <div className="aspect-video rounded-xl mb-4 overflow-hidden border border-outline-variant bg-surface-container relative shadow-sm group/mockup">
-                      <img 
-                        src="/assets/template_1_preview.png" 
-                        alt="Royal Classic Template Full Preview" 
-                        className="w-full h-full object-cover group-hover/mockup:scale-105 transition-all duration-500"
-                      />
-                    </div>
-                    
-                    <p className="text-xs text-on-surface-variant leading-relaxed">
-                      يتميز بتصميم زمردي دافئ، أركان مزخرفة، شريط أرقام الإحصائيات، فوائد الدورة ومحاضرها، وكاروسيل آراء الطلاب.
-                    </p>
-                  </div>
-                  
-                  <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                    <button 
-                      type="button"
-                      onClick={() => changeTemplate('template_1')}
-                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${courseTemplate === 'template_1' ? 'bg-primary text-white font-black' : 'border border-outline-variant text-gray-700 hover:bg-gray-50'}`}
-                    >
-                      {courseTemplate === 'template_1' ? 'محدد' : 'تحديد القالب'}
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => setPreviewTemplateId('template_1')}
-                      className="text-xs text-primary font-bold flex items-center gap-1 hover:underline"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">edit</span> تخصيص وتعديل
-                    </button>
-                  </div>
-                </div>
 
-                {/* Template 2 Card */}
-                <div className={`border-2 rounded-[24px] p-5 flex flex-col justify-between transition-all ${courseTemplate === 'template_2' ? 'border-primary bg-primary/5 ring-2 ring-primary/10' : 'border-outline-variant bg-white hover:border-primary/50'}`}>
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-bold text-gray-900 text-sm">قالب صفحة الدروس التفاعلية (الافتراضي)</h4>
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${courseTemplate === 'template_2' ? 'border-primary bg-primary' : 'border-outline-variant'}`}>
-                        {courseTemplate === 'template_2' && <div className="w-2 h-2 bg-white rounded-full" />}
-                      </div>
-                    </div>
-                    
-                    {/* Full UI Template Mockup */}
-                    <div className="aspect-video rounded-xl mb-4 overflow-hidden border border-outline-variant bg-surface-container relative shadow-sm group/mockup">
-                      <img 
-                        src="/assets/template_2_preview.png" 
-                        alt="Interactive Default Template Full Preview" 
-                        className="w-full h-full object-cover group-hover/mockup:scale-105 transition-all duration-500"
-                      />
-                    </div>
-                    
-                    <p className="text-xs text-on-surface-variant leading-relaxed">
-                      تصميم تعليمي كلاسيكي مع مشغل فيديو بارز في الهيدر، وعرض تفاعلي للأقسام والدروس، وجدول المخرجات بلمسات عصرية.
-                    </p>
-                  </div>
-                  
-                  <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                    <button 
-                      type="button"
-                      onClick={() => changeTemplate('template_2')}
-                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${courseTemplate === 'template_2' ? 'bg-primary text-white font-black' : 'border border-outline-variant text-gray-700 hover:bg-gray-50'}`}
-                    >
-                      {courseTemplate === 'template_2' ? 'محدد' : 'تحديد القالب'}
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => setPreviewTemplateId('template_2')}
-                      className="text-xs text-primary font-bold flex items-center gap-1 hover:underline"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">edit</span> تخصيص وتعديل
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </section>
 
             {/* Bottom action buttons */}
             <div className="flex items-center justify-end gap-4 pt-6 border-t border-outline-variant mt-6">
@@ -2546,6 +2555,141 @@ export default function CourseDetailsPage() {
                 </h4>
               </div>
             </div>
+
+            {/* Section 3: Landing Page Templates selection */}
+            <section className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm text-right">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="material-symbols-outlined text-primary">auto_awesome_motion</span>
+                <div>
+                  <h3 className="font-title-md text-title-md text-gray-900">قالب صفحة البيع الافتراضية</h3>
+                  <p className="text-xs text-on-surface-variant font-medium mt-1">اختر التصميم المناسب لعرض صفحة التسويق والبيع لطلابك</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                {/* Template 1 Card */}
+                <div className={`border-2 rounded-[24px] p-5 flex flex-col justify-between transition-all ${courseTemplate === 'template_1' ? 'border-primary bg-primary/5 ring-2 ring-primary/10' : 'border-outline-variant bg-white hover:border-primary/50'}`}>
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-bold text-gray-900 text-sm">القالب الأول (الكلاسيكي الملكي)</h4>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${courseTemplate === 'template_1' ? 'border-primary bg-primary' : 'border-outline-variant'}`}>
+                        {courseTemplate === 'template_1' && <div className="w-2 h-2 bg-white rounded-full" />}
+                      </div>
+                    </div>
+                    
+                    {/* Full UI Template Mockup */}
+                    <div className="aspect-video rounded-xl mb-4 overflow-hidden border border-outline-variant bg-surface-container relative shadow-sm group/mockup">
+                      {/* Preview Button */}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewTemplate('template_1');
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.stopPropagation();
+                            setPreviewTemplate('template_1');
+                          }
+                        }}
+                        className="absolute top-2 left-2 z-20 bg-white/95 hover:bg-white text-blue-700 hover:text-blue-800 px-3 py-1.5 rounded-lg shadow-md flex items-center gap-1.5 text-xs font-black border border-slate-200 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                      >
+                        <Eye size={12} />
+                        معاينة الشاشة
+                      </div>
+                      <img 
+                        src="/assets/template_1_preview.png" 
+                        alt="Royal Classic Template Full Preview" 
+                        className="w-full h-full object-cover group-hover/mockup:scale-105 transition-all duration-500"
+                      />
+                    </div>
+                    
+                    <p className="text-xs text-on-surface-variant leading-relaxed">
+                      يتميز بتصميم زمردي دافئ، أركان مزخرفة، شريط أرقام الإحصائيات، فوائد الدورة ومحاضرها، وكاروسيل آراء الطلاب.
+                    </p>
+                  </div>
+                  
+                  <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                    <button 
+                      type="button"
+                      onClick={() => changeTemplate('template_1')}
+                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${courseTemplate === 'template_1' ? 'bg-primary text-white font-black' : 'border border-outline-variant text-gray-700 hover:bg-gray-50'}`}
+                    >
+                      {courseTemplate === 'template_1' ? 'محدد' : 'تحديد القالب'}
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setPreviewTemplateId('template_1')}
+                      className="text-xs text-primary font-bold flex items-center gap-1 hover:underline"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">edit</span> تخصيص وتعديل
+                    </button>
+                  </div>
+                </div>
+
+                {/* Template 2 Card */}
+                <div className={`border-2 rounded-[24px] p-5 flex flex-col justify-between transition-all ${courseTemplate === 'template_2' ? 'border-primary bg-primary/5 ring-2 ring-primary/10' : 'border-outline-variant bg-white hover:border-primary/50'}`}>
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-bold text-gray-900 text-sm">قالب صفحة الدروس التفاعلية (الافتراضي)</h4>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${courseTemplate === 'template_2' ? 'border-primary bg-primary' : 'border-outline-variant'}`}>
+                        {courseTemplate === 'template_2' && <div className="w-2 h-2 bg-white rounded-full" />}
+                      </div>
+                    </div>
+                    
+                    {/* Full UI Template Mockup */}
+                    <div className="aspect-video rounded-xl mb-4 overflow-hidden border border-outline-variant bg-surface-container relative shadow-sm group/mockup">
+                      {/* Preview Button */}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewTemplate('template_2');
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.stopPropagation();
+                            setPreviewTemplate('template_2');
+                          }
+                        }}
+                        className="absolute top-2 left-2 z-20 bg-white/95 hover:bg-white text-blue-700 hover:text-blue-800 px-3 py-1.5 rounded-lg shadow-md flex items-center gap-1.5 text-xs font-black border border-slate-200 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                      >
+                        <Eye size={12} />
+                        معاينة الشاشة
+                      </div>
+                      <img 
+                        src="/assets/template_2_preview.png" 
+                        alt="Interactive Default Template Full Preview" 
+                        className="w-full h-full object-cover group-hover/mockup:scale-105 transition-all duration-500"
+                      />
+                    </div>
+                    
+                    <p className="text-xs text-on-surface-variant leading-relaxed">
+                      تصميم تعليمي كلاسيكي مع مشغل فيديو بارز في الهيدر، وعرض تفاعلي للأقسام والدروس، وجدول المخرجات بلمسات عصرية.
+                    </p>
+                  </div>
+                  
+                  <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                    <button 
+                      type="button"
+                      onClick={() => changeTemplate('template_2')}
+                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${courseTemplate === 'template_2' ? 'bg-primary text-white font-black' : 'border border-outline-variant text-gray-700 hover:bg-gray-50'}`}
+                    >
+                      {courseTemplate === 'template_2' ? 'محدد' : 'تحديد القالب'}
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setPreviewTemplateId('template_2')}
+                      className="text-xs text-primary font-bold flex items-center gap-1 hover:underline"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">edit</span> تخصيص وتعديل
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
 
             {/* Default Sales Page Section */}
             <section className="space-y-4">
@@ -2909,7 +3053,7 @@ export default function CourseDetailsPage() {
       {isCreateLandingModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-250" dir="rtl">
           <div 
-            className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl p-8 border border-slate-100 animate-in zoom-in-95 duration-250 relative"
+            className="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl p-8 border border-slate-100 animate-in zoom-in-95 duration-250 relative"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -2941,21 +3085,26 @@ export default function CourseDetailsPage() {
                   <label className="block text-xs font-black text-slate-800">اختر قالب التصميم المطلوب *</label>
                   <span className="text-[10px] text-blue-600 font-bold">معاينة مباشرة لكل قالب قبل الاعتماد</span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {/* Template 1 Choice */}
                   <div
                     role="button"
                     tabIndex={0}
                     onClick={() => setNewSelectedTemplate('template_1')}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setNewSelectedTemplate('template_1'); }}
-                    className={`p-5 border-2 rounded-2xl shadow-xs text-right transition-all flex flex-col gap-2.5 cursor-pointer ${
+                    className={`p-4 border-2 rounded-2xl transition-all duration-300 flex flex-col gap-3 cursor-pointer relative hover:scale-[1.02] hover:shadow-md ${
                       newSelectedTemplate === 'template_1'
-                        ? 'border-blue-600 bg-blue-50/20'
-                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                        ? 'border-blue-600 bg-blue-50/10 ring-2 ring-blue-600/10'
+                        : 'border-slate-100 hover:border-slate-200 bg-slate-50/40'
                     }`}
                   >
+                    {newSelectedTemplate === 'template_1' && (
+                      <div className="absolute top-2 right-2 z-20 bg-blue-600 text-white rounded-full p-0.5 shadow-md">
+                        <Check size={10} />
+                      </div>
+                    )}
                     {/* CSS Mockup */}
-                    <div className="w-full h-32 bg-[#082A24] rounded-lg border border-slate-200 overflow-hidden flex flex-col relative select-none">
+                    <div className="w-full h-24 bg-gradient-to-br from-[#082A24] to-[#041512] rounded-xl border border-slate-700/30 overflow-hidden flex flex-col relative select-none shadow-inner">
                       {/* Preview Button */}
                       <div
                         role="button"
@@ -2964,28 +3113,28 @@ export default function CourseDetailsPage() {
                           e.stopPropagation();
                           setPreviewTemplate('template_1');
                         }}
-                        className="absolute top-1.5 left-1.5 z-10 bg-white/90 hover:bg-white text-blue-600 hover:text-blue-700 p-1.5 rounded-lg shadow-xs flex items-center gap-1 text-[9px] font-bold border border-slate-200/80 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                        className="absolute top-2 left-2 z-10 bg-white/95 hover:bg-white text-blue-600 hover:text-blue-700 px-2 py-1 rounded-md shadow-sm flex items-center gap-1 text-[9px] font-black border border-slate-200/80 hover:scale-105 active:scale-95 transition-all cursor-pointer"
                       >
                         <Eye size={10} />
                         معاينة
                       </div>
-                      <div className="h-8 bg-[#082A24] p-1 flex flex-col gap-0.5 justify-center">
-                        <div className="w-8 h-0.5 bg-[#FBF7EE]/40 rounded"></div>
-                        <div className="w-12 h-1 bg-[#FBF7EE] rounded"></div>
+                      <div className="h-7 bg-black/25 p-1 flex flex-col gap-0.5 justify-center">
+                        <div className="w-8 h-0.5 bg-[#C9A24B] rounded"></div>
+                        <div className="w-12 h-1 bg-white/40 rounded"></div>
                       </div>
-                      <div className="flex-grow p-1 flex gap-1">
-                        <div className="flex-grow bg-white border border-slate-100 rounded p-0.5 flex flex-col gap-0.5">
-                          <div className="w-6 h-0.5 bg-slate-300 rounded"></div>
-                          <div className="w-full h-0.5 bg-slate-200 rounded"></div>
+                      <div className="flex-grow p-1.5 flex gap-1.5">
+                        <div className="flex-grow bg-white/5 rounded p-1 flex flex-col gap-1">
+                          <div className="w-6 h-0.5 bg-white/80 rounded"></div>
+                          <div className="w-full h-0.5 bg-white/30 rounded"></div>
                         </div>
-                        <div className="w-6 bg-white border border-slate-100 rounded p-0.5 flex flex-col gap-0.5">
-                          <div className="w-full h-2 bg-emerald-500 rounded"></div>
+                        <div className="w-6 bg-white/5 rounded p-1 flex flex-col gap-1 items-center justify-center">
+                          <div className="w-full h-2 bg-[#C9A24B]/80 rounded"></div>
                         </div>
                       </div>
                     </div>
                     <div>
                       <span className="text-xs font-black text-slate-900 block font-bold text-right">الكلاسيكي الملكي</span>
-                      <span className="text-[9px] text-slate-400 font-bold leading-normal block mt-0.5 text-right">تصميم زمردي دافئ وعروض إحصائيات</span>
+                      <span className="text-[9px] text-slate-400 font-bold leading-normal block mt-0.5 text-right font-bold">تصميم زمردي دافئ وعروض إحصائيات</span>
                     </div>
                   </div>
 
@@ -2995,14 +3144,19 @@ export default function CourseDetailsPage() {
                     tabIndex={0}
                     onClick={() => setNewSelectedTemplate('template_2')}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setNewSelectedTemplate('template_2'); }}
-                    className={`p-5 border-2 rounded-2xl shadow-xs text-right transition-all flex flex-col gap-2.5 cursor-pointer ${
+                    className={`p-4 border-2 rounded-2xl transition-all duration-300 flex flex-col gap-3 cursor-pointer relative hover:scale-[1.02] hover:shadow-md ${
                       newSelectedTemplate === 'template_2'
-                        ? 'border-blue-600 bg-blue-50/20'
-                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                        ? 'border-blue-600 bg-blue-50/10 ring-2 ring-blue-600/10'
+                        : 'border-slate-100 hover:border-slate-200 bg-slate-50/40'
                     }`}
                   >
+                    {newSelectedTemplate === 'template_2' && (
+                      <div className="absolute top-2 right-2 z-20 bg-blue-600 text-white rounded-full p-0.5 shadow-md">
+                        <Check size={10} />
+                      </div>
+                    )}
                     {/* CSS Mockup */}
-                    <div className="w-full h-32 bg-[#0040a7] rounded-lg border border-slate-200 overflow-hidden flex flex-col relative select-none">
+                    <div className="w-full h-24 bg-gradient-to-br from-[#0040a7] to-[#002868] rounded-xl border border-slate-700/30 overflow-hidden flex flex-col relative select-none shadow-inner">
                       {/* Preview Button */}
                       <div
                         role="button"
@@ -3011,78 +3165,27 @@ export default function CourseDetailsPage() {
                           e.stopPropagation();
                           setPreviewTemplate('template_2');
                         }}
-                        className="absolute top-1.5 left-1.5 z-10 bg-white/90 hover:bg-white text-blue-600 hover:text-blue-700 p-1.5 rounded-lg shadow-xs flex items-center gap-1 text-[9px] font-bold border border-slate-200/80 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                        className="absolute top-2 left-2 z-10 bg-white/95 hover:bg-white text-blue-600 hover:text-blue-700 px-2 py-1 rounded-md shadow-sm flex items-center gap-1 text-[9px] font-black border border-slate-200/80 hover:scale-105 active:scale-95 transition-all cursor-pointer"
                       >
                         <Eye size={10} />
                         معاينة
                       </div>
-                      <div className="h-3 bg-white border-b border-slate-100 flex items-center justify-between px-1">
-                        <div className="w-4 h-0.5 bg-blue-600 rounded"></div>
+                      <div className="h-6 bg-black/10 flex items-center justify-between px-1.5 border-b border-white/5">
+                        <div className="w-4 h-0.5 bg-white/70 rounded"></div>
                       </div>
-                      <div className="flex-grow p-1 flex gap-2 items-center">
-                        <div className="flex-1 flex flex-col gap-0.5">
-                          <div className="w-10 h-1 bg-slate-800 rounded"></div>
-                          <div className="w-full h-0.5 bg-slate-400 rounded"></div>
+                      <div className="flex-grow p-1.5 flex gap-1.5 items-center">
+                        <div className="flex-grow flex flex-col gap-1">
+                          <div className="w-10 h-1 bg-white/90 rounded"></div>
+                          <div className="w-full h-0.5 bg-white/40 rounded"></div>
                         </div>
-                        <div className="w-10 h-6 bg-slate-900 rounded flex items-center justify-center shrink-0">
-                          <div className="w-2.5 h-2.5 bg-white/20 rounded-full"></div>
+                        <div className="w-10 h-6 bg-white/5 border border-white/10 rounded flex items-center justify-center shrink-0">
+                          <div className="w-2.5 h-2.5 bg-white/40 rounded-full"></div>
                         </div>
                       </div>
                     </div>
                     <div>
                       <span className="text-xs font-black text-slate-900 block font-bold text-right">الافتراضي التفاعلي</span>
                       <span className="text-[9px] text-slate-400 font-bold leading-normal block mt-0.5 text-right">مشغل فيديو وجداول دروس متقدمة</span>
-                    </div>
-                  </div>
-
-                  {/* Template 3 Choice */}
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setNewSelectedTemplate('template_3')}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setNewSelectedTemplate('template_3'); }}
-                    className={`p-5 border-2 rounded-2xl shadow-xs text-right transition-all flex flex-col gap-2.5 cursor-pointer ${
-                      newSelectedTemplate === 'template_3'
-                        ? 'border-blue-600 bg-blue-50/20'
-                        : 'border-slate-200 hover:border-slate-300 bg-white'
-                    }`}
-                  >
-                    {/* CSS Mockup */}
-                    <div className="w-full h-32 bg-[#f0f2f5] rounded-lg border border-slate-200 overflow-hidden flex flex-col relative select-none pt-1">
-                      {/* Preview Button */}
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setPreviewTemplate('template_3');
-                        }}
-                        className="absolute top-1.5 left-1.5 z-10 bg-white/90 hover:bg-white text-blue-600 hover:text-blue-700 p-1.5 rounded-lg shadow-xs flex items-center gap-1 text-[9px] font-bold border border-slate-200/80 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                      >
-                        <Eye size={10} />
-                        معاينة
-                      </div>
-                      <div className="px-1 text-center flex flex-col items-center gap-0.5">
-                        <div className="w-12 h-1 bg-slate-800 rounded"></div>
-                        <div className="w-16 h-0.5 bg-slate-400 rounded"></div>
-                      </div>
-                      <div className="flex-grow px-1 pb-1 flex gap-1 items-start mt-1">
-                        <div className="flex-grow flex-col gap-0.5">
-                          <div className="bg-white border border-slate-100 rounded p-0.5 flex flex-col gap-0.5">
-                            <div className="w-8 h-0.5 bg-slate-200 rounded"></div>
-                          </div>
-                        </div>
-                        <div className="w-8 bg-white border border-slate-200 rounded overflow-hidden flex flex-col shrink-0">
-                          <div className="h-1 bg-blue-600"></div>
-                          <div className="p-0.5 flex flex-col">
-                            <div className="w-full h-1 bg-blue-500 rounded"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-xs font-black text-slate-900 block font-bold text-right">تجربة المستخدم (UI/UX)</span>
-                      <span className="text-[9px] text-slate-400 font-bold leading-normal block mt-0.5 text-right">قائمة جانبية وسعر ثابت ملتصق</span>
                     </div>
                   </div>
                 </div>
@@ -3118,6 +3221,7 @@ export default function CourseDetailsPage() {
           onClose={() => setPreviewTemplate(null)}
           onSelect={() => {
             setNewSelectedTemplate(previewTemplate);
+            changeTemplate(previewTemplate);
             setPreviewTemplate(null);
           }}
         />

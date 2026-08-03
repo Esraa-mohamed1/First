@@ -22,8 +22,6 @@ import { showAlert } from '@/lib/sweetalert';
 import axios from 'axios';
 import { unwrapEncryptedResponseData } from '@/lib/decryption';
 import LandingRenderer from '@/modules/landing/renderer/LandingRenderer';
-import NavbarBlock, { FooterBlock } from '@/builder/components/NavbarBlock';
-import { TenantFooter } from '@/builder/templates/classic/ClassicTemplate';
 import { getThemeBySlug } from '@/builder/templates/themeStyles';
 
 const MySwal = withReactContent(Swal);
@@ -298,13 +296,6 @@ export default function CourseStudentViewPage() {
 
   return (
     <div style={cssVariables} className="min-h-screen w-full transition-all duration-300 flex flex-col justify-between" dir="rtl">
-      {/* Dynamic Navbar */}
-      {navbarNode ? (
-        <NavbarBlock {...navbarNode.props} isLandingPage={true} />
-      ) : (
-        <NavbarBlock isLandingPage={true} />
-      )}
-
       {/* Main Course Content */}
       <div className="w-full flex-grow">
         <LandingRenderer
@@ -318,13 +309,6 @@ export default function CourseStudentViewPage() {
           setIsPaymentModalOpen={setIsPaymentModalOpen}
         />
       </div>
-
-      {/* Dynamic Footer */}
-      {footerNode ? (
-        <FooterBlock {...footerNode.props} />
-      ) : (
-        <TenantFooter />
-      )}
     </div>
   );
 }

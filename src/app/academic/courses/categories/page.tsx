@@ -16,7 +16,7 @@ import {
 } from '@/services/academic-classification';
 
 export default function AcademicClassificationPage() {
-  const [activeTab, setActiveTab] = useState<'grades' | 'semesters' | 'subjects' | 'years' | 'general'>('grades');
+  const [activeTab, setActiveTab] = useState<'grades' | 'semesters' | 'subjects' | 'years'>('grades');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -31,7 +31,6 @@ export default function AcademicClassificationPage() {
       case 'semesters': return 'فصل دراسي';
       case 'subjects': return 'مادة دراسية';
       case 'years': return 'عام دراسي';
-      case 'general': return 'تصنيف عام';
       default: return 'عنصر جديد';
     }
   };
@@ -41,6 +40,7 @@ export default function AcademicClassificationPage() {
   const [addDesc, setAddDesc] = useState('');
   const [addStage, setAddStage] = useState('المرحلة الثانوية');
   const [addAcademicYear, setAddAcademicYear] = useState('2025/2026');
+  const [addGradeId, setAddGradeId] = useState('');
 
   const [editItemData, setEditItemData] = useState<ClassificationItem>({
     id: '',
@@ -48,32 +48,16 @@ export default function AcademicClassificationPage() {
     desc: '',
     stage: 'المرحلة الثانوية',
     academic_year: '2025/2026',
-    active: true
+    active: true,
+    grade_id: ''
   });
 
   // Local state storage per tab
   const [dataStore, setDataStore] = useState<Record<string, ClassificationItem[]>>({
-    grades: [
-      { id: '01', name: 'أولى ثانوي', desc: 'الصف الأول من المرحلة الثانوية', stage: 'المرحلة الثانوية', academic_year: '2025/2026', active: true },
-      { id: '02', name: 'ثانية ثانوي', desc: 'الصف الثاني من المرحلة الثانوية', stage: 'المرحلة الثانوية', academic_year: '2025/2026', active: true },
-      { id: '03', name: 'ثالثة ثانوي', desc: 'الصف الثالث من المرحلة الثانوية', stage: 'المرحلة الثانوية', academic_year: '2025/2026', active: false }
-    ],
-    semesters: [
-      { id: '01', name: 'الفصل الدراسي الأول', desc: 'فصل الخريف والربيع الأكاديمي', stage: 'عام', academic_year: '2025/2026', active: true },
-      { id: '02', name: 'الفصل الدراسي الثاني', desc: 'فصل الربيع والتخرج الأكاديمي', stage: 'عام', academic_year: '2025/2026', active: true }
-    ],
-    subjects: [
-      { id: '01', name: 'الرياضيات والتفاضل', desc: 'منهج الرياضيات المتقدمة للصفوف الثانوية', stage: 'المرحلة الثانوية', academic_year: '2025/2026', active: true },
-      { id: '02', name: 'الفيزياء التطبيقية', desc: 'مبادئ الفيزياء والتجارب العلمية', stage: 'المرحلة الثانوية', academic_year: '2025/2026', active: true }
-    ],
-    years: [
-      { id: '01', name: '2025/2026', desc: 'العام الدراسي الحالي', stage: 'عام', academic_year: '2025/2026', active: true },
-      { id: '02', name: '2024/2025', desc: 'العام الدراسي السابق', stage: 'عام', academic_year: '2024/2025', active: false }
-    ],
-    general: [
-      { id: '01', name: 'تصميم الواجهات UI/UX', desc: 'مسار التصميم الرقمي وتجربة المستخدم', stage: 'عام', academic_year: '2025/2026', active: true },
-      { id: '02', name: 'البرمجة والتطوير', desc: 'مسار تطوير الويب والمنتجات الرقمية', stage: 'عام', academic_year: '2025/2026', active: true }
-    ]
+    grades: [],
+    semesters: [],
+    subjects: [],
+    years: []
   });
 
   // Fetch items from backend API
@@ -91,14 +75,16 @@ export default function AcademicClassificationPage() {
         remoteItems = await getSubjects();
       }
 
-      if (remoteItems && remoteItems.length > 0) {
+      if (remoteItems) {
         const formatted = remoteItems.map((item: any, i: number) => ({
           id: item.id || String(i + 1).padStart(2, '0'),
           name: item.name || item.title || 'عنصر جديد',
           desc: item.desc || item.description || 'لا يوجد وصف',
           stage: item.stage || item.educational_stage || (tab === 'grades' ? 'المرحلة الثانوية' : 'عام'),
           academic_year: item.academic_year || item.academic_year_name || '2025/2026',
-          active: item.active !== undefined ? item.active : (item.is_active !== undefined ? item.is_active : true)
+          active: item.active !== undefined ? item.active : (item.is_active !== undefined ? item.is_active : true),
+          grade_id: item.grade_id || item.grade?.id || '',
+          grade_name: item.grade?.name || ''
         }));
         setDataStore(prev => ({ ...prev, [tab]: formatted }));
       }
@@ -108,6 +94,39 @@ export default function AcademicClassificationPage() {
       setLoading(false);
     }
   }, []);
+
+  // Always pre-fetch grades to ensure they are available for dropdowns
+  useEffect(() => {
+    const preFetch = async () => {
+      try {
+        const remoteGrades = await getGrades();
+        if (remoteGrades) {
+          const formatted = remoteGrades.map((item: any, i: number) => ({
+            id: item.id || String(i + 1).padStart(2, '0'),
+            name: item.name || item.title || 'عنصر جديد',
+            desc: item.desc || item.description || 'لا يوجد وصف',
+            stage: item.stage || item.educational_stage || 'المرحلة الثانوية',
+            academic_year: item.academic_year || item.academic_year_name || '2025/2026',
+            active: item.active !== undefined ? item.active : (item.is_active !== undefined ? item.is_active : true),
+            grade_id: item.grade_id || item.grade?.id || '',
+            grade_name: item.grade?.name || ''
+          }));
+          setDataStore(prev => ({ ...prev, grades: formatted }));
+        }
+      } catch (err) {
+        console.warn('Failed to pre-fetch grades:', err);
+      }
+    };
+    preFetch();
+  }, []);
+
+  const availableGrades = dataStore.grades || [];
+
+  useEffect(() => {
+    if (isAddModalOpen && availableGrades.length > 0 && !addGradeId) {
+      setAddGradeId(String(availableGrades[0].id));
+    }
+  }, [isAddModalOpen, availableGrades, addGradeId]);
 
   useEffect(() => {
     fetchTabContent(activeTab);
@@ -125,13 +144,17 @@ export default function AcademicClassificationPage() {
     if (!addName.trim()) return;
 
     setActionLoading(true);
-    const payload = {
+    const payload: any = {
       name: addName.trim(),
       description: addDesc.trim() || 'وصف مختصر للتصنيف',
       stage: addStage,
       academic_year: addAcademicYear,
       is_active: true
     };
+
+    if (activeTab !== 'grades') {
+      payload.grade_id = addGradeId;
+    }
 
     try {
       let createdRemote: any = null;
@@ -152,7 +175,9 @@ export default function AcademicClassificationPage() {
         desc: addDesc.trim() || 'وصف مختصر للتصنيف',
         stage: addStage,
         academic_year: addAcademicYear,
-        active: true
+        active: true,
+        grade_id: activeTab !== 'grades' ? addGradeId : undefined,
+        grade_name: activeTab !== 'grades' ? (availableGrades.find(g => String(g.id) === String(addGradeId))?.name || '') : undefined
       };
 
       setDataStore(prev => ({
@@ -163,6 +188,11 @@ export default function AcademicClassificationPage() {
       toast.success('تمت إضافة العنصر بنجاح!');
       setAddName('');
       setAddDesc('');
+      if (availableGrades.length > 0) {
+        setAddGradeId(String(availableGrades[0].id));
+      } else {
+        setAddGradeId('');
+      }
       setIsAddModalOpen(false);
     } catch (err) {
       console.error('API create error:', err);
@@ -174,7 +204,9 @@ export default function AcademicClassificationPage() {
         desc: addDesc.trim() || 'وصف مختصر للتصنيف',
         stage: addStage,
         academic_year: addAcademicYear,
-        active: true
+        active: true,
+        grade_id: activeTab !== 'grades' ? addGradeId : undefined,
+        grade_name: activeTab !== 'grades' ? (availableGrades.find(g => String(g.id) === String(addGradeId))?.name || '') : undefined
       };
 
       setDataStore(prev => ({
@@ -185,6 +217,11 @@ export default function AcademicClassificationPage() {
       toast.success('تم التحديث بنجاح');
       setAddName('');
       setAddDesc('');
+      if (availableGrades.length > 0) {
+        setAddGradeId(String(availableGrades[0].id));
+      } else {
+        setAddGradeId('');
+      }
       setIsAddModalOpen(false);
     } finally {
       setActionLoading(false);
@@ -192,7 +229,10 @@ export default function AcademicClassificationPage() {
   };
 
   const handleOpenEdit = (item: ClassificationItem) => {
-    setEditItemData(item);
+    setEditItemData({
+      ...item,
+      grade_id: item.grade_id || (availableGrades[0]?.id ? String(availableGrades[0].id) : '')
+    });
     setIsEditModalOpen(true);
   };
 
@@ -200,13 +240,17 @@ export default function AcademicClassificationPage() {
     e.preventDefault();
     setActionLoading(true);
 
-    const payload = {
+    const payload: any = {
       name: editItemData.name,
-      description: editItemData.desc,
+      description: editItemData.desc || editItemData.description || '',
       stage: editItemData.stage,
       academic_year: editItemData.academic_year,
       is_active: editItemData.active
     };
+
+    if (activeTab !== 'grades') {
+      payload.grade_id = editItemData.grade_id;
+    }
 
     try {
       if (activeTab === 'grades') {
@@ -221,9 +265,13 @@ export default function AcademicClassificationPage() {
     } catch (err) {
       console.warn('API update failed, updating state locally');
     } finally {
+      const updatedItem = {
+        ...editItemData,
+        grade_name: activeTab !== 'grades' ? (availableGrades.find(g => String(g.id) === String(editItemData.grade_id))?.name || '') : undefined
+      };
       setDataStore(prev => ({
         ...prev,
-        [activeTab]: prev[activeTab].map(item => item.id === editItemData.id ? editItemData : item)
+        [activeTab]: prev[activeTab].map(item => item.id === editItemData.id ? updatedItem : item)
       }));
 
       toast.success('تم تحديث البيانات بنجاح!');
@@ -345,19 +393,6 @@ export default function AcademicClassificationPage() {
             <CalendarCheck size={16} />
             <span>الأعوام الدراسية</span>
           </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('general')}
-            className={`px-5 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
-              activeTab === 'general'
-                ? 'border-blue-600 text-blue-600 bg-white shadow-xs'
-                : 'border-transparent text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <Layers size={16} />
-            <span>تصنيفات عامة</span>
-          </button>
         </div>
 
         {/* Search Bar Strip */}
@@ -403,7 +438,7 @@ export default function AcademicClassificationPage() {
                   <tr className="bg-slate-50/60 border-b border-slate-200 text-xs font-black text-slate-500">
                     <th className="px-6 py-4 w-16">#</th>
                     <th className="px-6 py-4">الاسم والوصف</th>
-                    <th className="px-6 py-4">المرحلة الدراسية</th>
+                    {activeTab !== 'grades' && <th className="px-6 py-4">الصف الدراسي</th>}
                     <th className="px-6 py-4">العام الدراسي</th>
                     <th className="px-6 py-4">الحالة</th>
                     <th className="px-6 py-4 text-left">الإجراءات</th>
@@ -419,7 +454,11 @@ export default function AcademicClassificationPage() {
                           <span className="text-[11px] text-slate-400 font-medium">{item.desc || item.description}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-slate-600 font-bold">{item.stage || 'عام'}</td>
+                      {activeTab !== 'grades' && (
+                        <td className="px-6 py-4 text-slate-600 font-bold">
+                          {item.grade_name || availableGrades.find(g => String(g.id) === String(item.grade_id))?.name || 'عام'}
+                        </td>
+                      )}
                       <td className="px-6 py-4 text-blue-600 font-bold">{item.academic_year || '2025/2026'}</td>
                       <td className="px-6 py-4">
                         <span className={`px-3 py-1 rounded-full text-[10px] font-black inline-flex items-center gap-1.5 ${
@@ -547,21 +586,25 @@ export default function AcademicClassificationPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* المرحلة الدراسية */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-black text-slate-700">المرحلة الدراسية</label>
-                  <select
-                    value={addStage}
-                    onChange={(e) => setAddStage(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"
-                  >
-                    <option value="المرحلة الابتدائية">المرحلة الابتدائية</option>
-                    <option value="المرحلة المتوسطة">المرحلة المتوسطة</option>
-                    <option value="المرحلة الثانوية">المرحلة الثانوية</option>
-                    <option value="المرحلة الجامعية">المرحلة الجامعية</option>
-                    <option value="عام">عام / تدريب حر</option>
-                  </select>
-                </div>
+                {/* الصف الدراسي (بديلاً عن المرحلة الدراسية) */}
+                {activeTab !== 'grades' ? (
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-black text-slate-700">الصف الدراسي *</label>
+                    <select
+                      value={addGradeId}
+                      onChange={(e) => setAddGradeId(e.target.value)}
+                      required
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"
+                    >
+                      <option value="" disabled>اختر الصف الدراسي...</option>
+                      {availableGrades.map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {g.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
 
                 {/* العام الدراسي */}
                 <div className="space-y-1.5">
@@ -642,21 +685,25 @@ export default function AcademicClassificationPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* المرحلة الدراسية */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-black text-slate-700">المرحلة الدراسية</label>
-                  <select
-                    value={editItemData.stage || 'المرحلة الثانوية'}
-                    onChange={(e) => setEditItemData({ ...editItemData, stage: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"
-                  >
-                    <option value="المرحلة الابتدائية">المرحلة الابتدائية</option>
-                    <option value="المرحلة المتوسطة">المرحلة المتوسطة</option>
-                    <option value="المرحلة الثانوية">المرحلة الثانوية</option>
-                    <option value="المرحلة الجامعية">المرحلة الجامعية</option>
-                    <option value="عام">عام / تدريب حر</option>
-                  </select>
-                </div>
+                {/* الصف الدراسي (بديلاً عن المرحلة الدراسية) */}
+                {activeTab !== 'grades' ? (
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-black text-slate-700">الصف الدراسي *</label>
+                    <select
+                      value={editItemData.grade_id || ''}
+                      onChange={(e) => setEditItemData({ ...editItemData, grade_id: e.target.value })}
+                      required
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"
+                    >
+                      <option value="" disabled>اختر الصف الدراسي...</option>
+                      {availableGrades.map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {g.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
 
                 {/* العام الدراسي */}
                 <div className="space-y-1.5">
