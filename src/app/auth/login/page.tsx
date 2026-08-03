@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, Loader2, Eye, EyeOff, ArrowRight, Phone, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, Loader2, Eye, EyeOff, ArrowRight, Phone, CheckCircle2, AlertCircle } from 'lucide-react';
 import { login } from '@/services/auth';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
@@ -21,6 +21,7 @@ export default function AcademyLoginPage() {
         password: ''
     });
 
+    const [generalError, setGeneralError] = useState('');
     const [errors, setErrors] = useState({
         email: '',
         phone: '',
@@ -55,6 +56,7 @@ export default function AcademyLoginPage() {
         const { name, value } = e.target;
 
         // Sanitize phone input and show error if invalid chars
+        if (generalError) setGeneralError('');
         if (name === 'phone') {
             const hasNonDigits = /\D/.test(value);
             const sanitizedValue = value.replace(/\D/g, '');
@@ -165,16 +167,38 @@ export default function AcademyLoginPage() {
             }
         } catch (error: any) {
             let errorMessage = error.message || error.error || 'حدث خطأ أثناء تسجيل الدخول';
+
+            if (error?.errors && typeof error.errors === 'object') {
+                const firstKey = Object.keys(error.errors)[0];
+                const firstVal = error.errors[firstKey];
+                if (firstVal) {
+                    errorMessage = Array.isArray(firstVal) ? firstVal[0] : firstVal;
+                }
+            }
             
             // Map common English API errors to user-friendly Arabic
             if (errorMessage === 'Invalid credentials' || errorMessage === 'Unauthorized' || errorMessage.toLowerCase().includes('credential')) {
-                errorMessage = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+                errorMessage = 'بيانات الدخول غير صحيحة (البريد الإلكتروني أو كلمة المرور غير صحيحة)';
             } else if (errorMessage === 'User not found' || errorMessage.toLowerCase().includes('user not found')) {
-                errorMessage = 'المستخدم غير موجود';
+                errorMessage = 'المستخدم غير موجود، يرجى التأكد من البيانات';
             } else if (errorMessage.toLowerCase().includes('network error')) {
                 errorMessage = 'حدث خطأ في الاتصال، يرجى التحقق من الشبكة';
             }
 
+            setGeneralError(errorMessage);
+            if (loginMethod === 'email') {
+                setErrors({
+                    email: errorMessage,
+                    phone: '',
+                    password: errorMessage
+                });
+            } else {
+                setErrors({
+                    email: '',
+                    phone: errorMessage,
+                    password: errorMessage
+                });
+            }
             toast.error(errorMessage);
         } finally {
             setIsLoading(false);
@@ -183,6 +207,7 @@ export default function AcademyLoginPage() {
 
     const toggleLoginMethod = (e: React.MouseEvent) => {
         e.preventDefault();
+        setGeneralError('');
         setLoginMethod(prev => prev === 'email' ? 'phone' : 'email');
         setErrors({ email: '', phone: '', password: '' });
     };
@@ -200,6 +225,13 @@ export default function AcademyLoginPage() {
                     </div>
 
                     <form onSubmit={handleLogin} className="space-y-8">
+                        {generalError && (
+                            <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-black flex items-center gap-3 shadow-sm animate-pulse">
+                                <AlertCircle size={20} className="text-red-500 shrink-0" />
+                                <span>{generalError}</span>
+                            </div>
+                        )}
+
                         <div className="space-y-6">
                             {loginMethod === 'email' ? (
                                 <div className="space-y-1">
@@ -213,7 +245,7 @@ export default function AcademyLoginPage() {
                                             value={formData.email}
                                             onChange={handleChange}
                                             placeholder="admin@academy.com"
-                                            className={`w-full p-4 pr-12 text-right bg-gray-50 border-2 rounded-[24px] focus:bg-white focus:border-blue-500 outline-none transition-all duration-300 font-bold text-gray-900 shadow-sm ${errors.email ? 'border-red-500' : 'border-transparent'}`}
+                                            className={`w-full p-4 pr-12 text-right bg-gray-50 border-2 rounded-[24px] focus:bg-white outline-none transition-all duration-300 font-bold text-gray-900 shadow-sm ${errors.email ? 'border-red-500 bg-red-50/20 focus:border-red-500 focus:ring-4 focus:ring-red-500/10' : 'border-transparent focus:border-blue-500'}`}
                                         />
                                         <Mail className={`absolute right-4 top-1/2 -translate-y-1/2 transition-colors ${errors.email ? 'text-red-500' : 'text-gray-400 group-focus-within:text-blue-600'}`} size={20} />
                                     </div>
@@ -263,7 +295,7 @@ export default function AcademyLoginPage() {
                                         value={formData.password}
                                         onChange={handleChange}
                                         placeholder="••••••••"
-                                        className={`w-full p-4 pr-12 text-right bg-gray-50 border-2 rounded-[24px] focus:bg-white focus:border-blue-500 outline-none transition-all duration-300 font-bold text-gray-900 shadow-sm ${errors.password ? 'border-red-500' : 'border-transparent'}`}
+                                        className={`w-full p-4 pr-12 text-right bg-gray-50 border-2 rounded-[24px] focus:bg-white outline-none transition-all duration-300 font-bold text-gray-900 shadow-sm ${errors.password ? 'border-red-500 bg-red-50/20 focus:border-red-500 focus:ring-4 focus:ring-red-500/10' : 'border-transparent focus:border-blue-500'}`}
                                     />
                                     <Lock className={`absolute right-4 top-1/2 -translate-y-1/2 transition-colors ${errors.password ? 'text-red-500' : 'text-gray-400 group-focus-within:text-blue-600'}`} size={20} />
                                     <button
