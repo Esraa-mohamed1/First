@@ -104,6 +104,48 @@ export default function CoursesPage() {
     }
   };
 
+  const calculateReadiness = (course: Course) => {
+    let score = 0;
+    const max = 6;
+    if (course.title) score++;
+    if (course.description) score++;
+    if ((course as any).short_description) score++;
+    if (course.category_id || course.category) score++;
+    if (course.image) score++;
+    if (course.price_type) score++;
+    return Math.round((score / max) * 100);
+  };
+
+  const getCourseTypeIcon = (type: string) => {
+    switch (type) {
+      case 'registered': return 'videocam';
+      case 'online': return 'podcasts';
+      case 'offline': return 'location_on';
+      default: return 'videocam';
+    }
+  };
+
+  const getCourseTypeAr = (type: string) => {
+    switch (type) {
+      case 'registered': return 'مسجلة';
+      case 'online': return 'مباشرة';
+      case 'offline': return 'حضورية';
+      default: return 'مسجلة';
+    }
+  };
+
+  const getCourseStatusBadge = (status: string) => {
+    switch (status) {
+      case 'published':
+        return <span className="bg-[#6cf8bb]/20 text-[#00714d] border border-[#6cf8bb]/30 px-2.5 py-1 rounded-md text-[10px] font-bold backdrop-blur-sm">منشورة</span>;
+      case 'stopped':
+        return <span className="bg-error-container/90 text-on-error-container px-2.5 py-1 rounded-md text-[10px] font-bold backdrop-blur-sm">متوقفة</span>;
+      case 'draft':
+      default:
+        return <span className="bg-surface-variant text-on-surface-variant px-2.5 py-1 rounded-md text-[10px] font-bold backdrop-blur-sm">مسودة</span>;
+    }
+  };
+
   const filteredCourses = courses.filter(course =>
     course.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -164,8 +206,8 @@ export default function CoursesPage() {
         </button>
       </div>
 
-      {/* Courses Table Container */}
-      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm min-h-[550px] pb-52 md:pb-0">
+      {/* Courses Cards Grid Container */}
+      <div className="bg-[#f8f9fa] rounded-[40px] shadow-sm min-h-[550px] pb-52 md:pb-0">
         {loading ? (
           <div className="flex items-center justify-center h-full min-h-[400px]">
             <Loader2 className="animate-spin text-blue-600" size={40} />
@@ -175,87 +217,144 @@ export default function CoursesPage() {
             <p className="text-xl font-bold">لا توجد دورات حالياً</p>
           </div>
         ) : (
-          <div className="overflow-x-auto custom-scrollbar pb-60">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="text-right text-gray-400 font-black text-base border-b border-gray-50">
-                  <th className="px-8 py-8 whitespace-nowrap">اسم الدورة</th>
-                  <th className="px-8 py-8 whitespace-nowrap">التصنيف</th>
-                  <th className="px-8 py-8 whitespace-nowrap">المدرب</th>
-                  <th className="px-8 py-8 whitespace-nowrap">السعر</th>
-                  <th className="px-8 py-8 whitespace-nowrap">عدد المشتركين</th>
-                  <th className="px-8 py-8 whitespace-nowrap">عدد الدروس</th>
-                  <th className="px-8 py-8 whitespace-nowrap">تاريخ الإضافة</th>
-                  <th className="px-8 py-8 whitespace-nowrap"></th>
-                </tr>
-              </thead>
-              <tbody className="text-gray-900 font-bold">
-                {filteredCourses.map((course) => (
-                  <tr
-                    key={course.id}
-                    className="hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0 group cursor-pointer"
-                    onClick={() => router.push(`/academic/courses/${course.id}`)}
-                  >
-                    <td className="px-8 py-8 whitespace-nowrap">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-lg font-black">{course.title}</span>
-                        {course.status && (
-                          <span className={`px-3 py-1 rounded-full text-xs w-fit ${course.status === 'published' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
-                            }`}>
-                            {course.status === 'published' ? 'منشورة' : 'مسودة'}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">{typeof course.category === 'object' && course.category !== null ? (course.category as any).name : (course.category || 'غير مصنف')}</td>
-                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">{(course as any).user?.name || course.instructor_name || (typeof course.instructor === 'object' && course.instructor !== null ? (course.instructor as any).name : (course.instructor || 'أحمد محمد'))}</td>
-                    <td className="px-8 py-8 whitespace-nowrap font-black">
-                      {Number(course.price) === 0 ? (
-                        <span className="text-green-600">مجاني</span>
-                      ) : (
-                        <div className="flex flex-col gap-1">
-                          {course.final_price && Number(course.final_price) < Number(course.price) ? (
-                            <>
-                              <div className="flex items-center gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredCourses.map((course) => {
+              const readiness = calculateReadiness(course);
+              const studentCount = (course as any).students_count ?? 0;
+              const totalSales = studentCount * Number(course.final_price || course.price || 0);
+              const typeIcon = getCourseTypeIcon(course.type || 'registered');
+              const typeLabel = getCourseTypeAr(course.type || 'registered');
 
-                                <span className="text-lg text-gray-900">{course.final_price} ر.س</span>
-                                <div className="flex justify-center">
-                                  <span className="text-sm text-gray-400 line-through decoration-blue-500 font-bold">{course.price} ر.س</span>
-                                </div>
-                              </div>
-                              <span className="text-[12px] bg-green-100 text-green-600 px-2 py-0.5 rounded-full w-fit">
-                                خصم {Number(course.price) - Number(course.final_price)} ر.س
-                              </span>
-                            </>
-                          ) : (
-                            <span className="text-lg text-gray-900">{course.price} ر.س</span>
-                          )}
+              return (
+                <div
+                  key={course.id}
+                  className="bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col hover:shadow-lg transition-shadow group relative"
+                >
+                  <div className="relative h-48 overflow-hidden">
+                    <img
+                      className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                      src={course.image || 'https://images.unsplash.com/photo-1586717791821-3f44a563de4c?auto=format&fit=crop&q=80&w=600'}
+                      alt={course.title}
+                    />
+                    <div className="absolute top-3 right-3 flex gap-2 z-10">
+                      {getCourseStatusBadge(course.status || 'draft')}
+                      <span className="bg-black/50 text-white px-2.5 py-1 rounded-md text-[10px] font-bold backdrop-blur-sm flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[12px]">{typeIcon}</span>
+                        {typeLabel}
+                      </span>
+                    </div>
+
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4 z-15">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/academic/courses/${course.id}/view`);
+                        }}
+                        className="w-full bg-white text-on-surface py-2 rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-50 transition-all active:scale-[0.98]"
+                      >
+                        <span className="material-symbols-outlined text-lg">visibility</span>
+                        معاينة الدورة
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-5 flex-grow flex flex-col">
+                    <h3
+                      onClick={() => router.push(`/academic/courses/${course.id}`)}
+                      className="font-bold text-lg text-on-surface mb-1 group-hover:text-primary transition-colors cursor-pointer line-clamp-1"
+                    >
+                      {course.title}
+                    </h3>
+                    <p className="text-on-surface-variant text-xs mb-4 line-clamp-1 italic font-medium">
+                      {(course as any).short_description || 'تعلم الدورة مع نخبة من كبار المحاضرين.'}
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-4 mb-5 p-3 bg-surface-container-low rounded-lg border border-slate-50">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-on-surface-variant mb-0.5">الطلاب</span>
+                        <div className="flex items-center gap-1">
+                          <span className="material-symbols-outlined text-sm text-primary">group</span>
+                          <span className="text-xs font-bold text-slate-800">{studentCount.toLocaleString('ar-EG')} طالب</span>
                         </div>
-                      )}
-                    </td>
-                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">0</td>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-on-surface-variant mb-0.5">إجمالي المبيعات</span>
+                        <div className="flex items-center gap-1 text-on-secondary-container">
+                          <span className="material-symbols-outlined text-sm text-emerald-600">payments</span>
+                          <span className="text-xs font-bold text-emerald-700">{totalSales.toLocaleString('ar-EG')} ر.س</span>
+                        </div>
+                      </div>
+                    </div>
 
-                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">
-                      {course.units?.reduce((acc, unit) => acc + (unit.lessons?.length || 0), 0) || 0}
-                    </td>
-                    <td className="px-8 py-8 whitespace-nowrap text-gray-500">
-                      {course.created_at ? new Date(course.created_at).toLocaleDateString('ar-EG') : '--/--/----'}
-                    </td>
-                    <td className="px-8 py-8 whitespace-nowrap">
-                      <div className="flex items-center justify-end relative">
+                    <div className="mb-5">
+                      <div className="flex items-center justify-between text-[11px] font-bold mb-1.5">
+                        <span className="text-on-surface-variant">جاهزية المحتوى</span>
+                        <span className={`font-black ${readiness >= 80 ? 'text-secondary' : readiness >= 40 ? 'text-tertiary' : 'text-error'}`}>
+                          {readiness}%
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full bg-surface-variant rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${readiness >= 80 ? 'bg-secondary' : readiness >= 40 ? 'bg-tertiary' : 'bg-error'}`}
+                          style={{ width: `${readiness}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-auto pt-4 border-t border-outline-variant/60 flex items-center justify-between relative">
+                      <div className="flex items-center gap-1">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            router.push(`/academic/courses/${course.id}`);
+                          }}
+                          className="p-2 text-primary hover:bg-primary/10 rounded-xl transition-colors border border-transparent hover:border-primary/20"
+                          title="إدارة الإعدادات"
+                        >
+                          <span className="material-symbols-outlined">settings_suggest</span>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toast('ميزة تكرار الدورة ستتوفر قريباً');
+                          }}
+                          className="p-2 text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors"
+                          title="تكرار الدورة"
+                        >
+                          <span className="material-symbols-outlined">content_copy</span>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (course.slug) {
+                              navigator.clipboard.writeText(`${window.location.origin}/user/courses/${course.slug}`);
+                              toast.success('تم نسخ رابط الدورة بنجاح');
+                            } else {
+                              toast.error('لا يوجد رابط مخصص لهذه الدورة بعد');
+                            }
+                          }}
+                          className="p-2 text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors"
+                          title="نسخ الرابط"
+                        >
+                          <span className="material-symbols-outlined">link</span>
+                        </button>
+                      </div>
+
+                      <div className="relative">
+                        <button
+                          onClick={(e) => {
+
+
+                            e.stopPropagation();
                             setActiveDropdownId(activeDropdownId === course.id ? null : course.id);
                           }}
-                          className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all"
+                          className="p-2 text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors"
                         >
-                          <MoreVertical size={20} />
+                          <span className="material-symbols-outlined">more_vert</span>
                         </button>
 
                         {activeDropdownId === course.id && (
                           <>
-                            {/* Backdrop to close dropdown */}
                             <div
                               className="fixed inset-0 z-[100]"
                               onClick={(e) => {
@@ -263,9 +362,7 @@ export default function CoursesPage() {
                                 setActiveDropdownId(null);
                               }}
                             />
-
-                            {/* Dropdown Menu */}
-                            <div className="absolute left-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-2xl shadow-xl z-[101] py-2 animate-in fade-in zoom-in slide-in-from-top-2 duration-200">
+                            <div className="absolute left-0 bottom-full mb-2 w-48 bg-white border border-gray-100 rounded-2xl shadow-xl z-[101] py-2 animate-in fade-in zoom-in slide-in-from-bottom-2 duration-200">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -274,36 +371,9 @@ export default function CoursesPage() {
                                 }}
                                 className="w-full px-4 py-2.5 text-right text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center justify-end gap-3 transition-colors"
                               >
-                                <span>تعديل الدورة</span>
-                                <Edit size={16} className="text-blue-600" />
+                                <span>تعديل الاسم والنوع</span>
+                                <span className="material-symbols-outlined text-[16px] text-blue-600">edit</span>
                               </button>
-
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveDropdownId(null);
-                                  toast('هذه الميزة ستتوفر قريباً');
-                                }}
-                                className="w-full px-4 py-2.5 text-right text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center justify-end gap-3 transition-colors"
-                              >
-                                <span>احصائيات الدورة</span>
-                                <BarChart3 size={16} className="text-orange-600" />
-                              </button>
-
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveDropdownId(null);
-                                  router.push(`/academic/courses/${course.id}/view`);
-                                }}
-                                className="w-full px-4 py-2.5 text-right text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center justify-end gap-3 transition-colors"
-                              >
-                                <span>مشاهدة الدورة</span>
-                                <Eye size={16} className="text-green-600" />
-                              </button>
-
-                              <div className="h-px bg-gray-100 my-1 mx-2" />
-
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -312,24 +382,24 @@ export default function CoursesPage() {
                                 }}
                                 className="w-full px-4 py-2.5 text-right text-sm font-bold text-red-600 hover:bg-red-50 flex items-center justify-end gap-3 transition-colors"
                               >
-                                <span>حذف</span>
-                                <Trash2 size={16} />
+                                <span>حذف الدورة</span>
+                                <span className="material-symbols-outlined text-[16px]">delete</span>
                               </button>
                             </div>
                           </>
                         )}
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
         {/* Pagination - Keep it static for now or hide if no items */}
         {!loading && filteredCourses.length > 0 && (
-          <div className="px-10 py-8 border-t border-gray-50 flex items-center justify-between bg-white">
+          <div className="px-10 py-8 border-t border-gray-50 flex items-center justify-between bg-white rounded-b-[40px]">
             <div className="flex gap-3">
               <button className="w-12 h-12 flex items-center justify-center rounded-2xl border border-gray-100 text-gray-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
                 <ChevronRight size={24} />

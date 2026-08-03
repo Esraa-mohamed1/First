@@ -10,11 +10,15 @@ import FAQSection from '../components/FAQSection';
 import ReviewsSection from '../components/ReviewsSection';
 import WhatsAppSection from '../components/WhatsAppSection';
 import FooterSection from '../components/FooterSection';
+import Template2Renderer from './Template2Renderer';
+import Template3Renderer from './Template3Renderer';
+import { MobileHeader, MobileStickyBar } from '../components/MobileStickyBar';
 
 interface LandingRendererProps {
   courseId?: string | number;
   courseSlug?: string;
   isEditable?: boolean;
+  landingPageId?: string | number;
   onSubscribe?: () => Promise<void> | void;
   isSubscribing?: boolean;
   selectedPaymentMethod?: any;
@@ -27,6 +31,7 @@ export default function LandingRenderer({
   courseId,
   courseSlug,
   isEditable = false,
+  landingPageId,
   onSubscribe = () => {},
   isSubscribing = false,
   selectedPaymentMethod,
@@ -34,7 +39,7 @@ export default function LandingRenderer({
   isPaymentModalOpen,
   setIsPaymentModalOpen,
 }: LandingRendererProps) {
-  const { loading, error } = useLandingContent({ courseId, courseSlug });
+  const { loading, error } = useLandingContent({ courseId, courseSlug, landingPageId: landingPageId ? String(landingPageId) : undefined });
   
   const content = useLandingStore(state => state.content);
   const courseData = useLandingStore(state => state.courseData);
@@ -57,6 +62,40 @@ export default function LandingRenderer({
     );
   }
 
+  if (templateName === 'template_2') {
+    return (
+      <Template2Renderer
+        content={content}
+        courseData={courseData}
+        isEditable={isEditable}
+        onSubscribe={onSubscribe}
+        isSubscribing={isSubscribing}
+        selectedPaymentMethod={selectedPaymentMethod}
+        setSelectedPaymentMethod={setSelectedPaymentMethod}
+        isPaymentModalOpen={isPaymentModalOpen}
+        setIsPaymentModalOpen={setIsPaymentModalOpen}
+        setActiveSectionId={setActiveSectionId}
+      />
+    );
+  }
+
+  if (templateName === 'template_3') {
+    return (
+      <Template3Renderer
+        content={content}
+        courseData={courseData}
+        isEditable={isEditable}
+        onSubscribe={onSubscribe}
+        isSubscribing={isSubscribing}
+        selectedPaymentMethod={selectedPaymentMethod}
+        setSelectedPaymentMethod={setSelectedPaymentMethod}
+        isPaymentModalOpen={isPaymentModalOpen}
+        setIsPaymentModalOpen={setIsPaymentModalOpen}
+        setActiveSectionId={setActiveSectionId}
+      />
+    );
+  }
+
   // Resolve template theme stylesheet properties
   const theme = getThemeBySlug(templateName || 'template_1');
   const cssVariables = {
@@ -70,7 +109,10 @@ export default function LandingRenderer({
   } as React.CSSProperties;
 
   return (
-    <div style={cssVariables} className="min-h-screen w-full transition-all duration-300 relative" dir="rtl">
+    <div style={cssVariables} className="min-h-screen w-full transition-all duration-300 relative pb-20 md:pb-0" dir="rtl">
+      {/* Mobile Top Header */}
+      <MobileHeader courseTitle={courseData?.title} />
+
       {/* 1. Hero Section */}
       <HeroSection
         data={content.hero}
@@ -142,6 +184,14 @@ export default function LandingRenderer({
         templateId={templateName}
         isEditable={isEditable}
         onEdit={() => setActiveSectionId('footer')}
+      />
+
+      {/* Mobile Floating Bottom Action Bar */}
+      <MobileStickyBar
+        courseData={courseData}
+        onSubscribe={onSubscribe}
+        isSubscribing={isSubscribing}
+        whatsappNumber={content.whatsapp?.phoneNumber}
       />
     </div>
   );

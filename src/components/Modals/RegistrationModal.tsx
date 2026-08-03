@@ -73,7 +73,7 @@ const RegistrationModal = () => {
             setErrors(prev => ({ ...prev, phone: 'يرجى إدخال الرمز كاملاً' }));
             return;
         }
-        setStep(4);
+        handleComplete();
     };
 
     const handleGoogleLogin = useGoogleLogin({
@@ -262,7 +262,7 @@ const RegistrationModal = () => {
             document.cookie = `backup_password=${encodeURIComponent(formData.password)}; path=/; max-age=3600; SameSite=Lax`;
 
             toast.success('تم إنشاء الحساب بنجاح');
-            setStep(4);
+            handleComplete();
         } catch (error: any) {
             // Map server validation errors to specific fields
             if (error?.errors && typeof error.errors === 'object') {

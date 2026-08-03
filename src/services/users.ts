@@ -1,11 +1,25 @@
 import academyApi from '@/lib/academy-api';
 import { ApiResponse, User } from '@/types/api';
 
-export const getUsers = async (role?: string): Promise<User[]> => {
+export const getUsers = async (role?: string, limit?: number): Promise<User[]> => {
   try {
-    const url = role ? `users?role=${role}` : 'users';
+    const params = new URLSearchParams();
+    if (role) {
+      params.append('role', role);
+    }
+    if (limit) {
+      params.append('limit', String(limit));
+    }
+    
+    let url = 'users';
+    const queryString = params.toString();
+    if (queryString) {
+      url += `?${queryString}`;
+    }
+
     const response = await academyApi.get<ApiResponse<User[]>>(url);
-    return response.data.data || [];
+    const data = response.data.data || [];
+    return limit ? data.slice(0, limit) : data;
   } catch (error: any) {
     console.error('Failed to get users:', error);
     return [];

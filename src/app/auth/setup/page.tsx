@@ -17,7 +17,7 @@ export default function SetupPage() {
 
   // Step 1: Card selection
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
-  const [selectedField, setSelectedField] = useState('educational');
+  const [selectedField, setSelectedField] = useState('schoolteacher');
 
   // Step 2: Country selection dropdown state
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -102,21 +102,37 @@ export default function SetupPage() {
 
     try {
       const fullLink = domainPrefix + domainSuffix;
-      const cachedEmail = localStorage.getItem('user_email');
-      const cachedPhone = localStorage.getItem('user_phone') || phone;
+
+      const getCookie = (name: string) => {
+        if (typeof document === 'undefined') return '';
+        const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+        return match ? decodeURIComponent(match[1]) : '';
+      };
+
+      const userInfoStr = localStorage.getItem('user_info');
+      const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
+      const cachedEmail = localStorage.getItem('user_email') || userInfo?.email || getCookie('backup_email') || '';
+      const cachedPhone = localStorage.getItem('user_phone') || userInfo?.phone || getCookie('backup_phone') || phone || '';
 
       const payload: any = {
         username: academyName || 'أكاديمي',
         phone_academy: phone || cachedPhone || '0500000000',
         country_code: activeCountry?.isoCode || 'EG',
         specialties: selectedField,
+        role: selectedField,
+        account_type: selectedField,
+        type: selectedField,
         link_academy: fullLink.toLowerCase()
       };
 
       if (cachedEmail) {
         payload.email = cachedEmail;
-      } else if (cachedPhone) {
+      }
+      if (cachedPhone) {
         payload.phone = cachedPhone;
+      }
+      if (!payload.email && !payload.phone) {
+        payload.email = 'admin@academy.com';
       }
 
       const setupResponse = (await createAccountInfoAcademy(payload)) as any;
@@ -135,10 +151,12 @@ export default function SetupPage() {
       }
 
       localStorage.setItem('academy_link_name', finalLink);
+      localStorage.setItem('user_account_type', selectedField);
+      localStorage.setItem('user_role', selectedField);
       toast.success('تم حفظ معلومات الأكاديمية بنجاح');
 
       // Auto login logic
-      const password = localStorage.getItem('user_password');
+      const password = localStorage.getItem('user_password') || getCookie('backup_password');
       let loginSuccess = false;
 
       if (password && (cachedEmail || cachedPhone)) {
@@ -221,6 +239,12 @@ export default function SetupPage() {
           handled = true;
         }
 
+        if (!handled && (validationErrors.email || validationErrors.phone)) {
+          const msg = 'يرجى التأكد من اختيار رابط منصة صحيح وبيانات التواصل.';
+          toast.error(msg);
+          handled = true;
+        }
+
         if (!handled && (validationErrors.username || validationErrors.phone_academy)) {
           const msg = (Array.isArray(validationErrors.username) ? validationErrors.username[0] : validationErrors.username) ||
             (Array.isArray(validationErrors.phone_academy) ? validationErrors.phone_academy[0] : validationErrors.phone_academy);
@@ -232,11 +256,13 @@ export default function SetupPage() {
       }
 
       if (!handled) {
-        const rawMessage = error?.message || (typeof error === 'string' ? error : 'حدث خطأ أثناء حفظ معلومات المنصة');
+        let rawMessage = error?.message || (typeof error === 'string' ? error : 'حدث خطأ أثناء حفظ معلومات المنصة');
         if (typeof rawMessage === 'string' && rawMessage.toLowerCase().includes('already been taken')) {
           const translated = 'رابط المنصة مستخدم بالفعل، يرجى اختيار رابط آخر.';
           setDomainError(translated);
           toast.error(translated);
+        } else if (typeof rawMessage === 'string' && rawMessage.toLowerCase().includes('validation errors detected')) {
+          toast.error('يرجى التأكد من ملء الحقول المطلوبة ومراجعة رابط المنصة.');
         } else {
           toast.error(rawMessage);
         }
@@ -319,7 +345,7 @@ export default function SetupPage() {
               <div
                 className={`group bg-white border border-[#E5E7EB] p-8 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col h-full ${selectedCardIndex === 1 ? 'card-active' : selectedCardIndex !== null ? 'card-inactive' : ''
                   }`}
-                onClick={() => selectCard(1, 'educational')}
+                onClick={() => selectCard(1, 'schoolteacher')}
               >
                 <div className={`absolute top-4 left-4 transition-opacity ${selectedCardIndex === 1 ? 'opacity-100' : 'opacity-0'}`}>
                   <span className="material-symbols-outlined text-[#004ac6] text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
@@ -344,7 +370,7 @@ export default function SetupPage() {
               <div
                 className={`group bg-white border border-[#E5E7EB] p-8 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col h-full ${selectedCardIndex === 2 ? 'card-active' : selectedCardIndex !== null ? 'card-inactive' : ''
                   }`}
-                onClick={() => selectCard(2, 'training')}
+                onClick={() => selectCard(2, 'coach')}
               >
                 <div className={`absolute top-4 left-4 transition-opacity ${selectedCardIndex === 2 ? 'opacity-100' : 'opacity-0'}`}>
                   <span className="material-symbols-outlined text-[#004ac6] text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
@@ -369,7 +395,7 @@ export default function SetupPage() {
               <div
                 className={`group bg-white border border-[#E5E7EB] p-8 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col h-full ${selectedCardIndex === 3 ? 'card-active' : selectedCardIndex !== null ? 'card-inactive' : ''
                   }`}
-                onClick={() => selectCard(3, 'consulting')}
+                onClick={() => selectCard(3, 'academy')}
               >
                 <div className={`absolute top-4 left-4 transition-opacity ${selectedCardIndex === 3 ? 'opacity-100' : 'opacity-0'}`}>
                   <span className="material-symbols-outlined text-[#004ac6] text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
@@ -548,10 +574,7 @@ export default function SetupPage() {
                     'ابدأ استخدام درب'
                   )}
                 </button>
-                <p className="text-center mt-6 text-[#434655] text-xs flex items-center justify-center gap-2">
-                  <span className="material-symbols-outlined text-[#006a61] text-base">verified</span>
-                  تجربة مجانية لمدة 14 يوم. يمكنك تغيير جميع الإعدادات لاحقًا.
-                </p>
+
               </div>
             </div>
           </section>

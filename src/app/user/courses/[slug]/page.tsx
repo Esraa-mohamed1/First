@@ -22,8 +22,6 @@ import { showAlert } from '@/lib/sweetalert';
 import axios from 'axios';
 import { unwrapEncryptedResponseData } from '@/lib/decryption';
 import LandingRenderer from '@/modules/landing/renderer/LandingRenderer';
-import NavbarBlock, { FooterBlock } from '@/builder/components/NavbarBlock';
-import { TenantFooter } from '@/builder/templates/classic/ClassicTemplate';
 import { getThemeBySlug } from '@/builder/templates/themeStyles';
 
 const MySwal = withReactContent(Swal);
@@ -185,21 +183,29 @@ export default function CourseStudentViewPage() {
 
         // Resolve course template from local storage or API info
         let resolvedTemplate = 'template_1';
-        if (data.infos && Array.isArray(data.infos)) {
-          const templateInfo = data.infos.find(
-            (info: any) => (info.key === 'course_template' || info.info_key === 'course_template')
-          );
-          if (templateInfo) {
-            resolvedTemplate = templateInfo.value || templateInfo.info_value || 'template_1';
+        if (typeof window !== 'undefined') {
+          const urlParams = new URLSearchParams(window.location.search);
+          const queryTemplate = urlParams.get('template');
+          if (queryTemplate) {
+            resolvedTemplate = queryTemplate;
+          } else {
+            const localStored = localStorage.getItem(`darab_course_template_${data.id}`);
+            if (localStored) {
+              resolvedTemplate = localStored;
+            } else {
+              const globalStored = localStorage.getItem('darab_active_template');
+              if (globalStored) resolvedTemplate = globalStored;
+            }
           }
         }
-        if (typeof window !== 'undefined') {
-          const localStored = localStorage.getItem(`darab_course_template_${data.id}`);
-          if (localStored) {
-            resolvedTemplate = localStored;
-          } else {
-            const globalStored = localStorage.getItem('darab_active_template');
-            if (globalStored) resolvedTemplate = globalStored;
+        if (typeof window !== 'undefined' && !new URLSearchParams(window.location.search).get('template')) {
+          if (data.infos && Array.isArray(data.infos)) {
+            const templateInfo = data.infos.find(
+              (info: any) => (info.key === 'course_template' || info.info_key === 'course_template')
+            );
+            if (templateInfo) {
+              resolvedTemplate = templateInfo.value || templateInfo.info_value || 'template_1';
+            }
           }
         }
         setActiveTemplateId(resolvedTemplate);
@@ -290,13 +296,6 @@ export default function CourseStudentViewPage() {
 
   return (
     <div style={cssVariables} className="min-h-screen w-full transition-all duration-300 flex flex-col justify-between" dir="rtl">
-      {/* Dynamic Navbar */}
-      {navbarNode ? (
-        <NavbarBlock {...navbarNode.props} isLandingPage={true} />
-      ) : (
-        <NavbarBlock isLandingPage={true} />
-      )}
-
       {/* Main Course Content */}
       <div className="w-full flex-grow">
         <LandingRenderer
@@ -310,13 +309,6 @@ export default function CourseStudentViewPage() {
           setIsPaymentModalOpen={setIsPaymentModalOpen}
         />
       </div>
-
-      {/* Dynamic Footer */}
-      {footerNode ? (
-        <FooterBlock {...footerNode.props} />
-      ) : (
-        <TenantFooter />
-      )}
     </div>
   );
 }
