@@ -163,7 +163,7 @@ export default function CreateCourseClient() {
   const courseTypeParam = searchParams.get('type');
 
   // Navigation tab state
-  const [activeTab, setActiveTab] = useState<'info' | 'content' | 'pricing' | 'landing_pages' | 'subscribers' | 'settings'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'content' | 'pricing' | 'landing_pages' | 'subscribers'>('info');
 
   const [courseId, setCourseId] = useState<number | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -967,14 +967,7 @@ export default function CreateCourseClient() {
               >
                 المشتركون والتقارير
               </button>
-              <button
-                onClick={() => setActiveTab('settings')}
-                className={`relative py-4 text-sm font-bold whitespace-nowrap transition-colors ${
-                  activeTab === 'settings' ? 'text-blue-600 tab-active' : 'text-slate-500 hover:text-blue-600'
-                }`}
-              >
-                الإعدادات
-              </button>
+
             </div>
           </div>
         </nav>
@@ -2274,13 +2267,7 @@ export default function CreateCourseClient() {
             </div>
           )}
 
-          {/* Tab 5: Settings */}
-          {activeTab === 'settings' && (
-            <div className="max-w-4xl bg-white border border-slate-300 rounded-2xl p-10 text-center text-slate-500 shadow-xs">
-              <h3 className="text-xl font-bold mb-2 text-slate-900">إعدادات الدورة المتقدمة</h3>
-              <p className="text-sm font-medium">يمكنك هنا تخصيص إعدادات الأمان والتراخيص الخاصة بهذه الدورة.</p>
-            </div>
-          )}
+
         </div>
       </main>
 
