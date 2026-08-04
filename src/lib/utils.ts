@@ -51,6 +51,10 @@ export function translateErrorToArabic(msg: string): string {
   // Name & Category & Course Info / Lesson Info
   if (normalized.includes('name has already been taken')) return 'الاسم مستخدم بالفعل.';
   if (normalized.includes('name field is required') || normalized.includes('name is required')) return 'الاسم مطلوب.';
+  if (normalized.includes('must be a string')) {
+    if (normalized.includes('name')) return 'اسم الفئة يجب أن يكون نصاً.';
+    return 'الحقل يجب أن يكون نصاً.';
+  }
   if (normalized.includes('title field is required') || normalized.includes('title is required')) {
     return 'العنوان مطلوب.';
   }
@@ -94,6 +98,39 @@ export function translateErrorToArabic(msg: string): string {
   if (normalized.includes('server error')) return 'حدث خطأ في الخادم.';
 
   return msg;
+}
+
+export function getErrorMessage(error: any, defaultMsg: string = 'حدث خطأ ما'): string {
+  if (!error) return defaultMsg;
+
+  // 1. Check for validation errors in error.errors
+  if (error.errors && typeof error.errors === 'object') {
+    const errObj = error.errors as Record<string, string | string[]>;
+    const getFirst = (v: string | string[]) => (Array.isArray(v) ? v[0] : v) || '';
+    const allMsgs = Object.values(errObj)
+      .map((v) => translateErrorToArabic(getFirst(v)))
+      .filter(Boolean);
+
+    if (allMsgs.length > 0) {
+      return allMsgs.join('\n');
+    }
+  }
+
+  // 2. Check for message on error object or nested error
+  if (error.message && typeof error.message === 'string') {
+    if (error.message.toLowerCase().includes('validation errors detected') && error.errors) {
+      const errObj = error.errors as Record<string, any>;
+      const msgs = Object.values(errObj).flat().map((m) => translateErrorToArabic(String(m))).filter(Boolean);
+      if (msgs.length > 0) return msgs.join('\n');
+    }
+    return translateErrorToArabic(error.message);
+  }
+
+  if (typeof error === 'string') {
+    return translateErrorToArabic(error);
+  }
+
+  return defaultMsg;
 }
 
 
