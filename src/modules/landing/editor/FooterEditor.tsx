@@ -2,13 +2,15 @@ import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { useLandingStore } from '../store/landingStore';
 
+import { getTemplateDefaultContent } from '../constants/defaultContent';
+
 export default function FooterEditor() {
-  const content = useLandingStore(state => state.content);
+  const storeContent = useLandingStore(state => state.content);
   const updateSectionContent = useLandingStore(state => state.updateSectionContent);
 
-  if (!content || !content.footer) return null;
-
-  const data = content.footer;
+  const defaultContent = getTemplateDefaultContent(null, 'template_1');
+  const data = storeContent?.footer || defaultContent.footer;
+  const links = Array.isArray(data.links) ? data.links : [];
 
   const handleChange = (field: string, value: any) => {
     updateSectionContent('footer', { [field]: value });
@@ -64,7 +66,7 @@ export default function FooterEditor() {
           </div>
 
           <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
-            {data.links.map((link, idx) => (
+            {links.map((link, idx) => (
               <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col gap-2 relative">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] text-slate-400 font-bold">رابط #{idx + 1}</span>

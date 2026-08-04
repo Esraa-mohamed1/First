@@ -80,6 +80,16 @@ export const getCourse = async (id: number | string): Promise<Course> => {
   }
 };
 
+export const getChaptersByCourse = async (courseId: number | string): Promise<any[]> => {
+  try {
+    const response = await academyApi.get<ApiResponse<any[]>>(`chapters?course_id=${courseId}`);
+    return response.data.data || [];
+  } catch (error: any) {
+    console.error('Failed to get chapters:', error);
+    return [];
+  }
+};
+
 export const createUnit = async (payload: CreateUnitPayload): Promise<Unit> => {
   try {
     const response = await academyApi.post<ApiResponse<Unit>>('chapters', payload);

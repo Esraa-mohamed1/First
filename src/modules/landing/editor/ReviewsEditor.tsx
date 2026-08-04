@@ -2,16 +2,17 @@ import React from 'react';
 import { Plus, Trash2, Star, Upload, MessageSquare, Image as ImageIcon, User } from 'lucide-react';
 import { useLandingStore } from '../store/landingStore';
 
+import { getTemplateDefaultContent } from '../constants/defaultContent';
+
 export default function ReviewsEditor() {
-  const content = useLandingStore(state => state.content);
+  const storeContent = useLandingStore(state => state.content);
   const updateSectionContent = useLandingStore(state => state.updateSectionContent);
 
-  if (!content || !content.reviews) return null;
-
-  const data = content.reviews;
+  const defaultContent = getTemplateDefaultContent(null, 'template_1');
+  const data = storeContent?.reviews || defaultContent.reviews;
   const reviewType = data.reviewType || 'carousel';
-  const screenshots = data.screenshots || [];
-  const items = data.items || [];
+  const screenshots = Array.isArray(data.screenshots) ? data.screenshots : [];
+  const items = Array.isArray(data.items) ? data.items : [];
 
   const handleChange = (field: string, value: any) => {
     updateSectionContent('reviews', { [field]: value });

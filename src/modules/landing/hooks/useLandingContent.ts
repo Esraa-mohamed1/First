@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getCourse } from '@/services/courses';
+import { getCourse, getChaptersByCourse } from '@/services/courses';
 import { getStudentCourse } from '@/services/student-courses';
 import { getLandingPageByCourseSlug, getStudentLandingPageByCourseSlug, getLandingPagesList } from '../services/landing.api';
 import { useLandingStore } from '../store/landingStore';
@@ -116,11 +116,12 @@ export function useLandingContent(options: { courseId?: string | number; courseS
 
           if (found) {
             landingPage = found;
-            // Attempt to fetch real course, fallback to stored course data
+            // Attempt to fetch real course + chapters, fallback to stored course data
             try {
               course = await getCourse(String(found.course_id));
-              if (course && course.chapters && !course.units) {
-                course.units = course.chapters;
+              if (course) {
+                const chapters = await getChaptersByCourse(course.id);
+                course.units = chapters.length > 0 ? chapters : (course.chapters || course.units || []);
               }
             } catch (e) {
               course = found.courseData;
@@ -135,8 +136,10 @@ export function useLandingContent(options: { courseId?: string | number; courseS
             // Wait, if it's mock ID (e.g. non-numeric during page init), handle it gracefully
             try {
               course = await getCourse(courseIdStr);
-              if (course && course.chapters && !course.units) {
-                course.units = course.chapters;
+              if (course) {
+                // Fetch chapters separately from the dedicated endpoint
+                const chapters = await getChaptersByCourse(course.id);
+                course.units = chapters.length > 0 ? chapters : (course.chapters || course.units || []);
               }
             } catch (e) {
               console.error('Failed to get real course, using mock:', e);
@@ -170,8 +173,9 @@ export function useLandingContent(options: { courseId?: string | number; courseS
           } else if (options.courseSlug) {
             // Public Student view mode
             course = await getStudentCourse(options.courseSlug);
-            if (course && course.chapters && !course.units) {
-              course.units = course.chapters;
+            if (course) {
+              const chapters = await getChaptersByCourse(course.id);
+              course.units = chapters.length > 0 ? chapters : (course.chapters || course.units || []);
             }
             if (course && course.slug) {
               landingPage = await getStudentLandingPageByCourseSlug(course.slug, course.id);

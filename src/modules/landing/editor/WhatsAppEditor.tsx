@@ -1,13 +1,14 @@
 import React from 'react';
 import { useLandingStore } from '../store/landingStore';
 
+import { getTemplateDefaultContent } from '../constants/defaultContent';
+
 export default function WhatsAppEditor() {
-  const content = useLandingStore(state => state.content);
+  const storeContent = useLandingStore(state => state.content);
   const updateSectionContent = useLandingStore(state => state.updateSectionContent);
 
-  if (!content || !content.whatsapp) return null;
-
-  const data = content.whatsapp;
+  const defaultContent = getTemplateDefaultContent(null, 'template_1');
+  const data = storeContent?.whatsapp || defaultContent.whatsapp;
 
   const handleChange = (field: string, value: any) => {
     updateSectionContent('whatsapp', { [field]: value });

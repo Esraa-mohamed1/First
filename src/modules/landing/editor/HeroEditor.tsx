@@ -1,13 +1,14 @@
 import React from 'react';
 import { useLandingStore } from '../store/landingStore';
 
+import { getTemplateDefaultContent } from '../constants/defaultContent';
+
 export default function HeroEditor() {
-  const content = useLandingStore(state => state.content);
+  const storeContent = useLandingStore(state => state.content);
   const updateSectionContent = useLandingStore(state => state.updateSectionContent);
 
-  if (!content || !content.hero) return null;
-
-  const data = content.hero;
+  const defaultContent = getTemplateDefaultContent(null, 'template_1');
+  const data = storeContent?.hero || defaultContent.hero;
 
   const handleChange = (field: string, value: any) => {
     updateSectionContent('hero', { [field]: value });

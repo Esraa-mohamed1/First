@@ -1,5 +1,324 @@
 {
-  "templateId": "الصفحة الرئيسية",
-  "sections": [],
-  "updatedAt": "2026-08-04T09:12:26.772Z"
+  "templateId": "template_1",
+  "sections": [
+    {
+      "id": 1,
+      "pages_id": 2,
+      "type": "navbar",
+      "order": 1,
+      "props": "{\"title\":\"درب\",\"show_search\":false,\"show_profile\":false,\"bg_color\":\"#ffffff\",\"border_color\":\"transparent\",\"is_landing_page\":true,\"order\":1}",
+      "items": [],
+      "created_at": "2026-08-04T09:26:35.000000Z",
+      "updated_at": "2026-08-04T09:26:35.000000Z"
+    },
+    {
+      "id": 2,
+      "pages_id": 2,
+      "type": "hero",
+      "order": 2,
+      "props": "{\"title\":\"ابدأ رحلتك في UI\\/UX واصنع تصاميم تخطف الانتباه من أول نظرة\",\"subtitle\":\"نتعلم خطوة بخطوة إزاي نصمم واجهات احترافية وفهم سلوك المستخدم بشكل عملي.\",\"button_text\":\"ابدأ الآن\",\"button_link\":\"#\",\"background_color\":\"#ffffff\",\"text_color\":\"#1f2937\",\"padding_top\":80,\"padding_bottom\":80,\"badge_text\":\"ابدأ رحلتك في UI\\/UX\",\"show_second_button\":true,\"second_button_text\":\"تصفح الدورات\",\"second_button_color\":\"#ffffff\",\"second_button_text_color\":\"#7c3aed\",\"hero_image\":\"\\/assets\\/ima.png\",\"hero_image_position\":\"right\",\"align\":\"right\",\"title_color\":\"#1f2937\",\"subtitle_color\":\"#4b5563\",\"button_color\":\"#7c3aed\",\"button_text_color\":\"#ffffff\",\"order\":2}",
+      "items": [],
+      "created_at": "2026-08-04T09:26:35.000000Z",
+      "updated_at": "2026-08-04T09:26:35.000000Z"
+    },
+    {
+      "id": 3,
+      "pages_id": 2,
+      "type": "hero",
+      "order": 3,
+      "props": "{\"title\":\"نبذة عني\",\"subtitle\":\"أكثر من 5 سنوات من الخبرة في مشاريع حقيقية مع شركات عالمية وناشئة، ساعدت مئات الطلاب على دخول سوق العمل وبناء مسيرة مهنية مستدامة في عالم التصميم الرقمي.\",\"button_text\":null,\"button_link\":\"#\",\"background_color\":\"#ffffff\",\"text_color\":\"#1f2937\",\"padding_top\":80,\"padding_bottom\":80,\"hero_image\":\"\\/assets\\/profile.png\",\"hero_image_position\":\"right\",\"align\":\"right\",\"title_color\":\"#1f2937\",\"subtitle_color\":\"#4b5563\",\"order\":3}",
+      "items": [],
+      "created_at": "2026-08-04T09:26:35.000000Z",
+      "updated_at": "2026-08-04T09:26:35.000000Z"
+    },
+    {
+      "id": 4,
+      "pages_id": 2,
+      "type": "features_section",
+      "order": 4,
+      "props": "{\"title\":\"ما يميز أكاديميتنا\",\"subtitle\":\"نقدم لك أفضل تجربة تعليمية متكاملة لضمان نجاحك وتفوقك المهني.\",\"background_color\":\"#ffffff\",\"text_color\":\"#1e293b\",\"padding_top\":64,\"padding_bottom\":64,\"grid_cols\":3,\"order\":4}",
+      "items": [
+        {
+          "id": 1,
+          "section_id": 4,
+          "order": 1,
+          "props": {
+            "icon": "PlayCircle",
+            "icon_color": "#7c3aed",
+            "title": "محتوى تعليمي تطبيقي",
+            "description": "دروس مسجلة بجودة عالية ومشاريع حقيقية تصممها بنفسك."
+          },
+          "created_at": "2026-08-04T09:26:35.000000Z",
+          "updated_at": "2026-08-04T09:26:35.000000Z"
+        },
+        {
+          "id": 2,
+          "section_id": 4,
+          "order": 2,
+          "props": {
+            "icon": "Users",
+            "icon_color": "#7c3aed",
+            "title": "دعم ومتابعة مستمرة",
+            "description": "تواصل مباشر مع المدربين للحصول على إجابات لاستفساراتك وتقييم أعمالك."
+          },
+          "created_at": "2026-08-04T09:26:35.000000Z",
+          "updated_at": "2026-08-04T09:26:35.000000Z"
+        },
+        {
+          "id": 3,
+          "section_id": 4,
+          "order": 3,
+          "props": {
+            "icon": "Award",
+            "icon_color": "#7c3aed",
+            "title": "شهادات إتمام معتمدة",
+            "description": "احصل على شهادة تثبت مهاراتك عند إتمامك لكافة المتطلبات والمشاريع."
+          },
+          "created_at": "2026-08-04T09:26:35.000000Z",
+          "updated_at": "2026-08-04T09:26:35.000000Z"
+        }
+      ],
+      "created_at": "2026-08-04T09:26:35.000000Z",
+      "updated_at": "2026-08-04T09:26:35.000000Z"
+    },
+    {
+      "id": 5,
+      "pages_id": 2,
+      "type": "kpi-cards",
+      "order": 5,
+      "props": "{\"title\":null,\"background_color\":\"#ffffff\",\"text_color\":\"#1f2937\",\"padding_top\":60,\"padding_bottom\":60,\"grid_cols\":\"3\",\"order\":5,\"cards\":[{\"id\":\"kpi-1\",\"title\":\"سنوات خبرة\",\"value\":\"+5\",\"change\":null,\"is_positive\":true,\"icon\":null,\"color\":\"#7c3aed\"},{\"id\":\"kpi-2\",\"title\":\"طالب\",\"value\":\"500+\",\"change\":null,\"is_positive\":true,\"icon\":null,\"color\":\"#7c3aed\"},{\"id\":\"kpi-3\",\"title\":\"مشروع مكتمل\",\"value\":\"100+\",\"change\":null,\"is_positive\":true,\"icon\":null,\"color\":\"#7c3aed\"}]}",
+      "items": [],
+      "created_at": "2026-08-04T09:26:35.000000Z",
+      "updated_at": "2026-08-04T09:26:35.000000Z"
+    },
+    {
+      "id": 6,
+      "pages_id": 2,
+      "type": "course-cards",
+      "order": 6,
+      "props": "{\"title\":\"الدورات المتاحة\",\"subtitle\":null,\"background_color\":\"#f4f4f5\",\"text_color\":\"#1f2937\",\"padding_top\":64,\"padding_bottom\":64,\"grid_cols\":\"3\",\"show_price\":true,\"show_students_count\":false,\"button_bg\":\"#7c3aed\",\"order\":6,\"courses\":[{\"id\":\"c1\",\"title\":\"أساسيات تصميم UI\\/UX\",\"instructor\":\"أ. عمرو البرلسي\",\"price\":\"٤٠٠ ريال\",\"students\":\"٨٧ طالب\",\"duration\":\"٨ ساعات\",\"image\":\"\\/assets\\/course3.jpg\",\"description\":\"تعلم مبادئ التصميم خطوة بخطوة وكيفية التعامل مع الألوان والخطوط لبناء واجهات سهلة الاستخدام ومحترفة.\"},{\"id\":\"c2\",\"title\":\"إتقان فيجما (FigJam)\",\"instructor\":\"أ. مصطفى عبد الصبور\",\"price\":\"٢٥٠ ريال\",\"students\":\"٣١٢ طالب\",\"duration\":\"١٥ ساعة\",\"image\":\"\\/assets\\/course1.png\",\"description\":\"تعلم كيفية استخدام أداة FigJam للعصف الذهني والتخطيط وتصميم خرائط تجربة المستخدم بشكل تعاوني وممتع.\"},{\"id\":\"c3\",\"title\":\"إتقان فيجما (FigJam)\",\"instructor\":\"أ. صهيب حسن\",\"price\":\"١٩٠ ريال\",\"students\":\"٢٤٣ طالب\",\"duration\":\"١٢ ساعة\",\"image\":\"\\/assets\\/course1.png\",\"description\":\"تعلم كيفية استخدام أداة FigJam للعصف الذهني والتخطيط وتصميم خرائط تجربة المستخدم بشكل تعاوني وممتع.\"}]}",
+      "items": [],
+      "created_at": "2026-08-04T09:26:35.000000Z",
+      "updated_at": "2026-08-04T09:26:35.000000Z"
+    },
+    {
+      "id": 7,
+      "pages_id": 2,
+      "type": "pricing_section",
+      "order": 7,
+      "props": "{\"title\":\"خطط الاشتراك والأسعار\",\"subtitle\":\"اختر الخطة المناسبة لك وابدأ التعلم وتطوير مهاراتك اليوم.\",\"background_color\":\"#ffffff\",\"text_color\":\"#1e293b\",\"padding_top\":64,\"padding_bottom\":64,\"order\":7}",
+      "items": [
+        {
+          "id": 4,
+          "section_id": 7,
+          "order": 1,
+          "props": {
+            "title": "الخطة الأساسية",
+            "price": "99$",
+            "duration": "شهرياً",
+            "features": [
+              "الوصول إلى الدورات الأساسية",
+              "دعم عبر البريد الإلكتروني",
+              "شهادة إتمام أساسية"
+            ],
+            "button_text": "اشترك الآن",
+            "button_link": "#",
+            "is_popular": false
+          },
+          "created_at": "2026-08-04T09:26:35.000000Z",
+          "updated_at": "2026-08-04T09:26:35.000000Z"
+        },
+        {
+          "id": 5,
+          "section_id": 7,
+          "order": 2,
+          "props": {
+            "title": "الخطة الاحترافية",
+            "price": "199$",
+            "duration": "شهرياً",
+            "features": [
+              "الوصول إلى جميع الدورات",
+              "دعم مباشر ومتابعة مخصصة",
+              "شهادة معتمدة ومشاريع عملية"
+            ],
+            "button_text": "اشترك الآن",
+            "button_link": "#",
+            "is_popular": true
+          },
+          "created_at": "2026-08-04T09:26:35.000000Z",
+          "updated_at": "2026-08-04T09:26:35.000000Z"
+        },
+        {
+          "id": 6,
+          "section_id": 7,
+          "order": 3,
+          "props": {
+            "title": "الخطة المتقدمة",
+            "price": "299$",
+            "duration": "شهرياً",
+            "features": [
+              "استشارات خاصة 1-on-1",
+              "مراجعة بورتفوليو مخصصة",
+              "أولوية دعم وتوظيف"
+            ],
+            "button_text": "اشترك الآن",
+            "button_link": "#",
+            "is_popular": false
+          },
+          "created_at": "2026-08-04T09:26:35.000000Z",
+          "updated_at": "2026-08-04T09:26:35.000000Z"
+        }
+      ],
+      "created_at": "2026-08-04T09:26:35.000000Z",
+      "updated_at": "2026-08-04T09:26:35.000000Z"
+    },
+    {
+      "id": 8,
+      "pages_id": 2,
+      "type": "testimonials_section",
+      "order": 8,
+      "props": "{\"title\":\"ماذا يقول طلابي ؟\",\"subtitle\":\"آراء حقيقية من طلابنا الذين بدأوا مسيرتهم المهنية في مجال تصميم واجهات المستخدم.\",\"background_color\":\"#ffffff\",\"text_color\":\"#1e293b\",\"padding_top\":64,\"padding_bottom\":64,\"order\":8}",
+      "items": [
+        {
+          "id": 7,
+          "section_id": 8,
+          "order": 1,
+          "props": {
+            "quote": "الدورات ممتازة وتطبيقية جداً، حصلت على أول عميل بعد أسبوعين فقط من إتمام الكورس.",
+            "author": "أحمد المنصوري",
+            "role": "مصمم UI/UX مستقل",
+            "rating": 5
+          },
+          "created_at": "2026-08-04T09:26:35.000000Z",
+          "updated_at": "2026-08-04T09:26:35.000000Z"
+        },
+        {
+          "id": 8,
+          "section_id": 8,
+          "order": 2,
+          "props": {
+            "quote": "أسلوب التدريس واضح ومنهجي، ساعدني على بناء مشروعي الخاص بثقة ومهارة عالية.",
+            "author": "سارة العمري",
+            "role": "مطورة ويب متقدمة",
+            "rating": 5
+          },
+          "created_at": "2026-08-04T09:26:35.000000Z",
+          "updated_at": "2026-08-04T09:26:35.000000Z"
+        },
+        {
+          "id": 9,
+          "section_id": 8,
+          "order": 3,
+          "props": {
+            "quote": "استطعت مضاعفة دخلي خلال 3 أشهر بعد التخصص في تصميم واجهات المستخدم.",
+            "author": "خالد الزهراني",
+            "role": "مصمم واجهات محترف",
+            "rating": 5
+          },
+          "created_at": "2026-08-04T09:26:35.000000Z",
+          "updated_at": "2026-08-04T09:26:35.000000Z"
+        }
+      ],
+      "created_at": "2026-08-04T09:26:35.000000Z",
+      "updated_at": "2026-08-04T09:26:35.000000Z"
+    },
+    {
+      "id": 9,
+      "pages_id": 2,
+      "type": "gallery_section",
+      "order": 9,
+      "props": "{\"title\":\"معرض أعمالي\",\"subtitle\":\"استعرض بعضاً من المشاريع والتصاميم التي قام طلابنا بتطويرها خلال التدريب الميداني والعملي.\",\"background_color\":\"#ffffff\",\"grid_cols\":3,\"image_aspect\":\"auto\",\"padding_top\":64,\"padding_bottom\":64,\"order\":9}",
+      "items": [
+        {
+          "id": 10,
+          "section_id": 9,
+          "order": 1,
+          "props": {
+            "image_url": "/assets/stats.jpg",
+            "caption": "تصميم تطبيق خدمات مالية"
+          },
+          "created_at": "2026-08-04T09:26:35.000000Z",
+          "updated_at": "2026-08-04T09:26:35.000000Z"
+        },
+        {
+          "id": 11,
+          "section_id": 9,
+          "order": 2,
+          "props": {
+            "image_url": "/assets/beniftsbg.png",
+            "caption": "تصميم موقع تجارة إلكترونية"
+          },
+          "created_at": "2026-08-04T09:26:35.000000Z",
+          "updated_at": "2026-08-04T09:26:35.000000Z"
+        },
+        {
+          "id": 12,
+          "section_id": 9,
+          "order": 3,
+          "props": {
+            "image_url": "/assets/paymentbg.jpg",
+            "caption": "تصميم تطبيق توصيل طلبات"
+          },
+          "created_at": "2026-08-04T09:26:35.000000Z",
+          "updated_at": "2026-08-04T09:26:35.000000Z"
+        }
+      ],
+      "created_at": "2026-08-04T09:26:35.000000Z",
+      "updated_at": "2026-08-04T09:26:35.000000Z"
+    },
+    {
+      "id": 10,
+      "pages_id": 2,
+      "type": "faq_section",
+      "order": 10,
+      "props": "{\"title\":\"الأسئلة الشائعة للطلاب\",\"subtitle\":\"إجابات على أسئلتك قبل التسجيل في برامجنا التدريبية.\",\"background_color\":\"#f8fafc\",\"text_color\":\"#1e293b\",\"padding_top\":64,\"padding_bottom\":64,\"order\":10}",
+      "items": [
+        {
+          "id": 13,
+          "section_id": 10,
+          "order": 1,
+          "props": {
+            "question": "كيف أستفيد من التدريب العملي؟",
+            "answer": "كل كورس يحتوي على مشاريع تطبيقية تبني من خلالها بورتفوليو قوي لعرضه على الشركات."
+          },
+          "created_at": "2026-08-04T09:26:35.000000Z",
+          "updated_at": "2026-08-04T09:26:35.000000Z"
+        },
+        {
+          "id": 14,
+          "section_id": 10,
+          "order": 2,
+          "props": {
+            "question": "هل الدورات مناسبة للمبتدئين؟",
+            "answer": "نعم، نبدأ معك من الصفر خطوة بخطوة حتى الاحتراف."
+          },
+          "created_at": "2026-08-04T09:26:35.000000Z",
+          "updated_at": "2026-08-04T09:26:35.000000Z"
+        }
+      ],
+      "created_at": "2026-08-04T09:26:35.000000Z",
+      "updated_at": "2026-08-04T09:26:35.000000Z"
+    },
+    {
+      "id": 11,
+      "pages_id": 2,
+      "type": "hero",
+      "order": 11,
+      "props": "{\"title\":\"هل أنت مستعد لبدء مسيرتك في التصميم؟\",\"subtitle\":\"اصنع مستقبلك اليوم وابدأ بتطوير مهاراتك خطوة بخطوة.\",\"button_text\":\"سجل الآن\",\"button_link\":\"#\",\"background_color\":\"#7c3aed\",\"text_color\":\"#1f2937\",\"padding_top\":64,\"padding_bottom\":64,\"align\":\"center\",\"title_color\":\"#ffffff\",\"subtitle_color\":\"#f3e8ff\",\"button_color\":\"#ffffff\",\"button_text_color\":\"#7c3aed\",\"show_second_button\":false,\"order\":11}",
+      "items": [],
+      "created_at": "2026-08-04T09:26:35.000000Z",
+      "updated_at": "2026-08-04T09:26:35.000000Z"
+    },
+    {
+      "id": 12,
+      "pages_id": 2,
+      "type": "footer",
+      "order": 12,
+      "props": "{\"copyright\":\"جميع الحقوق محفوظة\",\"logo_url\":null,\"logo_text\":\"د\",\"bg_color\":\"#ffffff\",\"text_color\":\"#1f2937\",\"show_logo\":true,\"show_socials\":true,\"order\":12}",
+      "items": [],
+      "created_at": "2026-08-04T09:26:35.000000Z",
+      "updated_at": "2026-08-04T09:26:35.000000Z"
+    }
+  ],
+  "updatedAt": "2026-08-04T10:00:59.966Z"
 }
