@@ -93,13 +93,12 @@ export default function AcademicLayout({
     router.push(`/auth/verification?contact=${encodeURIComponent(contact)}`);
   };
 
+  // On course create/edit pages, the course's own header acts as the main nav.
+  // Only match /academic/courses/create and /academic/courses/{numericId}[/...]
+  // so that list pages like /academic/courses/recorded still show the nav.
   const isCourseCreateOrEdit =
     pathname === '/academic/courses/create' ||
-    (pathname.startsWith('/academic/courses/') &&
-     pathname !== '/academic/courses' &&
-     !pathname.match(/\/courses\/.*\/student/));
-
-  const hideTopHeader = pathname.match(/\/courses\/.*\/student/) || isCourseCreateOrEdit;
+    /^\/academic\/courses\/\d+/.test(pathname);
 
   return (
     <div className="min-h-screen bg-[#F0F2F5] flex relative" dir="rtl">
@@ -118,9 +117,16 @@ export default function AcademicLayout({
       )}
 
       <main className={twMerge("flex-1 transition-all duration-300 w-full overflow-x-hidden", !pathname.match(/\/courses\/.*\/student/) && "lg:mr-72")}>
-        {!hideTopHeader && <Header onMenuClick={() => setIsSidebarOpen(true)} />}
+        {/* Hide the global profile header on create/edit course — the course header replaces it */}
+        {!pathname.match(/\/courses\/.*\/student/) && !isCourseCreateOrEdit && (
+          <Header onMenuClick={() => setIsSidebarOpen(true)} />
+        )}
         <div className={twMerge(
-          !pathname.match(/\/courses\/.*\/student/) ? (isCourseCreateOrEdit ? "p-0 max-w-[1800px] mx-auto" : "p-8 md:p-12 max-w-[1800px] mx-auto") : ""
+          !pathname.match(/\/courses\/.*\/student/)
+            ? isCourseCreateOrEdit
+              ? 'p-0 max-w-[1800px] mx-auto'
+              : 'p-8 md:p-12 max-w-[1800px] mx-auto'
+            : ''
         )}>
           {children}
         </div>

@@ -2305,7 +2305,7 @@ export default function CreateCourseClient() {
 
       {/* Template Preview Modal */}
       {previewTemplateId && (
-        <div className="fixed inset-0 z-55 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" dir="rtl">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" dir="rtl">
           <div 
             className="bg-white rounded-[2.5rem] w-full max-w-7xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
@@ -2407,8 +2407,8 @@ export default function CreateCourseClient() {
               </div>
 
               {/* Right Column: Live Interactive Preview (Flex fill) */}
-              <div className="flex-1 bg-slate-100 p-4 flex flex-col h-full overflow-hidden">
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200/50 overflow-hidden flex-1 flex flex-col relative h-full">
+              <div className="flex-1 bg-slate-100 p-4 flex flex-col min-h-[600px] overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200/50 overflow-hidden flex-1 flex flex-col relative" style={{ minHeight: 550 }}>
                   <div className="absolute inset-0 overflow-y-auto">
                     <LandingRenderer
                       courseId={courseId || undefined}
@@ -2425,7 +2425,7 @@ export default function CreateCourseClient() {
 
       {/* Creation Dialog Modal */}
       {isCreateLandingModalOpen && (
-        <div className="fixed inset-0 z-55 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-250" dir="rtl">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-250" dir="rtl">
           <div 
             className="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl p-8 border border-slate-100 animate-in zoom-in-95 duration-250 relative"
             onClick={(e) => e.stopPropagation()}

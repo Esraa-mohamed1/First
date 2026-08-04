@@ -1533,14 +1533,6 @@ export default function CourseDetailsPage() {
             </button>
             <button 
               type="button"
-              onClick={() => handleTabChange('pricing')}
-              className={`relative py-4 text-label-md font-bold whitespace-nowrap transition-colors ${activeTab === 'pricing' ? 'text-primary font-black' : 'text-on-surface-variant hover:text-primary'}`}
-            >
-              التسعير والتحصيل
-              {activeTab === 'pricing' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-t-full" />}
-            </button>
-            <button 
-              type="button"
               onClick={() => handleTabChange('landing_pages')}
               className={`relative py-4 text-label-md font-bold whitespace-nowrap transition-colors ${activeTab === 'landing_pages' ? 'text-primary font-black' : 'text-on-surface-variant hover:text-primary'}`}
             >
@@ -1957,6 +1949,219 @@ export default function CourseDetailsPage() {
               )}
             </section>
 
+            {/* Section 5: Pricing & Collection accounts */}
+            <section className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm overflow-hidden text-right space-y-6">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>payments</span>
+                <h3 className="font-title-md text-title-md text-gray-900">التسعير وطرق التحصيل</h3>
+              </div>
+
+              {/* Pricing Options */}
+              <div className="space-y-6">
+                <div className="flex bg-surface-container p-1 rounded-lg w-fit border border-gray-100">
+                  <button 
+                    type="button"
+                    onClick={() => setPricingType('free')}
+                    className={`px-8 py-2 rounded-md text-label-md font-bold transition-all ${pricingType === 'free' ? 'bg-white shadow-sm text-primary font-black' : 'text-on-surface-variant hover:text-gray-900'}`}
+                  >
+                    مجانية
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => setPricingType('paid')}
+                    className={`px-8 py-2 rounded-md text-label-md font-bold transition-all ${pricingType === 'paid' ? 'bg-white shadow-sm text-primary font-black' : 'text-on-surface-variant hover:text-gray-900'}`}
+                  >
+                    مدفوعة
+                  </button>
+                </div>
+                
+                {pricingType === 'paid' && (
+                  <div className="space-y-6 animate-in fade-in duration-300">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-label-md mb-2 text-gray-900">السعر الأساسي</label>
+                        <div className="relative">
+                          <input 
+                            type="number" 
+                            value={price}
+                            onChange={(e) => {
+                              setPrice(e.target.value);
+                              if (errors.price) setErrors(prev => ({ ...prev, price: null }));
+                            }}
+                            placeholder="0.00" 
+                            className={`w-full border ${errors.price ? 'border-red-500 bg-red-50/20' : 'border-outline-variant'} rounded-lg px-4 py-2 pl-12 text-sm font-bold text-gray-900 bg-white`} 
+                          />
+                          <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-on-surface-variant pointer-events-none font-bold text-xs">
+                            {currency}
+                          </div>
+                        </div>
+                        {errors.price && (
+                          <p className="text-red-500 text-xs font-bold mt-1 flex items-center gap-1">
+                            <X size={12} />
+                            {translateErrorToArabic(Array.isArray(errors.price) ? errors.price[0] : String(errors.price))}
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <label className="block text-label-md mb-2 text-gray-900">العملة</label>
+                        <select 
+                          value={currency} 
+                          onChange={(e) => setCurrency(e.target.value as any)}
+                          className="w-full border border-outline-variant rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary text-sm font-bold text-gray-900 bg-white outline-none"
+                        >
+                          <option value="SAR">SAR — ريال سعودي</option>
+                          <option value="EGP">EGP — جنيه مصري</option>
+                          <option value="USD">USD — دولار أمريكي</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Discount Toggle Switch */}
+                    <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-lg border border-outline-variant">
+                      <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-primary">sell</span>
+                        <div>
+                          <p className="text-label-md font-bold text-gray-900">تفعيل الخصم</p>
+                          <p className="text-label-sm text-on-surface-variant font-medium">حدد سعراً مخفضاً لفترة زمنية</p>
+                        </div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={isDiscounted}
+                          onChange={(e) => setIsDiscounted(e.target.checked)}
+                          className="sr-only peer" 
+                        />
+                        <div className="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                      </label>
+                    </div>
+
+                    {isDiscounted && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-300">
+                        <div>
+                          <label className="block text-label-md mb-2 text-gray-900">سعر الخصم</label>
+                          <div className="relative">
+                            <input 
+                              type="number" 
+                              value={discountPrice}
+                              onChange={(e) => setDiscountPrice(e.target.value)}
+                              placeholder="0.00" 
+                              className="w-full border border-outline-variant rounded-lg px-4 py-2 pl-12 text-sm font-bold text-gray-900 bg-white" 
+                            />
+                            <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-on-surface-variant pointer-events-none font-bold text-xs">
+                              {currency}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Collection Accounts */}
+              <div className="pt-6 border-t border-slate-100 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-base font-black text-gray-900">طرق التحصيل (وسائل الدفع)</h4>
+                    <p className="text-xs text-gray-400 font-bold mt-0.5">اختر وسائل الدفع التي تريد تفعيلها لهذه الدورة</p>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => router.push('/academic/finance/payment-settings')}
+                    className="text-xs font-bold text-primary hover:underline"
+                  >
+                    إدارة وسائل الدفع
+                  </button>
+                </div>
+
+                <PaymentMethodDropdown
+                  options={activeMethods}
+                  selectedValues={selectedPaymentMethods.map(m => m.methodId)}
+                  onChange={(ids) => {
+                    if (ids.length > 3) {
+                      MySwal.fire({
+                        title: 'الحد الأقصى لوسائل الدفع',
+                        text: 'يمكنك تحديد 3 وسائل دفع كحد أقصى لهذه الدورة.',
+                        icon: 'warning',
+                        confirmButtonText: 'حسناً',
+                        confirmButtonColor: '#2563eb',
+                      });
+                      return;
+                    }
+
+                    const newMethods = ids.map(id => {
+                      const existing = selectedPaymentMethods.find(m => m.methodId === id);
+                      if (existing) return existing;
+                      const method = activeMethods.find(m => m.id === id);
+                      if (!method) return null;
+                      const originalInfo = academyPaymentMethods.find(m => m.id.toString() === id);
+                      return {
+                        methodId: method.id,
+                        methodName: method.name,
+                        type: method.type,
+                        value: originalInfo?.accountValue || originalInfo?.account_value || '',
+                        currency: originalInfo?.currency || 'SAR',
+                        logo: method.logo || originalInfo?.logo
+                      };
+                    }).filter(Boolean) as AcademyPaymentMethod[];
+                    setSelectedPaymentMethods(newMethods);
+                    if (errors.receiver_accounts) setErrors(prev => ({ ...prev, receiver_accounts: null }));
+                  }}
+                />
+                {errors.receiver_accounts && (
+                  <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl p-3 mt-2">
+                    <X size={14} className="text-red-500 shrink-0" />
+                    <p className="text-red-600 text-xs font-bold">
+                      {translateErrorToArabic(Array.isArray(errors.receiver_accounts) ? errors.receiver_accounts[0] : String(errors.receiver_accounts || ''))}
+                    </p>
+                  </div>
+                )}
+
+                {selectedPaymentMethods.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                    {selectedPaymentMethods.map((pm) => (
+                      <div key={pm.methodId} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:border-primary/30 hover:shadow-lg transition-all duration-300 flex flex-col justify-between relative group/pm">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedPaymentMethods(prev => prev.filter(m => m.methodId !== pm.methodId));
+                          }}
+                          className="absolute top-4 left-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors shadow-sm bg-white border border-slate-100"
+                          title="إزالة وسيلة الدفع"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                        
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100/80 overflow-hidden shrink-0">
+                            {pm.logo ? (
+                              <img src={getLogoUrl(pm.logo)} alt={pm.methodName} className="w-full h-full object-cover" />
+                            ) : (
+                              <Landmark size={18} className="text-primary" />
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">الحساب المفعل</span>
+                            <span className="font-black text-slate-900 text-sm mt-0.5">{pm.methodName}</span>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 pt-3 border-t border-slate-50 flex flex-col gap-1 text-right">
+                          <span className="text-[10px] text-slate-400 font-bold block">رقم الحساب / المحفظة</span>
+                          <div className="flex items-center justify-between gap-3 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100/50 mt-1">
+                            <span className="font-mono text-xs text-slate-700 font-bold break-all select-all">{pm.value}</span>
+                            <span className="text-[9px] bg-blue-50 text-primary px-2 py-0.5 rounded font-black tracking-wider uppercase">{pm.currency}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+
             {/* Bottom tab buttons */}
             <div className="flex items-center justify-end gap-4 pt-4">
               <button 
@@ -2163,287 +2368,10 @@ export default function CourseDetailsPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('pricing')}
+                onClick={() => setActiveTab('landing_pages')}
                 className="px-12 py-3 bg-primary text-white font-black rounded-full shadow-lg shadow-blue-100 hover:brightness-110 transition-all text-sm"
               >
                 التالي
-              </button>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'pricing' && (
-          <div className="space-y-8 animate-in fade-in duration-300">
-            {/* Section 1: Pricing details */}
-            <section className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm overflow-hidden text-right">
-              <div className="flex items-center gap-2 mb-6">
-                <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>payments</span>
-                <h3 className="font-title-md text-title-md text-gray-900">التسعير</h3>
-              </div>
-              <div className="flex flex-col lg:flex-row gap-8">
-                <div className="flex-grow space-y-6">
-                  {/* Pricing segment options */}
-                  <div className="flex bg-surface-container p-1 rounded-lg w-fit border border-gray-100">
-                    <button 
-                      type="button"
-                      onClick={() => setPricingType('free')}
-                      className={`px-8 py-2 rounded-md text-label-md font-bold transition-all ${pricingType === 'free' ? 'bg-white shadow-sm text-primary font-black' : 'text-on-surface-variant hover:text-gray-900'}`}
-                    >
-                      مجانية
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => setPricingType('paid')}
-                      className={`px-8 py-2 rounded-md text-label-md font-bold transition-all ${pricingType === 'paid' ? 'bg-white shadow-sm text-primary font-black' : 'text-on-surface-variant hover:text-gray-900'}`}
-                    >
-                      مدفوعة
-                    </button>
-                  </div>
-                  
-                  {pricingType === 'paid' && (
-                    <div className="space-y-6 animate-in fade-in duration-300">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-label-md mb-2 text-gray-900">السعر الأساسي</label>
-                          <div className="relative">
-                            <input 
-                              type="number" 
-                              value={price}
-                              onChange={(e) => {
-                                setPrice(e.target.value);
-                                if (errors.price) setErrors(prev => ({ ...prev, price: null }));
-                              }}
-                              placeholder="0.00" 
-                              className={`w-full border ${errors.price ? 'border-red-500 bg-red-50/20' : 'border-outline-variant'} rounded-lg px-4 py-2 pl-12 text-sm font-bold text-gray-900 bg-white`} 
-                            />
-                            <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-on-surface-variant pointer-events-none font-bold text-xs">
-                              {currency}
-                            </div>
-                          </div>
-                          {errors.price && (
-                            <p className="text-red-500 text-xs font-bold mt-1 flex items-center gap-1">
-                              <X size={12} />
-                              {translateErrorToArabic(Array.isArray(errors.price) ? errors.price[0] : String(errors.price))}
-                            </p>
-                          )}
-                        </div>
-                        
-                        <div>
-                          <label className="block text-label-md mb-2 text-gray-900">العملة</label>
-                          <select 
-                            value={currency} 
-                            onChange={(e) => setCurrency(e.target.value as any)}
-                            className="w-full border border-outline-variant rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary text-sm font-bold text-gray-900 bg-white outline-none"
-                          >
-                            <option value="SAR">SAR — ريال سعودي</option>
-                            <option value="EGP">EGP — جنيه مصري</option>
-                            <option value="USD">USD — دولار أمريكي</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* Discount Toggle Switch */}
-                      <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-lg border border-outline-variant">
-                        <div className="flex items-center gap-3">
-                          <span className="material-symbols-outlined text-primary">sell</span>
-                          <div>
-                            <p className="text-label-md font-bold text-gray-900">تفعيل الخصم</p>
-                            <p className="text-label-sm text-on-surface-variant font-medium">حدد سعراً مخفضاً لفترة زمنية</p>
-                          </div>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            checked={isDiscounted}
-                            onChange={(e) => setIsDiscounted(e.target.checked)}
-                            className="sr-only peer" 
-                          />
-                          <div className="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                        </label>
-                      </div>
-
-                      {isDiscounted && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-300">
-                          <div>
-                            <label className="block text-label-md mb-2 text-gray-900">سعر الخصم</label>
-                            <input 
-                              type="number" 
-                              value={discountPrice}
-                              onChange={(e) => setDiscountPrice(e.target.value)}
-                              placeholder="0.00" 
-                              className="w-full border border-outline-variant rounded-lg px-4 py-2 text-sm font-bold text-gray-900 bg-white" 
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-label-md mb-2 text-gray-900">ينتهي في</label>
-                            <input 
-                              type="date" 
-                              value={discountEndDate}
-                              onChange={(e) => setDiscountEndDate(e.target.value)}
-                              className="w-full border border-outline-variant rounded-lg px-4 py-2 text-sm font-bold text-gray-900 bg-white" 
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Price Preview Card */}
-                {pricingType === 'paid' && (
-                  <div className="w-full lg:w-72 bg-surface-container rounded-xl p-6 border border-outline-variant flex flex-col items-center justify-center text-center shrink-0">
-                    <p className="text-label-sm text-on-surface-variant mb-2">معاينة السعر للمشترك</p>
-                    <div>
-                      {isDiscounted && parseFloat(discountPrice) > 0 ? (
-                        <div className="flex flex-col items-center">
-                          <span className="text-label-sm line-through text-on-surface-variant mb-1">{price || 0} {currency}</span>
-                          <h4 className="text-3xl font-bold text-secondary">{discountPrice} {currency}</h4>
-                        </div>
-                      ) : (
-                        <h4 className="text-3xl font-bold text-secondary">{price || 0} {currency}</h4>
-                      )}
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-outline-variant w-full">
-                      <div className="flex items-center justify-between text-label-sm text-on-surface-variant font-medium">
-                        <span>عمولة المنصة (5%)</span>
-                        <span>
-                          {(isDiscounted && parseFloat(discountPrice) > 0 ? (parseFloat(discountPrice) * 0.05).toFixed(2) : (parseFloat(price || '0') * 0.05).toFixed(2))} {currency}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-label-sm font-bold mt-1 text-gray-900">
-                        <span>صافي ربحك</span>
-                        <span>
-                          {(isDiscounted && parseFloat(discountPrice) > 0 ? (parseFloat(discountPrice) * 0.95).toFixed(2) : (parseFloat(price || '0') * 0.95).toFixed(2))} {currency}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* Section 2: Collection accounts */}
-            <section className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm text-right space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-black text-gray-900">طرق التحصيل (وسائل الدفع)</h3>
-                  <p className="text-xs text-gray-400 font-bold mt-1">اختر وسائل الدفع التي تريد تفعيلها لهذه الدورة</p>
-                </div>
-                <button 
-                  type="button"
-                  onClick={() => router.push('/academic/finance/payment-settings')}
-                  className="text-xs font-bold text-primary hover:underline"
-                >
-                  إدارة وسائل الدفع
-                </button>
-              </div>
-
-              <PaymentMethodDropdown
-                options={activeMethods}
-                selectedValues={selectedPaymentMethods.map(m => m.methodId)}
-                onChange={(ids) => {
-                  if (ids.length > 3) {
-                    MySwal.fire({
-                      title: 'الحد الأقصى لوسائل الدفع',
-                      text: 'يمكنك تحديد 3 وسائل دفع كحد أقصى لهذه الدورة.',
-                      icon: 'warning',
-                      confirmButtonText: 'حسناً',
-                      confirmButtonColor: '#2563eb',
-                    });
-                    return;
-                  }
-
-                  const newMethods = ids.map(id => {
-                    const existing = selectedPaymentMethods.find(m => m.methodId === id);
-                    if (existing) return existing;
-                    const method = activeMethods.find(m => m.id === id);
-                    if (!method) return null;
-                    const originalInfo = academyPaymentMethods.find(m => m.id.toString() === id);
-                    return {
-                      methodId: method.id,
-                      methodName: method.name,
-                      type: method.type,
-                      value: originalInfo?.accountValue || originalInfo?.account_value || '',
-                      currency: originalInfo?.currency || 'SAR',
-                      logo: method.logo || originalInfo?.logo
-                    };
-                  }).filter(Boolean) as AcademyPaymentMethod[];
-                  setSelectedPaymentMethods(newMethods);
-                  if (errors.receiver_accounts) setErrors(prev => ({ ...prev, receiver_accounts: null }));
-                }}
-              />
-              {errors.receiver_accounts && (
-                <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl p-3 mt-2">
-                  <X size={14} className="text-red-500 shrink-0" />
-                  <p className="text-red-600 text-xs font-bold">
-                    {translateErrorToArabic(Array.isArray(errors.receiver_accounts) ? errors.receiver_accounts[0] : String(errors.receiver_accounts || ''))}
-                  </p>
-                </div>
-              )}
-
-              {selectedPaymentMethods.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-top-2 duration-300">
-                  {selectedPaymentMethods.map((pm) => (
-                    <div key={pm.methodId} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:border-primary/30 hover:shadow-lg transition-all duration-300 flex flex-col justify-between relative group/pm">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedPaymentMethods(prev => prev.filter(m => m.methodId !== pm.methodId));
-                        }}
-                        className="absolute top-4 left-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors shadow-sm bg-white border border-slate-100"
-                        title="إزالة وسيلة الدفع"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                      
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100/80 overflow-hidden shrink-0">
-                          {pm.logo ? (
-                            <img src={getLogoUrl(pm.logo)} alt={pm.methodName} className="w-full h-full object-cover" />
-                          ) : (
-                            <Landmark size={18} className="text-primary" />
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">الحساب المفعل</span>
-                          <span className="font-black text-slate-900 text-sm mt-0.5">{pm.methodName}</span>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 pt-3 border-t border-slate-50 flex flex-col gap-1 text-right">
-                        <span className="text-[10px] text-slate-400 font-bold block">رقم الحساب / المحفظة</span>
-                        <div className="flex items-center justify-between gap-3 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100/50 mt-1">
-                          <span className="font-mono text-xs text-slate-700 font-bold break-all select-all">{pm.value}</span>
-                          <span className="text-[9px] bg-blue-50 text-primary px-2 py-0.5 rounded font-black tracking-wider uppercase">{pm.currency}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-
-
-
-            {/* Bottom action buttons */}
-            <div className="flex items-center justify-end gap-4 pt-6 border-t border-outline-variant mt-6">
-              <button
-                type="button"
-                onClick={() => setActiveTab('content')}
-                className="px-10 py-3 bg-gray-100 text-gray-600 font-black rounded-full hover:bg-gray-200 transition-all text-sm"
-              >
-                السابق
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  await handleSavePricing();
-                  setActiveTab('landing_pages');
-                }}
-                disabled={isSavingPricing}
-                className="px-12 py-3 bg-primary text-white font-black rounded-full shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all disabled:opacity-70 text-sm"
-              >
-                {isSavingPricing ? 'جاري الحفظ...' : 'حفظ والتالي'}
               </button>
             </div>
           </div>
