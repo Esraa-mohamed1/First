@@ -112,16 +112,16 @@ export default function TemplatesPage() {
       let pageId = '';
 
       if (existingPage) {
-        // Activate existing page by sending only is_active key
-        const updated = await updatePage(existingPage.id, { is_active: '1' });
+        // Activate existing page by sending is_active: 1
+        const updated = await updatePage(existingPage.id, { is_active: 1 });
         pageId = String(updated.id);
 
-        // Update pages state: set is_active = '1' for the activated page, and '0' for others
+        // Update pages state: set is_active = 1 for the activated page, and 0 for others
         setPages(prev => prev.map((p: any) => {
           if (String(p.id) === pageId) {
-            return { ...p, is_active: '1' };
+            return { ...p, is_active: 1 };
           }
-          return { ...p, is_active: '0' };
+          return { ...p, is_active: 0 };
         }));
 
         // Fetch sections of the existing page to sync to cache
@@ -139,15 +139,15 @@ export default function TemplatesPage() {
           slug: `home-${Date.now()}`,
           status: 'published',
           template: id,
-          is_active: '1'
+          is_active: 1
         };
         const created = await createPage(payload);
         pageId = String(created.id);
 
         // Update pages state: add new page and set others as inactive
         setPages(prev => [
-          { ...created, is_active: '1' },
-          ...prev.map((p: any) => ({ ...p, is_active: '0' }))
+          { ...created, is_active: 1 },
+          ...prev.map((p: any) => ({ ...p, is_active: 0 }))
         ]);
 
         // Sync default static template config to cache
@@ -799,7 +799,7 @@ export default function TemplatesPage() {
                       <span>جاري التفعيل...</span>
                     </>
                   ) : (
-                    <span>تفعيل القالب</span>
+                    <span>{pages.some((p: any) => p.title === previewTemplate.id) ? 'إعادة اختيار القالب' : 'اختيار القالب'}</span>
                   )}
                 </button>
               )}

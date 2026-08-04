@@ -99,28 +99,17 @@ export const clearPagesCache = () => {
   pagesPromise = null;
 };
 
-export const getPages = async (): Promise<any[]> => {
+export const getPages = async (forceRefresh = false): Promise<any[]> => {
   const now = Date.now();
-  if (pagesCache && now - pagesCache.timestamp < CACHE_TTL_MS) {
+  if (!forceRefresh && pagesCache && now - pagesCache.timestamp < CACHE_TTL_MS) {
     return pagesCache.data;
   }
-  if (pagesPromise) {
+  if (!forceRefresh && pagesPromise) {
     return pagesPromise;
   }
 
   pagesPromise = (async () => {
     try {
-      try {
-        const response = await academyApi.get<any>('/landing_pages');
-        const data = response.data?.data ?? response.data;
-        if (Array.isArray(data) && data.length > 0) {
-          pagesCache = { data, timestamp: Date.now() };
-          return data as any[];
-        }
-      } catch (error) {
-        console.warn('Failed to fetch /landing_pages, falling back to /pages:', error);
-      }
-
       const response = await academyApi.get<any>('/pages');
       const data = response.data?.data ?? response.data;
       const result = (Array.isArray(data) ? data : []) as any[];

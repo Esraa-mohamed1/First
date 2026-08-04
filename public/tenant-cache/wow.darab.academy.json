@@ -2,327 +2,230 @@
   "templateId": "template_2",
   "sections": [
     {
-      "id": "nav-t2",
+      "id": "13",
       "type": "navbar",
       "props": {
-        "title": "درب | Udemy",
-        "showSearch": true,
-        "showProfile": true,
+        "title": "درب",
+        "showSearch": false,
+        "showProfile": false,
         "bgColor": "#ffffff",
-        "borderColor": "#e2e8f0",
+        "borderColor": "transparent",
         "isLandingPage": true,
-        "order": 1
+        "order": 1,
+        "items": []
       }
     },
     {
-      "id": "hero-t2",
-      "type": "hero_section",
+      "id": "14",
+      "type": "hero",
       "props": {
-        "title": "تعلّم بلا حدود. طوّر مهاراتك.",
-        "subtitle": "انضم إلى ملايين المتعلمين من جميع أنحاء العالم واستكشف آلاف الدورات التدريبية المخصصة لتطوير مستقبلك المهني.",
-        "show_button": true,
-        "button_text": "ابدأ التعلم الآن",
-        "button_link": "#",
-        "background_color": "#F3F8FC",
-        "text_color": "#4b5563",
-        "title_color": "#0B2540",
-        "button_color": "#FF7A5C",
-        "button_text_color": "#ffffff",
-        "font_size": 44,
-        "font_weight": 800,
-        "padding_top": 80,
-        "padding_bottom": 80,
+        "title": "ابدأ رحلتك في UI/UX واصنع تصاميم تخطف الانتباه من أول نظرة",
+        "subtitle": "نتعلم خطوة بخطوة إزاي نصمم واجهات احترافية وفهم سلوك المستخدم بشكل عملي.",
+        "buttonText": "ابدأ الآن",
+        "buttonLink": "#",
+        "backgroundColor": "#ffffff",
+        "textColor": "#1f2937",
+        "paddingTop": 80,
+        "paddingBottom": 80,
+        "badgeText": "ابدأ رحلتك في UI/UX",
+        "showSecondButton": true,
+        "secondButtonText": "تصفح الدورات",
+        "secondButtonColor": "#ffffff",
+        "secondButtonTextColor": "#7c3aed",
+        "heroImage": "/assets/ima.png",
+        "heroImagePosition": "right",
         "align": "right",
-        "slider_speed": 4,
-        "show_arrows": true,
-        "show_card_overlay": true,
-        "items": [
-          {
-            "order": 1,
-            "props": {
-              "title": "تعلّم مهارات المستقبل بالسرعة التي تناسبك",
-              "subtitle": "اختر من بين آلاف الدورات التدريبية في البرمجة، التصميم، التسويق وغيرها من المجالات الأكثر طلباً في سوق العمل.",
-              "button_text": "استكشف الدورات",
-              "button_link": "#",
-              "bg_image": "",
-              "background_color": "#F3F8FC",
-              "button_color": "#0B2540",
-              "button_text_color": "#ffffff",
-              "title_color": "#0B2540",
-              "text_color": "#2d2f31",
-              "align": "right",
-              "show_card_overlay": true
-            }
-          },
-          {
-            "order": 2,
-            "props": {
-              "title": "احصل على تدريب عملي ومشاريع حقيقية",
-              "subtitle": "تعلم على أيدي خبراء ومحترفين يمارسون المهنة فعلياً، وابدأ في تطبيق ما تتعلمه مباشرة لبناء بورتفوليو متميز.",
-              "button_text": "تعرّف على المدربين",
-              "button_link": "#",
-              "bg_image": "",
-              "background_color": "#E6F1FA",
-              "button_color": "#FF7A5C",
-              "button_text_color": "#ffffff",
-              "title_color": "#0B2540",
-              "text_color": "#2d2f31",
-              "align": "right",
-              "show_card_overlay": true
-            }
-          }
-        ],
-        "order": 2
+        "titleColor": "#1f2937",
+        "subtitleColor": "#4b5563",
+        "buttonColor": "#7c3aed",
+        "buttonTextColor": "#ffffff",
+        "order": 2,
+        "items": []
       }
     },
     {
-      "id": "features-t2",
+      "id": "15",
+      "type": "hero",
+      "props": {
+        "title": "نبذة عني",
+        "subtitle": "أكثر من 5 سنوات من الخبرة في مشاريع حقيقية مع شركات عالمية وناشئة، ساعدت مئات الطلاب على دخول سوق العمل وبناء مسيرة مهنية مستدامة في عالم التصميم الرقمي.",
+        "buttonText": null,
+        "buttonLink": "#",
+        "backgroundColor": "#ffffff",
+        "textColor": "#1f2937",
+        "paddingTop": 80,
+        "paddingBottom": 80,
+        "heroImage": "/assets/profile.png",
+        "heroImagePosition": "right",
+        "align": "right",
+        "titleColor": "#1f2937",
+        "subtitleColor": "#4b5563",
+        "order": 3,
+        "items": []
+      }
+    },
+    {
+      "id": "16",
       "type": "features_section",
       "props": {
-        "title": "ما الذي يميز تجربة التعلم معنا؟",
-        "subtitle": "ميزات صُممت خصيصاً لمساعدتك على النجاح وتحقيق طموحك المهني",
+        "title": "ما يميز أكاديميتنا",
+        "subtitle": "نقدم لك أفضل تجربة تعليمية متكاملة لضمان نجاحك وتفوقك المهني.",
         "background_color": "#ffffff",
-        "text_color": "#1c1d1f",
+        "text_color": "#1e293b",
+        "padding_top": 64,
+        "padding_bottom": 64,
         "grid_cols": 3,
-        "padding_top": 60,
-        "padding_bottom": 60,
+        "order": 4,
         "items": [
           {
-            "id": "feat-t2-1",
+            "id": "15",
             "order": 1,
             "props": {
               "icon": "PlayCircle",
-              "icon_color": "#2FA8E0",
-              "title": "دروس مرنة وعالية الجودة",
-              "description": "شاهد دروس الفيديو المسجلة بدقة عالية على أي جهاز في أي وقت."
+              "icon_color": "#7c3aed",
+              "title": "محتوى تعليمي تطبيقي",
+              "description": "دروس مسجلة بجودة عالية ومشاريع حقيقية تصممها بنفسك."
             }
           },
           {
-            "id": "feat-t2-2",
+            "id": "16",
             "order": 2,
             "props": {
               "icon": "Users",
-              "icon_color": "#2FA8E0",
-              "title": "تعلم من خبراء الصناعة",
-              "description": "تفاعل مع مدربين ذوي خبرة وتلقى إجابات عن كل أسئلتك مباشرة."
+              "icon_color": "#7c3aed",
+              "title": "دعم ومتابعة مستمرة",
+              "description": "تواصل مباشر مع المدربين للحصول على إجابات لاستفساراتك وتقييم أعمالك."
             }
           },
           {
-            "id": "feat-t2-3",
+            "id": "17",
             "order": 3,
             "props": {
               "icon": "Award",
-              "icon_color": "#2FA8E0",
-              "title": "شهادات إتمام لمسيرتك",
-              "description": "عزز سيرتك الذاتية بشهادات معتمدة عند إتمامك لأي مسار تدريبي."
+              "icon_color": "#7c3aed",
+              "title": "شهادات إتمام معتمدة",
+              "description": "احصل على شهادة تثبت مهاراتك عند إتمامك لكافة المتطلبات والمشاريع."
             }
           }
-        ],
-        "order": 3
+        ]
       }
     },
     {
-      "id": "categories-t2",
-      "type": "categories_section",
+      "id": "17",
+      "type": "kpi-cards",
       "props": {
-        "title": "تصفح المجالات الأكثر طلباً",
-        "subtitle": "اختر التخصص الذي تبحث عنه وابدأ رحلتك التعلّمية اليوم",
-        "background_color": "#f7f9fa",
-        "text_color": "#1c1d1f",
-        "grid_cols": 3,
-        "padding_top": 60,
-        "padding_bottom": 60,
-        "items": [
+        "title": null,
+        "backgroundColor": "#ffffff",
+        "textColor": "#1f2937",
+        "paddingTop": 60,
+        "paddingBottom": 60,
+        "gridCols": "3",
+        "order": 5,
+        "cards": [
           {
-            "id": "cat-t2-1",
-            "order": 1,
-            "props": {
-              "name": "تطوير وبرمجة الويب",
-              "icon": "Code",
-              "count": "24",
-              "description": "HTML, CSS, JavaScript, React, Node.js, databases"
-            }
+            "id": "kpi-1",
+            "title": "سنوات خبرة",
+            "value": "+5",
+            "change": null,
+            "isPositive": true,
+            "icon": null,
+            "color": "#7c3aed"
           },
           {
-            "id": "cat-t2-2",
-            "order": 2,
-            "props": {
-              "name": "تصميم واجهات المستخدم UI/UX",
-              "icon": "Sparkles",
-              "count": "14",
-              "description": "Figma, design systems, wireframing, usability testing"
-            }
+            "id": "kpi-2",
+            "title": "طالب",
+            "value": "500+",
+            "change": null,
+            "isPositive": true,
+            "icon": null,
+            "color": "#7c3aed"
           },
           {
-            "id": "cat-t2-3",
-            "order": 3,
-            "props": {
-              "name": "إدارة الأعمال والتسويق",
-              "icon": "TrendingUp",
-              "count": "18",
-              "description": "SEO, digital advertising, content strategies"
-            }
+            "id": "kpi-3",
+            "title": "مشروع مكتمل",
+            "value": "100+",
+            "change": null,
+            "isPositive": true,
+            "icon": null,
+            "color": "#7c3aed"
           }
         ],
-        "order": 4
+        "items": []
       }
     },
     {
-      "id": "courses-t2",
+      "id": "18",
       "type": "course-cards",
       "props": {
-        "title": "ابدأ رحلة التعلم مع دوراتنا الأكثر مبيعاً",
+        "title": "الدورات المتاحة",
+        "subtitle": null,
+        "backgroundColor": "#f4f4f5",
+        "textColor": "#1f2937",
+        "paddingTop": 64,
+        "paddingBottom": 64,
         "gridCols": "3",
         "showPrice": true,
-        "showStudentsCount": true,
-        "buttonBg": "#2FA8E0",
-        "background_color": "#ffffff",
-        "padding_top": 60,
-        "padding_bottom": 60,
-        "order": 5,
+        "showStudentsCount": false,
+        "buttonBg": "#7c3aed",
+        "order": 6,
         "courses": [
           {
             "id": "c1",
-            "title": "تصميم واجهات المستخدم الشاملة من الصفر",
-            "instructor": "أ. مصطفى الشافعي",
-            "price": "٢٩٠ ريال",
-            "students": "٤٥٠ طالب",
-            "duration": "١٨ ساعة",
-            "image": "",
-            "description": "من أساسيات فيجما إلى تسليم المشاريع وبناء بورتفوليو قوي ومحترف."
+            "title": "أساسيات تصميم UI/UX",
+            "instructor": "أ. عمرو البرلسي",
+            "price": "٤٠٠ ريال",
+            "students": "٨٧ طالب",
+            "duration": "٨ ساعات",
+            "image": "/assets/course3.jpg",
+            "description": "تعلم مبادئ التصميم خطوة بخطوة وكيفية التعامل مع الألوان والخطوط لبناء واجهات سهلة الاستخدام ومحترفة."
           },
           {
             "id": "c2",
-            "title": "المرجع الكامل في تطوير الويب الحديث",
-            "instructor": "أ. مازن عبد العزيز",
-            "price": "٣٩٠ ريال",
-            "students": "٩١٠ طالب",
-            "duration": "٤٢ ساعة",
-            "image": "",
-            "description": "تعلم فرونت إند وباك إند وقم ببناء ١٠ تطبيقات حقيقية ونشرها."
+            "title": "إتقان فيجما (FigJam)",
+            "instructor": "أ. مصطفى عبد الصبور",
+            "price": "٢٥٠ ريال",
+            "students": "٣١٢ طالب",
+            "duration": "١٥ ساعة",
+            "image": "/assets/course1.png",
+            "description": "تعلم كيفية استخدام أداة FigJam للعصف الذهني والتخطيط وتصميم خرائط تجربة المستخدم بشكل تعاوني وممتع."
           },
           {
             "id": "c3",
-            "title": "التسويق الرقمي وبناء العلامات التجارية الشخصية",
-            "instructor": "أ. هند القاسم",
+            "title": "إتقان فيجما (FigJam)",
+            "instructor": "أ. صهيب حسن",
             "price": "١٩٠ ريال",
-            "students": "٣٢٠ طالب",
+            "students": "٢٤٣ طالب",
             "duration": "١٢ ساعة",
-            "image": "",
-            "description": "كيفية كتابة المحتوى، وإطلاق الحملات الممولة وتحليل نتائجها."
-          }
-        ]
-      }
-    },
-    {
-      "id": "testimonials-t2",
-      "type": "testimonials_section",
-      "props": {
-        "title": "ماذا يقول متعلمونا حول العالم؟",
-        "subtitle": "قصص نجاح واقعية لطلاب غيروا مسارهم المهني وبنوا مهارات جديدة",
-        "background_color": "#f7f9fa",
-        "text_color": "#1c1d1f",
-        "padding_top": 60,
-        "padding_bottom": 60,
-        "avatar_size": 40,
-        "avatar_shape": "circle",
-        "items": [
-          {
-            "id": "t-t2-1",
-            "order": 1,
-            "props": {
-              "quote": "الكورسات مبسطة وتطبيقية وتجيب عن جميع التساؤلات، حصلت على وظيفتي الأولى كمصمم بفضل هذه الدورة.",
-              "author": "رائد المطيري",
-              "role": "مصمم واجهات مستقل",
-              "rating": 5,
-              "avatar": ""
-            }
-          },
-          {
-            "id": "t-t2-2",
-            "order": 2,
-            "props": {
-              "quote": "كود نظيف ومنهجية واضحة جداً سهلت علي الدخول لعالم البرمجة بعد سنوات من التردد.",
-              "author": "عبير الجار الله",
-              "role": "مطور فرونت إند مبتدئ",
-              "rating": 5,
-              "avatar": ""
-            }
+            "image": "/assets/course1.png",
+            "description": "تعلم كيفية استخدام أداة FigJam للعصف الذهني والتخطيط وتصميم خرائط تجربة المستخدم بشكل تعاوني وممتع."
           }
         ],
-        "order": 6
+        "items": []
       }
     },
     {
-      "id": "metrics-t2",
-      "type": "kpi-cards",
-      "props": {
-        "gridCols": "4",
-        "backgroundColor": "#f7f9fa",
-        "order": 8,
-        "cards": [
-          {
-            "id": "m-1",
-            "title": "اختر مسارك",
-            "value": "استكشاف",
-            "change": "",
-            "isPositive": true,
-            "icon": "Compass",
-            "color": "#2FA8E0"
-          },
-          {
-            "id": "m-2",
-            "title": "سجل في الدورة",
-            "value": "تسجيل",
-            "change": "",
-            "isPositive": true,
-            "icon": "UserPlus",
-            "color": "#2FA8E0"
-          },
-          {
-            "id": "m-3",
-            "title": "شاهد وتعلم",
-            "value": "تعلم",
-            "change": "",
-            "isPositive": true,
-            "icon": "PlayCircle",
-            "color": "#2FA8E0"
-          },
-          {
-            "id": "m-4",
-            "title": "احصل على الشهادة",
-            "value": "تخرج",
-            "change": "",
-            "isPositive": true,
-            "icon": "Award",
-            "color": "#2FA8E0"
-          }
-        ]
-      }
-    },
-    {
-      "id": "cta-t2",
+      "id": "19",
       "type": "pricing_section",
       "props": {
-        "title": "قم بتعزيز مهاراتك اليوم مع منصتنا المتقدمة",
-        "subtitle": "آلاف الدورات في انتظارك، سجل الآن واحصل على وصول فوري لأفضل الموارد التعليمية.",
-        "background_color": "var(--t2-indigo)",
-        "text_color": "var(--t2-canvas)",
-        "padding_top": 80,
-        "padding_bottom": 80,
-        "order": 10,
+        "title": "خطط الاشتراك والأسعار",
+        "subtitle": "اختر الخطة المناسبة لك وابدأ التعلم وتطوير مهاراتك اليوم.",
+        "background_color": "#ffffff",
+        "text_color": "#1e293b",
+        "padding_top": 64,
+        "padding_bottom": 64,
+        "order": 7,
         "items": [
           {
-            "id": "p-t2-1",
+            "id": "18",
             "order": 1,
             "props": {
-              "title": "اشتراك شهري",
+              "title": "الخطة الأساسية",
               "price": "99$",
               "duration": "شهرياً",
               "features": [
-                "وصول كامل للدورات",
-                "شهادات معتمدة",
-                "دعم فني"
+                "الوصول إلى الدورات الأساسية",
+                "دعم عبر البريد الإلكتروني",
+                "شهادة إتمام أساسية"
               ],
               "button_text": "اشترك الآن",
               "button_link": "#",
@@ -330,38 +233,195 @@
             }
           },
           {
-            "id": "p-t2-2",
+            "id": "19",
             "order": 2,
             "props": {
-              "title": "اشتراك سنوي",
-              "price": "899$",
-              "duration": "سنوياً",
+              "title": "الخطة الاحترافية",
+              "price": "199$",
+              "duration": "شهرياً",
               "features": [
-                "كل ميزات الشهري",
-                "توفير 20%",
-                "جلسات إرشادية"
+                "الوصول إلى جميع الدورات",
+                "دعم مباشر ومتابعة مخصصة",
+                "شهادة معتمدة ومشاريع عملية"
               ],
               "button_text": "اشترك الآن",
               "button_link": "#",
               "is_popular": true
+            }
+          },
+          {
+            "id": "20",
+            "order": 3,
+            "props": {
+              "title": "الخطة المتقدمة",
+              "price": "299$",
+              "duration": "شهرياً",
+              "features": [
+                "استشارات خاصة 1-on-1",
+                "مراجعة بورتفوليو مخصصة",
+                "أولوية دعم وتوظيف"
+              ],
+              "button_text": "اشترك الآن",
+              "button_link": "#",
+              "is_popular": false
             }
           }
         ]
       }
     },
     {
-      "id": "footer-t2",
+      "id": "20",
+      "type": "testimonials_section",
+      "props": {
+        "title": "ماذا يقول طلابي ؟",
+        "subtitle": "آراء حقيقية من طلابنا الذين بدأوا مسيرتهم المهنية في مجال تصميم واجهات المستخدم.",
+        "background_color": "#ffffff",
+        "text_color": "#1e293b",
+        "padding_top": 64,
+        "padding_bottom": 64,
+        "order": 8,
+        "items": [
+          {
+            "id": "21",
+            "order": 1,
+            "props": {
+              "quote": "الدورات ممتازة وتطبيقية جداً، حصلت على أول عميل بعد أسبوعين فقط من إتمام الكورس.",
+              "author": "أحمد المنصوري",
+              "role": "مصمم UI/UX مستقل",
+              "rating": 5
+            }
+          },
+          {
+            "id": "22",
+            "order": 2,
+            "props": {
+              "quote": "أسلوب التدريس واضح ومنهجي، ساعدني على بناء مشروعي الخاص بثقة ومهارة عالية.",
+              "author": "سارة العمري",
+              "role": "مطورة ويب متقدمة",
+              "rating": 5
+            }
+          },
+          {
+            "id": "23",
+            "order": 3,
+            "props": {
+              "quote": "استطعت مضاعفة دخلي خلال 3 أشهر بعد التخصص في تصميم واجهات المستخدم.",
+              "author": "خالد الزهراني",
+              "role": "مصمم واجهات محترف",
+              "rating": 5
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "21",
+      "type": "gallery_section",
+      "props": {
+        "title": "معرض أعمالي",
+        "subtitle": "استعرض بعضاً من المشاريع والتصاميم التي قام طلابنا بتطويرها خلال التدريب الميداني والعملي.",
+        "background_color": "#ffffff",
+        "grid_cols": 3,
+        "image_aspect": "auto",
+        "padding_top": 64,
+        "padding_bottom": 64,
+        "order": 9,
+        "items": [
+          {
+            "id": "24",
+            "order": 1,
+            "props": {
+              "image_url": "/assets/stats.jpg",
+              "caption": "تصميم تطبيق خدمات مالية"
+            }
+          },
+          {
+            "id": "25",
+            "order": 2,
+            "props": {
+              "image_url": "/assets/beniftsbg.png",
+              "caption": "تصميم موقع تجارة إلكترونية"
+            }
+          },
+          {
+            "id": "26",
+            "order": 3,
+            "props": {
+              "image_url": "/assets/paymentbg.jpg",
+              "caption": "تصميم تطبيق توصيل طلبات"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "22",
+      "type": "faq_section",
+      "props": {
+        "title": "الأسئلة الشائعة للطلاب",
+        "subtitle": "إجابات على أسئلتك قبل التسجيل في برامجنا التدريبية.",
+        "background_color": "#f8fafc",
+        "text_color": "#1e293b",
+        "padding_top": 64,
+        "padding_bottom": 64,
+        "order": 10,
+        "items": [
+          {
+            "id": "27",
+            "order": 1,
+            "props": {
+              "question": "كيف أستفيد من التدريب العملي؟",
+              "answer": "كل كورس يحتوي على مشاريع تطبيقية تبني من خلالها بورتفوليو قوي لعرضه على الشركات."
+            }
+          },
+          {
+            "id": "28",
+            "order": 2,
+            "props": {
+              "question": "هل الدورات مناسبة للمبتدئين؟",
+              "answer": "نعم، نبدأ معك من الصفر خطوة بخطوة حتى الاحتراف."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "23",
+      "type": "hero",
+      "props": {
+        "title": "هل أنت مستعد لبدء مسيرتك في التصميم؟",
+        "subtitle": "اصنع مستقبلك اليوم وابدأ بتطوير مهاراتك خطوة بخطوة.",
+        "buttonText": "سجل الآن",
+        "buttonLink": "#",
+        "backgroundColor": "#7c3aed",
+        "textColor": "#1f2937",
+        "paddingTop": 64,
+        "paddingBottom": 64,
+        "align": "center",
+        "titleColor": "#ffffff",
+        "subtitleColor": "#f3e8ff",
+        "buttonColor": "#ffffff",
+        "buttonTextColor": "#7c3aed",
+        "showSecondButton": false,
+        "order": 11,
+        "items": []
+      }
+    },
+    {
+      "id": "24",
       "type": "footer",
       "props": {
-        "copyright": "جميع الحقوق محفوظة © درب ٢٠٢٦",
-        "logoText": "درب | المنصة",
-        "bgColor": "#0B2540",
-        "textColor": "#ffffff",
-        "showLogo": true,
-        "showSocials": true,
-        "order": 11
+        "copyright": "جميع الحقوق محفوظة",
+        "logo_url": null,
+        "logo_text": "د",
+        "bg_color": "#ffffff",
+        "text_color": "#1f2937",
+        "show_logo": true,
+        "show_socials": true,
+        "order": 12,
+        "items": []
       }
     }
   ],
-  "updatedAt": "2026-08-04T08:39:55.388Z"
+  "updatedAt": "2026-08-04T08:56:42.007Z"
 }

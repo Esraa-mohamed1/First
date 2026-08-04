@@ -155,10 +155,14 @@ export default function PageBuilderPage() {
       let activePageId = pageId;
 
       try {
-        const apiPages = await getPages();
+        const apiPages = await getPages(true);
         const TEMPLATE_SLUGS = ['academy-dashboard', 'template_1', 'template_2', 'template_3', 'template_4', 'template_courses_1'];
 
-        let activePage = apiPages.find((p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true');
+        // If pageId was passed explicitly, try to find that page first
+        let activePage = pageId !== '1' ? apiPages.find((p: any) => String(p.id) === pageId) : undefined;
+        if (!activePage) {
+          activePage = apiPages.find((p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true');
+        }
         if (!activePage) {
           const templatePages = apiPages.filter((p: any) => TEMPLATE_SLUGS.includes(p.title));
           activePage = templatePages.sort((a: any, b: any) => Number(b.id) - Number(a.id))[0];
