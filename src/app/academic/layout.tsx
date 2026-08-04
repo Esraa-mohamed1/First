@@ -93,10 +93,16 @@ export default function AcademicLayout({
     router.push(`/auth/verification?contact=${encodeURIComponent(contact)}`);
   };
 
+  const isCourseCreateOrEdit =
+    pathname === '/academic/courses/create' ||
+    (pathname.startsWith('/academic/courses/') &&
+     pathname !== '/academic/courses' &&
+     !pathname.match(/\/courses\/.*\/student/));
+
+  const hideTopHeader = pathname.match(/\/courses\/.*\/student/) || isCourseCreateOrEdit;
+
   return (
     <div className="min-h-screen bg-[#F0F2F5] flex relative" dir="rtl">
-
-
 
       {!pathname.match(/\/courses\/.*\/student/) && (
         <>
@@ -112,9 +118,9 @@ export default function AcademicLayout({
       )}
 
       <main className={twMerge("flex-1 transition-all duration-300 w-full overflow-x-hidden", !pathname.match(/\/courses\/.*\/student/) && "lg:mr-72")}>
-        {!pathname.match(/\/courses\/.*\/student/) && <Header onMenuClick={() => setIsSidebarOpen(true)} />}
+        {!hideTopHeader && <Header onMenuClick={() => setIsSidebarOpen(true)} />}
         <div className={twMerge(
-          !pathname.match(/\/courses\/.*\/student/) ? "p-8 md:p-12 max-w-[1800px] mx-auto" : ""
+          !pathname.match(/\/courses\/.*\/student/) ? (isCourseCreateOrEdit ? "p-0 max-w-[1800px] mx-auto" : "p-8 md:p-12 max-w-[1800px] mx-auto") : ""
         )}>
           {children}
         </div>

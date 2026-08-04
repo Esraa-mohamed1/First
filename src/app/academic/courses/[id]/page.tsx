@@ -3016,19 +3016,32 @@ export default function CourseDetailsPage() {
                 </div>
 
                 <div className="flex-grow overflow-y-auto">
-                  {activeSectionId === 'hero' && <HeroEditor />}
-                  {activeSectionId === 'learning' && <LearningEditor />}
-                  {activeSectionId === 'chapters' && <ChapterEditor />}
-                  {activeSectionId === 'payment' && <PaymentEditor />}
-                  {activeSectionId === 'faq' && <FAQEditor />}
-                  {activeSectionId === 'reviews' && <ReviewsEditor />}
-                  {activeSectionId === 'whatsapp' && <WhatsAppEditor />}
-                  {activeSectionId === 'footer' && <FooterEditor />}
-                  {!activeSectionId && (
-                    <div className="text-center py-16 text-slate-400 font-bold text-xs">
-                      👈 اختر قسماً من القائمة أعلاه أو انقر فوق زر "تعديل القسم" مباشرة لتعديل إعداداته هنا.
-                    </div>
-                  )}
+                  {(() => {
+                    const sec = (activeSectionId || '').toLowerCase().trim();
+                    const key = 
+                      ['hero', 'overview', 'intro', 'banner', 'header', 'main'].includes(sec) ? 'hero' :
+                      ['learning', 'features', 'benefits', 'outcomes', 'about'].includes(sec) ? 'learning' :
+                      ['chapters', 'curriculum', 'syllabus', 'content', 'modules', 'units'].includes(sec) ? 'chapters' :
+                      ['payment', 'pricing', 'packages', 'checkout'].includes(sec) ? 'payment' :
+                      ['faq', 'questions', 'help'].includes(sec) ? 'faq' :
+                      ['reviews', 'testimonials', 'ratings', 'students'].includes(sec) ? 'reviews' :
+                      ['whatsapp', 'contact', 'support', 'chat'].includes(sec) ? 'whatsapp' :
+                      ['footer', 'bottom'].includes(sec) ? 'footer' : (sec ? 'hero' : '');
+
+                    if (key === 'hero') return <HeroEditor />;
+                    if (key === 'learning') return <LearningEditor />;
+                    if (key === 'chapters') return <ChapterEditor />;
+                    if (key === 'payment') return <PaymentEditor />;
+                    if (key === 'faq') return <FAQEditor />;
+                    if (key === 'reviews') return <ReviewsEditor />;
+                    if (key === 'whatsapp') return <WhatsAppEditor />;
+                    if (key === 'footer') return <FooterEditor />;
+                    return (
+                      <div className="text-center py-16 text-slate-400 font-bold text-xs">
+                        👈 اختر قسماً من القائمة أعلاه أو انقر فوق زر "تعديل القسم" مباشرة لتعديل إعداداته هنا.
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 

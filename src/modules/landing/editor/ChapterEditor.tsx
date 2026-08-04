@@ -1,13 +1,14 @@
 import React from 'react';
 import { useLandingStore } from '../store/landingStore';
 
+import { getTemplateDefaultContent } from '../constants/defaultContent';
+
 export default function ChapterEditor() {
-  const content = useLandingStore(state => state.content);
+  const storeContent = useLandingStore(state => state.content);
   const updateSectionContent = useLandingStore(state => state.updateSectionContent);
 
-  if (!content || !content.chapters) return null;
-
-  const data = content.chapters;
+  const defaultContent = getTemplateDefaultContent(null, 'template_1');
+  const data = storeContent?.chapters || defaultContent.chapters;
 
   const handleChange = (field: string, value: any) => {
     updateSectionContent('chapters', { [field]: value });

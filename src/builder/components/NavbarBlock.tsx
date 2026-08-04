@@ -92,6 +92,14 @@ export default function NavbarBlock(props: NavbarBlockProps) {
         };
 
         const token = localStorage.getItem('token');
+        const cachedInfo = localStorage.getItem('darab_academy_profile');
+        if (cachedInfo) {
+          try {
+            setAcademyInfo(JSON.parse(cachedInfo));
+            return;
+          } catch (e) {}
+        }
+
         if (!token) return;
 
         headers['Authorization'] = `Bearer ${token}`;
@@ -357,6 +365,14 @@ export function FooterBlock(props: any) {
         };
 
         const token = localStorage.getItem('token');
+        const cachedFull = localStorage.getItem('darab_academy_profile_full');
+        if (cachedFull) {
+          try {
+            setProfile(JSON.parse(cachedFull));
+            return;
+          } catch (e) {}
+        }
+
         if (!token) return;
 
         headers['Authorization'] = `Bearer ${token}`;

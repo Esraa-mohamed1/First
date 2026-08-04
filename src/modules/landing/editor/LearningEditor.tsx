@@ -3,13 +3,15 @@ import { Plus, Trash2, Pen } from 'lucide-react';
 import { useLandingStore } from '../store/landingStore';
 import { LearningCard } from '../types/landing';
 
+import { getTemplateDefaultContent } from '../constants/defaultContent';
+
 export default function LearningEditor() {
-  const content = useLandingStore(state => state.content);
+  const storeContent = useLandingStore(state => state.content);
   const updateSectionContent = useLandingStore(state => state.updateSectionContent);
 
-  if (!content || !content.learning) return null;
-
-  const data = content.learning;
+  const defaultContent = getTemplateDefaultContent(null, 'template_1');
+  const data = storeContent?.learning || defaultContent.learning;
+  const cards = Array.isArray(data.cards) ? data.cards : [];
 
   const handleChange = (field: string, value: any) => {
     updateSectionContent('learning', { [field]: value });
@@ -82,7 +84,7 @@ export default function LearningEditor() {
           </div>
 
           <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-            {data.cards.map((card, idx) => (
+            {cards.map((card, idx) => (
               <div key={card.id || idx} className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col gap-2 relative">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] text-slate-400 font-bold">المنفعة #{idx + 1}</span>

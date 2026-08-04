@@ -1,13 +1,14 @@
 import React from 'react';
 import { useLandingStore } from '../store/landingStore';
 
+import { getTemplateDefaultContent } from '../constants/defaultContent';
+
 export default function PaymentEditor() {
-  const content = useLandingStore(state => state.content);
+  const storeContent = useLandingStore(state => state.content);
   const updateSectionContent = useLandingStore(state => state.updateSectionContent);
 
-  if (!content || !content.payment) return null;
-
-  const data = content.payment;
+  const defaultContent = getTemplateDefaultContent(null, 'template_1');
+  const data = storeContent?.payment || defaultContent.payment;
 
   const handleChange = (field: string, value: any) => {
     updateSectionContent('payment', { [field]: value });

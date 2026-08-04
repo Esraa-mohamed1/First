@@ -952,14 +952,6 @@ export default function CreateCourseClient() {
                 محتوى الدورة
               </button>
               <button
-                onClick={() => setActiveTab('pricing')}
-                className={`relative py-4 text-sm font-bold whitespace-nowrap transition-colors ${
-                  activeTab === 'pricing' ? 'text-blue-600 tab-active' : 'text-slate-500 hover:text-blue-600'
-                }`}
-              >
-                التسعير والتحصيل
-              </button>
-              <button
                 onClick={() => setActiveTab('landing_pages')}
                 className={`relative py-4 text-sm font-bold whitespace-nowrap transition-colors ${
                   activeTab === 'landing_pages' ? 'text-blue-600 tab-active' : 'text-slate-500 hover:text-blue-600'
@@ -1575,6 +1567,43 @@ export default function CreateCourseClient() {
                     </div>
                   )}
                 </section>
+
+                {/* Section 5: Payment Methods / Pricing */}
+                <section className="bg-white border border-slate-300 rounded-2xl p-7 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.07)] transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200">
+                      <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                        payments
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-slate-900">وسائل الدفع المقبولة والتسعير</h3>
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">حدد حسابات استلام الأموال لهذه الدورة التدريبية</p>
+                    </div>
+                  </div>
+
+                  <PaymentMethodDropdown
+                    options={activeMethods}
+                    selectedValues={selectedPaymentMethods.map((m) => m.methodId)}
+                    onChange={(ids) => {
+                      const newMethods = ids.map((id) => {
+                        const existing = selectedPaymentMethods.find((m) => m.methodId === id);
+                        if (existing) return existing;
+                        const method = activeMethods.find((m) => m.id === id);
+                        const originalInfo = academyPaymentMethods.find((m) => m.id.toString() === id);
+                        return {
+                          methodId: method?.id || id,
+                          methodName: method?.name || '',
+                          type: method?.type || 'account_number',
+                          value: originalInfo?.accountValue || originalInfo?.account_value || '',
+                          currency: originalInfo?.currency || 'SAR',
+                          logo: method?.logo,
+                        };
+                      });
+                      setSelectedPaymentMethods(newMethods);
+                    }}
+                  />
+                </section>
               </div>
             </div>
           )}
@@ -1894,38 +1923,7 @@ export default function CreateCourseClient() {
             </div>
           )}
 
-          {/* Tab 3: Marketing & Sales */}
-          {activeTab === 'pricing' && (
-            <div className="max-w-4xl space-y-6">
-              <div className="bg-white border border-slate-300 rounded-2xl p-7 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-6">
-                <div>
-                  <h3 className="text-xl font-bold text-slate-900">وسائل الدفع المقبولة</h3>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">حدد حسابات استلام الأموال لهذه الدورة التدريبية</p>
-                </div>
-                <PaymentMethodDropdown
-                  options={activeMethods}
-                  selectedValues={selectedPaymentMethods.map((m) => m.methodId)}
-                  onChange={(ids) => {
-                    const newMethods = ids.map((id) => {
-                      const existing = selectedPaymentMethods.find((m) => m.methodId === id);
-                      if (existing) return existing;
-                      const method = activeMethods.find((m) => m.id === id);
-                      const originalInfo = academyPaymentMethods.find((m) => m.id.toString() === id);
-                      return {
-                        methodId: method?.id || id,
-                        methodName: method?.name || '',
-                        type: method?.type || 'account_number',
-                        value: originalInfo?.accountValue || originalInfo?.account_value || '',
-                        currency: originalInfo?.currency || 'SAR',
-                        logo: method?.logo,
-                      };
-                    });
-                    setSelectedPaymentMethods(newMethods);
-                  }}
-                />
-              </div>
-            </div>
-          )}
+
 
           {/* Tab 3.5: Marketing & Sales (Landing Pages) */}
           {activeTab === 'landing_pages' && (
@@ -2379,19 +2377,32 @@ export default function CreateCourseClient() {
                 </div>
 
                 <div className="flex-grow overflow-y-auto">
-                  {activeSectionId === 'hero' && <HeroEditor />}
-                  {activeSectionId === 'learning' && <LearningEditor />}
-                  {activeSectionId === 'chapters' && <ChapterEditor />}
-                  {activeSectionId === 'payment' && <PaymentEditor />}
-                  {activeSectionId === 'faq' && <FAQEditor />}
-                  {activeSectionId === 'reviews' && <ReviewsEditor />}
-                  {activeSectionId === 'whatsapp' && <WhatsAppEditor />}
-                  {activeSectionId === 'footer' && <FooterEditor />}
-                  {!activeSectionId && (
-                    <div className="text-center py-16 text-slate-400 font-bold text-xs">
-                      👈 اختر قسماً من القائمة أعلاه أو انقر فوق زر "تعديل القسم" مباشرة لتعديل إعداداته هنا.
-                    </div>
-                  )}
+                  {(() => {
+                    const sec = (activeSectionId || '').toLowerCase().trim();
+                    const key = 
+                      ['hero', 'overview', 'intro', 'banner', 'header', 'main'].includes(sec) ? 'hero' :
+                      ['learning', 'features', 'benefits', 'outcomes', 'about'].includes(sec) ? 'learning' :
+                      ['chapters', 'curriculum', 'syllabus', 'content', 'modules', 'units'].includes(sec) ? 'chapters' :
+                      ['payment', 'pricing', 'packages', 'checkout'].includes(sec) ? 'payment' :
+                      ['faq', 'questions', 'help'].includes(sec) ? 'faq' :
+                      ['reviews', 'testimonials', 'ratings', 'students'].includes(sec) ? 'reviews' :
+                      ['whatsapp', 'contact', 'support', 'chat'].includes(sec) ? 'whatsapp' :
+                      ['footer', 'bottom'].includes(sec) ? 'footer' : (sec ? 'hero' : '');
+
+                    if (key === 'hero') return <HeroEditor />;
+                    if (key === 'learning') return <LearningEditor />;
+                    if (key === 'chapters') return <ChapterEditor />;
+                    if (key === 'payment') return <PaymentEditor />;
+                    if (key === 'faq') return <FAQEditor />;
+                    if (key === 'reviews') return <ReviewsEditor />;
+                    if (key === 'whatsapp') return <WhatsAppEditor />;
+                    if (key === 'footer') return <FooterEditor />;
+                    return (
+                      <div className="text-center py-16 text-slate-400 font-bold text-xs">
+                        👈 اختر قسماً من القائمة أعلاه أو انقر فوق زر "تعديل القسم" مباشرة لتعديل إعداداته هنا.
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 

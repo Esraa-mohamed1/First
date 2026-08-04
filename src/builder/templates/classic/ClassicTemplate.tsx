@@ -50,6 +50,14 @@ export function TenantFooter() {
         };
 
         const token = localStorage.getItem('token');
+        const cachedFull = localStorage.getItem('darab_academy_profile_full');
+        if (cachedFull) {
+          try {
+            setProfile(JSON.parse(cachedFull));
+            return;
+          } catch (e) {}
+        }
+
         if (!token) return;
 
         headers['Authorization'] = `Bearer ${token}`;
