@@ -99,28 +99,17 @@ export const clearPagesCache = () => {
   pagesPromise = null;
 };
 
-export const getPages = async (): Promise<any[]> => {
+export const getPages = async (forceRefresh = false): Promise<any[]> => {
   const now = Date.now();
-  if (pagesCache && now - pagesCache.timestamp < CACHE_TTL_MS) {
+  if (!forceRefresh && pagesCache && now - pagesCache.timestamp < CACHE_TTL_MS) {
     return pagesCache.data;
   }
-  if (pagesPromise) {
+  if (!forceRefresh && pagesPromise) {
     return pagesPromise;
   }
 
   pagesPromise = (async () => {
     try {
-      try {
-        const response = await academyApi.get<any>('/landing_pages');
-        const data = response.data?.data ?? response.data;
-        if (Array.isArray(data) && data.length > 0) {
-          pagesCache = { data, timestamp: Date.now() };
-          return data as any[];
-        }
-      } catch (error) {
-        console.warn('Failed to fetch /landing_pages, falling back to /pages:', error);
-      }
-
       const response = await academyApi.get<any>('/pages');
       const data = response.data?.data ?? response.data;
       const result = (Array.isArray(data) ? data : []) as any[];
@@ -141,20 +130,21 @@ export const getPages = async (): Promise<any[]> => {
 export const createPage = async (
   payload: CreatePagePayload
 ): Promise<CreatedPageResponse> => {
-  const formData = new URLSearchParams();
-  formData.append('title', payload.title);
-  formData.append('slug', payload.slug);
-  formData.append('status', payload.status);
+  clearPagesCache();
+  const body: Record<string, any> = {
+    title: payload.title,
+    slug: payload.slug,
+    status: payload.status,
+  };
   if (payload.template) {
-    formData.append('template', payload.template);
-    formData.append('template_id', payload.template);
+    body.template = payload.template;
+    body.template_id = payload.template;
   }
   if (payload.is_active !== undefined) {
-    formData.append('is_active', String(payload.is_active));
+    body.is_active = payload.is_active;
   }
 
-  clearPagesCache();
-  const response = await academyApi.post<any>('/pages', formData);
+  const response = await academyApi.post<any>('/pages', body);
   const data = response.data?.data ?? response.data;
   if (!data) throw new Error('No data returned from pages API');
   return data as CreatedPageResponse;
@@ -169,19 +159,19 @@ export const updatePage = async (
   payload: Partial<CreatePagePayload>
 ): Promise<CreatedPageResponse> => {
   clearPagesCache();
-  const formData = new URLSearchParams();
-  if (payload.title !== undefined) formData.append('title', payload.title);
-  if (payload.slug !== undefined) formData.append('slug', payload.slug);
-  if (payload.status !== undefined) formData.append('status', payload.status);
+  const body: Record<string, any> = {};
+  if (payload.title !== undefined) body.title = payload.title;
+  if (payload.slug !== undefined) body.slug = payload.slug;
+  if (payload.status !== undefined) body.status = payload.status;
   if (payload.template !== undefined) {
-    formData.append('template', payload.template);
-    formData.append('template_id', payload.template);
+    body.template = payload.template;
+    body.template_id = payload.template;
   }
   if (payload.is_active !== undefined) {
-    formData.append('is_active', String(payload.is_active));
+    body.is_active = payload.is_active;
   }
 
-  const response = await academyApi.put<any>(`/pages/${pageId}`, formData);
+  const response = await academyApi.put<any>(`/pages/${pageId}`, body);
   const data = response.data?.data ?? response.data;
   if (!data) throw new Error('No data returned from pages API');
   return data as CreatedPageResponse;

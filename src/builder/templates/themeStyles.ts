@@ -41,14 +41,14 @@ export const TEMPLATE_THEMES: Record<string, TemplateTheme> = {
     cardShape: 'classic',
   },
   'template_3': {
-    primaryColor: '#8b5cf6', // Creative Purple
-    primaryRgb: '139, 92, 246',
-    secondaryColor: '#7c3aed',
-    accentColor: '#581c87',
-    backgroundColor: '#FAF5FF',
-    textColor: '#1f2937',
-    fontFamily: 'Tajawal',
-    cardShape: 'leaf',
+    primaryColor: '#10b981', // Academic Emerald Green
+    primaryRgb: '16, 185, 129',
+    secondaryColor: '#0f172a', // Deep Slate
+    accentColor: '#6366f1', // Indigo Accent
+    backgroundColor: '#ffffff',
+    textColor: '#0f172a',
+    fontFamily: 'Cairo',
+    cardShape: 'classic',
   },
   'template_4': {
     primaryColor: '#0d9488', // Corporate Teal

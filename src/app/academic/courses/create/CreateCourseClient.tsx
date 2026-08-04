@@ -32,6 +32,7 @@ import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { createCourse, createUnit, getCategories, getCourse, updateCourse, createCategory } from '@/services/courses';
+import { getErrorMessage } from '@/lib/utils';
 import { getGrades, getTerms, getSubjects, getAcademicYears, ClassificationItem } from '@/services/academic-classification';
 import { getProfileStatus } from '@/services/auth';
 import { getUsers } from '@/services/users';
@@ -598,7 +599,7 @@ export default function CreateCourseClient() {
       }
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || 'حدث خطأ أثناء حفظ الدورة');
+      toast.error(getErrorMessage(error, 'حدث خطأ أثناء حفظ الدورة'));
       throw error;
     }
   };
@@ -819,13 +820,15 @@ export default function CreateCourseClient() {
   const handleCreateInlineCategory = async (payload: any) => {
     setIsSubmitting(true);
     try {
-      const newCat = await createCategory(payload);
+      const name = typeof payload === 'string' ? payload : payload?.name;
+      const isActive = typeof payload === 'object' && payload?.is_active !== undefined ? payload.is_active : 1;
+      const newCat = await createCategory(name, isActive);
       setCategories((prev) => [...prev, newCat]);
       setCategory(newCat.id.toString());
       setIsAddingCategory(false);
       toast.success('تم إضافة الفئة بنجاح');
     } catch (err: any) {
-      toast.error(err?.message || 'فشل إضافة الفئة');
+      toast.error(getErrorMessage(err, 'فشل إضافة الفئة'));
     } finally {
       setIsSubmitting(false);
     }

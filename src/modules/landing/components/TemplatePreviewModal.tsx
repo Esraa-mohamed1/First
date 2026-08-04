@@ -86,7 +86,7 @@ export default function TemplatePreviewModal({
       case 'template_2':
         return 'الافتراضي التفاعلي (مشغل فيديو وجداول دروس متقدمة)';
       case 'template_3':
-        return 'تجربة المستخدم UI/UX (قائمة جانبية وسعر ثابت ملتصق)';
+        return 'قالب الأكاديمية والتعلم المعتمد (تصميم أكاديمي شامل ومسارات معتمدة)';
       default:
         return id;
     }
