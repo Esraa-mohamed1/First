@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getCourses, getStats } from '@/services/courses';
-import { getUsers } from '@/services/users';
+import { getDashboard } from '@/services/courses';
 import { getMyUsageLimit } from '@/services/auth';
 
 export const useAcademicDashboard = () => {
@@ -21,15 +20,42 @@ export const useAcademicDashboard = () => {
   // Fetch data
   const fetchData = async () => {
     try {
-      const [coursesData, studentsData, statsData, usageResponse] = await Promise.all([
-        getCourses(undefined, undefined, undefined, 2),
-        getUsers('student', 5),
-        getStats().catch(() => null),
+      const [dashboardData, usageResponse] = await Promise.all([
+        getDashboard().catch(() => null),
         getMyUsageLimit().catch(() => null)
       ]);
-      setCourses(coursesData || []);
-      setStudents(studentsData || []);
-      setStats(statsData || null);
+
+      console.log('useAcademicDashboard: dashboardData fetched:', dashboardData);
+      if (dashboardData) {
+        // Extract courses from various potential response fields ensuring it is an array
+        const coursesData = Array.isArray(dashboardData.latest_courses)
+          ? dashboardData.latest_courses
+          : (Array.isArray(dashboardData.courses) ? dashboardData.courses : []);
+        setCourses(coursesData);
+
+        // Extract students/users from various potential response fields ensuring it is an array
+        const studentsData = Array.isArray(dashboardData.latest_users)
+          ? dashboardData.latest_users
+          : (Array.isArray(dashboardData.students) ? dashboardData.students : []);
+        setStudents(studentsData);
+
+        // Extract stats mapping to the exact structure from the /dashboard response
+        const statsData = {
+          total_revenue: dashboardData.total_sales?.total ?? dashboardData.total_revenue ?? dashboardData.stats?.total_revenue,
+          total_revenue_percentage: dashboardData.total_sales?.percentage,
+          active_students: dashboardData.new_students?.total ?? dashboardData.active_students ?? dashboardData.stats?.active_students,
+          active_students_percentage: dashboardData.new_students?.percentage,
+          published_courses: (dashboardData.courses && typeof dashboardData.courses === 'object' && !Array.isArray(dashboardData.courses))
+            ? dashboardData.courses.total
+            : (Array.isArray(dashboardData.courses) ? dashboardData.courses.length : (dashboardData.published_courses ?? dashboardData.stats?.published_courses)),
+          published_courses_percentage: dashboardData.courses?.percentage,
+          bags: dashboardData.bags?.total ?? dashboardData.stats?.bags,
+          bags_percentage: dashboardData.bags?.percentage,
+          instructors_count: dashboardData.instructors_count ?? dashboardData.stats?.instructors_count
+        };
+        console.log('useAcademicDashboard: mapped statsData:', statsData);
+        setStats(statsData);
+      }
       setUsageLimits(usageResponse?.data || (Array.isArray(usageResponse) ? usageResponse : []));
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
@@ -99,7 +125,7 @@ export const useAcademicDashboard = () => {
   const storageLimitObj = usageLimits.find((i: any) => i.feature_slug === 'storage_limit');
 
   const totalStudentsLimit = maxStudentsObj ? parseFloat(maxStudentsObj.total_limit || '5000') : 5000;
-  const usedStudents = students.length;
+  const usedStudents = maxStudentsObj ? parseFloat(maxStudentsObj.used_amount || '0') : (stats?.active_students || students.length || 0);
   const remainingStudents = Math.max(totalStudentsLimit - usedStudents, 0);
   const studentProgressPercent = totalStudentsLimit > 0 ? Math.min((usedStudents / totalStudentsLimit) * 100, 100) : 0;
 

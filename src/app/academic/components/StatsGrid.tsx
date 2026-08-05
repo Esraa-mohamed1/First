@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Wallet, Users, Eye, RotateCw } from 'lucide-react';
+import { Wallet, Users, ShoppingBag, RotateCw } from 'lucide-react';
 import StatCard from '@/components/Academic/StatsCard';
 
 interface StatsGridProps {
@@ -10,41 +10,46 @@ interface StatsGridProps {
 
 export const StatsGrid = ({ stats }: StatsGridProps) => {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-5">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-5">
       <StatCard
         title="اجمالي المبيعات"
-        value={stats?.total_revenue ? `${stats.total_revenue}$` : "40,689$"}
-        trend={{ value: 8.5, isPositive: true }}
+        value={stats?.total_revenue !== undefined ? `${stats.total_revenue}$` : "40,689$"}
+        trend={{ 
+          value: stats?.total_revenue_percentage !== undefined ? Math.abs(stats.total_revenue_percentage) : 8.5, 
+          isPositive: stats?.total_revenue_percentage !== undefined ? stats.total_revenue_percentage >= 0 : true 
+        }}
         icon={Wallet}
         color="purple"
       />
       <StatCard
         title="عدد الطلاب الجدد"
-        value={stats?.active_students ? String(stats.active_students) : "2,689"}
-        trend={{ value: 10.5, isPositive: true }}
+        value={stats?.active_students !== undefined ? String(stats.active_students) : "2,689"}
+        trend={{ 
+          value: stats?.active_students_percentage !== undefined ? Math.abs(stats.active_students_percentage) : 10.5, 
+          isPositive: stats?.active_students_percentage !== undefined ? stats.active_students_percentage >= 0 : true 
+        }}
         icon={Users}
         color="blue"
       />
       <StatCard
-        title="عدد الزيارات"
-        value="205"
-        trend={{ value: 8.5, isPositive: true }}
-        icon={Eye}
+        title="عدد الحقائب"
+        value={stats?.bags !== undefined ? String(stats.bags) : "1"}
+        trend={{ 
+          value: stats?.bags_percentage !== undefined ? Math.abs(stats.bags_percentage) : 0, 
+          isPositive: stats?.bags_percentage !== undefined ? stats.bags_percentage >= 0 : true 
+        }}
+        icon={ShoppingBag}
         color="orange"
       />
       <StatCard
         title="عدد الدورات"
-        value={stats?.published_courses ? String(stats.published_courses) : "1,436"}
-        trend={{ value: 2.6, isPositive: true }}
+        value={stats?.published_courses !== undefined ? String(stats.published_courses) : "1,436"}
+        trend={{ 
+          value: stats?.published_courses_percentage !== undefined ? Math.abs(stats.published_courses_percentage) : 2.6, 
+          isPositive: stats?.published_courses_percentage !== undefined ? stats.published_courses_percentage >= 0 : true 
+        }}
         icon={RotateCw}
         color="red"
-      />
-      <StatCard
-        title="الرصيد الحالي"
-        value="20,214"
-        trend={{ value: 2.6, isPositive: true }}
-        icon={Wallet}
-        color="green"
       />
     </div>
   );

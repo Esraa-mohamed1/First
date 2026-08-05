@@ -325,3 +325,15 @@ export const updateCourse = async (id: number, payload: any): Promise<Course> =>
     throw error.response?.data || error;
   }
 };
+
+export const getDashboard = async (): Promise<any> => {
+  try {
+    const response = await academyApi.get<any>('dashboard');
+    console.log('API getDashboard response.data:', response.data);
+    return response.data?.data !== undefined ? response.data.data : response.data;
+  } catch (error: any) {
+    console.error('Failed to get dashboard data:', error);
+    throw error.response?.data || error;
+  }
+};
+
