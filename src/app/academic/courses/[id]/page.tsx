@@ -1172,7 +1172,7 @@ export default function CourseDetailsPage() {
 
   const handleCopyCustomLink = (page: any) => {
     if (typeof window !== 'undefined') {
-      const link = `${window.location.origin}/user/courses/${page.slug || 'preview'}?lp_id=${page.id}`;
+      const link = `${window.location.origin}/${page.slug || 'preview'}?lp_id=${page.id}`;
       navigator.clipboard.writeText(link);
       toast.success('تم نسخ رابط صفحة البيع بنجاح!');
     }
@@ -1180,7 +1180,7 @@ export default function CourseDetailsPage() {
 
   const handleCopyDefaultLink = () => {
     if (typeof window !== 'undefined') {
-      const link = `${window.location.origin}/user/courses/${course?.slug || id}`;
+      const link = `${window.location.origin}/${course?.slug || id}`;
       navigator.clipboard.writeText(link);
       toast.success('تم نسخ رابط صفحة البيع الافتراضية بنجاح!');
     }
@@ -1406,7 +1406,7 @@ export default function CourseDetailsPage() {
               type="button"
               onClick={() => {
                 if (course?.slug) {
-                  router.push(`/user/courses/${course.slug}`);
+                  router.push(`/${course.slug}`);
                 } else {
                   router.push(`/academic/courses/${id}/student`);
                 }
@@ -1420,7 +1420,7 @@ export default function CourseDetailsPage() {
               type="button"
               onClick={() => {
                 if (typeof window !== 'undefined') {
-                  navigator.clipboard.writeText(`${window.location.origin}/user/courses/${course?.slug || id}`);
+                  navigator.clipboard.writeText(`${window.location.origin}/${course?.slug || id}`);
                   toast.success('تم نسخ رابط الدورة بنجاح!');
                 }
               }}
@@ -2675,7 +2675,7 @@ export default function CourseDetailsPage() {
                     <button 
                       type="button"
                       onClick={() => {
-                        window.open(`/user/courses/${course?.slug || id}`, '_blank');
+                        window.open(`/${course?.slug || id}`, '_blank');
                       }}
                       className="flex-1 lg:flex-none px-5 py-2.5 border border-primary text-primary rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary/5 transition-all cursor-pointer"
                     >
@@ -2780,7 +2780,7 @@ export default function CourseDetailsPage() {
                           <button 
                             type="button"
                             onClick={() => {
-                              window.open(`/user/courses/${page.slug || 'preview'}?lp_id=${page.id}`, '_blank');
+                              window.open(`/${page.slug || 'preview'}?lp_id=${page.id}`, '_blank');
                             }}
                             className="text-on-surface-variant hover:bg-slate-100 p-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center" 
                             title="معاينة كطالب"

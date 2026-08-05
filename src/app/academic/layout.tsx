@@ -34,7 +34,7 @@ export default function AcademicLayout({
           // Allow guest access to landing page, redirect only if trying to access academic routes
           if (typeof window !== 'undefined') {
             const path = window.location.pathname;
-            if (path.startsWith('/academic')) {
+            if (path.startsWith('/academic') && !path.includes('/student')) {
               router.push('/auth/login');
               return;
             }
@@ -65,7 +65,7 @@ export default function AcademicLayout({
         // Only redirect to login if not on guest landing page
         if (typeof window !== 'undefined') {
           const path = window.location.pathname;
-          if (path.startsWith('/academic')) {
+          if (path.startsWith('/academic') && !path.includes('/student')) {
             router.push('/auth/login');
           }
         }

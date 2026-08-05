@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { BuilderNode } from '@/builder/interfaces';
 import academyApi from '@/lib/academy-api';
+import api from '@/lib/api';
 
 // -----------------------------------------------------------------------
 // Types
@@ -123,6 +124,17 @@ export const getPages = async (forceRefresh = false): Promise<any[]> => {
   return pagesPromise;
 };
 
+export const getPublicPages = async (): Promise<any[]> => {
+  try {
+    const response = await api.get<any>('/pages');
+    const data = response.data?.data ?? response.data;
+    return (Array.isArray(data) ? data : []) as any[];
+  } catch (error) {
+    console.error('Failed to get public pages:', error);
+    return [];
+  }
+};
+
 // -----------------------------------------------------------------------
 // createPage
 // -----------------------------------------------------------------------
@@ -208,6 +220,21 @@ export const getSections = async (
   });
   const data = response.data?.data ?? response.data;
   return (Array.isArray(data) ? data : []) as ApiSection[];
+};
+
+export const getPublicSections = async (
+  pageId: string | number
+): Promise<ApiSection[]> => {
+  try {
+    const response = await api.get<any>(`/sections`, {
+      params: { page_id: pageId },
+    });
+    const data = response.data?.data ?? response.data;
+    return (Array.isArray(data) ? data : []) as ApiSection[];
+  } catch (error) {
+    console.error('Failed to get public sections:', error);
+    return [];
+  }
 };
 
 // -----------------------------------------------------------------------

@@ -327,7 +327,7 @@ export default function CoursesPage() {
                           onClick={(e) => {
                             e.stopPropagation();
                             if (course.slug) {
-                              navigator.clipboard.writeText(`${window.location.origin}/user/courses/${course.slug}`);
+                              navigator.clipboard.writeText(`${window.location.origin}/${course.slug}`);
                               toast.success('تم نسخ رابط الدورة بنجاح');
                             } else {
                               toast.error('لا يوجد رابط مخصص لهذه الدورة بعد');
