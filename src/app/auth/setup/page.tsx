@@ -19,12 +19,16 @@ export default function SetupPage() {
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [selectedField, setSelectedField] = useState('schoolteacher');
 
-  // Step 2: Country selection dropdown state
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [countrySearch, setCountrySearch] = useState('');
-
   // Local fallback country if selectedCountry is not initialized yet
   const activeCountry = selectedCountry || (countries && countries.length > 0 ? countries.find(c => c.isoCode === 'EG') || countries[0] : null);
+
+  // Find countries safely
+  const saudiCountry = countries?.find(c => c.isoCode === 'SA') || { name: 'المملكة العربية السعودية', isoCode: 'SA', flagUrl: 'https://flagcdn.com/w80/sa.png', flagEmoji: '🇸🇦', dialCode: '+966' };
+  const kuwaitCountry = {
+    ...(countries?.find(c => c.isoCode === 'KW') || { name: 'الكويت', isoCode: 'KW', flagEmoji: '🇰🇼', dialCode: '+965' }),
+    flagUrl: 'https://static.vecteezy.com/system/resources/previews/024/660/953/original/flag-of-kuwait-national-country-symbol-free-vector.jpg'
+  };
+  const egyptCountry = countries?.find(c => c.isoCode === 'EG') || { name: 'مصر', isoCode: 'EG', flagUrl: 'https://flagcdn.com/w80/eg.png', flagEmoji: '🇪🇬', dialCode: '+20' };
 
   // Form details
   const [academyName, setAcademyName] = useState('');
@@ -60,15 +64,10 @@ export default function SetupPage() {
     }
   };
 
-  const toggleDropdown = () => {
-    setDropdownOpen(prev => !prev);
-  };
-
   const handleCountrySelect = (c: Country) => {
     if (setSelectedCountry) {
       setSelectedCountry(c);
     }
-    setDropdownOpen(false);
   };
 
   const handleDomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -272,11 +271,6 @@ export default function SetupPage() {
     }
   };
 
-
-  const filteredCountries = (countries || []).filter(c =>
-    c.name.includes(countrySearch)
-  );
-
   const getProgLineWidth = () => {
     if (currentStep === 1) return '0%';
     if (currentStep === 2) return '50%';
@@ -331,6 +325,21 @@ export default function SetupPage() {
             ٣
           </div>
         </div>
+
+        {/* Back Button */}
+        {currentStep > 1 && (
+          <div className="w-full max-w-xl flex justify-start mb-6">
+            <button
+              onClick={() => goToStep(currentStep - 1)}
+              className="flex items-center gap-2 text-sm font-bold text-[#434655] hover:text-[#004ac6] transition-all bg-white py-2.5 px-4 rounded-xl border border-slate-200 hover:border-[#004ac6]/30 shadow-sm hover:shadow-md active:scale-95 duration-200 group"
+            >
+              <span className="material-symbols-outlined transition-transform duration-200 group-hover:translate-x-1 select-none">
+                arrow_forward
+              </span>
+              <span>الرجوع للخطوة السابقة</span>
+            </button>
+          </div>
+        )}
 
         {/* Step 1: Account Type */}
         {currentStep === 1 && (
@@ -428,55 +437,45 @@ export default function SetupPage() {
             </div>
 
             <div className="relative w-full space-y-6">
-              {/* Country Select Dropdown */}
-              <div className="relative w-full">
-                <div
-                  className="w-full bg-white border border-slate-300 p-4 rounded-xl flex items-center justify-between cursor-pointer hover:border-[#004ac6] transition-all"
-                  onClick={toggleDropdown}
-                >
-                  <div className="flex items-center gap-3">
-                    {activeCountry?.flagUrl ? (
-                      <img src={activeCountry.flagUrl} alt={activeCountry.name} className="w-7 h-5 object-cover rounded" />
-                    ) : (
-                      <span className="text-2xl">{activeCountry?.flagEmoji || '🇪🇬'}</span>
-                    )}
-                    <span className="text-base font-medium text-[#111827]">{activeCountry?.name || 'مصر'}</span>
-                  </div>
-                  <span className="material-symbols-outlined text-[#434655]">expand_more</span>
-                </div>
-
-                {dropdownOpen && (
-                  <div className="absolute top-full mt-2 w-full bg-white border border-[#E5E7EB] rounded-xl shadow-xl z-20 overflow-hidden">
-                    <div className="p-2">
-                      <div className="flex items-center px-3 py-2 bg-[#eef4ff] rounded-lg mb-2">
-                        <span className="material-symbols-outlined text-[#434655] ml-2">search</span>
-                        <input
-                          type="text"
-                          placeholder="بحث عن دولة..."
-                          value={countrySearch}
-                          onChange={e => setCountrySearch(e.target.value)}
-                          className="bg-transparent border-none focus:outline-none w-full text-sm text-[#111827]"
-                        />
+              {/* 3 Circular Country Selectors */}
+              <div className="flex justify-center items-center gap-6 sm:gap-10 py-4">
+                {[
+                  { id: 'EG', label: 'مصر', country: egyptCountry },
+                  { id: 'SA', label: 'السعودية', country: saudiCountry },
+                  { id: 'KW', label: 'الكويت', country: kuwaitCountry }
+                ].map(({ id, label, country }) => {
+                  const isSelected = activeCountry?.isoCode === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => handleCountrySelect(country)}
+                      className="flex flex-col items-center gap-3 group transition-all duration-300 focus:outline-none"
+                    >
+                      <div
+                        className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center border-4 overflow-hidden transition-all duration-300 shadow-sm relative ${
+                          isSelected
+                            ? 'border-[#004ac6] bg-[#eef4ff] scale-105 shadow-md shadow-[#004ac6]/15'
+                            : 'border-slate-200 bg-white hover:border-slate-300 hover:scale-102 hover:shadow-md'
+                        }`}
+                      >
+                        {country.flagUrl ? (
+                          <img
+                            src={id === 'KW' ? country.flagUrl : country.flagUrl.replace('/w40/', '/w80/')}
+                            alt={label}
+                            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border border-slate-100 shadow-inner"
+                          />
+                        ) : (
+                          <span className="text-3xl sm:text-4xl">{country.flagEmoji}</span>
+                        )}
+                        <div className={`absolute inset-0 rounded-full bg-[#004ac6]/5 transition-opacity duration-300 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
                       </div>
-                      <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                        {filteredCountries.map(c => (
-                          <div
-                            key={c.isoCode}
-                            onClick={() => handleCountrySelect(c)}
-                            className="flex items-center gap-3 p-3 hover:bg-[#eef4ff] rounded-lg cursor-pointer transition-colors"
-                          >
-                            {c.flagUrl ? (
-                              <img src={c.flagUrl} alt={c.name} className="w-6 h-4 object-cover rounded" />
-                            ) : (
-                              <span className="text-2xl">{c.flagEmoji}</span>
-                            )}
-                            <span className="text-sm font-medium text-[#111827]">{c.name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                      <span className={`text-sm font-bold transition-colors ${isSelected ? 'text-[#004ac6]' : 'text-[#434655] group-hover:text-[#111827]'}`}>
+                        {label}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Additional optional inputs if missing */}
