@@ -86,6 +86,17 @@ export const getLandingPagesList = async (): Promise<any[]> => {
   }
 };
 
+export const getStudentLandingPagesList = async (): Promise<any[]> => {
+  try {
+    const response = await studentApi.get('landing_pages');
+    const data = response.data?.data ?? response.data;
+    return Array.isArray(data) ? data : [];
+  } catch (error: any) {
+    console.error('Failed to fetch student landing pages list:', error);
+    return [];
+  }
+};
+
 export const deleteLandingPage = async (id: string | number): Promise<any> => {
   try {
     const response = await academyApi.delete(`landing_pages/${id}`);
@@ -95,4 +106,3 @@ export const deleteLandingPage = async (id: string | number): Promise<any> => {
     throw error.response?.data || error;
   }
 };
-

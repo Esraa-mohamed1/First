@@ -23,6 +23,7 @@ import axios from 'axios';
 import { unwrapEncryptedResponseData } from '@/lib/decryption';
 import LandingRenderer from '@/modules/landing/renderer/LandingRenderer';
 import { getThemeBySlug } from '@/builder/templates/themeStyles';
+import { useModal } from '@/context/ModalContext';
 
 const MySwal = withReactContent(Swal);
 
@@ -59,6 +60,19 @@ export default function CourseStudentViewPage() {
   const [expandedUnits, setExpandedUnits] = useState<number[]>([]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<AcademyPaymentMethod | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const { openModal } = useModal();
+
+  const handleSetPaymentModalOpen = (open: boolean) => {
+    if (open) {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) {
+        toast.error('يرجى إنشاء حساب أو تسجيل الدخول أولاً للمتابعة');
+        openModal('registration');
+        return;
+      }
+    }
+    setIsPaymentModalOpen(open);
+  };
   const [showFloatingWidget, setShowFloatingWidget] = useState(true);
   const [activeTemplateId, setActiveTemplateId] = useState<string>('template_1');
   const [navbarNode, setNavbarNode] = useState<any | null>(null);
@@ -242,6 +256,13 @@ export default function CourseStudentViewPage() {
   const handleSubscribe = async () => {
     if (!course) return;
     
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      toast.error('يرجى إنشاء حساب أو تسجيل الدخول أولاً للمتابعة');
+      openModal('registration');
+      return;
+    }
+    
     setIsSubscribing(true);
     try {
       const price = Number(course.final_price || course.price || 0);
@@ -306,7 +327,7 @@ export default function CourseStudentViewPage() {
           selectedPaymentMethod={selectedPaymentMethod}
           setSelectedPaymentMethod={setSelectedPaymentMethod}
           isPaymentModalOpen={isPaymentModalOpen}
-          setIsPaymentModalOpen={setIsPaymentModalOpen}
+          setIsPaymentModalOpen={handleSetPaymentModalOpen}
         />
       </div>
     </div>

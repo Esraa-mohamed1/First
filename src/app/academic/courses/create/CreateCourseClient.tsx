@@ -803,7 +803,7 @@ export default function CreateCourseClient() {
 
   const handleCopyCustomLink = (page: any) => {
     if (typeof window !== 'undefined') {
-      const link = `${window.location.origin}/user/courses/${page.slug || 'preview'}?lp_id=${page.id}`;
+      const link = `${window.location.origin}/${page.slug || 'preview'}?lp_id=${page.id}`;
       navigator.clipboard.writeText(link);
       toast.success('تم نسخ رابط صفحة البيع بنجاح!');
     }
@@ -811,7 +811,7 @@ export default function CreateCourseClient() {
 
   const handleCopyDefaultLink = () => {
     if (typeof window !== 'undefined') {
-      const link = `${window.location.origin}/user/courses/${slug || courseId}`;
+      const link = `${window.location.origin}/${slug || courseId}`;
       navigator.clipboard.writeText(link);
       toast.success('تم نسخ رابط صفحة البيع الافتراضية بنجاح!');
     }
@@ -2110,7 +2110,7 @@ export default function CreateCourseClient() {
                           <button 
                             type="button"
                             onClick={() => {
-                              window.open(`/user/courses/${slug || courseId}`, '_blank');
+                              window.open(`/${slug || courseId}`, '_blank');
                             }}
                             className="flex-1 lg:flex-none px-5 py-2.5 border border-blue-600 text-blue-600 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-50 transition-all cursor-pointer"
                           >
@@ -2215,7 +2215,7 @@ export default function CreateCourseClient() {
                                 <button 
                                   type="button"
                                   onClick={() => {
-                                    window.open(`/user/courses/${page.slug || 'preview'}?lp_id=${page.id}`, '_blank');
+                                    window.open(`/${page.slug || 'preview'}?lp_id=${page.id}`, '_blank');
                                   }}
                                   className="text-slate-500 hover:bg-slate-100 p-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center" 
                                   title="معاينة كطالب"

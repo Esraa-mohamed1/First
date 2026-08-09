@@ -29,7 +29,7 @@ export default function CourseStudentViewPage() {
       try {
         const data = await getCourse(id);
         if (data && data.slug) {
-          router.replace(`/user/courses/${data.slug}`);
+          router.replace(`/${data.slug}`);
           return;
         }
         if ((data as any).chapters) {

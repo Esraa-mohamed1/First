@@ -180,7 +180,7 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
                     قيد الانتظار
                   </button>
                   <Link
-                    href={`/user/courses/${course.slug}`}
+                    href={`/${course.slug}`}
                     className="px-4 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold py-3 rounded-xl transition-all duration-300 border border-gray-100"
                     title="عرض التفاصيل"
                   >
@@ -204,13 +204,13 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
                       <span>مرفوض</span>
                     </button>
                     <Link
-                      href={`/user/courses/${course.slug}?retry=true`}
+                      href={`/${course.slug}?retry=true`}
                       className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all duration-300 text-sm"
                     >
                       <span>إعادة الاشتراك</span>
                     </Link>
                     <Link
-                      href={`/user/courses/${course.slug}`}
+                      href={`/${course.slug}`}
                       className="px-4 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold py-3 rounded-xl transition-all duration-300 border border-gray-100"
                       title="عرض التفاصيل"
                     >
@@ -225,7 +225,7 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
                 </div>
               ) : (
                 <Link
-                  href={`/user/courses/${course.slug}`}
+                  href={`/${course.slug}`}
                   className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-lg shadow-blue-500/20"
                 >
                   اشترك الآن

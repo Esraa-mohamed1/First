@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getPages, getSections, apiToEditor } from '@/services/pages';
+import { getPublicPages, getPublicSections, apiToEditor } from '@/services/pages';
 import { getTemplateById } from '@/builder/utils/templates';
 import TemplateRenderer from '@/builder/templates/renderer/TemplateRenderer';
 
@@ -24,8 +24,8 @@ export default function TenantHomeClient({
     async function loadActivePageAndSections() {
       try {
         setLoading(true);
-        // 1. Fetch fresh pages list from /pages endpoint
-        const pagesList = await getPages(true);
+        // 1. Fetch fresh pages list from public /pages endpoint
+        const pagesList = await getPublicPages();
 
         let activePage = pagesList.find(
           (p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true'
@@ -46,8 +46,8 @@ export default function TenantHomeClient({
           const resolvedTemplateId = activePage.template_name || activePage.template || activePage.title || 'template_1';
           setTemplateId(resolvedTemplateId);
 
-          // 2. Fetch sections for active page ID from /sections endpoint (visible in Network Tab)
-          const apiSections = await getSections(activePage.id);
+          // 2. Fetch sections for active page ID from public /sections endpoint
+          const apiSections = await getPublicSections(activePage.id);
           if (apiSections && apiSections.length > 0) {
             const editorNodes = apiToEditor(apiSections);
             setSections(editorNodes);

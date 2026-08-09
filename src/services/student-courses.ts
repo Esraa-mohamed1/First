@@ -234,4 +234,12 @@ export const getLessonComments = async (lessonId: number | string): Promise<any>
   }
 };
 
-
+export const getStudentChaptersByCourse = async (courseId: number | string): Promise<any[]> => {
+  try {
+    const response = await studentApi.get<ApiResponse<any[]>>(`chapters?course_id=${courseId}`);
+    return response.data.data || [];
+  } catch (error: any) {
+    console.error('Failed to get student chapters:', error);
+    return [];
+  }
+};
