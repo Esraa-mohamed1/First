@@ -77,6 +77,7 @@ export default function CourseCards(props: CourseCardsProps) {
     if (realCourses.length === 0) return courses;
     return realCourses.map(course => ({
       id: String(course.id),
+      slug: course.slug || String(course.id),
       title: course.title,
       instructor: course.instructor || course.instructor_name || course.coach || 'أحمد محمد',
       price: Number(course.price) === 0 ? 'مجانًا' : `${course.price} ر.س`,
@@ -192,8 +193,13 @@ export default function CourseCards(props: CourseCardsProps) {
 
           const isPurpleTheme = buttonBg === '#7c3aed';
 
+          const courseHref = `/${course.slug || course.id}`;
+          const CardWrapper = ({ children }: { children: React.ReactNode }) =>
+            isEditing ? <div>{children}</div> : <Link href={courseHref} className="block">{children}</Link>;
+
           if (isUdemy) {
             return (
+              <CardWrapper key={course.id}>
               <div 
                 key={course.id} 
                 onClick={(e) => {
@@ -269,13 +275,14 @@ export default function CourseCards(props: CourseCardsProps) {
                   </div>
                 </div>
               </div>
+              </CardWrapper>
             );
           }
 
           if (isPurpleTheme) {
             return (
+              <CardWrapper key={course.id}>
               <div 
-                key={course.id} 
                 onClick={(e) => {
                   if (isEditing && sectionId) {
                     e.stopPropagation();
@@ -329,12 +336,13 @@ export default function CourseCards(props: CourseCardsProps) {
                   </div>
                 </div>
               </div>
+              </CardWrapper>
             );
           }
 
           return (
+            <CardWrapper key={course.id}>
             <div 
-              key={course.id} 
               onClick={(e) => {
                 if (isEditing && sectionId) {
                   e.stopPropagation();
@@ -401,6 +409,7 @@ export default function CourseCards(props: CourseCardsProps) {
               </div>
 
             </div>
+            </CardWrapper>
           );
         })}
       </div>

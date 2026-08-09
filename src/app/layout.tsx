@@ -21,7 +21,7 @@ export default function RootLayout({
     return (
         <html lang="ar" dir="rtl" suppressHydrationWarning>
             <body suppressHydrationWarning>
-                <Script id="clarity-script" strategy="afterInteractive">
+                {/* <Script id="clarity-script" strategy="afterInteractive">
                     {`
                         (function(c,l,a,r,i,t,y){
                             c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
@@ -29,7 +29,7 @@ export default function RootLayout({
                             y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
                         })(window, document, "clarity", "script", "xzm1689tnx");
                     `}
-                </Script>
+                </Script> */}
                 <Providers>
                     <ModalProvider>
                         {children}

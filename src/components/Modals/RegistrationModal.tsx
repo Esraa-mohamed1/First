@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { X, CheckCircle2, ShieldCheck, Mail, Phone, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useModal } from '@/context/ModalContext';
 import { createAccount } from '@/services/auth';
+import { registerStudent } from '@/services/student-auth';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useCountry } from '@/hooks/useCountry';
@@ -87,8 +88,7 @@ const RegistrationModal = () => {
                 const token = "google_simulated_token_" + Date.now();
                 localStorage.setItem('token', token);
                 document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
-                closeModal();
-                router.push('/auth/setup');
+                handleComplete();
             } catch (error) {
                 console.error('Google Sign Up Error:', error);
                 toast.error('فشل إنشاء الحساب بجوجل');
@@ -225,26 +225,61 @@ const RegistrationModal = () => {
     const handleCreateAccount = async () => {
         setIsLoading(true);
         try {
-            const accountPayload: any = {
-                name: (contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone),
-                academy_name: (contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone) + "'s Academy",
-                password: formData.password,
-                package_id: data?.package_id
-            };
-
-            if (contactMethod === 'email') {
-                accountPayload.email = formData.email;
-            } else {
-                accountPayload.phone = formData.phone;
-                accountPayload.country_code = selectedCountry?.isoCode;
+            let isStudent = false;
+            if (typeof window !== 'undefined') {
+                const hostname = window.location.hostname;
+                const isTenant = hostname && 
+                                 hostname !== 'darab.academy' && 
+                                 hostname !== 'www.darab.academy' && 
+                                 hostname !== 'localhost' && 
+                                 !hostname.startsWith('127.0.0.');
+                
+                if (isTenant || window.location.pathname.startsWith('/student') || !window.location.pathname.startsWith('/auth')) {
+                    isStudent = true;
+                }
             }
 
-            const response = await createAccount(accountPayload);
+            let response;
+            if (isStudent) {
+                const name = contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone;
+                response = await registerStudent({
+                    name,
+                    email: contactMethod === 'email' ? formData.email : undefined,
+                    phone: contactMethod === 'phone' ? formData.phone : undefined,
+                    password: formData.password,
+                    password_confirmation: formData.confirmPassword,
+                    role: 'student'
+                });
+            } else {
+                const accountPayload: any = {
+                    name: (contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone),
+                    academy_name: (contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone) + "'s Academy",
+                    password: formData.password,
+                    package_id: data?.package_id
+                };
 
-            if (response.data?.token) {
-                localStorage.setItem('token', response.data.token);
-            } else if (response.token) {
-                localStorage.setItem('token', response.token);
+                if (contactMethod === 'email') {
+                    accountPayload.email = formData.email;
+                } else {
+                    accountPayload.phone = formData.phone;
+                    accountPayload.country_code = selectedCountry?.isoCode;
+                }
+
+                response = await createAccount(accountPayload);
+            }
+
+            const resObj: any = response;
+            let token = resObj.data?.token || resObj.token || resObj.data?.access_token || resObj.access_token;
+            if (!token && resObj.meta?.access_token) {
+                token = resObj.meta.access_token;
+            }
+            if (!token && resObj.data?.meta?.access_token) {
+                token = resObj.data.meta.access_token;
+            }
+
+            if (token) {
+                localStorage.setItem('token', token);
+                document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
             }
 
             if (contactMethod === 'email') {
@@ -293,6 +328,24 @@ const RegistrationModal = () => {
 
     const handleComplete = () => {
         closeModal();
+        
+        // Determine if we are on a tenant subdomain or a student route
+        if (typeof window !== 'undefined') {
+            const hostname = window.location.hostname;
+            const isTenant = hostname && 
+                             hostname !== 'darab.academy' && 
+                             hostname !== 'www.darab.academy' && 
+                             hostname !== 'localhost' && 
+                             !hostname.startsWith('127.0.0.');
+            
+            if (isTenant || window.location.pathname.startsWith('/student') || !window.location.pathname.startsWith('/auth')) {
+                // Fire custom event for student success
+                const event = new CustomEvent('student-registered');
+                window.dispatchEvent(event);
+                return;
+            }
+        }
+
         router.push('/auth/setup');
     };
 
