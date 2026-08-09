@@ -113,10 +113,11 @@ export default function SetupPage() {
       const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
       const cachedEmail = localStorage.getItem('user_email') || userInfo?.email || getCookie('backup_email') || '';
       const cachedPhone = localStorage.getItem('user_phone') || userInfo?.phone || getCookie('backup_phone') || phone || '';
+      const finalPhone = phone || cachedPhone || '';
 
       const payload: any = {
         username: academyName || 'أكاديمي',
-        phone_academy: phone || cachedPhone || '0500000000',
+        phone_academy: finalPhone || '0500000000',
         country_code: activeCountry?.isoCode || 'EG',
         specialties: selectedField,
         role: selectedField,
@@ -127,9 +128,8 @@ export default function SetupPage() {
 
       if (cachedEmail) {
         payload.email = cachedEmail;
-      }
-      if (cachedPhone) {
-        payload.phone = cachedPhone;
+      } else if (finalPhone) {
+        payload.phone = finalPhone;
       }
       if (!payload.email && !payload.phone) {
         payload.email = 'admin@academy.com';
@@ -159,11 +159,11 @@ export default function SetupPage() {
       const password = localStorage.getItem('user_password') || getCookie('backup_password');
       let loginSuccess = false;
 
-      if (password && (cachedEmail || cachedPhone)) {
+      if (password && (cachedEmail || finalPhone)) {
         try {
           const loginResponse = await login({
             email: cachedEmail || undefined,
-            phone: cachedPhone || undefined,
+            phone: cachedEmail ? undefined : (finalPhone || undefined),
             password: password
           });
 
@@ -176,7 +176,7 @@ export default function SetupPage() {
               localStorage.setItem('user_info', JSON.stringify({
                 name: loginResponse.data.name,
                 email: loginResponse.data.email || cachedEmail,
-                phone: loginResponse.data.phone || cachedPhone,
+                phone: loginResponse.data.phone || finalPhone || cachedPhone,
                 role: 'الادمن'
               }));
             }

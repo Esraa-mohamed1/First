@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
 import { getCourse, getChaptersByCourse } from '@/services/courses';
-import { getStudentCourse } from '@/services/student-courses';
-import { getLandingPageByCourseSlug, getStudentLandingPageByCourseSlug, getLandingPagesList } from '../services/landing.api';
+import { getStudentCourse, getStudentChaptersByCourse } from '@/services/student-courses';
+import {
+  getLandingPageByCourseSlug,
+  getStudentLandingPageByCourseSlug,
+  getLandingPagesList,
+  getStudentLandingPagesList
+} from '../services/landing.api';
 import { useLandingStore } from '../store/landingStore';
 import { getTemplateDefaultContent } from '../constants/defaultContent';
 
@@ -106,7 +111,9 @@ export function useLandingContent(options: { courseId?: string | number; courseS
 
           if (!found) {
             try {
-              const apiList = await getLandingPagesList();
+              const apiList = options.courseSlug
+                ? await getStudentLandingPagesList()
+                : await getLandingPagesList();
               localStorage.setItem('darab_landing_pages', JSON.stringify(apiList));
               found = apiList.find((p: any) => String(p.id) === String(targetLpId));
             } catch (e) {
@@ -118,10 +125,18 @@ export function useLandingContent(options: { courseId?: string | number; courseS
             landingPage = found;
             // Attempt to fetch real course + chapters, fallback to stored course data
             try {
-              course = await getCourse(String(found.course_id));
-              if (course) {
-                const chapters = await getChaptersByCourse(course.id);
-                course.units = chapters.length > 0 ? chapters : (course.chapters || course.units || []);
+              if (options.courseSlug) {
+                course = await getStudentCourse(options.courseSlug);
+                if (course) {
+                  const chapters = await getStudentChaptersByCourse(course.id);
+                  course.units = chapters.length > 0 ? chapters : (course.chapters || course.units || []);
+                }
+              } else {
+                course = await getCourse(String(found.course_id));
+                if (course) {
+                  const chapters = await getChaptersByCourse(course.id);
+                  course.units = chapters.length > 0 ? chapters : (course.chapters || course.units || []);
+                }
               }
             } catch (e) {
               course = found.courseData;
@@ -174,7 +189,7 @@ export function useLandingContent(options: { courseId?: string | number; courseS
             // Public Student view mode
             course = await getStudentCourse(options.courseSlug);
             if (course) {
-              const chapters = await getChaptersByCourse(course.id);
+              const chapters = await getStudentChaptersByCourse(course.id);
               course.units = chapters.length > 0 ? chapters : (course.chapters || course.units || []);
             }
             if (course && course.slug) {
