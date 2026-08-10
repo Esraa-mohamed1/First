@@ -39,7 +39,9 @@ export default function HeroSection({
   // Dynamic metrics
   const totalLessons = course?.units?.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0) || 0;
   const videoUrl = course?.units?.[0]?.lessons?.[0]?.video_url;
-  const instructorName = course?.instructor?.name || course?.instructor || 'المدرب المعتمد';
+  const instructorName = typeof course?.instructor === 'object' && course.instructor !== null
+    ? course.instructor.name || 'المدرب المعتمد'
+    : course?.instructor || 'المدرب المعتمد';
   const instructorImage = course?.instructor?.profile_image || 'https://i.pravatar.cc/150?u=instructor';
   
   // Custom styles

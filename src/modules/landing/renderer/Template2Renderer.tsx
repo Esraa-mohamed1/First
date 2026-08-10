@@ -43,7 +43,9 @@ export default function Template2Renderer({
   const currency = courseData?.currency || 'ريال سعودي';
   const units = courseData?.chapters || courseData?.units || [];
   const lessonsCount = units.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0);
-  const instructorName = courseData?.instructor?.name || courseData?.instructor || 'أ. سارة أحمد';
+  const instructorName = typeof courseData?.instructor === 'object' && courseData.instructor !== null
+    ? courseData.instructor.name || 'أ. سارة أحمد'
+    : courseData?.instructor || 'أ. سارة أحمد';
   const instructorTitle = courseData?.instructor?.title || 'خبير تصميم واجهات وتجربة مستخدم (Lead UI/UX Designer)';
   const instructorBio = courseData?.instructor?.bio || 'خبرة تزيد عن 10 سنوات في تصميم المنتجات الرقمية لكبرى الشركات التقنية في المنطقة. ساهمت في تطوير أكثر من 50 تطبيقاً ناجحاً وحاصلة على جوائز دولية في الابتكار والتصميم الرقمي.';
   const instructorImage = courseData?.instructor?.profile_image || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400';
@@ -112,7 +114,11 @@ export default function Template2Renderer({
             <ol className="inline-flex items-center space-x-1 space-x-reverse">
               <li><a className="hover:text-white transition-colors" href="#">الدورات</a></li>
               <li><ChevronLeft size={16} className="mx-1" /></li>
-              <li className="text-white">{courseData?.category || 'تصميم واجهة المستخدم'}</li>
+              <li className="text-white">
+                {typeof courseData?.category === 'object' && courseData.category !== null 
+                  ? (courseData.category as any).name 
+                  : (courseData?.category || 'تصميم واجهة المستخدم')}
+              </li>
             </ol>
           </nav>
 
