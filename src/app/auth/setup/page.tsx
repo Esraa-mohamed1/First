@@ -8,6 +8,7 @@ import { createAccountInfoAcademy, login } from '@/services/auth';
 import { useCountry } from '@/hooks/useCountry';
 import { triggerPageLoader } from '@/components/PageLoader';
 import { Country } from '@/types/country';
+import { translateErrorToArabic } from '@/lib/utils';
 
 export default function SetupPage() {
   const router = useRouter();
@@ -31,8 +32,10 @@ export default function SetupPage() {
   const egyptCountry = countries?.find(c => c.isoCode === 'EG') || { name: 'مصر', isoCode: 'EG', flagUrl: 'https://flagcdn.com/w80/eg.png', flagEmoji: '🇪🇬', dialCode: '+20' };
 
   // Form details
+  const [email, setEmail] = useState('');
   const [academyName, setAcademyName] = useState('');
   const [phone, setPhone] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Step 3: Domain state
   const [domainPrefix, setDomainPrefix] = useState('');
@@ -43,8 +46,10 @@ export default function SetupPage() {
     // Prefill data from registration step
     const cachedAcademyName = localStorage.getItem('user_academy_name') || localStorage.getItem('user_name') || '';
     const cachedPhone = localStorage.getItem('user_phone') || '';
+    const cachedEmail = localStorage.getItem('user_email') || '';
     if (cachedAcademyName) setAcademyName(cachedAcademyName);
     if (cachedPhone) setPhone(cachedPhone);
+    if (cachedEmail) setEmail(cachedEmail);
   }, []);
 
   const selectCard = (cardIndex: number, field: string) => {
@@ -110,9 +115,10 @@ export default function SetupPage() {
 
       const userInfoStr = localStorage.getItem('user_info');
       const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
-      const cachedEmail = localStorage.getItem('user_email') || userInfo?.email || getCookie('backup_email') || '';
-      const cachedPhone = localStorage.getItem('user_phone') || userInfo?.phone || getCookie('backup_phone') || phone || '';
+      const cachedEmail = email || localStorage.getItem('user_email') || userInfo?.email || getCookie('backup_email') || '';
+      const cachedPhone = phone || localStorage.getItem('user_phone') || userInfo?.phone || getCookie('backup_phone') || '';
       const finalPhone = phone || cachedPhone || '';
+      const finalEmail = email || cachedEmail || '';
 
       const payload: any = {
         username: academyName || 'أكاديمي',
@@ -125,14 +131,10 @@ export default function SetupPage() {
         link_academy: fullLink.toLowerCase()
       };
 
-      if (cachedEmail) {
-        payload.email = cachedEmail;
-      } else if (finalPhone) {
-        payload.phone = finalPhone;
+      if (finalEmail) {
+        payload.email = finalEmail;
       }
-      if (!payload.email && !payload.phone) {
-        payload.email = 'admin@academy.com';
-      }
+      // Note: phone key is intentionally omitted as per requirement (only phone_academy is sent)
 
       const setupResponse = (await createAccountInfoAcademy(payload)) as any;
 
@@ -217,40 +219,38 @@ export default function SetupPage() {
     } catch (error: any) {
       console.error("Setup API Error:", error);
       let handled = false;
+      setFieldErrors({});
 
       const validationErrors = error?.errors || error?.response?.data?.errors || error?.error;
 
       if (validationErrors && typeof validationErrors === 'object') {
-        if (validationErrors.link_academy) {
-          const rawMsg = Array.isArray(validationErrors.link_academy)
-            ? validationErrors.link_academy[0]
-            : validationErrors.link_academy;
+        const newErrors: Record<string, string> = {};
 
-          let translated = rawMsg;
-          if (typeof rawMsg === 'string' && rawMsg.toLowerCase().includes('already been taken')) {
-            translated = 'رابط المنصة مستخدم بالفعل، يرجى اختيار رابط آخر.';
-          } else if (typeof rawMsg === 'string' && (rawMsg.toLowerCase().includes('format') || rawMsg.toLowerCase().includes('invalid'))) {
-            translated = 'صيغة رابط المنصة غير صالحة.';
+        Object.keys(validationErrors).forEach((key) => {
+          const rawMsg = Array.isArray(validationErrors[key])
+            ? validationErrors[key][0]
+            : validationErrors[key];
+          if (typeof rawMsg === 'string') {
+            newErrors[key] = translateErrorToArabic(rawMsg);
           }
+        });
 
+        setFieldErrors(newErrors);
+
+        if (newErrors.link_academy || newErrors.domainPrefix) {
+          const translated = newErrors.link_academy || newErrors.domainPrefix;
           setDomainError(translated);
           toast.error(translated);
+          goToStep(3);
           handled = true;
         }
 
-        if (!handled && (validationErrors.email || validationErrors.phone)) {
-          const msg = 'يرجى التأكد من اختيار رابط منصة صحيح وبيانات التواصل.';
-          toast.error(msg);
+        if (newErrors.email || newErrors.phone || newErrors.phone_academy || newErrors.username || newErrors.academy_name) {
+          const errKey = newErrors.email ? 'email' : (newErrors.phone ? 'phone' : (newErrors.phone_academy ? 'phone_academy' : 'username'));
+          const msg = newErrors[errKey];
+          toast.error(msg || 'يرجى مراجعة الحقول المدخلة');
+          goToStep(2);
           handled = true;
-        }
-
-        if (!handled && (validationErrors.username || validationErrors.phone_academy)) {
-          const msg = (Array.isArray(validationErrors.username) ? validationErrors.username[0] : validationErrors.username) ||
-            (Array.isArray(validationErrors.phone_academy) ? validationErrors.phone_academy[0] : validationErrors.phone_academy);
-          if (msg) {
-            toast.error(msg);
-            handled = true;
-          }
         }
       }
 
@@ -480,26 +480,102 @@ export default function SetupPage() {
 
               {/* Additional optional inputs if missing */}
               <div className="space-y-4 pt-2">
-                <div>
+                {/* Email Input */}
+                <div className="relative group">
+                  {fieldErrors.email && (
+                    <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      <span>{fieldErrors.email}</span>
+                      <div className="absolute -bottom-1 right-4 w-2 h-2 bg-red-600 rotate-45"></div>
+                    </div>
+                  )}
+                  <label className="block text-xs font-bold text-gray-700 mb-1 text-right">البريد الإلكتروني الأساسي</label>
+                  <input
+                    type="email"
+                    value={email}
+                    title={fieldErrors.email || ''}
+                    onChange={e => {
+                      setEmail(e.target.value);
+                      if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: '' }));
+                    }}
+                    placeholder="admin@academy.com"
+                    className={`w-full p-4 border rounded-xl bg-white focus:outline-none text-sm font-medium text-[#111827] transition-all ${
+                      fieldErrors.email ? 'border-red-500 bg-red-50/20 focus:border-red-500' : 'border-slate-300 focus:border-[#004ac6]'
+                    }`}
+                  />
+                  {fieldErrors.email && (
+                    <p className="mt-1 text-red-500 text-xs font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      {fieldErrors.email}
+                    </p>
+                  )}
+                </div>
+
+                {/* Academy Name Input */}
+                <div className="relative group">
+                  {(fieldErrors.username || fieldErrors.academy_name) && (
+                    <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      <span>{fieldErrors.username || fieldErrors.academy_name}</span>
+                      <div className="absolute -bottom-1 right-4 w-2 h-2 bg-red-600 rotate-45"></div>
+                    </div>
+                  )}
                   <label className="block text-xs font-bold text-gray-700 mb-1 text-right">اسم الأكاديمية / المنصة</label>
                   <input
                     type="text"
                     value={academyName}
-                    onChange={e => setAcademyName(e.target.value)}
+                    title={fieldErrors.username || fieldErrors.academy_name || ''}
+                    onChange={e => {
+                      setAcademyName(e.target.value);
+                      if (fieldErrors.username || fieldErrors.academy_name) {
+                        setFieldErrors(prev => ({ ...prev, username: '', academy_name: '' }));
+                      }
+                    }}
                     placeholder="أدخل اسم أكاديميتك"
-                    className="w-full p-4 border border-slate-300 rounded-xl bg-white focus:outline-none focus:border-[#004ac6] text-sm font-medium text-[#111827]"
+                    className={`w-full p-4 border rounded-xl bg-white focus:outline-none text-sm font-medium text-[#111827] transition-all ${
+                      fieldErrors.username || fieldErrors.academy_name ? 'border-red-500 bg-red-50/20 focus:border-red-500' : 'border-slate-300 focus:border-[#004ac6]'
+                    }`}
                   />
+                  {(fieldErrors.username || fieldErrors.academy_name) && (
+                    <p className="mt-1 text-red-500 text-xs font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      {fieldErrors.username || fieldErrors.academy_name}
+                    </p>
+                  )}
                 </div>
-                <div>
+
+                {/* Phone Input */}
+                <div className="relative group">
+                  {(fieldErrors.phone || fieldErrors.phone_academy) && (
+                    <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      <span>{fieldErrors.phone || fieldErrors.phone_academy}</span>
+                      <div className="absolute -bottom-1 right-4 w-2 h-2 bg-red-600 rotate-45"></div>
+                    </div>
+                  )}
                   <label className="block text-xs font-bold text-gray-700 mb-1 text-right">رقم الجوال الأساسي</label>
                   <input
                     type="text"
                     value={phone}
-                    onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
+                    title={fieldErrors.phone || fieldErrors.phone_academy || ''}
+                    onChange={e => {
+                      setPhone(e.target.value.replace(/\D/g, ''));
+                      if (fieldErrors.phone || fieldErrors.phone_academy) {
+                        setFieldErrors(prev => ({ ...prev, phone: '', phone_academy: '' }));
+                      }
+                    }}
                     placeholder="أدخل رقم الجوال"
                     dir="ltr"
-                    className="w-full p-4 border border-slate-300 rounded-xl bg-white focus:outline-none focus:border-[#004ac6] text-sm font-medium text-left text-[#111827]"
+                    className={`w-full p-4 border rounded-xl bg-white focus:outline-none text-sm font-medium text-left text-[#111827] transition-all ${
+                      fieldErrors.phone || fieldErrors.phone_academy ? 'border-red-500 bg-red-50/20 focus:border-red-500' : 'border-slate-300 focus:border-[#004ac6]'
+                    }`}
                   />
+                  {(fieldErrors.phone || fieldErrors.phone_academy) && (
+                    <p className="mt-1 text-red-500 text-xs font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      {fieldErrors.phone || fieldErrors.phone_academy}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -523,12 +599,23 @@ export default function SetupPage() {
 
             <div className="space-y-6">
               <div className="relative group">
-                <div className={`flex items-center border rounded-xl overflow-hidden transition-colors bg-white ${domainError ? 'border-red-500 focus-within:border-red-500' : 'border-slate-300 focus-within:border-[#004ac6]'}`}>
+                {(fieldErrors.link_academy || domainError) && (
+                  <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
+                    <span className="material-symbols-outlined text-sm">error</span>
+                    <span>{fieldErrors.link_academy || domainError}</span>
+                    <div className="absolute -bottom-1 right-4 w-2 h-2 bg-red-600 rotate-45"></div>
+                  </div>
+                )}
+                <div className={`flex items-center border rounded-xl overflow-hidden transition-colors bg-white ${domainError || fieldErrors.link_academy ? 'border-red-500 focus-within:border-red-500 bg-red-50/20' : 'border-slate-300 focus-within:border-[#004ac6]'}`}>
                   <input
                     type="text"
                     dir="ltr"
                     value={domainPrefix}
-                    onChange={handleDomainChange}
+                    title={fieldErrors.link_academy || domainError || ''}
+                    onChange={(e) => {
+                      handleDomainChange(e);
+                      if (fieldErrors.link_academy) setFieldErrors(prev => ({ ...prev, link_academy: '' }));
+                    }}
                     placeholder="اسم-منصتك"
                     className="flex-grow p-4 border-none text-lg font-medium placeholder:text-[#434655]/40 text-left outline-none text-[#111827]"
                   />
@@ -537,16 +624,16 @@ export default function SetupPage() {
                   </div>
                 </div>
 
-                {domainPrefix.length > 2 && !domainError && (
+                {domainPrefix.length > 2 && !domainError && !fieldErrors.link_academy && (
                   <div className="mt-2 text-[#006a61] text-xs font-semibold flex items-center gap-1">
                     <span className="material-symbols-outlined text-sm">check_circle</span>
                     صيغة الدومين متاحة للاستخدام
                   </div>
                 )}
-                {domainError && (
+                {(domainError || fieldErrors.link_academy) && (
                   <div className="mt-2 text-red-500 text-xs font-semibold flex items-center gap-1">
                     <span className="material-symbols-outlined text-sm">error</span>
-                    {domainError}
+                    {fieldErrors.link_academy || domainError}
                   </div>
                 )}
               </div>

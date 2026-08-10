@@ -114,3 +114,23 @@ export const updateDetailedProfile = async (payload: any): Promise<any> => {
   }
 };
 
+export const forgetPassword = async (payload: { email: string }): Promise<any> => {
+  try {
+    const response = await api.post<any>('https://api.darab.academy/api/auth/forget-password', payload);
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to request forget password:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const resetPassword = async (payload: any): Promise<any> => {
+  try {
+    const response = await api.post<any>('https://api.darab.academy/api/auth/reset-password', payload);
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to reset password:', error);
+    throw error.response?.data || error;
+  }
+};
+

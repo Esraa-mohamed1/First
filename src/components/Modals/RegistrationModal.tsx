@@ -7,7 +7,6 @@ import { useModal } from '@/context/ModalContext';
 import { createAccount } from '@/services/auth';
 import { registerStudent } from '@/services/student-auth';
 import toast from 'react-hot-toast';
-import { useGoogleLogin } from '@react-oauth/google';
 import { useCountry } from '@/hooks/useCountry';
 import { PhoneInput } from '@/components/CountrySelector';
 import { translateErrorToArabic } from '@/lib/utils';
@@ -77,30 +76,7 @@ const RegistrationModal = () => {
         handleComplete();
     };
 
-    const handleGoogleLogin = useGoogleLogin({
-        onSuccess: async (tokenResponse) => {
-            console.log('Google Login Success:', tokenResponse);
-            setIsLoading(true);
-            try {
-                // Simulate backend call
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                toast.success('تم إنشاء الحساب بجوجل بنجاح');
-                const token = "google_simulated_token_" + Date.now();
-                localStorage.setItem('token', token);
-                document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
-                handleComplete();
-            } catch (error) {
-                console.error('Google Sign Up Error:', error);
-                toast.error('فشل إنشاء الحساب بجوجل');
-            } finally {
-                setIsLoading(false);
-            }
-        },
-        onError: () => {
-            console.error('Google Login Error');
-            toast.error('فشل الاتصال بحساب جوجل');
-        },
-    });
+
 
     React.useEffect(() => {
         if (isOpen && view === 'registration') {
@@ -329,24 +305,15 @@ const RegistrationModal = () => {
     const handleComplete = () => {
         closeModal();
         
-        // Determine if we are on a tenant subdomain or a student route
         if (typeof window !== 'undefined') {
-            const hostname = window.location.hostname;
-            const isTenant = hostname && 
-                             hostname !== 'darab.academy' && 
-                             hostname !== 'www.darab.academy' && 
-                             hostname !== 'localhost' && 
-                             !hostname.startsWith('127.0.0.');
-            
-            if (isTenant || window.location.pathname.startsWith('/student') || !window.location.pathname.startsWith('/auth')) {
-                // Fire custom event for student success
-                const event = new CustomEvent('student-registered');
-                window.dispatchEvent(event);
-                return;
-            }
-        }
+            const event = new CustomEvent('student-registered');
+            window.dispatchEvent(event);
 
-        router.push('/auth/setup');
+            // Always navigate to /auth/setup even if client render or router issue occurs
+            window.location.href = '/auth/setup';
+        } else {
+            router.push('/auth/setup');
+        }
     };
 
     const toggleContactMethod = (e: React.MouseEvent) => {
@@ -515,19 +482,7 @@ const RegistrationModal = () => {
                             )}
                         </button>
 
-                        <div className="relative flex items-center justify-center py-2">
-                            <div className="flex-grow border-t border-[#e2e8f0]"></div>
-                            <span className="flex-shrink mx-4 text-[10px] text-[#6b7280] font-black uppercase tracking-[0.2em]">أو</span>
-                            <div className="flex-grow border-t border-[#e2e8f0]"></div>
-                        </div>
 
-                        <button
-                            onClick={() => handleGoogleLogin()}
-                            className="w-full py-4 bg-white border border-[#e2e8f0] text-[#1a1a1a] font-black rounded-2xl hover:bg-[#f8faff] hover:border-[#2563eb]/20 transition-all flex items-center justify-center gap-3 text-sm shadow-sm group active:scale-95"
-                        >
-                            <img src="https://www.google.com/favicon.ico" className="w-4 h-4 shadow-sm group-hover:scale-110 transition-transform" alt="google" />
-                            التسجيل عن طريق جوجل
-                        </button>
 
                         <p className="text-center text-xs font-bold text-[#6b7280] mt-4">
                             لديك حساب بالفعل؟{' '}
