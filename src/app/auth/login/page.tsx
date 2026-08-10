@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Mail, Lock, Loader2, Eye, EyeOff, ArrowRight, Phone, CheckCircle2, AlertCircle } from 'lucide-react';
 import { login } from '@/services/auth';
 import toast from 'react-hot-toast';
-import { useGoogleLogin } from '@react-oauth/google';
 import { useCountry } from '@/hooks/useCountry';
 import { PhoneInput } from '@/components/CountrySelector';
 
@@ -34,23 +33,7 @@ export default function AcademyLoginPage() {
         special: false
     });
 
-    const handleGoogleLogin = useGoogleLogin({
-        onSuccess: async (tokenResponse) => {
-            setIsLoading(true);
-            try {
-                toast.success('تم تسجيل الدخول بجوجل بنجاح');
-                document.cookie = `token=google_simulated_token; path=/; max-age=86400; SameSite=Lax`;
-                window.location.href = '/academic';
-            } catch (error) {
-                toast.error('فشل تسجيل الدخول بجوجل');
-            } finally {
-                setIsLoading(false);
-            }
-        },
-        onError: () => {
-            toast.error('فشل الاتصال بحساب جوجل');
-        },
-    });
+
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -335,42 +318,34 @@ export default function AcademyLoginPage() {
                             </div>
 
                             <div className="flex justify-end px-1">
-                                <button type="button" className="text-sm font-bold text-gray-500 hover:text-blue-600 hover:underline transition-all">
+                                <button 
+                                    type="button" 
+                                    onClick={() => router.push('/auth/forget-password')}
+                                    className="text-sm font-bold text-gray-500 hover:text-blue-600 hover:underline transition-all"
+                                >
                                     نسيت كلمة المرور؟
                                 </button>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                        <div className="mt-6">
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full py-4.5 bg-blue-600 text-white font-black text-lg rounded-[24px] shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-1 active:scale-95 transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group shadow-blue-500/20"
+                                className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-bold text-base rounded-2xl shadow-lg shadow-blue-600/20 hover:shadow-blue-600/35 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed group"
                             >
                                 {isLoading ? (
                                     <>
-                                        <Loader2 className="animate-spin" size={24} />
+                                        <Loader2 className="animate-spin" size={20} />
                                         <span>جاري المعالجة...</span>
                                     </>
                                 ) : (
                                     <>
                                         <span>تسجيل الدخول</span>
-                                        <ArrowRight className="w-5 h-14 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                                        <ArrowRight className="w-4 h-4 opacity-0 -translate-x-3 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
                                     </>
                                 )}
                             </button>
-
-                            {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
-                                <button
-                                    type="button"
-                                    onClick={() => handleGoogleLogin()}
-                                    className="w-full py-4.5 bg-white border-2 border-gray-100 text-gray-700 font-bold rounded-[24px] hover:border-blue-200 hover:bg-blue-50/30 hover:text-blue-600 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm group"
-                                    disabled={isLoading}
-                                >
-                                    <img src="https://www.google.com/favicon.ico" className="w-5 h-5 shadow-sm group-hover:scale-110 transition-transform" alt="Google" />
-                                    <span>الدخول باستخدام جوجل</span>
-                                </button>
-                            )}
                         </div>
 
                         <div className="text-center pt-4">

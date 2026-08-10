@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { X, CheckCircle2, ShieldCheck, Mail, Phone, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useModal } from '@/context/ModalContext';
 import { createAccount } from '@/services/auth';
+import { registerStudent } from '@/services/student-auth';
 import toast from 'react-hot-toast';
-import { useGoogleLogin } from '@react-oauth/google';
 import { useCountry } from '@/hooks/useCountry';
 import { PhoneInput } from '@/components/CountrySelector';
 import { translateErrorToArabic } from '@/lib/utils';
@@ -76,31 +76,7 @@ const RegistrationModal = () => {
         handleComplete();
     };
 
-    const handleGoogleLogin = useGoogleLogin({
-        onSuccess: async (tokenResponse) => {
-            console.log('Google Login Success:', tokenResponse);
-            setIsLoading(true);
-            try {
-                // Simulate backend call
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                toast.success('تم إنشاء الحساب بجوجل بنجاح');
-                const token = "google_simulated_token_" + Date.now();
-                localStorage.setItem('token', token);
-                document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
-                closeModal();
-                router.push('/auth/setup');
-            } catch (error) {
-                console.error('Google Sign Up Error:', error);
-                toast.error('فشل إنشاء الحساب بجوجل');
-            } finally {
-                setIsLoading(false);
-            }
-        },
-        onError: () => {
-            console.error('Google Login Error');
-            toast.error('فشل الاتصال بحساب جوجل');
-        },
-    });
+
 
     React.useEffect(() => {
         if (isOpen && view === 'registration') {
@@ -225,26 +201,61 @@ const RegistrationModal = () => {
     const handleCreateAccount = async () => {
         setIsLoading(true);
         try {
-            const accountPayload: any = {
-                name: (contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone),
-                academy_name: (contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone) + "'s Academy",
-                password: formData.password,
-                package_id: data?.package_id
-            };
-
-            if (contactMethod === 'email') {
-                accountPayload.email = formData.email;
-            } else {
-                accountPayload.phone = formData.phone;
-                accountPayload.country_code = selectedCountry?.isoCode;
+            let isStudent = false;
+            if (typeof window !== 'undefined') {
+                const hostname = window.location.hostname;
+                const isTenant = hostname && 
+                                 hostname !== 'darab.academy' && 
+                                 hostname !== 'www.darab.academy' && 
+                                 hostname !== 'localhost' && 
+                                 !hostname.startsWith('127.0.0.');
+                
+                if (isTenant || window.location.pathname.startsWith('/student') || !window.location.pathname.startsWith('/auth')) {
+                    isStudent = true;
+                }
             }
 
-            const response = await createAccount(accountPayload);
+            let response;
+            if (isStudent) {
+                const name = contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone;
+                response = await registerStudent({
+                    name,
+                    email: contactMethod === 'email' ? formData.email : undefined,
+                    phone: contactMethod === 'phone' ? formData.phone : undefined,
+                    password: formData.password,
+                    password_confirmation: formData.confirmPassword,
+                    role: 'student'
+                });
+            } else {
+                const accountPayload: any = {
+                    name: (contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone),
+                    academy_name: (contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone) + "'s Academy",
+                    password: formData.password,
+                    package_id: data?.package_id
+                };
 
-            if (response.data?.token) {
-                localStorage.setItem('token', response.data.token);
-            } else if (response.token) {
-                localStorage.setItem('token', response.token);
+                if (contactMethod === 'email') {
+                    accountPayload.email = formData.email;
+                } else {
+                    accountPayload.phone = formData.phone;
+                    accountPayload.country_code = selectedCountry?.isoCode;
+                }
+
+                response = await createAccount(accountPayload);
+            }
+
+            const resObj: any = response;
+            let token = resObj.data?.token || resObj.token || resObj.data?.access_token || resObj.access_token;
+            if (!token && resObj.meta?.access_token) {
+                token = resObj.meta.access_token;
+            }
+            if (!token && resObj.data?.meta?.access_token) {
+                token = resObj.data.meta.access_token;
+            }
+
+            if (token) {
+                localStorage.setItem('token', token);
+                document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
             }
 
             if (contactMethod === 'email') {
@@ -293,7 +304,16 @@ const RegistrationModal = () => {
 
     const handleComplete = () => {
         closeModal();
-        router.push('/auth/setup');
+        
+        if (typeof window !== 'undefined') {
+            const event = new CustomEvent('student-registered');
+            window.dispatchEvent(event);
+
+            // Always navigate to /auth/setup even if client render or router issue occurs
+            window.location.href = '/auth/setup';
+        } else {
+            router.push('/auth/setup');
+        }
     };
 
     const toggleContactMethod = (e: React.MouseEvent) => {
@@ -462,19 +482,7 @@ const RegistrationModal = () => {
                             )}
                         </button>
 
-                        <div className="relative flex items-center justify-center py-2">
-                            <div className="flex-grow border-t border-[#e2e8f0]"></div>
-                            <span className="flex-shrink mx-4 text-[10px] text-[#6b7280] font-black uppercase tracking-[0.2em]">أو</span>
-                            <div className="flex-grow border-t border-[#e2e8f0]"></div>
-                        </div>
 
-                        <button
-                            onClick={() => handleGoogleLogin()}
-                            className="w-full py-4 bg-white border border-[#e2e8f0] text-[#1a1a1a] font-black rounded-2xl hover:bg-[#f8faff] hover:border-[#2563eb]/20 transition-all flex items-center justify-center gap-3 text-sm shadow-sm group active:scale-95"
-                        >
-                            <img src="https://www.google.com/favicon.ico" className="w-4 h-4 shadow-sm group-hover:scale-110 transition-transform" alt="google" />
-                            التسجيل عن طريق جوجل
-                        </button>
 
                         <p className="text-center text-xs font-bold text-[#6b7280] mt-4">
                             لديك حساب بالفعل؟{' '}

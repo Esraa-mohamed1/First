@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, Mail, Lock, Loader2, Eye, EyeOff, Phone, CheckCircle2 } from 'lucide-react';
 import { useModal } from '@/context/ModalContext';
-import { superAdminLogin } from '@/services/auth';
+import { superAdminLogin, login } from '@/services/auth';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useCountry } from '@/hooks/useCountry';
@@ -48,6 +48,20 @@ const LoginModal = () => {
                 toast.success('تم تسجيل الدخول بجوجل بنجاح');
                 document.cookie = `token=google_simulated_token; path=/; max-age=86400; SameSite=Lax`;
                 closeModal();
+                if (typeof window !== 'undefined') {
+                    const hostname = window.location.hostname;
+                    const isTenant = hostname && 
+                                     hostname !== 'darab.academy' && 
+                                     hostname !== 'www.darab.academy' && 
+                                     hostname !== 'localhost' && 
+                                     !hostname.startsWith('127.0.0.');
+                    
+                    if (isTenant || window.location.pathname.startsWith('/student') || !window.location.pathname.startsWith('/auth')) {
+                        const event = new CustomEvent('student-logged-in');
+                        window.dispatchEvent(event);
+                        return;
+                    }
+                }
                 triggerPageLoader(true);
                 window.location.href = '/dashboard';
             } catch (error) {
@@ -140,7 +154,21 @@ const LoginModal = () => {
                 ? { email: formData.email, password: formData.password }
                 : { phone: formData.phone, password: formData.password, country_code: selectedCountry?.isoCode };
                 
-            const response = await superAdminLogin(payload);
+            let isStudent = false;
+            if (typeof window !== 'undefined') {
+                const hostname = window.location.hostname;
+                const isTenant = hostname && 
+                                 hostname !== 'darab.academy' && 
+                                 hostname !== 'www.darab.academy' && 
+                                 hostname !== 'localhost' && 
+                                 !hostname.startsWith('127.0.0.');
+                
+                if (isTenant || window.location.pathname.startsWith('/student') || !window.location.pathname.startsWith('/auth')) {
+                    isStudent = true;
+                }
+            }
+
+            const response = isStudent ? await login(payload) : await superAdminLogin(payload);
             const res = response as any;
 
             const token = res?.meta?.access_token || res?.token || res?.access_token || res?.data?.token || res?.data?.access_token;
@@ -160,6 +188,20 @@ const LoginModal = () => {
                 
                 toast.success('تم تسجيل الدخول بنجاح');
                 closeModal();
+                if (typeof window !== 'undefined') {
+                    const hostname = window.location.hostname;
+                    const isTenant = hostname && 
+                                     hostname !== 'darab.academy' && 
+                                     hostname !== 'www.darab.academy' && 
+                                     hostname !== 'localhost' && 
+                                     !hostname.startsWith('127.0.0.');
+                    
+                    if (isTenant || window.location.pathname.startsWith('/student') || !window.location.pathname.startsWith('/auth')) {
+                        const event = new CustomEvent('student-logged-in');
+                        window.dispatchEvent(event);
+                        return;
+                    }
+                }
                 triggerPageLoader(true);
                 window.location.href = '/dashboard';
             } else {

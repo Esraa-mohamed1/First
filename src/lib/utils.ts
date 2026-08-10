@@ -27,14 +27,20 @@ export function translateErrorToArabic(msg: string): string {
   const normalized = msg.toLowerCase().trim();
 
   // Email
+  if (normalized.includes('selected email is invalid') || normalized.includes('email is invalid') || normalized.includes('email is not valid')) return 'البريد الإلكتروني المحدد غير صالح.';
   if (normalized.includes('email has already been taken')) return 'البريد الإلكتروني مستخدم بالفعل.';
   if (normalized.includes('email field is required') || normalized.includes('email is required')) return 'البريد الإلكتروني مطلوب.';
   if (normalized.includes('email must be a valid email')) return 'البريد الإلكتروني يجب أن يكون عنواناً صالحاً.';
 
-  // Phone
-  if (normalized.includes('phone has already been taken')) return 'رقم الجوال مستخدم بالفعل.';
-  if (normalized.includes('phone field is required') || normalized.includes('phone is required')) return 'رقم الجوال مطلوب.';
-  if (normalized.includes('phone must be') || normalized.includes('phone is invalid') || normalized.includes('phone format')) return 'رقم الجوال غير صالح.';
+  // Phone & Academy Phone
+  if (normalized.includes('selected phone is invalid') || normalized.includes('phone is invalid') || normalized.includes('phone_academy is invalid') || normalized.includes('phone is not valid')) return 'رقم الجوال المحدد غير صالح.';
+  if (normalized.includes('phone has already been taken') || normalized.includes('phone_academy has already been taken')) return 'رقم الجوال مستخدم بالفعل.';
+  if (normalized.includes('phone field is required') || normalized.includes('phone is required') || normalized.includes('phone_academy is required')) return 'رقم الجوال مطلوب.';
+  if (normalized.includes('phone must be') || normalized.includes('phone format')) return 'رقم الجوال غير صالح.';
+
+  // Username & Domain
+  if (normalized.includes('selected username is invalid') || normalized.includes('username is invalid')) return 'اسم الأكاديمية أو المستخدم غير صالح.';
+  if (normalized.includes('selected link_academy is invalid') || normalized.includes('link_academy is invalid') || normalized.includes('link_academy has already been taken')) return 'رابط المنصة غير صالح أو مستخدم بالفعل.';
 
   // Password
   if (normalized.includes('password field is required') || normalized.includes('password is required')) return 'كلمة المرور مطلوبة.';

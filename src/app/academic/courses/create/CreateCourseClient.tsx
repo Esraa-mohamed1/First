@@ -1011,36 +1011,7 @@ export default function CreateCourseClient() {
                       />
                     </div>
 
-                    {/* Course Link (Slug) Section */}
-                    <div className="bg-slate-50 border border-slate-300 p-4.5 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="material-symbols-outlined text-lg text-slate-400">link</span>
-                          {isEditingSlug ? (
-                            <input
-                              type="text"
-                              value={slug}
-                              onChange={(e) => setSlug(e.target.value)}
-                              onBlur={() => setIsEditingSlug(false)}
-                              className="px-3 py-1 border border-slate-300 rounded-lg text-sm outline-none font-mono bg-white"
-                              autoFocus
-                            />
-                          ) : (
-                            <span className="text-sm font-mono text-blue-600 font-bold select-all" dir="ltr">
-                              darb.edu/courses/{slug || 'design-basics'}
-                            </span>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => setIsEditingSlug(!isEditingSlug)}
-                            className="text-blue-600 text-xs font-bold flex items-center gap-1 hover:bg-blue-50 px-2.5 py-1 rounded-lg transition-colors"
-                          >
-                            {isEditingSlug ? 'حفظ' : 'تعديل'}
-                          </button>
-                        </div>
-                        <p className="text-xs text-slate-500 font-medium">هذا هو الرابط العام الذي سيتم نشره، اضغط للتعديل.</p>
-                      </div>
-                    </div>
+
 
                     {/* 2. Thumbnail & Short Description */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1134,89 +1105,91 @@ export default function CreateCourseClient() {
                 </section>
 
                 {/* Section 2: Academic Classification */}
-                <section className="bg-white border border-slate-300 rounded-2xl p-7 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.07)] transition-all duration-300">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200">
-                      <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-                        school
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-slate-900">التصنيف الدراسي</h3>
-                      <p className="text-xs text-slate-500 font-medium mt-0.5">حدد الصف والفصل والمادة الدراسية للمجموعة</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div>
-                      <label className="block text-sm font-bold mb-2 text-slate-800">الصف الدراسي</label>
-                      <select
-                        value={gradeLevel}
-                        onChange={(e) => {
-                          setGradeLevel(e.target.value);
-                          setSemester('');
-                          setSubject('');
-                        }}
-                        className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white"
-                      >
-                        <option value="">اختر الصف...</option>
-                        {activeGrades.map((g) => (
-                          <option key={g.id} value={g.id}>
-                            {g.name}
-                          </option>
-                        ))}
-                      </select>
+                {(currentUser?.role === 'schoolteacher' || currentUser?.role === 'school_teacher') && (
+                  <section className="bg-white border border-slate-300 rounded-2xl p-7 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.07)] transition-all duration-300">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200">
+                        <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                          school
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-slate-900">التصنيف الدراسي</h3>
+                        <p className="text-xs text-slate-500 font-medium mt-0.5">حدد الصف والفصل والمادة الدراسية للمجموعة</p>
+                      </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-bold mb-2 text-slate-800">الفصل الدراسي</label>
-                      <select
-                        value={semester}
-                        onChange={(e) => setSemester(e.target.value)}
-                        className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white"
-                      >
-                        <option value="">اختر الترم...</option>
-                        {activeSemesters.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <div>
+                        <label className="block text-sm font-bold mb-2 text-slate-800">الصف الدراسي</label>
+                        <select
+                          value={gradeLevel}
+                          onChange={(e) => {
+                            setGradeLevel(e.target.value);
+                            setSemester('');
+                            setSubject('');
+                          }}
+                          className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white"
+                        >
+                          <option value="">اختر الصف...</option>
+                          {activeGrades.map((g) => (
+                            <option key={g.id} value={g.id}>
+                              {g.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                    <div>
-                      <label className="block text-sm font-bold mb-2 text-slate-800">المادة</label>
-                      <select
-                        value={subject}
-                        onChange={(e) => setSubject(e.target.value)}
-                        className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white"
-                      >
-                        <option value="">اختر المادة...</option>
-                        {activeSubjects.map((sub) => (
-                          <option key={sub.id} value={sub.id}>
-                            {sub.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                      <div>
+                        <label className="block text-sm font-bold mb-2 text-slate-800">الفصل الدراسي</label>
+                        <select
+                          value={semester}
+                          onChange={(e) => setSemester(e.target.value)}
+                          className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white"
+                        >
+                          <option value="">اختر الترم...</option>
+                          {activeSemesters.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                    <div>
-                      <label className="block text-sm font-bold mb-2 text-slate-800">العام الدراسي</label>
-                      <select
-                        value={academicYear}
-                        onChange={(e) => setAcademicYear(e.target.value)}
-                        className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white"
-                      >
-                        <option value="">اختر العام الدراسي...</option>
-                        {activeYears.map((y) => (
-                          <option key={y.id} value={y.id}>
-                            {y.name}
-                          </option>
-                        ))}
-                      </select>
+                      <div>
+                        <label className="block text-sm font-bold mb-2 text-slate-800">المادة</label>
+                        <select
+                          value={subject}
+                          onChange={(e) => setSubject(e.target.value)}
+                          className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white"
+                        >
+                          <option value="">اختر المادة...</option>
+                          {activeSubjects.map((sub) => (
+                            <option key={sub.id} value={sub.id}>
+                              {sub.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold mb-2 text-slate-800">العام الدراسي</label>
+                        <select
+                          value={academicYear}
+                          onChange={(e) => setAcademicYear(e.target.value)}
+                          className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white"
+                        >
+                          <option value="">اختر العام الدراسي...</option>
+                          {activeYears.map((y) => (
+                            <option key={y.id} value={y.id}>
+                              {y.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
-                  </div>
-                </section>
+                  </section>
+                )}
 
                 {/* Section 3: Learning Details */}
                 <section className="bg-white border border-slate-300 rounded-2xl p-7 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.07)] transition-all duration-300">

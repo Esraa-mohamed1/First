@@ -8,6 +8,7 @@ import { createAccountInfoAcademy, login } from '@/services/auth';
 import { useCountry } from '@/hooks/useCountry';
 import { triggerPageLoader } from '@/components/PageLoader';
 import { Country } from '@/types/country';
+import { translateErrorToArabic } from '@/lib/utils';
 
 export default function SetupPage() {
   const router = useRouter();
@@ -19,16 +20,22 @@ export default function SetupPage() {
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [selectedField, setSelectedField] = useState('schoolteacher');
 
-  // Step 2: Country selection dropdown state
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [countrySearch, setCountrySearch] = useState('');
-
   // Local fallback country if selectedCountry is not initialized yet
   const activeCountry = selectedCountry || (countries && countries.length > 0 ? countries.find(c => c.isoCode === 'EG') || countries[0] : null);
 
+  // Find countries safely
+  const saudiCountry = countries?.find(c => c.isoCode === 'SA') || { name: 'المملكة العربية السعودية', isoCode: 'SA', flagUrl: 'https://flagcdn.com/w80/sa.png', flagEmoji: '🇸🇦', dialCode: '+966' };
+  const kuwaitCountry = {
+    ...(countries?.find(c => c.isoCode === 'KW') || { name: 'الكويت', isoCode: 'KW', flagEmoji: '🇰🇼', dialCode: '+965' }),
+    flagUrl: 'https://static.vecteezy.com/system/resources/previews/024/660/953/original/flag-of-kuwait-national-country-symbol-free-vector.jpg'
+  };
+  const egyptCountry = countries?.find(c => c.isoCode === 'EG') || { name: 'مصر', isoCode: 'EG', flagUrl: 'https://flagcdn.com/w80/eg.png', flagEmoji: '🇪🇬', dialCode: '+20' };
+
   // Form details
+  const [email, setEmail] = useState('');
   const [academyName, setAcademyName] = useState('');
   const [phone, setPhone] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Step 3: Domain state
   const [domainPrefix, setDomainPrefix] = useState('');
@@ -39,8 +46,10 @@ export default function SetupPage() {
     // Prefill data from registration step
     const cachedAcademyName = localStorage.getItem('user_academy_name') || localStorage.getItem('user_name') || '';
     const cachedPhone = localStorage.getItem('user_phone') || '';
+    const cachedEmail = localStorage.getItem('user_email') || '';
     if (cachedAcademyName) setAcademyName(cachedAcademyName);
     if (cachedPhone) setPhone(cachedPhone);
+    if (cachedEmail) setEmail(cachedEmail);
   }, []);
 
   const selectCard = (cardIndex: number, field: string) => {
@@ -60,15 +69,10 @@ export default function SetupPage() {
     }
   };
 
-  const toggleDropdown = () => {
-    setDropdownOpen(prev => !prev);
-  };
-
   const handleCountrySelect = (c: Country) => {
     if (setSelectedCountry) {
       setSelectedCountry(c);
     }
-    setDropdownOpen(false);
   };
 
   const handleDomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,9 +115,10 @@ export default function SetupPage() {
 
       const userInfoStr = localStorage.getItem('user_info');
       const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
-      const cachedEmail = localStorage.getItem('user_email') || userInfo?.email || getCookie('backup_email') || '';
-      const cachedPhone = localStorage.getItem('user_phone') || userInfo?.phone || getCookie('backup_phone') || phone || '';
+      const cachedEmail = email || localStorage.getItem('user_email') || userInfo?.email || getCookie('backup_email') || '';
+      const cachedPhone = phone || localStorage.getItem('user_phone') || userInfo?.phone || getCookie('backup_phone') || '';
       const finalPhone = phone || cachedPhone || '';
+      const finalEmail = email || cachedEmail || '';
 
       const payload: any = {
         username: academyName || 'أكاديمي',
@@ -126,14 +131,10 @@ export default function SetupPage() {
         link_academy: fullLink.toLowerCase()
       };
 
-      if (cachedEmail) {
-        payload.email = cachedEmail;
-      } else if (finalPhone) {
-        payload.phone = finalPhone;
+      if (finalEmail) {
+        payload.email = finalEmail;
       }
-      if (!payload.email && !payload.phone) {
-        payload.email = 'admin@academy.com';
-      }
+      // Note: phone key is intentionally omitted as per requirement (only phone_academy is sent)
 
       const setupResponse = (await createAccountInfoAcademy(payload)) as any;
 
@@ -218,40 +219,38 @@ export default function SetupPage() {
     } catch (error: any) {
       console.error("Setup API Error:", error);
       let handled = false;
+      setFieldErrors({});
 
       const validationErrors = error?.errors || error?.response?.data?.errors || error?.error;
 
       if (validationErrors && typeof validationErrors === 'object') {
-        if (validationErrors.link_academy) {
-          const rawMsg = Array.isArray(validationErrors.link_academy)
-            ? validationErrors.link_academy[0]
-            : validationErrors.link_academy;
+        const newErrors: Record<string, string> = {};
 
-          let translated = rawMsg;
-          if (typeof rawMsg === 'string' && rawMsg.toLowerCase().includes('already been taken')) {
-            translated = 'رابط المنصة مستخدم بالفعل، يرجى اختيار رابط آخر.';
-          } else if (typeof rawMsg === 'string' && (rawMsg.toLowerCase().includes('format') || rawMsg.toLowerCase().includes('invalid'))) {
-            translated = 'صيغة رابط المنصة غير صالحة.';
+        Object.keys(validationErrors).forEach((key) => {
+          const rawMsg = Array.isArray(validationErrors[key])
+            ? validationErrors[key][0]
+            : validationErrors[key];
+          if (typeof rawMsg === 'string') {
+            newErrors[key] = translateErrorToArabic(rawMsg);
           }
+        });
 
+        setFieldErrors(newErrors);
+
+        if (newErrors.link_academy || newErrors.domainPrefix) {
+          const translated = newErrors.link_academy || newErrors.domainPrefix;
           setDomainError(translated);
           toast.error(translated);
+          goToStep(3);
           handled = true;
         }
 
-        if (!handled && (validationErrors.email || validationErrors.phone)) {
-          const msg = 'يرجى التأكد من اختيار رابط منصة صحيح وبيانات التواصل.';
-          toast.error(msg);
+        if (newErrors.email || newErrors.phone || newErrors.phone_academy || newErrors.username || newErrors.academy_name) {
+          const errKey = newErrors.email ? 'email' : (newErrors.phone ? 'phone' : (newErrors.phone_academy ? 'phone_academy' : 'username'));
+          const msg = newErrors[errKey];
+          toast.error(msg || 'يرجى مراجعة الحقول المدخلة');
+          goToStep(2);
           handled = true;
-        }
-
-        if (!handled && (validationErrors.username || validationErrors.phone_academy)) {
-          const msg = (Array.isArray(validationErrors.username) ? validationErrors.username[0] : validationErrors.username) ||
-            (Array.isArray(validationErrors.phone_academy) ? validationErrors.phone_academy[0] : validationErrors.phone_academy);
-          if (msg) {
-            toast.error(msg);
-            handled = true;
-          }
         }
       }
 
@@ -271,11 +270,6 @@ export default function SetupPage() {
       setLoading(false);
     }
   };
-
-
-  const filteredCountries = (countries || []).filter(c =>
-    c.name.includes(countrySearch)
-  );
 
   const getProgLineWidth = () => {
     if (currentStep === 1) return '0%';
@@ -331,6 +325,21 @@ export default function SetupPage() {
             ٣
           </div>
         </div>
+
+        {/* Back Button */}
+        {currentStep > 1 && (
+          <div className="w-full max-w-xl flex justify-start mb-6">
+            <button
+              onClick={() => goToStep(currentStep - 1)}
+              className="flex items-center gap-2 text-sm font-bold text-[#434655] hover:text-[#004ac6] transition-all bg-white py-2.5 px-4 rounded-xl border border-slate-200 hover:border-[#004ac6]/30 shadow-sm hover:shadow-md active:scale-95 duration-200 group"
+            >
+              <span className="material-symbols-outlined transition-transform duration-200 group-hover:translate-x-1 select-none">
+                arrow_forward
+              </span>
+              <span>الرجوع للخطوة السابقة</span>
+            </button>
+          </div>
+        )}
 
         {/* Step 1: Account Type */}
         {currentStep === 1 && (
@@ -428,79 +437,145 @@ export default function SetupPage() {
             </div>
 
             <div className="relative w-full space-y-6">
-              {/* Country Select Dropdown */}
-              <div className="relative w-full">
-                <div
-                  className="w-full bg-white border border-slate-300 p-4 rounded-xl flex items-center justify-between cursor-pointer hover:border-[#004ac6] transition-all"
-                  onClick={toggleDropdown}
-                >
-                  <div className="flex items-center gap-3">
-                    {activeCountry?.flagUrl ? (
-                      <img src={activeCountry.flagUrl} alt={activeCountry.name} className="w-7 h-5 object-cover rounded" />
-                    ) : (
-                      <span className="text-2xl">{activeCountry?.flagEmoji || '🇪🇬'}</span>
-                    )}
-                    <span className="text-base font-medium text-[#111827]">{activeCountry?.name || 'مصر'}</span>
-                  </div>
-                  <span className="material-symbols-outlined text-[#434655]">expand_more</span>
-                </div>
-
-                {dropdownOpen && (
-                  <div className="absolute top-full mt-2 w-full bg-white border border-[#E5E7EB] rounded-xl shadow-xl z-20 overflow-hidden">
-                    <div className="p-2">
-                      <div className="flex items-center px-3 py-2 bg-[#eef4ff] rounded-lg mb-2">
-                        <span className="material-symbols-outlined text-[#434655] ml-2">search</span>
-                        <input
-                          type="text"
-                          placeholder="بحث عن دولة..."
-                          value={countrySearch}
-                          onChange={e => setCountrySearch(e.target.value)}
-                          className="bg-transparent border-none focus:outline-none w-full text-sm text-[#111827]"
-                        />
+              {/* 3 Circular Country Selectors */}
+              <div className="flex justify-center items-center gap-6 sm:gap-10 py-4">
+                {[
+                  { id: 'EG', label: 'مصر', country: egyptCountry },
+                  { id: 'SA', label: 'السعودية', country: saudiCountry },
+                  { id: 'KW', label: 'الكويت', country: kuwaitCountry }
+                ].map(({ id, label, country }) => {
+                  const isSelected = activeCountry?.isoCode === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => handleCountrySelect(country)}
+                      className="flex flex-col items-center gap-3 group transition-all duration-300 focus:outline-none"
+                    >
+                      <div
+                        className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center border-4 overflow-hidden transition-all duration-300 shadow-sm relative ${
+                          isSelected
+                            ? 'border-[#004ac6] bg-[#eef4ff] scale-105 shadow-md shadow-[#004ac6]/15'
+                            : 'border-slate-200 bg-white hover:border-slate-300 hover:scale-102 hover:shadow-md'
+                        }`}
+                      >
+                        {country.flagUrl ? (
+                          <img
+                            src={id === 'KW' ? country.flagUrl : country.flagUrl.replace('/w40/', '/w80/')}
+                            alt={label}
+                            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border border-slate-100 shadow-inner"
+                          />
+                        ) : (
+                          <span className="text-3xl sm:text-4xl">{country.flagEmoji}</span>
+                        )}
+                        <div className={`absolute inset-0 rounded-full bg-[#004ac6]/5 transition-opacity duration-300 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
                       </div>
-                      <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                        {filteredCountries.map(c => (
-                          <div
-                            key={c.isoCode}
-                            onClick={() => handleCountrySelect(c)}
-                            className="flex items-center gap-3 p-3 hover:bg-[#eef4ff] rounded-lg cursor-pointer transition-colors"
-                          >
-                            {c.flagUrl ? (
-                              <img src={c.flagUrl} alt={c.name} className="w-6 h-4 object-cover rounded" />
-                            ) : (
-                              <span className="text-2xl">{c.flagEmoji}</span>
-                            )}
-                            <span className="text-sm font-medium text-[#111827]">{c.name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                      <span className={`text-sm font-bold transition-colors ${isSelected ? 'text-[#004ac6]' : 'text-[#434655] group-hover:text-[#111827]'}`}>
+                        {label}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Additional optional inputs if missing */}
               <div className="space-y-4 pt-2">
-                <div>
+                {/* Email Input */}
+                <div className="relative group">
+                  {fieldErrors.email && (
+                    <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      <span>{fieldErrors.email}</span>
+                      <div className="absolute -bottom-1 right-4 w-2 h-2 bg-red-600 rotate-45"></div>
+                    </div>
+                  )}
+                  <label className="block text-xs font-bold text-gray-700 mb-1 text-right">البريد الإلكتروني الأساسي</label>
+                  <input
+                    type="email"
+                    value={email}
+                    title={fieldErrors.email || ''}
+                    onChange={e => {
+                      setEmail(e.target.value);
+                      if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: '' }));
+                    }}
+                    placeholder="admin@academy.com"
+                    className={`w-full p-4 border rounded-xl bg-white focus:outline-none text-sm font-medium text-[#111827] transition-all ${
+                      fieldErrors.email ? 'border-red-500 bg-red-50/20 focus:border-red-500' : 'border-slate-300 focus:border-[#004ac6]'
+                    }`}
+                  />
+                  {fieldErrors.email && (
+                    <p className="mt-1 text-red-500 text-xs font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      {fieldErrors.email}
+                    </p>
+                  )}
+                </div>
+
+                {/* Academy Name Input */}
+                <div className="relative group">
+                  {(fieldErrors.username || fieldErrors.academy_name) && (
+                    <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      <span>{fieldErrors.username || fieldErrors.academy_name}</span>
+                      <div className="absolute -bottom-1 right-4 w-2 h-2 bg-red-600 rotate-45"></div>
+                    </div>
+                  )}
                   <label className="block text-xs font-bold text-gray-700 mb-1 text-right">اسم الأكاديمية / المنصة</label>
                   <input
                     type="text"
                     value={academyName}
-                    onChange={e => setAcademyName(e.target.value)}
+                    title={fieldErrors.username || fieldErrors.academy_name || ''}
+                    onChange={e => {
+                      setAcademyName(e.target.value);
+                      if (fieldErrors.username || fieldErrors.academy_name) {
+                        setFieldErrors(prev => ({ ...prev, username: '', academy_name: '' }));
+                      }
+                    }}
                     placeholder="أدخل اسم أكاديميتك"
-                    className="w-full p-4 border border-slate-300 rounded-xl bg-white focus:outline-none focus:border-[#004ac6] text-sm font-medium text-[#111827]"
+                    className={`w-full p-4 border rounded-xl bg-white focus:outline-none text-sm font-medium text-[#111827] transition-all ${
+                      fieldErrors.username || fieldErrors.academy_name ? 'border-red-500 bg-red-50/20 focus:border-red-500' : 'border-slate-300 focus:border-[#004ac6]'
+                    }`}
                   />
+                  {(fieldErrors.username || fieldErrors.academy_name) && (
+                    <p className="mt-1 text-red-500 text-xs font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      {fieldErrors.username || fieldErrors.academy_name}
+                    </p>
+                  )}
                 </div>
-                <div>
+
+                {/* Phone Input */}
+                <div className="relative group">
+                  {(fieldErrors.phone || fieldErrors.phone_academy) && (
+                    <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      <span>{fieldErrors.phone || fieldErrors.phone_academy}</span>
+                      <div className="absolute -bottom-1 right-4 w-2 h-2 bg-red-600 rotate-45"></div>
+                    </div>
+                  )}
                   <label className="block text-xs font-bold text-gray-700 mb-1 text-right">رقم الجوال الأساسي</label>
                   <input
                     type="text"
                     value={phone}
-                    onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
+                    title={fieldErrors.phone || fieldErrors.phone_academy || ''}
+                    onChange={e => {
+                      setPhone(e.target.value.replace(/\D/g, ''));
+                      if (fieldErrors.phone || fieldErrors.phone_academy) {
+                        setFieldErrors(prev => ({ ...prev, phone: '', phone_academy: '' }));
+                      }
+                    }}
                     placeholder="أدخل رقم الجوال"
                     dir="ltr"
-                    className="w-full p-4 border border-slate-300 rounded-xl bg-white focus:outline-none focus:border-[#004ac6] text-sm font-medium text-left text-[#111827]"
+                    className={`w-full p-4 border rounded-xl bg-white focus:outline-none text-sm font-medium text-left text-[#111827] transition-all ${
+                      fieldErrors.phone || fieldErrors.phone_academy ? 'border-red-500 bg-red-50/20 focus:border-red-500' : 'border-slate-300 focus:border-[#004ac6]'
+                    }`}
                   />
+                  {(fieldErrors.phone || fieldErrors.phone_academy) && (
+                    <p className="mt-1 text-red-500 text-xs font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      {fieldErrors.phone || fieldErrors.phone_academy}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -524,12 +599,23 @@ export default function SetupPage() {
 
             <div className="space-y-6">
               <div className="relative group">
-                <div className={`flex items-center border rounded-xl overflow-hidden transition-colors bg-white ${domainError ? 'border-red-500 focus-within:border-red-500' : 'border-slate-300 focus-within:border-[#004ac6]'}`}>
+                {(fieldErrors.link_academy || domainError) && (
+                  <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
+                    <span className="material-symbols-outlined text-sm">error</span>
+                    <span>{fieldErrors.link_academy || domainError}</span>
+                    <div className="absolute -bottom-1 right-4 w-2 h-2 bg-red-600 rotate-45"></div>
+                  </div>
+                )}
+                <div className={`flex items-center border rounded-xl overflow-hidden transition-colors bg-white ${domainError || fieldErrors.link_academy ? 'border-red-500 focus-within:border-red-500 bg-red-50/20' : 'border-slate-300 focus-within:border-[#004ac6]'}`}>
                   <input
                     type="text"
                     dir="ltr"
                     value={domainPrefix}
-                    onChange={handleDomainChange}
+                    title={fieldErrors.link_academy || domainError || ''}
+                    onChange={(e) => {
+                      handleDomainChange(e);
+                      if (fieldErrors.link_academy) setFieldErrors(prev => ({ ...prev, link_academy: '' }));
+                    }}
                     placeholder="اسم-منصتك"
                     className="flex-grow p-4 border-none text-lg font-medium placeholder:text-[#434655]/40 text-left outline-none text-[#111827]"
                   />
@@ -538,16 +624,16 @@ export default function SetupPage() {
                   </div>
                 </div>
 
-                {domainPrefix.length > 2 && !domainError && (
+                {domainPrefix.length > 2 && !domainError && !fieldErrors.link_academy && (
                   <div className="mt-2 text-[#006a61] text-xs font-semibold flex items-center gap-1">
                     <span className="material-symbols-outlined text-sm">check_circle</span>
                     صيغة الدومين متاحة للاستخدام
                   </div>
                 )}
-                {domainError && (
+                {(domainError || fieldErrors.link_academy) && (
                   <div className="mt-2 text-red-500 text-xs font-semibold flex items-center gap-1">
                     <span className="material-symbols-outlined text-sm">error</span>
-                    {domainError}
+                    {fieldErrors.link_academy || domainError}
                   </div>
                 )}
               </div>
