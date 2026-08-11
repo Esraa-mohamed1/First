@@ -773,7 +773,7 @@ export default function CreateCourseClient() {
       }
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || 'حدث خطأ أثناء إنشاء صفحة البيع');
+      toast.error(getErrorMessage(err, 'حدث خطأ أثناء إنشاء صفحة البيع'));
     } finally {
       setIsCreatingLanding(false);
     }

@@ -73,7 +73,21 @@ export const updateLandingPage = async (payload: {
   }
 };
 
-export const saveLandingPage = updateLandingPage;
+export const saveLandingPage = async (payload: {
+  id?: number | string;
+  template_name: string;
+  content: any;
+  is_active: boolean;
+  course_id: number;
+  user_id: number;
+}): Promise<any> => {
+  if (payload.id) {
+    return updateLandingPage(payload);
+  } else {
+    const { id, ...createPayload } = payload;
+    return createLandingPage(createPayload);
+  }
+};
 
 export const getLandingPagesList = async (): Promise<any[]> => {
   try {

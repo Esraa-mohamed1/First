@@ -7,12 +7,8 @@ import axios from 'axios';
 const BUNNY_LIBRARY_ID = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID;
 const BUNNY_API_KEY = process.env.BUNNY_API_KEY;
 
-export interface BunnyVideoResponse {
-  guid: string;
-  title: string;
-  availableResolutions: string;
-  thumbnailFileName: string;
-}
+import { BunnyVideoResponse } from '@/types/bunny';
+export type { BunnyVideoResponse };
 
 /**
  * Creates a video placeholder in Bunny Stream.
