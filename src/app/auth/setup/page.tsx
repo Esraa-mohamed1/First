@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { GraduationCap, Star, Building2, CheckCircle2, ArrowRight, AlertCircle } from 'lucide-react';
 import { useSetupState } from '@/hooks/useSetupState';
 
 export default function SetupPage() {
@@ -88,9 +89,7 @@ export default function SetupPage() {
               onClick={() => goToStep(currentStep - 1)}
               className="flex items-center gap-2 text-sm font-bold text-[#434655] hover:text-[#004ac6] transition-all bg-white py-2.5 px-4 rounded-xl border border-slate-200 hover:border-[#004ac6]/30 shadow-sm hover:shadow-md active:scale-95 duration-200 group"
             >
-              <span className="material-symbols-outlined transition-transform duration-200 group-hover:translate-x-1 select-none">
-                arrow_forward
-              </span>
+              <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-1" />
               <span>الرجوع للخطوة السابقة</span>
             </button>
           </div>
@@ -112,12 +111,10 @@ export default function SetupPage() {
                 onClick={() => selectCard(1, 'schoolteacher')}
               >
                 <div className={`absolute top-4 left-4 transition-opacity ${selectedCardIndex === 1 ? 'opacity-100' : 'opacity-0'}`}>
-                  <span className="material-symbols-outlined text-[#004ac6] text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-                    check_circle
-                  </span>
+                  <CheckCircle2 className="w-6 h-6 text-[#004ac6]" />
                 </div>
                 <div className="mb-6 w-12 h-12 rounded-xl bg-[#004ac6]/10 flex items-center justify-center text-[#004ac6]">
-                  <span className="material-symbols-outlined text-3xl">school</span>
+                  <GraduationCap className="w-8 h-8" />
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-[#111827]">مدرس ثانوية عامة</h3>
                 <p className="text-sm text-[#434655] mb-6 flex-grow leading-relaxed">
@@ -137,12 +134,10 @@ export default function SetupPage() {
                 onClick={() => selectCard(2, 'coach')}
               >
                 <div className={`absolute top-4 left-4 transition-opacity ${selectedCardIndex === 2 ? 'opacity-100' : 'opacity-0'}`}>
-                  <span className="material-symbols-outlined text-[#004ac6] text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-                    check_circle
-                  </span>
+                  <CheckCircle2 className="w-6 h-6 text-[#004ac6]" />
                 </div>
                 <div className="mb-6 w-12 h-12 rounded-xl bg-[#004ac6]/10 flex items-center justify-center text-[#004ac6]">
-                  <span className="material-symbols-outlined text-3xl">star</span>
+                  <Star className="w-8 h-8" />
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-[#111827]">مدرب أو كوتش</h3>
                 <p className="text-sm text-[#434655] mb-6 flex-grow leading-relaxed">
@@ -162,12 +157,10 @@ export default function SetupPage() {
                 onClick={() => selectCard(3, 'academy')}
               >
                 <div className={`absolute top-4 left-4 transition-opacity ${selectedCardIndex === 3 ? 'opacity-100' : 'opacity-0'}`}>
-                  <span className="material-symbols-outlined text-[#004ac6] text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-                    check_circle
-                  </span>
+                  <CheckCircle2 className="w-6 h-6 text-[#004ac6]" />
                 </div>
                 <div className="mb-6 w-12 h-12 rounded-xl bg-[#004ac6]/10 flex items-center justify-center text-[#004ac6]">
-                  <span className="material-symbols-outlined text-3xl">business</span>
+                  <Building2 className="w-8 h-8" />
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-[#111827]">أكاديمية أو مركز تدريبي</h3>
                 <p className="text-sm text-[#434655] mb-6 flex-grow leading-relaxed">
@@ -239,7 +232,7 @@ export default function SetupPage() {
                 <div className="relative group">
                   {fieldErrors.email && (
                     <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
-                      <span className="material-symbols-outlined text-sm">error</span>
+                      <AlertCircle className="w-4 h-4" />
                       <span>{fieldErrors.email}</span>
                       <div className="absolute -bottom-1 right-4 w-2 h-2 bg-red-600 rotate-45"></div>
                     </div>
@@ -260,7 +253,7 @@ export default function SetupPage() {
                   />
                   {fieldErrors.email && (
                     <p className="mt-1 text-red-500 text-xs font-semibold flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm">error</span>
+                      <AlertCircle className="w-4 h-4" />
                       {fieldErrors.email}
                     </p>
                   )}
@@ -270,7 +263,7 @@ export default function SetupPage() {
                 <div className="relative group">
                   {(fieldErrors.username || fieldErrors.academy_name) && (
                     <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
-                      <span className="material-symbols-outlined text-sm">error</span>
+                      <AlertCircle className="w-4 h-4" />
                       <span>{fieldErrors.username || fieldErrors.academy_name}</span>
                       <div className="absolute -bottom-1 right-4 w-2 h-2 bg-red-600 rotate-45"></div>
                     </div>
@@ -293,7 +286,7 @@ export default function SetupPage() {
                   />
                   {(fieldErrors.username || fieldErrors.academy_name) && (
                     <p className="mt-1 text-red-500 text-xs font-semibold flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm">error</span>
+                      <AlertCircle className="w-4 h-4" />
                       {fieldErrors.username || fieldErrors.academy_name}
                     </p>
                   )}
@@ -303,7 +296,7 @@ export default function SetupPage() {
                 <div className="relative group">
                   {(fieldErrors.phone || fieldErrors.phone_academy) && (
                     <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
-                      <span className="material-symbols-outlined text-sm">error</span>
+                      <AlertCircle className="w-4 h-4" />
                       <span>{fieldErrors.phone || fieldErrors.phone_academy}</span>
                       <div className="absolute -bottom-1 right-4 w-2 h-2 bg-red-600 rotate-45"></div>
                     </div>
@@ -327,7 +320,7 @@ export default function SetupPage() {
                   />
                   {(fieldErrors.phone || fieldErrors.phone_academy) && (
                     <p className="mt-1 text-red-500 text-xs font-semibold flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm">error</span>
+                      <AlertCircle className="w-4 h-4" />
                       {fieldErrors.phone || fieldErrors.phone_academy}
                     </p>
                   )}
@@ -356,7 +349,7 @@ export default function SetupPage() {
               <div className="relative group">
                 {(fieldErrors.link_academy || domainError) && (
                   <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
-                    <span className="material-symbols-outlined text-sm">error</span>
+                    <AlertCircle className="w-4 h-4" />
                     <span>{fieldErrors.link_academy || domainError}</span>
                     <div className="absolute -bottom-1 right-4 w-2 h-2 bg-red-600 rotate-45"></div>
                   </div>
@@ -381,13 +374,13 @@ export default function SetupPage() {
 
                 {domainPrefix.length > 2 && !domainError && !fieldErrors.link_academy && (
                   <div className="mt-2 text-[#006a61] text-xs font-semibold flex items-center gap-1">
-                    <span className="material-symbols-outlined text-sm">check_circle</span>
+                    <CheckCircle2 className="w-4 h-4" />
                     صيغة الدومين متاحة للاستخدام
                   </div>
                 )}
                 {(domainError || fieldErrors.link_academy) && (
                   <div className="mt-2 text-red-500 text-xs font-semibold flex items-center gap-1">
-                    <span className="material-symbols-outlined text-sm">error</span>
+                    <AlertCircle className="w-4 h-4" />
                     {fieldErrors.link_academy || domainError}
                   </div>
                 )}
