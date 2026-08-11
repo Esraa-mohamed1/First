@@ -201,16 +201,22 @@ const RegistrationModal = () => {
     const handleCreateAccount = async () => {
         setIsLoading(true);
         try {
+            // Determine if this is a tenant subdomain (student registration)
+            // or the root/landing domain (academy owner registration).
+            // We check the hostname ONLY — never the pathname — so that opening
+            // the modal on the landing page "/" still goes to create-account-academy.
             let isStudent = false;
             if (typeof window !== 'undefined') {
                 const hostname = window.location.hostname;
-                const isTenant = hostname && 
-                                 hostname !== 'darab.academy' && 
-                                 hostname !== 'www.darab.academy' && 
-                                 hostname !== 'localhost' && 
+                const isTenantSubdomain = hostname &&
+                                 hostname !== 'darab.academy' &&
+                                 hostname !== 'www.darab.academy' &&
+                                 hostname !== 'localhost' &&
                                  !hostname.startsWith('127.0.0.');
-                
-                if (isTenant || window.location.pathname.startsWith('/student') || !window.location.pathname.startsWith('/auth')) {
+
+                // Only treat as student when explicitly on a tenant subdomain
+                // or a /student/* path on a tenant domain.
+                if (isTenantSubdomain || window.location.pathname.startsWith('/student')) {
                     isStudent = true;
                 }
             }
@@ -227,6 +233,7 @@ const RegistrationModal = () => {
                     role: 'student'
                 });
             } else {
+                // Root/landing domain → academy owner registration via create-account-academy
                 const accountPayload: any = {
                     name: (contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone),
                     academy_name: (contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone) + "'s Academy",

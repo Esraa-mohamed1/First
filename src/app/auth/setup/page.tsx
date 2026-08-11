@@ -43,6 +43,14 @@ export default function SetupPage() {
   const domainSuffix = '.darab.academy';
 
   useEffect(() => {
+    // Clear any stale tenant key and token from a previous session.
+    // At this point the academy does not exist yet, so sending a tenant
+    // header (X-Tenant-Key) or a Bearer token from a different academy
+    // would cause the create-account-info-academy call to fail or target
+    // the wrong tenant.
+    localStorage.removeItem('academy_link_name');
+    localStorage.removeItem('token');
+
     // Prefill data from registration step
     const cachedAcademyName = localStorage.getItem('user_academy_name') || localStorage.getItem('user_name') || '';
     const cachedPhone = localStorage.getItem('user_phone') || '';
