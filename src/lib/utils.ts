@@ -84,24 +84,46 @@ export function translateErrorToArabic(msg: string): string {
   }
   if (normalized.includes('price field is required') || normalized.includes('price is required')) return 'سعر الدورة مطلوب للدورات المدفوعة.';
 
-  // Payment Accounts
+  // Course Access Days & Duration
   if (
-    normalized.includes('receiver_accounts') || 
-    normalized.includes('receiver accounts') || 
-    normalized.includes('receiving account') || 
-    normalized.includes('receiving_account') || 
-    normalized.includes('receiver')
+    normalized.includes('number of access days') ||
+    normalized.includes('access days') ||
+    normalized.includes('access_days')
   ) {
-    return 'يرجى تحديد حساب أو وسيلة استقبال المدفوعات (حساب التحصيل مطلوب للدورات المدفوعة).';
+    return 'يرجى تحديد عدد أيام الوصول (مدة صلاحية الدورة).';
+  }
+
+  // Landing Page
+  if (normalized.includes('landing page id is required')) return 'معرف صفحة الهبوط مطلوب للتحديث.';
+  if (normalized.includes('landing page')) return 'خطأ في صفحة الهبوط.';
+
+  // Academic Classifications
+  if (normalized.includes('subject_id') || normalized.includes('subject id') || normalized.includes('subject is required')) return 'المادة الدراسية مطلوبة.';
+  if (normalized.includes('academic_year_id') || normalized.includes('academic_year') || normalized.includes('academic year')) return 'السنة الدراسية مطلوبة.';
+  if (normalized.includes('grade_id') || normalized.includes('grade is required')) return 'الصف الدراسي مطلوب.';
+  if (normalized.includes('term_id') || normalized.includes('term is required')) return 'الترم الدراسي مطلوب.';
+
+  // Images & Attachments
+  if (normalized.includes('image field is required') || normalized.includes('image is required')) return 'صورة المعاينة مطلوبة.';
+  if (normalized.includes('file field is required') || normalized.includes('file is required')) return 'الملف المرفق مطلوب.';
+
+  // Pricing & Payment Methods
+  if (normalized.includes('type_price') || normalized.includes('type price')) return 'يرجى تحديد نوع السعر (مجاني أو مدفوع).';
+  if (normalized.includes('payment_info_ids') || normalized.includes('payment_info')) return 'يرجى اختيار وسيلة استقبال المدفوعات.';
+
+  // General Field Errors
+  if (normalized.includes('already been taken') || normalized.includes('already taken') || normalized.includes('already exists')) {
+    return 'هذه البيانات مستخدمة بالفعل، يرجى إدخال بيانات أخرى.';
   }
 
   // Auth & General
-  if (normalized.includes('credentials do not match')) return 'بيانات الاعتماد هذه غير متطابقة مع سجلاتنا.';
+  if (normalized.includes('credentials do not match') || normalized.includes('invalid credentials')) return 'بيانات الاعتماد هذه غير متطابقة مع سجلاتنا.';
   if (normalized.includes('package id is invalid') || normalized.includes('package_id is invalid')) return 'الباقة المحددة غير صالحة.';
   if (normalized.includes('validation errors detected')) return 'يرجى تصحيح الأخطاء في البيانات المدخلة.';
-  if (normalized.includes('unauthorized')) return 'غير مصرح بالدخول.';
-  if (normalized.includes('forbidden')) return 'غير مسموح بالوصول.';
-  if (normalized.includes('server error')) return 'حدث خطأ في الخادم.';
+  if (normalized.includes('unauthorized') || normalized.includes('unauthenticated')) return 'غير مصرح بالدخول، يرجى تسجيل الدخول.';
+  if (normalized.includes('forbidden')) return 'غير مسموح بالوصول لهذا الإجراء.';
+  if (normalized.includes('server error') || normalized.includes('internal server error')) return 'حدث خطأ في الخادم.';
+  if (normalized.includes('network error') || normalized.includes('failed to fetch')) return 'حدث خطأ في الاتصال بالشبكة.';
 
   return msg;
 }

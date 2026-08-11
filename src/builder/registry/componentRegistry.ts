@@ -18,10 +18,12 @@ import NavbarBlock, { FooterBlock } from '../components/NavbarBlock';
 import TabsBlock from '../components/TabsBlock';
 import MetricsCards from '../components/MetricsCards';
 
+import { getIconComponent } from '@/lib/iconMap';
+
 // ─── Dynamic Icon Component ──────────────────────────────────────────────────
 
 export function DynamicIcon({ name, className }: { name: string; className?: string }) {
-  const IconComponent = (LucideIcons as any)[name] || LucideIcons.HelpCircle;
+  const IconComponent = getIconComponent(name);
   return React.createElement(IconComponent, { className });
 }
 

@@ -1,39 +1,22 @@
 import academyApi from '@/lib/academy-api';
 import { ApiResponse, ReceiverAccount } from '@/types/api';
 
-export interface WithdrawalRequest {
-  id: number;
-  user_payment_info_id: number;
-  amount: string;
-  status: 'pending' | 'completed' | 'rejected' | string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CreateWithdrawalPayload {
-  user_payment_info_id: number;
-  amount: string | number;
-}
-
-export interface UserPaymentInfo {
-  id: number;
-  name: string;
-  accountValue: string;
-  account_value?: string;
-  currency: string;
-  logo?: string;
-  receiver_account_id?: number;
-}
-
-export interface WalletData {
-  id: number;
-  user_id: number;
-  balance: string | number;
-  available_balance: string | number;
-  is_active: number;
-  created_at: string;
-  updated_at: string;
-}
+import {
+  WithdrawalRequest,
+  CreateWithdrawalPayload,
+  UserPaymentInfo,
+  WalletData,
+  ConfigureReceiverAccountPayload,
+  StudentPurchaseRequest
+} from '@/types/finance';
+export type {
+  WithdrawalRequest,
+  CreateWithdrawalPayload,
+  UserPaymentInfo,
+  WalletData,
+  ConfigureReceiverAccountPayload,
+  StudentPurchaseRequest
+};
 
 export const getWithdrawalRequests = async (): Promise<WithdrawalRequest[]> => {
   try {
@@ -280,11 +263,7 @@ export const getReceiverAccounts = async (countryCode?: string): Promise<Receive
   }
 };
 
-export interface ConfigureReceiverAccountPayload {
-  receiver_account_id: number;
-  type: 'email' | 'phone';
-  value: string;
-}
+// ConfigureReceiverAccountPayload re-exported from @/types/finance above
 
 export const configureReceiverAccount = async (payload: ConfigureReceiverAccountPayload): Promise<any> => {
   try {
@@ -300,32 +279,7 @@ export const configureReceiverAccount = async (payload: ConfigureReceiverAccount
   }
 };
 
-export interface StudentPurchaseRequest {
-  id: number;
-  user_id: number;
-  course_id: number;
-  starts_at: string;
-  transaction_id: string;
-  receipt: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'penidng' | string;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-  user?: {
-    id: number;
-    name: string;
-    email: string;
-  };
-  course?: {
-    id: number;
-    title: string;
-    user_id: number;
-    price: string;
-    final_price: string;
-    currency: string;
-    image: string;
-  };
-}
+// StudentPurchaseRequest re-exported from @/types/finance above
 
 export const getStudentPurchaseRequests = async (): Promise<StudentPurchaseRequest[]> => {
   try {

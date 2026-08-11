@@ -22,7 +22,7 @@ import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdow
 import { PaymentMethodValueInput } from '@/components/payment/PaymentMethodValueInput';
 import { showAlert } from '@/lib/sweetalert';
 import { getUserPaymentInfos, UserPaymentInfo } from '@/services/finance';
-import { getLogoUrl } from '@/lib/utils';
+import { getLogoUrl, getErrorMessage } from '@/lib/utils';
 import { SearchableSelect } from '@/components/Academic/Common/SearchableSelect';
 import LandingRenderer from '@/modules/landing/renderer/LandingRenderer';
 import { useLandingStore } from '@/modules/landing/store/landingStore';
@@ -1142,7 +1142,7 @@ export default function CourseDetailsPage() {
       }
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || 'حدث خطأ أثناء إنشاء صفحة البيع');
+      toast.error(getErrorMessage(err, 'حدث خطأ أثناء إنشاء صفحة البيع'));
     } finally {
       setIsCreatingLanding(false);
     }

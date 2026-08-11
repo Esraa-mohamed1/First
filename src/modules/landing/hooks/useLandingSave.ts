@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { updateLandingPage } from '../services/landing.api';
+import { saveLandingPage } from '../services/landing.api';
 import { useLandingStore } from '../store/landingStore';
+import { getErrorMessage } from '@/lib/utils';
 
 export function useLandingSave() {
   const [saving, setSaving] = useState(false);
@@ -11,6 +12,7 @@ export function useLandingSave() {
   const templateName = useLandingStore(state => state.templateName);
   const isActive = useLandingStore(state => state.isActive);
   const userId = useLandingStore(state => state.userId);
+  const setLandingPageData = useLandingStore(state => state.setLandingPageData);
 
   const handleSave = async (customUserId?: number) => {
     if (!courseId) {
@@ -32,12 +34,17 @@ export function useLandingSave() {
         course_id: Number(courseId),
         user_id: Number(userId || customUserId || 3) // Fallback to 3 if user_id is missing
       };
-      await updateLandingPage(payload);
+
+      const result = await saveLandingPage(payload);
+      if (result && result.id) {
+        setLandingPageData(result);
+      }
+
       toast.success('تم حفظ تعديلات صفحة الهبوط بنجاح!');
       return true;
     } catch (error: any) {
       console.error('Failed to save landing page customization:', error);
-      toast.error(error.message || 'فشل حفظ تعديلات صفحة الهبوط');
+      toast.error(getErrorMessage(error, 'فشل حفظ تعديلات صفحة الهبوط'));
       return false;
     } finally {
       setSaving(false);
