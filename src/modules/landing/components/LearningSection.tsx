@@ -1,11 +1,9 @@
 import React from 'react';
-import { 
-  Layout, MousePointer2, Smartphone, PenTool, Globe, Award, 
-  ShieldCheck, Video, CheckCircle2, Pen, LucideIcon 
-} from 'lucide-react';
+import { Pen } from 'lucide-react';
 import { LearningSectionData } from '../types/landing';
 import { twMerge } from 'tailwind-merge';
 import { colorToRgbTriplet } from '../utils/color';
+import { getIconComponent } from '@/lib/iconMap';
 
 interface LearningSectionProps {
   data: LearningSectionData;
@@ -13,11 +11,6 @@ interface LearningSectionProps {
   isEditable: boolean;
   onEdit: () => void;
 }
-
-const IconMap: Record<string, LucideIcon> = {
-  Layout, MousePointer2, Smartphone, PenTool, Globe, Award, 
-  ShieldCheck, Video, CheckCircle2
-};
 
 export default function LearningSection({
   data,
@@ -101,7 +94,7 @@ export default function LearningSection({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {data.cards?.map((card, i) => {
               const iconName = card.icon || defaultIcons[i % defaultIcons.length];
-              const IconComponent = IconMap[iconName] || CheckCircle2;
+              const IconComponent = getIconComponent(iconName);
               
               return (
                 <div 
@@ -178,7 +171,7 @@ export default function LearningSection({
           {data.cards?.map((card, i) => {
             const iconName = card.icon || defaultIcons[i % defaultIcons.length];
             const colorName = card.color || defaultColors[i % defaultColors.length];
-            const IconComponent = IconMap[iconName] || CheckCircle2;
+            const IconComponent = getIconComponent(iconName);
 
             return (
               <div 

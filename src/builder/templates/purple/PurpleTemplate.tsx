@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import * as Lucide from 'lucide-react';
+import { getIconComponent } from '@/lib/iconMap';
 import { BuilderNode } from '../../interfaces';
 import { useBuilderStore } from '../../store/builderStore';
 import SectionShapeOverlay, { ShapeType } from '../../components/SectionShapeOverlay';
@@ -53,10 +54,7 @@ function useInView(threshold = 0.15) {
 }
 
 function DynamicLucideIcon({ name, className, size = 20, color }: { name: string; className?: string; size?: number; color?: string }) {
-  const IconComponent = (Lucide as any)[name];
-  if (!IconComponent) {
-    return null;
-  }
+  const IconComponent = getIconComponent(name);
   return <IconComponent className={className} size={size} style={{ color }} />;
 }
 
