@@ -8,6 +8,7 @@ import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import AddStudentModal from '@/components/Academic/Modals/AddStudentModal';
 import EditUserModal from '@/components/Academic/Modals/EditUserModal';
+import { Calendar, UserPlus, Bell, Users, TrendingUp, TrendingDown, CreditCard, Eye, MousePointerClick, CheckCircle2, Filter, Download, MessageSquare, Pencil, Trash2, ChevronRight, ChevronLeft, X, PlayCircle, HelpCircle, Timer, RotateCcw, Search, PauseCircle } from 'lucide-react';
 
 const MySwal = withReactContent(Swal);
 
@@ -293,7 +294,7 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
           <div className="flex items-center gap-6">
             <h2 className="font-title-md text-title-md text-on-surface font-bold">إدارة المشتركين والتقارير</h2>
             <div className="flex items-center bg-surface-container-lowest px-4 py-1.5 rounded-full border border-outline-variant">
-              <span className="material-symbols-outlined text-on-surface-variant text-[20px] ml-2">calendar_today</span>
+              <Calendar className="w-4 h-4 text-slate-500 ml-2" />
               <select
                 value={selectedPeriod}
                 onChange={(e) => setSelectedPeriod(e.target.value)}
@@ -312,13 +313,13 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
               onClick={() => setIsAddModalOpen(true)}
               className="bg-primary text-on-primary px-6 py-2 rounded-lg font-label-md text-label-md flex items-center gap-2 hover:bg-primary-container transition-all shadow-sm active:scale-95 cursor-pointer font-bold"
             >
-              <span className="material-symbols-outlined">person_add</span>
+              <UserPlus className="w-4 h-4" />
               <span>إضافة مشترك يدوياً</span>
             </button>
             
             <div className="flex items-center gap-3">
               <button className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors rounded-full relative">
-                <span className="material-symbols-outlined">notifications</span>
+                <Bell className="w-5 h-5 text-slate-600" />
                 <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-error rounded-full"></span>
               </button>
               <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden flex items-center justify-center font-bold text-primary">
@@ -333,7 +334,7 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
       {!showTopHeader && (
         <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
           <div className="flex items-center bg-surface-container-lowest px-4 py-2 rounded-full border border-outline-variant bg-white">
-            <span className="material-symbols-outlined text-on-surface-variant text-[20px] ml-2">calendar_today</span>
+            <Calendar className="w-4 h-4 text-slate-500 ml-2" />
             <select
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
@@ -350,7 +351,7 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
             onClick={() => setIsAddModalOpen(true)}
             className="bg-primary text-on-primary px-6 py-2.5 rounded-xl font-label-md text-label-md flex items-center gap-2 hover:bg-primary-container transition-all shadow-sm active:scale-95 cursor-pointer font-bold"
           >
-            <span className="material-symbols-outlined">person_add</span>
+            <UserPlus className="w-4 h-4" />
             <span>إضافة مشترك لـ هذه الدورة</span>
           </button>
         </div>
@@ -363,10 +364,10 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
           <div className="bg-white p-5 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start mb-4">
               <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                <span className="material-symbols-outlined">group</span>
+                <Users className="w-5 h-5" />
               </div>
               <span className="flex items-center text-secondary text-label-sm font-label-sm bg-secondary-container/20 px-2 py-0.5 rounded font-bold">
-                <span className="material-symbols-outlined text-[14px]">trending_up</span>
+                <TrendingUp className="w-3.5 h-3.5 ml-1" />
                 12%
               </span>
             </div>
@@ -380,10 +381,10 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
           <div className="bg-white p-5 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start mb-4">
               <div className="w-10 h-10 rounded-lg bg-secondary/10 text-secondary flex items-center justify-center">
-                <span className="material-symbols-outlined">payments</span>
+                <CreditCard className="w-5 h-5 text-emerald-600" />
               </div>
               <span className="flex items-center text-secondary text-label-sm font-label-sm bg-secondary-container/20 px-2 py-0.5 rounded font-bold">
-                <span className="material-symbols-outlined text-[14px]">trending_up</span>
+                <TrendingUp className="w-3.5 h-3.5 ml-1" />
                 8.4%
               </span>
             </div>
@@ -395,10 +396,10 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
           <div className="bg-white p-5 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start mb-4">
               <div className="w-10 h-10 rounded-lg bg-tertiary/10 text-tertiary flex items-center justify-center">
-                <span className="material-symbols-outlined">visibility</span>
+                <Eye className="w-5 h-5" />
               </div>
               <span className="flex items-center text-error text-label-sm font-label-sm bg-error-container/20 px-2 py-0.5 rounded font-bold">
-                <span className="material-symbols-outlined text-[14px]">trending_down</span>
+                <TrendingDown className="w-3.5 h-3.5 ml-1" />
                 2%
               </span>
             </div>
@@ -410,10 +411,10 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
           <div className="bg-white p-5 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start mb-4">
               <div className="w-10 h-10 rounded-lg bg-inverse-surface/10 text-inverse-surface flex items-center justify-center">
-                <span className="material-symbols-outlined">ads_click</span>
+                <MousePointerClick className="w-5 h-5" />
               </div>
               <span className="flex items-center text-secondary text-label-sm font-label-sm bg-secondary-container/20 px-2 py-0.5 rounded font-bold">
-                <span className="material-symbols-outlined text-[14px]">trending_up</span>
+                <TrendingUp className="w-3.5 h-3.5 ml-1" />
                 0.5%
               </span>
             </div>
@@ -425,10 +426,10 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
           <div className="bg-white p-5 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start mb-4">
               <div className="w-10 h-10 rounded-lg bg-secondary-container/20 text-on-secondary-container flex items-center justify-center">
-                <span className="material-symbols-outlined">task_alt</span>
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
               </div>
               <span className="flex items-center text-secondary text-label-sm font-label-sm bg-secondary-container/20 px-2 py-0.5 rounded font-bold">
-                <span className="material-symbols-outlined text-[14px]">trending_up</span>
+                <TrendingUp className="w-3.5 h-3.5 ml-1" />
                 5%
               </span>
             </div>

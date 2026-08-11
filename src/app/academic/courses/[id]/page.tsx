@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye, Landmark, X, Check, User as UserIcon, Loader2, Globe, Copy, MoreVertical, ExternalLink } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye, Landmark, X, Check, User as UserIcon, Loader2, Globe, Copy, MoreVertical, ExternalLink, Clock, Share2, ImagePlus, Info, GraduationCap, History, CreditCard, Tag, Sparkles, Layers, Star, LayoutGrid, Link as LinkIcon } from 'lucide-react';
 import { getCourse, deleteUnit, deleteLesson, createUnit, updateCourse, getCategories, createCategory } from '@/services/courses';
 import { getGrades, getTerms, getSubjects, getAcademicYears, ClassificationItem } from '@/services/academic-classification';
 import { getProfileStatus } from '@/services/auth';
@@ -1389,7 +1389,7 @@ export default function CourseDetailsPage() {
               </div>
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-1 text-label-sm text-on-surface-variant font-bold">
-                  <span className="material-symbols-outlined text-[16px]">pending_actions</span>
+                  <Clock className="w-4 h-4 text-slate-400" />
                   الحالة: {status === 'published' ? 'منشور' : 'مسودة'}
                 </span>
                 <div className="flex items-center gap-2">
@@ -1413,7 +1413,7 @@ export default function CourseDetailsPage() {
               }}
               className="px-4 py-2 text-label-md border border-outline-variant rounded-lg flex items-center gap-2 bg-white text-gray-700 hover:bg-surface-container transition-all font-bold shadow-sm"
             >
-              <span className="material-symbols-outlined text-[20px]">visibility</span>
+              <Eye className="w-4 h-4" />
               معاينة
             </button>
             <button 
@@ -1426,7 +1426,7 @@ export default function CourseDetailsPage() {
               }}
               className="px-4 py-2 text-label-md border border-outline-variant rounded-lg flex items-center gap-2 bg-white text-gray-700 hover:bg-surface-container transition-all font-bold shadow-sm"
             >
-              <span className="material-symbols-outlined text-[20px]">share</span>
+              <Share2 className="w-4 h-4" />
               مشاركة الدورة
             </button>
             <button 
@@ -1558,7 +1558,7 @@ export default function CourseDetailsPage() {
             {/* Section 1: Definition */}
             <section className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm space-y-6">
               <div className="flex items-center gap-2 mb-2">
-                <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>info</span>
+                <Info className="w-5 h-5 text-blue-600" />
                 <h3 className="font-title-md text-title-md text-gray-900">تعريف الدورة</h3>
               </div>
 
@@ -1605,13 +1605,13 @@ export default function CourseDetailsPage() {
                       <div className="relative w-full h-full">
                         <img src={previewImage} alt="Course Preview" className="object-cover w-full h-full" />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all text-white font-bold text-xs gap-1.5">
-                          <span className="material-symbols-outlined text-[16px]">upload</span>
+                          <Upload className="w-4 h-4" />
                           تغيير الصورة
                         </div>
                       </div>
                     ) : (
                       <>
-                        <span className="material-symbols-outlined text-on-surface-variant text-3xl">add_photo_alternate</span>
+                        <ImagePlus className="w-8 h-8 text-slate-400" />
                         <span className="text-label-sm text-on-surface-variant mt-1 font-bold">اضغط لرفع صورة أو اسحبها هنا</span>
                       </>
                     )}
@@ -2651,7 +2651,7 @@ export default function CourseDetailsPage() {
                       className="p-2.5 text-on-surface-variant hover:bg-slate-50 border border-outline-variant/60 rounded-xl transition-all cursor-pointer"
                       title="نسخ رابط الصفحة"
                     >
-                      <span className="material-symbols-outlined">link</span>
+                      <LinkIcon className="w-4 h-4" />
                     </button>
                   </div>
                 </div>

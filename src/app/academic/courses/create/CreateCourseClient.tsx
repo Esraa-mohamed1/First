@@ -27,6 +27,13 @@ import {
   Globe,
   MoreVertical,
   ExternalLink,
+  ImagePlus,
+  Clock,
+  Info,
+  Bold,
+  Italic,
+  List,
+  Link as LinkIcon,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
@@ -855,7 +862,7 @@ export default function CreateCourseClient() {
                 {previewUrl ? (
                   <img src={previewUrl} alt="Course Thumbnail" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                 ) : (
-                  <span className="material-symbols-outlined text-slate-400 group-hover:text-blue-600 text-3xl transition-colors">add_photo_alternate</span>
+                  <ImagePlus className="w-7 h-7 text-slate-400 group-hover:text-blue-600 transition-colors" />
                 )}
               </div>
               <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
@@ -871,7 +878,7 @@ export default function CreateCourseClient() {
                 </div>
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                    <span className="material-symbols-outlined text-base text-slate-400">pending_actions</span>
+                    <Clock className="w-4 h-4 text-slate-400" />
                     الحالة: {status === 'published' ? 'منشورة' : 'مسودة'}
                   </span>
                   <div className="flex items-center gap-2">
@@ -895,7 +902,7 @@ export default function CreateCourseClient() {
                 }}
                 className="px-4 py-2.5 text-sm border border-slate-300 rounded-xl flex items-center gap-2 bg-white hover:bg-slate-50 hover:border-slate-400 transition-all font-bold text-slate-700 shadow-xs active:scale-[0.98]"
               >
-                <span className="material-symbols-outlined text-xl">visibility</span>
+                <Eye className="w-4 h-4" />
                 معاينة
               </button>
               <button
@@ -909,9 +916,9 @@ export default function CreateCourseClient() {
                 }}
                 className="px-4 py-2.5 text-sm border border-slate-300 rounded-xl flex items-center gap-2 bg-white hover:bg-slate-50 hover:border-slate-400 transition-all font-bold text-slate-700 shadow-xs active:scale-[0.98]"
               >
-                <span className="material-symbols-outlined text-xl">share</span>
+                <Share2 className="w-4 h-4" />
                 مشاركة
-                <span className="material-symbols-outlined text-lg">expand_more</span>
+                <ChevronDown className="w-4 h-4" />
               </button>
               <button
                 onClick={handleSave}
@@ -923,7 +930,7 @@ export default function CreateCourseClient() {
               <button
                 onClick={handlePublish}
                 disabled={isSubmitting}
-                className="px-6 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition-all shadow-md shadow-blue-600/20 disabled:opacity-50 active:scale-[0.98]"
+                className="px-5 py-2.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all font-bold shadow-md hover:shadow-lg disabled:opacity-50 active:scale-[0.98]"
               >
                 نشر الدورة
               </button>
@@ -981,9 +988,7 @@ export default function CreateCourseClient() {
                 <section className="bg-white border border-slate-300 rounded-2xl p-7 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.07)] transition-all duration-300">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200">
-                      <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-                        info
-                      </span>
+                      <Info className="w-5 h-5" />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-slate-900">تعريف الدورة</h3>
@@ -1021,7 +1026,7 @@ export default function CreateCourseClient() {
                           onClick={() => fileInputRef.current?.click()}
                           className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl h-28 flex flex-col items-center justify-center bg-slate-50/50 hover:bg-blue-50/20 transition-all cursor-pointer group"
                         >
-                          <span className="material-symbols-outlined text-slate-400 group-hover:text-blue-600 text-3xl transition-colors">add_photo_alternate</span>
+                          <ImagePlus className="w-7 h-7 text-slate-400 group-hover:text-blue-600 transition-colors" />
                           <span className="text-xs font-medium text-slate-500 group-hover:text-blue-600 mt-1 transition-colors">اضغط لرفع صورة أو اسحبها هنا</span>
                         </div>
                       </div>
@@ -1042,16 +1047,16 @@ export default function CreateCourseClient() {
                       <div className="border border-slate-300 rounded-2xl overflow-hidden shadow-2xs">
                         <div className="bg-slate-50 p-2.5 border-b border-slate-300 flex gap-2">
                           <button type="button" className="p-1.5 hover:bg-white rounded-lg text-slate-600 transition-colors">
-                            <span className="material-symbols-outlined text-xl">format_bold</span>
+                            <Bold className="w-4 h-4" />
                           </button>
                           <button type="button" className="p-1.5 hover:bg-white rounded-lg text-slate-600 transition-colors">
-                            <span className="material-symbols-outlined text-xl">format_italic</span>
+                            <Italic className="w-4 h-4" />
                           </button>
                           <button type="button" className="p-1.5 hover:bg-white rounded-lg text-slate-600 transition-colors">
-                            <span className="material-symbols-outlined text-xl">format_list_bulleted</span>
+                            <List className="w-4 h-4" />
                           </button>
                           <button type="button" className="p-1.5 hover:bg-white rounded-lg text-slate-600 transition-colors">
-                            <span className="material-symbols-outlined text-xl">link</span>
+                            <LinkIcon className="w-4 h-4" />
                           </button>
                         </div>
                         <textarea
