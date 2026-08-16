@@ -32,6 +32,8 @@ import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { getProfileStatus } from '@/services/auth';
+import { getAcademicHtml } from '@/builder/templates/academic/academicHtml';
+import { getCoachHtml } from '@/builder/templates/coach/coachHtml';
 
 const MySwal = withReactContent(Swal);
 
@@ -262,268 +264,157 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
       };
     }
   } else if (role === 'coach') {
-    if (templateId === 'template_1') {
-      return {
-        navbar: { title: 'الكوتش أحمد للتدريب والتوجيه', logo: '', bgColor: '#ffffff', textColor: '#1e1b4b' },
-        hero: {
-          title: 'أطلق إمكانياتك الحقيقية وحقق أهدافك البدنية والذهنية',
-          subtitle: 'توجيه وتدريب شخصي مخصص ١٠٠٪ 🚀',
-          description: 'نصمم معاً برنامجاً متكاملاً للتغذية والتمارين أو التوجيه المهني مبنياً على أسس علمية ومتابعة يومية تضمن لك الوصول لغايتك.',
-          buttonText: 'احجز جلستك الاستشارية الأولى',
-          buttonLink: '#coaching',
-          image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800&auto=format&fit=crop',
-          backgroundColor: '#eef2ff',
-          textColor: '#312e81'
-        },
-        about: {
-          title: 'من هو الكوتش؟',
-          subtitle: 'مدرب وموجه شخصي معتمد دولياً بخبرة تزيد عن ٨ سنوات في مساعدة الأفراد على تطوير عاداتهم وتحويل نمط حياتهم البدني والمهني.',
-          image: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=800&auto=format&fit=crop',
-          backgroundColor: '#ffffff',
-          textColor: '#1f2937'
-        },
-        features: {
-          title: 'أركان رحلة التحول',
-          subtitle: 'منظومة تدريبية تركز على النتيجة والاستمرارية لتفادي الانتكاس.',
-          items: [
-            { icon: 'Laptop', title: 'خطة مخصصة لأسلوب حياتك', description: 'لا نتبع نظاماً صارماً بل نصمم نظاماً يتكيف معك.' },
-            { icon: 'Award', title: 'متابعة أسبوعية دقيقة', description: 'مراجعة دورية للأوزان أو القياسات ومستوى الإنجاز اليومي.' },
-            { icon: 'Phone', title: 'تواصل مباشر ويومي', description: 'خط تواصل مباشر لطرح استفساراتك والحفاظ على الحماس.' }
-          ],
-          backgroundColor: '#f8fafc',
-          textColor: '#1f2937'
-        },
-        pricing: {
-          title: 'باقات التدريب والمتابعة المباشرة',
-          subtitle: 'استثمر في تطوير صحتك وحياتك اليوم مع باقات الدعم المخصصة.',
-          items: [
-            { title: 'باقة المتابعة الشهرية الأساسية', price: '٣٥0 ريال / شهرياً', features: ['تصميم جدول التمارين والتغذية المخصصة', 'متابعة أسبوعية عبر التقارير الرقمية', 'دعم عبر الواتساب للرد على الأسئلة'] },
-            { title: 'باقة التدريب الخاص المتقدمة (٣ أشهر)', price: '٩٠0 ريال / بالكامل', features: ['كل مميزات الباقة الشهرية الأساسية', 'مكالمة زووم استشارية كل أسبوعين', 'تعديل وتحديث مستمر للخطط حسب التطور'] }
-          ],
-          backgroundColor: '#ffffff',
-          textColor: '#1f2937'
-        },
-        faq: {
-          title: 'الأسئلة الشائعة من المتدربين',
-          items: [
-            { question: 'هل أحتاج للذهاب للنادي الرياضي (الجيم)؟', answer: 'لا، يمكنني تصميم برنامج خاص للتدريب المنزلي بالاعتماد على وزن الجسم أو أدوات بسيطة.' },
-            { question: 'كيف تتم متابعة التطور والوزن؟', answer: 'من خلال نموذج رقمي محمي يملأه المتدرب أسبوعياً بالقياسات والصور وملاحظات النشاط اليومي.' }
-          ],
-          backgroundColor: '#f8fafc',
-          textColor: '#1f2937'
-        },
-        contact: {
-          title: 'هل لديك حالة صحية خاصة أو أهداف معقدة؟',
-          description: 'راسلني بالواتساب لأفهم حالتك ونحدد ما إذا كانت البرامج تناسبك.',
-          phoneNumber: '966500000000',
-          buttonText: 'تحدث مع الكوتش الآن',
-          backgroundColor: '#4f46e5',
-          textColor: '#ffffff'
-        },
-        footer: {
-          text: 'جميع الحقوق محفوظة © الكوتش أحمد علي للتدريب الشخصي ٢٠٢٦',
-          backgroundColor: '#1e1b4b',
-          textColor: '#eef2ff'
-        }
-      };
-    } else {
-      // Coach Template 2
-      return {
-        navbar: { title: 'التميز الرياضي والمهني', logo: '', bgColor: '#0f172a', textColor: '#ffffff' },
-        hero: {
-          title: 'حوّل أهدافك الرياضية والمهنية الصعبة إلى واقع ملموس ومستدام',
-          subtitle: 'أنظمة تدريب ذكية قائمة على البيانات 📈',
-          description: 'مع الكوتش المحترف، احصل على خطط مدعومة بالبيانات والتحليلات لقياس التقدم وتخطي الحواجز البدنية والعقلية التي تعيق نجاحك.',
-          buttonText: 'احجز استشارتك المهنية الآن',
-          buttonLink: '#start',
-          image: 'https://images.unsplash.com/photo-1548690312-e3b507d8c110?w=800&auto=format&fit=crop',
-          backgroundColor: '#0f172a',
-          textColor: '#ffffff'
-        },
-        about: {
-          title: 'منهجية التدريب الذكي',
-          subtitle: 'لا مجال للاجتهادات العشوائية. نحن نحلل تكوين جسمك ونمط حياتك ونطور جداول علمية دقيقة لتحقيق تحول حقيقي وملموس.',
-          image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&auto=format&fit=crop',
-          backgroundColor: '#111827',
-          textColor: '#f3f4f6'
-        },
-        features: {
-          title: 'رؤية شاملة للتطوير الشخصي',
-          subtitle: 'نوفر لك المزيج المثالي بين العلم التطبيقي والدافع النفسي لتفوقك.',
-          items: [
-            { icon: 'Award', title: 'بروتوكولات علمية حديثة', description: 'تحديثات مستمرة للخطط استناداً لأحدث الدراسات الرياضية.' },
-            { icon: 'Laptop', title: 'متابعة عبر المنصة التفاعلية', description: 'تتبع نتائجك، رسوم بيانية توضح تطور قوتك وتحملك.' },
-            { icon: 'Phone', title: 'استشارات هاتفية مباشرة', description: 'جلسة زووم شهرية لتقييم التقدم وتعديل الأهداف الطويلة.' }
-          ],
-          backgroundColor: '#0f172a',
-          textColor: '#ffffff'
-        },
-        pricing: {
-          title: 'باقات التدريب الحصرية',
-          subtitle: 'تضمين المتابعة، والأنظمة الغذائية وجلسات الاستشارات المباشرة.',
-          items: [
-            { title: 'باقة النخبة (التزام كامل ٣ أشهر)', price: '١٢٠0 ريال / بالكامل', features: ['خطط تمارين ونظام غذائي دقيق ومعدل', 'متابعة قياسات وصور أسبوعية', 'استشارة زووم نصف شهرية', 'أولوية تواصل واتساب على مدار اليوم'] },
-            { title: 'باقة الاحتراف الشاملة (٦ أشهر)', price: '٢٠٠٠ ريال / بالكامل', features: ['كل مميزات باقة النخبة مع خصم كبير', 'مكملات غذائية موصى بها مع ملف التعديل', 'تحليل ملف الفحوصات والتحاليل الطبية'] }
-          ],
-          backgroundColor: '#111827',
-          textColor: '#ffffff'
-        },
-        faq: {
-          title: 'الأسئلة الشائعة للمتدربين',
-          items: [
-            { question: 'كيف يتم تعديل الخطط الغذائية؟', answer: 'يتم تعديل خطة الوجبات دورياً بناءً على نزول الوزن وتفضيلاتك اليومية للأطعمة لضمان المتعة.' },
-            { question: 'هل تشمل الباقة جلسات تدريب مباشر؟', answer: 'التدريب عن بعد عبر تصميم الخطط والمتابعة، ولكن يمكنك رفع فيديوهات لأدائك الحركي لتصحيحه.' }
-          ],
-          backgroundColor: '#0f172a',
-          textColor: '#ffffff'
-        },
-        contact: {
-          title: 'ابدأ رحلة تحولك الخاصة اليوم',
-          description: 'انضم لآلاف المتدربين المتميزين وغير حياتك وجسدك بشكل آمن وصحي.',
-          phoneNumber: '966500000000',
-          buttonText: 'تواصل معي مباشرة بالواتساب',
-          backgroundColor: '#ef4444',
-          textColor: '#ffffff'
-        },
-        footer: {
-          text: 'التميز الرياضي والمهني © حقوق النشر محفوظة ٢٠٢٦',
-          backgroundColor: '#0f172a',
-          textColor: '#94a3b8'
-        }
-      };
-    }
+    return {
+      navbar: { title: 'Deep Knowledge', logo: '', bgColor: '#fbfafc', textColor: '#6750a4' },
+      hero: {
+        title: 'تعمق في المعرفة. <br/> تعلم من الصفوة.',
+        subtitle: 'أكاديمية النخبة',
+        description: 'مساحة حصرية مصممة للمفكرين والقادة. استكشف مناهج متقدمة وتواصل مع خبراء عالميين في بيئة دراسية مصممة للتركيز العميق والتميز الأكاديمي.',
+        buttonText: 'ابدأ رحلتك',
+        buttonLink: '#',
+        image: '',
+        backgroundColor: '#fbfafc',
+        textColor: '#1c1a22'
+      },
+      about: {
+        title: 'المرشدون الخبراء',
+        subtitle: 'نخبة من الأكاديميين والباحثين يرافقونك في رحلتك المعرفية.',
+        image: '',
+        backgroundColor: '#ffffff',
+        textColor: '#1c1a22'
+      },
+      features: {
+        title: 'المرشدون الخبراء',
+        subtitle: 'نخبة من الأكاديميين والباحثين يرافقونك في رحلتك المعرفية.',
+        items: [
+          {
+            icon: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD6JzKcQHDDohUQuzB8PNfXLDbsl7kf35bgCuG0sQW1h8cNdtvfatA7YI3HqNz6hiRLYcE6oU_P8qcDQyq1S4EDQdGdl3PraTpby8mme9L-kHXgx0kdcdb_pfIEdse9RcYvfBa3_gBCg2QIPqKv9LzEDqHVC0s2nGHMpRBNZve1OBkEhV00ehX4zl5HDvssuq8qkK-Yh14G6Udjd1e6e9VB3D5sX_35J7UvItIiInMbSaBA3ALb7g58eg',
+            title: 'د. طارق الحكيم - أستاذ الفلسفة المتقدمة',
+            description: 'خبير عالمي في الفلسفة التحليلية والمنطق الرياضي. يقدم رؤى معمقة تتحدى التفكير التقليدي وتبني أسساً معرفية متينة.'
+          },
+          {
+            icon: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDdn5I4iyCWiaDe9m4F8v8n_X00tPqBgqXH4hbDxxtEpcQGhs3Iv7ye36iLKGCPaYsSeLuQ6Q56ZRbKBk10dy_efgKLS3zHuPJjJmYL6JtPlCiByhhruLtE_z5QnQirZ362M0sgpMps7B8icOJUUVS6t_6GJ1K0xma8arDq0yEal-eRoeAXPmexe9Vlvhif39sPxgQQGgyuqPwrz1R2REpb3TQmQAfrbC-2IMbqMBAUhDDImR-r8q5cEQ',
+            title: 'د. ليلى المنصور - باحثة في الذكاء المعرفي',
+            description: 'رائدة في تقاطع علوم الحاسوب وعلم الأعصاب. تركز أبحاثها على محاكاة الإدراك البشري وتطوير خوارزميات التعلم العميق.'
+          },
+          {
+            icon: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBsvCKkFFgnTqd7h7Fw_WOHLv_-bXegAz36jnJ-dSBDWKiA81BP1TWumr1WnjULNWm_0CcbVBTge22QX2XN-cBPri3M3xbxSbAGqLIcFlI4XbbEacN9CKm1uRjQqkRnAfjumbe4cbh_txOhsTy_-6Eph6WwWNqlfr7j35tkwUU103Z7NEEpLCcfSvulZ4QoKpglkx4KRxtXU9TRhBm3eChxdvC43k04A-fnMk-IjFugUk9FdZ1nyfYQsA',
+            title: 'البروفيسور عمر زيدان - خبير الاقتصاد الكلي',
+            description: 'مستشار استراتيجي دولي. يحلل الأنظمة الاقتصادية المعقدة ويقدم استراتيجيات تنبؤية للأسواق العالمية الناشئة.'
+          }
+        ],
+        backgroundColor: '#fbfafc',
+        textColor: '#1c1a22'
+      },
+      pricing: {
+        title: 'سلسلة الماستركلاس',
+        subtitle: 'محاضرات مكثفة مسجلة بأعلى جودة سينمائية.',
+        items: [
+          {
+            title: 'بنية التفكير الاستراتيجي',
+            price: 'الحلقة 1',
+            features: ['45 دقيقة', 'https://lh3.googleusercontent.com/aida-public/AB6AXuAXpJX3q5uXYRCJ0P26aOiHCO6ssai534WXEH0acZCxxJWwAnux91BzP3cVQ-I09Yp_BnJZkboDuI3HhAYQROL-qkAZHMuhuMkclUAG-iB_eMV9KhTwCOLORHsHaWcy9cV25oZBqek1WcyH-K5R9Y718rEX4UUTfbLh5s77ovJzp3pdBAXWt2iJtJ7CIN8dP45tCVIqTuiZ_f4GpC49lyi0XC3oxtV9sBrBy2oxubJ8LNQY_adythzF8g']
+          },
+          {
+            title: 'تحليل الأنظمة المعقدة',
+            price: 'الحلقة 2',
+            features: ['52 دقيقة', 'https://lh3.googleusercontent.com/aida-public/AB6AXuDRQTwjFjHqFPLwD4Ia1wHj8tW3Aj0xcQvOR1DdS8lD0jwvVo4Z8mOsjlKrP3zjMBswfUBWkhBM7T1CXK0oMbhlSEYqRFRZrp_4NhP1Zy9u-pnmyE39rj7yU6Fb2ozxaVqoJWdESCHFLQXXywsipGmx4tDJoL-L9l7NFt-LiKT6Dq2A0wbgL4tV4fNVKNjmKmQk8WBlM30SKcRVu-bBJ4ulrQXnxK0_AFMOWOKxv3zOn3pnp0S1N-d-wA']
+          }
+        ],
+        backgroundColor: '#ffffff',
+        textColor: '#1c1a22'
+      },
+      faq: {
+        title: 'مسارات المناهج المتقدمة',
+        items: [
+          { question: 'الأسس المعرفية', answer: 'المستوى الأول' },
+          { question: 'المنطق التحليلي', answer: 'التفكير النقدي المتقدم' },
+          { question: 'فلسفة العلوم', answer: 'الابستيمولوجيا التطبيقية' }
+        ],
+        backgroundColor: '#fbfafc',
+        textColor: '#1c1a22'
+      },
+      contact: {
+        title: 'Deep Knowledge',
+        description: 'أكاديمية النخبة للتعليم العالي المستقل. نبني قادة الفكر للمستقبل من خلال مناهج صارمة وعميقة.',
+        phoneNumber: '',
+        buttonText: '',
+        backgroundColor: '#6750a4',
+        textColor: '#ffffff'
+      },
+      footer: {
+        text: '© 2024 Deep Knowledge Academy. All rights reserved.',
+        backgroundColor: '#fbfafc',
+        textColor: '#1c1a22'
+      }
+    };
   } else {
     // Academy Role ('academy')
-    if (templateId === 'template_1') {
-      return {
-        navbar: { title: 'أكاديمية درب للعلوم البرمجية', logo: '', bgColor: '#ffffff', textColor: '#0f172a' },
-        hero: {
-          title: 'ادرس علوم الحاسب والذكاء الاصطناعي مع أفضل خبراء الصناعة',
-          subtitle: 'بوابة التعلم والابتكار الأكاديمي الرقمي 🌐',
-          description: 'نقدم لك مسارات ومناهج تعليمية متكاملة تأخذك من البدايات الصفرية إلى الجاهزية المهنية والعملية لتلبي طلبات الشركات التقنية الحديثة.',
-          buttonText: 'تصفح الكتالوج البرمجي',
-          buttonLink: '#courses',
-          image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop',
-          backgroundColor: '#f8fafc',
-          textColor: '#0f172a'
-        },
-        about: {
-          title: 'عن أكاديميتنا المتطورة',
-          subtitle: 'تأسست الأكاديمية لردم الفجوة العميقة بين المناهج الأكاديمية النظرية ومتطلبات سوق العمل البرمجي الفعلي. ندرّب طلابنا على بيئات عمل ومشاريع حقيقية.',
-          image: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&auto=format&fit=crop',
-          backgroundColor: '#ffffff',
-          textColor: '#1f2937'
-        },
-        features: {
-          title: 'ما يميز مساراتنا الأكاديمية',
-          subtitle: 'بيئة تعليمية مجهزة لضمان وصولك لمرحلة الاحتراف والتوظيف.',
-          items: [
-            { icon: 'BookOpen', title: 'مناهج برمجية تطبيقية', description: 'محدثة باستمرار لمواكبة التغيرات في تقنيات فرونت إند وباك إند.' },
-            { icon: 'Award', title: 'شهادات تخرج معتمدة', description: 'توثق مهاراتك ومشاريعك المنفذة وتعزز من قوة ملفك الوظيفي.' },
-            { icon: 'Clock', title: 'ورش عمل ومجتمع نشط', description: 'لقاءات دورية لتبادل الخبرات ومراجعة الأكواد وتذليل العقبات.' }
-          ],
-          backgroundColor: '#f8fafc',
-          textColor: '#1f2937'
-        },
-        pricing: {
-          title: 'مسارات الاشتراك والأسعار المتاحة',
-          subtitle: 'اختر طريقة الدفع المناسبة واستمتع بوصول فوري لجميع موارد الأكاديمية.',
-          items: [
-            { title: 'العضوية البرمجية الشهرية', price: '١٢٠ ريال / شهرياً', features: ['وصول لكافة الكورسات الأساسية والمحدثة', 'ملفات الأكواد والملخصات التقنية', 'دعم من خلال المجتمع التقني'] },
-            { title: 'باقة الاحتراف والتوظيف (عام كامل)', price: '٩٩٩ ريال / سنوياً', features: ['دخول لجميع مسارات الأكاديمية المتقدمة', 'جلسات مراجعة للبورتفوليو والسيرة الذاتية', 'أولوية الترشيح للشركات الشريكة'] }
-          ],
-          backgroundColor: '#ffffff',
-          textColor: '#1f2937'
-        },
-        faq: {
-          title: 'الأسئلة الشائعة للمشتركين الجدد',
-          items: [
-            { question: 'هل أحتاج لمعرفة سابقة بالبرمجة للتسجيل؟', answer: 'لا، معظم مساراتنا تبدأ من الصفر تماماً وتأسيس أساسيات المنطق البرمجي وقواعد البيانات.' },
-            { question: 'هل أحصل على دعم إذا تعطل كودي؟', answer: 'نعم، نوفر منتدى تقني تفاعلي حيث يمكنك نشر مشكلتك ويقوم الموجهون بالرد عليك خلال ساعات.' }
-          ],
-          backgroundColor: '#f8fafc',
-          textColor: '#1f2937'
-        },
-        contact: {
-          title: 'هل ترغب في تسجيل مؤسستك أو فريق عملك؟',
-          description: 'تواصل مع قسم العلاقات الأكاديمية لتصميم باقات مخصصة للأعمال والمجموعات.',
-          phoneNumber: '966500000000',
-          buttonText: 'مراسلة خدمة العملاء واتساب',
-          backgroundColor: '#0284c7',
-          textColor: '#ffffff'
-        },
-        footer: {
-          text: 'أكاديمية درب للعلوم البرمجية © جميع الحقوق محفوظة ٢٠٢٦',
-          backgroundColor: '#0f172a',
-          textColor: '#94a3b8'
-        }
-      };
-    } else {
-      // Academy Template 2
-      return {
-        navbar: { title: 'أكاديمية المعرفة والتقنية الحديثة', logo: '', bgColor: '#0b1329', textColor: '#ffffff' },
-        hero: {
-          title: 'احترف مهارات المستقبل الرقمية والبرمجية مع دراسات معتمدة',
-          subtitle: 'تعليم احترافي للمستقبل ⚙️✨',
-          description: 'منظومة تعليمية متكاملة تقدم دراسة تفصيلية لمجالات الذكاء الاصطناعي، البرمجة، هندسة البيانات، وتطوير المنتجات تحت إشراف نخبة من المحاضرين الدوليين.',
-          buttonText: 'التحق بالدفعة الجديدة الآن',
-          buttonLink: '#enroll',
-          image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&auto=format&fit=crop',
-          backgroundColor: '#0b1329',
-          textColor: '#ffffff'
-        },
-        about: {
-          title: 'رسالتنا الأكاديمية والمهنية',
-          subtitle: 'نهدف لتمكين الجيل الجديد من قيادة التحول الرقمي بالمنطقة من خلال تعليم تقني تفاعلي، عالي الكفاءة، ومرتبط بالاحتياجات الحقيقية لشركات التكنولوجيا.',
-          image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&auto=format&fit=crop',
-          backgroundColor: '#1c2541',
-          textColor: '#cbd5e1'
-        },
-        features: {
-          title: 'بنية تحتية متطورة للتعلم الإلكتروني',
-          subtitle: 'كل ما تحتاجه للنجاح المهني والتطبيق الفعلي والتواصل.',
-          items: [
-            { icon: 'Laptop', title: 'بيئات برمجية تفاعلية', description: 'اكتب الأكواد مباشرة من متصفحك دون إعدادات معقدة لجهازك.' },
-            { icon: 'Award', title: 'امتحانات بمستوى قياسي', description: 'تقييم شامل يقيس الفهم العميق والقدرة على حل المشكلات التقنية.' },
-            { icon: 'Sparkles', title: 'فرص توظيف وتدريب ميداني', description: 'شراكات واسعة مع كبرى الشركات البرمجية لتأمين تدريب متميز.' }
-          ],
-          backgroundColor: '#0b1329',
-          textColor: '#ffffff'
-        },
-        pricing: {
-          title: 'باقات الاشتراك في الأكاديمية',
-          subtitle: 'باقات سنوية وشهرية لتختار ما يناسب جدولك وميزانيتك.',
-          items: [
-            { title: 'الاشتراك البرمجي الفضي', price: '١٥٠ ريال / شهرياً', features: ['وصول لكافة الكورسات الأساسية والمحدثة', 'ملخصات PDF ومشاريع المبتدئين', 'دعم تقني عبر تذاكر المنصة'] },
-            { title: 'الاشتراك الذهبي الشامل (عضوية سنوية)', price: '١,٢٠٠ ريال / سنوياً', features: ['دخول لجميع مسارات الأكاديمية المتقدمة', 'استشارة شخصية زووم مع الخبراء شهرياً', 'شهادة تخرج موثقة وملف توظيفي مفضل'] }
-          ],
-          backgroundColor: '#1c2541',
-          textColor: '#ffffff'
-        },
-        faq: {
-          title: 'الأسئلة الشائعة من الطلاب والأكاديميين',
-          items: [
-            { question: 'هل الشهادات مقبولة دولياً وفي الشركات؟', answer: 'نعم، شهاداتنا تتبع المعايير القياسية لتطوير البرمجيات ومعترف بها لدى أكثر من ١٠٠ شركة تقنية شريكة بالمنطقة.' },
-            { question: 'هل توجد شروط لسن معينة للتسجيل؟', answer: 'لا، نرحب بجميع الشغوفين بالتعلم البرمجي والتصميم من مختلف الأعمار طالما توافر لديهم الحاسب والإنترنت.' }
-          ],
-          backgroundColor: '#0b1329',
-          textColor: '#ffffff'
-        },
-        contact: {
-          title: 'هل تحتاج لطلب تمويل أو خصم أكاديمي للطلاب؟',
-          description: 'تواصل معنا للحصول على تفاصيل المنح الدراسية الجزئية المتاحة للطلاب المتفوقين.',
-          phoneNumber: '966500000000',
-          buttonText: 'المنح والتمويل واتساب',
-          backgroundColor: '#10b981',
-          textColor: '#ffffff'
-        },
-        footer: {
-          text: 'أكاديمية المعرفة والتقنية الحديثة © حقوق الطبع محفوظة ٢٠٢٦',
-          backgroundColor: '#0b1329',
-          textColor: '#5c677d'
-        }
-      };
-    }
+    return {
+      navbar: { title: 'إديوكور', logo: '', bgColor: '#ffffff', textColor: '#3525cd' },
+      hero: {
+        title: 'بناء تجربة أكاديمية أكثر ذكاءً.',
+        subtitle: 'حل مؤسسي متقدم',
+        description: 'اربط الطلاب، والمعلمين، والإداريين على منصة مؤسسية موحدة مصممة لتحقيق التميز القابل للقياس وسير العمل المبسط بكفاءة عالية.',
+        buttonText: 'استكشف المنصة',
+        buttonLink: '#',
+        image: 'https://tse4.mm.bing.net/th/id/OIP.CGEfBMBIYoz4Syk_3B8DawHaEK?r=0&rs=1&pid=ImgDetMain&o=7&rm=3',
+        backgroundColor: '#fcf8ff',
+        textColor: '#1b1b24'
+      },
+      about: {
+        title: 'تحليلات ذكية لاتخاذ قرارات أفضل',
+        subtitle: 'راقب الأداء الأكاديمي، وحدد الاتجاهات، وقم بتحسين المخرجات التعليمية من خلال لوحات تحكم تحليلية متقدمة توفر رؤى في الوقت الفعلي.',
+        image: '',
+        backgroundColor: '#ffffff',
+        textColor: '#1b1b24'
+      },
+      features: {
+        title: 'نظام بيئي أكاديمي متكامل',
+        subtitle: 'مجموعة شاملة ومتطورة من الأدوات لإدارة كل جانب من جوانب رحلة التعلم المؤسسية.',
+        items: [
+          { icon: 'groups', title: 'مركز الطلاب الشامل', description: 'تمكين المتعلمين بلوحات تحكم مخصصة، وتتبع دقيق للتقدم، وأدوات تواصل تعاونية سلسة لبيئة تعليمية محفزة.' },
+          { icon: 'assignment_ind', title: 'بوابة المعلمين', description: 'تبسيط تخطيط الدروس، وإدارة الدرجات، وتعزيز تفاعل الطلاب بأدوات متقدمة.' },
+          { icon: 'quiz', title: 'محرك التقييم', description: 'اختبارات آمنة وقابلة للتطوير مع تصحيح آلي وتحليلات أداء مفصلة ودقيقة.' },
+          { icon: 'insights', title: 'المخرجات والنتائج', description: 'تقارير مؤسسية شاملة لتتبع الفعالية الأكاديمية وإتقان الطلاب للمهارات المطلوبة.' }
+        ],
+        backgroundColor: '#f5f2ff',
+        textColor: '#1b1b24'
+      },
+      pricing: {
+        title: 'المخرجات والنتائج الإحصائية',
+        subtitle: 'معدلات تقدم وتحليلات رقمية للفصول الدراسية',
+        items: [
+          { title: 'طلاب نشطون', price: '12.4k', features: ['بوابات تفاعلية', 'تتبع التقدم'] },
+          { title: 'دورات مدارة', price: '320', features: ['فصول مسجلة', 'محاضرات بث مباشر'] },
+          { title: 'معدل الإنجاز', price: '87%', features: ['نسبة إتمام مرتفعة', 'التزام أكاديمي'] }
+        ],
+        backgroundColor: '#fcf8ff',
+        textColor: '#1b1b24'
+      },
+      faq: {
+        title: 'الأسئلة الشائعة حول إديوكور',
+        items: [
+          { question: 'هل الحصص البث المباشر مسجلة؟', answer: 'نعم، يتم تسجيل جميع اللقاءات المباشرة ورفعها للمنصة لتعيد مشاهدتها في أي وقت.' },
+          { question: 'كيف يساهم إديوكور في تحسين الأداء الأكاديمي؟', answer: 'يوفر النظام تحليلات شاملة تمكن الإداريين والمعلمين من مراقبة التقدم واتخاذ قرارات فورية مدعومة بالبيانات.' }
+        ],
+        backgroundColor: '#f5f2ff',
+        textColor: '#1b1b24'
+      },
+      contact: {
+        title: 'ابْنِ مستقبل التعليم',
+        description: 'انضم إلى المؤسسات الرائدة عالميًا في تحويل التجربة الأكاديمية. ارتقِ بمستوى مؤسستك التعليمية وابدأ رحلتك نحو التميز اليوم.',
+        phoneNumber: '201000000000',
+        buttonText: 'ابدأ الآن',
+        backgroundColor: '#3525cd',
+        textColor: '#ffffff'
+      },
+      footer: {
+        text: '© 2024 إديوكور الأكاديمية. جميع الحقوق محفوظة.',
+        backgroundColor: '#ffffff',
+        textColor: '#1b1b24'
+      }
+    };
   }
 };
 
@@ -578,6 +469,28 @@ export default function PageBuilderPage() {
       }
     }
     loadUserRole();
+  }, []);
+
+  // --- Listen to selection messages from preview iframe ---
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'SELECT_SECTION') {
+        setActiveSection(event.data.section);
+        if (event.data.index !== null && event.data.index !== undefined) {
+          setActiveItemIndex(event.data.index);
+          setTimeout(() => {
+            const el = document.getElementById(`editor-item-${event.data.section}-${event.data.index}`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 120);
+        } else {
+          setActiveItemIndex(null);
+        }
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, []);
 
   // --- Load content when role or active template changes ---
@@ -1022,13 +935,18 @@ export default function PageBuilderPage() {
 
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] font-bold text-slate-600">رابط صورة الهيرو المعبرة</label>
-                    <input
-                      type="text"
-                      value={content.hero.image}
-                      onChange={(e) => handleUpdateField('hero', 'image', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
-                      dir="ltr"
-                    />
+                    <div className="flex gap-2 items-center">
+                      {content.hero.image && (
+                        <img src={content.hero.image} className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0" alt="hero preview" />
+                      )}
+                      <input
+                        type="text"
+                        value={content.hero.image}
+                        onChange={(e) => handleUpdateField('hero', 'image', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left flex-grow"
+                        dir="ltr"
+                      />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -1092,13 +1010,18 @@ export default function PageBuilderPage() {
 
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] font-bold text-slate-600">صورة التعريف / البورتفوليو</label>
-                    <input
-                      type="text"
-                      value={content.about.image}
-                      onChange={(e) => handleUpdateField('about', 'image', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
-                      dir="ltr"
-                    />
+                    <div className="flex gap-2 items-center">
+                      {content.about.image && (
+                        <img src={content.about.image} className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0" alt="about preview" />
+                      )}
+                      <input
+                        type="text"
+                        value={content.about.image}
+                        onChange={(e) => handleUpdateField('about', 'image', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left flex-grow"
+                        dir="ltr"
+                      />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -1197,13 +1120,24 @@ export default function PageBuilderPage() {
                         </button>
                         
                         <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">اسم الأيقونة (مثال: Award, PlayCircle)</label>
-                          <input
-                            type="text"
-                            value={item.icon}
-                            onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'icon', e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-mono"
-                          />
+                          <label className="text-[9px] font-bold text-slate-500">
+                            {item.icon && (item.icon.startsWith('http') || item.icon.includes('/')) 
+                              ? 'رابط صورة الميزة / الموجه' 
+                              : 'رمز الأيقونة (مثال: Award, BookOpen أو رابط صورة)'}
+                          </label>
+                          <div className="flex gap-2 items-center">
+                            {item.icon && (item.icon.startsWith('http') || item.icon.includes('/')) && (
+                              <img src={item.icon} className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0" alt="preview" />
+                            )}
+                            <input
+                              type="text"
+                              value={item.icon}
+                              onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'icon', e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-mono flex-1 text-left"
+                              placeholder="أدخل اسم الأيقونة أو رابط الصورة"
+                              dir="ltr"
+                            />
+                          </div>
                         </div>
 
                         <div className="flex flex-col gap-1">
@@ -1319,15 +1253,48 @@ export default function PageBuilderPage() {
                           <label className="text-[9px] font-bold text-slate-500">الميزات المشمولة (مفصولة بفاصلة)</label>
                           <input
                             type="text"
-                            value={item.features.join('، ')}
+                            value={item.features.filter(f => !f.startsWith('http') && !f.includes('/')).join('، ')}
                             onChange={(e) => {
-                              const arr = e.target.value.split(/[،,]/).map(s => s.trim()).filter(Boolean);
-                              handleUpdateNestedField('pricing', 'items', idx, 'features', arr);
+                              const arrText = e.target.value.split(/[،,]/).map(s => s.trim()).filter(Boolean);
+                              const arrImgs = item.features.filter(f => f.startsWith('http') || f.includes('/'));
+                              handleUpdateNestedField('pricing', 'items', idx, 'features', [...arrText, ...arrImgs]);
                             }}
                             className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none text-slate-700 font-medium"
                             placeholder="ميزة ١ ، ميزة ٢ ، ميزة ٣"
                           />
                         </div>
+
+                        {/* If there is an image in features, or if the role is coach, allow editing it explicitly */}
+                        {(item.features.some(f => f.startsWith('http') || f.includes('/')) || currentRole === 'coach') && (
+                          <div className="flex flex-col gap-1 mt-1">
+                            <label className="text-[9px] font-bold text-slate-500">رابط صورة الكارت / الماستركلاس</label>
+                            <div className="flex gap-2 items-center">
+                              {item.features.find(f => f.startsWith('http') || f.includes('/')) && (
+                                <img 
+                                  src={item.features.find(f => f.startsWith('http') || f.includes('/'))} 
+                                  className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0" 
+                                  alt="preview" 
+                                />
+                              )}
+                              <input
+                                type="text"
+                                value={item.features.find(f => f.startsWith('http') || f.includes('/')) || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  const arrText = item.features.filter(f => !f.startsWith('http') && !f.includes('/'));
+                                  if (val.trim()) {
+                                    handleUpdateNestedField('pricing', 'items', idx, 'features', [...arrText, val.trim()]);
+                                  } else {
+                                    handleUpdateNestedField('pricing', 'items', idx, 'features', arrText);
+                                  }
+                                }}
+                                className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-mono flex-grow text-left"
+                                placeholder="https://..."
+                                dir="ltr"
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -1570,315 +1537,329 @@ export default function PageBuilderPage() {
             </div>
 
             {/* Simulated Live Renderer Web Page Content */}
-            <div className="flex-1 overflow-y-auto bg-white select-none">
-              
-              {/* Navbar Section */}
-              <div
-                onClick={() => { setActiveSection('navbar'); setActiveItemIndex(null); }}
-                style={{ backgroundColor: content.navbar.bgColor, color: content.navbar.textColor }}
-                className={`py-4 px-6 flex justify-between items-center cursor-pointer border-b border-slate-100 transition-all relative group ${
-                  activeSection === 'navbar' 
-                    ? 'ring-4 ring-blue-500 z-10 shadow-md' 
-                    : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                }`}
-              >
-                <div className="absolute top-1 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
-                  <Pencil className="w-2.5 h-2.5" />
-                  <span>تعديل الهيدر</span>
-                </div>
-                <div className="font-extrabold text-sm flex items-center gap-1.5">
-                  <Laptop className="w-4 h-4 text-blue-600" />
-                  <span>{content.navbar.title || 'شعار الموقع'}</span>
-                </div>
-                <div className="flex items-center gap-4 text-xs font-bold opacity-85">
-                  <span>الرئيسية</span>
-                  <span>من نحن</span>
-                  <span>الدورات</span>
-                  <span>تواصل معنا</span>
-                </div>
-              </div>
-
-              {/* Hero Banner Section */}
-              <div
-                onClick={() => { setActiveSection('hero'); setActiveItemIndex(null); }}
-                style={{ backgroundColor: content.hero.backgroundColor, color: content.hero.textColor }}
-                className={`p-8 sm:p-12 grid grid-cols-1 md:grid-cols-2 gap-6 items-center cursor-pointer transition-all relative group ${
-                  activeSection === 'hero' 
-                    ? 'ring-4 ring-blue-500 z-10 shadow-md' 
-                    : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                }`}
-              >
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
-                  <Pencil className="w-2.5 h-2.5" />
-                  <span>تعديل البانر الرئيسي</span>
-                </div>
-                <div className="space-y-4">
-                  <span className="inline-block px-3 py-1 bg-blue-500/10 rounded-full text-xs font-extrabold">
-                    {content.hero.subtitle}
-                  </span>
-                  <h2 className="text-xl sm:text-2xl font-black leading-snug">
-                    {content.hero.title}
-                  </h2>
-                  <p className="text-xs opacity-80 leading-relaxed max-w-md">
-                    {content.hero.description}
-                  </p>
-                  <div>
-                    <button
-                      type="button"
-                      className="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-extrabold hover:bg-blue-700 shadow-md pointer-events-none transition-all"
-                    >
-                      {content.hero.buttonText}
-                    </button>
+            {currentRole === 'academy' ? (
+              <iframe
+                srcDoc={getAcademicHtml(content)}
+                className="w-full h-full border-0"
+                title="Academic Preview"
+              />
+            ) : currentRole === 'coach' ? (
+              <iframe
+                srcDoc={getCoachHtml(content)}
+                className="w-full h-full border-0"
+                title="Coach Preview"
+              />
+            ) : (
+              <div className="flex-1 overflow-y-auto bg-white select-none">
+                
+                {/* Navbar Section */}
+                <div
+                  onClick={() => { setActiveSection('navbar'); setActiveItemIndex(null); }}
+                  style={{ backgroundColor: content.navbar.bgColor, color: content.navbar.textColor }}
+                  className={`py-4 px-6 flex justify-between items-center cursor-pointer border-b border-slate-100 transition-all relative group ${
+                    activeSection === 'navbar' 
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                      : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
+                  }`}
+                >
+                  <div className="absolute top-1 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
+                    <Pencil className="w-2.5 h-2.5" />
+                    <span>تعديل الهيدر</span>
+                  </div>
+                  <div className="font-extrabold text-sm flex items-center gap-1.5">
+                    <Laptop className="w-4 h-4 text-blue-600" />
+                    <span>{content.navbar.title || 'شعار الموقع'}</span>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs font-bold opacity-85">
+                    <span>الرئيسية</span>
+                    <span>من نحن</span>
+                    <span>الدورات</span>
+                    <span>تواصل معنا</span>
                   </div>
                 </div>
-                <div className="flex justify-center">
-                  <img
-                    src={content.hero.image || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop'}
-                    alt="Hero Preview Image"
-                    className="w-full max-w-[280px] h-auto rounded-2xl object-cover shadow-md"
-                  />
-                </div>
-              </div>
 
-              {/* About Section */}
-              <div
-                onClick={() => { setActiveSection('about'); setActiveItemIndex(null); }}
-                style={{ backgroundColor: content.about.backgroundColor, color: content.about.textColor }}
-                className={`p-8 sm:p-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center cursor-pointer border-t border-slate-100 transition-all relative group ${
-                  activeSection === 'about' 
-                    ? 'ring-4 ring-blue-500 z-10 shadow-md' 
-                    : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                }`}
-              >
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
-                  <Pencil className="w-2.5 h-2.5" />
-                  <span>تعديل النبذة والتعريف</span>
+                {/* Hero Banner Section */}
+                <div
+                  onClick={() => { setActiveSection('hero'); setActiveItemIndex(null); }}
+                  style={{ backgroundColor: content.hero.backgroundColor, color: content.hero.textColor }}
+                  className={`p-8 sm:p-12 grid grid-cols-1 md:grid-cols-2 gap-6 items-center cursor-pointer transition-all relative group ${
+                    activeSection === 'hero' 
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                      : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
+                  }`}
+                >
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
+                    <Pencil className="w-2.5 h-2.5" />
+                    <span>تعديل البانر الرئيسي</span>
+                  </div>
+                  <div className="space-y-4">
+                    <span className="inline-block px-3 py-1 bg-blue-500/10 rounded-full text-xs font-extrabold">
+                      {content.hero.subtitle}
+                    </span>
+                    <h2 className="text-xl sm:text-2xl font-black leading-snug">
+                      {content.hero.title}
+                    </h2>
+                    <p className="text-xs opacity-80 leading-relaxed max-w-md">
+                      {content.hero.description}
+                    </p>
+                    <div>
+                      <button
+                        type="button"
+                        className="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-extrabold hover:bg-blue-700 shadow-md pointer-events-none transition-all"
+                      >
+                        {content.hero.buttonText}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex justify-center">
+                    <img
+                      src={content.hero.image || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop'}
+                      alt="Hero Preview Image"
+                      className="w-full max-w-[280px] h-auto rounded-2xl object-cover shadow-md"
+                    />
+                  </div>
                 </div>
-                <div className="order-2 md:order-1 flex justify-center">
-                  <img
-                    src={content.about.image || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=800&auto=format&fit=crop'}
-                    alt="About Preview Image"
-                    className="w-[180px] h-[180px] rounded-full object-cover border-4 border-white shadow-lg"
-                  />
+
+                {/* About Section */}
+                <div
+                  onClick={() => { setActiveSection('about'); setActiveItemIndex(null); }}
+                  style={{ backgroundColor: content.about.backgroundColor, color: content.about.textColor }}
+                  className={`p-8 sm:p-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center cursor-pointer border-t border-slate-100 transition-all relative group ${
+                    activeSection === 'about' 
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                      : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
+                  }`}
+                >
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
+                    <Pencil className="w-2.5 h-2.5" />
+                    <span>تعديل النبذة والتعريف</span>
+                  </div>
+                  <div className="order-2 md:order-1 flex justify-center">
+                    <img
+                      src={content.about.image || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=800&auto=format&fit=crop'}
+                      alt="About Preview Image"
+                      className="w-[180px] h-[180px] rounded-full object-cover border-4 border-white shadow-lg"
+                    />
+                  </div>
+                  <div className="order-1 md:order-2 space-y-3">
+                    <h3 className="text-lg font-black">{content.about.title}</h3>
+                    <p className="text-xs leading-relaxed opacity-85 whitespace-pre-line">
+                      {content.about.subtitle}
+                    </p>
+                  </div>
                 </div>
-                <div className="order-1 md:order-2 space-y-3">
-                  <h3 className="text-lg font-black">{content.about.title}</h3>
-                  <p className="text-xs leading-relaxed opacity-85 whitespace-pre-line">
-                    {content.about.subtitle}
+
+                {/* Features Grid Section */}
+                <div
+                  onClick={() => { setActiveSection('features'); setActiveItemIndex(null); }}
+                  style={{ backgroundColor: content.features.backgroundColor, color: content.features.textColor }}
+                  className={`p-8 sm:p-12 space-y-8 cursor-pointer border-t border-slate-100 transition-all relative group ${
+                    activeSection === 'features' 
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                      : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
+                  }`}
+                >
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
+                    <Pencil className="w-2.5 h-2.5" />
+                    <span>تعديل المميزات والخصائص</span>
+                  </div>
+                  <div className="text-center space-y-1.5">
+                    <h3 className="text-lg font-black">{content.features.title}</h3>
+                    <p className="text-xs text-slate-500 font-bold">{content.features.subtitle}</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {content.features.items.map((item, i) => (
+                      <div
+                        key={i}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectSectionItem('features', i);
+                        }}
+                        className={`bg-white border p-4 rounded-2xl flex flex-col gap-2.5 shadow-xs cursor-pointer transition-all relative group/item ${
+                          activeSection === 'features' && activeItemIndex === i
+                            ? 'border-blue-500 ring-2 ring-blue-500/40 scale-[1.03] z-20 shadow-md'
+                            : 'border-slate-200 hover:border-blue-400 hover:shadow-sm'
+                        }`}
+                      >
+                        <div className="absolute top-1 left-1 opacity-0 group-hover/item:opacity-100 transition-opacity bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm z-30 pointer-events-none flex items-center gap-0.5">
+                          <Pencil className="w-2 h-2" />
+                          <span>تعديل</span>
+                        </div>
+                        <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200">
+                          {item.icon === 'BookOpen' ? <BookOpen className="w-4 h-4" /> :
+                           item.icon === 'Award' ? <Award className="w-4 h-4" /> :
+                           item.icon === 'Clock' ? <Clock className="w-4 h-4" /> :
+                           item.icon === 'Laptop' ? <Laptop className="w-4 h-4" /> :
+                           item.icon === 'Phone' ? <Phone className="w-4 h-4" /> :
+                           <Sparkles className="w-4 h-4" />}
+                        </div>
+                        <h4 className="text-xs font-black text-slate-900">{item.title}</h4>
+                        <p className="text-[10px] text-slate-500 leading-relaxed font-bold">{item.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Curriculum / Pricing Section */}
+                <div
+                  onClick={() => { setActiveSection('pricing'); setActiveItemIndex(null); }}
+                  style={{ backgroundColor: content.pricing.backgroundColor, color: content.pricing.textColor }}
+                  className={`p-8 sm:p-12 space-y-8 cursor-pointer border-t border-slate-100 transition-all relative group ${
+                    activeSection === 'pricing' 
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                      : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
+                  }`}
+                >
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
+                    <Pencil className="w-2.5 h-2.5" />
+                    <span>تعديل الدورات والأسعار</span>
+                  </div>
+                  <div className="text-center space-y-1.5">
+                    <h3 className="text-lg font-black">{content.pricing.title}</h3>
+                    <p className="text-xs text-slate-500 font-bold">{content.pricing.subtitle}</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
+                    {content.pricing.items.map((item, i) => (
+                      <div
+                        key={i}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectSectionItem('pricing', i);
+                        }}
+                        className={`bg-white border-2 rounded-3xl p-6 flex flex-col justify-between shadow-xs cursor-pointer transition-all relative group/item ${
+                          activeSection === 'pricing' && activeItemIndex === i
+                            ? 'border-blue-500 ring-2 ring-blue-500/40 scale-[1.02] z-20 shadow-md'
+                            : 'border-slate-200 hover:border-blue-400 hover:shadow-sm'
+                        }`}
+                      >
+                        <div className="absolute top-2 left-2 opacity-0 group-hover/item:opacity-100 transition-opacity bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm z-30 pointer-events-none flex items-center gap-0.5">
+                          <Pencil className="w-2 h-2" />
+                          <span>تعديل الباقة</span>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-extrabold text-slate-900 mb-2">{item.title}</h4>
+                          <div className="text-xl font-black text-blue-600 mb-4">{item.price}</div>
+                          <ul className="space-y-2 text-[10px] text-slate-500 font-bold">
+                            {item.features.map((feat, fIdx) => (
+                              <li key={fIdx} className="flex items-center gap-1.5">
+                                <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                                <span>{feat}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div className="mt-5">
+                          <button
+                            type="button"
+                            className="w-full py-2 bg-slate-900 text-white rounded-xl text-[10px] font-extrabold"
+                          >
+                            اشترك الآن
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* FAQ Section */}
+                <div
+                  onClick={() => { setActiveSection('faq'); setActiveItemIndex(null); }}
+                  style={{ backgroundColor: content.faq.backgroundColor, color: content.faq.textColor }}
+                  className={`p-8 sm:p-12 space-y-6 cursor-pointer border-t border-slate-100 transition-all relative group ${
+                    activeSection === 'faq' 
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                      : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
+                  }`}
+                >
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
+                    <Pencil className="w-2.5 h-2.5" />
+                    <span>تعديل الأسئلة الشائعة</span>
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-lg font-black">{content.faq.title}</h3>
+                  </div>
+
+                  <div className="max-w-2xl mx-auto space-y-3">
+                    {content.faq.items.map((item, i) => (
+                      <div
+                        key={i}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectSectionItem('faq', i);
+                        }}
+                        className={`bg-white border rounded-xl p-4 flex gap-3 text-right cursor-pointer transition-all relative group/item ${
+                          activeSection === 'faq' && activeItemIndex === i
+                            ? 'border-blue-500 ring-2 ring-blue-500/40 scale-[1.02] z-20 shadow-md'
+                            : 'border-slate-200 hover:border-blue-400 hover:shadow-sm'
+                        }`}
+                      >
+                        <div className="absolute top-2 left-2 opacity-0 group-hover/item:opacity-100 transition-opacity bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm z-30 pointer-events-none flex items-center gap-0.5">
+                          <Pencil className="w-2 h-2" />
+                          <span>تعديل السؤال</span>
+                        </div>
+                        <div className="w-5 h-5 rounded-full bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center text-[10px] font-black shrink-0">
+                          س
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-extrabold text-slate-900 mb-1">{item.question}</h4>
+                          <p className="text-[10px] text-slate-500 font-bold leading-relaxed">{item.answer}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Contact/WhatsApp Section */}
+                <div
+                  onClick={() => { setActiveSection('contact'); setActiveItemIndex(null); }}
+                  style={{ backgroundColor: content.contact.backgroundColor, color: content.contact.textColor }}
+                  className={`p-8 sm:p-10 text-center space-y-4 cursor-pointer border-t border-slate-100 transition-all relative group ${
+                    activeSection === 'contact' 
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                      : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
+                  }`}
+                >
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
+                    <Pencil className="w-2.5 h-2.5" />
+                    <span>تعديل أزرار التواصل</span>
+                  </div>
+                  <h3 className="text-lg font-black">{content.contact.title}</h3>
+                  <p className="text-xs max-w-md mx-auto leading-relaxed opacity-85">
+                    {content.contact.description}
                   </p>
-                </div>
-              </div>
-
-              {/* Features Grid Section */}
-              <div
-                onClick={() => { setActiveSection('features'); setActiveItemIndex(null); }}
-                style={{ backgroundColor: content.features.backgroundColor, color: content.features.textColor }}
-                className={`p-8 sm:p-12 space-y-8 cursor-pointer border-t border-slate-100 transition-all relative group ${
-                  activeSection === 'features' 
-                    ? 'ring-4 ring-blue-500 z-10 shadow-md' 
-                    : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                }`}
-              >
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
-                  <Pencil className="w-2.5 h-2.5" />
-                  <span>تعديل المميزات والخصائص</span>
-                </div>
-                <div className="text-center space-y-1.5">
-                  <h3 className="text-lg font-black">{content.features.title}</h3>
-                  <p className="text-xs text-slate-500 font-bold">{content.features.subtitle}</p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {content.features.items.map((item, i) => (
-                    <div
-                      key={i}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectSectionItem('features', i);
-                      }}
-                      className={`bg-white border p-4 rounded-2xl flex flex-col gap-2.5 shadow-xs cursor-pointer transition-all relative group/item ${
-                        activeSection === 'features' && activeItemIndex === i
-                          ? 'border-blue-500 ring-2 ring-blue-500/40 scale-[1.03] z-20 shadow-md'
-                          : 'border-slate-200 hover:border-blue-400 hover:shadow-sm'
-                      }`}
+                  <div className="flex justify-center">
+                    <a
+                      href="#"
+                      onClick={(e) => e.preventDefault()}
+                      className="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-500 text-white hover:bg-emerald-600 rounded-xl font-extrabold text-xs shadow-md transition-all"
                     >
-                      <div className="absolute top-1 left-1 opacity-0 group-hover/item:opacity-100 transition-opacity bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm z-30 pointer-events-none flex items-center gap-0.5">
-                        <Pencil className="w-2 h-2" />
-                        <span>تعديل</span>
-                      </div>
-                      <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200">
-                        {item.icon === 'BookOpen' ? <BookOpen className="w-4 h-4" /> :
-                         item.icon === 'Award' ? <Award className="w-4 h-4" /> :
-                         item.icon === 'Clock' ? <Clock className="w-4 h-4" /> :
-                         item.icon === 'Laptop' ? <Laptop className="w-4 h-4" /> :
-                         item.icon === 'Phone' ? <Phone className="w-4 h-4" /> :
-                         <Sparkles className="w-4 h-4" />}
-                      </div>
-                      <h4 className="text-xs font-black text-slate-900">{item.title}</h4>
-                      <p className="text-[10px] text-slate-500 leading-relaxed font-bold">{item.description}</p>
-                    </div>
-                  ))}
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>{content.contact.buttonText}</span>
+                    </a>
+                  </div>
                 </div>
+
+                {/* Footer Section */}
+                <div
+                  onClick={() => { setActiveSection('footer'); setActiveItemIndex(null); }}
+                  style={{ backgroundColor: content.footer.backgroundColor, color: content.footer.textColor }}
+                  className={`py-6 px-6 text-center text-[10px] cursor-pointer opacity-90 border-t border-slate-100 transition-all relative group ${
+                    activeSection === 'footer' 
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                      : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
+                  }`}
+                >
+                  <div className="absolute top-1 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
+                    <Pencil className="w-2.5 h-2.5" />
+                    <span>تعديل التذييل</span>
+                  </div>
+                  <p className="font-bold opacity-80">{content.footer.text}</p>
+                </div>
+
               </div>
-
-              {/* Curriculum / Pricing Section */}
-              <div
-                onClick={() => { setActiveSection('pricing'); setActiveItemIndex(null); }}
-                style={{ backgroundColor: content.pricing.backgroundColor, color: content.pricing.textColor }}
-                className={`p-8 sm:p-12 space-y-8 cursor-pointer border-t border-slate-100 transition-all relative group ${
-                  activeSection === 'pricing' 
-                    ? 'ring-4 ring-blue-500 z-10 shadow-md' 
-                    : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                }`}
-              >
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
-                  <Pencil className="w-2.5 h-2.5" />
-                  <span>تعديل الدورات والأسعار</span>
-                </div>
-                <div className="text-center space-y-1.5">
-                  <h3 className="text-lg font-black">{content.pricing.title}</h3>
-                  <p className="text-xs text-slate-500 font-bold">{content.pricing.subtitle}</p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
-                  {content.pricing.items.map((item, i) => (
-                    <div
-                      key={i}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectSectionItem('pricing', i);
-                      }}
-                      className={`bg-white border-2 rounded-3xl p-6 flex flex-col justify-between shadow-xs cursor-pointer transition-all relative group/item ${
-                        activeSection === 'pricing' && activeItemIndex === i
-                          ? 'border-blue-500 ring-2 ring-blue-500/40 scale-[1.02] z-20 shadow-md'
-                          : 'border-slate-200 hover:border-blue-400 hover:shadow-sm'
-                      }`}
-                    >
-                      <div className="absolute top-2 left-2 opacity-0 group-hover/item:opacity-100 transition-opacity bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm z-30 pointer-events-none flex items-center gap-0.5">
-                        <Pencil className="w-2 h-2" />
-                        <span>تعديل الباقة</span>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-extrabold text-slate-900 mb-2">{item.title}</h4>
-                        <div className="text-xl font-black text-blue-600 mb-4">{item.price}</div>
-                        <ul className="space-y-2 text-[10px] text-slate-500 font-bold">
-                          {item.features.map((feat, fIdx) => (
-                            <li key={fIdx} className="flex items-center gap-1.5">
-                              <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                              <span>{feat}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="mt-5">
-                        <button
-                          type="button"
-                          className="w-full py-2 bg-slate-900 text-white rounded-xl text-[10px] font-extrabold"
-                        >
-                          اشترك الآن
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* FAQ Section */}
-              <div
-                onClick={() => { setActiveSection('faq'); setActiveItemIndex(null); }}
-                style={{ backgroundColor: content.faq.backgroundColor, color: content.faq.textColor }}
-                className={`p-8 sm:p-12 space-y-6 cursor-pointer border-t border-slate-100 transition-all relative group ${
-                  activeSection === 'faq' 
-                    ? 'ring-4 ring-blue-500 z-10 shadow-md' 
-                    : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                }`}
-              >
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
-                  <Pencil className="w-2.5 h-2.5" />
-                  <span>تعديل الأسئلة الشائعة</span>
-                </div>
-                <div className="text-center">
-                  <h3 className="text-lg font-black">{content.faq.title}</h3>
-                </div>
-
-                <div className="max-w-2xl mx-auto space-y-3">
-                  {content.faq.items.map((item, i) => (
-                    <div
-                      key={i}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectSectionItem('faq', i);
-                      }}
-                      className={`bg-white border rounded-xl p-4 flex gap-3 text-right cursor-pointer transition-all relative group/item ${
-                        activeSection === 'faq' && activeItemIndex === i
-                          ? 'border-blue-500 ring-2 ring-blue-500/40 scale-[1.02] z-20 shadow-md'
-                          : 'border-slate-200 hover:border-blue-400 hover:shadow-sm'
-                      }`}
-                    >
-                      <div className="absolute top-2 left-2 opacity-0 group-hover/item:opacity-100 transition-opacity bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm z-30 pointer-events-none flex items-center gap-0.5">
-                        <Pencil className="w-2 h-2" />
-                        <span>تعديل السؤال</span>
-                      </div>
-                      <div className="w-5 h-5 rounded-full bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center text-[10px] font-black shrink-0">
-                        س
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-extrabold text-slate-900 mb-1">{item.question}</h4>
-                        <p className="text-[10px] text-slate-500 font-bold leading-relaxed">{item.answer}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Contact/WhatsApp Section */}
-              <div
-                onClick={() => { setActiveSection('contact'); setActiveItemIndex(null); }}
-                style={{ backgroundColor: content.contact.backgroundColor, color: content.contact.textColor }}
-                className={`p-8 sm:p-10 text-center space-y-4 cursor-pointer border-t border-slate-100 transition-all relative group ${
-                  activeSection === 'contact' 
-                    ? 'ring-4 ring-blue-500 z-10 shadow-md' 
-                    : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                }`}
-              >
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
-                  <Pencil className="w-2.5 h-2.5" />
-                  <span>تعديل أزرار التواصل</span>
-                </div>
-                <h3 className="text-lg font-black">{content.contact.title}</h3>
-                <p className="text-xs max-w-md mx-auto leading-relaxed opacity-85">
-                  {content.contact.description}
-                </p>
-                <div className="flex justify-center">
-                  <a
-                    href="#"
-                    onClick={(e) => e.preventDefault()}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-500 text-white hover:bg-emerald-600 rounded-xl font-extrabold text-xs shadow-md transition-all"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>{content.contact.buttonText}</span>
-                  </a>
-                </div>
-              </div>
-
-              {/* Footer Section */}
-              <div
-                onClick={() => { setActiveSection('footer'); setActiveItemIndex(null); }}
-                style={{ backgroundColor: content.footer.backgroundColor, color: content.footer.textColor }}
-                className={`py-6 px-6 text-center text-[10px] cursor-pointer opacity-90 border-t border-slate-100 transition-all relative group ${
-                  activeSection === 'footer' 
-                    ? 'ring-4 ring-blue-500 z-10 shadow-md' 
-                    : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                }`}
-              >
-                <div className="absolute top-1 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
-                  <Pencil className="w-2.5 h-2.5" />
-                  <span>تعديل التذييل</span>
-                </div>
-                <p className="font-bold opacity-80">{content.footer.text}</p>
-              </div>
-
-            </div>
+            )}
           </div>
         </div>
 
