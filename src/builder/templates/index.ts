@@ -6,5 +6,6 @@ export { default as PurpleTemplate } from './purple/PurpleTemplate';
 export { default as TealTemplate } from './teal/TealTemplate';
 export { default as AcademicTemplate } from './academic/AcademicTemplate';
 export { default as CoachTemplate } from './coach/CoachTemplate';
+export { default as SchoolCoachTemplate } from './schoolcoach/SchoolCoachTemplate';
 export { default as TemplateRenderer } from './renderer/TemplateRenderer';
 export * from './themeStyles';

@@ -307,9 +307,11 @@ export const getAcademicHtml = (content: TemplateContent) => {
 </button>
 </div>
 </div>
-<div class="w-full lg:w-1/2 relative h-[500px] lg:h-[600px] rounded-[2.5rem] bg-surface-container-lowest border border-outline-variant/50 shadow-2xl flex items-center justify-center p-8 group">
+<div class="w-full lg:w-1/2 flex items-center justify-center p-4">
+<div class="relative rounded-[2.5rem] bg-surface-container-lowest border border-outline-variant/50 shadow-2xl p-6 group special-image-hover overflow-hidden">
 <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-30 rounded-[2.5rem] pointer-events-none"></div>
-<img class="relative max-w-[85%] max-h-[85%] object-contain rounded-2xl shadow-xl border border-outline-variant/20 bg-white special-image-hover" data-alt="A modern, abstract digital ecosystem diagram representing connected nodes for students, courses, and success metrics in a premium enterprise style." src="${heroImg}"/>
+<img class="relative max-w-full h-auto object-contain rounded-2xl border border-outline-variant/20 shadow-sm bg-white" data-alt="A modern, abstract digital ecosystem diagram representing connected nodes for students, courses, and success metrics in a premium enterprise style." src="${heroImg}"/>
+</div>
 </div>
 </section>
 

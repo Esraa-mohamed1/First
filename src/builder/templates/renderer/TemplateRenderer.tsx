@@ -8,6 +8,7 @@ import PurpleTemplate from '../purple/PurpleTemplate';
 import TealTemplate from '../teal/TealTemplate';
 import AcademicTemplate from '../academic/AcademicTemplate';
 import CoachTemplate from '../coach/CoachTemplate';
+import SchoolCoachTemplate from '../schoolcoach/SchoolCoachTemplate';
 import { useBuilderStore } from '../../store/builderStore';
 
 interface TemplateRendererProps {
@@ -88,6 +89,9 @@ export default function TemplateRenderer({ templateId, sections }: TemplateRende
     }
     if (publishedRole === 'coach') {
       return <CoachTemplate />;
+    }
+    if (publishedRole === 'schoolcoach') {
+      return <SchoolCoachTemplate />;
     }
   }
 
