@@ -32,6 +32,8 @@ import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { getProfileStatus } from '@/services/auth';
+import { getPages, getSections, saveSections, createPage, updatePage, apiToEditor, editorToApi } from '@/services/pages';
+import { syncHomepageCache } from '@/lib/homepage-cache';
 import { getAcademicHtml } from '@/builder/templates/academic/academicHtml';
 import { getCoachHtml } from '@/builder/templates/coach/coachHtml';
 import { getSchoolCoachHtml } from '@/builder/templates/schoolcoach/schoolcoachHtml';
@@ -458,14 +460,211 @@ export default function PageBuilderPage() {
   // --- Core States ---
   const [currentRole, setCurrentRole] = useState<'schoolcoach' | 'coach' | 'academy'>('academy');
   const [activeTemplateId, setActiveTemplateId] = useState<string>('template_1');
+  const [activePageId, setActivePageId] = useState<string | null>(null);
   const [deviceMode, setDeviceMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [activeSection, setActiveSection] = useState<keyof TemplateContent>('hero');
   const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  // Ordered list of section types from the API (drives the sidebar dropdown)
+  const [sectionsList, setSectionsList] = useState<string[]>(['navbar','hero','about','features','pricing','faq','contact','footer']);
   const [saving, setSaving] = useState<boolean>(false);
 
   // Dynamic template content configurations
   const [content, setContent] = useState<TemplateContent | null>(null);
+  const [previewContent, setPreviewContent] = useState<TemplateContent | null>(null);
+
+  // Debounce preview updates to prevent iframe reload flicker during typing
+  useEffect(() => {
+    if (!content) return;
+    const timer = setTimeout(() => {
+      setPreviewContent(content);
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [content]);
+
+  // Real-time DOM text updates in the iframe to prevent screen refresh/flash while typing
+  useEffect(() => {
+    if (!content) return;
+    const iframe = document.getElementById('website-builder-iframe') as HTMLIFrameElement;
+    if (!iframe || !iframe.contentDocument) return;
+    const doc = iframe.contentDocument;
+
+    const updateText = (selector: string, text: string) => {
+      try {
+        const el = doc.querySelector(selector);
+        if (el && el.innerHTML !== text) {
+          el.innerHTML = text;
+        }
+      } catch (e) {
+        // Suppress selection errors
+      }
+    };
+
+    // 1. Navbar
+    updateText('[data-section="navbar"] span.text-headline-md, [data-section="navbar"] span.text-\\[22px\\], [data-section="navbar"] span.font-extrabold', content.navbar.title);
+
+    // 2. Hero
+    updateText('[data-section="hero"] h1', content.hero.title);
+    updateText('[data-section="hero"] p', content.hero.description);
+    updateText('[data-section="hero"] .text-label-md.text-primary, [data-section="hero"] .bg-gold-500\\/10 span, [data-section="hero"] .eyebrow-line', content.hero.subtitle);
+    updateText('[data-section="hero"] button, [data-section="hero"] a.btn-primary', content.hero.buttonText);
+
+    // 3. About
+    updateText('[data-section="about"] h2, [data-section="about"] h3', content.about.title);
+    updateText('[data-section="about"] p', content.about.subtitle);
+
+    // 4. Features
+    updateText('[data-section="features"] h2, [data-section="features"] h3, #subjects h2', content.features.title);
+    const featuresHeaderDesc = doc.querySelector('[data-section="features"] .text-center p, #subjects .text-center p');
+    if (featuresHeaderDesc && featuresHeaderDesc.innerHTML !== content.features.subtitle) {
+      featuresHeaderDesc.innerHTML = content.features.subtitle;
+    }
+    content.features.items.forEach((item, idx) => {
+      updateText(`[data-section="features"][data-index="${idx}"] h3, [data-section="features"][data-index="${idx}"] h4`, item.title);
+      updateText(`[data-section="features"][data-index="${idx}"] p`, item.description);
+    });
+
+    // 5. Pricing
+    updateText('[data-section="pricing"] h2, [data-section="pricing"] h3, #groups h2', content.pricing.title);
+    const pricingHeaderDesc = doc.querySelector('[data-section="pricing"] .text-center p, #groups .text-center p');
+    if (pricingHeaderDesc && pricingHeaderDesc.innerHTML !== content.pricing.subtitle) {
+      pricingHeaderDesc.innerHTML = content.pricing.subtitle;
+    }
+    content.pricing.items.forEach((item, idx) => {
+      updateText(`[data-section="pricing"][data-index="${idx}"] h3, [data-section="pricing"][data-index="${idx}"] h4`, item.title);
+      updateText(`[data-section="pricing"][data-index="${idx}"] .text-headline-md, [data-section="pricing"][data-index="${idx}"] .text-primary, [data-section="pricing"][data-index="${idx}"] .block.text-xs`, item.price);
+    });
+
+    // 6. FAQ / Testimonials
+    updateText('[data-section="faq"] h2, [data-section="faq"] h3, #testimonials h2', content.faq.title);
+    content.faq.items.forEach((item, idx) => {
+      updateText(`[data-section="faq"][data-index="${idx}"] h4, [data-section="faq"][data-index="${idx}"] .font-body-lg, [data-section="faq"][data-index="${idx}"] .font-headline-md`, item.question);
+      updateText(`[data-section="faq"][data-index="${idx}"] p:nth-of-type(2), [data-section="faq"][data-index="${idx}"] p.italic, [data-section="faq"][data-index="${idx}"] .bg-surface, [data-section="faq"][data-index="${idx}"] p.text-gray-600`, item.answer);
+    });
+
+    // 7. Contact
+    updateText('[data-section="contact"] h2, [data-section="contact"] h3', content.contact.title);
+    updateText('[data-section="contact"] p', content.contact.description);
+    updateText('[data-section="contact"] button, [data-section="contact"] a.btn-primary, [data-section="contact"] a.bg-emerald-500 span, [data-section="contact"] a.btn-primary span', content.contact.buttonText);
+
+    // 8. Footer
+    updateText('[data-section="footer"] p, footer p', content.footer.text);
+  }, [content]);
+
+  // Handle iframe document load: inject hover outlines and click selections
+  const handleIframeLoad = () => {
+    const iframe = document.getElementById('website-builder-iframe') as HTMLIFrameElement;
+    if (!iframe || !iframe.contentDocument) return;
+    const doc = iframe.contentDocument;
+
+    // 1. Inject visual editor styles into the iframe
+    const styleId = 'darab-editor-styles';
+    if (!doc.getElementById(styleId)) {
+      const style = doc.createElement('style');
+      style.id = styleId;
+      style.innerHTML = `
+        [data-section] {
+          position: relative;
+          cursor: pointer;
+          transition: all 0.2s ease-in-out;
+        }
+        [data-section]:hover {
+          outline: 2px dashed #3b82f6 !important;
+          outline-offset: -2px;
+        }
+        [data-section].active-section {
+          outline: 4px solid #3b82f6 !important;
+          outline-offset: -4px;
+          box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3) !important;
+        }
+        
+        [data-index] {
+          position: relative;
+          cursor: pointer;
+          transition: all 0.2s ease-in-out;
+        }
+        [data-index]:hover {
+          outline: 2px dashed #10b981 !important;
+          outline-offset: -2px;
+        }
+        [data-index].active-item {
+          outline: 3px solid #10b981 !important;
+          outline-offset: -3px;
+        }
+      `;
+      doc.head.appendChild(style);
+    }
+
+    // 2. Add intercepting click listener
+    doc.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement;
+      const itemEl = target.closest('[data-index]') as HTMLElement | null;
+      const sectionEl = target.closest('[data-section]') as HTMLElement | null;
+
+      if (sectionEl) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const sectionName = sectionEl.getAttribute('data-section') as keyof TemplateContent;
+        
+        // Update iframe visual classes
+        doc.querySelectorAll('[data-section]').forEach(el => el.classList.remove('active-section'));
+        sectionEl.classList.add('active-section');
+
+        setActiveSection(sectionName);
+
+        if (itemEl && sectionEl.contains(itemEl)) {
+          const indexStr = itemEl.getAttribute('data-index');
+          if (indexStr !== null) {
+            const idx = parseInt(indexStr, 10);
+            
+            doc.querySelectorAll('[data-index]').forEach(el => el.classList.remove('active-item'));
+            itemEl.classList.add('active-item');
+            
+            setActiveItemIndex(idx);
+            
+            // Scroll sidebar list to target item
+            setTimeout(() => {
+              const el = document.getElementById(`editor-item-${sectionName}-${idx}`);
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 120);
+          } else {
+            setActiveItemIndex(null);
+          }
+        } else {
+          setActiveItemIndex(null);
+          doc.querySelectorAll('[data-index]').forEach(el => el.classList.remove('active-item'));
+        }
+      }
+    }, true);
+  };
+
+  // Keep active section and item outline sync inside the iframe document
+  useEffect(() => {
+    const iframe = document.getElementById('website-builder-iframe') as HTMLIFrameElement;
+    if (!iframe || !iframe.contentDocument) return;
+    const doc = iframe.contentDocument;
+
+    // Sync section outline active class
+    doc.querySelectorAll('[data-section]').forEach(el => {
+      if (el.getAttribute('data-section') === activeSection) {
+        el.classList.add('active-section');
+      } else {
+        el.classList.remove('active-section');
+      }
+    });
+
+    // Sync item outline active class
+    doc.querySelectorAll('[data-index]').forEach(el => {
+      const idxStr = el.getAttribute('data-index');
+      const parentSection = el.closest('[data-section]')?.getAttribute('data-section');
+      if (parentSection === activeSection && idxStr !== null && parseInt(idxStr, 10) === activeItemIndex) {
+        el.classList.add('active-item');
+      } else {
+        el.classList.remove('active-item');
+      }
+    });
+  }, [activeSection, activeItemIndex, previewContent]);
 
   const handleSelectSectionItem = (section: keyof TemplateContent, index: number) => {
     setActiveSection(section);
@@ -525,24 +724,160 @@ export default function PageBuilderPage() {
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  // --- Load content when role or active template changes ---
+  // --- Load page and sections from Database ---
   useEffect(() => {
-    // Try to load cached config first
-    const cacheKey = `darab_active_template_config_${currentRole}_${activeTemplateId}`;
-    if (typeof window !== 'undefined') {
+    async function loadPageData() {
+      if (!currentRole) return;
+      setLoading(true);
+      
+      let resolvedPageId: string | null = null;
+      try {
+        const apiPages = await getPages(true);
+        // Find a page matching templateIdParam
+        let page = apiPages.find((p: any) => p.title === templateIdParam || p.template === templateIdParam || p.template_id === templateIdParam);
+        
+        // If not found, look for any active page or first page
+        if (!page) {
+          page = apiPages.find((p: any) => p.is_active === 1 || p.is_active === true);
+        }
+        
+        if (page) {
+          resolvedPageId = String(page.id);
+          setActivePageId(resolvedPageId);
+        } else {
+          // Create a new page for this template
+          const payload = {
+            title: templateIdParam,
+            slug: `home-${Date.now()}`,
+            status: 'published',
+            template: templateIdParam,
+            is_active: 1
+          };
+          const created = await createPage(payload);
+          resolvedPageId = String(created.id);
+          setActivePageId(resolvedPageId);
+        }
+        
+        // Now fetch sections for resolvedPageId
+        if (resolvedPageId) {
+          const apiSections = await getSections(resolvedPageId);
+          if (apiSections && apiSections.length > 0) {
+            const editorNodes = apiToEditor(apiSections);
+
+            // Drive sidebar dropdown from the actual API section order
+            const KNOWN_SECTION_TYPES = ['navbar','hero','about','features','pricing','faq','contact','footer'];
+            const apiSectionTypes = editorNodes
+              .map(n => n.type)
+              .filter(t => KNOWN_SECTION_TYPES.includes(t));
+            // Merge so we always show all 8; API order wins for sections present
+            const merged = [
+              ...apiSectionTypes,
+              ...KNOWN_SECTION_TYPES.filter(t => !apiSectionTypes.includes(t))
+            ];
+            setSectionsList(merged);
+            
+            // Reconstruct content state from database sections!
+            const fallback = getDefaultContent(currentRole, activeTemplateId);
+            
+            const navbarNode = editorNodes.find(n => n.type === 'navbar');
+            const heroNode = editorNodes.find(n => n.type === 'hero');
+            const aboutNode = editorNodes.find(n => n.type === 'about');
+            const featuresNode = editorNodes.find(n => n.type === 'features');
+            const pricingNode = editorNodes.find(n => n.type === 'pricing');
+            const faqNode = editorNodes.find(n => n.type === 'faq');
+            const contactNode = editorNodes.find(n => n.type === 'contact');
+            const footerNode = editorNodes.find(n => n.type === 'footer');
+
+            const parsedContent: TemplateContent = {
+              navbar: navbarNode?.props ? {
+                title: navbarNode.props.title ?? fallback.navbar.title,
+                logo: navbarNode.props.logo ?? fallback.navbar.logo,
+                bgColor: navbarNode.props.bgColor ?? navbarNode.props.bg_color ?? fallback.navbar.bgColor,
+                textColor: navbarNode.props.textColor ?? navbarNode.props.text_color ?? fallback.navbar.textColor,
+              } : fallback.navbar,
+              hero: heroNode?.props ? {
+                title: heroNode.props.title ?? fallback.hero.title,
+                subtitle: heroNode.props.subtitle ?? fallback.hero.subtitle,
+                description: heroNode.props.description ?? fallback.hero.description,
+                buttonText: heroNode.props.buttonText ?? heroNode.props.button_text ?? fallback.hero.buttonText,
+                buttonLink: heroNode.props.buttonLink ?? fallback.hero.buttonLink,
+                image: heroNode.props.image ?? fallback.hero.image,
+                backgroundColor: heroNode.props.backgroundColor ?? heroNode.props.background_color ?? fallback.hero.backgroundColor,
+                textColor: heroNode.props.textColor ?? heroNode.props.text_color ?? fallback.hero.textColor,
+              } : fallback.hero,
+              about: aboutNode?.props ? {
+                title: aboutNode.props.title ?? fallback.about.title,
+                subtitle: aboutNode.props.subtitle ?? fallback.about.subtitle,
+                image: aboutNode.props.image ?? fallback.about.image,
+                backgroundColor: aboutNode.props.backgroundColor ?? aboutNode.props.background_color ?? fallback.about.backgroundColor,
+                textColor: aboutNode.props.textColor ?? aboutNode.props.text_color ?? fallback.about.textColor,
+              } : fallback.about,
+              features: featuresNode?.props ? {
+                title: featuresNode.props.title ?? fallback.features.title,
+                subtitle: featuresNode.props.subtitle ?? fallback.features.subtitle,
+                items: featuresNode.props.items ?? fallback.features.items,
+                backgroundColor: featuresNode.props.backgroundColor ?? featuresNode.props.background_color ?? fallback.features.backgroundColor,
+                textColor: featuresNode.props.textColor ?? featuresNode.props.text_color ?? fallback.features.textColor,
+              } : fallback.features,
+              pricing: pricingNode?.props ? {
+                title: pricingNode.props.title ?? fallback.pricing.title,
+                subtitle: pricingNode.props.subtitle ?? fallback.pricing.subtitle,
+                items: pricingNode.props.items ?? fallback.pricing.items,
+                backgroundColor: pricingNode.props.backgroundColor ?? pricingNode.props.background_color ?? fallback.pricing.backgroundColor,
+                textColor: pricingNode.props.textColor ?? pricingNode.props.text_color ?? fallback.pricing.textColor,
+              } : fallback.pricing,
+              faq: faqNode?.props ? {
+                title: faqNode.props.title ?? fallback.faq.title,
+                items: faqNode.props.items ?? fallback.faq.items,
+                backgroundColor: faqNode.props.backgroundColor ?? fallback.faq.backgroundColor,
+                textColor: faqNode.props.textColor ?? fallback.faq.textColor,
+              } : fallback.faq,
+              contact: contactNode?.props ? {
+                title: contactNode.props.title ?? fallback.contact.title,
+                description: contactNode.props.description ?? fallback.contact.description,
+                phoneNumber: contactNode.props.phoneNumber ?? contactNode.props.phone_number ?? fallback.contact.phoneNumber,
+                buttonText: contactNode.props.buttonText ?? contactNode.props.button_text ?? fallback.contact.buttonText,
+                backgroundColor: contactNode.props.backgroundColor ?? contactNode.props.background_color ?? fallback.contact.backgroundColor,
+                textColor: contactNode.props.textColor ?? contactNode.props.text_color ?? fallback.contact.textColor,
+              } : fallback.contact,
+              footer: footerNode?.props ? {
+                text: footerNode.props.text ?? fallback.footer.text,
+                backgroundColor: footerNode.props.backgroundColor ?? footerNode.props.background_color ?? fallback.footer.backgroundColor,
+                textColor: footerNode.props.textColor ?? footerNode.props.text_color ?? fallback.footer.textColor,
+              } : fallback.footer,
+            };
+            setContent(parsedContent);
+            setPreviewContent(parsedContent);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load page data from backend:', err);
+      }
+      
+      // Fallback: check localStorage or load default content
+      const cacheKey = `darab_active_template_config_${currentRole}_${activeTemplateId}`;
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
         try {
-          setContent(JSON.parse(cached));
+          const parsedCached = JSON.parse(cached);
+          setContent(parsedCached);
+          setPreviewContent(parsedCached);
+          setLoading(false);
           return;
         } catch (e) {
-          console.error('Failed to parse cached configuration, using default:', e);
+          console.error(e);
         }
       }
+      const defaults = getDefaultContent(currentRole, activeTemplateId);
+      setContent(defaults);
+      setPreviewContent(defaults);
+      setLoading(false);
     }
-    // Set default content structure
-    setContent(getDefaultContent(currentRole, activeTemplateId));
-  }, [currentRole, activeTemplateId]);
+    
+    loadPageData();
+  }, [currentRole, activeTemplateId, templateIdParam]);
 
   // --- Navigation & Action Handlers ---
   const handleGoBack = () => {
@@ -550,16 +885,36 @@ export default function PageBuilderPage() {
   };
 
   const handleSaveDraft = async () => {
-    if (!content) return;
+    if (!content || !activePageId) return;
     setSaving(true);
     try {
+      // 1. Sync draft to LocalStorage
       const cacheKey = `darab_active_template_config_${currentRole}_${activeTemplateId}`;
       localStorage.setItem(cacheKey, JSON.stringify(content));
-      
-      // Simulate API saving
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      
-      toast.success('تم حفظ مسودة تصميمك بنجاح!', {
+
+      // 2. Prepare database sections payload
+      const nodes = [
+        { id: 'navbar', type: 'navbar', props: { ...content.navbar, role: currentRole, templateId: activeTemplateId } },
+        { id: 'hero', type: 'hero', props: content.hero },
+        { id: 'about', type: 'about', props: content.about },
+        { id: 'features', type: 'features', props: content.features },
+        { id: 'pricing', type: 'pricing', props: content.pricing },
+        { id: 'faq', type: 'faq', props: content.faq },
+        { id: 'contact', type: 'contact', props: content.contact },
+        { id: 'footer', type: 'footer', props: content.footer }
+      ];
+
+      const apiSections = editorToApi(nodes, activePageId);
+      await saveSections(activePageId, apiSections);
+
+      // 3. Sync frontend homepage cache
+      try {
+        await syncHomepageCache(activeTemplateId, nodes);
+      } catch (cacheErr) {
+        console.error('Failed to sync to homepage cache during save:', cacheErr);
+      }
+
+      toast.success('تم حفظ مسودة تصميمك على السيرفر بنجاح!', {
         style: {
           fontFamily: 'IBM Plex Sans Arabic',
           fontWeight: 'bold',
@@ -568,14 +923,14 @@ export default function PageBuilderPage() {
       });
     } catch (err) {
       console.error(err);
-      toast.error('حدث خطأ أثناء حفظ المسودة.');
+      toast.error('حدث خطأ أثناء حفظ المسودة على السيرفر.');
     } finally {
       setSaving(false);
     }
   };
 
   const handlePublish = async () => {
-    if (!content) return;
+    if (!content || !activePageId) return;
     
     const confirmResult = await MySwal.fire({
       title: 'هل تريد نشر هذا المظهر للموقع الآن؟',
@@ -596,24 +951,47 @@ export default function PageBuilderPage() {
 
     setSaving(true);
     try {
-      // Sync active template key to localStorage
+      // 1. Sync published template keys to localStorage
       localStorage.setItem('darab_active_template', activeTemplateId);
+      localStorage.setItem('darab_active_page_id', activePageId);
       const cacheKey = `darab_active_template_config_${currentRole}_${activeTemplateId}`;
       localStorage.setItem(cacheKey, JSON.stringify(content));
       
-      // Sync general active template styles config key for components
       localStorage.setItem(`darab_published_template_config`, JSON.stringify({
         role: currentRole,
         templateId: activeTemplateId,
         content: content
       }));
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // 2. Prepare and save database sections
+      const nodes = [
+        { id: 'navbar', type: 'navbar', props: { ...content.navbar, role: currentRole, templateId: activeTemplateId } },
+        { id: 'hero', type: 'hero', props: content.hero },
+        { id: 'about', type: 'about', props: content.about },
+        { id: 'features', type: 'features', props: content.features },
+        { id: 'pricing', type: 'pricing', props: content.pricing },
+        { id: 'faq', type: 'faq', props: content.faq },
+        { id: 'contact', type: 'contact', props: content.contact },
+        { id: 'footer', type: 'footer', props: content.footer }
+      ];
+
+      const apiSections = editorToApi(nodes, activePageId);
+      await saveSections(activePageId, apiSections);
+
+      // 3. Mark the page as active/published in the pages database
+      await updatePage(activePageId, { is_active: 1, status: 'published' });
+
+      // 4. Invalidate and sync homepage cache
+      try {
+        await syncHomepageCache(activeTemplateId, nodes);
+      } catch (cacheErr) {
+        console.error('Failed to sync to homepage cache during publish:', cacheErr);
+      }
 
       MySwal.fire({
         icon: 'success',
         title: 'تم النشر بنجاح!',
-        text: 'تم تحديث مظهر الأكاديمية والموقع الخارجي ليعمل بالشكل الجديد.',
+        text: 'تم تفعيل وتحديث مظهر موقعك على السيرفر الخارجي وفي لوحة التحكم.',
         confirmButtonColor: '#2563eb',
         confirmButtonText: 'حسناً',
         customClass: {
@@ -629,7 +1007,9 @@ export default function PageBuilderPage() {
   };
 
   const resetToDefault = () => {
-    setContent(getDefaultContent(currentRole, activeTemplateId));
+    const defaults = getDefaultContent(currentRole, activeTemplateId);
+    setContent(defaults);
+    setPreviewContent(defaults);
     toast.success('تمت إعادة تعيين القيم الافتراضية للقالب.');
   };
 
@@ -837,7 +1217,7 @@ export default function PageBuilderPage() {
         {/* Left Column: Editor inspector Panel (350px width) */}
         <div className="w-[360px] bg-white border-l border-slate-200 shadow-xs flex flex-col min-h-0 overflow-hidden shrink-0">
           
-          {/* Quick Section Switcher */}
+          {/* Quick Section Switcher — driven by API sections order */}
           <div className="p-5 border-b border-slate-200/80 bg-slate-50/50 shrink-0 space-y-2">
             <span className="text-[10px] font-black text-slate-500 block">اختر القسم لتخصيص محتوياته:</span>
             <div className="relative">
@@ -849,14 +1229,23 @@ export default function PageBuilderPage() {
                 }}
                 className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-white font-extrabold focus:outline-none focus:border-blue-600 cursor-pointer pr-8 text-slate-800"
               >
-                <option value="navbar">شريط التنقل العلوي (Navbar)</option>
-                <option value="hero">البانر الترحيبي (Hero Banner)</option>
-                <option value="about">النبذة والتعريف (About Section)</option>
-                <option value="features">مميزات الأكاديمية (Features)</option>
-                <option value="pricing">الدورات والاشتراكات (Curriculum/Pricing)</option>
-                <option value="faq">الأسئلة الشائعة (FAQ Accordions)</option>
-                <option value="contact">أزرار التواصل (Contact/WhatsApp)</option>
-                <option value="footer">تذييل الصفحة (Footer Bar)</option>
+                {sectionsList.map((sectionType) => {
+                  const SECTION_LABELS: Record<string, string> = {
+                    navbar:   'شريط التنقل العلوي (Navbar)',
+                    hero:     'البانر الترحيبي (Hero Banner)',
+                    about:    'النبذة والتعريف (About Section)',
+                    features: 'مميزات الأكاديمية (Features)',
+                    pricing:  'الدورات والاشتراكات (Curriculum/Pricing)',
+                    faq:      'الأسئلة الشائعة (FAQ Accordions)',
+                    contact:  'أزرار التواصل (Contact/WhatsApp)',
+                    footer:   'تذييل الصفحة (Footer Bar)',
+                  };
+                  return (
+                    <option key={sectionType} value={sectionType}>
+                      {SECTION_LABELS[sectionType] ?? sectionType}
+                    </option>
+                  );
+                })}
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
                 <Settings className="w-4 h-4" />
@@ -1571,19 +1960,25 @@ export default function PageBuilderPage() {
             {/* Simulated Live Renderer Web Page Content */}
             {currentRole === 'academy' ? (
               <iframe
-                srcDoc={getAcademicHtml(content)}
+                id="website-builder-iframe"
+                srcDoc={getAcademicHtml(previewContent || content)}
+                onLoad={handleIframeLoad}
                 className="w-full h-full border-0"
                 title="Academic Preview"
               />
             ) : currentRole === 'coach' ? (
               <iframe
-                srcDoc={getCoachHtml(content)}
+                id="website-builder-iframe"
+                srcDoc={getCoachHtml(previewContent || content)}
+                onLoad={handleIframeLoad}
                 className="w-full h-full border-0"
                 title="Coach Preview"
               />
             ) : currentRole === 'schoolcoach' ? (
               <iframe
-                srcDoc={getSchoolCoachHtml(content)}
+                id="website-builder-iframe"
+                srcDoc={getSchoolCoachHtml(previewContent || content)}
+                onLoad={handleIframeLoad}
                 className="w-full h-full border-0"
                 title="School Coach Preview"
               />

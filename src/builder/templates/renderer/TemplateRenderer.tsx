@@ -84,14 +84,18 @@ export default function TemplateRenderer({ templateId, sections }: TemplateRende
 
   // Render role-specific premium HTML template wrappers for template_1
   if (templateId === 'template_1' || templateId === 'academy-dashboard' || !templateId) {
-    if (publishedRole === 'academy') {
-      return <AcademicTemplate />;
+    const navbarSection = sections.find((s: any) => s.type === 'navbar');
+    const detectedRole = navbarSection?.props?.role || navbarSection?.props?.currentRole;
+    const activeRole = detectedRole || publishedRole;
+
+    if (activeRole === 'academy') {
+      return <AcademicTemplate sections={sections} />;
     }
-    if (publishedRole === 'coach') {
-      return <CoachTemplate />;
+    if (activeRole === 'coach') {
+      return <CoachTemplate sections={sections} />;
     }
-    if (publishedRole === 'schoolcoach') {
-      return <SchoolCoachTemplate />;
+    if (activeRole === 'schoolcoach') {
+      return <SchoolCoachTemplate sections={sections} />;
     }
   }
 
