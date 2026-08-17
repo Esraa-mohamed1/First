@@ -52,7 +52,7 @@ export interface TemplateContent {
   };
 }
 
-export const getAcademicHtml = (content: TemplateContent) => {
+export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = false) => {
   const navbarTitle = content?.navbar?.title || 'إديوكور';
   const navbarBg = content?.navbar?.bgColor || '#ffffff';
   const navbarText = content?.navbar?.textColor || '#3525cd';
@@ -67,14 +67,20 @@ export const getAcademicHtml = (content: TemplateContent) => {
 
   const aboutTitle = content?.about?.title || 'تحليلات ذكية لاتخاذ قرارات أفضل';
   const aboutSubtitle = content?.about?.subtitle || 'راقب الأداء الأكاديمي، وحدد الاتجاهات، وقم بتحسين المخرجات التعليمية من خلال لوحات تحكم تحليلية متقدمة توفر رؤى في الوقت الفعلي.';
+  const aboutBg = content?.about?.backgroundColor || '#ffffff';
+  const aboutTextColor = content?.about?.textColor || '#1b1b24';
 
   const featuresTitle = content?.features?.title || 'نظام بيئي أكاديمي متكامل';
   const featuresSubtitle = content?.features?.subtitle || 'مجموعة شاملة ومتطورة من الأدوات لإدارة كل جانب من جوانب رحلة التعلم المؤسسية.';
   const featuresItems = content?.features?.items || [];
+  const featuresBg = content?.features?.backgroundColor || '#f5f2ff';
+  const featuresTextColor = content?.features?.textColor || '#1b1b24';
 
   const pricingTitle = content?.pricing?.title || 'المخرجات والنتائج الإحصائية';
   const pricingSubtitle = content?.pricing?.subtitle || 'معدلات تقدم وتحليلات رقمية للفصول الدراسية';
   const pricingItems = content?.pricing?.items || [];
+  const pricingBg = content?.pricing?.backgroundColor || '#fcf8ff';
+  const pricingTextColor = content?.pricing?.textColor || '#1b1b24';
 
   const contactTitle = content?.contact?.title || 'ابْنِ مستقبل التعليم';
   const contactDesc = content?.contact?.description || 'انضم إلى المؤسسات الرائدة عالميًا في تحويل التجربة الأكاديمية. ارتقِ بمستوى مؤسستك التعليمية وابدأ رحلتك نحو التميز اليوم.';
@@ -202,10 +208,16 @@ export const getAcademicHtml = (content: TemplateContent) => {
         .rtl-icon {
             transform: scaleX(-1);
         }
+        ${isEditing ? `
         .section-hover:hover {
             box-shadow: 0 0 0 2px rgb(59, 130, 246) !important;
             border-radius: 12px;
         }
+        ` : `
+        .section-hover {
+            cursor: default !important;
+        }
+        `}
         .special-image-hover {
             transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
@@ -286,7 +298,8 @@ export const getAcademicHtml = (content: TemplateContent) => {
 <!-- Main Content Canvas -->
 <main class="w-full">
 <!-- Hero Section -->
-<section data-section="hero" class="relative pt-24 pb-32 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto flex flex-col lg:flex-row items-center gap-stack-xl transition-all duration-300 section-hover cursor-pointer rounded-[2.5rem]" style="background-color: ${heroBg}; color: ${heroTextColor};">
+<section data-section="hero" class="w-full transition-all duration-300 section-hover cursor-pointer" style="background-color: ${heroBg}; color: ${heroTextColor};">
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-36 pb-32 flex flex-col lg:flex-row items-center gap-stack-xl">
 <div class="w-full lg:w-1/2 flex flex-col items-start gap-stack-md z-10 p-4">
 <div class="inline-flex items-center gap-3 px-4 py-1.5 bg-primary/10 border border-primary/20 rounded-full">
 <span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
@@ -313,11 +326,12 @@ export const getAcademicHtml = (content: TemplateContent) => {
 <img class="relative max-w-full h-auto object-contain rounded-2xl border border-outline-variant/20 shadow-sm bg-white" data-alt="A modern, abstract digital ecosystem diagram representing connected nodes for students, courses, and success metrics in a premium enterprise style." src="${heroImg}"/>
 </div>
 </div>
+</div>
 </section>
 
 <!-- Partners Section -->
-<section class="py-12 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto border-y border-outline-variant/20 mb-16">
-  <div class="flex flex-col md:flex-row items-center justify-between gap-8 opacity-70">
+<section class="w-full border-y border-outline-variant/20 bg-surface">
+  <div class="max-w-container-max mx-auto py-12 px-margin-mobile md:px-margin-desktop flex flex-col md:flex-row items-center justify-between gap-8 opacity-70">
     <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider text-center md:text-right shrink-0">معتمدون لدى جهات رائدة عالمياً:</span>
     <div class="flex flex-wrap items-center justify-center gap-12 text-outline-variant font-bold text-headline-sm">
       <div class="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-[28px]">school</span> ACADEMY</div>
@@ -329,29 +343,32 @@ export const getAcademicHtml = (content: TemplateContent) => {
 </section>
 
 <!-- Video Intro Section -->
-<section class="py-20 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto mb-20">
-  <div class="bg-primary-container/10 border border-primary/20 rounded-[2.5rem] p-8 md:p-16 grid grid-cols-1 lg:grid-cols-2 gap-stack-lg items-center">
-    <div class="space-y-6">
-      <span class="text-label-md font-label-md text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">شاهد وتعلّم</span>
-      <h2 class="text-headline-lg font-headline-lg text-on-surface leading-tight">تعرف على فلسفتنا التعليمية في ٣ دقائق</h2>
-      <p class="text-body-lg font-body-lg text-on-surface-variant leading-relaxed">نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.</p>
-      <div class="flex items-center gap-4 text-primary font-bold">
-        <span class="material-symbols-outlined text-[32px] animate-bounce">play_arrow</span>
-        <span>اضغط على المشغل لمشاهدة العرض التعريفي</span>
+<section class="w-full bg-surface">
+  <div class="max-w-container-max mx-auto py-20 px-margin-mobile md:px-margin-desktop">
+    <div class="bg-primary-container/10 border border-primary/20 rounded-[2.5rem] p-8 md:p-16 grid grid-cols-1 lg:grid-cols-2 gap-stack-lg items-center">
+      <div class="space-y-6">
+        <span class="text-label-md font-label-md text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">شاهد وتعلّم</span>
+        <h2 class="text-headline-lg font-headline-lg text-on-surface leading-tight">تعرف على فلسفتنا التعليمية في ٣ دقائق</h2>
+        <p class="text-body-lg font-body-lg text-on-surface-variant leading-relaxed">نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.</p>
+        <div class="flex items-center gap-4 text-primary font-bold">
+          <span class="material-symbols-outlined text-[32px] animate-bounce">play_arrow</span>
+          <span>اضغط على المشغل لمشاهدة العرض التعريفي</span>
+        </div>
       </div>
-    </div>
-    <div class="relative h-[300px] md:h-[400px] rounded-3xl overflow-hidden bg-slate-900 shadow-2xl border border-outline-variant/30 flex items-center justify-center group cursor-pointer">
-      <div class="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-700 group-hover:scale-105" style="background-image: url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop');"></div>
-      <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
-      <div class="relative z-10 w-20 h-20 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300">
-        <span class="material-symbols-outlined text-[40px] fill">play_arrow</span>
+      <div class="relative h-[300px] md:h-[400px] rounded-3xl overflow-hidden bg-slate-900 shadow-2xl border border-outline-variant/30 flex items-center justify-center group cursor-pointer">
+        <div class="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-700 group-hover:scale-105" style="background-image: url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop');"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
+        <div class="relative z-10 w-20 h-20 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300">
+          <span class="material-symbols-outlined text-[40px] fill">play_arrow</span>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
 <!-- Smart Analytics Section -->
-<section data-section="about" class="py-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto mb-20 transition-all duration-300 section-hover cursor-pointer rounded-3xl">
+<section data-section="about" class="w-full transition-all duration-300 section-hover cursor-pointer" style="background-color: ${aboutBg}; color: ${aboutTextColor};">
+<div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-stack-xl items-center">
 <div class="relative h-[450px] bg-surface-container-lowest rounded-3xl p-8 border border-outline-variant/50 shadow-xl">
 <h3 class="text-headline-md font-headline-md text-on-surface mb-6">رؤى الأداء المؤسسي</h3>
@@ -383,10 +400,12 @@ export const getAcademicHtml = (content: TemplateContent) => {
 </ul>
 </div>
 </div>
+</div>
 </section>
 
 <!-- Complete Academic Ecosystem (Bento Grid) -->
-<section data-section="features" class="py-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto bg-surface-container-low rounded-[3rem] mb-24 border border-outline-variant/30 transition-all duration-300 section-hover cursor-pointer">
+<section data-section="features" class="w-full bg-surface-container-low transition-all duration-300 section-hover cursor-pointer" style="${featuresBg ? `background-color: ${featuresBg};` : ''} ${featuresTextColor ? `color: ${featuresTextColor};` : ''}">
+<div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
 <div class="text-center mb-20">
 <h2 class="text-headline-lg font-headline-lg text-on-surface mb-stack-sm">${featuresTitle}</h2>
 <p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mx-auto">${featuresSubtitle}</p>
@@ -448,32 +467,36 @@ export const getAcademicHtml = (content: TemplateContent) => {
     </div>
   </div>
 </div>
+</div>
 </section>
 
 <!-- Stats Section -->
-<section class="py-20 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto mb-20 bg-primary/5 rounded-[2.5rem] border border-outline-variant/10">
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-gutter">
-    <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-      <span class="block text-display-lg font-display-lg text-primary font-black mb-2">98%</span>
-      <span class="text-body-md font-body-md text-on-surface-variant font-bold">نسبة رضا الطلاب</span>
-    </div>
-    <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-      <span class="block text-display-lg font-display-lg text-primary font-black mb-2">150+</span>
-      <span class="text-body-md font-body-md text-on-surface-variant font-bold">منهج دراسي متكامل</span>
-    </div>
-    <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-      <span class="block text-display-lg font-display-lg text-primary font-black mb-2">12k+</span>
-      <span class="text-body-md font-body-md text-on-surface-variant font-bold">خريج متميز</span>
-    </div>
-    <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-      <span class="block text-display-lg font-display-lg text-primary font-black mb-2">24/7</span>
-      <span class="text-body-md font-body-md text-on-surface-variant font-bold">دعم أكاديمي مباشر</span>
+<section class="w-full bg-primary/5">
+  <div class="max-w-container-max mx-auto py-20 px-margin-mobile md:px-margin-desktop">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+      <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
+        <span class="block text-display-lg font-display-lg text-primary font-black mb-2">98%</span>
+        <span class="text-body-md font-body-md text-on-surface-variant font-bold">نسبة رضا الطلاب</span>
+      </div>
+      <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
+        <span class="block text-display-lg font-display-lg text-primary font-black mb-2">150+</span>
+        <span class="text-body-md font-body-md text-on-surface-variant font-bold">منهج دراسي متكامل</span>
+      </div>
+      <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
+        <span class="block text-display-lg font-display-lg text-primary font-black mb-2">12k+</span>
+        <span class="text-body-md font-body-md text-on-surface-variant font-bold">خريج متميز</span>
+      </div>
+      <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
+        <span class="block text-display-lg font-display-lg text-primary font-black mb-2">24/7</span>
+        <span class="text-body-md font-body-md text-on-surface-variant font-bold">دعم أكاديمي مباشر</span>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- 2. Academic Management (Stats / Pricing items) -->
-<section data-section="pricing" class="py-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto border-y border-outline-variant/30 mb-24 bg-surface transition-all duration-300 section-hover cursor-pointer rounded-3xl">
+<section data-section="pricing" class="w-full border-y border-outline-variant/30 bg-surface transition-all duration-300 section-hover cursor-pointer" style="background-color: ${pricingBg}; color: ${pricingTextColor};">
+<div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
 <div class="text-center mb-10">
   <h3 class="text-headline-md font-headline-md text-on-surface mb-2">${pricingTitle}</h3>
   <p class="text-xs text-slate-500 font-bold">${pricingSubtitle}</p>
@@ -489,8 +512,12 @@ export const getAcademicHtml = (content: TemplateContent) => {
     </div>
   `).join('')}
 </div>
+</div>
+</section>
+
 <!-- Testimonials Section -->
-<section class="py-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto mb-20 bg-surface-container/50 border border-outline-variant/30 rounded-[2.5rem]">
+<section class="w-full bg-surface-container/50 border-y border-outline-variant/30">
+<div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
 <div class="text-center mb-16">
   <span class="text-label-md font-label-md text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">آراء وقصص النجاح</span>
   <h2 class="text-headline-lg font-headline-lg text-on-surface mt-4 mb-2">ماذا يقول شركاؤنا وطلابنا؟</h2>
@@ -531,17 +558,20 @@ export const getAcademicHtml = (content: TemplateContent) => {
     </div>
   </div>
 </div>
+</div>
 </section>
 
 <!-- Newsletter Section -->
-<section class="py-20 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto mb-20 bg-surface-container border border-outline-variant/30 rounded-[2.5rem]">
-  <div class="max-w-3xl mx-auto text-center space-y-8">
-    <span class="material-symbols-outlined text-primary text-[48px] fill">mail</span>
-    <h2 class="text-headline-lg font-headline-lg text-on-surface">اشترك في نشرتنا البريدية المعرفية</h2>
-    <p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl mx-auto leading-relaxed">احصل على أحدث المقالات التحليلية، والمناهج الجديدة، والماستركلاسز الحصرية مباشرة في بريدك الإلكتروني أسبوعياً.</p>
-    <div class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-      <input type="email" placeholder="أدخل بريدك الإلكتروني هنا" class="flex-grow px-6 py-4 rounded-full border border-outline-variant bg-white text-on-surface outline-none focus:border-primary transition-colors text-sm" />
-      <button class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-8 py-4 rounded-full shadow-md transition-colors duration-300 shrink-0">اشترك الآن</button>
+<section class="w-full bg-surface-container border-y border-outline-variant/30">
+  <div class="max-w-container-max mx-auto py-20 px-margin-mobile md:px-margin-desktop">
+    <div class="max-w-3xl mx-auto text-center space-y-8">
+      <span class="material-symbols-outlined text-primary text-[48px] fill">mail</span>
+      <h2 class="text-headline-lg font-headline-lg text-on-surface">اشترك في نشرتنا البريدية المعرفية</h2>
+      <p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl mx-auto leading-relaxed">احصل على أحدث المقالات التحليلية، والمناهج الجديدة، والماستركلاسز الحصرية مباشرة في بريدك الإلكتروني أسبوعياً.</p>
+      <div class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+        <input type="email" placeholder="أدخل بريدك الإلكتروني هنا" class="flex-grow px-6 py-4 rounded-full border border-outline-variant bg-white text-on-surface outline-none focus:border-primary transition-colors text-sm" />
+        <button class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-8 py-4 rounded-full shadow-md transition-colors duration-300 shrink-0">اشترك الآن</button>
+      </div>
     </div>
   </div>
 </section>

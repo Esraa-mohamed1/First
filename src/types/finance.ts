@@ -12,6 +12,8 @@ export interface CreateWithdrawalPayload {
   amount: string | number;
 }
 
+import { ReceiverAccount } from './api';
+
 export interface UserPaymentInfo {
   id: number;
   name: string;
@@ -20,6 +22,7 @@ export interface UserPaymentInfo {
   currency: string;
   logo?: string;
   receiver_account_id?: number;
+  receiver_account?: ReceiverAccount;
 }
 
 export interface WalletData {

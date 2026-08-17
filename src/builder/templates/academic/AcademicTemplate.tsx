@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { getAcademicHtml } from './academicHtml';
 import { getPublicPages, getPublicSections, apiToEditor } from '@/services/pages';
+import { useBuilderStore } from '../../store/builderStore';
 
 const TEMPLATE_SLUGS = ['academy-dashboard', 'template_1', 'template_2', 'template_3', 'template_4'];
 
@@ -148,6 +149,7 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT) 
 
 export default function AcademicTemplate({ sections: sectionsProp }: AcademicTemplateProps) {
   const [content, setContent] = useState<any>(null);
+  const { isEditing } = useBuilderStore();
 
   useEffect(() => {
     async function load() {
@@ -202,7 +204,7 @@ export default function AcademicTemplate({ sections: sectionsProp }: AcademicTem
   return (
     <div style={{ width: '100%', height: '100vh', overflow: 'hidden' }}>
       <iframe
-        srcDoc={getAcademicHtml(content)}
+        srcDoc={getAcademicHtml(content, isEditing)}
         style={{ width: '100%', height: '100%', border: 'none' }}
         title="Academic Template"
       />

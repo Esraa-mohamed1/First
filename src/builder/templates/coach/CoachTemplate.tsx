@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { getCoachHtml } from './coachHtml';
 import { getPublicPages, getPublicSections, apiToEditor } from '@/services/pages';
+import { useBuilderStore } from '../../store/builderStore';
 
 const TEMPLATE_SLUGS = ['coach-dashboard', 'template_1', 'template_2', 'template_3', 'template_4'];
 
@@ -159,6 +160,7 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT) 
 
 export default function CoachTemplate({ sections: sectionsProp }: CoachTemplateProps) {
   const [content, setContent] = useState<any>(null);
+  const { isEditing } = useBuilderStore();
 
   useEffect(() => {
     async function load() {
@@ -213,7 +215,7 @@ export default function CoachTemplate({ sections: sectionsProp }: CoachTemplateP
   return (
     <div style={{ width: '100%', height: '100vh', overflow: 'hidden' }}>
       <iframe
-        srcDoc={getCoachHtml(content)}
+        srcDoc={getCoachHtml(content, isEditing)}
         style={{ width: '100%', height: '100%', border: 'none' }}
         title="Coach Template"
       />

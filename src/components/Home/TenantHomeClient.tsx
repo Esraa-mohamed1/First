@@ -84,9 +84,7 @@ export default function TenantHomeClient({
 
   return (
     <main className="w-full min-h-screen bg-white">
-      <div className="max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12">
-        <TemplateRenderer templateId={templateId} sections={sections} />
-      </div>
+      <TemplateRenderer templateId={templateId} sections={sections} />
     </main>
   );
 }

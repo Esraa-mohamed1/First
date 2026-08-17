@@ -1,6 +1,6 @@
 import { TemplateContent } from '../academic/academicHtml';
 
-export const getCoachHtml = (content: TemplateContent) => {
+export const getCoachHtml = (content: TemplateContent, isEditing: boolean = false) => {
   const navbarTitle = content?.navbar?.title || 'Deep Knowledge';
   const navbarBg = content?.navbar?.bgColor || '#141218';
   const navbarText = content?.navbar?.textColor || '#cfbcff';
@@ -224,10 +224,16 @@ export const getCoachHtml = (content: TemplateContent) => {
             height: 1px;
             background: #cac4d0;
         }
+        ${isEditing ? `
         .section-hover:hover {
             box-shadow: 0 0 0 2px rgb(103, 80, 164) !important;
             border-radius: 4px;
         }
+        ` : `
+        .section-hover {
+            cursor: default !important;
+        }
+        `}
   </style>
 </head>
 <body class="bg-background text-on-surface font-body-lg min-h-screen flex flex-col antialiased selection:bg-tertiary-container selection:text-on-tertiary-container">

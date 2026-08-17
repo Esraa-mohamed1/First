@@ -1,6 +1,6 @@
 import { TemplateContent } from '../academic/academicHtml';
 
-export const getSchoolCoachHtml = (content: TemplateContent) => {
+export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean = false) => {
   const navbarTitle = content?.navbar?.title || 'الأستاذ أحمد محمد';
   const navbarBg = content?.navbar?.bgColor || '#0a1628';
   const navbarText = content?.navbar?.textColor || '#ffffff';
@@ -234,10 +234,16 @@ export const getSchoolCoachHtml = (content: TemplateContent) => {
         .section-title.dark-section-title {
             color: var(--color-white);
         }
+        ${isEditing ? `
         .section-hover:hover {
             box-shadow: 0 0 0 2px var(--color-gold-500) !important;
             border-radius: 12px;
         }
+        ` : `
+        .section-hover {
+            cursor: default !important;
+        }
+        `}
         .special-image-hover {
             transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }

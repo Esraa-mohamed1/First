@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { getSchoolCoachHtml } from './schoolcoachHtml';
 import { getPublicPages, getPublicSections, apiToEditor } from '@/services/pages';
+import { useBuilderStore } from '../../store/builderStore';
 
 const TEMPLATE_SLUGS = ['schoolcoach-dashboard', 'template_1', 'template_2', 'template_3', 'template_4'];
 
@@ -177,6 +178,7 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT) 
 
 export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCoachTemplateProps) {
   const [content, setContent] = useState<any>(null);
+  const { isEditing } = useBuilderStore();
 
   useEffect(() => {
     async function load() {
@@ -231,7 +233,7 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
   return (
     <div style={{ width: '100%', height: '100vh', overflow: 'hidden' }}>
       <iframe
-        srcDoc={getSchoolCoachHtml(content)}
+        srcDoc={getSchoolCoachHtml(content, isEditing)}
         style={{ width: '100%', height: '100%', border: 'none' }}
         title="Teacher Template"
       />

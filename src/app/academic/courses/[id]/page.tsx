@@ -7,7 +7,7 @@ import { getCourse, deleteUnit, deleteLesson, createUnit, updateCourse, getCateg
 import { getGrades, getTerms, getSubjects, getAcademicYears, ClassificationItem } from '@/services/academic-classification';
 import { getProfileStatus } from '@/services/auth';
 import { getUsers, createUser } from '@/services/users';
-import { Course, Unit, Lesson, User } from '@/types/api';
+import { Course, Unit, Lesson, User, ReceiverAccount } from '@/types/api';
 import { AcademyPaymentMethod, PaymentMethod } from '@/types/payment';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
 import EditUnitModal from '@/components/Academic/Modals/EditUnitModal';
@@ -21,7 +21,7 @@ import { CourseStatusToggle } from '@/components/course/CourseStatusToggle';
 import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdown';
 import { PaymentMethodValueInput } from '@/components/payment/PaymentMethodValueInput';
 import { showAlert } from '@/lib/sweetalert';
-import { getUserPaymentInfos, UserPaymentInfo } from '@/services/finance';
+import { getUserPaymentInfos, UserPaymentInfo, getReceiverAccounts } from '@/services/finance';
 import { getLogoUrl, getErrorMessage } from '@/lib/utils';
 import { SearchableSelect } from '@/components/Academic/Common/SearchableSelect';
 import LandingRenderer from '@/modules/landing/renderer/LandingRenderer';
@@ -304,17 +304,6 @@ export default function CourseDetailsPage() {
   const [expandedUnits, setExpandedUnits] = useState<number[]>([]);
   const [academyPaymentMethods, setAcademyPaymentMethods] = useState<UserPaymentInfo[]>([]);
 
-  // Dynamically compute active methods based on saved settings
-  const activeMethods: PaymentMethod[] = academyPaymentMethods.map(m => ({
-    id: m.id.toString(),
-    name: `${m.name} (${m.currency})`,
-    type: 'account_number' as const,
-    icon: 'credit-card',
-    logo: m.logo,
-    isActive: true,
-    currency: m.currency
-  }));
-  
   // Global Data
   const [categories, setCategories] = useState<any[]>([]);
   const [instructors, setInstructors] = useState<User[]>([]);
@@ -453,6 +442,54 @@ export default function CourseDetailsPage() {
   const [currency, setCurrency] = useState<'EGP' | 'SAR'>('SAR');
   const [isSavingPricing, setIsSavingPricing] = useState(false);
   const [errors, setErrors] = useState<Record<string, any>>({});
+  const [receiverTemplates, setReceiverTemplates] = useState<ReceiverAccount[]>([]);
+
+  const activeMethods: PaymentMethod[] = academyPaymentMethods
+    .filter((m) => {
+      if (m.currency !== currency) return false;
+      const template = receiverTemplates.find((t) => t.id === m.receiver_account_id);
+      const targetCountry = currency === 'EGP' ? 'EG' : 'SA';
+      if (template) {
+        if (template.country_code !== targetCountry) return false;
+      } else if (m.receiver_account) {
+        if (m.receiver_account.country_code !== targetCountry) return false;
+      } else {
+        const lowerName = m.name.toLowerCase();
+        if (targetCountry === 'SA') {
+          if (lowerName.includes('instapay') || lowerName.includes('vodafone') || lowerName.includes('fawry') || lowerName.includes('اتصالات') || lowerName.includes('فودافون')) {
+            return false;
+          }
+        } else if (targetCountry === 'EG') {
+          if (lowerName.includes('urpay') || lowerName.includes('stc') || lowerName.includes('mada') || lowerName.includes('مدى')) {
+            return false;
+          }
+        }
+      }
+      return true;
+    })
+    .map(m => ({
+      id: m.id.toString(),
+      name: `${m.name} (${m.currency})`,
+      type: 'account_number' as const,
+      icon: 'credit-card',
+      logo: m.logo,
+      isActive: true,
+      currency: m.currency
+    }));
+
+  // Reset selected payment methods when currency changes
+  useEffect(() => {
+    setSelectedPaymentMethods((prev) => {
+      if (!prev || prev.length === 0) return prev;
+      const valid = prev.filter((m) =>
+        activeMethods.some((am) => am.id.toString() === m.methodId.toString())
+      );
+      if (valid.length !== prev.length) {
+        return valid;
+      }
+      return prev;
+    });
+  }, [currency, academyPaymentMethods]);
 
   // Sync academic info to/from local storage for this course
   useEffect(() => {
@@ -1189,13 +1226,15 @@ export default function CourseDetailsPage() {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [cats, profile, paymentInfos] = await Promise.all([
+        const [cats, profile, paymentInfos, templates] = await Promise.all([
           getCategories(),
           getProfileStatus(),
-          getUserPaymentInfos()
+          getUserPaymentInfos(),
+          getReceiverAccounts().catch(e => { console.warn('Failed to fetch receiver templates:', e); return []; })
         ]);
         setCategories(cats);
         setAcademyPaymentMethods(paymentInfos || []);
+        setReceiverTemplates(templates || []);
 
         const userData = profile.data || profile;
         if (userData) {
@@ -1970,7 +2009,11 @@ export default function CourseDetailsPage() {
                         <label className="block text-label-md mb-2 text-gray-900">العملة</label>
                         <select 
                           value={currency} 
-                          onChange={(e) => setCurrency(e.target.value as any)}
+                          onChange={(e) => {
+                            const newCurr = e.target.value as any;
+                            setCurrency(newCurr);
+                            setSelectedPaymentMethods([]);
+                          }}
                           className="w-full border border-outline-variant rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary text-sm font-bold text-gray-900 bg-white outline-none"
                         >
                           <option value="SAR">SAR — ريال سعودي</option>

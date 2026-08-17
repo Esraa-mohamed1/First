@@ -90,15 +90,19 @@ export const getUserPaymentInfos = async (): Promise<UserPaymentInfo[]> => {
       });
     }
 
-    return items.map(item => ({
-      ...item,
-      id: item.id,
-      name: item.receiver_account?.name || item.name || '',
-      logo: item.receiver_account?.logo || '',
-      accountValue: item.accountValue || item.account_value || '',
-      receiver_account_id: item.receiver_account_id,
-      currency: item.currency || 'SAR',
-    }));
+    return items.map(item => {
+      const countryCode = item.receiver_account?.country_code || 'SA';
+      const derivedCurrency = countryCode === 'EG' ? 'EGP' : countryCode === 'KW' ? 'KWD' : 'SAR';
+      return {
+        ...item,
+        id: item.id,
+        name: item.receiver_account?.name || item.name || '',
+        logo: item.receiver_account?.logo || '',
+        accountValue: item.accountValue || item.account_value || '',
+        receiver_account_id: item.receiver_account_id,
+        currency: item.currency || derivedCurrency,
+      };
+    });
   } catch (error: any) {
     console.error('Failed to get instructor receiver accounts:', error);
     throw error.response?.data || error;
