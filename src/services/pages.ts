@@ -111,13 +111,57 @@ export const getPages = async (forceRefresh = false): Promise<any[]> => {
   return pagesPromise;
 };
 
+function getTenantKeyForCache(): string | null {
+  if (typeof window === 'undefined') return null;
+  let tenantKey = localStorage.getItem('academy_link_name');
+  if (!tenantKey) {
+    let hostname = window.location.hostname;
+    if (hostname.endsWith('.localhost')) {
+      hostname = hostname.replace('.localhost', '');
+    }
+    if (hostname && hostname !== 'localhost' && !hostname.startsWith('127.0.0.')) {
+      tenantKey = hostname;
+    }
+  }
+  return tenantKey ? tenantKey.toLowerCase() : null;
+}
+
 export const getPublicPages = async (): Promise<any[]> => {
   try {
-    const response = await api.get<any>('/pages');
+    const response = await academyApi.get<any>('/pages');
     const data = response.data?.data ?? response.data;
     return (Array.isArray(data) ? data : []) as any[];
-  } catch (error) {
-    console.error('Failed to get public pages:', error);
+  } catch (error: any) {
+    const status = error?.response?.status || error?.status;
+    if (status === 404) {
+      console.info(`[getPublicPages] Endpoint returned 404; falling back to static cache or empty list.`);
+    } else {
+      console.warn(`[getPublicPages] Failed via academyApi (status=${status || 'unknown'}). Trying static cache fallback.`);
+    }
+
+    const tenantKey = getTenantKeyForCache();
+    if (tenantKey) {
+      try {
+        const cacheRes = await fetch(`/tenant-cache/${encodeURIComponent(tenantKey)}.json`, { cache: 'no-store' });
+        if (cacheRes.ok) {
+          const cached = await cacheRes.json();
+          if (cached && cached.templateId) {
+            return [{
+              id: 'cached-home',
+              slug: 'home',
+              title: 'Home',
+              template_name: cached.templateId,
+              template: cached.templateId,
+              is_active: true,
+              _fromCache: true,
+              _cachedSections: cached.sections || []
+            }];
+          }
+        }
+      } catch (_cacheErr) {
+        /* ignore cache miss */
+      }
+    }
     return [];
   }
 };
@@ -193,17 +237,60 @@ export const getSections = async (
   return (Array.isArray(data) ? data : []) as ApiSection[];
 };
 
+let cachedSectionsByPageKey: Record<string, { sections: ApiSection[]; timestamp: number }> = {};
+const CACHED_SECTIONS_TTL = 30000;
+
+export function setCachedSectionsForPage(pageKey: string, sections: ApiSection[]) {
+  cachedSectionsByPageKey[String(pageKey)] = {
+    sections: (sections || []) as ApiSection[],
+    timestamp: Date.now()
+  };
+}
+
 export const getPublicSections = async (
   pageId: string | number
 ): Promise<ApiSection[]> => {
+  const pageKey = String(pageId);
+  const cachedNow = cachedSectionsByPageKey[pageKey];
+  if (cachedNow && Date.now() - cachedNow.timestamp < CACHED_SECTIONS_TTL) {
+    return cachedNow.sections;
+  }
+
   try {
-    const response = await api.get<any>(`/sections`, {
+    const response = await academyApi.get<any>(`/sections`, {
       params: { page_id: pageId },
     });
     const data = response.data?.data ?? response.data;
-    return (Array.isArray(data) ? data : []) as ApiSection[];
-  } catch (error) {
-    console.error('Failed to get public sections:', error);
+    const result = (Array.isArray(data) ? data : []) as ApiSection[];
+    setCachedSectionsForPage(pageKey, result);
+    return result;
+  } catch (error: any) {
+    const status = error?.response?.status || error?.status;
+    if (status === 404) {
+      console.info(`[getPublicSections] page_id=${pageKey} returned 404; trying cache/static fallback.`);
+    } else {
+      console.warn(`[getPublicSections] page_id=${pageKey} failed (status=${status || 'unknown'}). Trying cache/static fallback.`);
+    }
+
+    if (cachedNow) {
+      return cachedNow.sections;
+    }
+
+    const tenantKey = getTenantKeyForCache();
+    if (tenantKey) {
+      try {
+        const cacheRes = await fetch(`/tenant-cache/${encodeURIComponent(tenantKey)}.json`, { cache: 'no-store' });
+        if (cacheRes.ok) {
+          const cached = await cacheRes.json();
+          if (cached && Array.isArray(cached.sections)) {
+            setCachedSectionsForPage(pageKey, cached.sections);
+            return cached.sections as ApiSection[];
+          }
+        }
+      } catch (_cacheErr) {
+        /* ignore cache miss */
+      }
+    }
     return [];
   }
 };

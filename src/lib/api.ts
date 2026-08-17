@@ -14,6 +14,9 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    if (error.response && error.response.data !== undefined) {
+      error.response.data = unwrapEncryptedResponseData(error.response.data);
+    }
     return Promise.reject(error);
   }
 );

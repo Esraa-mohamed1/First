@@ -46,14 +46,20 @@ export default function TenantHomeClient({
           const resolvedTemplateId = activePage.template_name || activePage.template || activePage.title || 'template_1';
           setTemplateId(resolvedTemplateId);
 
-          // 2. Fetch sections for active page ID from public /sections endpoint
-          const apiSections = await getPublicSections(activePage.id);
-          if (apiSections && apiSections.length > 0) {
-            const editorNodes = apiToEditor(apiSections);
+          // If this page was synthesized from the static tenant-cache JSON, sections are already attached.
+          if (activePage._fromCache && Array.isArray(activePage._cachedSections) && activePage._cachedSections.length > 0) {
+            const editorNodes = apiToEditor(activePage._cachedSections);
             setSections(editorNodes);
           } else {
-            const defaultTmpl = getTemplateById(resolvedTemplateId);
-            setSections(defaultTmpl?.sections || []);
+            // Fetch sections for active page ID from public /sections endpoint
+            const apiSections = await getPublicSections(activePage.id);
+            if (apiSections && apiSections.length > 0) {
+              const editorNodes = apiToEditor(apiSections);
+              setSections(editorNodes);
+            } else {
+              const defaultTmpl = getTemplateById(resolvedTemplateId);
+              setSections(defaultTmpl?.sections || []);
+            }
           }
         } else {
           const defaultTmpl = getTemplateById(initialTemplateId);

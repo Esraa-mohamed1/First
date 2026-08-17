@@ -22,7 +22,22 @@ export const createAccountInfoAcademy = async (payload: any) => {
     return response.data;
   } catch (error: any) {
     console.error('Failed to create academy info:', error);
-    throw error.response?.data || error;
+    const responseData = error?.response?.data;
+    if (responseData && typeof responseData === 'object' && Object.keys(responseData).length > 0) {
+      throw responseData;
+    }
+    if (error && typeof error === 'object') {
+      const safeError: any = {};
+      if (error.message) safeError.message = error.message;
+      if (error.name) safeError.name = error.name;
+      if (error.code) safeError.code = error.code;
+      if (error.status) safeError.status = error.status;
+      if (error.statusText) safeError.statusText = error.statusText;
+      if (Object.keys(safeError).length > 0) {
+        throw safeError;
+      }
+    }
+    throw typeof error === 'string' ? error : { message: 'حدث خطأ غير متوقع أثناء حفظ معلومات الأكاديمية' };
   }
 };
 

@@ -13,19 +13,19 @@ academyApi.interceptors.request.use(
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token');
       let tenantKey = localStorage.getItem('academy_link_name');
+      let derivedTenantFromHost = false;
       if (!tenantKey) {
         let hostname = window.location.hostname;
                 if (hostname.endsWith('.localhost')) {
           hostname = hostname.replace('.localhost', '');
         }        if (hostname && hostname !== 'localhost') {
            tenantKey = hostname;
+           derivedTenantFromHost = true;
         }
       }
 
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
-      } else {
-        console.warn('AcademyAPI: No token found in localStorage');
       }
       
       if (tenantKey) {
@@ -33,8 +33,6 @@ academyApi.interceptors.request.use(
         config.headers['X-Tenant-Key'] = lowerKey;
         config.headers['X-Tenant'] = lowerKey;
         config.headers['x-tenant-name'] = lowerKey;
-      } else {
-        console.warn('AcademyAPI: No academy_link_name found in localStorage/hostname');
       }
     }
     return config;
@@ -61,6 +59,10 @@ academyApi.interceptors.response.use(
     return response;
   },
   (error) => {
+    if (error.response && error.response.data !== undefined) {
+      error.response.data = unwrapEncryptedResponseData(error.response.data);
+    }
+
     if (error.response && error.response.status === 401) {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token');

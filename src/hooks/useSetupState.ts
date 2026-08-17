@@ -4,7 +4,7 @@ import { createAccountInfoAcademy, login } from '@/services/auth';
 import { useCountry } from '@/hooks/useCountry';
 import { triggerPageLoader } from '@/components/PageLoader';
 import { Country } from '@/types/country';
-import { translateErrorToArabic } from '@/lib/utils';
+import { translateErrorToArabic, getErrorMessage } from '@/lib/utils';
 
 export function useSetupState() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -215,13 +215,21 @@ export function useSetupState() {
       triggerPageLoader(true);
       window.location.href = tenantUrl;
     } catch (error: any) {
-      console.error("Setup API Error:", error);
+      const errorStr = (error && typeof error === 'object')
+        ? (Object.keys(error).length > 0 ? JSON.stringify(error, null, 2) : String(error))
+        : String(error);
+      console.error("Setup API Error:", errorStr);
       let handled = false;
       setFieldErrors({});
 
-      const validationErrors = error?.errors || error?.response?.data?.errors || error?.error;
+      const validationErrors =
+        error?.errors ||
+        error?.response?.data?.errors ||
+        error?.data?.errors ||
+        error?.error?.errors ||
+        error?.error;
 
-      if (validationErrors && typeof validationErrors === 'object') {
+      if (validationErrors && typeof validationErrors === 'object' && Object.keys(validationErrors).length > 0) {
         const newErrors: Record<string, string> = {};
 
         Object.keys(validationErrors).forEach((key) => {
@@ -230,30 +238,45 @@ export function useSetupState() {
             : validationErrors[key];
           if (typeof rawMsg === 'string') {
             newErrors[key] = translateErrorToArabic(rawMsg);
+          } else if (rawMsg && typeof rawMsg === 'object') {
+            const nested = Array.isArray((rawMsg as any).message) ? (rawMsg as any).message[0] : (rawMsg as any).message;
+            if (typeof nested === 'string') {
+              newErrors[key] = translateErrorToArabic(nested);
+            }
           }
         });
 
-        setFieldErrors(newErrors);
+        if (Object.keys(newErrors).length > 0) {
+          setFieldErrors(newErrors);
 
-        if (newErrors.link_academy || newErrors.domainPrefix) {
-          const translated = newErrors.link_academy || newErrors.domainPrefix;
-          setDomainError(translated);
-          toast.error(translated);
-          goToStep(3);
-          handled = true;
-        }
+          if (newErrors.link_academy || newErrors.domainPrefix) {
+            const translated = newErrors.link_academy || newErrors.domainPrefix;
+            setDomainError(translated);
+            toast.error(translated);
+            goToStep(3);
+            handled = true;
+          }
 
-        if (newErrors.email || newErrors.phone || newErrors.phone_academy || newErrors.username || newErrors.academy_name) {
-          const errKey = newErrors.email ? 'email' : (newErrors.phone ? 'phone' : (newErrors.phone_academy ? 'phone_academy' : 'username'));
-          const msg = newErrors[errKey];
-          toast.error(msg || 'يرجى مراجعة الحقول المدخلة');
-          goToStep(2);
-          handled = true;
+          if (newErrors.email || newErrors.phone || newErrors.phone_academy || newErrors.username || newErrors.academy_name) {
+            const errKey = newErrors.email ? 'email' : (newErrors.phone ? 'phone' : (newErrors.phone_academy ? 'phone_academy' : 'username'));
+            const msg = newErrors[errKey];
+            toast.error(msg || 'يرجى مراجعة الحقول المدخلة');
+            goToStep(2);
+            handled = true;
+          }
         }
       }
 
       if (!handled) {
-        let rawMessage = error?.message || (typeof error === 'string' ? error : 'حدث خطأ أثناء حفظ معلومات المنصة');
+        const fallbackMessage = getErrorMessage(error, 'حدث خطأ أثناء حفظ معلومات المنصة');
+        let rawMessage =
+          error?.message ||
+          error?.response?.data?.message ||
+          error?.data?.message ||
+          error?.error?.message ||
+          (typeof error === 'string' ? error : null) ||
+          fallbackMessage;
+
         if (typeof rawMessage === 'string' && rawMessage.toLowerCase().includes('already been taken')) {
           const translated = 'رابط المنصة مستخدم بالفعل، يرجى اختيار رابط آخر.';
           setDomainError(translated);
@@ -261,7 +284,7 @@ export function useSetupState() {
         } else if (typeof rawMessage === 'string' && rawMessage.toLowerCase().includes('validation errors detected')) {
           toast.error('يرجى التأكد من ملء الحقول المطلوبة ومراجعة رابط المنصة.');
         } else {
-          toast.error(rawMessage);
+          toast.error(typeof rawMessage === 'string' ? rawMessage : fallbackMessage);
         }
       }
     } finally {
