@@ -2273,24 +2273,6 @@ export default function CreateCourseClient() {
                             <span className="material-symbols-outlined text-sm">edit</span>
                             تعديل الصفحة
                           </button>
-                          <button 
-                            type="button"
-                            onClick={() => {
-                              window.open(`/${slug || courseId}`, '_blank');
-                            }}
-                            className="flex-1 lg:flex-none px-5 py-2.5 border border-blue-600 text-blue-600 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-50 transition-all cursor-pointer"
-                          >
-                            <span className="material-symbols-outlined text-sm">visibility</span>
-                            معاينة
-                          </button>
-                          <button 
-                            type="button"
-                            onClick={handleCopyDefaultLink}
-                            className="p-2.5 text-slate-500 hover:bg-slate-50 border border-slate-200 rounded-xl transition-all cursor-pointer"
-                            title="نسخ رابط الصفحة"
-                          >
-                            <span className="material-symbols-outlined">link</span>
-                          </button>
                         </div>
                       </div>
                     </div>

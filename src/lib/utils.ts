@@ -26,6 +26,37 @@ export function translateErrorToArabic(msg: string): string {
   if (!msg) return '';
   const normalized = msg.toLowerCase().trim();
 
+  // Access Until Date & Duration
+  if (
+    normalized.includes('access_until_date') ||
+    normalized.includes('access until date') ||
+    normalized.includes('access end date') ||
+    normalized.includes('specify the access end date')
+  ) {
+    return 'يرجى تحديد تاريخ نهاية صلاحية الوصول للدورة.';
+  }
+  if (
+    normalized.includes('access_days') ||
+    normalized.includes('access days') ||
+    normalized.includes('number of access days') ||
+    normalized.includes('specify the number of access days')
+  ) {
+    return 'يرجى تحديد عدد أيام الوصول (مدة صلاحية الدورة).';
+  }
+  if (
+    normalized.includes('access_duration') ||
+    normalized.includes('access duration') ||
+    normalized.includes('access_duration_type')
+  ) {
+    return 'يرجى تحديد نوع مدة صلاحية الوصول للدورة.';
+  }
+  if (
+    normalized.includes('must be a date after') ||
+    normalized.includes('must be a date after today')
+  ) {
+    return 'تاريخ انتهاء الوصول يجب أن يكون تاريخاً مستقبلياً.';
+  }
+
   // Email
   if (normalized.includes('selected email is invalid') || normalized.includes('email is invalid') || normalized.includes('email is not valid')) return 'البريد الإلكتروني المحدد غير صالح.';
   if (normalized.includes('email has already been taken')) return 'البريد الإلكتروني مستخدم بالفعل.';
@@ -54,44 +85,38 @@ export function translateErrorToArabic(msg: string): string {
     return 'تأكيد كلمة المرور غير متطابق.';
   }
 
-  // Name & Category & Course Info / Lesson Info
+  // Name & Title & Category & Course Info / Lesson Info
   if (normalized.includes('name has already been taken')) return 'الاسم مستخدم بالفعل.';
   if (normalized.includes('name field is required') || normalized.includes('name is required')) return 'الاسم مطلوب.';
   if (normalized.includes('must be a string')) {
     if (normalized.includes('name')) return 'اسم الفئة يجب أن يكون نصاً.';
     return 'الحقل يجب أن يكون نصاً.';
   }
-  if (normalized.includes('title field is required') || normalized.includes('title is required')) {
-    return 'العنوان مطلوب.';
+  if (normalized.includes('title field is required') || normalized.includes('title is required') || normalized.includes('title required')) {
+    return 'اسم الدورة مطلوب.';
   }
   if (normalized.includes('address field is required') || normalized.includes('address is required')) return 'موقع أو عنوان المحاضرة مطلوب.';
   if (normalized.includes('start date field is required') || normalized.includes('start_date field is required')) return 'تاريخ بداية المحاضرة مطلوب.';
   if (normalized.includes('end date field is required') || normalized.includes('end_date field is required')) return 'تاريخ نهاية المحاضرة مطلوب.';
-  if (normalized.includes('description field is required') || normalized.includes('description is required')) return 'الوصف مطلوب.';
+  if (normalized.includes('short_description') || normalized.includes('short description')) return 'الوصف المختصر مطلوب.';
+  if (normalized.includes('description field is required') || normalized.includes('description is required')) return 'وصف الدورة مطلوب.';
   if (
     normalized.includes('category id field is required') || 
     normalized.includes('category_id field is required') || 
+    normalized.includes('category_id') ||
     normalized.includes('category is required')
   ) {
-    return 'الفئة مطلوبة.';
+    return 'تصنيف الدورة مطلوب.';
   }
   if (
     normalized.includes('user id field is required') || 
     normalized.includes('user_id field is required') || 
+    normalized.includes('user_id') ||
     normalized.includes('user is required')
   ) {
     return 'المدرب مطلوب.';
   }
-  if (normalized.includes('price field is required') || normalized.includes('price is required')) return 'سعر الدورة مطلوب للدورات المدفوعة.';
-
-  // Course Access Days & Duration
-  if (
-    normalized.includes('number of access days') ||
-    normalized.includes('access days') ||
-    normalized.includes('access_days')
-  ) {
-    return 'يرجى تحديد عدد أيام الوصول (مدة صلاحية الدورة).';
-  }
+  if (normalized.includes('price field is required') || normalized.includes('price is required') || normalized.includes('price required')) return 'سعر الدورة مطلوب للدورات المدفوعة.';
 
   // Landing Page
   if (normalized.includes('landing page id is required')) return 'معرف صفحة الهبوط مطلوب للتحديث.';
@@ -104,12 +129,12 @@ export function translateErrorToArabic(msg: string): string {
   if (normalized.includes('term_id') || normalized.includes('term is required')) return 'الترم الدراسي مطلوب.';
 
   // Images & Attachments
-  if (normalized.includes('image field is required') || normalized.includes('image is required')) return 'صورة المعاينة مطلوبة.';
+  if (normalized.includes('image field is required') || normalized.includes('image is required') || normalized.includes('image required')) return 'صورة المعاينة مطلوبة.';
   if (normalized.includes('file field is required') || normalized.includes('file is required')) return 'الملف المرفق مطلوب.';
 
   // Pricing & Payment Methods
   if (normalized.includes('type_price') || normalized.includes('type price')) return 'يرجى تحديد نوع السعر (مجاني أو مدفوع).';
-  if (normalized.includes('payment_info_ids') || normalized.includes('payment_info')) return 'يرجى اختيار وسيلة استقبال المدفوعات.';
+  if (normalized.includes('payment_info_ids') || normalized.includes('payment_info') || normalized.includes('receiver_accounts') || normalized.includes('receiver accounts')) return 'يرجى اختيار وسيلة دفع واحدة على الأقل لاستقبال الأموال.';
 
   // General Field Errors
   if (normalized.includes('already been taken') || normalized.includes('already taken') || normalized.includes('already exists')) {
@@ -131,9 +156,11 @@ export function translateErrorToArabic(msg: string): string {
 export function getErrorMessage(error: any, defaultMsg: string = 'حدث خطأ ما'): string {
   if (!error) return defaultMsg;
 
-  // 1. Check for validation errors in error.errors
-  if (error.errors && typeof error.errors === 'object') {
-    const errObj = error.errors as Record<string, string | string[]>;
+  const dataObj = error.response?.data || error.data || error;
+
+  // 1. Check for validation errors object (e.g. dataObj.errors = { access_until_date: ["You must specify..."] })
+  if (dataObj && dataObj.errors && typeof dataObj.errors === 'object') {
+    const errObj = dataObj.errors as Record<string, string | string[]>;
     const getFirst = (v: string | string[]) => (Array.isArray(v) ? v[0] : v) || '';
     const allMsgs = Object.values(errObj)
       .map((v) => translateErrorToArabic(getFirst(v)))
@@ -144,14 +171,15 @@ export function getErrorMessage(error: any, defaultMsg: string = 'حدث خطأ 
     }
   }
 
-  // 2. Check for message on error object or nested error
-  if (error.message && typeof error.message === 'string') {
-    if (error.message.toLowerCase().includes('validation errors detected') && error.errors) {
-      const errObj = error.errors as Record<string, any>;
+  // 2. Check for message property
+  const msg = dataObj.message || error.message;
+  if (msg && typeof msg === 'string') {
+    if (msg.toLowerCase().includes('validation errors detected') && dataObj.errors) {
+      const errObj = dataObj.errors as Record<string, any>;
       const msgs = Object.values(errObj).flat().map((m) => translateErrorToArabic(String(m))).filter(Boolean);
       if (msgs.length > 0) return msgs.join('\n');
     }
-    return translateErrorToArabic(error.message);
+    return translateErrorToArabic(msg);
   }
 
   if (typeof error === 'string') {
