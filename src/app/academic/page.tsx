@@ -6,6 +6,7 @@ import { ChevronDown } from 'lucide-react';
 import SelectCourseTypeModal from '@/components/Academic/Modals/SelectCourseTypeModal';
 import AddStudentModal from '@/components/Academic/Modals/AddStudentModal';
 
+import DashboardTopBanners from '@/components/Academic/DashboardTopBanners';
 import { useAcademicDashboard } from './hooks/useAcademicDashboard';
 import { StatsGrid } from './components/StatsGrid';
 import { StudentsTable } from './components/StudentsTable';
@@ -174,6 +175,9 @@ export default function AcademicDashboardPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-10 sm:pb-20 animate-in fade-in duration-700 text-right relative" dir="rtl">
+
+      {/* Free Trial & Phone/Email Verification Banner */}
+      <DashboardTopBanners />
 
       {/* Top Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 text-right">

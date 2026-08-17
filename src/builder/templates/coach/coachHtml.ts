@@ -1,17 +1,17 @@
 import { TemplateContent } from '../academic/academicHtml';
 
 export const getCoachHtml = (content: TemplateContent, isEditing: boolean = false) => {
-  const navbarTitle = content?.navbar?.title || 'Deep Knowledge';
-  const navbarBg = content?.navbar?.bgColor || '#141218';
-  const navbarText = content?.navbar?.textColor || '#cfbcff';
+  const navbarTitle = content?.navbar?.title || (content?.navbar as any)?.name || 'Deep Knowledge';
+  const navbarBg = content?.navbar?.bgColor || (content?.navbar as any)?.bg_color || '#141218';
+  const navbarText = content?.navbar?.textColor || (content?.navbar as any)?.text_color || '#cfbcff';
 
   const heroSubtitle = content?.hero?.subtitle || 'أكاديمية النخبة';
   const heroTitle = content?.hero?.title || 'تعمق في المعرفة. <br/> تعلم من الصفوة.';
   const heroDesc = content?.hero?.description || 'مساحة حصرية مصممة للمفكرين والقادة. استكشف مناهج متقدمة وتواصل مع خبراء عالميين في بيئة دراسية مصممة للتركيز العميق والتميز الأكاديمي.';
-  const heroBtnText = content?.hero?.buttonText || 'ابدأ رحلتك';
-  const heroBtnLink = content?.hero?.buttonLink || '#';
-  const heroBg = content?.hero?.backgroundColor || '#141218';
-  const heroTextColor = content?.hero?.textColor || '#e6e0e9';
+  const heroBtnText = content?.hero?.buttonText || (content?.hero as any)?.button_text || 'ابدأ رحلتك';
+  const heroBtnLink = content?.hero?.buttonLink || (content?.hero as any)?.button_link || '#';
+  const heroBg = content?.hero?.backgroundColor || (content?.hero as any)?.background_color || (content?.hero as any)?.bg_color || '#141218';
+  const heroTextColor = content?.hero?.textColor || (content?.hero as any)?.text_color || '#e6e0e9';
 
   const aboutTitle = content?.about?.title || 'المرشدون الخبراء';
   const aboutSubtitle = content?.about?.subtitle || 'نخبة من الأكاديميين والباحثين يرافقونك في رحلتك المعرفية.';

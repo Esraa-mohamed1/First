@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Academic/Sidebar';
 import Header from '@/components/Academic/Header';
-import DashboardTopBanners from '@/components/Academic/DashboardTopBanners';
 import { getProfileStatus } from '@/services/auth';
 import { AlertCircle } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
@@ -129,7 +128,6 @@ export default function AcademicLayout({
               : 'p-8 md:p-12 max-w-[1800px] mx-auto'
             : ''
         )}>
-          {!isCourseCreateOrEdit && <DashboardTopBanners />}
           {children}
         </div>
       </main>

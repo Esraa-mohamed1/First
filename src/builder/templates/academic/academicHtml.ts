@@ -52,45 +52,71 @@ export interface TemplateContent {
   };
 }
 
+export const renderMedia = (url: string | undefined | null, className: string = '', alt: string = 'media') => {
+  if (!url) return '';
+  const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('youtube') || url.includes('vimeo') || url.includes('youtu.be');
+  if (isVideo) {
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      let embedUrl = url;
+      if (url.includes('watch?v=')) {
+        embedUrl = url.replace('watch?v=', 'embed/').split('&')[0];
+      } else if (url.includes('youtu.be/')) {
+        embedUrl = url.replace('youtu.be/', 'www.youtube.com/embed/').split('?')[0];
+      }
+      return `<iframe src="${embedUrl}" class="${className}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+    }
+    if (url.includes('vimeo.com')) {
+      const vimeoId = url.split('/').pop();
+      return `<iframe src="https://player.vimeo.com/video/${vimeoId}" class="${className}" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+    }
+    return `<video src="${url}" controls autoplay loop muted class="${className} object-cover"></video>`;
+  }
+  return `<img src="${url}" alt="${alt}" class="${className} object-cover" />`;
+};
+
 export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = false) => {
-  const navbarTitle = content?.navbar?.title || 'إديوكور';
-  const navbarBg = content?.navbar?.bgColor || '#ffffff';
-  const navbarText = content?.navbar?.textColor || '#3525cd';
+  const navbarTitle = content?.navbar?.title || (content?.navbar as any)?.name || 'إديوكور';
+  const navbarBg = content?.navbar?.bgColor || (content?.navbar as any)?.bg_color || '#ffffff';
+  const navbarText = content?.navbar?.textColor || (content?.navbar as any)?.text_color || '#3525cd';
+  const navbarLogo = content?.navbar?.logo || '';
 
   const heroSubtitle = content?.hero?.subtitle || 'حل مؤسسي متقدم';
   const heroTitle = content?.hero?.title || 'بناء تجربة أكاديمية أكثر ذكاءً.';
   const heroDesc = content?.hero?.description || 'اربط الطلاب، والمعلمين، والإداريين على منصة مؤسسية موحدة مصممة لتحقيق التميز القابل للقياس وسير العمل المبسط بكفاءة عالية.';
-  const heroBtnText = content?.hero?.buttonText || 'استكشف المنصة';
-  const heroImg = content?.hero?.image || 'https://tse4.mm.bing.net/th/id/OIP.CGEfBMBIYoz4Syk_3B8DawHaEK?r=0&rs=1&pid=ImgDetMain&o=7&rm=3';
-  const heroBg = content?.hero?.backgroundColor || '#fcf8ff';
-  const heroTextColor = content?.hero?.textColor || '#1b1b24';
+  const heroBtnText = content?.hero?.buttonText || (content?.hero as any)?.button_text || 'استكشف المنصة';
+  const heroBtnLink = content?.hero?.buttonLink || (content?.hero as any)?.button_link || '#';
+  const heroImg = content?.hero?.image || (content?.hero as any)?.img || (content?.hero as any)?.video || 'https://tse4.mm.bing.net/th/id/OIP.CGEfBMBIYoz4Syk_3B8DawHaEK?r=0&rs=1&pid=ImgDetMain&o=7&rm=3';
+  const heroBg = content?.hero?.backgroundColor || (content?.hero as any)?.background_color || (content?.hero as any)?.bg_color || '#fcf8ff';
+  const heroTextColor = content?.hero?.textColor || (content?.hero as any)?.text_color || '#1b1b24';
 
   const aboutTitle = content?.about?.title || 'تحليلات ذكية لاتخاذ قرارات أفضل';
   const aboutSubtitle = content?.about?.subtitle || 'راقب الأداء الأكاديمي، وحدد الاتجاهات، وقم بتحسين المخرجات التعليمية من خلال لوحات تحكم تحليلية متقدمة توفر رؤى في الوقت الفعلي.';
-  const aboutBg = content?.about?.backgroundColor || '#ffffff';
-  const aboutTextColor = content?.about?.textColor || '#1b1b24';
+  const aboutImg = content?.about?.image || (content?.about as any)?.img || (content?.about as any)?.video || '';
+  const aboutBg = content?.about?.backgroundColor || (content?.about as any)?.background_color || (content?.about as any)?.bg_color || '#ffffff';
+  const aboutTextColor = content?.about?.textColor || (content?.about as any)?.text_color || '#1b1b24';
 
   const featuresTitle = content?.features?.title || 'نظام بيئي أكاديمي متكامل';
   const featuresSubtitle = content?.features?.subtitle || 'مجموعة شاملة ومتطورة من الأدوات لإدارة كل جانب من جوانب رحلة التعلم المؤسسية.';
   const featuresItems = content?.features?.items || [];
-  const featuresBg = content?.features?.backgroundColor || '#f5f2ff';
-  const featuresTextColor = content?.features?.textColor || '#1b1b24';
+  const featuresBg = content?.features?.backgroundColor || (content?.features as any)?.background_color || (content?.features as any)?.bg_color || '#f5f2ff';
+  const featuresTextColor = content?.features?.textColor || (content?.features as any)?.text_color || '#1b1b24';
 
   const pricingTitle = content?.pricing?.title || 'المخرجات والنتائج الإحصائية';
   const pricingSubtitle = content?.pricing?.subtitle || 'معدلات تقدم وتحليلات رقمية للفصول الدراسية';
   const pricingItems = content?.pricing?.items || [];
-  const pricingBg = content?.pricing?.backgroundColor || '#fcf8ff';
-  const pricingTextColor = content?.pricing?.textColor || '#1b1b24';
+  const pricingBg = content?.pricing?.backgroundColor || (content?.pricing as any)?.background_color || (content?.pricing as any)?.bg_color || '#fcf8ff';
+  const pricingTextColor = content?.pricing?.textColor || (content?.pricing as any)?.text_color || '#1b1b24';
 
   const contactTitle = content?.contact?.title || 'ابْنِ مستقبل التعليم';
   const contactDesc = content?.contact?.description || 'انضم إلى المؤسسات الرائدة عالميًا في تحويل التجربة الأكاديمية. ارتقِ بمستوى مؤسستك التعليمية وابدأ رحلتك نحو التميز اليوم.';
-  const contactBtnText = content?.contact?.buttonText || 'ابدأ الآن';
-  const contactBg = content?.contact?.backgroundColor || '#3525cd';
-  const contactTextColor = content?.contact?.textColor || '#ffffff';
+  const contactPhone = content?.contact?.phoneNumber || (content?.contact as any)?.phone_number || '201000000000';
+  const contactBtnText = content?.contact?.buttonText || (content?.contact as any)?.button_text || 'ابدأ الآن';
+  const contactBg = content?.contact?.backgroundColor || (content?.contact as any)?.background_color || (content?.contact as any)?.bg_color || '#3525cd';
+  const contactTextColor = content?.contact?.textColor || (content?.contact as any)?.text_color || '#ffffff';
 
   const footerText = content?.footer?.text || '© 2024 إديوكور الأكاديمية. جميع الحقوق محفوظة.';
-  const footerBg = content?.footer?.backgroundColor || '#ffffff';
-  const footerTextColor = content?.footer?.textColor || '#1b1b24';
+  const footerBg = content?.footer?.backgroundColor || (content?.footer as any)?.background_color || (content?.footer as any)?.bg_color || '#ffffff';
+  const footerTextColor = content?.footer?.textColor || (content?.footer as any)?.text_color || '#1b1b24';
 
   return `<!DOCTYPE html>
 <html class="light" dir="rtl" lang="ar">
@@ -323,7 +349,7 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 <div class="w-full lg:w-1/2 flex items-center justify-center p-4">
 <div class="relative rounded-[2.5rem] bg-surface-container-lowest border border-outline-variant/50 shadow-2xl p-6 group special-image-hover overflow-hidden">
 <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-30 rounded-[2.5rem] pointer-events-none"></div>
-<img class="relative max-w-full h-auto object-contain rounded-2xl border border-outline-variant/20 shadow-sm bg-white" data-alt="A modern, abstract digital ecosystem diagram representing connected nodes for students, courses, and success metrics in a premium enterprise style." src="${heroImg}"/>
+${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl border border-outline-variant/20 shadow-sm bg-white', 'hero media')}
 </div>
 </div>
 </div>
@@ -370,34 +396,23 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 <section data-section="about" class="w-full transition-all duration-300 section-hover cursor-pointer" style="background-color: ${aboutBg}; color: ${aboutTextColor};">
 <div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-stack-xl items-center">
-<div class="relative h-[450px] bg-surface-container-lowest rounded-3xl p-8 border border-outline-variant/50 shadow-xl">
-<h3 class="text-headline-md font-headline-md text-on-surface mb-6">رؤى الأداء المؤسسي</h3>
-<div class="flex items-end gap-4 h-64 mt-12 px-4">
-<div class="flex-1 bg-primary/20 rounded-t-xl h-1/3 relative group"><div class="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-surface px-3 py-1 rounded-md shadow-sm text-sm font-bold">35%</div></div>
-<div class="flex-1 bg-secondary/30 rounded-t-xl h-1/2 relative group"><div class="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-surface px-3 py-1 rounded-md shadow-sm text-sm font-bold">50%</div></div>
-<div class="flex-1 bg-tertiary-fixed-dim/40 rounded-t-xl h-3/4 relative group"><div class="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-surface px-3 py-1 rounded-md shadow-sm text-sm font-bold">75%</div></div>
-<div class="flex-1 bg-primary rounded-t-xl h-full relative group"><div class="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-surface px-3 py-1 rounded-md shadow-sm text-sm font-bold">92%</div></div>
-</div>
-<div class="flex justify-between mt-4 text-on-surface-variant font-label-md text-sm px-4">
-<span>الربع الأول</span>
-<span>الربع الثاني</span>
-<span>الربع الثالث</span>
-<span>الربع الرابع</span>
-</div>
+<div class="relative h-[450px] bg-surface-container-lowest rounded-3xl border border-outline-variant/50 shadow-xl overflow-hidden">
+  ${aboutImg
+    ? renderMedia(aboutImg, 'w-full h-full object-cover', 'about')
+    : `<div class="w-full h-full flex flex-col items-center justify-center p-8">
+        <h3 class="text-headline-md font-headline-md text-on-surface mb-6">رؤى الأداء المؤسسي</h3>
+        <div class="flex items-end gap-4 h-40 w-full px-4">
+          <div class="flex-1 bg-primary/20 rounded-t-xl h-1/3"></div>
+          <div class="flex-1 bg-secondary/30 rounded-t-xl h-1/2"></div>
+          <div class="flex-1 bg-tertiary-fixed-dim/40 rounded-t-xl h-3/4"></div>
+          <div class="flex-1 bg-primary rounded-t-xl h-full"></div>
+        </div>
+      </div>`
+  }
 </div>
 <div class="flex flex-col gap-stack-md">
 <h2 class="text-headline-lg font-headline-lg text-on-surface">${aboutTitle}</h2>
 <p class="text-body-lg font-body-lg text-on-surface-variant mb-4">${aboutSubtitle}</p>
-<ul class="space-y-4">
-  ${featuresItems.map((item, idx) => `
-    <li data-section="features" data-index="${idx}" class="flex items-center gap-4 text-body-md font-body-md text-on-surface cursor-pointer hover:text-primary transition-colors">
-      <span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-full">
-        ${item.icon === 'BookOpen' ? 'menu_book' : item.icon === 'Award' ? 'workspace_premium' : item.icon === 'Clock' ? 'schedule' : item.icon === 'Laptop' ? 'laptop_mac' : item.icon === 'Phone' ? 'call' : 'trending_up'}
-      </span>
-      <span>${item.title} - ${item.description}</span>
-    </li>
-  `).join('')}
-</ul>
 </div>
 </div>
 </div>
@@ -411,61 +426,23 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 <p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mx-auto">${featuresSubtitle}</p>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter auto-rows-[280px]">
-  <!-- Card 1: Students (Large) -->
-  <div data-section="features" data-index="0" class="col-span-1 lg:col-span-2 row-span-1 bg-surface-container-lowest border border-outline-variant/60 rounded-3xl p-stack-lg shadow-sm hover:shadow-xl hover:border-primary/50 hover:-translate-y-2 transition-all duration-300 group flex flex-col justify-between overflow-hidden relative">
-    <div class="relative z-10">
-      <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-stack-md group-hover:scale-110 group-hover:bg-primary transition-all duration-300">
-        <span class="material-symbols-outlined text-primary group-hover:text-on-primary text-[32px] transition-colors">groups</span>
+  ${featuresItems.map((item, idx) => {
+    const isImg = item.icon && (item.icon.startsWith('http') || item.icon.includes('/') || item.icon.startsWith('data:'));
+    const colSpan = idx === 0 || idx === featuresItems.length - 1 ? 'col-span-1 lg:col-span-2' : 'col-span-1';
+    const colors = ['primary', 'secondary', 'tertiary', 'primary'];
+    const color = colors[idx % colors.length];
+    const iconEl = isImg
+      ? `<img src="${item.icon}" alt="${item.title}" class="w-14 h-14 rounded-2xl object-cover border border-outline-variant/30" />`
+      : `<div class="w-14 h-14 rounded-2xl bg-${color}/10 flex items-center justify-center mb-stack-md group-hover:scale-110 group-hover:bg-${color} transition-all duration-300"><span class="material-symbols-outlined text-${color} group-hover:text-on-${color} text-[32px] transition-colors">${item.icon || 'star'}</span></div>`;
+    return `
+    <div data-section="features" data-index="${idx}" class="${colSpan} row-span-1 bg-surface-container-lowest border border-outline-variant/60 rounded-3xl p-stack-lg shadow-sm hover:shadow-xl hover:border-${color}/50 hover:-translate-y-2 transition-all duration-300 group flex flex-col justify-between overflow-hidden relative">
+      <div class="relative z-10">
+        ${iconEl}
+        <h3 class="text-headline-md font-headline-md text-on-surface mb-3 mt-3">${item.title || ''}</h3>
+        <p class="text-body-md font-body-md text-on-surface-variant max-w-md">${item.description || ''}</p>
       </div>
-      <h3 class="text-headline-md font-headline-md text-on-surface mb-3">${featuresItems[0]?.title || 'مركز الطلاب الشامل'}</h3>
-      <p class="text-body-md font-body-md text-on-surface-variant max-w-md">${featuresItems[0]?.description || 'تمكين المتعلمين بلوحات تحكم مخصصة، وتتبع دقيق للتقدم، وأدوات تواصل تعاونية سلسة لبيئة تعليمية محفزة.'}</p>
-    </div>
-    <div class="absolute left-0 bottom-0 w-1/2 h-full bg-gradient-to-r from-primary/5 to-transparent"></div>
-  </div>
-  
-  <!-- Card 2: Teachers -->
-  <div data-section="features" data-index="1" class="col-span-1 row-span-1 bg-surface-container-lowest border border-outline-variant/60 rounded-3xl p-stack-lg shadow-sm hover:shadow-xl hover:border-secondary/50 hover:-translate-y-2 transition-all duration-300 group flex flex-col justify-between">
-    <div>
-      <div class="w-14 h-14 rounded-2xl bg-secondary/10 flex items-center justify-center mb-stack-md group-hover:scale-110 group-hover:bg-secondary transition-all duration-300">
-        <span class="material-symbols-outlined text-secondary group-hover:text-on-secondary text-[32px] transition-colors">assignment_ind</span>
-      </div>
-      <h3 class="text-headline-md font-headline-md text-on-surface mb-3">${featuresItems[1]?.title || 'بوابة المعلمين'}</h3>
-      <p class="text-body-md font-body-md text-on-surface-variant">${featuresItems[1]?.description || 'تبسيط تخطيط الدروس، وإدارة الدرجات، وتعزيز تفاعل الطلاب بأدوات متقدمة.'}</p>
-    </div>
-  </div>
-  
-  <!-- Card 3: Exams -->
-  <div data-section="features" data-index="2" class="col-span-1 row-span-1 bg-surface-container-lowest border border-outline-variant/60 rounded-3xl p-stack-lg shadow-sm hover:shadow-xl hover:border-tertiary/50 hover:-translate-y-2 transition-all duration-300 group flex flex-col justify-between">
-    <div>
-      <div class="w-14 h-14 rounded-2xl bg-tertiary/10 flex items-center justify-center mb-stack-md group-hover:scale-110 group-hover:bg-tertiary transition-all duration-300">
-        <span class="material-symbols-outlined text-tertiary group-hover:text-on-tertiary text-[32px] transition-colors">quiz</span>
-      </div>
-      <h3 class="text-headline-md font-headline-md text-on-surface mb-3">${featuresItems[2]?.title || 'محرك التقييم'}</h3>
-      <p class="text-body-md font-body-md text-on-surface-variant">${featuresItems[2]?.description || 'اختبارات آمنة وقابلة للتطوير مع تصحيح آلي وتحليلات أداء مفصلة ودقيقة.'}</p>
-    </div>
-  </div>
-  
-  <!-- Card 4: Results (Wide) -->
-  <div data-section="features" data-index="3" class="col-span-1 lg:col-span-2 row-span-1 bg-surface-container-lowest border border-outline-variant/60 rounded-3xl p-stack-lg shadow-sm hover:shadow-xl hover:border-primary/50 hover:-translate-y-2 transition-all duration-300 group flex flex-col md:flex-row items-center gap-stack-lg justify-between">
-    <div class="flex-1">
-      <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-stack-md group-hover:scale-110 group-hover:bg-primary transition-all duration-300">
-        <span class="material-symbols-outlined text-primary group-hover:text-on-primary text-[32px] transition-colors">insights</span>
-      </div>
-      <h3 class="text-headline-md font-headline-md text-on-surface mb-3">${featuresItems[3]?.title || 'المخرجات والنتائج'}</h3>
-      <p class="text-body-md font-body-md text-on-surface-variant max-w-md">${featuresItems[3]?.description || 'تقارير مؤسسية شاملة لتتبع الفعالية الأكاديمية وإتقان الطلاب للمهارات المطلوبة.'}</p>
-    </div>
-    <div class="w-full md:w-1/3 h-full flex flex-col justify-center gap-4 opacity-70 group-hover:opacity-100 transition-opacity duration-300">
-      <div class="w-full bg-surface-variant rounded-full h-4 overflow-hidden shadow-inner">
-        <div class="bg-secondary h-full rounded-full relative"><span class="absolute left-2 text-[10px] text-white top-1/2 -translate-y-1/2 font-bold">85%</span></div>
-      </div>
-      <div class="w-full bg-surface-variant rounded-full h-4 overflow-hidden shadow-inner">
-        <div class="bg-primary h-full rounded-full relative" style="width: 70%"><span class="absolute left-2 text-[10px] text-white top-1/2 -translate-y-1/2 font-bold">70%</span></div>
-      </div>
-      <div class="w-full bg-surface-variant rounded-full h-4 overflow-hidden shadow-inner">
-        <div class="bg-tertiary h-full rounded-full relative" style="width: 92%"><span class="absolute left-2 text-[10px] text-white top-1/2 -translate-y-1/2 font-bold">92%</span></div>
-      </div>
-    </div>
-  </div>
+    </div>`;
+  }).join('')}
 </div>
 </div>
 </section>

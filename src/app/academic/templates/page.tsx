@@ -29,6 +29,7 @@ import {
 import toast from 'react-hot-toast';
 
 import { createPage, getSections, apiToEditor, getPages, updatePage } from '@/services/pages';
+import { getProfileStatus } from '@/services/auth';
 import { getTemplateById } from '@/builder/utils/templates';
 import TemplateRenderer from '@/builder/templates/renderer/TemplateRenderer';
 import { syncHomepageCache } from '@/lib/homepage-cache';
@@ -40,6 +41,7 @@ interface Template {
   id: string;
   name: string;
   category: 'website' | 'courses';
+  role?: 'academy' | 'coach' | 'schoolcoach';
   imageUrl: string;
   description: string;
   accentColor: string;
@@ -51,6 +53,7 @@ interface Template {
 const TEMPLATE_SLUGS = ['academy-dashboard', 'template_1', 'template_2', 'template_3', 'template_4', 'template_courses_1'];
 
 export default function TemplatesPage() {
+  const [userRole, setUserRole] = useState<'academy' | 'coach' | 'schoolcoach'>('academy');
   const [activeTemplateId, setActiveTemplateId] = useState<string>('template_1');
   const [activePageId, setActivePageId] = useState<string | null>(null);
   const [pages, setPages] = useState<any[]>([]);
@@ -60,6 +63,29 @@ export default function TemplatesPage() {
 
   const [previewSections, setPreviewSections] = useState<any[]>([]);
   const [loadingPreview, setLoadingPreview] = useState(false);
+
+  // Load user profile & role from getProfileStatus() (/me endpoint)
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const profile = await getProfileStatus();
+        const userData = profile?.data || profile;
+        if (userData && userData.role) {
+          const roleStr = userData.role.toLowerCase().trim();
+          if (roleStr === 'schoolteacher' || roleStr === 'school_teacher' || roleStr === 'schoolcoach') {
+            setUserRole('schoolcoach');
+          } else if (roleStr === 'coach' || roleStr === 'instructor' || roleStr === 'teacher') {
+            setUserRole('coach');
+          } else {
+            setUserRole('academy');
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load user profile role in TemplatesPage:', err);
+      }
+    };
+    fetchUserRole();
+  }, []);
 
   // Load selected template and page ID from localStorage & API
   useEffect(() => {
@@ -95,6 +121,9 @@ export default function TemplatesPage() {
           // Sync localStorage for fallback compatibility
           localStorage.setItem('darab_active_template', activeSlug);
           localStorage.setItem('darab_active_page_id', activeId);
+        } else {
+          // Default first template for the user's role
+          setActiveTemplateId('template_1');
         }
       } catch (err) {
         console.error('Failed to load pages in TemplatesPage:', err);
@@ -220,21 +249,18 @@ export default function TemplatesPage() {
         }
       }
     } catch (e) {
-      console.error('Failed to fetch preview sections from API:', e);
+      console.error('Failed to fetch sections for preview:', e);
     }
 
     // Fallback: load this template's own static default sections
-    try {
-      const defaultTemplateConfig = getTemplateById(template.id);
-      setPreviewSections(defaultTemplateConfig.sections);
-    } catch (e) {
-      console.error('Failed to fetch static default template sections:', e);
-      setPreviewSections([]);
+    const defaultTemplate = getTemplateById(template.id);
+    if (defaultTemplate?.sections) {
+      setPreviewSections(defaultTemplate.sections);
     }
     setLoadingPreview(false);
   };
 
-  const handleSelectInsideSimulator = async () => {
+  const handleApplyPreviewTemplate = async () => {
     if (previewTemplate) {
       const targetId = previewTemplate.id;
       const targetName = previewTemplate.name;
@@ -244,15 +270,17 @@ export default function TemplatesPage() {
   };
 
   // -------------------------------------------------------------
-  // Data Definitions for Mock Templates
+  // Data Definitions for Role-Based Templates
   // -------------------------------------------------------------
-  const WEBSITE_TEMPLATES: Template[] = [
+  const ALL_WEBSITE_TEMPLATES: Template[] = [
+    // --- ACADEMY ROLE TEMPLATES ---
     {
       id: 'template_1',
-      name: 'قالب الأول (الكلاسيكي الملكي)',
+      name: 'قالب الأكاديمية الأول (الافتراضي)',
       category: 'website',
+      role: 'academy',
       imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAJaarzdUdatddupC-Car8sLGMlsoCGMu746IHi3QCutv4sFUix5gq9L2IRD4GL54JOa5IkrpDTu9qB3y_sthhJWAlnKee_XZS9vb_84lCTldItK-vBbrhlX8HfKgZPrzGv1klkqPQ7pb8ZVCTbn7dwdv_rWq8EFF46EMzQr9htoSdNFZNNvfS_aYO5CeFYWGhoYbUdxIDy63nipZ5e2vktOdPjNh-FlhRPoBUwXsc1nE2lfke5RXmiQsHp6Zg8DVEwfTPMfrx8Ae4',
-      description: 'تصميم درب التقليدي الاحترافي، بلمسات زرقاء وتخطيط هرمي منسق للدورات.',
+      description: 'تصميم درب الأكاديمي الاحترافي، بلمسات زرقاء وتخطيط هرمي منسق للدورات والمراكز.',
       accentColor: '#005c86',
       themeName: 'الأزرق المعتمد',
       rating: '4.9/5',
@@ -260,38 +288,72 @@ export default function TemplatesPage() {
     },
     {
       id: 'template_2',
-      name: 'القالب الثاني (على طريقة يوديمي)',
+      name: 'قالب الأكاديمية الشامل (على طريقة يوديمي)',
       category: 'website',
+      role: 'academy',
       imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB4iH4QN5hawBNBS5h9s9nS1TEOla1eY5JJBqQOqqjhAcuOlHHEGvnQUIHaXpvbQX9suHmsGlgv0xfg0Us7GtGZPQZLjNjAsSb3srLVJGGI4JhTw1Ox5L1yvBbvfJnp2IzBFGjUi-SISVcwTm1m9E2wpeb0s33mi9i-k6-PXWT7bxjjJfB8-tokQtf0u5nDOyc2UDANLG2c6UALdgFPTLJ5HDo34MDxx0k5foN_8S6R-2hJhXdyF5sEUPHIXe8KarPgOvzf7Tg2VLI',
-      description: 'تصميم تعليمي كلاسيكي وعصري مستوحى من منصة Udemy، لعرض الكورسات والتصنيفات بطريقة مرتبة وجذابة.',
+      description: 'تصميم تعليمي كلاسيكي وعصري مستوحى من منصة Udemy، لعرض الكورسات والتصنيفات بطريقة مرتبة.',
       accentColor: '#2FA8E0',
       themeName: 'السماوي الهادئ',
       rating: '4.9/5',
       loadSpeed: '0.5 ثانية'
     },
+
+    // --- COACH ROLE TEMPLATES ---
     {
-      id: 'template_3',
-      name: 'قالب الثالث (الإبداعي الأرجواني)',
+      id: 'template_1',
+      name: 'قالب المدرب الشخصي والتطوير (الافتراضي)',
       category: 'website',
+      role: 'coach',
       imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB9KcwP0hcNTjqTsP9-zEoZDcp7ymS0jNj6ob0RwCIdKZ108wU5GjjnHQ0Ji6KDK0ow73ll6wBAdPJRnFpak6zMSPeZ4oAs50vCNlTZKzFA-09Anx2ZOEFVdcumpmAMBHwpacUtUq3v8BNDiO8uMUSw84-4TcE5wdXfhHaOF0A9vgFNdp5-eoQ3H2QBP0nj_d2E4mHbznhcP-MK1K3iSrqNQPbcQChXz_3auUIfp_d-OYnMw6Hv-Uca0MdxRgbltFjrZV6VFE9-guA',
-      description: 'ترتيب متطور لرواد التصميم والفنون الإبداعية، بلمسات أرجوانية وخلفيات ناعمة.',
+      description: 'ترتيب متطور للمدربين والخبراء، بلمسات أرجوانية وخلفيات ناعمة لاستعراض البرامج والخبرات.',
       accentColor: '#8b5cf6',
       themeName: 'الأرجواني الملكي',
       rating: '4.9/5',
       loadSpeed: '0.7 ثانية'
     },
     {
-      id: 'template_4',
-      name: 'قالب الرابع (الريادي الذهبي)',
+      id: 'template_2',
+      name: 'قالب التمكين وتطوير المهارات القيادية',
       category: 'website',
+      role: 'coach',
       imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDtqpBVFtjEqV4PVoWYoyU8fcNsGZBndlgPIbkTUs2JhnbX94-veF8_k8_HudB9diVBtjprCKzLuuiObyibFF6J9QbaMi1GcDswO0I4W3wlUhbXjD_j1nPDgegx4guIeTcmiF9PHyt3yU3B-zTYYixNNb5rzSTyXu_dNsQybxKmntcB87QhR6ICgCXRlHXPPaV2v4GrYnnz6NmYa8CQCbDOZw82qqN70CS7UckmVyBWvUnicK0nzC2SZsnW_QwGRn3db9X6vbI-6DE',
-      description: 'قالب ريادي أنيق مناسب لمجالات التمويل والتكنولوجيا والاستشارات الإدارية المرموقة.',
+      description: 'قالب أنيق مناسب لمجالات التمويل، التكنولوجيا، والاستشارات القيادية المرموقة.',
       accentColor: '#0d9488',
       themeName: 'تيل احترافي',
       rating: '4.7/5',
       loadSpeed: '0.9 ثانية'
+    },
+
+    // --- SCHOOLCOACH ROLE TEMPLATES ---
+    {
+      id: 'template_1',
+      name: 'قالب الأستاذ والمعلم القدير (الافتراضي)',
+      category: 'website',
+      role: 'schoolcoach',
+      imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDdn5I4iyCWiaDe9m4F8v8n_X00tPqBgqXH4hbDxxtEpcQGhs3Iv7ye36iLKGCPaYsSeLuQ6Q56ZRbKBk10dy_efgKLS3zHuPJjJmYL6JtPlCiByhhruLtE_z5QnQirZ362M0sgpMps7B8icOJUUVS6t_6GJ1K0xma8arDq0yEal-eRoeAXPmexe9Vlvhif39sPxgQQGgyuqPwrz1R2REpb3TQmQAfrbC-2IMbqMBAUhDDImR-r8q5cEQ',
+      description: 'تصميم مخصص لمعلمي المناهج الدراسية والمجموعات التفاعلية والتحضير للامتحانات بكفاءة عالية.',
+      accentColor: '#0a1628',
+      themeName: 'الكحلي الذهبي',
+      rating: '4.9/5',
+      loadSpeed: '0.5 ثانية'
+    },
+    {
+      id: 'template_2',
+      name: 'قالب بوابة المتفوق الأكاديمية التفاعلية',
+      category: 'website',
+      role: 'schoolcoach',
+      imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
+      description: 'تعلّم المناهج الدراسية بأسلوب تفاعلي متطور مع خرائط ذهنية واختبارات ذكية.',
+      accentColor: '#0f172a',
+      themeName: 'الكحلي الفاخر',
+      rating: '4.9/5',
+      loadSpeed: '0.5 ثانية'
     }
   ];
+
+  // Only display templates that match the user's role from /me endpoint
+  const WEBSITE_TEMPLATES = ALL_WEBSITE_TEMPLATES.filter(t => t.role === userRole);
 
   const COURSE_TEMPLATES: Template[] = [
     {
@@ -789,7 +851,7 @@ export default function TemplatesPage() {
                 </Link>
               ) : (
                 <button 
-                  onClick={handleSelectInsideSimulator}
+                  onClick={handleApplyPreviewTemplate}
                   disabled={!!activatingId}
                   className="px-5 py-2.5 rounded-xl bg-[#005c86] hover:brightness-110 text-white font-bold text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-1.5"
                 >

@@ -788,62 +788,90 @@ export default function PageBuilderPage() {
             const contactNode = editorNodes.find(n => n.type === 'contact');
             const footerNode = editorNodes.find(n => n.type === 'footer');
 
+            // Helper: get items already flattened by apiToEditor (node.props.items), 
+            // falling back to default items if empty/missing.
+            const safeItems = (nodeItems: any[] | undefined | null, defaultItems: any[]) => {
+              if (!Array.isArray(nodeItems) || nodeItems.length === 0) return defaultItems;
+              // Items from apiToEditor already have props merged at root level
+              return nodeItems.map(item => {
+                // Ensure required fields have safe values
+                const merged = { ...item };
+                if (merged.features && !Array.isArray(merged.features)) {
+                  merged.features = [];
+                }
+                return merged;
+              });
+            };
+
+            // Safe string accessor: returns value if non-null/non-empty, else fallback
+            const sv = (val: any, fallbackVal: any) =>
+              (val !== null && val !== undefined && val !== '') ? val : fallbackVal;
+
             const parsedContent: TemplateContent = {
               navbar: navbarNode?.props ? {
-                title: navbarNode.props.title ?? fallback.navbar.title,
-                logo: navbarNode.props.logo ?? fallback.navbar.logo,
-                bgColor: navbarNode.props.bgColor ?? navbarNode.props.bg_color ?? fallback.navbar.bgColor,
-                textColor: navbarNode.props.textColor ?? navbarNode.props.text_color ?? fallback.navbar.textColor,
+                title: sv(navbarNode.props.title, fallback.navbar.title),
+                logo: sv(navbarNode.props.logo, fallback.navbar.logo),
+                bgColor: sv(navbarNode.props.bgColor ?? navbarNode.props.bg_color, fallback.navbar.bgColor),
+                textColor: sv(navbarNode.props.textColor ?? navbarNode.props.text_color, fallback.navbar.textColor),
               } : fallback.navbar,
+
               hero: heroNode?.props ? {
-                title: heroNode.props.title ?? fallback.hero.title,
-                subtitle: heroNode.props.subtitle ?? fallback.hero.subtitle,
-                description: heroNode.props.description ?? fallback.hero.description,
-                buttonText: heroNode.props.buttonText ?? heroNode.props.button_text ?? fallback.hero.buttonText,
-                buttonLink: heroNode.props.buttonLink ?? fallback.hero.buttonLink,
-                image: heroNode.props.image ?? fallback.hero.image,
-                backgroundColor: heroNode.props.backgroundColor ?? heroNode.props.background_color ?? fallback.hero.backgroundColor,
-                textColor: heroNode.props.textColor ?? heroNode.props.text_color ?? fallback.hero.textColor,
+                title: sv(heroNode.props.title, fallback.hero.title),
+                subtitle: sv(heroNode.props.subtitle, fallback.hero.subtitle),
+                description: sv(heroNode.props.description, fallback.hero.description),
+                buttonText: sv(heroNode.props.buttonText ?? heroNode.props.button_text, fallback.hero.buttonText),
+                buttonLink: sv(heroNode.props.buttonLink ?? heroNode.props.button_link, fallback.hero.buttonLink),
+                image: sv(heroNode.props.image, fallback.hero.image),
+                backgroundColor: sv(heroNode.props.backgroundColor ?? heroNode.props.background_color ?? heroNode.props.bg_color, fallback.hero.backgroundColor),
+                textColor: sv(heroNode.props.textColor ?? heroNode.props.text_color, fallback.hero.textColor),
               } : fallback.hero,
+
               about: aboutNode?.props ? {
-                title: aboutNode.props.title ?? fallback.about.title,
-                subtitle: aboutNode.props.subtitle ?? fallback.about.subtitle,
-                image: aboutNode.props.image ?? fallback.about.image,
-                backgroundColor: aboutNode.props.backgroundColor ?? aboutNode.props.background_color ?? fallback.about.backgroundColor,
-                textColor: aboutNode.props.textColor ?? aboutNode.props.text_color ?? fallback.about.textColor,
+                title: sv(aboutNode.props.title, fallback.about.title),
+                subtitle: sv(aboutNode.props.subtitle, fallback.about.subtitle),
+                // about.image can be null from backend — use fallback in that case
+                image: sv(aboutNode.props.image, fallback.about.image),
+                backgroundColor: sv(aboutNode.props.backgroundColor ?? aboutNode.props.background_color ?? aboutNode.props.bg_color, fallback.about.backgroundColor),
+                textColor: sv(aboutNode.props.textColor ?? aboutNode.props.text_color, fallback.about.textColor),
               } : fallback.about,
+
               features: featuresNode?.props ? {
-                title: featuresNode.props.title ?? fallback.features.title,
-                subtitle: featuresNode.props.subtitle ?? fallback.features.subtitle,
-                items: featuresNode.props.items ?? fallback.features.items,
-                backgroundColor: featuresNode.props.backgroundColor ?? featuresNode.props.background_color ?? fallback.features.backgroundColor,
-                textColor: featuresNode.props.textColor ?? featuresNode.props.text_color ?? fallback.features.textColor,
+                title: sv(featuresNode.props.title, fallback.features.title),
+                subtitle: sv(featuresNode.props.subtitle, fallback.features.subtitle),
+                // Use items from apiToEditor output (already flattened: item.title, item.icon, item.description)
+                items: safeItems(featuresNode.props.items, fallback.features.items),
+                backgroundColor: sv(featuresNode.props.backgroundColor ?? featuresNode.props.background_color ?? featuresNode.props.bg_color, fallback.features.backgroundColor),
+                textColor: sv(featuresNode.props.textColor ?? featuresNode.props.text_color, fallback.features.textColor),
               } : fallback.features,
+
               pricing: pricingNode?.props ? {
-                title: pricingNode.props.title ?? fallback.pricing.title,
-                subtitle: pricingNode.props.subtitle ?? fallback.pricing.subtitle,
-                items: pricingNode.props.items ?? fallback.pricing.items,
-                backgroundColor: pricingNode.props.backgroundColor ?? pricingNode.props.background_color ?? fallback.pricing.backgroundColor,
-                textColor: pricingNode.props.textColor ?? pricingNode.props.text_color ?? fallback.pricing.textColor,
+                title: sv(pricingNode.props.title, fallback.pricing.title),
+                subtitle: sv(pricingNode.props.subtitle, fallback.pricing.subtitle),
+                items: safeItems(pricingNode.props.items, fallback.pricing.items),
+                backgroundColor: sv(pricingNode.props.backgroundColor ?? pricingNode.props.background_color ?? pricingNode.props.bg_color, fallback.pricing.backgroundColor),
+                textColor: sv(pricingNode.props.textColor ?? pricingNode.props.text_color, fallback.pricing.textColor),
               } : fallback.pricing,
+
               faq: faqNode?.props ? {
-                title: faqNode.props.title ?? fallback.faq.title,
-                items: faqNode.props.items ?? fallback.faq.items,
-                backgroundColor: faqNode.props.backgroundColor ?? fallback.faq.backgroundColor,
-                textColor: faqNode.props.textColor ?? fallback.faq.textColor,
+                title: sv(faqNode.props.title, fallback.faq.title),
+                items: safeItems(faqNode.props.items, fallback.faq.items),
+                backgroundColor: sv(faqNode.props.backgroundColor ?? faqNode.props.background_color ?? faqNode.props.bg_color, fallback.faq.backgroundColor),
+                textColor: sv(faqNode.props.textColor ?? faqNode.props.text_color, fallback.faq.textColor),
               } : fallback.faq,
+
               contact: contactNode?.props ? {
-                title: contactNode.props.title ?? fallback.contact.title,
-                description: contactNode.props.description ?? fallback.contact.description,
-                phoneNumber: contactNode.props.phoneNumber ?? contactNode.props.phone_number ?? fallback.contact.phoneNumber,
-                buttonText: contactNode.props.buttonText ?? contactNode.props.button_text ?? fallback.contact.buttonText,
-                backgroundColor: contactNode.props.backgroundColor ?? contactNode.props.background_color ?? fallback.contact.backgroundColor,
-                textColor: contactNode.props.textColor ?? contactNode.props.text_color ?? fallback.contact.textColor,
+                title: sv(contactNode.props.title, fallback.contact.title),
+                description: sv(contactNode.props.description, fallback.contact.description),
+                phoneNumber: sv(contactNode.props.phoneNumber ?? contactNode.props.phone_number, fallback.contact.phoneNumber),
+                buttonText: sv(contactNode.props.buttonText ?? contactNode.props.button_text, fallback.contact.buttonText),
+                backgroundColor: sv(contactNode.props.backgroundColor ?? contactNode.props.background_color ?? contactNode.props.bg_color, fallback.contact.backgroundColor),
+                textColor: sv(contactNode.props.textColor ?? contactNode.props.text_color, fallback.contact.textColor),
               } : fallback.contact,
+
               footer: footerNode?.props ? {
-                text: footerNode.props.text ?? fallback.footer.text,
-                backgroundColor: footerNode.props.backgroundColor ?? footerNode.props.background_color ?? fallback.footer.backgroundColor,
-                textColor: footerNode.props.textColor ?? footerNode.props.text_color ?? fallback.footer.textColor,
+                text: sv(footerNode.props.text, fallback.footer.text),
+                backgroundColor: sv(footerNode.props.backgroundColor ?? footerNode.props.background_color ?? footerNode.props.bg_color, fallback.footer.backgroundColor),
+                textColor: sv(footerNode.props.textColor ?? footerNode.props.text_color, fallback.footer.textColor),
               } : fallback.footer,
             };
             setContent(parsedContent);
@@ -1016,13 +1044,15 @@ export default function PageBuilderPage() {
   // --- Specific Content Fields Handlers ---
   const handleUpdateField = (section: keyof TemplateContent, field: string, value: any) => {
     if (!content) return;
-    setContent({
+    const updated = {
       ...content,
       [section]: {
         ...content[section],
         [field]: value
       }
-    });
+    };
+    setContent(updated);
+    setPreviewContent(updated);
   };
 
   const handleUpdateNestedField = (section: keyof TemplateContent, nestedKey: string, index: number, field: string, value: any) => {
@@ -1032,26 +1062,30 @@ export default function PageBuilderPage() {
       ...arrayCopy[index],
       [field]: value
     };
-    setContent({
+    const updated = {
       ...content,
       [section]: {
         ...content[section],
         [nestedKey]: arrayCopy
       }
-    });
+    };
+    setContent(updated);
+    setPreviewContent(updated);
   };
 
   const handleAddListItem = (section: keyof TemplateContent, nestedKey: string, newItemTemplate: any) => {
     if (!content) return;
     const arrayCopy = [...(content[section] as any)[nestedKey]];
     arrayCopy.push(newItemTemplate);
-    setContent({
+    const updated = {
       ...content,
       [section]: {
         ...content[section],
         [nestedKey]: arrayCopy
       }
-    });
+    };
+    setContent(updated);
+    setPreviewContent(updated);
   };
 
   const handleRemoveListItem = (section: keyof TemplateContent, nestedKey: string, index: number) => {
@@ -1062,13 +1096,15 @@ export default function PageBuilderPage() {
       return;
     }
     const filtered = arrayCopy.filter((_, i) => i !== index);
-    setContent({
+    const updated = {
       ...content,
       [section]: {
         ...content[section],
         [nestedKey]: filtered
       }
-    });
+    };
+    setContent(updated);
+    setPreviewContent(updated);
   };
 
   // Renders loading spinner on start
@@ -1150,26 +1186,8 @@ export default function PageBuilderPage() {
           </button>
         </div>
 
-        {/* Role & Template switcher panel + Save action */}
+        {/* Template switcher panel + Save action */}
         <div className="flex items-center gap-3">
-          
-          {/* Simulated Role Selection for Testing */}
-          <div className="flex items-center gap-1.5 border-l border-slate-200 pl-3">
-            <span className="text-[10px] font-bold text-slate-500">مستوى صلاحياتك:</span>
-            <select
-              value={currentRole}
-              onChange={(e) => {
-                const nextRole = e.target.value as any;
-                setCurrentRole(nextRole);
-                toast.success(`تم تبديل المستوى إلى: ${nextRole === 'schoolcoach' ? 'مدرس / مدرسة' : nextRole === 'coach' ? 'مدرب شخصي' : 'أكاديمية'}`);
-              }}
-              className="border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-extrabold bg-slate-50 hover:bg-white text-slate-700 outline-none cursor-pointer focus:border-blue-500 transition-colors"
-            >
-              <option value="schoolcoach">المدرس / المدرسة (School Coach)</option>
-              <option value="coach">مدرب مستقل (Coach)</option>
-              <option value="academy">أكاديمية تدريب معتمدة (Academy)</option>
-            </select>
-          </div>
 
           {/* Template Selection */}
           <div className="flex bg-slate-100 border border-slate-200 p-1 rounded-xl">
@@ -1670,52 +1688,62 @@ export default function PageBuilderPage() {
                           />
                         </div>
 
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">الميزات المشمولة (مفصولة بفاصلة)</label>
-                          <input
-                            type="text"
-                            value={item.features.filter(f => !f.startsWith('http') && !f.includes('/')).join('، ')}
-                            onChange={(e) => {
-                              const arrText = e.target.value.split(/[،,]/).map(s => s.trim()).filter(Boolean);
-                              const arrImgs = item.features.filter(f => f.startsWith('http') || f.includes('/'));
-                              handleUpdateNestedField('pricing', 'items', idx, 'features', [...arrText, ...arrImgs]);
-                            }}
-                            className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none text-slate-700 font-medium"
-                            placeholder="ميزة ١ ، ميزة ٢ ، ميزة ٣"
-                          />
-                        </div>
+                        {(() => {
+                          const itemFeatures = Array.isArray(item.features) ? item.features : [];
+                          const hasImg = itemFeatures.some(f => typeof f === 'string' && (f.startsWith('http') || f.includes('/')));
+                          const imgUrl = itemFeatures.find(f => typeof f === 'string' && (f.startsWith('http') || f.includes('/')));
 
-                        {/* If there is an image in features, or if the role is coach, allow editing it explicitly */}
-                        {(item.features.some(f => f.startsWith('http') || f.includes('/')) || currentRole === 'coach') && (
-                          <div className="flex flex-col gap-1 mt-1">
-                            <label className="text-[9px] font-bold text-slate-500">رابط صورة الكارت / الماستركلاس</label>
-                            <div className="flex gap-2 items-center">
-                              {item.features.find(f => f.startsWith('http') || f.includes('/')) && (
-                                <img 
-                                  src={item.features.find(f => f.startsWith('http') || f.includes('/'))} 
-                                  className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0" 
-                                  alt="preview" 
+                          return (
+                            <>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-bold text-slate-500">الميزات المشمولة (مفصولة بفاصلة)</label>
+                                <input
+                                  type="text"
+                                  value={itemFeatures.filter(f => typeof f === 'string' && !f.startsWith('http') && !f.includes('/')).join('، ')}
+                                  onChange={(e) => {
+                                    const arrText = e.target.value.split(/[،,]/).map(s => s.trim()).filter(Boolean);
+                                    const arrImgs = itemFeatures.filter(f => typeof f === 'string' && (f.startsWith('http') || f.includes('/')));
+                                    handleUpdateNestedField('pricing', 'items', idx, 'features', [...arrText, ...arrImgs]);
+                                  }}
+                                  className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none text-slate-700 font-medium"
+                                  placeholder="ميزة ١ ، ميزة ٢ ، ميزة ٣"
                                 />
+                              </div>
+
+                              {/* If there is an image in features, or if the role is coach, allow editing it explicitly */}
+                              {(hasImg || currentRole === 'coach') && (
+                                <div className="flex flex-col gap-1 mt-1">
+                                  <label className="text-[9px] font-bold text-slate-500">رابط صورة الكارت / الماستركلاس</label>
+                                  <div className="flex gap-2 items-center">
+                                    {imgUrl && (
+                                      <img 
+                                        src={imgUrl} 
+                                        className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0" 
+                                        alt="preview" 
+                                      />
+                                    )}
+                                    <input
+                                      type="text"
+                                      value={imgUrl || ''}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        const arrText = itemFeatures.filter(f => typeof f === 'string' && !f.startsWith('http') && !f.includes('/'));
+                                        if (val.trim()) {
+                                          handleUpdateNestedField('pricing', 'items', idx, 'features', [...arrText, val.trim()]);
+                                        } else {
+                                          handleUpdateNestedField('pricing', 'items', idx, 'features', arrText);
+                                        }
+                                      }}
+                                      className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-mono flex-grow text-left"
+                                      placeholder="https://..."
+                                      dir="ltr"
+                                    />
+                                  </div>
+                                </div>
                               )}
-                              <input
-                                type="text"
-                                value={item.features.find(f => f.startsWith('http') || f.includes('/')) || ''}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  const arrText = item.features.filter(f => !f.startsWith('http') && !f.includes('/'));
-                                  if (val.trim()) {
-                                    handleUpdateNestedField('pricing', 'items', idx, 'features', [...arrText, val.trim()]);
-                                  } else {
-                                    handleUpdateNestedField('pricing', 'items', idx, 'features', arrText);
-                                  }
-                                }}
-                                className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-mono flex-grow text-left"
-                                placeholder="https://..."
-                                dir="ltr"
-                              />
-                            </div>
-                          </div>
-                        )}
+                            </>
+                          );
+                        })()}
                       </div>
                     ))}
                   </div>
@@ -1961,7 +1989,7 @@ export default function PageBuilderPage() {
             {currentRole === 'academy' ? (
               <iframe
                 id="website-builder-iframe"
-                srcDoc={getAcademicHtml(previewContent || content)}
+                srcDoc={getAcademicHtml(content)}
                 onLoad={handleIframeLoad}
                 className="w-full h-full border-0"
                 title="Academic Preview"
@@ -1969,7 +1997,7 @@ export default function PageBuilderPage() {
             ) : currentRole === 'coach' ? (
               <iframe
                 id="website-builder-iframe"
-                srcDoc={getCoachHtml(previewContent || content)}
+                srcDoc={getCoachHtml(content)}
                 onLoad={handleIframeLoad}
                 className="w-full h-full border-0"
                 title="Coach Preview"
@@ -1977,7 +2005,7 @@ export default function PageBuilderPage() {
             ) : currentRole === 'schoolcoach' ? (
               <iframe
                 id="website-builder-iframe"
-                srcDoc={getSchoolCoachHtml(previewContent || content)}
+                srcDoc={getSchoolCoachHtml(content)}
                 onLoad={handleIframeLoad}
                 className="w-full h-full border-0"
                 title="School Coach Preview"
@@ -2175,7 +2203,7 @@ export default function PageBuilderPage() {
                           <h4 className="text-sm font-extrabold text-slate-900 mb-2">{item.title}</h4>
                           <div className="text-xl font-black text-blue-600 mb-4">{item.price}</div>
                           <ul className="space-y-2 text-[10px] text-slate-500 font-bold">
-                            {item.features.map((feat, fIdx) => (
+                            {(Array.isArray(item.features) ? item.features : []).map((feat, fIdx) => (
                               <li key={fIdx} className="flex items-center gap-1.5">
                                 <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                                 <span>{feat}</span>

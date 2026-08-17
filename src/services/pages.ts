@@ -364,6 +364,46 @@ function safeParseProps(raw: any): Record<string, any> {
   return {};
 }
 
+export function normalizeSectionProps(type: string, rawProps: any): Record<string, any> {
+  if (!rawProps || typeof rawProps !== 'object') return {};
+  const camel = keysToCamel(rawProps);
+  const snake = keysToSnake(rawProps);
+  const merged = { ...snake, ...camel };
+
+  // Explicit dual-key normalization
+  if (merged.bg_color || merged.bgColor) {
+    const val = merged.bgColor || merged.bg_color;
+    merged.bgColor = val;
+    merged.bg_color = val;
+  }
+  if (merged.text_color || merged.textColor) {
+    const val = merged.textColor || merged.text_color;
+    merged.textColor = val;
+    merged.text_color = val;
+  }
+  if (merged.background_color || merged.backgroundColor) {
+    const val = merged.backgroundColor || merged.background_color || merged.bg_color || merged.bgColor;
+    merged.backgroundColor = val;
+    merged.background_color = val;
+  }
+  if (merged.button_text || merged.buttonText) {
+    const val = merged.buttonText || merged.button_text;
+    merged.buttonText = val;
+    merged.button_text = val;
+  }
+  if (merged.button_link || merged.buttonLink) {
+    const val = merged.buttonLink || merged.button_link;
+    merged.buttonLink = val;
+    merged.button_link = val;
+  }
+  if (merged.phone_number || merged.phoneNumber) {
+    const val = merged.phoneNumber || merged.phone_number;
+    merged.phoneNumber = val;
+    merged.phone_number = val;
+  }
+  return merged;
+}
+
 // -----------------------------------------------------------------------
 // apiToEditor
 // -----------------------------------------------------------------------
@@ -374,13 +414,8 @@ export function apiToEditor(sections: ApiSection[]): BuilderNode[] {
   const sorted = [...sections].sort((a, b) => (a.order || 0) - (b.order || 0));
 
   return sorted.map((sec) => {
-    const isLegacy = LEGACY_TYPES.includes(sec.type);
-
     const rawProps = safeParseProps(sec.props);
-
-    console.log(`=== apiToEditor: section ${sec.type} rawProps ===`, JSON.stringify(rawProps, null, 2));
-
-    const props = isLegacy ? keysToCamel(rawProps) : keysToCamelForNewTypes(rawProps);
+    const props = normalizeSectionProps(sec.type, rawProps);
 
     let editorItems = undefined;
     if (sec.items) {
@@ -394,10 +429,13 @@ export function apiToEditor(sections: ApiSection[]): BuilderNode[] {
           itemProps = rest;
         }
 
+        const normalizedItemProps = normalizeSectionProps('', itemProps);
+
         return {
           id: item.id?.toString() || `${sec.type}-item-${Math.random().toString(36).substr(2, 9)}`,
           order: item.order,
-          props: isLegacy ? keysToCamel(itemProps) : itemProps,
+          ...normalizedItemProps,
+          props: normalizedItemProps,
         };
       });
     }
