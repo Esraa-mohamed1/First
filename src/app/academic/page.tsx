@@ -54,6 +54,7 @@ export default function AcademicDashboardPage() {
     setCarouselIndex,
     courses,
     stats,
+    isOnboardingCompleted,
     fetchData,
     enrichedStudents,
     carouselSlides,
@@ -239,11 +240,13 @@ export default function AcademicDashboardPage() {
 
         {/* LEFT COLUMN (Sidebar widgets) */}
         <div className="lg:col-span-4 xl:col-span-3 space-y-6 sm:space-y-8 order-2">
-          <div id="dashboard-checklist" className="scroll-mt-24">
-            <DashboardChecklist
-              setIsSelectTypeModalOpen={setIsSelectTypeModalOpen}
-            />
-          </div>
+          {!isOnboardingCompleted && (
+            <div id="dashboard-checklist" className="scroll-mt-24">
+              <DashboardChecklist
+                setIsSelectTypeModalOpen={setIsSelectTypeModalOpen}
+              />
+            </div>
+          )}
 
           {/* F. Promotional Carousel Banner Card */}
           <PromoCarousel

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getDashboard } from '@/services/courses';
-import { getMyUsageLimit } from '@/services/auth';
+import { getMyUsageLimit, getProfileStatus } from '@/services/auth';
 
 export const useAcademicDashboard = () => {
   const [isSelectTypeModalOpen, setIsSelectTypeModalOpen] = useState(false);
@@ -15,15 +15,27 @@ export const useAcademicDashboard = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [usageLimits, setUsageLimits] = useState<any[]>([]);
+  const [isOnboardingCompleted, setIsOnboardingCompleted] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
   // Fetch data
   const fetchData = async () => {
     try {
-      const [dashboardData, usageResponse] = await Promise.all([
+      const [dashboardData, usageResponse, profileResponse] = await Promise.all([
         getDashboard().catch(() => null),
-        getMyUsageLimit().catch(() => null)
+        getMyUsageLimit().catch(() => null),
+        getProfileStatus().catch(() => null)
       ]);
+
+      const userObj = profileResponse?.data || profileResponse;
+      if (userObj) {
+        const onboardingVal = userObj.onboarding ?? userObj.is_onboarding_completed ?? userObj.onboarding_completed;
+        if (onboardingVal === true || onboardingVal === 1 || onboardingVal === '1' || onboardingVal === 'true') {
+          setIsOnboardingCompleted(true);
+        } else {
+          setIsOnboardingCompleted(false);
+        }
+      }
 
       console.log('useAcademicDashboard: dashboardData fetched:', dashboardData);
       if (dashboardData) {
@@ -152,6 +164,7 @@ export const useAcademicDashboard = () => {
     students,
     stats,
     loading,
+    isOnboardingCompleted,
     fetchData,
     enrichedStudents,
     carouselSlides,
