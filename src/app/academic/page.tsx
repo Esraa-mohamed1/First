@@ -6,6 +6,7 @@ import { ChevronDown } from 'lucide-react';
 import SelectCourseTypeModal from '@/components/Academic/Modals/SelectCourseTypeModal';
 import AddStudentModal from '@/components/Academic/Modals/AddStudentModal';
 
+import DashboardTopBanners from '@/components/Academic/DashboardTopBanners';
 import { useAcademicDashboard } from './hooks/useAcademicDashboard';
 import { StatsGrid } from './components/StatsGrid';
 import { StudentsTable } from './components/StudentsTable';
@@ -54,6 +55,7 @@ export default function AcademicDashboardPage() {
     setCarouselIndex,
     courses,
     stats,
+    isOnboardingCompleted,
     fetchData,
     enrichedStudents,
     carouselSlides,
@@ -174,6 +176,9 @@ export default function AcademicDashboardPage() {
   return (
     <div className="space-y-6 sm:space-y-8 pb-10 sm:pb-20 animate-in fade-in duration-700 text-right relative" dir="rtl">
 
+      {/* Free Trial & Phone/Email Verification Banner */}
+      <DashboardTopBanners />
+
       {/* Top Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 text-right">
         <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">لوحة التحكم</h2>
@@ -239,11 +244,13 @@ export default function AcademicDashboardPage() {
 
         {/* LEFT COLUMN (Sidebar widgets) */}
         <div className="lg:col-span-4 xl:col-span-3 space-y-6 sm:space-y-8 order-2">
-          <div id="dashboard-checklist" className="scroll-mt-24">
-            <DashboardChecklist
-              setIsSelectTypeModalOpen={setIsSelectTypeModalOpen}
-            />
-          </div>
+          {!isOnboardingCompleted && (
+            <div id="dashboard-checklist" className="scroll-mt-24">
+              <DashboardChecklist
+                setIsSelectTypeModalOpen={setIsSelectTypeModalOpen}
+              />
+            </div>
+          )}
 
           {/* F. Promotional Carousel Banner Card */}
           <PromoCarousel

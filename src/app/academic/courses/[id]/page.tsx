@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye, Landmark, X, Check, User as UserIcon, Loader2, Globe, Copy, MoreVertical, ExternalLink } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye, Landmark, X, Check, User as UserIcon, Loader2, Globe, Copy, MoreVertical, ExternalLink, Clock, Share2, ImagePlus, Info, GraduationCap, History, CreditCard, Tag, Sparkles, Layers, Star, LayoutGrid, Link as LinkIcon } from 'lucide-react';
 import { getCourse, deleteUnit, deleteLesson, createUnit, updateCourse, getCategories, createCategory } from '@/services/courses';
 import { getGrades, getTerms, getSubjects, getAcademicYears, ClassificationItem } from '@/services/academic-classification';
 import { getProfileStatus } from '@/services/auth';
 import { getUsers, createUser } from '@/services/users';
-import { Course, Unit, Lesson, User } from '@/types/api';
+import { Course, Unit, Lesson, User, ReceiverAccount } from '@/types/api';
 import { AcademyPaymentMethod, PaymentMethod } from '@/types/payment';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
 import EditUnitModal from '@/components/Academic/Modals/EditUnitModal';
@@ -21,7 +21,7 @@ import { CourseStatusToggle } from '@/components/course/CourseStatusToggle';
 import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdown';
 import { PaymentMethodValueInput } from '@/components/payment/PaymentMethodValueInput';
 import { showAlert } from '@/lib/sweetalert';
-import { getUserPaymentInfos, UserPaymentInfo } from '@/services/finance';
+import { getUserPaymentInfos, UserPaymentInfo, getReceiverAccounts } from '@/services/finance';
 import { getLogoUrl, getErrorMessage } from '@/lib/utils';
 import { SearchableSelect } from '@/components/Academic/Common/SearchableSelect';
 import LandingRenderer from '@/modules/landing/renderer/LandingRenderer';
@@ -304,17 +304,6 @@ export default function CourseDetailsPage() {
   const [expandedUnits, setExpandedUnits] = useState<number[]>([]);
   const [academyPaymentMethods, setAcademyPaymentMethods] = useState<UserPaymentInfo[]>([]);
 
-  // Dynamically compute active methods based on saved settings
-  const activeMethods: PaymentMethod[] = academyPaymentMethods.map(m => ({
-    id: m.id.toString(),
-    name: `${m.name} (${m.currency})`,
-    type: 'account_number' as const,
-    icon: 'credit-card',
-    logo: m.logo,
-    isActive: true,
-    currency: m.currency
-  }));
-  
   // Global Data
   const [categories, setCategories] = useState<any[]>([]);
   const [instructors, setInstructors] = useState<User[]>([]);
@@ -453,6 +442,54 @@ export default function CourseDetailsPage() {
   const [currency, setCurrency] = useState<'EGP' | 'SAR'>('SAR');
   const [isSavingPricing, setIsSavingPricing] = useState(false);
   const [errors, setErrors] = useState<Record<string, any>>({});
+  const [receiverTemplates, setReceiverTemplates] = useState<ReceiverAccount[]>([]);
+
+  const activeMethods: PaymentMethod[] = academyPaymentMethods
+    .filter((m) => {
+      if (m.currency !== currency) return false;
+      const template = receiverTemplates.find((t) => t.id === m.receiver_account_id);
+      const targetCountry = currency === 'EGP' ? 'EG' : 'SA';
+      if (template) {
+        if (template.country_code !== targetCountry) return false;
+      } else if (m.receiver_account) {
+        if (m.receiver_account.country_code !== targetCountry) return false;
+      } else {
+        const lowerName = m.name.toLowerCase();
+        if (targetCountry === 'SA') {
+          if (lowerName.includes('instapay') || lowerName.includes('vodafone') || lowerName.includes('fawry') || lowerName.includes('اتصالات') || lowerName.includes('فودافون')) {
+            return false;
+          }
+        } else if (targetCountry === 'EG') {
+          if (lowerName.includes('urpay') || lowerName.includes('stc') || lowerName.includes('mada') || lowerName.includes('مدى')) {
+            return false;
+          }
+        }
+      }
+      return true;
+    })
+    .map(m => ({
+      id: m.id.toString(),
+      name: `${m.name} (${m.currency})`,
+      type: 'account_number' as const,
+      icon: 'credit-card',
+      logo: m.logo,
+      isActive: true,
+      currency: m.currency
+    }));
+
+  // Reset selected payment methods when currency changes
+  useEffect(() => {
+    setSelectedPaymentMethods((prev) => {
+      if (!prev || prev.length === 0) return prev;
+      const valid = prev.filter((m) =>
+        activeMethods.some((am) => am.id.toString() === m.methodId.toString())
+      );
+      if (valid.length !== prev.length) {
+        return valid;
+      }
+      return prev;
+    });
+  }, [currency, academyPaymentMethods]);
 
   // Sync academic info to/from local storage for this course
   useEffect(() => {
@@ -1189,13 +1226,15 @@ export default function CourseDetailsPage() {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [cats, profile, paymentInfos] = await Promise.all([
+        const [cats, profile, paymentInfos, templates] = await Promise.all([
           getCategories(),
           getProfileStatus(),
-          getUserPaymentInfos()
+          getUserPaymentInfos(),
+          getReceiverAccounts().catch(e => { console.warn('Failed to fetch receiver templates:', e); return []; })
         ]);
         setCategories(cats);
         setAcademyPaymentMethods(paymentInfos || []);
+        setReceiverTemplates(templates || []);
 
         const userData = profile.data || profile;
         if (userData) {
@@ -1389,7 +1428,7 @@ export default function CourseDetailsPage() {
               </div>
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-1 text-label-sm text-on-surface-variant font-bold">
-                  <span className="material-symbols-outlined text-[16px]">pending_actions</span>
+                  <Clock className="w-4 h-4 text-slate-400" />
                   الحالة: {status === 'published' ? 'منشور' : 'مسودة'}
                 </span>
                 <div className="flex items-center gap-2">
@@ -1413,7 +1452,7 @@ export default function CourseDetailsPage() {
               }}
               className="px-4 py-2 text-label-md border border-outline-variant rounded-lg flex items-center gap-2 bg-white text-gray-700 hover:bg-surface-container transition-all font-bold shadow-sm"
             >
-              <span className="material-symbols-outlined text-[20px]">visibility</span>
+              <Eye className="w-4 h-4" />
               معاينة
             </button>
             <button 
@@ -1426,7 +1465,7 @@ export default function CourseDetailsPage() {
               }}
               className="px-4 py-2 text-label-md border border-outline-variant rounded-lg flex items-center gap-2 bg-white text-gray-700 hover:bg-surface-container transition-all font-bold shadow-sm"
             >
-              <span className="material-symbols-outlined text-[20px]">share</span>
+              <Share2 className="w-4 h-4" />
               مشاركة الدورة
             </button>
             <button 
@@ -1558,7 +1597,7 @@ export default function CourseDetailsPage() {
             {/* Section 1: Definition */}
             <section className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm space-y-6">
               <div className="flex items-center gap-2 mb-2">
-                <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>info</span>
+                <Info className="w-5 h-5 text-blue-600" />
                 <h3 className="font-title-md text-title-md text-gray-900">تعريف الدورة</h3>
               </div>
 
@@ -1605,13 +1644,13 @@ export default function CourseDetailsPage() {
                       <div className="relative w-full h-full">
                         <img src={previewImage} alt="Course Preview" className="object-cover w-full h-full" />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all text-white font-bold text-xs gap-1.5">
-                          <span className="material-symbols-outlined text-[16px]">upload</span>
+                          <Upload className="w-4 h-4" />
                           تغيير الصورة
                         </div>
                       </div>
                     ) : (
                       <>
-                        <span className="material-symbols-outlined text-on-surface-variant text-3xl">add_photo_alternate</span>
+                        <ImagePlus className="w-8 h-8 text-slate-400" />
                         <span className="text-label-sm text-on-surface-variant mt-1 font-bold">اضغط لرفع صورة أو اسحبها هنا</span>
                       </>
                     )}
@@ -1970,7 +2009,11 @@ export default function CourseDetailsPage() {
                         <label className="block text-label-md mb-2 text-gray-900">العملة</label>
                         <select 
                           value={currency} 
-                          onChange={(e) => setCurrency(e.target.value as any)}
+                          onChange={(e) => {
+                            const newCurr = e.target.value as any;
+                            setCurrency(newCurr);
+                            setSelectedPaymentMethods([]);
+                          }}
                           className="w-full border border-outline-variant rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary text-sm font-bold text-gray-900 bg-white outline-none"
                         >
                           <option value="SAR">SAR — ريال سعودي</option>
@@ -2651,7 +2694,7 @@ export default function CourseDetailsPage() {
                       className="p-2.5 text-on-surface-variant hover:bg-slate-50 border border-outline-variant/60 rounded-xl transition-all cursor-pointer"
                       title="نسخ رابط الصفحة"
                     >
-                      <span className="material-symbols-outlined">link</span>
+                      <LinkIcon className="w-4 h-4" />
                     </button>
                   </div>
                 </div>

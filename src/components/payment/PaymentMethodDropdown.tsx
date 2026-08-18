@@ -24,6 +24,7 @@ const SafeLogo = ({ src, alt, isSelected }: { src: string; alt: string; isSelect
 import { PaymentMethod } from '@/types/payment';
 import { getLogoUrl } from '@/lib/utils';
 import { Check, Landmark } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface PaymentMethodDropdownProps {
   options: PaymentMethod[];
@@ -68,6 +69,10 @@ export const PaymentMethodDropdown = ({
               if (isSelected) {
                 onChange(selectedValues.filter(val => val !== option.id.toString()));
               } else {
+                if (selectedValues.length >= 3) {
+                  toast.error('يمكنك اختيار ٣ وسائل دفع كحد أقصى');
+                  return;
+                }
                 onChange([...selectedValues, option.id.toString()]);
               }
             };

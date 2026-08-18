@@ -27,6 +27,13 @@ import {
   Globe,
   MoreVertical,
   ExternalLink,
+  ImagePlus,
+  Clock,
+  Info,
+  Bold,
+  Italic,
+  List,
+  Link as LinkIcon,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
@@ -36,11 +43,11 @@ import { getErrorMessage } from '@/lib/utils';
 import { getGrades, getTerms, getSubjects, getAcademicYears, ClassificationItem } from '@/services/academic-classification';
 import { getProfileStatus } from '@/services/auth';
 import { getUsers } from '@/services/users';
-import { User } from '@/types/api';
+import { User, ReceiverAccount } from '@/types/api';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
 import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdown';
 import { AcademyPaymentMethod, PaymentMethod } from '@/types/payment';
-import { getUserPaymentInfos, UserPaymentInfo } from '@/services/finance';
+import { getUserPaymentInfos, UserPaymentInfo, getReceiverAccounts, createUserPaymentInfo } from '@/services/finance';
 
 import {
   getLandingPagesList,
@@ -246,8 +253,16 @@ export default function CreateCourseClient() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const DRAFT_CACHE_KEY = 'darb_create_course_draft_cache';
-  const DRAFT_EXPIRY_MS = 7 * 60 * 1000; // 7 minutes
+  // Add payment method modal states
+  const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
+  const [newPaymentTemplateId, setNewPaymentTemplateId] = useState('');
+  const [newPaymentAccountValue, setNewPaymentAccountValue] = useState('');
+  const [newPaymentCustomName, setNewPaymentCustomName] = useState('');
+  const [isSavingNewPayment, setIsSavingNewPayment] = useState(false);
+  const [receiverTemplates, setReceiverTemplates] = useState<ReceiverAccount[]>([]);
+
+  const DRAFT_CACHE_KEY = `darb_create_course_draft_cache_${courseTypeParam || 'recorded'}`;
+  const DRAFT_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
 
   // Helper to re-get units list from backend
   const refreshUnits = async (idToFetch?: number | null) => {
@@ -292,15 +307,44 @@ export default function CreateCourseClient() {
           if (cached.accessUntilDate) setAccessUntilDate(cached.accessUntilDate);
           if (cached.courseId) setCourseId(cached.courseId);
           if (cached.units && Array.isArray(cached.units)) setUnits(cached.units);
+          if (cached.selectedPaymentMethods && Array.isArray(cached.selectedPaymentMethods)) {
+            const restoredCurrency = cached.currency || currency;
+            const valid = cached.selectedPaymentMethods.filter((m: any) => m.currency === restoredCurrency);
+            setSelectedPaymentMethods(valid);
+          }
+
+          // Restore cached image if exists
+          try {
+            const imageCacheKey = `darb_create_course_image_${courseTypeParam || 'recorded'}`;
+            const cachedImage = localStorage.getItem(imageCacheKey);
+            if (cachedImage) {
+              setPreviewUrl(cachedImage);
+              // Convert base64 back to File object
+              const arr = cachedImage.split(',');
+              const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+              const bstr = atob(arr[1]);
+              let n = bstr.length;
+              const u8arr = new Uint8Array(n);
+              while (n--) {
+                u8arr[n] = bstr.charCodeAt(n);
+              }
+              const file = new File([u8arr], 'cached_thumbnail.png', { type: mime });
+              setSelectedFile(file);
+            }
+          } catch (imageErr) {
+            console.error('Error restoring cached image:', imageErr);
+          }
+
           toast.success('تم استعادة بيانات المسودة المحفوظة مؤقتاً');
         } else {
           localStorage.removeItem(DRAFT_CACHE_KEY);
+          localStorage.removeItem(`darb_create_course_image_${courseTypeParam || 'recorded'}`);
         }
       }
     } catch (err) {
       console.error('Error restoring draft:', err);
     }
-  }, []);
+  }, [DRAFT_CACHE_KEY]);
 
   // 2. Save draft to localStorage whenever form state changes
   useEffect(() => {
@@ -322,6 +366,7 @@ export default function CreateCourseClient() {
       pricingType,
       price,
       currency,
+      selectedPaymentMethods,
       isDiscounted,
       discountPrice,
       discountEndDate,
@@ -352,6 +397,7 @@ export default function CreateCourseClient() {
     pricingType,
     price,
     currency,
+    selectedPaymentMethods,
     isDiscounted,
     discountPrice,
     discountEndDate,
@@ -362,29 +408,53 @@ export default function CreateCourseClient() {
     units,
   ]);
 
+  // Reset selected payment methods when currency changes
+  useEffect(() => {
+    setSelectedPaymentMethods((prev) => {
+      if (!prev || prev.length === 0) return prev;
+      const valid = prev.filter((m) =>
+        activeMethods.some((am) => am.id.toString() === m.methodId.toString())
+      );
+      if (valid.length !== prev.length) {
+        return valid;
+      }
+      return prev;
+    });
+  }, [currency, academyPaymentMethods]);
+
   useEffect(() => {
     if (courseId && activeTab === 'landing_pages') {
       fetchLandingPages();
     }
   }, [courseId, activeTab]);
 
-  const activeMethods: PaymentMethod[] = academyPaymentMethods.map((m) => ({
-    id: m.id.toString(),
-    name: `${m.name} (${m.currency})`,
-    type: 'account_number' as const,
-    icon: 'credit-card',
-    logo: m.logo,
-    isActive: true,
-    currency: m.currency,
-  }));
+  const activeMethods: PaymentMethod[] = academyPaymentMethods
+    .filter((m) => {
+      if (m.currency !== currency) return false;
+      const targetCountry = currency === 'EGP' ? 'EG' : 'SA';
+      if (m.receiver_account && m.receiver_account.country_code !== targetCountry) {
+        return false;
+      }
+      return true;
+    })
+    .map((m) => ({
+      id: m.id.toString(),
+      name: `${m.name} (${m.currency})`,
+      type: 'account_number' as const,
+      icon: 'credit-card',
+      logo: m.logo,
+      isActive: true,
+      currency: m.currency,
+    }));
 
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [cats, profile, paymentInfos, grades, terms, subjects, years] = await Promise.all([
+        const [cats, profile, paymentInfos, templates, grades, terms, subjects, years] = await Promise.all([
           getCategories(),
           getProfileStatus(),
           getUserPaymentInfos(),
+          getReceiverAccounts().catch(e => { console.warn('Failed to fetch receiver templates:', e); return []; }),
           getGrades().catch(e => { console.warn('Failed to fetch grades:', e); return []; }),
           getTerms().catch(e => { console.warn('Failed to fetch terms:', e); return []; }),
           getSubjects().catch(e => { console.warn('Failed to fetch subjects:', e); return []; }),
@@ -392,6 +462,7 @@ export default function CreateCourseClient() {
         ]);
         setCategories(cats);
         setAcademyPaymentMethods(paymentInfos || []);
+        setReceiverTemplates(templates || []);
 
         const formatClassification = (items: any[], isGrade = false) => {
           return (items || []).map((item: any, i: number) => ({
@@ -438,6 +509,17 @@ export default function CreateCourseClient() {
     if (file) {
       setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
+
+      try {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64data = reader.result as string;
+          localStorage.setItem(`darb_create_course_image_${courseTypeParam || 'recorded'}`, base64data);
+        };
+        reader.readAsDataURL(file);
+      } catch (err) {
+        console.error('Failed to convert and cache image:', err);
+      }
     }
   };
 
@@ -525,20 +607,40 @@ export default function CreateCourseClient() {
   const ensureCourseCreated = async (overriddenStatus?: string) => {
     if (courseId && !overriddenStatus) return courseId;
 
-    if (!title.trim()) {
-      toast.error('يرجى إدخال اسم الدورة أولاً');
-      throw new Error('Missing course title');
+    const targetStatus = overriddenStatus || status;
+
+    // Enforce strict validations ONLY when user explicitly publishes the course
+    if (targetStatus === 'published') {
+      if (!title.trim()) {
+        toast.error('يرجى إدخال اسم الدورة أولاً في المعلومات الأساسية قبل النشر');
+        throw new Error('Missing course title');
+      }
+
+      if (pricingType === 'paid') {
+        if (!price || Number(price) <= 0) {
+          toast.error('سعر الدورة مطلوب للدورات المدفوعة ويجب أن يكون أكبر من 0');
+          throw new Error('Invalid price');
+        }
+        if (selectedPaymentMethods.length === 0) {
+          toast.error('يرجى اختيار وسيلة دفع واحدة على الأقل للتحصيل');
+          throw new Error('Please select at least one payment method');
+        }
+      }
+    }
+
+    let effectiveTitle = title.trim();
+    if (!effectiveTitle) {
+      effectiveTitle = 'دورة جديدة بدون عنوان';
+      setTitle(effectiveTitle);
     }
 
     let userId = currentUser?.id || 2;
     if (selectedInstructor) userId = selectedInstructor;
 
-    const targetStatus = overriddenStatus || status;
-
     const targetAudienceStr = targetAudience.filter(Boolean).join('، ');
 
     const payload: any = {
-      title,
+      title: effectiveTitle,
       category_id: category || undefined,
       description: description || undefined,
       short_description: shortDescription || undefined,
@@ -621,10 +723,71 @@ export default function CreateCourseClient() {
       await ensureCourseCreated('published');
       setStatus('published');
       toast.success('تم نشر الدورة بنجاح!');
+      localStorage.removeItem(DRAFT_CACHE_KEY);
+      localStorage.removeItem(`darb_create_course_image_${courseTypeParam || 'recorded'}`);
     } catch (err) {
       // Handled inside
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleCreatePaymentMethod = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPaymentTemplateId) {
+      toast.error('يرجى اختيار وسيلة الدفع أولاً');
+      return;
+    }
+    if (!newPaymentAccountValue) {
+      toast.error('يرجى إدخال رقم الحساب أو الهاتف المربوط بالخدمة');
+      return;
+    }
+
+    setIsSavingNewPayment(true);
+    try {
+      const payload = {
+        name: newPaymentCustomName || 'حساب استقبال',
+        accountValue: newPaymentAccountValue,
+        currency: currency,
+        receiver_account_id: Number(newPaymentTemplateId),
+      };
+
+      const result = await createUserPaymentInfo(payload);
+      toast.success('تمت إضافة وتفعيل وسيلة الدفع بنجاح');
+
+      // 1. Refetch active academy payment methods
+      const updatedMethods = await getUserPaymentInfos();
+      setAcademyPaymentMethods(updatedMethods);
+
+      // 2. Auto-select the newly added payment method
+      const newMethod = {
+        methodId: result.id.toString(),
+        methodName: result.name || newPaymentCustomName || '',
+        type: 'account_number' as const,
+        value: result.accountValue || newPaymentAccountValue,
+        currency: result.currency || currency,
+        logo: result.logo || '',
+      };
+      
+      setSelectedPaymentMethods((prev) => {
+        const next = [...prev, newMethod];
+        if (next.length > 3) {
+          toast.success('تمت إضافة وسيلة الدفع وتفعيلها واستبدال أقدم وسيلة محددة لتظل ٣ وسائل كحد أقصى');
+          return next.slice(next.length - 3);
+        }
+        return next;
+      });
+
+      // 3. Clear form and close modal
+      setNewPaymentTemplateId('');
+      setNewPaymentAccountValue('');
+      setNewPaymentCustomName('');
+      setShowAddPaymentModal(false);
+    } catch (err: any) {
+      console.error('Failed to create payment info:', err);
+      toast.error(err?.message || 'فشل إضافة وسيلة الدفع. يرجى التحقق من البيانات.');
+    } finally {
+      setIsSavingNewPayment(false);
     }
   };
 
@@ -855,7 +1018,7 @@ export default function CreateCourseClient() {
                 {previewUrl ? (
                   <img src={previewUrl} alt="Course Thumbnail" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                 ) : (
-                  <span className="material-symbols-outlined text-slate-400 group-hover:text-blue-600 text-3xl transition-colors">add_photo_alternate</span>
+                  <ImagePlus className="w-7 h-7 text-slate-400 group-hover:text-blue-600 transition-colors" />
                 )}
               </div>
               <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
@@ -863,7 +1026,7 @@ export default function CreateCourseClient() {
               <div>
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                    {title || 'أساسيات التصميم الجرافيكي للمبتدئين'}
+                    {title || 'دورة جديدة بدون عنوان'}
                   </h2>
                   <span className="px-2.5 py-0.5 bg-slate-100 border border-slate-300 text-xs rounded-full text-slate-600 font-semibold">
                     {courseTypeParam === 'live-online' ? 'بث مباشر' : courseTypeParam === 'in-person' ? 'حضورية' : 'مسجلة'}
@@ -871,7 +1034,7 @@ export default function CreateCourseClient() {
                 </div>
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                    <span className="material-symbols-outlined text-base text-slate-400">pending_actions</span>
+                    <Clock className="w-4 h-4 text-slate-400" />
                     الحالة: {status === 'published' ? 'منشورة' : 'مسودة'}
                   </span>
                   <div className="flex items-center gap-2">
@@ -895,7 +1058,7 @@ export default function CreateCourseClient() {
                 }}
                 className="px-4 py-2.5 text-sm border border-slate-300 rounded-xl flex items-center gap-2 bg-white hover:bg-slate-50 hover:border-slate-400 transition-all font-bold text-slate-700 shadow-xs active:scale-[0.98]"
               >
-                <span className="material-symbols-outlined text-xl">visibility</span>
+                <Eye className="w-4 h-4" />
                 معاينة
               </button>
               <button
@@ -909,9 +1072,9 @@ export default function CreateCourseClient() {
                 }}
                 className="px-4 py-2.5 text-sm border border-slate-300 rounded-xl flex items-center gap-2 bg-white hover:bg-slate-50 hover:border-slate-400 transition-all font-bold text-slate-700 shadow-xs active:scale-[0.98]"
               >
-                <span className="material-symbols-outlined text-xl">share</span>
+                <Share2 className="w-4 h-4" />
                 مشاركة
-                <span className="material-symbols-outlined text-lg">expand_more</span>
+                <ChevronDown className="w-4 h-4" />
               </button>
               <button
                 onClick={handleSave}
@@ -923,7 +1086,7 @@ export default function CreateCourseClient() {
               <button
                 onClick={handlePublish}
                 disabled={isSubmitting}
-                className="px-6 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition-all shadow-md shadow-blue-600/20 disabled:opacity-50 active:scale-[0.98]"
+                className="px-5 py-2.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all font-bold shadow-md hover:shadow-lg disabled:opacity-50 active:scale-[0.98]"
               >
                 نشر الدورة
               </button>
@@ -981,9 +1144,7 @@ export default function CreateCourseClient() {
                 <section className="bg-white border border-slate-300 rounded-2xl p-7 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.07)] transition-all duration-300">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200">
-                      <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-                        info
-                      </span>
+                      <Info className="w-5 h-5" />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-slate-900">تعريف الدورة</h3>
@@ -1019,10 +1180,16 @@ export default function CreateCourseClient() {
                         <label className="block text-sm font-bold mb-2 text-slate-800">الصورة التعريفية (Thumbnail)</label>
                         <div
                           onClick={() => fileInputRef.current?.click()}
-                          className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl h-28 flex flex-col items-center justify-center bg-slate-50/50 hover:bg-blue-50/20 transition-all cursor-pointer group"
+                          className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl h-28 flex flex-col items-center justify-center bg-slate-50/50 hover:bg-blue-50/20 transition-all cursor-pointer group overflow-hidden relative"
                         >
-                          <span className="material-symbols-outlined text-slate-400 group-hover:text-blue-600 text-3xl transition-colors">add_photo_alternate</span>
-                          <span className="text-xs font-medium text-slate-500 group-hover:text-blue-600 mt-1 transition-colors">اضغط لرفع صورة أو اسحبها هنا</span>
+                          {previewUrl ? (
+                            <img src={previewUrl} alt="Thumbnail Preview" className="w-full h-full object-cover" />
+                          ) : (
+                            <>
+                              <ImagePlus className="w-7 h-7 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                              <span className="text-xs font-medium text-slate-500 group-hover:text-blue-600 mt-1 transition-colors">اضغط لرفع صورة أو اسحبها هنا</span>
+                            </>
+                          )}
                         </div>
                       </div>
                       <div className="order-1 md:order-1">
@@ -1042,16 +1209,16 @@ export default function CreateCourseClient() {
                       <div className="border border-slate-300 rounded-2xl overflow-hidden shadow-2xs">
                         <div className="bg-slate-50 p-2.5 border-b border-slate-300 flex gap-2">
                           <button type="button" className="p-1.5 hover:bg-white rounded-lg text-slate-600 transition-colors">
-                            <span className="material-symbols-outlined text-xl">format_bold</span>
+                            <Bold className="w-4 h-4" />
                           </button>
                           <button type="button" className="p-1.5 hover:bg-white rounded-lg text-slate-600 transition-colors">
-                            <span className="material-symbols-outlined text-xl">format_italic</span>
+                            <Italic className="w-4 h-4" />
                           </button>
                           <button type="button" className="p-1.5 hover:bg-white rounded-lg text-slate-600 transition-colors">
-                            <span className="material-symbols-outlined text-xl">format_list_bulleted</span>
+                            <List className="w-4 h-4" />
                           </button>
                           <button type="button" className="p-1.5 hover:bg-white rounded-lg text-slate-600 transition-colors">
-                            <span className="material-symbols-outlined text-xl">link</span>
+                            <LinkIcon className="w-4 h-4" />
                           </button>
                         </div>
                         <textarea
@@ -1339,7 +1506,11 @@ export default function CreateCourseClient() {
                               <label className="block text-sm font-bold mb-2 text-slate-800">العملة</label>
                               <select
                                 value={currency}
-                                onChange={(e) => setCurrency(e.target.value as any)}
+                                onChange={(e) => {
+                                  const newCurr = e.target.value as any;
+                                  setCurrency(newCurr);
+                                  setSelectedPaymentMethods([]);
+                                }}
                                 className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none text-sm text-slate-900 font-medium bg-white"
                               >
                                 <option value="EGP">EGP — جنيه مصري</option>
@@ -1536,16 +1707,38 @@ export default function CreateCourseClient() {
 
                 {/* Section 5: Payment Methods / Pricing */}
                 <section className="bg-white border border-slate-300 rounded-2xl p-7 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.07)] transition-all duration-300">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200">
-                      <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-                        payments
-                      </span>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200">
+                        <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                          payments
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-slate-900">وسائل الدفع المقبولة والتسعير</h3>
+                        <p className="text-xs text-slate-500 font-medium mt-0.5">حدد حسابات استلام الأموال لهذه الدورة التدريبية</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-slate-900">وسائل الدفع المقبولة والتسعير</h3>
-                      <p className="text-xs text-slate-500 font-medium mt-0.5">حدد حسابات استلام الأموال لهذه الدورة التدريبية</p>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const countryCode = currency === 'EGP' ? 'EG' : 'SA';
+                        const filtered = receiverTemplates.filter(t => t.country_code === countryCode);
+                        if (filtered.length > 0) {
+                          setNewPaymentTemplateId(filtered[0].id.toString());
+                          setNewPaymentCustomName(filtered[0].name);
+                        } else {
+                          setNewPaymentTemplateId('');
+                          setNewPaymentCustomName('');
+                        }
+                        setNewPaymentAccountValue('');
+                        setShowAddPaymentModal(true);
+                      }}
+                      className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer self-start sm:self-center"
+                    >
+                      <Plus className="w-4 h-4" />
+                      إضافة وسيلة استقبال جديدة
+                    </button>
                   </div>
 
                   <PaymentMethodDropdown
@@ -2080,24 +2273,6 @@ export default function CreateCourseClient() {
                             <span className="material-symbols-outlined text-sm">edit</span>
                             تعديل الصفحة
                           </button>
-                          <button 
-                            type="button"
-                            onClick={() => {
-                              window.open(`/${slug || courseId}`, '_blank');
-                            }}
-                            className="flex-1 lg:flex-none px-5 py-2.5 border border-blue-600 text-blue-600 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-50 transition-all cursor-pointer"
-                          >
-                            <span className="material-symbols-outlined text-sm">visibility</span>
-                            معاينة
-                          </button>
-                          <button 
-                            type="button"
-                            onClick={handleCopyDefaultLink}
-                            className="p-2.5 text-slate-500 hover:bg-slate-50 border border-slate-200 rounded-xl transition-all cursor-pointer"
-                            title="نسخ رابط الصفحة"
-                          >
-                            <span className="material-symbols-outlined">link</span>
-                          </button>
                         </div>
                       </div>
                     </div>
@@ -2557,6 +2732,92 @@ export default function CreateCourseClient() {
             setPreviewTemplate(null);
           }}
         />
+      )}
+
+      {/* Add Payment Method Modal */}
+      {showAddPaymentModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-250" dir="rtl">
+          <div 
+            className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl p-8 border border-slate-100 animate-in zoom-in-95 duration-250 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowAddPaymentModal(false)}
+              className="absolute top-6 left-6 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            <h2 className="text-lg font-black text-slate-900 mb-2">إضافة حساب استقبال جديد</h2>
+            <p className="text-xs font-bold text-slate-400 mb-6">أدخل بيانات وسيلة الدفع التي ترغب في تفعيلها لاستقبال مستحقات الطلاب بهذه العملة ({currency})</p>
+
+            <form onSubmit={handleCreatePaymentMethod} className="space-y-5 text-right">
+              {/* Template Select Dropdown */}
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-slate-700">نوع وسيلة الاستقبال *</label>
+                <select
+                  value={newPaymentTemplateId}
+                  onChange={(e) => {
+                    setNewPaymentTemplateId(e.target.value);
+                    const countryCode = currency === 'EGP' ? 'EG' : 'SA';
+                    const filtered = receiverTemplates.filter(t => t.country_code === countryCode);
+                    const tmpl = filtered.find(t => t.id.toString() === e.target.value);
+                    if (tmpl) {
+                      setNewPaymentCustomName(tmpl.name);
+                    }
+                  }}
+                  required
+                  className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-bold bg-white"
+                >
+                  <option value="">اختر النوع...</option>
+                  {(() => {
+                    const countryCode = currency === 'EGP' ? 'EG' : 'SA';
+                    const filtered = receiverTemplates.filter(t => t.country_code === countryCode);
+                    return (filtered.length > 0 ? filtered : receiverTemplates).map(tmpl => (
+                      <option key={tmpl.id} value={tmpl.id}>{tmpl.name}</option>
+                    ));
+                  })()}
+                </select>
+              </div>
+
+              {/* Name Input */}
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-slate-700">اسم الحساب التوضيحي *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="مثال: حساب البنك الأهلي، رقم كاش..."
+                  value={newPaymentCustomName}
+                  onChange={(e) => setNewPaymentCustomName(e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-bold"
+                />
+              </div>
+
+              {/* Account Value Input */}
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-slate-700">رقم الحساب / رقم الهاتف *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="أدخل رقم الحساب أو المحفظة هنا..."
+                  value={newPaymentAccountValue}
+                  onChange={(e) => setNewPaymentAccountValue(e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-bold text-left"
+                  dir="ltr"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSavingNewPayment}
+                className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer mt-4"
+              >
+                {isSavingNewPayment ? <Loader2 className="animate-spin" size={16} /> : 'حفظ وتفعيل الحساب'}
+              </button>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

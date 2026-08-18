@@ -354,7 +354,12 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
 
   /** Toggle payment method selection safely */
   const togglePaymentMethod = (method: string) => {
-    const updated = safePaymentMethods.includes(method)
+    const isSelected = safePaymentMethods.includes(method);
+    if (!isSelected && safePaymentMethods.length >= 3) {
+      toast.error('يمكنك اختيار ٣ وسائل دفع كحد أقصى');
+      return;
+    }
+    const updated = isSelected
       ? safePaymentMethods.filter((m) => m !== method)
       : [...safePaymentMethods, method];
     setFormData((prev) => ({ ...prev, paymentMethods: updated }));

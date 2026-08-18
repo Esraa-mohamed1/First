@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, Eye, BarChart3 } from 'lucide-react';
+import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, Eye, BarChart3, Video, Radio, MapPin, Users, CreditCard, Settings2, Copy, Link as LinkIcon, Pencil } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCourses, deleteCourse } from '@/services/courses';
@@ -90,12 +90,12 @@ export default function CourseList({ typeFilter, title, description, createType 
     return Math.round((score / max) * 100);
   };
 
-  const getCourseTypeIcon = (type: string) => {
+  const renderCourseTypeIcon = (type: string) => {
     switch (type) {
-      case 'registered': return 'videocam';
-      case 'online': return 'podcasts';
-      case 'offline': return 'location_on';
-      default: return 'videocam';
+      case 'registered': return <Video className="w-3 h-3" />;
+      case 'online': return <Radio className="w-3 h-3" />;
+      case 'offline': return <MapPin className="w-3 h-3" />;
+      default: return <Video className="w-3 h-3" />;
     }
   };
 
@@ -170,7 +170,6 @@ export default function CourseList({ typeFilter, title, description, createType 
               const readiness = calculateReadiness(course);
               const studentCount = (course as any).students_count ?? 0;
               const totalSales = studentCount * Number(course.final_price || course.price || 0);
-              const typeIcon = getCourseTypeIcon(course.type || 'registered');
               const typeLabel = getCourseTypeAr(course.type || 'registered');
               
               return (
@@ -187,7 +186,7 @@ export default function CourseList({ typeFilter, title, description, createType 
                     <div className="absolute top-3 right-3 flex gap-2 z-10">
                       {getCourseStatusBadge(course.status || 'draft')}
                       <span className="bg-black/50 text-white px-2.5 py-1 rounded-md text-[10px] font-bold backdrop-blur-sm flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[12px]">{typeIcon}</span>
+                        {renderCourseTypeIcon(course.type || 'registered')}
                         {typeLabel}
                       </span>
                     </div>
@@ -200,7 +199,7 @@ export default function CourseList({ typeFilter, title, description, createType 
                         }}
                         className="w-full bg-white text-on-surface py-2 rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-50 transition-all active:scale-[0.98]"
                       >
-                        <span className="material-symbols-outlined text-lg">visibility</span>
+                        <Eye className="w-4 h-4" />
                         معاينة الدورة
                       </button>
                     </div>
@@ -221,14 +220,14 @@ export default function CourseList({ typeFilter, title, description, createType 
                       <div className="flex flex-col">
                         <span className="text-[10px] text-on-surface-variant mb-0.5">الطلاب</span>
                         <div className="flex items-center gap-1">
-                          <span className="material-symbols-outlined text-sm text-primary">group</span>
+                          <Users className="w-3.5 h-3.5 text-blue-600" />
                           <span className="text-xs font-bold text-slate-800">{studentCount.toLocaleString('ar-EG')} طالب</span>
                         </div>
                       </div>
                       <div className="flex flex-col">
                         <span className="text-[10px] text-on-surface-variant mb-0.5">إجمالي المبيعات</span>
                         <div className="flex items-center gap-1 text-on-secondary-container">
-                          <span className="material-symbols-outlined text-sm text-emerald-600">payments</span>
+                          <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
                           <span className="text-xs font-bold text-emerald-700">{totalSales.toLocaleString('ar-EG')} ر.س</span>
                         </div>
                       </div>
@@ -259,7 +258,7 @@ export default function CourseList({ typeFilter, title, description, createType 
                           className="p-2 text-primary hover:bg-primary/10 rounded-xl transition-colors border border-transparent hover:border-primary/20" 
                           title="إدارة الإعدادات"
                         >
-                          <span className="material-symbols-outlined">settings_suggest</span>
+                          <Settings2 className="w-4 h-4 text-blue-600" />
                         </button>
                         <button 
                           onClick={(e) => {
@@ -269,7 +268,7 @@ export default function CourseList({ typeFilter, title, description, createType 
                           className="p-2 text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors" 
                           title="تكرار الدورة"
                         >
-                          <span className="material-symbols-outlined">content_copy</span>
+                          <Copy className="w-4 h-4 text-slate-500" />
                         </button>
                         <button 
                           onClick={(e) => {
@@ -284,7 +283,7 @@ export default function CourseList({ typeFilter, title, description, createType 
                           className="p-2 text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors" 
                           title="نسخ الرابط"
                         >
-                          <span className="material-symbols-outlined">link</span>
+                          <LinkIcon className="w-4 h-4 text-slate-500" />
                         </button>
                       </div>
                       
@@ -296,7 +295,7 @@ export default function CourseList({ typeFilter, title, description, createType 
                           }}
                           className="p-2 text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors"
                         >
-                          <span className="material-symbols-outlined">more_vert</span>
+                          <MoreVertical className="w-4 h-4 text-slate-500" />
                         </button>
                         
                         {activeDropdownId === course.id && (
@@ -318,7 +317,7 @@ export default function CourseList({ typeFilter, title, description, createType 
                                 className="w-full px-4 py-2.5 text-right text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center justify-end gap-3 transition-colors"
                               >
                                 <span>تعديل الاسم والنوع</span>
-                                <span className="material-symbols-outlined text-[16px] text-blue-600">edit</span>
+                                <Pencil className="w-4 h-4 text-blue-600" />
                               </button>
                               <button
                                 onClick={(e) => {
@@ -329,7 +328,7 @@ export default function CourseList({ typeFilter, title, description, createType 
                                 className="w-full px-4 py-2.5 text-right text-sm font-bold text-red-600 hover:bg-red-50 flex items-center justify-end gap-3 transition-colors"
                               >
                                 <span>حذف الدورة</span>
-                                <span className="material-symbols-outlined text-[16px]">delete</span>
+                                <Trash2 className="w-4 h-4 text-red-600" />
                               </button>
                             </div>
                           </>
@@ -343,7 +342,7 @@ export default function CourseList({ typeFilter, title, description, createType 
           </div>
         )}
       </div>
-      
+
       <CreateCourseModal
         isOpen={isEditModalOpen}
         onClose={() => {
