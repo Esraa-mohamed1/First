@@ -661,7 +661,9 @@ export default function PageBuilderPage() {
         updateText('#about-analytics h3', content.about.analyticsTitle || 'رؤى الأداء المؤسسي');
         const chartColor = content.about.analyticsColor || '#3525cd';
         const bars = content.about.analyticsBars || [40, 65, 85, 50, 95];
-        const barEls = doc.querySelectorAll('#about-analytics div.flex.items-end > div');
+        
+        // Dynamic Glass Bars Update
+        const barEls = doc.querySelectorAll('#about-analytics div.relative.z-10.flex-1');
         barEls.forEach((barEl, i) => {
           const el = barEl as HTMLElement;
           if (el) {
@@ -669,10 +671,29 @@ export default function PageBuilderPage() {
               el.style.height = `${bars[i]}%`;
             }
             if (chartColor) {
-              el.style.backgroundColor = chartColor;
+              const opacities = ['22', '33', '44', '66', 'aa'];
+              const op = opacities[i] || '88';
+              el.style.background = `linear-gradient(to top, ${chartColor}${op}, ${chartColor})`;
             }
           }
         });
+
+        // Dynamic SVG Curve Path Update
+        const svgPaths = doc.querySelectorAll('#about-analytics svg path');
+        if (svgPaths.length >= 2) {
+          const b1 = bars[0] ?? 40;
+          const b2 = bars[1] ?? 65;
+          const b3 = bars[2] ?? 85;
+          const b5 = bars[4] ?? 95;
+          const dArea = `M 0 ${100 - b1} Q 25 ${100 - b2}, 50 ${100 - b3} T 100 ${100 - b5} L 100 100 L 0 100 Z`;
+          const dLine = `M 0 ${100 - b1} Q 25 ${100 - b2}, 50 ${100 - b3} T 100 ${100 - b5}`;
+          
+          (svgPaths[0] as SVGPathElement).setAttribute('d', dArea);
+          (svgPaths[0] as SVGPathElement).setAttribute('fill', chartColor);
+          
+          (svgPaths[1] as SVGPathElement).setAttribute('d', dLine);
+          (svgPaths[1] as SVGPathElement).setAttribute('stroke', chartColor);
+        }
       }
 
       // Video Intro:
@@ -2010,42 +2031,27 @@ export default function PageBuilderPage() {
                         </button>
                         
                         <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">
-                            {item.icon && (item.icon.startsWith('http') || item.icon.includes('/') || item.icon.startsWith('data:'))
-                              ? 'رابط صورة الميزة / الموجه'
-                              : 'أيقونة الميزة'}
-                          </label>
-                          {/* Icon picker: Material Symbols grid */}
+                          <label className="text-[9px] font-bold text-slate-500">أيقونة الميزة</label>
+                          {/* Visual Icon Picker without raw text name input */}
                           <div className="border border-slate-200 rounded-xl bg-white overflow-hidden">
-                            {/* URL/name input always visible */}
-                            <div className="flex gap-2 items-center p-2">
-                              {item.icon && (item.icon.startsWith('http') || item.icon.includes('/') || item.icon.startsWith('data:')) && (
-                                <img src={item.icon} className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0" alt="preview" />
-                              )}
-                              {!item.icon?.startsWith('http') && !item.icon?.includes('/') && item.icon && (
-                                <span className="material-symbols-outlined text-blue-600 text-[22px] shrink-0" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20" }}>{item.icon}</span>
-                              )}
-                              <input
-                                type="text"
-                                value={item.icon}
-                                onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'icon', e.target.value)}
-                                className="border border-slate-200 rounded-lg p-2 text-[10px] bg-slate-50 outline-none font-mono flex-1 text-left focus:border-blue-500"
-                                placeholder="رابط صورة أو اسم أيقونة"
-                                dir="ltr"
-                              />
+                            <div className="flex items-center justify-between bg-slate-50 border border-slate-200/80 rounded-xl p-2">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-blue-100/80 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 shadow-sm">
+                                  {item.icon && (item.icon.startsWith('http') || item.icon.includes('/') || item.icon.startsWith('data:')) ? (
+                                    <img src={item.icon} className="w-7 h-7 rounded object-cover" alt="icon preview" />
+                                  ) : (
+                                    <span className="material-symbols-outlined text-[20px]">{item.icon || 'star'}</span>
+                                  )}
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-600">الأيقونة المحددة</span>
+                              </div>
                               <button
                                 type="button"
                                 onClick={() => setOpenIconPickerIdx(openIconPickerIdx === idx ? null : idx)}
-                                className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
-                                  openIconPickerIdx === idx
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-slate-100 text-slate-500 hover:bg-blue-100 hover:text-blue-600'
-                                }`}
-                                title={openIconPickerIdx === idx ? 'إغلاق الأيقونات' : 'اختيار أيقونة'}
+                                className="px-2.5 py-1 bg-white border border-slate-200 hover:border-blue-500 hover:bg-blue-50 text-blue-600 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1"
                               >
-                                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                                  {openIconPickerIdx === idx ? 'expand_less' : 'grid_view'}
-                                </span>
+                                <span className="material-symbols-outlined text-sm">{openIconPickerIdx === idx ? 'close' : 'grid_view'}</span>
+                                {openIconPickerIdx === idx ? 'إغلاق' : 'تغيير الأيقونة'}
                               </button>
                             </div>
                             {/* Material Symbols grid picker (collapsible) */}

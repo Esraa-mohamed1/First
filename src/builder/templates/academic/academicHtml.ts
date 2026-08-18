@@ -425,17 +425,39 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 <section data-section="about" id="about-analytics" class="w-full transition-all duration-300 section-hover cursor-pointer" style="background-color: ${aboutBg}; color: ${aboutTextColor};">
 <div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-stack-xl items-center">
-<div class="relative h-[450px] bg-surface-container-lowest rounded-3xl border border-outline-variant/50 shadow-xl overflow-hidden">
+<div class="relative h-[450px] bg-surface-container-lowest rounded-3xl border border-outline-variant/50 shadow-xl overflow-hidden p-8 flex flex-col justify-between">
   ${aboutImg
     ? renderMedia(aboutImg, 'w-full h-full object-cover', 'about')
-    : `<div class="w-full h-full flex flex-col items-center justify-center p-8">
-        <h3 class="text-headline-md font-headline-md text-on-surface mb-6">${analyticsTitle}</h3>
-        <div class="flex items-end gap-4 h-40 w-full px-4">
-          <div class="flex-1 rounded-t-xl transition-all duration-500" style="height: ${bar1}%; background-color: ${analyticsColor}; opacity: 0.35;"></div>
-          <div class="flex-1 rounded-t-xl transition-all duration-500" style="height: ${bar2}%; background-color: ${analyticsColor}; opacity: 0.55;"></div>
-          <div class="flex-1 rounded-t-xl transition-all duration-500" style="height: ${bar3}%; background-color: ${analyticsColor}; opacity: 0.75;"></div>
-          <div class="flex-1 rounded-t-xl transition-all duration-500" style="height: ${bar4}%; background-color: ${analyticsColor}; opacity: 0.90;"></div>
-          <div class="flex-1 rounded-t-xl transition-all duration-500" style="height: ${bar5}%; background-color: ${analyticsColor}; opacity: 1.00;"></div>
+    : `<div class="w-full h-full flex flex-col justify-between">
+        <div class="flex items-center justify-between border-b border-outline-variant/20 pb-4 mb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-3.5 h-3.5 rounded-full shadow-sm" style="background-color: ${analyticsColor};"></div>
+            <h3 class="text-headline-md font-headline-md text-on-surface font-extrabold">${analyticsTitle}</h3>
+          </div>
+          <span class="text-xs font-bold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">تحديث مباشر ⚡</span>
+        </div>
+        
+        <div class="relative flex-1 w-full flex items-end justify-between gap-3 pt-6 pb-2 px-2">
+          <!-- Smooth SVG Background Curve -->
+          <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-25" preserveAspectRatio="none" viewBox="0 0 100 100">
+            <path d="M 0 ${100 - bar1} Q 25 ${100 - bar2}, 50 ${100 - bar3} T 100 ${100 - bar5} L 100 100 L 0 100 Z" fill="${analyticsColor}" />
+            <path d="M 0 ${100 - bar1} Q 25 ${100 - bar2}, 50 ${100 - bar3} T 100 ${100 - bar5}" fill="none" stroke="${analyticsColor}" stroke-width="3" />
+          </svg>
+
+          <!-- 5 Dynamic Curved Glass Bars -->
+          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar1}%; background: linear-gradient(to top, ${analyticsColor}22, ${analyticsColor});"></div>
+          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar2}%; background: linear-gradient(to top, ${analyticsColor}33, ${analyticsColor});"></div>
+          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar3}%; background: linear-gradient(to top, ${analyticsColor}44, ${analyticsColor});"></div>
+          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar4}%; background: linear-gradient(to top, ${analyticsColor}66, ${analyticsColor});"></div>
+          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar5}%; background: linear-gradient(to top, ${analyticsColor}aa, ${analyticsColor});"></div>
+        </div>
+
+        <div class="flex items-center justify-between text-[11px] text-on-surface-variant font-bold border-t border-outline-variant/20 pt-3">
+          <span>الربع الأول</span>
+          <span>الربع الثاني</span>
+          <span>الربع الثالث</span>
+          <span>الربع الرابع</span>
+          <span>المجموع السنوي</span>
         </div>
       </div>`
   }
