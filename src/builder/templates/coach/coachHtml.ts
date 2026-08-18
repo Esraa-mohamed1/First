@@ -1,544 +1,465 @@
 import { TemplateContent } from '../academic/academicHtml';
 
 export const getCoachHtml = (content: TemplateContent) => {
-  const navbarTitle = content?.navbar?.title || 'Deep Knowledge';
-  const navbarBg = content?.navbar?.bgColor || '#141218';
-  const navbarText = content?.navbar?.textColor || '#cfbcff';
+  const navbarTitle = content?.navbar?.title || 'Deep Knowledge Academy';
+  const navbarBg = content?.navbar?.bgColor || '#faf9fb';
+  const navbarText = content?.navbar?.textColor || '#4f378a';
 
-  const heroSubtitle = content?.hero?.subtitle || 'أكاديمية النخبة';
-  const heroTitle = content?.hero?.title || 'تعمق في المعرفة. <br/> تعلم من الصفوة.';
-  const heroDesc = content?.hero?.description || 'مساحة حصرية مصممة للمفكرين والقادة. استكشف مناهج متقدمة وتواصل مع خبراء عالميين في بيئة دراسية مصممة للتركيز العميق والتميز الأكاديمي.';
-  const heroBtnText = content?.hero?.buttonText || 'ابدأ رحلتك';
-  const heroBtnLink = content?.hero?.buttonLink || '#';
-  const heroBg = content?.hero?.backgroundColor || '#141218';
-  const heroTextColor = content?.hero?.textColor || '#e6e0e9';
+  const heroSubtitle = content?.hero?.subtitle || 'أكاديمية التدريب الشخصي';
+  const heroTitle = content?.hero?.title || 'تعلّم بوضوح. <br/> طوّر مهاراتك بثقة.';
+  const heroDesc = content?.hero?.description || 'أكاديمية تعليمية وتدريبية متخصصة تحت إشراف الكوتش مباشرة. نقدم لك كورسات عملية ومبسطة تساعدك على بناء مهارات حقيقية والوصول لأهدافك بخطوات مدروسة.';
+  const heroBtnText = content?.hero?.buttonText || 'استكشف الكورسات';
+  const heroBtnLink = content?.hero?.buttonLink || '#courses';
+  const heroBg = content?.hero?.backgroundColor || '#faf9fb';
+  const heroTextColor = content?.hero?.textColor || '#1a1c1d';
 
-  const aboutTitle = content?.about?.title || 'المرشدون الخبراء';
-  const aboutSubtitle = content?.about?.subtitle || 'نخبة من الأكاديميين والباحثين يرافقونك في رحلتك المعرفية.';
+  const aboutTitle = content?.about?.title || 'عن الكوتش';
+  const aboutSubtitle = content?.about?.subtitle || 'خبرة عملية وتوجيه مستمر للوصول إلى أهدافك التعليمية.';
 
   const featuresItems = content?.features?.items || [
     {
-      icon: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD6JzKcQHDDohUQuzB8PNfXLDbsl7kf35bgCuG0sQW1h8cNdtvfatA7YI3HqNz6hiRLYcE6oU_P8qcDQyq1S4EDQdGdl3PraTpby8mme9L-kHXgx0kdcdb_pfIEdse9RcYvfBa3_gBCg2QIPqKv9LzEDqHVC0s2nGHMpRBNZve1OBkEhV00ehX4zl5HDvssuq8qkK-Yh14G6Udjd1e6e9VB3D5sX_35J7UvItIiInMbSaBA3ALb7g58eg',
-      title: 'د. طارق الحكيم - أستاذ الفلسفة المتقدمة',
-      description: 'خبير عالمي في الفلسفة التحليلية والمنطق الرياضي. يقدم رؤى معمقة تتحدى التفكير التقليدي وتبني أسساً معرفية متينة.'
+      icon: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop',
+      title: 'أساسيات التفكير التحليلي وحل المشكلات',
+      description: 'كورس عملي يغطي أدوات التحليل المنطقي واتخاذ القرارات بناءً على بيانات ومعلومات دقيقة.'
     },
     {
-      icon: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDdn5I4iyCWiaDe9m4F8v8n_X00tPqBgqXH4hbDxxtEpcQGhs3Iv7ye36iLKGCPaYsSeLuQ6Q56ZRbKBk10dy_efgKLS3zHuPJjJmYL6JtPlCiByhhruLtE_z5QnQirZ362M0sgpMps7B8icOJUUVS6t_6GJ1K0xma8arDq0yEal-eRoeAXPmexe9Vlvhif39sPxgQQGgyuqPwrz1R2REpb3TQmQAfrbC-2IMbqMBAUhDDImR-r8q5cEQ',
-      title: 'د. ليلى المنصور - باحثة في الذكاء المعرفي',
-      description: 'رائدة في تقاطع علوم الحاسوب وعلم الأعصاب. تركز أبحاثها على محاكاة الإدراك البشري وتطوير خوارزميات التعلم العميق.'
+      icon: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
+      title: 'منهجية التخطيط والتنفيذ العملي',
+      description: 'تعلم كيفية تحويل الأهداف الكبيرة إلى خطط عمل تنفيذية ومتابعة الإنجاز بفاعلية.'
     },
     {
-      icon: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBsvCKkFFgnTqd7h7Fw_WOHLv_-bXegAz36jnJ-dSBDWKiA81BP1TWumr1WnjULNWm_0CcbVBTge22QX2XN-cBPri3M3xbxSbAGqLIcFlI4XbbEacN9CKm1uRjQqkRnAfjumbe4cbh_txOhsTy_-6Eph6WwWNqlfr7j35tkwUU103Z7NEEpLCcfSvulZ4QoKpglkx4KRxtXU9TRhBm3eChxdvC43k04A-fnMk-IjFugUk9FdZ1nyfYQsA',
-      title: 'البروفيسور عمر زيدان - خبير الاقتصاد الكلي',
-      description: 'مستشار استراتيجي دولي. يحلل الأنظمة الاقتصادية المعقدة ويقدم استراتيجيات تنبؤية للأسواق العالمية الناشئة.'
+      icon: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&auto=format&fit=crop',
+      title: 'صياغة المحتوى وبناء الأفكار الاحترافية',
+      description: 'دليل شامل لإتقان صياغة الأفكار وتوصيل الرسائل بوضوح وجاذبية للمستهدفين.'
     }
   ];
 
-  const pricingTitle = content?.pricing?.title || 'سلسلة الماستركلاس';
-  const pricingSubtitle = content?.pricing?.subtitle || 'محاضرات مكثفة مسجلة بأعلى جودة سينمائية.';
+  const pricingTitle = content?.pricing?.title || 'الكورسات والدورات التدريبية';
+  const pricingSubtitle = content?.pricing?.subtitle || 'دورات متخصصة ومصممة للتطبيق العملي.';
   const pricingItems = content?.pricing?.items || [
     {
-      title: 'بنية التفكير الاستراتيجي',
-      price: 'الحلقة 1',
-      features: ['45 دقيقة', 'https://lh3.googleusercontent.com/aida-public/AB6AXuAXpJX3q5uXYRCJ0P26aOiHCO6ssai534WXEH0acZCxxJWwAnux91BzP3cVQ-I09Yp_BnJZkboDuI3HhAYQROL-qkAZHMuhuMkclUAG-iB_eMV9KhTwCOLORHsHaWcy9cV25oZBqek1WcyH-K5R9Y718rEX4UUTfbLh5s77ovJzp3pdBAXWt2iJtJ7CIN8dP45tCVIqTuiZ_f4GpC49lyi0XC3oxtV9sBrBy2oxubJ8LNQY_adythzF8g']
+      title: 'أساسيات التفكير التحليلي وحل المشكلات',
+      price: 'كورس كامل',
+      features: ['١٢ درس • ٦ أسابيع', 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop']
     },
     {
-      title: 'تحليل الأنظمة المعقدة',
-      price: 'الحلقة 2',
-      features: ['52 دقيقة', 'https://lh3.googleusercontent.com/aida-public/AB6AXuDRQTwjFjHqFPLwD4Ia1wHj8tW3Aj0xcQvOR1DdS8lD0jwvVo4Z8mOsjlKrP3zjMBswfUBWkhBM7T1CXK0oMbhlSEYqRFRZrp_4NhP1Zy9u-pnmyE39rj7yU6Fb2ozxaVqoJWdESCHFLQXXywsipGmx4tDJoL-L9l7NFt-LiKT6Dq2A0wbgL4tV4fNVKNjmKmQk8WBlM30SKcRVu-bBJ4ulrQXnxK0_AFMOWOKxv3zOn3pnp0S1N-d-wA']
+      title: 'منهجية التخطيط والتنفيذ العملي',
+      price: 'كورس متقدم',
+      features: ['١٥ درس • ٨ أسابيع', 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop']
     }
   ];
 
-  const faqTitle = content?.faq?.title || 'مسارات المناهج المتقدمة';
+  const faqTitle = content?.faq?.title || 'الأسئلة الشائعة';
   const faqItems = content?.faq?.items || [
-    { question: 'الأسس المعرفية', answer: 'المستوى الأول' },
-    { question: 'المنطق التحليلي', answer: 'التفكير النقدي المتقدم' },
-    { question: 'فلسفة العلوم', answer: 'الابستيمولوجيا التطبيقية' }
+    { question: 'هل الكورسات مناسبة للمبتدئين؟', answer: 'نعم، جميع الكورسات مصممة لتبدأ معك من الأساسيات وتتدرج خطوة بخطوة حتى المستوى المتقدم.' },
+    { question: 'هل توجد متابعة أو إجابة على الاستفسارات؟', answer: 'نعم، يمكنك تقديم استفساراتك والحصول على توجيه وإجابة مباشرة من الكوتش.' },
+    { question: 'هل يمكنني التعلم بالسرعة التي تناسبني؟', answer: 'بالتأكيد، المحتوى متاح لك دائماً لتشاهده وتطبقه بالسرعة المناسبة لك.' }
   ];
 
-  const contactTitle = content?.contact?.title || 'Deep Knowledge';
-  const contactDesc = content?.contact?.description || 'أكاديمية النخبة للتعليم العالي المستقل. نبني قادة الفكر للمستقبل من خلال مناهج صارمة وعميقة.';
+  const contactTitle = content?.contact?.title || 'Deep Knowledge Academy';
+  const contactDesc = content?.contact?.description || 'أكاديمية تعليمية وتدريبية متخصصة تحت إشراف الكوتش مباشرة لبناء مهارات عملية ملموسة.';
 
-  const footerText = content?.footer?.text || '© 2024 Deep Knowledge Academy. All rights reserved.';
+  const footerText = content?.footer?.text || '© 2024 Deep Knowledge Academy. جميع الحقوق محفوظة.';
 
   return `<!DOCTYPE html>
-<html class="light" dir="rtl" lang="ar">
+<html dir="rtl" lang="ar">
 <head>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>${navbarTitle} - Academy</title>
-  <!-- Material Symbols -->
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-  <!-- Google Fonts for Typography Config -->
-  <link href="https://fonts.googleapis.com" rel="preconnect"/>
-  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;700&amp;family=Cairo:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
-  <!-- Tailwind Config -->
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <script id="tailwind-config">
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            "colors": {
-                    "outline": "#79747e",
-                    "tertiary-container": "#ffd8e4",
-                    "surface-container": "#f3edf7",
-                    "inverse-primary": "#d0bcff",
-                    "error": "#ba1a1a",
-                    "tertiary-fixed-dim": "#efb8c8",
-                    "on-error": "#ffffff",
-                    "background": "#fbfafc",
-                    "surface-container-highest": "#e6e0e9",
-                    "surface": "#fbfafc",
-                    "inverse-on-surface": "#f4eff4",
-                    "surface-bright": "#fdf7ff",
-                    "on-secondary": "#ffffff",
-                    "on-primary": "#ffffff",
-                    "on-secondary-fixed-variant": "#49454f",
-                    "on-secondary-container": "#1d192b",
-                    "surface-dim": "#ded8e1",
-                    "on-error-container": "#410002",
-                    "on-primary-fixed-variant": "#4f378b",
-                    "on-tertiary": "#ffffff",
-                    "primary-fixed-dim": "#d0bcff",
-                    "secondary-fixed-dim": "#ccc2dc",
-                    "surface-variant": "#e7e0ec",
-                    "on-surface-variant": "#49454f",
-                    "primary-fixed": "#eaddff",
-                    "on-background": "#1c1b1f",
-                    "outline-variant": "#cac4d0",
-                    "on-primary-container": "#21005d",
-                    "surface-tint": "#6750a4",
-                    "secondary-container": "#e8def8",
-                    "surface-container-low": "#f7f2fa",
-                    "tertiary-fixed": "#ffd8e4",
-                    "on-secondary-fixed": "#1d192b",
-                    "on-primary-fixed": "#21005d",
-                    "on-surface": "#1c1b1f",
-                    "primary-container": "#eaddff",
-                    "surface-container-lowest": "#ffffff",
-                    "inverse-surface": "#313033",
-                    "secondary": "#625b71",
-                    "on-tertiary-container": "#31111d",
-                    "on-tertiary-fixed-variant": "#633b48",
-                    "tertiary": "#7d5260",
-                    "error-container": "#ffdad6",
-                    "surface-container-high": "#ece6f0",
-                    "on-tertiary-fixed": "#31111d",
-                    "secondary-fixed": "#e8def8",
-                    "primary": "#6750a4"
-            },
-            "borderRadius": {
-                    "DEFAULT": "0.125rem",
-                    "lg": "0.25rem",
-                    "xl": "0.5rem",
-                    "full": "0.75rem"
-            },
-            "spacing": {
-                    "margin-mobile": "16px",
-                    "container-max": "1280px",
-                    "base": "8px",
-                    "margin-desktop": "48px",
-                    "gutter": "24px"
-            },
-            "fontFamily": {
-                    "body-lg": [
-                            "Cairo", "Inter"
-                    ],
-                    "headline-md": [
-                            "Cairo", "IBM Plex Sans"
-                    ],
-                    "display-lg": [
-                            "Cairo", "IBM Plex Sans"
-                    ],
-                    "label-sm": [
-                            "JetBrains Mono"
-                    ],
-                    "body-md": [
-                            "Cairo", "Inter"
-                    ],
-                    "display-lg-mobile": [
-                            "Cairo", "IBM Plex Sans"
-                    ]
-            },
-            "fontSize": {
-                    "body-lg": [
-                            "18px",
-                            {
-                                    "lineHeight": "1.6",
-                                    "fontWeight": "400"
-                            }
-                    ],
-                    "headline-md": [
-                            "24px",
-                            {
-                                    "lineHeight": "1.3",
-                                    "fontWeight": "600"
-                            }
-                    ],
-                    "display-lg": [
-                            "48px",
-                            {
-                                    "lineHeight": "1.1",
-                                    "fontWeight": "700"
-                            }
-                    ],
-                    "label-sm": [
-                            "12px",
-                            {
-                                    "lineHeight": "1.0",
-                                    "letterSpacing": "0.05em",
-                                    "fontWeight": "500"
-                            }
-                    ],
-                    "body-md": [
-                            "16px",
-                            {
-                                    "lineHeight": "1.6",
-                                    "fontWeight": "400"
-                            }
-                    ],
-                    "display-lg-mobile": [
-                            "32px",
-                            {
-                                    "lineHeight": "1.2",
-                                    "fontWeight": "700"
-                            }
-                    ]
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>${navbarTitle}</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@500&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#eeb8c8",
+                        "outline-variant": "#cbc4d2",
+                        "tertiary-fixed-dim": "#e7c365",
+                        "primary": "#4f378a",
+                        "surface-container-low": "#f4f3f5",
+                        "secondary-container": "#fdc6d6",
+                        "primary-container": "#6750a4",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#ffdf93",
+                        "on-primary-fixed-variant": "#4f378a",
+                        "on-surface-variant": "#494551",
+                        "surface": "#faf9fb",
+                        "outline": "#7a7582",
+                        "surface-container-highest": "#e3e2e4",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed": "#241a00",
+                        "on-tertiary-container": "#503d00",
+                        "inverse-primary": "#cfbcff",
+                        "background": "#faf9fb",
+                        "error": "#ba1a1a",
+                        "surface-tint": "#6750a4",
+                        "on-tertiary-fixed-variant": "#594400",
+                        "primary-fixed": "#e9ddff",
+                        "tertiary-container": "#c9a74d",
+                        "on-secondary-fixed": "#31111d",
+                        "primary-fixed-dim": "#cfbcff",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed-variant": "#633b48",
+                        "surface-container": "#eeedef",
+                        "on-primary-container": "#e0d2ff",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#e8e8ea",
+                        "on-primary-fixed": "#22005d",
+                        "inverse-surface": "#2f3032",
+                        "secondary": "#7d5260",
+                        "tertiary": "#765b00",
+                        "on-secondary-container": "#7a4f5d",
+                        "inverse-on-surface": "#f1f0f2",
+                        "surface-variant": "#e3e2e4",
+                        "surface-bright": "#faf9fb",
+                        "on-surface": "#1a1c1d",
+                        "surface-dim": "#dadadc",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed": "#ffd9e3",
+                        "on-background": "#1a1c1d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-mobile": "16px",
+                        "section-gap": "80px",
+                        "content-gap": "32px",
+                        "baseline": "4px",
+                        "margin-desktop": "64px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Cairo"],
+                        "label-mono": ["JetBrains Mono"],
+                        "body-lg": ["Cairo"],
+                        "display-lg": ["Cairo"],
+                        "title-lg": ["Cairo"],
+                        "headline-lg": ["Cairo"],
+                        "body-md": ["Cairo"],
+                        "label-en": ["IBM Plex Sans"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "label-mono": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "display-lg": ["57px", { "lineHeight": "64px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "title-lg": ["22px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-en": ["14px", { "lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "500" }]
+                    }
+                }
             }
-          },
-        },
-      }
-  </script>
-  <style>
-        /* Custom glow effect in light mode */
-        .gold-glow {
-            text-shadow: 0 4px 12px rgba(103, 80, 164, 0.1);
         }
-        .tree-line-v {
-            width: 1px;
-            background: linear-gradient(to bottom, #cac4d0, transparent);
-        }
-        .tree-line-h {
-            height: 1px;
-            background: #cac4d0;
-        }
+    </script>
+<style>
+        body { background-color: #faf9fb; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
         .section-hover:hover {
-            box-shadow: 0 0 0 2px rgb(103, 80, 164) !important;
+            box-shadow: 0 0 0 2px rgb(79, 55, 138) !important;
             border-radius: 4px;
         }
-  </style>
+</style>
 </head>
-<body class="bg-background text-on-surface font-body-lg min-h-screen flex flex-col antialiased selection:bg-tertiary-container selection:text-on-tertiary-container">
-<!-- TopAppBar -->
-<header data-section="navbar" class="bg-surface border-b border-outline-variant/30 shadow-sm w-full sticky top-0 z-50 transition-all duration-300 section-hover cursor-pointer" style="background-color: ${navbarBg}; color: ${navbarText};">
-<div class="flex items-center justify-between px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto h-24">
-<div class="flex items-center gap-stack-sm hover:scale-95 transition-transform duration-200 cursor-pointer">
-<span class="material-symbols-outlined text-primary text-[32px]">menu_book</span>
-<span class="text-headline-md font-headline-md text-primary" style="color: ${navbarText};">${navbarTitle}</span>
-</div>
-<div class="flex items-center">
-<button class="hover:text-primary transition-colors duration-300 opacity-80 hover:opacity-100">
-<span class="material-symbols-outlined text-[32px]">account_circle</span>
-</button>
-</div>
-</div>
-</header>
-<main class="flex-grow">
-<!-- Hero Section -->
-<section data-section="hero" class="relative min-h-[70vh] flex items-center justify-center overflow-hidden px-margin-mobile md:px-margin-desktop section-hover cursor-pointer" style="background-color: ${heroBg}; color: ${heroTextColor};">
-<!-- Atmospheric Background Element -->
-<div class="absolute inset-0 z-0 opacity-20 pointer-events-none" style="background: radial-gradient(circle at 50% 50%, rgba(201, 167, 77, 0.15) 0%, transparent 60%);"></div>
-<div class="relative z-10 text-center max-w-4xl mx-auto flex flex-col items-center gap-8">
-<div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-tertiary/30 bg-surface-container-low mb-4">
-<span class="material-symbols-outlined text-tertiary text-label-sm" style="font-variation-settings: 'FILL' 1;">stars</span>
-<span class="font-label-sm text-label-sm text-tertiary uppercase tracking-widest">${heroSubtitle}</span>
-</div>
-<h1 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-on-surface font-extrabold leading-tight gold-glow">
-                    ${heroTitle}
-</h1>
-<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mt-4">
-                    ${heroDesc}
-                </p>
-<div class="flex gap-4 mt-8">
-<button class="font-label-sm text-label-sm bg-tertiary text-on-tertiary px-8 py-4 rounded hover:bg-tertiary-container transition-colors duration-300 flex items-center gap-2">
-<span>${heroBtnText}</span>
-<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
-</button>
-<button class="font-label-sm text-label-sm border border-outline text-on-surface px-8 py-4 rounded hover:border-tertiary hover:text-tertiary transition-colors duration-300">
-                        استكشف المناهج
-                    </button>
-</div>
-</div>
-</section>
-
-<!-- Partners Section -->
-<section class="py-12 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto border-y border-outline-variant/20 mb-16">
-  <div class="flex flex-col md:flex-row items-center justify-between gap-8 opacity-70">
-    <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider text-center md:text-right shrink-0">معتمدون لدى جهات رائدة عالمياً:</span>
-    <div class="flex flex-wrap items-center justify-center gap-12 text-outline-variant font-bold text-headline-sm">
-      <div class="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-[28px]">school</span> ACADEMY</div>
-      <div class="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-[28px]">globe</span> GLOBAL</div>
-      <div class="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-[28px]">verified</span> ISO CERTIFIED</div>
-      <div class="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-[28px]">terminal</span> TECH LAB</div>
-    </div>
-  </div>
-</section>
-
-<!-- Video Intro Section -->
-<section class="py-20 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto mb-20">
-  <div class="bg-primary-container/10 border border-primary/20 rounded-[2.5rem] p-8 md:p-16 grid grid-cols-1 lg:grid-cols-2 gap-stack-lg items-center">
-    <div class="space-y-6">
-      <span class="text-label-md font-label-md text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">شاهد وتعلّم</span>
-      <h2 class="text-headline-lg font-headline-lg text-on-surface leading-tight">تعرف على فلسفتنا التعليمية في ٣ دقائق</h2>
-      <p class="text-body-lg font-body-lg text-on-surface-variant leading-relaxed">نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.</p>
-      <div class="flex items-center gap-4 text-primary font-bold">
-        <span class="material-symbols-outlined text-[32px] animate-bounce">play_arrow</span>
-        <span>اضغط على المشغل لمشاهدة العرض التعريفي</span>
-      </div>
-    </div>
-    <div class="relative h-[300px] md:h-[400px] rounded-3xl overflow-hidden bg-slate-900 shadow-2xl border border-outline-variant/30 flex items-center justify-center group cursor-pointer">
-      <div class="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-700 group-hover:scale-105" style="background-image: url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop');"></div>
-      <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
-      <div class="relative z-10 w-20 h-20 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300">
-        <span class="material-symbols-outlined text-[40px] fill">play_arrow</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Section 1: Expert Mentors -->
-<section data-section="features" class="py-24 px-margin-mobile md:px-margin-desktop bg-surface-container-lowest border-y border-surface-container-low relative section-hover cursor-pointer">
-<div class="max-w-container-max mx-auto">
-<div class="flex items-center gap-4 mb-12">
-<div class="w-12 h-[1px] bg-tertiary"></div>
-<h2 class="font-headline-md text-headline-md text-on-surface">${aboutTitle}</h2>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
-  ${featuresItems.map((item, idx) => {
-    const parts = item.title.split(' - ');
-    const name = parts[0] || '';
-    const role = parts[1] || '';
-    return `
-      <!-- Mentor Card -->
-      <div data-section="features" data-index="${idx}" class="group relative bg-surface-container border-t border-tertiary/50 p-6 flex flex-col gap-6 transition-all duration-300 hover:bg-surface-container-highest cursor-pointer">
-        <div class="w-full h-64 bg-surface-container-highest overflow-hidden relative">
-          <img class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-500 opacity-80 group-hover:opacity-100" src="${item.icon}" alt="${name}"/>
-          <div class="absolute inset-0 bg-gradient-to-t from-surface-container to-transparent opacity-60"></div>
-        </div>
-        <div>
-          <h3 class="font-body-lg text-body-lg font-bold text-on-surface mb-1">${name}</h3>
-          <p class="font-label-sm text-label-sm text-tertiary tracking-widest mb-4">${role}</p>
-          <p class="font-body-md text-body-md text-on-surface-variant line-clamp-3">
-            ${item.description}
-          </p>
-        </div>
-      </div>
-    `;
-  }).join('')}
-</div>
-</div>
-</section>
-
-<!-- Stats Section -->
-<section class="py-20 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto mb-20 bg-primary/5 rounded-[2.5rem] border border-outline-variant/10">
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-gutter">
-    <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-      <span class="block text-display-lg font-display-lg text-primary font-black mb-2">98%</span>
-      <span class="text-body-md font-body-md text-on-surface-variant font-bold">نسبة رضا الطلاب</span>
-    </div>
-    <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-      <span class="block text-display-lg font-display-lg text-primary font-black mb-2">150+</span>
-      <span class="text-body-md font-body-md text-on-surface-variant font-bold">منهج دراسي متكامل</span>
-    </div>
-    <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-      <span class="block text-display-lg font-display-lg text-primary font-black mb-2">12k+</span>
-      <span class="text-body-md font-body-md text-on-surface-variant font-bold">خريج متميز</span>
-    </div>
-    <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-      <span class="block text-display-lg font-display-lg text-primary font-black mb-2">24/7</span>
-      <span class="text-body-md font-body-md text-on-surface-variant font-bold">دعم أكاديمي مباشر</span>
-    </div>
-  </div>
-</section>
-
-<!-- Section 2: Masterclass Series -->
-<section data-section="pricing" class="py-24 px-margin-mobile md:px-margin-desktop bg-background section-hover cursor-pointer">
-<div class="max-w-container-max mx-auto">
-<div class="flex justify-between items-end mb-12">
-<div>
-<h2 class="font-headline-md text-headline-md text-on-surface mb-2">${pricingTitle}</h2>
-<p class="font-body-md text-body-md text-on-surface-variant">${pricingSubtitle}</p>
-</div>
-<button class="hidden md:flex items-center gap-2 font-label-sm text-label-sm text-tertiary hover:text-tertiary-container transition-colors">
-                        عرض الكل <span class="material-symbols-outlined text-[16px]">arrow_back</span>
-</button>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-  ${pricingItems.map((item, idx) => {
-    const duration = item.features?.[0] || '';
-    const imgUrl = item.features?.[1] || '';
-    return `
-      <!-- Masterclass Card -->
-      <div data-section="pricing" data-index="${idx}" class="relative group cursor-pointer overflow-hidden border border-outline-variant hover:border-tertiary/50 transition-colors duration-300">
-        <div class="aspect-video bg-surface-container-high relative">
-          <img class="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-500" src="${imgUrl}" alt="${item.title}"/>
-          <div class="absolute inset-0 flex items-center justify-center">
-            <div class="w-16 h-16 rounded-full border border-tertiary flex items-center justify-center bg-background/50 backdrop-blur-md group-hover:scale-110 transition-transform duration-300">
-              <span class="material-symbols-outlined text-tertiary text-headline-md ml-1">play_arrow</span>
-            </div>
-          </div>
-        </div>
-        <div class="p-6 bg-surface-container-low absolute bottom-0 left-0 right-0 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-          <div class="flex justify-between items-center mb-2">
-            <span class="font-label-sm text-label-sm text-tertiary bg-tertiary/10 px-2 py-1 rounded">${item.price}</span>
-            <span class="font-label-sm text-label-sm text-on-surface-variant">${duration}</span>
-          </div>
-          <h3 class="font-headline-md text-headline-md text-on-surface">${item.title}</h3>
-        </div>
-      </div>
-    `;
-  }).join('')}
-</div>
-</div>
-</section>
-<!-- Section 3: Curriculum Tree Diagram -->
-<section data-section="faq" class="py-24 px-margin-mobile md:px-margin-desktop bg-surface-container-lowest border-t border-surface-container-low section-hover cursor-pointer">
-<div class="max-w-container-max mx-auto text-center mb-16">
-<h2 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-on-surface mb-4">${faqTitle}</h2>
-<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">هيكلية مصممة بعناية لتأخذك من المفاهيم الأساسية إلى التطبيقات النظرية المعقدة.</p>
-</div>
-<!-- CSS Flex Tree Representation -->
-<div class="flex flex-col items-center w-full max-w-4xl mx-auto overflow-x-auto pb-8">
-<!-- Root Node -->
-<div data-section="faq" data-index="0" class="bg-surface-container border border-tertiary px-8 py-4 rounded z-10 shadow-[0_4px_20px_rgba(201,167,77,0.05)] cursor-pointer">
-<span class="font-headline-md text-headline-md text-tertiary block">${faqItems[0]?.question || 'الأسس المعرفية'}</span>
-<span class="font-label-sm text-label-sm text-on-surface-variant">${faqItems[0]?.answer || 'المستوى الأول'}</span>
-</div>
-<div class="tree-line-v h-8"></div>
-<div class="tree-line-h w-2/3 md:w-1/2"></div>
-<!-- Level 2 Branches -->
-<div class="flex justify-between w-2/3 md:w-1/2 relative mt-[-1px]">
-<div class="tree-line-v h-8"></div>
-<div class="tree-line-v h-8"></div>
-</div>
-<!-- Level 2 Nodes -->
-<div class="flex justify-between w-full md:w-3/4 gap-4">
-<div data-section="faq" data-index="1" class="flex flex-col items-center flex-1 cursor-pointer">
-<div class="bg-surface-container-low border border-outline-variant px-6 py-4 rounded w-full text-center hover:border-tertiary/50 transition-colors">
-<span class="font-body-lg text-body-lg text-on-surface block mb-1">${faqItems[1]?.question || 'المنطق التحليلي'}</span>
-<div class="flex gap-1 justify-center mt-2">
-<div class="w-2 h-2 rounded-full bg-tertiary"></div>
-<div class="w-2 h-2 rounded-full bg-surface-variant"></div>
-<div class="w-2 h-2 rounded-full bg-surface-variant"></div>
-</div>
-</div>
-<div class="tree-line-v h-8"></div>
-<div class="bg-surface border border-outline-variant/50 px-4 py-2 rounded text-sm text-on-surface-variant w-full text-center">${faqItems[1]?.answer || 'التفكير النقدي المتقدم'}</div>
-</div>
-<div data-section="faq" data-index="2" class="flex flex-col items-center flex-1 cursor-pointer">
-<div class="bg-surface-container-low border border-outline-variant px-6 py-4 rounded w-full text-center hover:border-tertiary/50 transition-colors">
-<span class="font-body-lg text-body-lg text-on-surface block mb-1">${faqItems[2]?.question || 'فلسفة العلوم'}</span>
-<div class="flex gap-1 justify-center mt-2">
-<div class="w-2 h-2 rounded-full bg-tertiary"></div>
-<div class="w-2 h-2 rounded-full bg-tertiary"></div>
-<div class="w-2 h-2 rounded-full bg-surface-variant"></div>
-</div>
-</div>
-<div class="tree-line-v h-8"></div>
-<div class="bg-surface border border-outline-variant/50 px-4 py-2 rounded text-sm text-on-surface-variant w-full text-center">${faqItems[2]?.answer || 'الابستيمولوجيا التطبيقية'}</div>
-</div>
-</div>
-</div>
-<!-- Testimonials Section -->
-<section class="py-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto bg-surface-container/50 border border-outline-variant/20 rounded-[2.5rem] mb-24 relative">
-<div class="text-center mb-16">
-  <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-tertiary/30 bg-surface-container-low mb-4">
-    <span class="material-symbols-outlined text-tertiary text-label-sm" style="font-variation-settings: 'FILL' 1;">reviews</span>
-    <span class="font-label-sm text-label-sm text-tertiary uppercase tracking-widest">تجارب وقصص نجاح</span>
-  </div>
-  <h2 class="font-headline-md text-headline-md text-on-surface">ماذا يقول النخبة؟</h2>
-  <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mx-auto mt-2">تجارب حقيقية ورؤى ملهمة من طلابنا وقادتنا الذين غيروا مسارهم الأكاديمي والمهني.</p>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
-  <!-- Card 1 -->
-  <div class="bg-surface-container border border-outline-variant/40 p-8 flex flex-col justify-between hover:bg-surface-container-highest transition-all duration-300">
-    <p class="font-body-md text-body-md text-on-surface-variant italic mb-8">"الماستركلاسز والدروس الفلسفية المعمقة أعادت صياغة طريقتي في التفكير واتخاذ القرارات الاستراتيجية. تجربة دراسية استثنائية ونخبوية حقاً."</p>
-    <div class="flex items-center gap-4">
-      <div class="w-12 h-12 rounded bg-tertiary/20 flex items-center justify-center font-bold text-tertiary">خ.م</div>
-      <div>
-        <h4 class="font-body-lg text-body-lg font-bold text-on-surface">خالد منصور</h4>
-        <p class="font-label-sm text-label-sm text-tertiary">مستشار إداري وتطوير أعمال</p>
-      </div>
-    </div>
-  </div>
-  <!-- Card 2 -->
-  <div class="bg-surface-container border border-outline-variant/40 p-8 flex flex-col justify-between hover:bg-surface-container-highest transition-all duration-300">
-    <p class="font-body-md text-body-md text-on-surface-variant italic mb-8">"من أفضل القرارات المعرفية التي اتخذتها. منهجية التدريب والتحليل بالبيانات لا تدع مجالاً للعشوائية أو التخمين."</p>
-    <div class="flex items-center gap-4">
-      <div class="w-12 h-12 rounded bg-tertiary/20 flex items-center justify-center font-bold text-tertiary">س.ع</div>
-      <div>
-        <h4 class="font-body-lg text-body-lg font-bold text-on-surface">سارة العلي</h4>
-        <p class="font-label-sm text-label-sm text-tertiary">رائدة أعمال تكنولوجية</p>
-      </div>
-    </div>
-  </div>
-  <!-- Card 3 -->
-  <div class="bg-surface-container border border-outline-variant/40 p-8 flex flex-col justify-between hover:bg-surface-container-highest transition-all duration-300">
-    <p class="font-body-md text-body-md text-on-surface-variant italic mb-8">"المحتوى الأكاديمي والتحليل العميق وفر لي رؤى لم أجدها في المراجع التقليدية. التوجيه الشخصي مع د. طارق كان فارقاً في مساري العلمي."</p>
-    <div class="flex items-center gap-4">
-      <div class="w-12 h-12 rounded bg-tertiary/20 flex items-center justify-center font-bold text-tertiary">أ.ح</div>
-      <div>
-        <h4 class="font-body-lg text-body-lg font-bold text-on-surface">أحمد حماد</h4>
-        <p class="font-label-sm text-label-sm text-tertiary">باحث أكاديمي في الفلسفة</p>
-      </div>
-    </div>
-  </div>
-</div>
-</section>
-
-<!-- Newsletter Section -->
-<section class="py-20 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto mb-20 bg-surface-container border border-outline-variant/30 rounded-[2.5rem]">
-  <div class="max-w-3xl mx-auto text-center space-y-8">
-    <span class="material-symbols-outlined text-primary text-[48px] fill">mail</span>
-    <h2 class="text-headline-lg font-headline-lg text-on-surface">اشترك في نشرتنا البريدية المعرفية</h2>
-    <p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl mx-auto leading-relaxed">احصل على أحدث المقالات التحليلية، والمناهج الجديدة، والماستركلاسز الحصرية مباشرة في بريدك الإلكتروني أسبوعياً.</p>
-    <div class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-      <input type="email" placeholder="أدخل بريدك الإلكتروني هنا" class="flex-grow px-6 py-4 rounded-full border border-outline-variant bg-white text-on-surface outline-none focus:border-primary transition-colors text-sm" />
-      <button class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-8 py-4 rounded-full shadow-md transition-colors duration-300 shrink-0">اشترك الآن</button>
-    </div>
-  </div>
-</section>
-
-</main>
-<!-- Footer -->
-<footer data-section="contact" class="bg-surface-container-lowest text-outline py-12 border-t border-outline-variant full-width flat no shadows section-hover cursor-pointer">
-<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter px-margin-desktop max-w-container-max mx-auto">
-<div class="col-span-1 md:col-span-2 mb-8 md:mb-0">
-<span class="font-headline-md text-headline-md text-tertiary block mb-4">${contactTitle}</span>
-<p class="font-body-md text-body-md text-on-surface-variant max-w-sm">
-                    ${contactDesc}
-                </p>
-</div>
-<div class="col-span-1">
-<h4 class="font-label-sm text-label-sm text-on-surface tracking-widest mb-4">روابط سريعة</h4>
-<ul class="flex flex-col gap-3">
-<li><a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-all hover:underline decoration-1 underline-offset-4" href="#">Curriculum</a></li>
-<li><a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-all hover:underline decoration-1 underline-offset-4" href="#">Mentors</a></li>
-<li><a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-all hover:underline decoration-1 underline-offset-4" href="#">Masterclasses</a></li>
-<li><a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-all hover:underline decoration-1 underline-offset-4" href="#">Privacy</a></li>
+<body class="text-on-background font-body-md bg-background antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- 1. TopNavBar -->
+<nav data-section="navbar" class="bg-surface/80 dark:bg-surface/80 backdrop-blur-md fixed top-0 w-full z-50 border-b border-outline-variant flat no shadows section-hover cursor-pointer" style="background-color: \${navbarBg}; color: \${navbarText};">
+<div class="flex flex-row-reverse justify-between items-center w-full px-margin-desktop py-4 max-w-[1280px] mx-auto md:px-margin-desktop px-margin-mobile">
+<div class="text-headline-md font-headline-md font-bold text-primary dark:text-primary-fixed" style="color: \${navbarText};">\${navbarTitle}</div>
+<ul class="hidden md:flex flex-row-reverse gap-8 items-center font-title-lg text-title-lg">
+<li><a class="text-primary dark:text-primary-fixed border-b-2 border-primary pb-1" href="#home">الرئيسية</a></li>
+<li><a class="text-on-surface-variant dark:text-on-surface-variant/70 hover:text-primary transition-colors duration-200" href="#about">عن الكوتش</a></li>
+<li><a class="text-on-surface-variant dark:text-on-surface-variant/70 hover:text-primary transition-colors duration-200" href="#courses">الكورسات</a></li>
+<li><a class="text-on-surface-variant dark:text-on-surface-variant/70 hover:text-primary transition-colors duration-200" href="#journey">رحلة التعلم</a></li>
+<li><a class="text-on-surface-variant dark:text-on-surface-variant/70 hover:text-primary transition-colors duration-200" href="#testimonials">آراء الطلاب</a></li>
+<li><a class="text-on-surface-variant dark:text-on-surface-variant/70 hover:text-primary transition-colors duration-200" href="#faq">الأسئلة الشائعة</a></li>
 </ul>
+<button class="bg-primary text-on-primary font-label-en text-label-en uppercase px-6 py-2 rounded scale-95 duration-200 hover:bg-primary-container transition-colors hidden md:block">ابدأ الآن</button>
+<button class="md:hidden text-primary">
+<span class="material-symbols-outlined text-3xl">menu</span>
+</button>
 </div>
-<div class="col-span-1 flex items-end justify-start md:justify-end mt-8 md:mt-0" data-section="footer">
-<p class="font-label-sm text-label-sm text-outline">
-                    ${footerText}
-                </p>
+</nav>
+
+<main class="pt-[100px]">
+<!-- 2. Hero -->
+<section id="home" data-section="hero" class="max-w-[1280px] mx-auto px-margin-desktop md:px-margin-desktop px-margin-mobile py-section-gap flex flex-col md:flex-row-reverse items-center gap-content-gap section-hover cursor-pointer" style="background-color: \${heroBg}; color: \${heroTextColor};">
+<div class="w-full md:w-1/2" style="position: relative;">
+<img class="w-full aspect-[4/5] object-cover rounded border border-outline-variant" data-alt="Professional coach in a clean study room with notebook and laptop" src="\${content?.hero?.image || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800&auto=format&fit=crop'}"/>
+<div class="absolute -right-12 bottom-12 hidden md:block p-4 bg-surface-container-low border border-outline-variant rounded font-label-mono text-label-mono text-on-surface-variant max-w-[200px]">
+    توجيه شخصي 1-on-1 — التعلم الفعال يعتمد على الفهم العميق والتطبيق العملي المباشر.
 </div>
+</div>
+<div class="w-full md:w-1/2 flex flex-col items-start gap-6">
+<div class="inline-flex items-center gap-2 px-3 py-1 bg-primary-fixed text-primary font-label-mono text-xs rounded-full">
+  <span class="material-symbols-outlined text-sm">school</span>
+  <span>\${heroSubtitle}</span>
+</div>
+<h1 class="font-display-lg text-display-lg text-on-background">\${heroTitle}</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-lg">
+    \${heroDesc}
+</p>
+<div class="flex gap-4 pt-4">
+<a href="\${heroBtnLink}" class="bg-primary text-on-primary px-8 py-3 rounded font-title-lg text-title-lg hover:bg-primary-container transition-colors inline-block">\${heroBtnText}</a>
+<a href="#about" class="border border-outline text-primary px-8 py-3 rounded font-title-lg text-title-lg hover:bg-surface-container-low transition-colors inline-block">تعرّف على الكوتش</a>
+</div>
+</div>
+</section>
+
+<!-- 3. Value Proposition / Features Bar -->
+<section class="max-w-[1280px] mx-auto px-margin-desktop py-content-gap border-y border-outline-variant bg-surface-container-lowest">
+<p class="text-center font-label-mono text-label-mono text-outline mb-6 uppercase tracking-widest">مميزات التجربة التعليمية مع الكوتش</p>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+<div class="flex flex-col items-center gap-2 p-2">
+<span class="material-symbols-outlined text-3xl text-primary">play_circle</span>
+<span class="font-title-lg text-sm font-bold text-on-background">دروس مسجلة عالية الجودة</span>
+</div>
+<div class="flex flex-col items-center gap-2 p-2">
+<span class="material-symbols-outlined text-3xl text-primary">assignment_turned_in</span>
+<span class="font-title-lg text-sm font-bold text-on-background">تمارين وتطبيقات عملية</span>
+</div>
+<div class="flex flex-col items-center gap-2 p-2">
+<span class="material-symbols-outlined text-3xl text-primary">forum</span>
+<span class="font-title-lg text-sm font-bold text-on-background">متابعة وتوجيه مباشر</span>
+</div>
+<div class="flex flex-col items-center gap-2 p-2">
+<span class="material-symbols-outlined text-3xl text-primary">update</span>
+<span class="font-title-lg text-sm font-bold text-on-background">محتوى متجدد باستمرار</span>
+</div>
+</div>
+</section>
+
+<!-- 4. About the Coach -->
+<section id="about" data-section="about" class="max-w-[1280px] mx-auto px-margin-desktop py-section-gap section-hover cursor-pointer">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter items-center">
+<div class="md:col-span-5">
+<div class="relative">
+<img class="w-full aspect-square object-cover rounded border border-outline-variant shadow-sm" src="\${content?.about?.image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop'}" alt="Coach Profile Image"/>
+<div class="absolute bottom-4 right-4 bg-surface/90 backdrop-blur-md p-3 border border-outline-variant rounded font-label-mono text-xs text-primary">
+  مدرب وموجه تعليمي
+</div>
+</div>
+</div>
+<div class="md:col-span-7 flex flex-col items-start gap-4">
+<h2 class="font-headline-lg text-headline-lg text-primary border-b border-primary pb-2 inline-block">\${aboutTitle}</h2>
+<p class="font-body-lg text-body-lg text-on-background leading-relaxed">
+أهلاً بك! أنا مدربك في هذه الأكاديمية. أسعى لتقديم محتوى تعليمي عملي ومباشر يجمع بين الفهم النظري والتطبيق الفعلي، دون تعقيد أو حشو غير ضروري.
+</p>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+\${aboutSubtitle} هدفنا هنا ليس مجرد مشاهدة الدروس، بل التأكد من قدرتك على تطبيق كل معلومة تتعلمها، وتطوير مهاراتك خطوة بخطوة للحصول على نتائج ملموسة.
+</p>
+<div class="grid grid-cols-2 gap-4 w-full pt-4">
+<div class="p-4 border border-outline-variant rounded bg-surface">
+<span class="material-symbols-outlined text-primary text-2xl mb-1">psychology</span>
+<h4 class="font-title-lg text-sm font-bold">منهجية مبسطة</h4>
+<p class="font-body-md text-xs text-on-surface-variant mt-1">تفكيك المفاهيم المعقدة إلى خطوات واضحة وقابلة للتطبيق.</p>
+</div>
+<div class="p-4 border border-outline-variant rounded bg-surface">
+<span class="material-symbols-outlined text-primary text-2xl mb-1">groups</span>
+<h4 class="font-title-lg text-sm font-bold">توجيه شخصي</h4>
+<p class="font-body-md text-xs text-on-surface-variant mt-1">متابعة الاستفسارات وتقديم التغذية الراجعة لجميع الطلاب.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- 5. Courses Section -->
+<section id="courses" data-section="features" class="bg-surface-container-low py-section-gap border-t border-outline-variant section-hover cursor-pointer">
+<div class="max-w-[1280px] mx-auto px-margin-desktop">
+<div class="text-center mb-16">
+<h2 class="font-headline-lg text-headline-lg text-on-background">\${content?.features?.title || 'الدورات التدريبية والكورسات'}</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-4 max-w-2xl mx-auto">\${content?.features?.subtitle || 'دورات متخصصة مصممة بعناية لتناسب جميع المستويات مع تطبيقات عملية ومتابعة مستمرة.'}</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+  \${featuresItems.map((item: any, idx: number) => \`
+    <div data-section="features" data-index="\${idx}" class="group border border-outline-variant rounded bg-surface p-6 hover:border-primary transition-colors cursor-pointer flex flex-col h-full">
+      <div class="w-full aspect-video mb-6 overflow-hidden rounded bg-surface-variant relative">
+        <img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" src="\${item.icon || 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop'}" alt="\${item.title}"/>
+        <div class="absolute top-2 right-2 bg-surface/90 backdrop-blur-sm px-2 py-1 rounded font-label-mono text-label-mono text-primary">كورس تطبيقي</div>
+      </div>
+      <h3 class="font-title-lg text-title-lg text-on-background group-hover:text-primary transition-colors mb-2">\${item.title}</h3>
+      <p class="font-body-md text-body-md text-on-surface-variant flex-grow">\${item.description}</p>
+      <div class="mt-6 flex items-center justify-between border-t border-outline-variant pt-4">
+        <div class="flex items-center gap-2 text-on-surface-variant font-label-mono text-label-mono">
+          <span class="material-symbols-outlined text-sm">schedule</span>
+          <span>دروس مسجلة + تطبيقات</span>
+        </div>
+        <button class="text-primary font-label-en text-label-en hover:underline uppercase">عرض الكورس</button>
+      </div>
+    </div>
+  \`).join('')}
+</div>
+</div>
+</section>
+
+<!-- 6. Student Journey -->
+<section id="journey" class="bg-surface-container-low py-section-gap border-y border-outline-variant">
+<div class="max-w-[900px] mx-auto px-margin-desktop">
+<div class="text-center mb-16">
+<h2 class="font-headline-lg text-headline-lg text-on-background">رحلة التعلم مع الكوتش</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">خطوات متسلسلة ومنظمة تحول المعرفة إلى مهارات تطبيقية ملموسة.</p>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 relative">
+<div class="p-4 border border-outline-variant rounded bg-surface text-center flex flex-col items-center">
+<div class="w-10 h-10 rounded-full bg-primary text-on-primary font-bold flex items-center justify-center mb-3">01</div>
+<h4 class="font-title-lg text-sm font-bold mb-1">اختر الكورس</h4>
+<p class="font-body-md text-xs text-on-surface-variant">حدد الكورس المناسب لهدفك الحالي.</p>
+</div>
+<div class="p-4 border border-outline-variant rounded bg-surface text-center flex flex-col items-center">
+<div class="w-10 h-10 rounded-full bg-primary text-on-primary font-bold flex items-center justify-center mb-3">02</div>
+<h4 class="font-title-lg text-sm font-bold mb-1">ابدأ التعلم</h4>
+<p class="font-body-md text-xs text-on-surface-variant">شاهد الدروس المسجلة في أي وقت.</p>
+</div>
+<div class="p-4 border border-outline-variant rounded bg-surface text-center flex flex-col items-center">
+<div class="w-10 h-10 rounded-full bg-primary text-on-primary font-bold flex items-center justify-center mb-3">03</div>
+<h4 class="font-title-lg text-sm font-bold mb-1">طبّق التمارين</h4>
+<p class="font-body-md text-xs text-on-surface-variant">نفّذ المهام التطبيقية المرفقة.</p>
+</div>
+<div class="p-4 border border-outline-variant rounded bg-surface text-center flex flex-col items-center">
+<div class="w-10 h-10 rounded-full bg-primary text-on-primary font-bold flex items-center justify-center mb-3">04</div>
+<h4 class="font-title-lg text-sm font-bold mb-1">احصل على التوجيه</h4>
+<p class="font-body-md text-xs text-on-surface-variant">احصل على ملاحظات وإجابات الكوتش.</p>
+</div>
+<div class="p-4 border border-outline-variant rounded bg-surface text-center flex flex-col items-center">
+<div class="w-10 h-10 rounded-full bg-primary text-on-primary font-bold flex items-center justify-center mb-3">05</div>
+<h4 class="font-title-lg text-sm font-bold mb-1">طوّر مستواك</h4>
+<p class="font-body-md text-xs text-on-surface-variant">حقّق نتائج ملموسة وواصل النمو.</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- 7. Student Reviews -->
+<section id="testimonials" class="max-w-[1280px] mx-auto px-margin-desktop py-section-gap">
+<div class="text-center mb-16">
+<h2 class="font-headline-lg text-headline-lg text-on-background">آراء الطلاب والمشاركين</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-4 max-w-2xl mx-auto">تجارب واقعية من متعلمين استفادوا من الكورسات والتوجيه المباشر.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<div class="p-6 border border-outline-variant rounded bg-surface relative flex flex-col">
+<div class="flex gap-1 text-tertiary-fixed-dim mb-4">
+<span class="material-symbols-outlined text-tertiary-container" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-tertiary-container" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-tertiary-container" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-tertiary-container" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-tertiary-container" data-weight="fill">star</span>
+</div>
+<p class="font-body-md text-body-md text-on-background leading-relaxed mb-6 flex-grow">
+"الشرح كان واضح جداً، والأهم إني قدرت أطبق اللي اتعلمته عملياً في شغلي من أول أسبوع. التوجيه المباشر اختصر عليا وقت طويل."
+</p>
+<div class="flex items-center gap-4 mt-auto border-t border-outline-variant pt-4">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-title-lg">م.ع</div>
+<div>
+<p class="font-title-lg text-title-lg text-on-background text-sm">محمد العتيبي</p>
+<p class="font-label-mono text-label-mono text-on-surface-variant text-xs">متعلم مستمر</p>
+</div>
+</div>
+</div>
+<div class="p-6 border border-outline-variant rounded bg-surface relative flex flex-col">
+<div class="flex gap-1 text-tertiary-fixed-dim mb-4">
+<span class="material-symbols-outlined text-tertiary-container" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-tertiary-container" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-tertiary-container" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-tertiary-container" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-tertiary-container" data-weight="fill">star</span>
+</div>
+<p class="font-body-md text-body-md text-on-background leading-relaxed mb-6 flex-grow">
+"الكورس كان منظم بشكل ممتاز وبدون أي حشو. الكوتش يركز على التطبيق وعلى إعطاء أمثلة من واقع العمل اليومي."
+</p>
+<div class="flex items-center gap-4 mt-auto border-t border-outline-variant pt-4">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-title-lg">ر.س</div>
+<div>
+<p class="font-title-lg text-title-lg text-on-background text-sm">ريم السعيد</p>
+<p class="font-label-mono text-label-mono text-on-surface-variant text-xs">مستفيدة من الكورسات</p>
+</div>
+</div>
+</div>
+<div class="p-6 border border-outline-variant rounded bg-surface relative flex flex-col">
+<div class="flex gap-1 text-tertiary-fixed-dim mb-4">
+<span class="material-symbols-outlined text-tertiary-container" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-tertiary-container" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-tertiary-container" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-tertiary-container" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-tertiary-container" data-weight="fill">star</span>
+</div>
+<p class="font-body-md text-body-md text-on-background leading-relaxed mb-6 flex-grow">
+"كنت أعاني من تشتت الأفكار عند التخطيط لمشروعي. من خلال التمارين والمتابعة، قدرت أصيغ الخطة بوضوح وأبدأ التنفيذ."
+</p>
+<div class="flex items-center gap-4 mt-auto border-t border-outline-variant pt-4">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-title-lg">ط.م</div>
+<div>
+<p class="font-title-lg text-title-lg text-on-background text-sm">طارق مصطفى</p>
+<p class="font-label-mono text-label-mono text-on-surface-variant text-xs">صانع محتوى</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- 8. FAQ Section -->
+<section id="faq" data-section="faq" class="max-w-[1000px] mx-auto px-margin-desktop py-section-gap section-hover cursor-pointer">
+<div class="text-center mb-12">
+<h2 class="font-headline-lg text-headline-lg text-on-background">\${faqTitle}</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">إجابات لأكثر الأسئلة تكراراً حول الكورسات ونظام التعلم.</p>
+</div>
+<div class="space-y-4">
+  \${faqItems.map((item: any, idx: number) => \`
+    <div data-section="faq" data-index="\${idx}" class="border border-outline-variant rounded bg-surface p-6 cursor-pointer hover:border-primary transition-colors">
+      <h3 class="font-title-lg text-title-lg text-primary mb-2">\${item.question}</h3>
+      <p class="font-body-md text-body-md text-on-surface-variant">\${item.answer}</p>
+    </div>
+  \`).join('')}
+</div>
+</section>
+
+<!-- 9. Final CTA / Newsletter -->
+<section class="max-w-[800px] mx-auto px-margin-desktop py-section-gap mb-section-gap">
+<div class="border border-primary-fixed-dim bg-primary-fixed/10 p-12 text-center rounded">
+<span class="material-symbols-outlined text-primary text-5xl mb-4">school</span>
+<h2 class="font-headline-lg text-headline-lg text-on-background mb-4">جاهز لتبدأ رحلة التعلم وتطوير مهاراتك؟</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-8 max-w-md mx-auto">
+    اشترك في النشرة التعليمية ليصلك أحدث الكورسات والدروس المجانية والنصائح العملية مباشرة على بريدك.
+</p>
+<form class="flex flex-col md:flex-row gap-4 max-w-lg mx-auto" onsubmit="event.preventDefault();">
+<input class="flex-1 bg-surface border border-outline-variant px-4 py-3 rounded font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none text-right" placeholder="البريد الإلكتروني" required="" type="email"/>
+<button class="bg-primary text-on-primary px-8 py-3 rounded font-title-lg hover:bg-primary-container transition-colors shrink-0" type="submit">اشترك الآن</button>
+</form>
+</div>
+</section>
+</main>
+
+<!-- 10. Footer -->
+<footer data-section="footer" class="bg-surface-container-lowest dark:bg-surface-dim w-full border-t border-outline-variant flat section-hover cursor-pointer">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter px-margin-desktop py-section-gap max-w-[1280px] mx-auto text-right">
+<div class="md:col-span-1" data-section="contact">
+<div class="text-headline-md font-headline-md text-primary mb-4">\${contactTitle}</div>
+<p class="font-body-md text-body-md text-on-surface-variant">\${contactDesc}</p>
+</div>
+<div class="md:col-span-3 flex flex-wrap justify-end gap-8 font-body-md text-body-md mt-4 md:mt-0">
+<a class="text-on-surface-variant hover:text-primary underline transition-all opacity-80 hover:opacity-100" href="#home">الرئيسية</a>
+<a class="text-on-surface-variant hover:text-primary underline transition-all opacity-80 hover:opacity-100" href="#about">عن الكوتش</a>
+<a class="text-on-surface-variant hover:text-primary underline transition-all opacity-80 hover:opacity-100" href="#courses">الكورسات</a>
+<a class="text-on-surface-variant hover:text-primary underline transition-all opacity-80 hover:opacity-100" href="#testimonials">آراء الطلاب</a>
+<a class="text-on-surface-variant hover:text-primary underline transition-all opacity-80 hover:opacity-100" href="#faq">الأسئلة الشائعة</a>
+</div>
+</div>
+<div class="text-center py-4 border-t border-outline-variant/30 text-xs text-on-surface-variant">
+\${footerText}
 </div>
 </footer>
+
 <script>
-        // Post messages to parent editor on section clicks
         document.addEventListener('click', (e) => {
           const el = e.target.closest('[data-section]');
           if (el) {
