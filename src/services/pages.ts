@@ -401,6 +401,99 @@ export function normalizeSectionProps(type: string, rawProps: any): Record<strin
     merged.phoneNumber = val;
     merged.phone_number = val;
   }
+  // Video Intro
+  if (merged.video_tag || merged.videoTag) {
+    const val = merged.videoTag || merged.video_tag;
+    merged.videoTag = val;
+    merged.video_tag = val;
+  }
+  if (merged.video_title || merged.videoTitle) {
+    const val = merged.videoTitle || merged.video_title;
+    merged.videoTitle = val;
+    merged.video_title = val;
+  }
+  if (merged.video_desc || merged.videoDesc) {
+    const val = merged.videoDesc || merged.video_desc;
+    merged.videoDesc = val;
+    merged.video_desc = val;
+  }
+  if (merged.video_link || merged.videoLink) {
+    const val = merged.videoLink || merged.video_link;
+    merged.videoLink = val;
+    merged.video_link = val;
+  }
+  // Newsletter
+  if (merged.newsletter_title || merged.newsletterTitle) {
+    const val = merged.newsletterTitle || merged.newsletter_title;
+    merged.newsletterTitle = val;
+    merged.newsletter_title = val;
+  }
+  if (merged.newsletter_desc || merged.newsletterDesc) {
+    const val = merged.newsletterDesc || merged.newsletter_desc;
+    merged.newsletterDesc = val;
+    merged.newsletter_desc = val;
+  }
+  if (merged.newsletter_btn_text || merged.newsletterBtnText) {
+    const val = merged.newsletterBtnText || merged.newsletter_btn_text;
+    merged.newsletterBtnText = val;
+    merged.newsletter_btn_text = val;
+  }
+  // Testimonials
+  if (merged.testimonials_title || merged.testimonialsTitle) {
+    const val = merged.testimonialsTitle || merged.testimonials_title;
+    merged.testimonialsTitle = val;
+    merged.testimonials_title = val;
+  }
+  if (merged.testimonials_subtitle || merged.testimonialsSubtitle) {
+    const val = merged.testimonialsSubtitle || merged.testimonials_subtitle;
+    merged.testimonialsSubtitle = val;
+    merged.testimonials_subtitle = val;
+  }
+  if (merged.testimonial1_text || merged.testimonial1Text) {
+    const val = merged.testimonial1Text || merged.testimonial1_text;
+    merged.testimonial1Text = val;
+    merged.testimonial1_text = val;
+  }
+  if (merged.testimonial1_author || merged.testimonial1Author) {
+    const val = merged.testimonial1Author || merged.testimonial1_author;
+    merged.testimonial1Author = val;
+    merged.testimonial1_author = val;
+  }
+  if (merged.testimonial1_role || merged.testimonial1Role) {
+    const val = merged.testimonial1Role || merged.testimonial1_role;
+    merged.testimonial1Role = val;
+    merged.testimonial1_role = val;
+  }
+  if (merged.testimonial2_text || merged.testimonial2Text) {
+    const val = merged.testimonial2Text || merged.testimonial2_text;
+    merged.testimonial2Text = val;
+    merged.testimonial2_text = val;
+  }
+  if (merged.testimonial2_author || merged.testimonial2Author) {
+    const val = merged.testimonial2Author || merged.testimonial2_author;
+    merged.testimonial2Author = val;
+    merged.testimonial2_author = val;
+  }
+  if (merged.testimonial2_role || merged.testimonial2Role) {
+    const val = merged.testimonial2Role || merged.testimonial2_role;
+    merged.testimonial2Role = val;
+    merged.testimonial2_role = val;
+  }
+  if (merged.testimonial3_text || merged.testimonial3Text) {
+    const val = merged.testimonial3Text || merged.testimonial3_text;
+    merged.testimonial3Text = val;
+    merged.testimonial3_text = val;
+  }
+  if (merged.testimonial3_author || merged.testimonial3Author) {
+    const val = merged.testimonial3Author || merged.testimonial3_author;
+    merged.testimonial3Author = val;
+    merged.testimonial3_author = val;
+  }
+  if (merged.testimonial3_role || merged.testimonial3Role) {
+    const val = merged.testimonial3Role || merged.testimonial3_role;
+    merged.testimonial3Role = val;
+    merged.testimonial3_role = val;
+  }
   return merged;
 }
 

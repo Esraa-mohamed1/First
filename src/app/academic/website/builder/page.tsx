@@ -65,6 +65,13 @@ interface AboutConfig {
   image: string;
   backgroundColor: string;
   textColor: string;
+  videoTag?: string;
+  videoTitle?: string;
+  videoDesc?: string;
+  videoLink?: string;
+  analyticsTitle?: string;
+  analyticsBars?: number[];
+  analyticsColor?: string;
 }
 
 interface FeatureItem {
@@ -93,6 +100,17 @@ interface PricingConfig {
   items: PricingItem[];
   backgroundColor: string;
   textColor: string;
+  testimonialsTitle?: string;
+  testimonialsSubtitle?: string;
+  testimonial1Text?: string;
+  testimonial1Author?: string;
+  testimonial1Role?: string;
+  testimonial2Text?: string;
+  testimonial2Author?: string;
+  testimonial2Role?: string;
+  testimonial3Text?: string;
+  testimonial3Author?: string;
+  testimonial3Role?: string;
 }
 
 interface FAQItem {
@@ -105,6 +123,8 @@ interface FAQConfig {
   items: FAQItem[];
   backgroundColor: string;
   textColor: string;
+  testimonialsTitle?: string;
+  testimonialsSubtitle?: string;
 }
 
 interface ContactConfig {
@@ -120,14 +140,19 @@ interface FooterConfig {
   text: string;
   backgroundColor: string;
   textColor: string;
+  newsletterTitle?: string;
+  newsletterDesc?: string;
+  newsletterBtnText?: string;
 }
 
 interface TemplateContent {
   navbar: NavbarConfig;
   hero: HeroConfig;
   about: AboutConfig;
+  video?: any;
   features: FeaturesConfig;
   pricing: PricingConfig;
+  testimonials?: any;
   faq: FAQConfig;
   contact: ContactConfig;
   footer: FooterConfig;
@@ -154,7 +179,11 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
           subtitle: 'خبرة تزيد عن ١٠ سنوات في تدريس مناهج الرياضيات للمرحلة الثانوية. نعتمد على الفهم والتحليل وتدريب الطالب على أنماط الامتحانات المختلفة لضمان الثقة والتميز.',
           image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBsvCKkFFgnTqd7h7Fw_WOHLv_-bXegAz36jnJ-dSBDWKiA81BP1TWumr1WnjULNWm_0CcbVBTge22QX2XN-cBPri3M3xbxSbAGqLIcFlI4XbbEacN9CKm1uRjQqkRnAfjumbe4cbh_txOhsTy_-6Eph6WwWNqlfr7j35tkwUU103Z7NEEpLCcfSvulZ4QoKpglkx4KRxtXU9TRhBm3eChxdvC43k04A-fnMk-IjFugUk9FdZ1nyfYQsA',
           backgroundColor: '#ffffff',
-          textColor: '#1a1f29'
+          textColor: '#1a1f29',
+          videoTag: 'شاهد وتعلّم',
+          videoTitle: 'تعرف على فلسفتنا التعليمية في ٣ دقائق',
+          videoDesc: 'نقدم لك جولة سريعة داخل مجموعاتنا التفاعلية المباشرة، ونوضح طريقة المتابعة والتقييمات الدورية للطلاب.',
+          videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop'
         },
         features: {
           title: 'المواد الدراسية',
@@ -215,7 +244,9 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
             { question: 'م. علي عمر - طالب سابق', answer: 'تأسست في الرياضيات على يد الأستاذ أحمد، والآن أدرس هندسة البرمجيات بسهولة.' }
           ],
           backgroundColor: '#f7f8fa',
-          textColor: '#1a1f29'
+          textColor: '#1a1f29',
+          testimonialsTitle: 'آراء وقصص نجاح الطلاب',
+          testimonialsSubtitle: 'ماذا يقول أولياء الأمور وطلابنا بعد تحقيق الدرجة الكاملة والتفوق في امتحاناتهم.'
         },
         contact: {
           title: 'ابدأ رحلة تفوقك اليوم',
@@ -228,7 +259,10 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         footer: {
           text: '© ٢٠٢٦ الأستاذ أحمد محمد. جميع الحقوق محفوظة.',
           backgroundColor: '#0a1628',
-          textColor: '#ffffff'
+          textColor: '#ffffff',
+          newsletterTitle: 'اشترك في نشرتنا المعرفية',
+          newsletterDesc: 'احصل على نماذج امتحانات، ملخصات ومذكرات للمراجعة مباشرة في بريدك الإلكتروني.',
+          newsletterBtnText: 'اشترك الآن'
         }
       };
     } else {
@@ -250,7 +284,11 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
           subtitle: 'نحن لا نلقن، بل نساعدك على الفهم العميق والربط بين المفاهيم. نستخدم تكنولوجيا التعليم المبتكرة لجعل تجربة المذاكرة شيقة وسريعة.',
           image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&auto=format&fit=crop',
           backgroundColor: '#1e293b',
-          textColor: '#cbd5e1'
+          textColor: '#cbd5e1',
+          videoTag: 'شاهد وتعلّم',
+          videoTitle: 'تعرف على فلسفتنا التعليمية في ٣ دقائق',
+          videoDesc: 'نقدم لك جولة سريعة داخل مجموعاتنا التفاعلية المباشرة، ونوضح طريقة المتابعة والتقييمات الدورية للطلاب.',
+          videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop'
         },
         features: {
           title: 'لماذا يفضلنا الطلاب الأوائل؟',
@@ -280,7 +318,9 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
             { question: 'كيف يمكن تفعيل الاشتراك الورقي؟', answer: 'يمكنك إدخال كود التفعيل المستلم من المدرسة أو الوكيل ليفتح المحتوى فوراً.' }
           ],
           backgroundColor: '#0f172a',
-          textColor: '#ffffff'
+          textColor: '#ffffff',
+          testimonialsTitle: 'آراء وقصص نجاح الطلاب',
+          testimonialsSubtitle: 'ماذا يقول أولياء الأمور وطلابنا بعد تحقيق الدرجة الكاملة والتفوق في امتحاناتهم.'
         },
         contact: {
           title: 'تواصل مباشر مع مشرفي الدعم',
@@ -293,7 +333,10 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         footer: {
           text: 'بوابة المتفوق الأكاديمية © جميع الحقوق محفوظة لعام ٢٠٢٦',
           backgroundColor: '#0f172a',
-          textColor: '#94a3b8'
+          textColor: '#94a3b8',
+          newsletterTitle: 'اشترك في نشرتنا المعرفية',
+          newsletterDesc: 'احصل على نماذج امتحانات، ملخصات ومذكرات للمراجعة مباشرة في بريدك الإلكتروني.',
+          newsletterBtnText: 'اشترك الآن'
         }
       };
     }
@@ -315,7 +358,11 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         subtitle: 'نخبة من الأكاديميين والباحثين يرافقونك في رحلتك المعرفية.',
         image: '',
         backgroundColor: '#ffffff',
-        textColor: '#1c1a22'
+        textColor: '#1c1a22',
+        videoTag: 'شاهد وتعلّم',
+        videoTitle: 'تعرف على فلسفتنا التعليمية في ٣ دقائق',
+        videoDesc: 'نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.',
+        videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop'
       },
       features: {
         title: 'المرشدون الخبراء',
@@ -356,7 +403,18 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
           }
         ],
         backgroundColor: '#ffffff',
-        textColor: '#1c1a22'
+        textColor: '#1c1a22',
+        testimonialsTitle: 'ماذا يقول النخبة؟',
+        testimonialsSubtitle: 'تجارب حقيقية ورؤى ملهمة من طلابنا وقادتنا الذين غيروا مسارهم الأكاديمي والمهني.',
+        testimonial1Text: 'الماستركلاسز والدروس الفلسفية المعمقة أعادت صياغة طريقتي في التفكير واتخاذ القرارات الاستراتيجية. تجربة دراسية استثنائية ونخبوية حقاً.',
+        testimonial1Author: 'خالد منصور',
+        testimonial1Role: 'مستشار إداري وتطوير أعمال',
+        testimonial2Text: 'من أفضل القرارات المعرفية التي اتخذتها. منهجية التدريب والتحليل بالبيانات لا تدع مجالاً للعشوائية أو التخمين.',
+        testimonial2Author: 'سارة العلي',
+        testimonial2Role: 'رائدة أعمال تكنولوجية',
+        testimonial3Text: 'المحتوى الأكاديمي والتحليل العميق وفر لي رؤى لم أجدها في المراجع التقليدية. التوجيه الشخصي مع د. طارق كان فارقاً في مساري العلمي.',
+        testimonial3Author: 'أحمد حماد',
+        testimonial3Role: 'باحث أكاديمي في الفلسفة'
       },
       faq: {
         title: 'مسارات المناهج المتقدمة',
@@ -379,7 +437,10 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
       footer: {
         text: '© 2024 Deep Knowledge Academy. All rights reserved.',
         backgroundColor: '#fbfafc',
-        textColor: '#1c1a22'
+        textColor: '#1c1a22',
+        newsletterTitle: 'اشترك في نشرتنا البريدية المعرفية',
+        newsletterDesc: 'احصل على أحدث المقالات التحليلية، والمناهج الجديدة، والماستركلاسز الحصرية مباشرة في بريدك الإلكتروني أسبوعياً.',
+        newsletterBtnText: 'اشترك الآن'
       }
     };
   } else {
@@ -401,7 +462,11 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         subtitle: 'راقب الأداء الأكاديمي، وحدد الاتجاهات، وقم بتحسين المخرجات التعليمية من خلال لوحات تحكم تحليلية متقدمة توفر رؤى في الوقت الفعلي.',
         image: '',
         backgroundColor: '#ffffff',
-        textColor: '#1b1b24'
+        textColor: '#1b1b24',
+        videoTag: 'شاهد وتعلّم',
+        videoTitle: 'تعرف على فلسفتنا التعليمية في ٣ دقائق',
+        videoDesc: 'نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.',
+        videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop'
       },
       features: {
         title: 'نظام بيئي أكاديمي متكامل',
@@ -424,7 +489,18 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
           { title: 'معدل الإنجاز', price: '87%', features: ['نسبة إتمام مرتفعة', 'التزام أكاديمي'] }
         ],
         backgroundColor: '#fcf8ff',
-        textColor: '#1b1b24'
+        textColor: '#1b1b24',
+        testimonialsTitle: 'ماذا يقول شركاؤنا وطلابنا؟',
+        testimonialsSubtitle: 'قصص نجاح ملهمة وتجارب واقعية يعبر عنها شركاؤنا الأكاديميون وطلابنا المتميزون.',
+        testimonial1Text: 'سهولة إدارة المحتوى التعليمي والتحليلات الدقيقة المتاحة مكنتنا كإدارة من تتبع الأداء وتحسين المخرجات التعليمية بشكل ملموس وسريع.',
+        testimonial1Author: 'أ.د. محمد الشمري',
+        testimonial1Role: 'عميد القبول والتسجيل',
+        testimonial2Text: 'سهولة التصفح، والوصول الفوري للمقررات والامتحانات التفاعلية، أتاح لي تنظيم وقتي والمذاكرة بذكاء وبدون تشتت تماماً.',
+        testimonial2Author: 'رنا عبدالله',
+        testimonial2Role: 'طالبة هندسة برمجيات',
+        testimonial3Text: 'كأستاذ، مكنتني بوابة المعلم من متابعة الواجبات وإعطاء تقييمات تفصيلية فورية لكل طالب وطالبة بسهولة مطلقة ووقت قياسي.',
+        testimonial3Author: 'م. عاصم العتيبي',
+        testimonial3Role: 'عضو هيئة التدريس'
       },
       faq: {
         title: 'الأسئلة الشائعة حول إديوكور',
@@ -446,7 +522,10 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
       footer: {
         text: '© 2024 إديوكور الأكاديمية. جميع الحقوق محفوظة.',
         backgroundColor: '#ffffff',
-        textColor: '#1b1b24'
+        textColor: '#1b1b24',
+        newsletterTitle: 'اشترك في نشرتنا البريدية المعرفية',
+        newsletterDesc: 'احصل على أحدث المقالات التحليلية، والمناهج الجديدة، والماستركلاسز الحصرية مباشرة في بريدك الإلكتروني أسبوعياً.',
+        newsletterBtnText: 'اشترك الآن'
       }
     };
   }
@@ -457,6 +536,14 @@ export default function PageBuilderPage() {
   const searchParams = useSearchParams();
   const templateIdParam = searchParams.get('templateId') || 'template_1';
 
+  // Helper to get HTML for role
+  const getHtmlForRole = (role: string, c: TemplateContent) => {
+    if (role === 'academy') return getAcademicHtml(c);
+    if (role === 'coach') return getCoachHtml(c);
+    if (role === 'schoolcoach') return getSchoolCoachHtml(c);
+    return '';
+  };
+
   // --- Core States ---
   const [currentRole, setCurrentRole] = useState<'schoolcoach' | 'coach' | 'academy'>('academy');
   const [activeTemplateId, setActiveTemplateId] = useState<string>('template_1');
@@ -464,14 +551,16 @@ export default function PageBuilderPage() {
   const [deviceMode, setDeviceMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [activeSection, setActiveSection] = useState<keyof TemplateContent>('hero');
   const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
+  const [openIconPickerIdx, setOpenIconPickerIdx] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   // Ordered list of section types from the API (drives the sidebar dropdown)
-  const [sectionsList, setSectionsList] = useState<string[]>(['navbar','hero','about','features','pricing','faq','contact','footer']);
+  const [sectionsList, setSectionsList] = useState<string[]>(['navbar','hero','about','video','features','pricing','testimonials','faq','contact','footer']);
   const [saving, setSaving] = useState<boolean>(false);
 
   // Dynamic template content configurations
   const [content, setContent] = useState<TemplateContent | null>(null);
   const [previewContent, setPreviewContent] = useState<TemplateContent | null>(null);
+  const [initialHtml, setInitialHtml] = useState<string>('');
 
   // Debounce preview updates to prevent iframe reload flicker during typing
   useEffect(() => {
@@ -500,6 +589,44 @@ export default function PageBuilderPage() {
       }
     };
 
+    const updateStyle = (selector: string, styleProp: string, value: string | undefined) => {
+      if (!value) return;
+      try {
+        const el = doc.querySelector(selector) as HTMLElement;
+        if (el) {
+          el.style.setProperty(styleProp, value);
+        }
+      } catch (e) {}
+    };
+
+    // Live Background & Text Color Updates across all section banners
+    updateStyle('[data-section="navbar"]', 'background-color', content.navbar.bgColor);
+    updateStyle('[data-section="navbar"]', 'color', content.navbar.textColor);
+
+    updateStyle('[data-section="hero"]', 'background-color', content.hero.backgroundColor);
+    updateStyle('[data-section="hero"]', 'color', content.hero.textColor);
+
+    updateStyle('#about-analytics', 'background-color', content.about.backgroundColor);
+    updateStyle('#about-analytics', 'color', content.about.textColor);
+
+    updateStyle('[data-section="features"]', 'background-color', content.features.backgroundColor);
+    updateStyle('[data-section="features"]', 'color', content.features.textColor);
+
+    updateStyle('#pricing-plans', 'background-color', content.pricing.backgroundColor);
+    updateStyle('#pricing-plans', 'color', content.pricing.textColor);
+
+    updateStyle('#testimonials', 'background-color', content.pricing.backgroundColor);
+    updateStyle('#testimonials', 'color', content.pricing.textColor);
+
+    updateStyle('[data-section="faq"]', 'background-color', content.faq.backgroundColor);
+    updateStyle('[data-section="faq"]', 'color', content.faq.textColor);
+
+    updateStyle('[data-section="contact"]', 'background-color', content.contact.backgroundColor);
+    updateStyle('[data-section="contact"]', 'color', content.contact.textColor);
+
+    updateStyle('#footer-bar', 'background-color', content.footer.backgroundColor);
+    updateStyle('#footer-bar', 'color', content.footer.textColor);
+
     // 1. Navbar
     updateText('[data-section="navbar"] span.text-headline-md, [data-section="navbar"] span.text-\\[22px\\], [data-section="navbar"] span.font-extrabold', content.navbar.title);
 
@@ -510,45 +637,171 @@ export default function PageBuilderPage() {
     updateText('[data-section="hero"] button, [data-section="hero"] a.btn-primary', content.hero.buttonText);
 
     // 3. About
-    updateText('[data-section="about"] h2, [data-section="about"] h3', content.about.title);
-    updateText('[data-section="about"] p', content.about.subtitle);
+    if (currentRole === 'coach') {
+      updateText('[data-section="features"] h2', content.about.title);
+      updateText('#about-video .text-label-md, #about-video .text-xs.font-bold', content.about.videoTag || '');
+      updateText('#about-video h2.text-headline-lg, #about-video .text-headline-lg', content.about.videoTitle || '');
+      updateText('#about-video p.text-body-lg, #about-video p.text-on-surface-variant', content.about.videoDesc || '');
+    } else {
+      // Smart Analytics Title, Subtitle, & Image:
+      updateText('#about-analytics h2.text-headline-lg, #about-analytics h2', content.about.title);
+      const analyticsSubtitleEl = doc.querySelector('#about-analytics p.text-body-lg');
+      if (analyticsSubtitleEl && content.about.subtitle !== undefined && analyticsSubtitleEl.innerHTML !== content.about.subtitle) {
+        analyticsSubtitleEl.innerHTML = content.about.subtitle;
+      }
+      if (content.about.image) {
+        const aboutImgEl = doc.querySelector('#about-analytics img') as HTMLImageElement;
+        if (aboutImgEl && aboutImgEl.src !== content.about.image) {
+          aboutImgEl.src = content.about.image;
+        }
+      }
+
+      // Smart Analytics Chart Title, Bar Heights/Curves, & Bar Colors:
+      if (!content.about.image) {
+        updateText('#about-analytics h3', content.about.analyticsTitle || 'رؤى الأداء المؤسسي');
+        const chartColor = content.about.analyticsColor || '#3525cd';
+        const bars = content.about.analyticsBars || [40, 65, 85, 50, 95];
+        const barEls = doc.querySelectorAll('#about-analytics div.flex.items-end > div');
+        barEls.forEach((barEl, i) => {
+          const el = barEl as HTMLElement;
+          if (el) {
+            if (bars[i] !== undefined) {
+              el.style.height = `${bars[i]}%`;
+            }
+            if (chartColor) {
+              el.style.backgroundColor = chartColor;
+            }
+          }
+        });
+      }
+
+      // Video Intro:
+      updateText('#about-video .text-label-md, #about-video .text-xs.font-bold', content.about.videoTag || '');
+      updateText('#about-video h2.text-headline-lg, #about-video .text-headline-lg, #about-video .text-3xl.font-extrabold', content.about.videoTitle || '');
+      updateText('#about-video p.text-body-lg.font-body-lg, #about-video p.leading-relaxed', content.about.videoDesc || '');
+      if (content.about.videoLink) {
+        const videoBgEl = doc.querySelector('#about-video .bg-cover') as HTMLElement;
+        if (videoBgEl) {
+          videoBgEl.style.backgroundImage = `url('${content.about.videoLink}')`;
+        }
+      }
+    }
 
     // 4. Features
-    updateText('[data-section="features"] h2, [data-section="features"] h3, #subjects h2', content.features.title);
+    updateText('[data-section="features"] h2.font-headline-lg, [data-section="features"] h2, #subjects h2', content.features.title);
     const featuresHeaderDesc = doc.querySelector('[data-section="features"] .text-center p, #subjects .text-center p');
     if (featuresHeaderDesc && featuresHeaderDesc.innerHTML !== content.features.subtitle) {
       featuresHeaderDesc.innerHTML = content.features.subtitle;
     }
     content.features.items.forEach((item, idx) => {
-      updateText(`[data-section="features"][data-index="${idx}"] h3, [data-section="features"][data-index="${idx}"] h4`, item.title);
-      updateText(`[data-section="features"][data-index="${idx}"] p`, item.description);
+      if (currentRole === 'coach') {
+        const parts = item.title.split(' - ');
+        const name = parts[0] || '';
+        const role = parts[1] || '';
+        updateText(`[data-section="features"][data-index="${idx}"] h3`, name);
+        updateText(`[data-section="features"][data-index="${idx}"] p.text-tertiary`, role);
+        updateText(`[data-section="features"][data-index="${idx}"] p.text-on-surface-variant`, item.description);
+      } else {
+        updateText(`[data-section="features"][data-index="${idx}"] h3, [data-section="features"][data-index="${idx}"] h4`, item.title);
+        updateText(`[data-section="features"][data-index="${idx}"] p`, item.description);
+      }
+
+      // Feature Icon Real-time update:
+      if (item.icon) {
+        const isImg = item.icon.startsWith('http') || item.icon.includes('/') || item.icon.startsWith('data:');
+        if (isImg) {
+          const imgEl = doc.querySelector(`[data-section="features"][data-index="${idx}"] img`) as HTMLImageElement;
+          if (imgEl && imgEl.src !== item.icon) {
+            imgEl.src = item.icon;
+          }
+        } else {
+          const iconSpan = doc.querySelector(`[data-section="features"][data-index="${idx}"] span.material-symbols-outlined`);
+          if (iconSpan && iconSpan.innerHTML !== item.icon) {
+            iconSpan.innerHTML = item.icon;
+          }
+        }
+      }
     });
 
     // 5. Pricing
-    updateText('[data-section="pricing"] h2, [data-section="pricing"] h3, #groups h2', content.pricing.title);
-    const pricingHeaderDesc = doc.querySelector('[data-section="pricing"] .text-center p, #groups .text-center p');
+    updateText('#pricing-plans h2, #pricing-plans h3, #groups h2', content.pricing.title);
+    const pricingHeaderDesc = doc.querySelector('#pricing-plans .text-center p, #groups .text-center p');
     if (pricingHeaderDesc && pricingHeaderDesc.innerHTML !== content.pricing.subtitle) {
       pricingHeaderDesc.innerHTML = content.pricing.subtitle;
     }
     content.pricing.items.forEach((item, idx) => {
-      updateText(`[data-section="pricing"][data-index="${idx}"] h3, [data-section="pricing"][data-index="${idx}"] h4`, item.title);
-      updateText(`[data-section="pricing"][data-index="${idx}"] .text-headline-md, [data-section="pricing"][data-index="${idx}"] .text-primary, [data-section="pricing"][data-index="${idx}"] .block.text-xs`, item.price);
+      if (currentRole === 'academy') {
+        updateText(`#pricing-plans [data-index="${idx}"] p`, item.title);
+        updateText(`#pricing-plans [data-index="${idx}"] h4`, item.price);
+      } else if (currentRole === 'coach') {
+        updateText(`#pricing-plans [data-index="${idx}"] h3`, item.title);
+        updateText(`#pricing-plans [data-index="${idx}"] span.text-tertiary`, item.price);
+        const duration = item.features?.[0] || '';
+        updateText(`#pricing-plans [data-index="${idx}"] span.text-on-surface-variant`, duration);
+      } else {
+        updateText(`#pricing-plans [data-index="${idx}"] h3, #groups [data-index="${idx}"] h3`, item.title);
+        updateText(`#pricing-plans [data-index="${idx}"] .block.text-xs, #groups [data-index="${idx}"] .block.text-xs`, item.price);
+      }
     });
 
-    // 6. FAQ / Testimonials
-    updateText('[data-section="faq"] h2, [data-section="faq"] h3, #testimonials h2', content.faq.title);
-    content.faq.items.forEach((item, idx) => {
-      updateText(`[data-section="faq"][data-index="${idx}"] h4, [data-section="faq"][data-index="${idx}"] .font-body-lg, [data-section="faq"][data-index="${idx}"] .font-headline-md`, item.question);
-      updateText(`[data-section="faq"][data-index="${idx}"] p:nth-of-type(2), [data-section="faq"][data-index="${idx}"] p.italic, [data-section="faq"][data-index="${idx}"] .bg-surface, [data-section="faq"][data-index="${idx}"] p.text-gray-600`, item.answer);
-    });
+    // 6. Testimonials
+    updateText('#testimonials h2.text-headline-lg, #testimonials h2.section-title, #testimonials h2', content.pricing.testimonialsTitle || content.faq.testimonialsTitle || '');
+    updateText('#testimonials p.text-body-lg.max-w-2xl, #testimonials p.text-body-lg.max-w-xl, #testimonials p.text-body-md', content.pricing.testimonialsSubtitle || content.faq.testimonialsSubtitle || '');
+    
+    for (let i = 1; i <= 3; i++) {
+      const textVal = (content.pricing as any)[`testimonial${i}Text`];
+      const authorVal = (content.pricing as any)[`testimonial${i}Author`];
+      const roleVal = (content.pricing as any)[`testimonial${i}Role`];
+      
+      if (textVal !== undefined) {
+        updateText(`[data-testimonial="${i-1}"] p.italic, [data-testimonial="${i-1}"] p.text-on-surface-variant`, textVal ? `"${textVal}"` : '');
+      }
+      if (authorVal !== undefined) {
+        updateText(`[data-testimonial="${i-1}"] h4`, authorVal || '');
+      }
+      if (roleVal !== undefined) {
+        updateText(`[data-testimonial="${i-1}"] p.text-slate-500, [data-testimonial="${i-1}"] p.text-gray-400, [data-testimonial="${i-1}"] p.text-tertiary`, roleVal || '');
+      }
+    }
 
-    // 7. Contact
-    updateText('[data-section="contact"] h2, [data-section="contact"] h3', content.contact.title);
-    updateText('[data-section="contact"] p', content.contact.description);
-    updateText('[data-section="contact"] button, [data-section="contact"] a.btn-primary, [data-section="contact"] a.bg-emerald-500 span, [data-section="contact"] a.btn-primary span', content.contact.buttonText);
+    // 7. FAQ
+    if (currentRole === 'schoolcoach') {
+      updateText('#testimonials h2.section-title, #testimonials h2', content.faq.testimonialsTitle || '');
+      updateText('#testimonials p.text-body-lg.max-w-2xl', content.faq.testimonialsSubtitle || '');
+      content.faq.items.forEach((item, idx) => {
+        updateText(`[data-section="faq"][data-index="${idx}"] h4`, item.question);
+        updateText(`[data-section="faq"][data-index="${idx}"] p.italic`, item.answer);
+      });
+    } else if (currentRole === 'coach') {
+      updateText('[data-section="faq"] > div > div > h2, [data-section="faq"] h2', content.faq.title);
+      content.faq.items.forEach((item, idx) => {
+        updateText(`[data-section="faq"][data-index="${idx}"] span.font-headline-md, [data-section="faq"][data-index="${idx}"] span.font-body-lg`, item.question);
+        updateText(`[data-section="faq"][data-index="${idx}"] div.bg-surface`, item.answer);
+      });
+    } else {
+      updateText('[data-section="faq"] h2', content.faq.title);
+      content.faq.items.forEach((item, idx) => {
+        updateText(`[data-section="faq"][data-index="${idx}"] h4, [data-section="faq"][data-index="${idx}"] .font-body-lg`, item.question);
+        updateText(`[data-section="faq"][data-index="${idx}"] p:nth-of-type(2), [data-section="faq"][data-index="${idx}"] p.italic, [data-section="faq"][data-index="${idx}"] p.text-gray-600`, item.answer);
+      });
+    }
 
-    // 8. Footer
-    updateText('[data-section="footer"] p, footer p', content.footer.text);
+    // 8. Contact
+    updateText('[data-section="contact"] h2.text-display-lg, [data-section="contact"] h2, [data-section="contact"] span.font-headline-md', content.contact.title);
+    const contactDescEl = doc.querySelector('[data-section="contact"] p.text-body-lg, [data-section="contact"] p.font-body-md, [data-section="contact"] p.text-on-surface-variant');
+    if (contactDescEl && content.contact.description !== undefined && contactDescEl.innerHTML !== content.contact.description) {
+      contactDescEl.innerHTML = content.contact.description;
+    }
+    const contactBtnEl = doc.querySelector('[data-section="contact"] button, [data-section="contact"] a.btn-primary');
+    if (contactBtnEl && content.contact.buttonText !== undefined && contactBtnEl.innerHTML !== content.contact.buttonText) {
+      contactBtnEl.innerHTML = content.contact.buttonText;
+    }
+
+    // 9. Footer
+    updateText('#footer-bar span.text-body-md.text-on-surface-variant, #footer-bar .font-body-md.text-on-surface-variant', content.footer.text);
+    updateText('#newsletter h2.text-headline-lg, #newsletter h2.text-\\[32px\\]', content.footer.newsletterTitle || '');
+    updateText('#newsletter p.text-body-lg.max-w-xl, #newsletter p.leading-relaxed', content.footer.newsletterDesc || '');
+    updateText('#newsletter button', content.footer.newsletterBtnText || '');
   }, [content]);
 
   // Handle iframe document load: inject hover outlines and click selections
@@ -613,6 +866,25 @@ export default function PageBuilderPage() {
 
         setActiveSection(sectionName);
 
+        // If the user clicked on testimonials, scroll sidebar editor to testimonials
+        const isTestimonials = sectionEl.id === 'testimonials' || target.closest('#testimonials');
+        if (isTestimonials) {
+          setTimeout(() => {
+            const el = document.getElementById('testimonials-editor-header');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 120);
+        } else if (sectionEl.id === 'about-video' || target.closest('#about-video')) {
+          setTimeout(() => {
+            const el = document.getElementById('about-video-editor-header');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 120);
+        } else if (sectionEl.id === 'about-analytics' || target.closest('#about-analytics')) {
+          setTimeout(() => {
+            const el = document.getElementById('about-analytics-editor-header');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 120);
+        }
+
         if (itemEl && sectionEl.contains(itemEl)) {
           const indexStr = itemEl.getAttribute('data-index');
           if (indexStr !== null) {
@@ -664,7 +936,7 @@ export default function PageBuilderPage() {
         el.classList.remove('active-item');
       }
     });
-  }, [activeSection, activeItemIndex, previewContent]);
+  }, [activeSection, activeItemIndex, content]);
 
   const handleSelectSectionItem = (section: keyof TemplateContent, index: number) => {
     setActiveSection(section);
@@ -765,11 +1037,11 @@ export default function PageBuilderPage() {
             const editorNodes = apiToEditor(apiSections);
 
             // Drive sidebar dropdown from the actual API section order
-            const KNOWN_SECTION_TYPES = ['navbar','hero','about','features','pricing','faq','contact','footer'];
+            const KNOWN_SECTION_TYPES = ['navbar','hero','about','video','features','pricing','testimonials','faq','contact','footer'];
             const apiSectionTypes = editorNodes
               .map(n => n.type)
               .filter(t => KNOWN_SECTION_TYPES.includes(t));
-            // Merge so we always show all 8; API order wins for sections present
+            // Merge so we always show all sections; API order wins for sections present
             const merged = [
               ...apiSectionTypes,
               ...KNOWN_SECTION_TYPES.filter(t => !apiSectionTypes.includes(t))
@@ -829,16 +1101,21 @@ export default function PageBuilderPage() {
               about: aboutNode?.props ? {
                 title: sv(aboutNode.props.title, fallback.about.title),
                 subtitle: sv(aboutNode.props.subtitle, fallback.about.subtitle),
-                // about.image can be null from backend — use fallback in that case
                 image: sv(aboutNode.props.image, fallback.about.image),
                 backgroundColor: sv(aboutNode.props.backgroundColor ?? aboutNode.props.background_color ?? aboutNode.props.bg_color, fallback.about.backgroundColor),
                 textColor: sv(aboutNode.props.textColor ?? aboutNode.props.text_color, fallback.about.textColor),
+                videoTag: sv(aboutNode.props.videoTag ?? aboutNode.props.video_tag, fallback.about.videoTag),
+                videoTitle: sv(aboutNode.props.videoTitle ?? aboutNode.props.video_title, fallback.about.videoTitle),
+                videoDesc: sv(aboutNode.props.videoDesc ?? aboutNode.props.video_desc, fallback.about.videoDesc),
+                videoLink: sv(aboutNode.props.videoLink ?? aboutNode.props.video_link, fallback.about.videoLink),
+                analyticsTitle: sv(aboutNode.props.analyticsTitle ?? aboutNode.props.analytics_title, fallback.about.analyticsTitle),
+                analyticsBars: Array.isArray(aboutNode.props.analyticsBars ?? aboutNode.props.analytics_bars) ? (aboutNode.props.analyticsBars ?? aboutNode.props.analytics_bars) : fallback.about.analyticsBars,
+                analyticsColor: sv(aboutNode.props.analyticsColor ?? aboutNode.props.analytics_color, fallback.about.analyticsColor),
               } : fallback.about,
 
               features: featuresNode?.props ? {
                 title: sv(featuresNode.props.title, fallback.features.title),
                 subtitle: sv(featuresNode.props.subtitle, fallback.features.subtitle),
-                // Use items from apiToEditor output (already flattened: item.title, item.icon, item.description)
                 items: safeItems(featuresNode.props.items, fallback.features.items),
                 backgroundColor: sv(featuresNode.props.backgroundColor ?? featuresNode.props.background_color ?? featuresNode.props.bg_color, fallback.features.backgroundColor),
                 textColor: sv(featuresNode.props.textColor ?? featuresNode.props.text_color, fallback.features.textColor),
@@ -850,6 +1127,17 @@ export default function PageBuilderPage() {
                 items: safeItems(pricingNode.props.items, fallback.pricing.items),
                 backgroundColor: sv(pricingNode.props.backgroundColor ?? pricingNode.props.background_color ?? pricingNode.props.bg_color, fallback.pricing.backgroundColor),
                 textColor: sv(pricingNode.props.textColor ?? pricingNode.props.text_color, fallback.pricing.textColor),
+                testimonialsTitle: sv(pricingNode.props.testimonialsTitle ?? pricingNode.props.testimonials_title, fallback.pricing.testimonialsTitle),
+                testimonialsSubtitle: sv(pricingNode.props.testimonialsSubtitle ?? pricingNode.props.testimonials_subtitle, fallback.pricing.testimonialsSubtitle),
+                testimonial1Text: sv(pricingNode.props.testimonial1Text ?? pricingNode.props.testimonial1_text, fallback.pricing.testimonial1Text),
+                testimonial1Author: sv(pricingNode.props.testimonial1Author ?? pricingNode.props.testimonial1_author, fallback.pricing.testimonial1Author),
+                testimonial1Role: sv(pricingNode.props.testimonial1Role ?? pricingNode.props.testimonial1_role, fallback.pricing.testimonial1Role),
+                testimonial2Text: sv(pricingNode.props.testimonial2Text ?? pricingNode.props.testimonial2_text, fallback.pricing.testimonial2Text),
+                testimonial2Author: sv(pricingNode.props.testimonial2Author ?? pricingNode.props.testimonial2_author, fallback.pricing.testimonial2Author),
+                testimonial2Role: sv(pricingNode.props.testimonial2Role ?? pricingNode.props.testimonial2_role, fallback.pricing.testimonial2Role),
+                testimonial3Text: sv(pricingNode.props.testimonial3Text ?? pricingNode.props.testimonial3_text, fallback.pricing.testimonial3Text),
+                testimonial3Author: sv(pricingNode.props.testimonial3Author ?? pricingNode.props.testimonial3_author, fallback.pricing.testimonial3Author),
+                testimonial3Role: sv(pricingNode.props.testimonial3Role ?? pricingNode.props.testimonial3_role, fallback.pricing.testimonial3Role),
               } : fallback.pricing,
 
               faq: faqNode?.props ? {
@@ -857,6 +1145,8 @@ export default function PageBuilderPage() {
                 items: safeItems(faqNode.props.items, fallback.faq.items),
                 backgroundColor: sv(faqNode.props.backgroundColor ?? faqNode.props.background_color ?? faqNode.props.bg_color, fallback.faq.backgroundColor),
                 textColor: sv(faqNode.props.textColor ?? faqNode.props.text_color, fallback.faq.textColor),
+                testimonialsTitle: sv(faqNode.props.testimonialsTitle ?? faqNode.props.testimonials_title, fallback.faq.testimonialsTitle),
+                testimonialsSubtitle: sv(faqNode.props.testimonialsSubtitle ?? faqNode.props.testimonials_subtitle, fallback.faq.testimonialsSubtitle),
               } : fallback.faq,
 
               contact: contactNode?.props ? {
@@ -872,10 +1162,14 @@ export default function PageBuilderPage() {
                 text: sv(footerNode.props.text, fallback.footer.text),
                 backgroundColor: sv(footerNode.props.backgroundColor ?? footerNode.props.background_color ?? footerNode.props.bg_color, fallback.footer.backgroundColor),
                 textColor: sv(footerNode.props.textColor ?? footerNode.props.text_color, fallback.footer.textColor),
+                newsletterTitle: sv(footerNode.props.newsletterTitle ?? footerNode.props.newsletter_title, fallback.footer.newsletterTitle),
+                newsletterDesc: sv(footerNode.props.newsletterDesc ?? footerNode.props.newsletter_desc, fallback.footer.newsletterDesc),
+                newsletterBtnText: sv(footerNode.props.newsletterBtnText ?? footerNode.props.newsletter_btn_text, fallback.footer.newsletterBtnText),
               } : fallback.footer,
             };
             setContent(parsedContent);
             setPreviewContent(parsedContent);
+            setInitialHtml(getHtmlForRole(currentRole, parsedContent));
             setLoading(false);
             return;
           }
@@ -892,6 +1186,7 @@ export default function PageBuilderPage() {
           const parsedCached = JSON.parse(cached);
           setContent(parsedCached);
           setPreviewContent(parsedCached);
+          setInitialHtml(getHtmlForRole(currentRole, parsedCached));
           setLoading(false);
           return;
         } catch (e) {
@@ -901,6 +1196,7 @@ export default function PageBuilderPage() {
       const defaults = getDefaultContent(currentRole, activeTemplateId);
       setContent(defaults);
       setPreviewContent(defaults);
+      setInitialHtml(getHtmlForRole(currentRole, defaults));
       setLoading(false);
     }
     
@@ -1038,6 +1334,7 @@ export default function PageBuilderPage() {
     const defaults = getDefaultContent(currentRole, activeTemplateId);
     setContent(defaults);
     setPreviewContent(defaults);
+    setInitialHtml(getHtmlForRole(currentRole, defaults));
     toast.success('تمت إعادة تعيين القيم الافتراضية للقالب.');
   };
 
@@ -1047,7 +1344,7 @@ export default function PageBuilderPage() {
     const updated = {
       ...content,
       [section]: {
-        ...content[section],
+        ...(content[section] || {}),
         [field]: value
       }
     };
@@ -1056,8 +1353,10 @@ export default function PageBuilderPage() {
   };
 
   const handleUpdateNestedField = (section: keyof TemplateContent, nestedKey: string, index: number, field: string, value: any) => {
-    if (!content) return;
-    const arrayCopy = [...(content[section] as any)[nestedKey]];
+    if (!content || !content[section]) return;
+    const currentArray = (content[section] as any)?.[nestedKey];
+    if (!Array.isArray(currentArray)) return;
+    const arrayCopy = [...currentArray];
     arrayCopy[index] = {
       ...arrayCopy[index],
       [field]: value
@@ -1074,8 +1373,9 @@ export default function PageBuilderPage() {
   };
 
   const handleAddListItem = (section: keyof TemplateContent, nestedKey: string, newItemTemplate: any) => {
-    if (!content) return;
-    const arrayCopy = [...(content[section] as any)[nestedKey]];
+    if (!content || !content[section]) return;
+    const currentArray = (content[section] as any)?.[nestedKey];
+    const arrayCopy = Array.isArray(currentArray) ? [...currentArray] : [];
     arrayCopy.push(newItemTemplate);
     const updated = {
       ...content,
@@ -1089,13 +1389,14 @@ export default function PageBuilderPage() {
   };
 
   const handleRemoveListItem = (section: keyof TemplateContent, nestedKey: string, index: number) => {
-    if (!content) return;
-    const arrayCopy = [...(content[section] as any)[nestedKey]];
-    if (arrayCopy.length <= 1) {
+    if (!content || !content[section]) return;
+    const currentArray = (content[section] as any)?.[nestedKey];
+    if (!Array.isArray(currentArray)) return;
+    if (currentArray.length <= 1) {
       toast.error('يجب توفر عنصر واحد على الأقل في هذا القسم.');
       return;
     }
-    const filtered = arrayCopy.filter((_, i) => i !== index);
+    const filtered = currentArray.filter((_, i) => i !== index);
     const updated = {
       ...content,
       [section]: {
@@ -1249,14 +1550,16 @@ export default function PageBuilderPage() {
               >
                 {sectionsList.map((sectionType) => {
                   const SECTION_LABELS: Record<string, string> = {
-                    navbar:   'شريط التنقل العلوي (Navbar)',
-                    hero:     'البانر الترحيبي (Hero Banner)',
-                    about:    'النبذة والتعريف (About Section)',
-                    features: 'مميزات الأكاديمية (Features)',
-                    pricing:  'الدورات والاشتراكات (Curriculum/Pricing)',
-                    faq:      'الأسئلة الشائعة (FAQ Accordions)',
-                    contact:  'أزرار التواصل (Contact/WhatsApp)',
-                    footer:   'تذييل الصفحة (Footer Bar)',
+                    navbar:       'شريط التنقل العلوي (Navbar)',
+                    hero:         'البانر الترحيبي (Hero Banner)',
+                    about:        'النبذة والتعريف (About Section)',
+                    video:        'فيديو العرض التعريفي (Video Intro)',
+                    features:     'مميزات الأكاديمية (Features)',
+                    pricing:      'الدورات والأسعار (Curriculum/Pricing)',
+                    testimonials: 'آراء العملاء والتقييمات (Testimonials)',
+                    faq:          'الأسئلة الشائعة (FAQ Accordions)',
+                    contact:      'أزرار التواصل (Contact/WhatsApp)',
+                    footer:       'تذييل الصفحة (Footer Bar)',
                   };
                   return (
                     <option key={sectionType} value={sectionType}>
@@ -1362,14 +1665,27 @@ export default function PageBuilderPage() {
                     />
                   </div>
 
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">نص الزر الإرشادي (CTA Button)</label>
-                    <input
-                      type="text"
-                      value={content.hero.buttonText}
-                      onChange={(e) => handleUpdateField('hero', 'buttonText', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">نص الزر الإرشادي (CTA Button)</label>
+                      <input
+                        type="text"
+                        value={content.hero.buttonText}
+                        onChange={(e) => handleUpdateField('hero', 'buttonText', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">رابط الزر (Link / ID)</label>
+                      <input
+                        type="text"
+                        value={content.hero.buttonLink || '#'}
+                        onChange={(e) => handleUpdateField('hero', 'buttonLink', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                        dir="ltr"
+                        placeholder="#contact"
+                      />
+                    </div>
                   </div>
 
                   <div className="flex flex-col gap-1">
@@ -1428,7 +1744,7 @@ export default function PageBuilderPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
+                  <div id="about-analytics-editor-header" className="flex flex-col gap-1">
                     <label className="text-[11px] font-bold text-slate-600">عنوان قسم النبذة</label>
                     <input
                       type="text"
@@ -1479,6 +1795,141 @@ export default function PageBuilderPage() {
 
                     <div className="flex flex-col gap-1">
                       <label className="text-[11px] font-bold text-slate-600">لون نصوص النبذة</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input
+                          type="color"
+                          value={content.about.textColor}
+                          onChange={(e) => handleUpdateField('about', 'textColor', e.target.value)}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                        />
+                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.textColor}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Analytics Chart Controls */}
+                  {!content.about.image && (
+                    <div className="border-t border-slate-100 pt-3 mt-3 space-y-3">
+                      <h4 id="about-analytics-editor-header" className="text-[11px] font-extrabold text-slate-700">تخصيص مخطط ورؤى الأداء (Analytics Chart)</h4>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">عنوان المخطط الإحصائي</label>
+                        <input
+                          type="text"
+                          value={content.about.analyticsTitle || 'رؤى الأداء المؤسسي'}
+                          onChange={(e) => handleUpdateField('about', 'analyticsTitle', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون أعمدة التحليلات</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.about.analyticsColor || '#3525cd'}
+                            onChange={(e) => handleUpdateField('about', 'analyticsColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.analyticsColor || '#3525cd'}</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 pt-1">
+                        <label className="text-[11px] font-bold text-slate-600 block">منحنيات وارتفاعات الأعمدة (الأداء %):</label>
+                        {([0, 1, 2, 3, 4]).map((barIdx) => {
+                          const bars = content.about.analyticsBars || [40, 65, 85, 50, 95];
+                          const val = bars[barIdx] ?? 50;
+                          return (
+                            <div key={barIdx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                              <span className="text-[10px] font-bold text-slate-600 w-14 shrink-0">عمود {barIdx + 1}:</span>
+                              <input
+                                type="range"
+                                min="15"
+                                max="100"
+                                value={val}
+                                onChange={(e) => {
+                                  const newBars = [...(content.about.analyticsBars || [40, 65, 85, 50, 95])];
+                                  newBars[barIdx] = parseInt(e.target.value, 10);
+                                  handleUpdateField('about', 'analyticsBars', newBars);
+                                }}
+                                className="flex-grow accent-blue-600 cursor-pointer"
+                              />
+                              <span className="text-[10px] font-mono font-extrabold text-blue-600 w-8 text-left">{val}%</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Video Intro Editor */}
+            {activeSection === 'video' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص فيديو الفلسفة التعليمية (Video Intro)</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div id="about-video-editor-header" className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">شارة الفيديو (Tag)</label>
+                    <input
+                      type="text"
+                      value={content.about.videoTag || ''}
+                      onChange={(e) => handleUpdateField('about', 'videoTag', e.target.value)}
+                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">عنوان الفيديو</label>
+                    <input
+                      type="text"
+                      value={content.about.videoTitle || ''}
+                      onChange={(e) => handleUpdateField('about', 'videoTitle', e.target.value)}
+                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">وصف الفيديو</label>
+                    <textarea
+                      value={content.about.videoDesc || ''}
+                      onChange={(e) => handleUpdateField('about', 'videoDesc', e.target.value)}
+                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[80px]"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">رابط الفيديو / صورة العرض (Video Link / Thumbnail)</label>
+                    <input
+                      type="text"
+                      value={content.about.videoLink || ''}
+                      onChange={(e) => handleUpdateField('about', 'videoLink', e.target.value)}
+                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                      dir="ltr"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">خلفية قسم الفيديو</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input
+                          type="color"
+                          value={content.about.backgroundColor}
+                          onChange={(e) => handleUpdateField('about', 'backgroundColor', e.target.value)}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                        />
+                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.backgroundColor}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">لون النصوص</label>
                       <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
                         <input
                           type="color"
@@ -1560,22 +2011,80 @@ export default function PageBuilderPage() {
                         
                         <div className="flex flex-col gap-1">
                           <label className="text-[9px] font-bold text-slate-500">
-                            {item.icon && (item.icon.startsWith('http') || item.icon.includes('/')) 
-                              ? 'رابط صورة الميزة / الموجه' 
-                              : 'رمز الأيقونة (مثال: Award, BookOpen أو رابط صورة)'}
+                            {item.icon && (item.icon.startsWith('http') || item.icon.includes('/') || item.icon.startsWith('data:'))
+                              ? 'رابط صورة الميزة / الموجه'
+                              : 'أيقونة الميزة'}
                           </label>
-                          <div className="flex gap-2 items-center">
-                            {item.icon && (item.icon.startsWith('http') || item.icon.includes('/')) && (
-                              <img src={item.icon} className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0" alt="preview" />
+                          {/* Icon picker: Material Symbols grid */}
+                          <div className="border border-slate-200 rounded-xl bg-white overflow-hidden">
+                            {/* URL/name input always visible */}
+                            <div className="flex gap-2 items-center p-2">
+                              {item.icon && (item.icon.startsWith('http') || item.icon.includes('/') || item.icon.startsWith('data:')) && (
+                                <img src={item.icon} className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0" alt="preview" />
+                              )}
+                              {!item.icon?.startsWith('http') && !item.icon?.includes('/') && item.icon && (
+                                <span className="material-symbols-outlined text-blue-600 text-[22px] shrink-0" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20" }}>{item.icon}</span>
+                              )}
+                              <input
+                                type="text"
+                                value={item.icon}
+                                onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'icon', e.target.value)}
+                                className="border border-slate-200 rounded-lg p-2 text-[10px] bg-slate-50 outline-none font-mono flex-1 text-left focus:border-blue-500"
+                                placeholder="رابط صورة أو اسم أيقونة"
+                                dir="ltr"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setOpenIconPickerIdx(openIconPickerIdx === idx ? null : idx)}
+                                className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                                  openIconPickerIdx === idx
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-slate-100 text-slate-500 hover:bg-blue-100 hover:text-blue-600'
+                                }`}
+                                title={openIconPickerIdx === idx ? 'إغلاق الأيقونات' : 'اختيار أيقونة'}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                                  {openIconPickerIdx === idx ? 'expand_less' : 'grid_view'}
+                                </span>
+                              </button>
+                            </div>
+                            {/* Material Symbols grid picker (collapsible) */}
+                            {openIconPickerIdx === idx && (
+                              <div className="border-t border-slate-100 p-2">
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <p className="text-[9px] text-slate-400 font-bold">اختر أيقونة:</p>
+                                  <button
+                                    type="button"
+                                    onClick={() => setOpenIconPickerIdx(null)}
+                                    className="text-[9px] text-slate-400 hover:text-red-500 font-bold flex items-center gap-0.5"
+                                  >
+                                    <X className="w-3 h-3" /> إغلاق
+                                  </button>
+                                </div>
+                                <div className="grid grid-cols-8 gap-1">
+                                  {['school','menu_book','star','verified','check_circle','rocket_launch','psychology','lightbulb','emoji_events','workspace_premium','military_tech','grade','local_library','auto_stories','science','calculate','draw','edit','history_edu','sports_esports','devices','laptop','tablet_mac','phone_iphone','cloud','data_usage','analytics','bar_chart','trending_up','timeline','groups','people','person','supervisor_account','support_agent','headset_mic','chat','forum','language','translate','public','travel_explore','apartment','business','corporate_fare','account_balance','hub','bolt','diamond','favorite'].map((iconName) => (
+                                    <button
+                                      key={iconName}
+                                      type="button"
+                                      title={iconName}
+                                      onClick={() => {
+                                        handleUpdateNestedField('features', 'items', idx, 'icon', iconName);
+                                        setOpenIconPickerIdx(null);
+                                      }}
+                                      className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:bg-blue-100 hover:text-blue-600 ${
+                                        item.icon === iconName
+                                          ? 'bg-blue-600 text-white'
+                                          : 'text-slate-600 bg-slate-50'
+                                      }`}
+                                    >
+                                      <span className="material-symbols-outlined" style={{ fontSize: '16px', fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20" }}>
+                                        {iconName}
+                                      </span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
                             )}
-                            <input
-                              type="text"
-                              value={item.icon}
-                              onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'icon', e.target.value)}
-                              className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-mono flex-1 text-left"
-                              placeholder="أدخل اسم الأيقونة أو رابط الصورة"
-                              dir="ltr"
-                            />
                           </div>
                         </div>
 
@@ -1751,6 +2260,101 @@ export default function PageBuilderPage() {
               </div>
             )}
 
+            {/* Testimonials Editor (Standalone Section) */}
+            {activeSection === 'testimonials' && (
+              <div className="space-y-5">
+                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص آراء العملاء والتقييمات</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم الآراء الرئيسي</label>
+                    <input
+                      type="text"
+                      value={content.pricing.testimonialsTitle || ''}
+                      onChange={(e) => handleUpdateField('pricing', 'testimonialsTitle', e.target.value)}
+                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">عنوان فرعي لقسم الآراء</label>
+                    <input
+                      type="text"
+                      value={content.pricing.testimonialsSubtitle || ''}
+                      onChange={(e) => handleUpdateField('pricing', 'testimonialsSubtitle', e.target.value)}
+                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                    />
+                  </div>
+
+                  {/* Testimonials Items 1, 2, 3 */}
+                  {[1, 2, 3].map((num) => (
+                    <div key={num} className="border border-slate-200 bg-slate-50 rounded-xl p-3 space-y-2">
+                      <span className="text-[10px] font-extrabold text-slate-700 block border-b border-slate-200 pb-1">الرأي {num}:</span>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[9px] font-bold text-slate-500">نص الرأي</label>
+                        <textarea
+                          value={(content.pricing as any)[`testimonial${num}Text`] || ''}
+                          onChange={(e) => handleUpdateField('pricing', `testimonial${num}Text`, e.target.value)}
+                          className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 min-h-[60px]"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">صاحب الرأي</label>
+                          <input
+                            type="text"
+                            value={(content.pricing as any)[`testimonial${num}Author`] || ''}
+                            onChange={(e) => handleUpdateField('pricing', `testimonial${num}Author`, e.target.value)}
+                            className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-bold"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">الوظيفة / الصفة</label>
+                          <input
+                            type="text"
+                            value={(content.pricing as any)[`testimonial${num}Role`] || ''}
+                            onChange={(e) => handleUpdateField('pricing', `testimonial${num}Role`, e.target.value)}
+                            className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">خلفية قسم الآراء</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input
+                          type="color"
+                          value={content.pricing.backgroundColor}
+                          onChange={(e) => handleUpdateField('pricing', 'backgroundColor', e.target.value)}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                        />
+                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.pricing.backgroundColor}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">لون نصوص الآراء</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input
+                          type="color"
+                          value={content.pricing.textColor}
+                          onChange={(e) => handleUpdateField('pricing', 'textColor', e.target.value)}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                        />
+                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.pricing.textColor}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* FAQ Editor */}
             {activeSection === 'faq' && (
               <div className="space-y-5">
@@ -1826,6 +2430,34 @@ export default function PageBuilderPage() {
                       </div>
                     ))}
                   </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">خلفية قسم الأسئلة</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input
+                          type="color"
+                          value={content.faq.backgroundColor}
+                          onChange={(e) => handleUpdateField('faq', 'backgroundColor', e.target.value)}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                        />
+                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.faq.backgroundColor}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">لون نصوص الأسئلة</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input
+                          type="color"
+                          value={content.faq.textColor}
+                          onChange={(e) => handleUpdateField('faq', 'textColor', e.target.value)}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                        />
+                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.faq.textColor}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -1871,13 +2503,41 @@ export default function PageBuilderPage() {
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">نص زر الواتساب</label>
+                    <label className="text-[11px] font-bold text-slate-600">نص زر التواصل / الواتساب</label>
                     <input
                       type="text"
                       value={content.contact.buttonText}
                       onChange={(e) => handleUpdateField('contact', 'buttonText', e.target.value)}
                       className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
                     />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input
+                          type="color"
+                          value={content.contact.backgroundColor}
+                          onChange={(e) => handleUpdateField('contact', 'backgroundColor', e.target.value)}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                        />
+                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.contact.backgroundColor}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">لون النصوص</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input
+                          type="color"
+                          value={content.contact.textColor}
+                          onChange={(e) => handleUpdateField('contact', 'textColor', e.target.value)}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                        />
+                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.contact.textColor}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1900,6 +2560,36 @@ export default function PageBuilderPage() {
                       onChange={(e) => handleUpdateField('footer', 'text', e.target.value)}
                       className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
                     />
+                  </div>
+
+                  <div className="border-t border-slate-100 pt-3 mt-3 space-y-3">
+                    <h4 className="text-[11px] font-extrabold text-slate-700">تعديل النشرة البريدية (Newsletter)</h4>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">عنوان النشرة البريدية</label>
+                      <input
+                        type="text"
+                        value={content.footer.newsletterTitle || ''}
+                        onChange={(e) => handleUpdateField('footer', 'newsletterTitle', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">وصف النشرة البريدية</label>
+                      <textarea
+                        value={content.footer.newsletterDesc || ''}
+                        onChange={(e) => handleUpdateField('footer', 'newsletterDesc', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[60px]"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">نص زر الاشتراك</label>
+                      <input
+                        type="text"
+                        value={content.footer.newsletterBtnText || ''}
+                        onChange={(e) => handleUpdateField('footer', 'newsletterBtnText', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -1986,29 +2676,14 @@ export default function PageBuilderPage() {
             </div>
 
             {/* Simulated Live Renderer Web Page Content */}
-            {currentRole === 'academy' ? (
+            {initialHtml ? (
               <iframe
+                key={`${currentRole}_${activeTemplateId}`}
                 id="website-builder-iframe"
-                srcDoc={getAcademicHtml(content)}
+                srcDoc={initialHtml}
                 onLoad={handleIframeLoad}
                 className="w-full h-full border-0"
-                title="Academic Preview"
-              />
-            ) : currentRole === 'coach' ? (
-              <iframe
-                id="website-builder-iframe"
-                srcDoc={getCoachHtml(content)}
-                onLoad={handleIframeLoad}
-                className="w-full h-full border-0"
-                title="Coach Preview"
-              />
-            ) : currentRole === 'schoolcoach' ? (
-              <iframe
-                id="website-builder-iframe"
-                srcDoc={getSchoolCoachHtml(content)}
-                onLoad={handleIframeLoad}
-                className="w-full h-full border-0"
-                title="School Coach Preview"
+                title="Website Preview"
               />
             ) : (
               <div className="flex-1 overflow-y-auto bg-white select-none">
