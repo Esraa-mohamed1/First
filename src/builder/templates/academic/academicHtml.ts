@@ -9,6 +9,10 @@ export interface TemplateContent {
     image: string;
     backgroundColor: string;
     textColor: string;
+    titleColor?: string;
+    subtitleColor?: string;
+    buttonColor?: string;
+    buttonTextColor?: string;
   };
   about: {
     title: string;

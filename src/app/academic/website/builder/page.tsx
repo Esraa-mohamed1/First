@@ -54,23 +54,48 @@ interface HeroConfig {
   description: string;
   buttonText: string;
   buttonLink: string;
+  secondaryButtonText?: string;
+  secondaryButtonLink?: string;
+  coachingMessage?: string;
   image: string;
   backgroundColor: string;
   textColor: string;
+  titleColor?: string;
+  subtitleColor?: string;
+  buttonBgColor?: string;
+  buttonTextColor?: string;
+  secondaryButtonBorderColor?: string;
+  secondaryButtonTextColor?: string;
+  coachingCardBgColor?: string;
+  coachingCardTextColor?: string;
 }
 
 interface AboutConfig {
   title: string;
   subtitle: string;
+  description?: string;
+  biography?: string;
+  coachTitle?: string;
+  skills?: string[];
+  cvText?: string;
   image: string;
   backgroundColor: string;
   textColor: string;
+  titleColor?: string;
 }
 
 interface FeatureItem {
+  id?: string;
   icon: string;
   title: string;
   description: string;
+  level?: string;
+  duration?: string;
+  lessons?: string;
+  price?: string;
+  ctaText?: string;
+  features?: string[];
+  image?: string;
 }
 
 interface FeaturesConfig {
@@ -79,9 +104,13 @@ interface FeaturesConfig {
   items: FeatureItem[];
   backgroundColor: string;
   textColor: string;
+  titleColor?: string;
+  subtitleColor?: string;
+  ctaText?: string;
 }
 
 interface PricingItem {
+  id?: string;
   title: string;
   price: string;
   features: string[];
@@ -95,16 +124,57 @@ interface PricingConfig {
   textColor: string;
 }
 
+interface JourneyStep {
+  id: string;
+  stepNumber: string;
+  title: string;
+  description: string;
+  icon?: string;
+}
+
+interface JourneyConfig {
+  title: string;
+  subtitle: string;
+  steps: JourneyStep[];
+  backgroundColor: string;
+  textColor: string;
+  titleColor?: string;
+  stepNumberBgColor?: string;
+  stepNumberTextColor?: string;
+}
+
+interface TestimonialItem {
+  id: string;
+  name: string;
+  role: string;
+  avatar?: string;
+  initials?: string;
+  review: string;
+  rating: number;
+}
+
+interface TestimonialsConfig {
+  title: string;
+  subtitle: string;
+  items: TestimonialItem[];
+  backgroundColor: string;
+  textColor: string;
+  titleColor?: string;
+}
+
 interface FAQItem {
+  id?: string;
   question: string;
   answer: string;
 }
 
 interface FAQConfig {
   title: string;
+  subtitle?: string;
   items: FAQItem[];
   backgroundColor: string;
   textColor: string;
+  titleColor?: string;
 }
 
 interface ContactConfig {
@@ -112,8 +182,33 @@ interface ContactConfig {
   description: string;
   phoneNumber: string;
   buttonText: string;
+  email?: string;
+  whatsapp?: string;
+  whatsappText?: string;
+  emailText?: string;
+  phoneText?: string;
+  facebook?: string;
+  instagram?: string;
+  linkedin?: string;
+  twitter?: string;
   backgroundColor: string;
   textColor: string;
+  titleColor?: string;
+  buttonBgColor?: string;
+  buttonTextColor?: string;
+}
+
+interface FinalCtaConfig {
+  title: string;
+  description: string;
+  icon?: string;
+  emailPlaceholder?: string;
+  buttonText?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  accentColor?: string;
+  buttonBgColor?: string;
+  buttonTextColor?: string;
 }
 
 interface FooterConfig {
@@ -128,8 +223,11 @@ interface TemplateContent {
   about: AboutConfig;
   features: FeaturesConfig;
   pricing: PricingConfig;
+  journey: JourneyConfig;
+  testimonials: TestimonialsConfig;
   faq: FAQConfig;
   contact: ContactConfig;
+  finalCta: FinalCtaConfig;
   footer: FooterConfig;
 }
 
@@ -229,6 +327,35 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
           text: '© ٢٠٢٦ الأستاذ أحمد محمد. جميع الحقوق محفوظة.',
           backgroundColor: '#0a1628',
           textColor: '#ffffff'
+        },
+        journey: {
+          title: 'رحلة التعلم والتميز',
+          subtitle: 'خطوات متسلسلة ومنظمة تحول المعرفة إلى مهارات تطبيقية ملموسة.',
+          steps: [
+            { id: 'j1', stepNumber: '01', title: 'اختر المادة الدراسية', description: 'حدد الفرع المناسب لمستواك الدراسي.' },
+            { id: 'j2', stepNumber: '02', title: 'تابع الدروس والتطبيقات', description: 'شاهد الشروحات التفاعلية واحل الأسئلة.' },
+            { id: 'j3', stepNumber: '03', title: 'احصل على التقييم', description: 'تابع مستواك من خلال الامتحانات الذكية.' }
+          ],
+          backgroundColor: '#eef0f3',
+          textColor: '#1a1f29'
+        },
+        testimonials: {
+          title: 'آراء الطلاب وأولياء الأمور',
+          subtitle: 'تجارب واقعية من طلاب حققوا الدرجات النهائية.',
+          items: [
+            { id: 't1', name: 'أحمد سعيد', role: 'طالب ثالث ثانوي', initials: 'أ.س', review: 'الشرح كان واضحاً ومبسطاً جداً، حصلت على المجموع الكلي بفضل الله ثم الأستاذ.', rating: 5 }
+          ],
+          backgroundColor: '#ffffff',
+          textColor: '#1a1f29'
+        },
+        finalCta: {
+          title: 'جاهز لتبدأ رحلة تفوقك الدراسي؟',
+          description: 'اشترك الآن في النشرة ليصلك أحدث الملخصات والأسئلة الهامة.',
+          icon: 'school',
+          emailPlaceholder: 'البريد الإلكتروني',
+          buttonText: 'اشترك الآن',
+          backgroundColor: '#0a1628',
+          textColor: '#ffffff'
         }
       };
     } else {
@@ -294,6 +421,33 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
           text: 'بوابة المتفوق الأكاديمية © جميع الحقوق محفوظة لعام ٢٠٢٦',
           backgroundColor: '#0f172a',
           textColor: '#94a3b8'
+        },
+        journey: {
+          title: 'رحلة التعلم الحديثة',
+          subtitle: 'تعلم تفاعلي وسريع يناسب أسلوب حياتك.',
+          steps: [
+            { id: 'j1', stepNumber: '01', title: 'شاهد الكبسولة', description: 'شرح ممتع ومكثف.' }
+          ],
+          backgroundColor: '#0f172a',
+          textColor: '#ffffff'
+        },
+        testimonials: {
+          title: 'تجارب الطلاب المتميزين',
+          subtitle: 'آراء وتقييمات من مستخدمي المنصة.',
+          items: [
+            { id: 't1', name: 'سارة خالد', role: 'طالبة', initials: 'س.خ', review: 'التطبيق المباشر والخرائط الذهنية سهلت عليا المذاكرة.', rating: 5 }
+          ],
+          backgroundColor: '#1e293b',
+          textColor: '#ffffff'
+        },
+        finalCta: {
+          title: 'انضم لبوابة المتفوق الأكاديمية',
+          description: 'اشترك الآن للحصول على التحديثات والمراجعات.',
+          icon: 'sparkles',
+          emailPlaceholder: 'البريد الإلكتروني',
+          buttonText: 'تفعيل الاشتراك',
+          backgroundColor: '#0f172a',
+          textColor: '#ffffff'
         }
       };
     }
@@ -306,75 +460,175 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         description: 'أكاديمية تعليمية وتدريبية متخصصة تحت إشراف الكوتش مباشرة. نقدم لك كورسات عملية ومبسطة تساعدك على بناء مهارات حقيقية والوصول لأهدافك بخطوات مدروسة.',
         buttonText: 'استكشف الكورسات',
         buttonLink: '#courses',
+        secondaryButtonText: 'تعرّف على الكوتش',
+        secondaryButtonLink: '#about',
+        coachingMessage: 'التوجيه الشخصي — التعلم الفعال يعتمد على الفهم العميق والتطبيق العملي المباشر.',
         image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800&auto=format&fit=crop',
         backgroundColor: '#faf9fb',
-        textColor: '#1a1c1d'
+        textColor: '#1a1c1d',
+        titleColor: '',
+        subtitleColor: '',
+        buttonBgColor: '#4f378a',
+        buttonTextColor: '#ffffff',
+        secondaryButtonBorderColor: '#4f378a',
+        secondaryButtonTextColor: '#4f378a',
+        coachingCardBgColor: '#f4f3f5',
+        coachingCardTextColor: '#49454f'
       },
       about: {
         title: 'عن الكوتش',
         subtitle: 'خبرة عملية وتوجيه مستمر للوصول إلى أهدافك التعليمية.',
+        description: 'أهلاً بك! أنا مدربك في هذه الأكاديمية. أسعى لتقديم محتوى تعليمي عملي ومباشر يجمع بين الفهم النظري والتطبيق الفعلي، دون تعقيد أو حشو غير ضروري.',
+        biography: 'هدفنا هنا ليس مجرد مشاهدة الدروس، بل التأكد من قدرتك على تطبيق كل معلومة تتعلمها، وتطوير مهاراتك خطوة بخطوة للحصول على نتائج ملموسة.',
+        coachTitle: 'مدرب وموجه تعليمي',
+        skills: ['منهجية مبسطة', 'توجيه شخصي', 'تطبيقات عملية', 'متابعة مستمرة'],
+        cvText: '',
         image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop',
         backgroundColor: '#ffffff',
-        textColor: '#1a1c1d'
+        textColor: '#1a1c1d',
+        titleColor: '#4f378a'
       },
       features: {
-        title: 'الكورسات المتاحة',
+        title: 'الدورات التدريبية والكورسات',
         subtitle: 'برامج تعليمية متكاملة مصممة لنقل مهاراتك من المستوى الأساسي إلى الاحترافي.',
         items: [
           {
+            id: 'course-analytical-thinking',
             icon: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop',
             title: 'أساسيات التفكير التحليلي وحل المشكلات',
-            description: 'كورس عملي يغطي أدوات التحليل المنطقي واتخاذ القرارات بناءً على بيانات ومعلومات دقيقة.'
+            description: 'كورس عملي يغطي أدوات التحليل المنطقي واتخاذ القرارات بناءً على بيانات ومعلومات دقيقة.',
+            level: 'مبتدئ',
+            duration: '٦ أسابيع',
+            lessons: '١٢ درس',
+            ctaText: 'عرض الكورس',
+            price: '',
+            features: ['تمارين عملية', 'اختبارات تقييمية', 'شهادة إتمام'],
+            image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop'
           },
           {
+            id: 'course-planning-execution',
             icon: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
             title: 'منهجية التخطيط والتنفيذ العملي',
-            description: 'تعلم كيفية تحويل الأهداف الكبيرة إلى خطط عمل تنفيذية ومتابعة الإنجاز بفاعلية.'
+            description: 'تعلم كيفية تحويل الأهداف الكبيرة إلى خطط عمل تنفيذية ومتابعة الإنجاز بفاعلية.',
+            level: 'متوسط',
+            duration: '٨ أسابيع',
+            lessons: '١٥ درس',
+            ctaText: 'عرض الكورس',
+            price: '',
+            features: ['نموذج خطط عمل', 'متابعة أسبوعية', 'تطبيقات حقيقية'],
+            image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop'
           },
           {
+            id: 'course-content-writing',
             icon: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&auto=format&fit=crop',
             title: 'صياغة المحتوى وبناء الأفكار الاحترافية',
-            description: 'دليل شامل لإتقان صياغة الأفكار وتوصيل الرسائل بوضوح وجاذبية للمستهدفين.'
+            description: 'دليل شامل لإتقان صياغة الأفكار وتوصيل الرسائل بوضوح وجاذبية للمستهدفين.',
+            level: 'متقدم',
+            duration: '٥ أسابيع',
+            lessons: '١٠ درس',
+            ctaText: 'عرض الكورس',
+            price: '',
+            features: ['نماذج محتوى', 'تغذية راجعة', 'مشاريع عملية'],
+            image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&auto=format&fit=crop'
           }
         ],
         backgroundColor: '#f4f3f5',
-        textColor: '#1a1c1d'
+        textColor: '#1a1c1d',
+        titleColor: '#1a1c1d',
+        subtitleColor: '#49454f',
+        ctaText: 'عرض الكورس'
       },
       pricing: {
         title: 'الكورسات والدورات التدريبية',
         subtitle: 'دورات مكثفة ومباشرة مصممة للتطبيق العملي.',
         items: [
           {
+            id: 'pricing-1',
             title: 'أساسيات التفكير التحليلي',
             price: 'كورس كامل',
-            features: ['١٢ درس • ٦ أسابيع', 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop']
+            features: ['١٢ درس • ٦ أسابيع']
           },
           {
+            id: 'pricing-2',
             title: 'التخطيط والتنفيذ العملي',
             price: 'كورس متقدم',
-            features: ['١٥ درس • ٨ أسابيع', 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop']
+            features: ['١٥ درس • ٨ أسابيع']
           }
         ],
         backgroundColor: '#ffffff',
         textColor: '#1a1c1d'
       },
+      journey: {
+        title: 'رحلة التعلم مع الكوتش',
+        subtitle: 'خطوات متسلسلة ومنظمة تحول المعرفة إلى مهارات تطبيقية ملموسة.',
+        steps: [
+          { id: 'j1', stepNumber: '01', title: 'اختر الكورس', description: 'حدد الكورس المناسب لهدفك الحالي.', icon: 'school' },
+          { id: 'j2', stepNumber: '02', title: 'ابدأ التعلم', description: 'شاهد الدروس المسجلة في أي وقت.', icon: 'play_circle' },
+          { id: 'j3', stepNumber: '03', title: 'طبّق التمارين', description: 'نفّذ المهام التطبيقية المرفقة.', icon: 'assignment_turned_in' },
+          { id: 'j4', stepNumber: '04', title: 'احصل على التوجيه', description: 'احصل على ملاحظات وإجابات الكوتش.', icon: 'forum' },
+          { id: 'j5', stepNumber: '05', title: 'طوّر مستواك', description: 'حقّق نتائج ملموسة وواصل النمو.', icon: 'update' }
+        ],
+        backgroundColor: '#f4f3f5',
+        textColor: '#1a1c1d',
+        titleColor: '#1a1c1d',
+        stepNumberBgColor: '#4f378a',
+        stepNumberTextColor: '#ffffff'
+      },
+      testimonials: {
+        title: 'آراء الطلاب والمشاركين',
+        subtitle: 'تجارب واقعية من متعلمين استفادوا من الكورسات والتوجيه المباشر.',
+        items: [
+          { id: 't1', name: 'محمد العتيبي', role: 'متعلم مستمر', initials: 'م.ع', review: 'الشرح كان واضحاً جداً، والأهم إني قدرت أطبق اللي اتعلمته عملياً في شغلي من أول أسبوع. التوجيه المباشر اختصر عليا وقت طويل.', rating: 5 },
+          { id: 't2', name: 'ريم السعيد', role: 'مستفيدة من الكورسات', initials: 'ر.س', review: 'الكورس كان منظم بشكل ممتاز وبدون أي حشو. الكوتش يركز على التطبيق وعلى إعطاء أمثلة من واقع العمل اليومي.', rating: 5 },
+          { id: 't3', name: 'طارق مصطفى', role: 'صانع محتوى', initials: 'ط.م', review: 'كنت أعاني من تشتت الأفكار عند التخطيط لمشروعي. من خلال التمارين والمتابعة، قدرت أصيغ الخطة بوضوح وأبدأ التنفيذ.', rating: 5 }
+        ],
+        backgroundColor: '#ffffff',
+        textColor: '#1a1c1d',
+        titleColor: '#1a1c1d'
+      },
       faq: {
         title: 'الأسئلة الشائعة',
+        subtitle: 'إجابات لأكثر الأسئلة تكراراً حول الكورسات ونظام التعلم.',
         items: [
-          { question: 'هل الكورسات مناسبة للمبتدئين؟', answer: 'نعم، تبدأ الكورسات من الأساسيات وتتدرج خطوة بخطوة.' },
-          { question: 'هل توجد متابعة أو إجابة على الاستفسارات؟', answer: 'نعم، يتم الرد على جميع الاستفسارات والتساؤلات بشكل مباشر.' },
-          { question: 'هل يمكنني التعلم بالسرعة التي تناسبني؟', answer: 'بالتأكيد، الدروس متاح لك مشاهدتها وإعادتها في أي وقت.' }
+          { id: 'f1', question: 'هل الكورسات مناسبة للمبتدئين؟', answer: 'نعم، جميع الكورسات مصممة لتبدأ معك من الأساسيات وتتدرج خطوة بخطوة حتى المستوى المتقدم.' },
+          { id: 'f2', question: 'هل توجد متابعة أو إجابة على الاستفسارات؟', answer: 'نعم، يمكنك تقديم استفساراتك والحصول على توجيه وإجابة مباشرة من الكوتش.' },
+          { id: 'f3', question: 'هل يمكنني التعلم بالسرعة التي تناسبني؟', answer: 'بالتأكيد، المحتوى متاح لك دائماً لتشاهده وتطبقه بالسرعة المناسبة لك.' }
         ],
         backgroundColor: '#faf9fb',
-        textColor: '#1a1c1d'
+        textColor: '#1a1c1d',
+        titleColor: '#1a1c1d'
       },
       contact: {
         title: 'Deep Knowledge Academy',
         description: 'أكاديمية تعليمية وتدريبية متخصصة تحت إشراف الكوتش مباشرة لبناء مهارات عملية ملموسة.',
         phoneNumber: '',
         buttonText: 'تواصل مع الكوتش',
+        email: '',
+        whatsapp: '',
+        whatsappText: 'تواصل واتساب',
+        emailText: 'راسلنا عبر البريد',
+        phoneText: 'اتصل بنا',
+        facebook: '',
+        instagram: '',
+        linkedin: '',
+        twitter: '',
         backgroundColor: '#4f378a',
-        textColor: '#ffffff'
+        textColor: '#ffffff',
+        titleColor: '#ffffff',
+        buttonBgColor: '#ffffff',
+        buttonTextColor: '#4f378a'
+      },
+      finalCta: {
+        title: 'جاهز لتبدأ رحلة التعلم وتطوير مهاراتك؟',
+        description: 'اشترك في النشرة التعليمية ليصلك أحدث الكورسات والدروس المجانية والنصائح العملية مباشرة على بريدك.',
+        icon: 'school',
+        emailPlaceholder: 'البريد الإلكتروني',
+        buttonText: 'اشترك الآن',
+        backgroundColor: '#4f378a',
+        textColor: '#1a1c1d',
+        accentColor: '#E9DDFF',
+        buttonBgColor: '#4f378a',
+        buttonTextColor: '#ffffff'
       },
       footer: {
         text: '© 2024 Deep Knowledge Academy. جميع الحقوق محفوظة.',
@@ -447,6 +701,33 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         text: '© 2024 إديوكور الأكاديمية. جميع الحقوق محفوظة.',
         backgroundColor: '#ffffff',
         textColor: '#1b1b24'
+      },
+      journey: {
+        title: 'رحلة التميز الأكاديمي المؤسسي',
+        subtitle: 'مسار منظومة العمل الأكاديمي التحليلي.',
+        steps: [
+          { id: 'j1', stepNumber: '01', title: 'التهيئة والتكامل', description: 'ربط الأنظمة الأكاديمية وإعداد اللوحات.' }
+        ],
+        backgroundColor: '#f5f2ff',
+        textColor: '#1b1b24'
+      },
+      testimonials: {
+        title: 'آراء وتقييمات القيادات الأكاديمية',
+        subtitle: 'تجارب واقعية من مؤسسات تعليمية رائدة.',
+        items: [
+          { id: 't1', name: 'د. خالد العمري', role: 'عميد القبول والتسجيل', initials: 'خ.ع', review: 'نظام متكامل ساهم في تحسين التحليلات وكفاءة اتخاذ القرار.', rating: 5 }
+        ],
+        backgroundColor: '#ffffff',
+        textColor: '#1b1b24'
+      },
+      finalCta: {
+        title: 'جاهز لبناء مستقبل التعليم المؤسسي؟',
+        description: 'ارتق بمؤسستك التعليمية اليوم معنا.',
+        icon: 'insights',
+        emailPlaceholder: 'البريد المؤسسي',
+        buttonText: 'تواصل معنا',
+        backgroundColor: '#3525cd',
+        textColor: '#ffffff'
       }
     };
   }
@@ -466,7 +747,7 @@ export default function PageBuilderPage() {
   const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   // Ordered list of section types from the API (drives the sidebar dropdown)
-  const [sectionsList, setSectionsList] = useState<string[]>(['navbar','hero','about','features','pricing','faq','contact','footer']);
+  const [sectionsList, setSectionsList] = useState<string[]>(['navbar','hero','features','about','pricing','journey','testimonials','faq','contact','finalCta','footer']);
   const [saving, setSaving] = useState<boolean>(false);
 
   // Dynamic template content configurations
@@ -551,7 +832,70 @@ export default function PageBuilderPage() {
     updateText('[data-section="footer"] p, footer p', content.footer.text);
   }, [content]);
 
-  // Handle iframe document load: inject hover outlines and click selections
+  // Helper to find target section element in preview document
+  const getSectionElement = (doc: Document, sectionName: string): HTMLElement | null => {
+    if (!doc) return null;
+
+    // 1. Direct data-section query
+    let el = doc.querySelector(`[data-section="${sectionName}"]`) as HTMLElement;
+    if (el) return el;
+
+    // 2. Direct ID query
+    el = doc.getElementById(sectionName) as HTMLElement;
+    if (el) return el;
+
+    // 3. Robust alias map for template variations
+    const ALIAS_MAP: Record<string, string[]> = {
+      navbar: ['[data-section="navbar"]', '#navbar', 'nav', 'header'],
+      hero: ['[data-section="hero"]', '#home', '#hero', '#hero-banner'],
+      about: ['[data-section="about"]', '#about', '#bio'],
+      features: ['[data-section="features"]', '#features', '#courses', '#subjects'],
+      pricing: ['[data-section="pricing"]', '#pricing', '#groups', '#courses', '[data-section="features"]'],
+      faq: ['[data-section="faq"]', '#faq', '#testimonials'],
+      contact: ['[data-section="contact"]', '#contact', '#newsletter', 'footer [data-section="contact"]'],
+      footer: ['[data-section="footer"]', '#footer', 'footer'],
+    };
+
+    const selectors = ALIAS_MAP[sectionName] || [];
+    for (const selector of selectors) {
+      el = doc.querySelector(selector) as HTMLElement;
+      if (el) return el;
+    }
+
+    return null;
+  };
+
+  // Auto-scroll preview window to the active section
+  const scrollToPreviewSection = (sectionName: string, smooth: boolean = true) => {
+    if (!sectionName) return;
+
+    // Try iframe first
+    const iframe = document.getElementById('website-builder-iframe') as HTMLIFrameElement;
+    if (iframe) {
+      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (doc) {
+        const targetEl = getSectionElement(doc, sectionName);
+        if (targetEl) {
+          targetEl.scrollIntoView({
+            behavior: smooth ? 'smooth' : 'auto',
+            block: 'start',
+          });
+          return;
+        }
+      }
+    }
+
+    // Fallback for non-iframe preview container
+    const targetEl = getSectionElement(document, sectionName);
+    if (targetEl) {
+      targetEl.scrollIntoView({
+        behavior: smooth ? 'smooth' : 'auto',
+        block: 'start',
+      });
+    }
+  };
+
+  // Handle iframe document load: inject hover outlines, click selections, and restore scroll position
   const handleIframeLoad = () => {
     const iframe = document.getElementById('website-builder-iframe') as HTMLIFrameElement;
     if (!iframe || !iframe.contentDocument) return;
@@ -637,6 +981,13 @@ export default function PageBuilderPage() {
         }
       }
     }, true);
+
+    // 3. Instantly restore scroll position to active section when iframe loads/reloads
+    if (activeSection) {
+      setTimeout(() => {
+        scrollToPreviewSection(activeSection, false);
+      }, 30);
+    }
   };
 
   // Keep active section and item outline sync inside the iframe document
@@ -664,11 +1015,17 @@ export default function PageBuilderPage() {
         el.classList.remove('active-item');
       }
     });
+
+    // Scroll preview to active section
+    if (activeSection) {
+      scrollToPreviewSection(activeSection, true);
+    }
   }, [activeSection, activeItemIndex, previewContent]);
 
   const handleSelectSectionItem = (section: keyof TemplateContent, index: number) => {
     setActiveSection(section);
     setActiveItemIndex(index);
+    scrollToPreviewSection(section, true);
     setTimeout(() => {
       const el = document.getElementById(`editor-item-${section}-${index}`);
       if (el) {
@@ -784,67 +1141,25 @@ export default function PageBuilderPage() {
             const aboutNode = editorNodes.find(n => n.type === 'about');
             const featuresNode = editorNodes.find(n => n.type === 'features');
             const pricingNode = editorNodes.find(n => n.type === 'pricing');
+            const journeyNode = editorNodes.find(n => n.type === 'journey');
+            const testimonialsNode = editorNodes.find(n => n.type === 'testimonials');
             const faqNode = editorNodes.find(n => n.type === 'faq');
             const contactNode = editorNodes.find(n => n.type === 'contact');
+            const finalCtaNode = editorNodes.find(n => n.type === 'finalCta');
             const footerNode = editorNodes.find(n => n.type === 'footer');
 
             const parsedContent: TemplateContent = {
-              navbar: navbarNode?.props ? {
-                title: navbarNode.props.title ?? fallback.navbar.title,
-                logo: navbarNode.props.logo ?? fallback.navbar.logo,
-                bgColor: navbarNode.props.bgColor ?? navbarNode.props.bg_color ?? fallback.navbar.bgColor,
-                textColor: navbarNode.props.textColor ?? navbarNode.props.text_color ?? fallback.navbar.textColor,
-              } : fallback.navbar,
-              hero: heroNode?.props ? {
-                title: heroNode.props.title ?? fallback.hero.title,
-                subtitle: heroNode.props.subtitle ?? fallback.hero.subtitle,
-                description: heroNode.props.description ?? fallback.hero.description,
-                buttonText: heroNode.props.buttonText ?? heroNode.props.button_text ?? fallback.hero.buttonText,
-                buttonLink: heroNode.props.buttonLink ?? fallback.hero.buttonLink,
-                image: heroNode.props.image ?? fallback.hero.image,
-                backgroundColor: heroNode.props.backgroundColor ?? heroNode.props.background_color ?? fallback.hero.backgroundColor,
-                textColor: heroNode.props.textColor ?? heroNode.props.text_color ?? fallback.hero.textColor,
-              } : fallback.hero,
-              about: aboutNode?.props ? {
-                title: aboutNode.props.title ?? fallback.about.title,
-                subtitle: aboutNode.props.subtitle ?? fallback.about.subtitle,
-                image: aboutNode.props.image ?? fallback.about.image,
-                backgroundColor: aboutNode.props.backgroundColor ?? aboutNode.props.background_color ?? fallback.about.backgroundColor,
-                textColor: aboutNode.props.textColor ?? aboutNode.props.text_color ?? fallback.about.textColor,
-              } : fallback.about,
-              features: featuresNode?.props ? {
-                title: featuresNode.props.title ?? fallback.features.title,
-                subtitle: featuresNode.props.subtitle ?? fallback.features.subtitle,
-                items: featuresNode.props.items ?? fallback.features.items,
-                backgroundColor: featuresNode.props.backgroundColor ?? featuresNode.props.background_color ?? fallback.features.backgroundColor,
-                textColor: featuresNode.props.textColor ?? featuresNode.props.text_color ?? fallback.features.textColor,
-              } : fallback.features,
-              pricing: pricingNode?.props ? {
-                title: pricingNode.props.title ?? fallback.pricing.title,
-                subtitle: pricingNode.props.subtitle ?? fallback.pricing.subtitle,
-                items: pricingNode.props.items ?? fallback.pricing.items,
-                backgroundColor: pricingNode.props.backgroundColor ?? pricingNode.props.background_color ?? fallback.pricing.backgroundColor,
-                textColor: pricingNode.props.textColor ?? pricingNode.props.text_color ?? fallback.pricing.textColor,
-              } : fallback.pricing,
-              faq: faqNode?.props ? {
-                title: faqNode.props.title ?? fallback.faq.title,
-                items: faqNode.props.items ?? fallback.faq.items,
-                backgroundColor: faqNode.props.backgroundColor ?? fallback.faq.backgroundColor,
-                textColor: faqNode.props.textColor ?? fallback.faq.textColor,
-              } : fallback.faq,
-              contact: contactNode?.props ? {
-                title: contactNode.props.title ?? fallback.contact.title,
-                description: contactNode.props.description ?? fallback.contact.description,
-                phoneNumber: contactNode.props.phoneNumber ?? contactNode.props.phone_number ?? fallback.contact.phoneNumber,
-                buttonText: contactNode.props.buttonText ?? contactNode.props.button_text ?? fallback.contact.buttonText,
-                backgroundColor: contactNode.props.backgroundColor ?? contactNode.props.background_color ?? fallback.contact.backgroundColor,
-                textColor: contactNode.props.textColor ?? contactNode.props.text_color ?? fallback.contact.textColor,
-              } : fallback.contact,
-              footer: footerNode?.props ? {
-                text: footerNode.props.text ?? fallback.footer.text,
-                backgroundColor: footerNode.props.backgroundColor ?? footerNode.props.background_color ?? fallback.footer.backgroundColor,
-                textColor: footerNode.props.textColor ?? footerNode.props.text_color ?? fallback.footer.textColor,
-              } : fallback.footer,
+              navbar: navbarNode?.props ? { ...fallback.navbar, ...navbarNode.props } : fallback.navbar,
+              hero: heroNode?.props ? { ...fallback.hero, ...heroNode.props } : fallback.hero,
+              about: aboutNode?.props ? { ...fallback.about, ...aboutNode.props } : fallback.about,
+              features: featuresNode?.props ? { ...fallback.features, ...featuresNode.props } : fallback.features,
+              pricing: pricingNode?.props ? { ...fallback.pricing, ...pricingNode.props } : fallback.pricing,
+              journey: journeyNode?.props ? { ...fallback.journey, ...journeyNode.props } : fallback.journey,
+              testimonials: testimonialsNode?.props ? { ...fallback.testimonials, ...testimonialsNode.props } : fallback.testimonials,
+              faq: faqNode?.props ? { ...fallback.faq, ...faqNode.props } : fallback.faq,
+              contact: contactNode?.props ? { ...fallback.contact, ...contactNode.props } : fallback.contact,
+              finalCta: finalCtaNode?.props ? { ...fallback.finalCta, ...finalCtaNode.props } : fallback.finalCta,
+              footer: footerNode?.props ? { ...fallback.footer, ...footerNode.props } : fallback.footer,
             };
             setContent(parsedContent);
             setPreviewContent(parsedContent);
@@ -1224,21 +1539,26 @@ export default function PageBuilderPage() {
               <select
                 value={activeSection}
                 onChange={(e) => {
-                  setActiveSection(e.target.value as any);
+                  const newSec = e.target.value as any;
+                  setActiveSection(newSec);
                   setActiveItemIndex(null);
+                  scrollToPreviewSection(newSec, true);
                 }}
                 className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-white font-extrabold focus:outline-none focus:border-blue-600 cursor-pointer pr-8 text-slate-800"
               >
                 {sectionsList.map((sectionType) => {
                   const SECTION_LABELS: Record<string, string> = {
-                    navbar:   'شريط التنقل العلوي (Navbar)',
-                    hero:     'البانر الترحيبي (Hero Banner)',
-                    about:    'النبذة والتعريف (About Section)',
-                    features: 'مميزات الأكاديمية (Features)',
-                    pricing:  'الدورات والاشتراكات (Curriculum/Pricing)',
-                    faq:      'الأسئلة الشائعة (FAQ Accordions)',
-                    contact:  'أزرار التواصل (Contact/WhatsApp)',
-                    footer:   'تذييل الصفحة (Footer Bar)',
+                    navbar:      'شريط التنقل العلوي (Navbar)',
+                    hero:        'البانر الترحيبي (Hero Banner)',
+                    features:    'الكورسات والبرامج التدريبية (Features/Courses)',
+                    about:       'التعريف بالكوتش (About Coach)',
+                    pricing:     'بطاقات الكورسات والاشتراكات (Curriculum/Pricing)',
+                    journey:     'رحلة التعلم مع الكوتش (Learning Journey)',
+                    testimonials:'آراء الطلاب والمشاركين (Testimonials)',
+                    faq:         'الأسئلة الشائعة (FAQ Accordions)',
+                    contact:     'أزرار التواصل (Contact/WhatsApp)',
+                    finalCta:    'الدعوة النهائية / الاشتراك في النشرة (Final CTA)',
+                    footer:      'تذييل الصفحة (Footer Bar)',
                   };
                   return (
                     <option key={sectionType} value={sectionType}>
@@ -1340,18 +1660,58 @@ export default function PageBuilderPage() {
                     <textarea
                       value={content.hero.description}
                       onChange={(e) => handleUpdateField('hero', 'description', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[110px]"
+                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[90px] resize-none"
                     />
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">نص الزر الإرشادي (CTA Button)</label>
-                    <input
-                      type="text"
-                      value={content.hero.buttonText}
-                      onChange={(e) => handleUpdateField('hero', 'buttonText', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                    <label className="text-[11px] font-bold text-slate-600">نص رسالة بطاقة التوجيه الشخصي أسفل البانر</label>
+                    <textarea
+                      value={content.hero.coachingMessage}
+                      onChange={(e) => handleUpdateField('hero', 'coachingMessage', e.target.value)}
+                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[60px] resize-none"
                     />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">نص زر الإجراء الأساسي (CTA)</label>
+                      <input
+                        type="text"
+                        value={content.hero.buttonText}
+                        onChange={(e) => handleUpdateField('hero', 'buttonText', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">رابط زر الإجراء الأساسي</label>
+                      <input
+                        type="text"
+                        value={content.hero.buttonLink}
+                        onChange={(e) => handleUpdateField('hero', 'buttonLink', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                        dir="ltr"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">نص الزر الثانوي</label>
+                      <input
+                        type="text"
+                        value={content.hero.secondaryButtonText}
+                        onChange={(e) => handleUpdateField('hero', 'secondaryButtonText', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">رابط الزر الثانوي</label>
+                      <input
+                        type="text"
+                        value={content.hero.secondaryButtonLink}
+                        onChange={(e) => handleUpdateField('hero', 'secondaryButtonLink', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                        dir="ltr"
+                      />
+                    </div>
                   </div>
 
                   <div className="flex flex-col gap-1">
@@ -1370,30 +1730,140 @@ export default function PageBuilderPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية البانر</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.hero.backgroundColor}
-                          onChange={(e) => handleUpdateField('hero', 'backgroundColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.hero.backgroundColor}</span>
+                  <div className="pt-1 border-t border-slate-100">
+                    <div className="text-[10px] font-black text-slate-500 mb-2.5">خلفية ونصوص البانر:</div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-600">خلفية البانر</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.hero.backgroundColor}
+                            onChange={(e) => handleUpdateField('hero', 'backgroundColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[9px] font-mono font-bold text-slate-500 uppercase">{content.hero.backgroundColor}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-600">لون نصوص البانر</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.hero.textColor || '#1a1c1d'}
+                            onChange={(e) => handleUpdateField('hero', 'textColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[9px] font-mono font-bold text-slate-500 uppercase">{content.hero.textColor || '#1a1c1d'}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-600">لون العنوان الترحيبي</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.hero.titleColor || content.hero.textColor || '#1a1c1d'}
+                            onChange={(e) => handleUpdateField('hero', 'titleColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[9px] font-mono font-bold text-slate-500 uppercase">{content.hero.titleColor || content.hero.textColor || '#1a1c1d'}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-600">لون العبارة التعريفية</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.hero.subtitleColor || content.hero.textColor || '#49454f'}
+                            onChange={(e) => handleUpdateField('hero', 'subtitleColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[9px] font-mono font-bold text-slate-500 uppercase">{content.hero.subtitleColor || content.hero.textColor || '#49454f'}</span>
+                        </div>
                       </div>
                     </div>
+                  </div>
 
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون نصوص البانر</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.hero.textColor}
-                          onChange={(e) => handleUpdateField('hero', 'textColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.hero.textColor}</span>
+                  <div className="pt-1 border-t border-slate-100">
+                    <div className="text-[10px] font-black text-slate-500 mb-2.5">ألوان الأزرار:</div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-600">خلفية زر الإجراء الأساسي</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.hero.buttonBgColor || '#4f378a'}
+                            onChange={(e) => handleUpdateField('hero', 'buttonBgColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[9px] font-mono font-bold text-slate-500 uppercase">{content.hero.buttonBgColor || '#4f378a'}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-600">نص زر الإجراء الأساسي</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.hero.buttonTextColor || '#ffffff'}
+                            onChange={(e) => handleUpdateField('hero', 'buttonTextColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[9px] font-mono font-bold text-slate-500 uppercase">{content.hero.buttonTextColor || '#ffffff'}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-600">إطار الزر الثانوي</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.hero.secondaryButtonBorderColor || '#4f378a'}
+                            onChange={(e) => handleUpdateField('hero', 'secondaryButtonBorderColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[9px] font-mono font-bold text-slate-500 uppercase">{content.hero.secondaryButtonBorderColor || '#4f378a'}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-600">نص الزر الثانوي</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.hero.secondaryButtonTextColor || '#4f378a'}
+                            onChange={(e) => handleUpdateField('hero', 'secondaryButtonTextColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[9px] font-mono font-bold text-slate-500 uppercase">{content.hero.secondaryButtonTextColor || '#4f378a'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-1 border-t border-slate-100">
+                    <div className="text-[10px] font-black text-slate-500 mb-2.5">بطاقة الرسالة أسفل البانر:</div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-600">خلفية البطاقة</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.hero.coachingCardBgColor || '#f4f3f5'}
+                            onChange={(e) => handleUpdateField('hero', 'coachingCardBgColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[9px] font-mono font-bold text-slate-500 uppercase">{content.hero.coachingCardBgColor || '#f4f3f5'}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-600">لون نص الرسالة</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.hero.coachingCardTextColor || '#49454f'}
+                            onChange={(e) => handleUpdateField('hero', 'coachingCardTextColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[9px] font-mono font-bold text-slate-500 uppercase">{content.hero.coachingCardTextColor || '#49454f'}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1406,31 +1876,86 @@ export default function PageBuilderPage() {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
                   <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص النبذة والتعريف</h3>
+                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص التعريف بالكوتش (About Section)</h3>
                 </div>
 
                 <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">الاسم / اسم الكوتش</label>
+                      <input
+                        type="text"
+                        value={content.about.title}
+                        onChange={(e) => handleUpdateField('about', 'title', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">المسمى الوظيفي / لقبه</label>
+                      <input
+                        type="text"
+                        value={content.about.coachTitle || ''}
+                        onChange={(e) => handleUpdateField('about', 'coachTitle', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+                  </div>
+
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم النبذة</label>
+                    <label className="text-[11px] font-bold text-slate-600">عنوان العنوان المختصر / السلا</label>
                     <input
                       type="text"
-                      value={content.about.title}
-                      onChange={(e) => handleUpdateField('about', 'title', e.target.value)}
+                      value={content.about.subtitle}
+                      onChange={(e) => handleUpdateField('about', 'subtitle', e.target.value)}
                       className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
                     />
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">تفاصيل وسيرة ذاتية (محتوى النبذة)</label>
+                    <label className="text-[11px] font-bold text-slate-600">نبذة تعريفية قصيرة</label>
                     <textarea
-                      value={content.about.subtitle}
-                      onChange={(e) => handleUpdateField('about', 'subtitle', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[140px]"
+                      value={content.about.description || ''}
+                      onChange={(e) => handleUpdateField('about', 'description', e.target.value)}
+                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[90px] resize-none"
                     />
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">صورة التعريف / البورتفوليو</label>
+                    <label className="text-[11px] font-bold text-slate-600">السيرة الذاتية المطولة</label>
+                    <textarea
+                      value={content.about.biography || ''}
+                      onChange={(e) => handleUpdateField('about', 'biography', e.target.value)}
+                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[120px] resize-none"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">المهارات / نقاط القوة (افصل بفاصلة)</label>
+                    <input
+                      type="text"
+                      value={(content.about.skills || []).join('، ')}
+                      onChange={(e) => {
+                        const skills = e.target.value.split(/[،,]/).map(s => s.trim()).filter(Boolean);
+                        handleUpdateField('about', 'skills', skills);
+                      }}
+                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      placeholder="مثال: منهجية مبسطة، توجيه شخصي، تطبيقات عملية"
+                    />
+                  </div>
+
+                  {content.about.cvText !== undefined && (
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">نص السيرة الذاتية / ال CV</label>
+                      <textarea
+                        value={content.about.cvText}
+                        onChange={(e) => handleUpdateField('about', 'cvText', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px] resize-none"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">صورة الكوتش / البروفايل</label>
                     <div className="flex gap-2 items-center">
                       {content.about.image && (
                         <img src={content.about.image} className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0" alt="about preview" />
@@ -1445,9 +1970,9 @@ export default function PageBuilderPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
                     <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
+                      <label className="text-[10px] font-bold text-slate-600">خلفية القسم</label>
                       <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
                         <input
                           type="color"
@@ -1455,20 +1980,31 @@ export default function PageBuilderPage() {
                           onChange={(e) => handleUpdateField('about', 'backgroundColor', e.target.value)}
                           className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                         />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.backgroundColor}</span>
+                        <span className="text-[9px] font-mono font-bold text-slate-500 uppercase">{content.about.backgroundColor}</span>
                       </div>
                     </div>
-
                     <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون نصوص النبذة</label>
+                      <label className="text-[10px] font-bold text-slate-600">لون النص العام</label>
                       <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
                         <input
                           type="color"
-                          value={content.about.textColor}
+                          value={content.about.textColor || '#1a1c1d'}
                           onChange={(e) => handleUpdateField('about', 'textColor', e.target.value)}
                           className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                         />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.textColor}</span>
+                        <span className="text-[9px] font-mono font-bold text-slate-500 uppercase">{content.about.textColor || '#1a1c1d'}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold text-slate-600">لون العنوان</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input
+                          type="color"
+                          value={content.about.titleColor || content.about.textColor || '#4f378a'}
+                          onChange={(e) => handleUpdateField('about', 'titleColor', e.target.value)}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                        />
+                        <span className="text-[9px] font-mono font-bold text-slate-500 uppercase">{content.about.titleColor || content.about.textColor || '#4f378a'}</span>
                       </div>
                     </div>
                   </div>
@@ -1481,12 +2017,12 @@ export default function PageBuilderPage() {
               <div className="space-y-5">
                 <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
                   <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص المميزات والخصائص</h3>
+                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص الكورسات والبرامج التدريبية (Features / Courses)</h3>
                 </div>
 
                 <div className="space-y-4">
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم المميزات الرئيسي</label>
+                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم الكورسات الرئيسي</label>
                     <input
                       type="text"
                       value={content.features.title}
@@ -1496,7 +2032,7 @@ export default function PageBuilderPage() {
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان فرعي قصير للقسم</label>
+                    <label className="text-[11px] font-bold text-slate-600">وصف قصير للقسم</label>
                     <input
                       type="text"
                       value={content.features.subtitle}
@@ -1504,26 +2040,75 @@ export default function PageBuilderPage() {
                       className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
                     />
                   </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">نص افتراضي لزر "عرض الكورس"</label>
+                    <input
+                      type="text"
+                      value={content.features.ctaText || 'عرض الكورس'}
+                      onChange={(e) => handleUpdateField('features', 'ctaText', e.target.value)}
+                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold text-slate-600">خلفية القسم</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input
+                          type="color"
+                          value={content.features.backgroundColor}
+                          onChange={(e) => handleUpdateField('features', 'backgroundColor', e.target.value)}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                        />
+                        <span className="text-[9px] font-mono font-bold text-slate-500 uppercase">{content.features.backgroundColor}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold text-slate-600">لون العنوان</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input
+                          type="color"
+                          value={content.features.titleColor || content.features.textColor || '#1a1c1d'}
+                          onChange={(e) => handleUpdateField('features', 'titleColor', e.target.value)}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                        />
+                        <span className="text-[9px] font-mono font-bold text-slate-500 uppercase">{content.features.titleColor || content.features.textColor || '#1a1c1d'}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold text-slate-600">لون الوصف</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input
+                          type="color"
+                          value={content.features.subtitleColor || '#49454f'}
+                          onChange={(e) => handleUpdateField('features', 'subtitleColor', e.target.value)}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                        />
+                        <span className="text-[9px] font-mono font-bold text-slate-500 uppercase">{content.features.subtitleColor || '#49454f'}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Features Items list */}
                 <div className="space-y-3 pt-3 border-t border-slate-100">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-slate-500">عناصر الميزات:</span>
+                    <span className="text-[10px] font-black text-slate-500">قائمة الكورسات:</span>
                     <button
                       type="button"
-                      onClick={() => handleAddListItem('features', 'items', { icon: 'Award', title: 'ميزة جديدة', description: 'اكتب وصف الميزة هنا بشكل مبسط وجاذب.' })}
+                      onClick={() => handleAddListItem('features', 'items', { id: `course-${Date.now()}`, icon: '', title: 'كورس جديد', description: 'اكتب وصف الكورس هنا بشكل مبسط وجذاب.', level: 'مبتدئ', duration: '', lessons: '', ctaText: (content.features.ctaText || 'عرض الكورس'), features: [] })}
                       className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-0.5"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      إضافة ميزة
+                      إضافة كورس
                     </button>
                   </div>
 
                   <div className="space-y-4">
                     {content.features.items.map((item, idx) => (
                       <div
-                        key={idx}
+                        key={item.id || idx}
                         id={`editor-item-features-${idx}`}
                         className={`border rounded-xl p-3 relative flex flex-col gap-2.5 transition-all duration-300 ${
                           activeSection === 'features' && activeItemIndex === idx
@@ -1535,17 +2120,24 @@ export default function PageBuilderPage() {
                           type="button"
                           onClick={() => handleRemoveListItem('features', 'items', idx)}
                           className="absolute top-2 left-2 text-slate-400 hover:text-red-500 transition-colors"
-                          title="حذف الميزة"
+                          title="حذف الكورس"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
-                        
+
                         <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">
-                            {item.icon && (item.icon.startsWith('http') || item.icon.includes('/')) 
-                              ? 'رابط صورة الميزة / الموجه' 
-                              : 'رمز الأيقونة (مثال: Award, BookOpen أو رابط صورة)'}
-                          </label>
+                          <label className="text-[9px] font-bold text-slate-500">معرف ثابت للكورس (ID)</label>
+                          <input
+                            type="text"
+                            value={item.id || `course-${idx}`}
+                            onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'id', e.target.value)}
+                            className="border border-slate-200 rounded-lg p-2 text-[9px] bg-white outline-none font-mono text-left"
+                            dir="ltr"
+                          />
+                        </div>
+
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">صورة / أيقونة الكورس (رابط)</label>
                           <div className="flex gap-2 items-center">
                             {item.icon && (item.icon.startsWith('http') || item.icon.includes('/')) && (
                               <img src={item.icon} className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0" alt="preview" />
@@ -1554,29 +2146,107 @@ export default function PageBuilderPage() {
                               type="text"
                               value={item.icon}
                               onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'icon', e.target.value)}
-                              className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-mono flex-1 text-left"
-                              placeholder="أدخل اسم الأيقونة أو رابط الصورة"
+                              className="border border-slate-200 rounded-lg p-2 text-[9px] bg-white outline-none font-mono flex-1 text-left"
                               dir="ltr"
+                              placeholder="https://..."
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="flex flex-col gap-1 col-span-2">
+                            <label className="text-[9px] font-bold text-slate-500">عنوان الكورس</label>
+                            <input
+                              type="text"
+                              value={item.title}
+                              onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'title', e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-bold"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">المستوى</label>
+                            <input
+                              type="text"
+                              value={item.level || ''}
+                              onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'level', e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-[9px] bg-white outline-none font-bold text-center"
+                              placeholder="مبتدئ / متوسط / متقدم"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">المدة</label>
+                            <input
+                              type="text"
+                              value={item.duration || ''}
+                              onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'duration', e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-[9px] bg-white outline-none text-center"
+                              placeholder="٦ أسابيع"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">عدد الدروس</label>
+                            <input
+                              type="text"
+                              value={item.lessons || ''}
+                              onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'lessons', e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-[9px] bg-white outline-none text-center"
+                              placeholder="١٢ درس"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">السعر (اختياري)</label>
+                            <input
+                              type="text"
+                              value={item.price || ''}
+                              onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'price', e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-[9px] bg-white outline-none font-extrabold text-center"
+                              placeholder="مجاني"
                             />
                           </div>
                         </div>
 
                         <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">عنوان الميزة</label>
-                          <input
-                            type="text"
-                            value={item.title}
-                            onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'title', e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-bold"
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">وصف الميزة</label>
+                          <label className="text-[9px] font-bold text-slate-500">وصف الكورس</label>
                           <textarea
                             value={item.description}
                             onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'description', e.target.value)}
                             className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none min-h-[50px] resize-none"
+                          />
+                        </div>
+
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">ميزات الكورس / النقاط (افصل بفاصلة)</label>
+                          <input
+                            type="text"
+                            value={(item.features || []).join('، ')}
+                            onChange={(e) => {
+                              const arr = e.target.value.split(/[،,]/).map(s => s.trim()).filter(Boolean);
+                              handleUpdateNestedField('features', 'items', idx, 'features', arr);
+                            }}
+                            className="border border-slate-200 rounded-lg p-2 text-[9px] bg-white outline-none"
+                            placeholder="تمارين عملية • اختبارات تقييمية • شهادة إتمام"
+                          />
+                        </div>
+
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">نص زر عرض التفاصيل</label>
+                          <input
+                            type="text"
+                            value={item.ctaText || (content.features.ctaText || 'عرض الكورس')}
+                            onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'ctaText', e.target.value)}
+                            className="border border-slate-200 rounded-lg p-2 text-[9px] bg-white outline-none font-bold"
+                          />
+                        </div>
+
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">صورة الكورس الكاملة (رابط)</label>
+                          <input
+                            type="text"
+                            value={item.image || item.icon || ''}
+                            onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'image', e.target.value)}
+                            className="border border-slate-200 rounded-lg p-2 text-[9px] bg-white outline-none font-mono text-left"
+                            dir="ltr"
+                            placeholder="https://..."
                           />
                         </div>
                       </div>
@@ -1591,12 +2261,12 @@ export default function PageBuilderPage() {
               <div className="space-y-5">
                 <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
                   <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص الكورسات والأسعار</h3>
+                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص الكورسات والاشتراكات (Pricing / Curriculum)</h3>
                 </div>
 
                 <div className="space-y-4">
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم الكورسات / التسعير</label>
+                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم الكورسات</label>
                     <input
                       type="text"
                       value={content.pricing.title}
@@ -1606,7 +2276,7 @@ export default function PageBuilderPage() {
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان فرعي لقسم التسعير</label>
+                    <label className="text-[11px] font-bold text-slate-600">عنوان فرعي</label>
                     <input
                       type="text"
                       value={content.pricing.subtitle}
@@ -1616,13 +2286,12 @@ export default function PageBuilderPage() {
                   </div>
                 </div>
 
-                {/* Pricing Plans List */}
                 <div className="space-y-3 pt-3 border-t border-slate-100">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-slate-500">بطاقات الباقات / الدورات:</span>
+                    <span className="text-[10px] font-black text-slate-500">بطاقات الباقات / الكورسات:</span>
                     <button
                       type="button"
-                      onClick={() => handleAddListItem('pricing', 'items', { title: 'باقة تدريبية جديدة', price: '١٠٠ ريال / شهرياً', features: ['تحديث دوري للمواد الدراسية', 'أوراق عمل شاملة'] })}
+                      onClick={() => handleAddListItem('pricing', 'items', { id: `pkg-${Date.now()}`, title: 'باقة تدريبية جديدة', price: '١٠٠ ريال / شهرياً', features: ['تحديث دوري للمواد الدراسية', 'أوراق عمل شاملة'] })}
                       className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-0.5"
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -1633,7 +2302,7 @@ export default function PageBuilderPage() {
                   <div className="space-y-4">
                     {content.pricing.items.map((item, idx) => (
                       <div
-                        key={idx}
+                        key={item.id || idx}
                         id={`editor-item-pricing-${idx}`}
                         className={`border rounded-xl p-3 relative flex flex-col gap-2.5 transition-all duration-300 ${
                           activeSection === 'pricing' && activeItemIndex === idx
@@ -1649,7 +2318,18 @@ export default function PageBuilderPage() {
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
-                        
+
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">معرف ثابت للباقة (ID)</label>
+                          <input
+                            type="text"
+                            value={item.id || `pkg-${idx}`}
+                            onChange={(e) => handleUpdateNestedField('pricing', 'items', idx, 'id', e.target.value)}
+                            className="border border-slate-200 rounded-lg p-2 text-[9px] bg-white outline-none font-mono text-left"
+                            dir="ltr"
+                          />
+                        </div>
+
                         <div className="flex flex-col gap-1">
                           <label className="text-[9px] font-bold text-slate-500">اسم الكورس أو الباقة</label>
                           <input
@@ -1671,7 +2351,7 @@ export default function PageBuilderPage() {
                         </div>
 
                         <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">الميزات المشمولة (مفصولة بفاصلة)</label>
+                          <label className="text-[9px] font-bold text-slate-500">الميزات المشمولة (افصل بفاصلة)</label>
                           <input
                             type="text"
                             value={item.features.filter(f => !f.startsWith('http') && !f.includes('/')).join('، ')}
@@ -1685,37 +2365,229 @@ export default function PageBuilderPage() {
                           />
                         </div>
 
-                        {/* If there is an image in features, or if the role is coach, allow editing it explicitly */}
-                        {(item.features.some(f => f.startsWith('http') || f.includes('/')) || currentRole === 'coach') && (
-                          <div className="flex flex-col gap-1 mt-1">
-                            <label className="text-[9px] font-bold text-slate-500">رابط صورة الكارت / الماستركلاس</label>
-                            <div className="flex gap-2 items-center">
-                              {item.features.find(f => f.startsWith('http') || f.includes('/')) && (
-                                <img 
-                                  src={item.features.find(f => f.startsWith('http') || f.includes('/'))} 
-                                  className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0" 
-                                  alt="preview" 
-                                />
-                              )}
-                              <input
-                                type="text"
-                                value={item.features.find(f => f.startsWith('http') || f.includes('/')) || ''}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  const arrText = item.features.filter(f => !f.startsWith('http') && !f.includes('/'));
-                                  if (val.trim()) {
-                                    handleUpdateNestedField('pricing', 'items', idx, 'features', [...arrText, val.trim()]);
-                                  } else {
-                                    handleUpdateNestedField('pricing', 'items', idx, 'features', arrText);
-                                  }
-                                }}
-                                className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-mono flex-grow text-left"
-                                placeholder="https://..."
-                                dir="ltr"
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">رابط صورة الباقة / الكورس (اختياري)</label>
+                          <div className="flex gap-2 items-center">
+                            {item.features.find(f => f.startsWith('http') || f.includes('/')) && (
+                              <img
+                                src={item.features.find(f => f.startsWith('http') || f.includes('/'))}
+                                className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0"
+                                alt="preview"
                               />
-                            </div>
+                            )}
+                            <input
+                              type="text"
+                              value={item.features.find(f => f.startsWith('http') || f.includes('/')) || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const arrText = item.features.filter(f => !f.startsWith('http') && !f.includes('/'));
+                                if (val.trim()) {
+                                  handleUpdateNestedField('pricing', 'items', idx, 'features', [...arrText, val.trim()]);
+                                } else {
+                                  handleUpdateNestedField('pricing', 'items', idx, 'features', arrText);
+                                }
+                              }}
+                              className="border border-slate-200 rounded-lg p-2 text-[9px] bg-white outline-none font-mono flex-grow text-left"
+                              placeholder="https://..."
+                              dir="ltr"
+                            />
                           </div>
-                        )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Journey / Learning Path Editor */}
+            {activeSection === 'journey' && (
+              <div className="space-y-5">
+                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص رحلة التعلم مع الكوتش (Learning Journey)</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">عنوان القسم الرئيسي</label>
+                    <input
+                      type="text"
+                      value={content.journey.title}
+                      onChange={(e) => handleUpdateField('journey', 'title', e.target.value)}
+                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">وصف قصير للقسم</label>
+                    <textarea
+                      value={content.journey.subtitle}
+                      onChange={(e) => handleUpdateField('journey', 'subtitle', e.target.value)}
+                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[60px] resize-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold text-slate-600">خلفية</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input type="color" value={content.journey.backgroundColor} onChange={(e) => handleUpdateField('journey', 'backgroundColor', e.target.value)} className="w-7 h-7 rounded-lg cursor-pointer bg-transparent border-0 outline-none shrink-0" />
+                        <span className="text-[8px] font-mono font-bold text-slate-500 uppercase">{content.journey.backgroundColor}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold text-slate-600">لون العنوان</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input type="color" value={content.journey.titleColor || content.journey.textColor || '#1a1c1d'} onChange={(e) => handleUpdateField('journey', 'titleColor', e.target.value)} className="w-7 h-7 rounded-lg cursor-pointer bg-transparent border-0 outline-none shrink-0" />
+                        <span className="text-[8px] font-mono font-bold text-slate-500 uppercase">{content.journey.titleColor || content.journey.textColor || '#1a1c1d'}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold text-slate-600">خلفية أرقام الخطوات</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input type="color" value={content.journey.stepNumberBgColor || '#4f378a'} onChange={(e) => handleUpdateField('journey', 'stepNumberBgColor', e.target.value)} className="w-7 h-7 rounded-lg cursor-pointer bg-transparent border-0 outline-none shrink-0" />
+                        <span className="text-[8px] font-mono font-bold text-slate-500 uppercase">{content.journey.stepNumberBgColor || '#4f378a'}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold text-slate-600">لون نص الأرقام</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input type="color" value={content.journey.stepNumberTextColor || '#ffffff'} onChange={(e) => handleUpdateField('journey', 'stepNumberTextColor', e.target.value)} className="w-7 h-7 rounded-lg cursor-pointer bg-transparent border-0 outline-none shrink-0" />
+                        <span className="text-[8px] font-mono font-bold text-slate-500 uppercase">{content.journey.stepNumberTextColor || '#ffffff'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-3 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black text-slate-500">الخطوات:</span>
+                    <button
+                      type="button"
+                      onClick={() => handleAddListItem('journey', 'steps', { id: `j-${Date.now()}`, stepNumber: String(content.journey.steps.length + 1).padStart(2, '0'), title: 'خطوة جديدة', description: 'وصف مختصر للخطوة.', icon: 'check_circle' })}
+                      className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-0.5"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      إضافة خطوة
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {content.journey.steps.map((step, idx) => (
+                      <div
+                        key={step.id || idx}
+                        className="border rounded-xl p-3 relative bg-slate-50 border-slate-200 flex flex-col gap-2"
+                      >
+                        <button type="button" onClick={() => handleRemoveListItem('journey', 'steps', idx)} className="absolute top-2 left-2 text-slate-400 hover:text-red-500 transition-colors" title="حذف الخطوة">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">الرقم</label>
+                            <input type="text" value={step.stepNumber} onChange={(e) => handleUpdateNestedField('journey', 'steps', idx, 'stepNumber', e.target.value)} className="border border-slate-200 rounded-lg p-2 text-[9px] bg-white outline-none font-bold text-center" />
+                          </div>
+                          <div className="flex flex-col gap-1 col-span-2">
+                            <label className="text-[9px] font-bold text-slate-500">رمز الأيقونة</label>
+                            <input type="text" value={step.icon || ''} onChange={(e) => handleUpdateNestedField('journey', 'steps', idx, 'icon', e.target.value)} className="border border-slate-200 rounded-lg p-2 text-[9px] bg-white outline-none font-mono text-left" dir="ltr" placeholder="school / forum •..." />
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">عنوان الخطوة</label>
+                          <input type="text" value={step.title} onChange={(e) => handleUpdateNestedField('journey', 'steps', idx, 'title', e.target.value)} className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-bold" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">وصف الخطوة</label>
+                          <textarea value={step.description} onChange={(e) => handleUpdateNestedField('journey', 'steps', idx, 'description', e.target.value)} className="border border-slate-200 rounded-lg p-2 text-[9px] bg-white outline-none min-h-[40px] resize-none" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Testimonials Editor */}
+            {activeSection === 'testimonials' && (
+              <div className="space-y-5">
+                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص آراء الطلاب والمشاركين (Testimonials)</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">عنوان القسم الرئيسي</label>
+                    <input type="text" value={content.testimonials.title} onChange={(e) => handleUpdateField('testimonials', 'title', e.target.value)} className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">وصف القسم</label>
+                    <input type="text" value={content.testimonials.subtitle} onChange={(e) => handleUpdateField('testimonials', 'subtitle', e.target.value)} className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold text-slate-600">خلفية القسم</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input type="color" value={content.testimonials.backgroundColor} onChange={(e) => handleUpdateField('testimonials', 'backgroundColor', e.target.value)} className="w-7 h-7 rounded-lg cursor-pointer bg-transparent border-0 outline-none shrink-0" />
+                        <span className="text-[8px] font-mono font-bold text-slate-500 uppercase">{content.testimonials.backgroundColor}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold text-slate-600">لون العنوان</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input type="color" value={content.testimonials.titleColor || content.testimonials.textColor || '#1a1c1d'} onChange={(e) => handleUpdateField('testimonials', 'titleColor', e.target.value)} className="w-7 h-7 rounded-lg cursor-pointer bg-transparent border-0 outline-none shrink-0" />
+                        <span className="text-[8px] font-mono font-bold text-slate-500 uppercase">{content.testimonials.titleColor || content.testimonials.textColor || '#1a1c1d'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-3 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black text-slate-500">التوصيات:</span>
+                    <button type="button" onClick={() => handleAddListItem('testimonials', 'items', { id: `t-${Date.now()}`, name: 'اسم الطالب', role: 'مشارك', initials: 'ن.م', review: 'اكتب رأي الطالب هنا.', rating: 5 })} className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-0.5">
+                      <Plus className="w-3.5 h-3.5" /> إضافة توصية
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {content.testimonials.items.map((t, idx) => (
+                      <div key={t.id || idx} className="border rounded-xl p-3 relative bg-slate-50 border-slate-200 flex flex-col gap-2">
+                        <button type="button" onClick={() => handleRemoveListItem('testimonials', 'items', idx)} className="absolute top-2 left-2 text-slate-400 hover:text-red-500 transition-colors">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">اسم الطالب</label>
+                            <input type="text" value={t.name} onChange={(e) => handleUpdateNestedField('testimonials', 'items', idx, 'name', e.target.value)} className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-bold" />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">دوره / وصفه</label>
+                            <input type="text" value={t.role} onChange={(e) => handleUpdateNestedField('testimonials', 'items', idx, 'role', e.target.value)} className="border border-slate-200 rounded-lg p-2 text-[9px] bg-white outline-none" />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">أحرف مختصرة (لو لم توجد صورة)</label>
+                            <input type="text" value={t.initials || ''} onChange={(e) => handleUpdateNestedField('testimonials', 'items', idx, 'initials', e.target.value)} className="border border-slate-200 rounded-lg p-2 text-[9px] bg-white outline-none text-center font-bold" />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">صورة الطالب (رابط اختياري)</label>
+                            <input type="text" value={t.avatar || ''} onChange={(e) => handleUpdateNestedField('testimonials', 'items', idx, 'avatar', e.target.value)} className="border border-slate-200 rounded-lg p-2 text-[9px] bg-white outline-none font-mono text-left" dir="ltr" placeholder="https://..." />
+                          </div>
+                          <div className="flex flex-col gap-1 col-span-2">
+                            <label className="text-[9px] font-bold text-slate-500">التقييم من ٥</label>
+                            <select value={String(t.rating || 5)} onChange={(e) => handleUpdateNestedField('testimonials', 'items', idx, 'rating', Number(e.target.value))} className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-bold cursor-pointer">
+                              <option value="5">★★★★★ — ٥ نجوم</option>
+                              <option value="4">★★★★☆ — ٤ نجوم</option>
+                              <option value="3">★★★☆☆ — ٣ نجوم</option>
+                              <option value="2">★★☆☆☆ — نجمتان</option>
+                              <option value="1">★☆☆☆☆ — نجمة واحدة</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">نص المراجعة / الرأي</label>
+                          <textarea value={t.review} onChange={(e) => handleUpdateNestedField('testimonials', 'items', idx, 'review', e.target.value)} className="border border-slate-200 rounded-lg p-2 text-[9px] bg-white outline-none min-h-[60px] resize-none" />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1734,66 +2606,38 @@ export default function PageBuilderPage() {
                 <div className="space-y-4">
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] font-bold text-slate-600">عنوان قسم الأسئلة الرئيسي</label>
-                    <input
-                      type="text"
-                      value={content.faq.title}
-                      onChange={(e) => handleUpdateField('faq', 'title', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
+                    <input type="text" value={content.faq.title} onChange={(e) => handleUpdateField('faq', 'title', e.target.value)} className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">وصف مختصر للقسم</label>
+                    <input type="text" value={content.faq.subtitle || ''} onChange={(e) => handleUpdateField('faq', 'subtitle', e.target.value)} className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium" />
                   </div>
                 </div>
 
-                {/* FAQ Items List */}
                 <div className="space-y-3 pt-3 border-t border-slate-100">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-black text-slate-500">قائمة الأسئلة والإجابات:</span>
-                    <button
-                      type="button"
-                      onClick={() => handleAddListItem('faq', 'items', { question: 'سؤال افتراضي جديد؟', answer: 'اكتب الإجابة المفصلة للطلاب هنا.' })}
-                      className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-0.5"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      إضافة سؤال
+                    <button type="button" onClick={() => handleAddListItem('faq', 'items', { id: `f-${Date.now()}`, question: 'سؤال جديد؟', answer: 'اكتب الإجابة المفصلة هنا.' })} className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-0.5">
+                      <Plus className="w-3.5 h-3.5" /> إضافة سؤال
                     </button>
                   </div>
-
                   <div className="space-y-4">
                     {content.faq.items.map((item, idx) => (
-                      <div
-                        key={idx}
-                        id={`editor-item-faq-${idx}`}
-                        className={`border rounded-xl p-3 relative flex flex-col gap-2.5 transition-all duration-300 ${
-                          activeSection === 'faq' && activeItemIndex === idx
-                            ? 'bg-blue-50/50 border-blue-500 ring-2 ring-blue-500/20 shadow-md scale-[1.01]'
-                            : 'bg-slate-50 border-slate-200'
-                        }`}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveListItem('faq', 'items', idx)}
-                          className="absolute top-2 left-2 text-slate-400 hover:text-red-500 transition-colors"
-                          title="حذف السؤال"
-                        >
+                      <div key={item.id || idx} id={`editor-item-faq-${idx}`} className={`border rounded-xl p-3 relative flex flex-col gap-2.5 transition-all duration-300 ${
+                        activeSection === 'faq' && activeItemIndex === idx
+                          ? 'bg-blue-50/50 border-blue-500 ring-2 ring-blue-500/20 shadow-md scale-[1.01]'
+                          : 'bg-slate-50 border-slate-200'
+                      }`}>
+                        <button type="button" onClick={() => handleRemoveListItem('faq', 'items', idx)} className="absolute top-2 left-2 text-slate-400 hover:text-red-500 transition-colors" title="حذف السؤال">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
-                        
                         <div className="flex flex-col gap-1">
                           <label className="text-[9px] font-bold text-slate-500">السؤال المطروح</label>
-                          <input
-                            type="text"
-                            value={item.question}
-                            onChange={(e) => handleUpdateNestedField('faq', 'items', idx, 'question', e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-bold"
-                          />
+                          <input type="text" value={item.question} onChange={(e) => handleUpdateNestedField('faq', 'items', idx, 'question', e.target.value)} className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-bold" />
                         </div>
-
                         <div className="flex flex-col gap-1">
                           <label className="text-[9px] font-bold text-slate-500">الإجابة</label>
-                          <textarea
-                            value={item.answer}
-                            onChange={(e) => handleUpdateNestedField('faq', 'items', idx, 'answer', e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none min-h-[60px] resize-none text-slate-600"
-                          />
+                          <textarea value={item.answer} onChange={(e) => handleUpdateNestedField('faq', 'items', idx, 'answer', e.target.value)} className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none min-h-[60px] resize-none text-slate-600" />
                         </div>
                       </div>
                     ))}
@@ -1812,44 +2656,157 @@ export default function PageBuilderPage() {
 
                 <div className="space-y-4">
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم تواصل معنا</label>
-                    <input
-                      type="text"
-                      value={content.contact.title}
-                      onChange={(e) => handleUpdateField('contact', 'title', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
+                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم التواصل</label>
+                    <input type="text" value={content.contact.title} onChange={(e) => handleUpdateField('contact', 'title', e.target.value)} className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium" />
                   </div>
 
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] font-bold text-slate-600">الوصف والدعوة للاتصال</label>
-                    <textarea
-                      value={content.contact.description}
-                      onChange={(e) => handleUpdateField('contact', 'description', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px] resize-none"
-                    />
+                    <textarea value={content.contact.description} onChange={(e) => handleUpdateField('contact', 'description', e.target.value)} className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px] resize-none" />
                   </div>
 
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">رقم الواتساب الاستشاري (مع رمز الدولة)</label>
-                    <input
-                      type="text"
-                      value={content.contact.phoneNumber}
-                      onChange={(e) => handleUpdateField('contact', 'phoneNumber', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
-                      dir="ltr"
-                      placeholder="مثال: 966500000000"
-                    />
+                  <div className="pt-2 border-t border-slate-100">
+                    <div className="text-[10px] font-black text-slate-500 mb-2.5">أزرار التواصل المباشر:</div>
+                    <div className="space-y-2.5">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-slate-600">رقم الواتساب (مع رمز الدولة)</label>
+                          <input type="text" value={content.contact.whatsapp || content.contact.phoneNumber || ''} onChange={(e) => handleUpdateField('contact', 'whatsapp', e.target.value)} className="border border-slate-200 rounded-xl p-2.5 text-[10px] bg-white focus:outline-none focus:border-blue-600 font-mono text-left" dir="ltr" placeholder="966500000000" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-slate-600">نص زر الواتساب</label>
+                          <input type="text" value={content.contact.whatsappText || content.contact.buttonText || 'تواصل واتساب'} onChange={(e) => handleUpdateField('contact', 'whatsappText', e.target.value)} className="border border-slate-200 rounded-xl p-2.5 text-[10px] bg-white focus:outline-none focus:border-blue-600 font-medium" />
+                        </div>
+
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-slate-600">البريد الإلكتروني</label>
+                          <input type="text" value={content.contact.email || ''} onChange={(e) => handleUpdateField('contact', 'email', e.target.value)} className="border border-slate-200 rounded-xl p-2.5 text-[10px] bg-white focus:outline-none focus:border-blue-600 font-mono text-left" dir="ltr" placeholder="info@example.com" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-slate-600">نص زر البريد</label>
+                          <input type="text" value={content.contact.emailText || 'راسلنا عبر البريد'} onChange={(e) => handleUpdateField('contact', 'emailText', e.target.value)} className="border border-slate-200 rounded-xl p-2.5 text-[10px] bg-white focus:outline-none focus:border-blue-600 font-medium" />
+                        </div>
+
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-slate-600">رقم الهاتف</label>
+                          <input type="text" value={content.contact.phoneNumber || ''} onChange={(e) => handleUpdateField('contact', 'phoneNumber', e.target.value)} className="border border-slate-200 rounded-xl p-2.5 text-[10px] bg-white focus:outline-none focus:border-blue-600 font-mono text-left" dir="ltr" placeholder="+966500000000" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-slate-600">نص زر الهاتف</label>
+                          <input type="text" value={content.contact.phoneText || 'اتصل بنا'} onChange={(e) => handleUpdateField('contact', 'phoneText', e.target.value)} className="border border-slate-200 rounded-xl p-2.5 text-[10px] bg-white focus:outline-none focus:border-blue-600 font-medium" />
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
+                  <div className="pt-2 border-t border-slate-100">
+                    <div className="text-[10px] font-black text-slate-500 mb-2.5">روابط حسابات التواصل الاجتماعي:</div>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {(['facebook', 'instagram', 'linkedin', 'twitter'] as const).map(k => (
+                        <div key={k} className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-slate-600 capitalize">{k === 'linkedin' ? 'لينكد إن' : k === 'facebook' ? 'فيسبوك' : k === 'instagram' ? 'إنستغرام' : 'تويتر / إكس'}</label>
+                          <input type="text" value={(content.contact as any)[k] || ''} onChange={(e) => handleUpdateField('contact', k, e.target.value)} className="border border-slate-200 rounded-xl p-2.5 text-[9px] bg-white focus:outline-none focus:border-blue-600 font-mono text-left" dir="ltr" placeholder="https://..." />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 grid grid-cols-4 gap-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold text-slate-600">خلفية القسم</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input type="color" value={content.contact.backgroundColor} onChange={(e) => handleUpdateField('contact', 'backgroundColor', e.target.value)} className="w-7 h-7 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none" />
+                        <span className="text-[8px] font-mono font-bold text-slate-500 uppercase">{content.contact.backgroundColor}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold text-slate-600">لون النصوص</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input type="color" value={content.contact.textColor || '#ffffff'} onChange={(e) => handleUpdateField('contact', 'textColor', e.target.value)} className="w-7 h-7 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none" />
+                        <span className="text-[8px] font-mono font-bold text-slate-500 uppercase">{content.contact.textColor || '#ffffff'}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold text-slate-600">خلفية الأزرار</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input type="color" value={content.contact.buttonBgColor || '#ffffff'} onChange={(e) => handleUpdateField('contact', 'buttonBgColor', e.target.value)} className="w-7 h-7 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none" />
+                        <span className="text-[8px] font-mono font-bold text-slate-500 uppercase">{content.contact.buttonBgColor || '#ffffff'}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold text-slate-600">نص الأزرار</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input type="color" value={content.contact.buttonTextColor || '#4f378a'} onChange={(e) => handleUpdateField('contact', 'buttonTextColor', e.target.value)} className="w-7 h-7 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none" />
+                        <span className="text-[8px] font-mono font-bold text-slate-500 uppercase">{content.contact.buttonTextColor || '#4f378a'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Final CTA Editor */}
+            {activeSection === 'finalCta' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص دعوة الاشتراك النهائية (Final CTA / Newsletter)</h3>
+                </div>
+
+                <div className="space-y-4">
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">نص زر الواتساب</label>
-                    <input
-                      type="text"
-                      value={content.contact.buttonText}
-                      onChange={(e) => handleUpdateField('contact', 'buttonText', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
+                    <label className="text-[11px] font-bold text-slate-600">عنوان الدعوة الرئيسي</label>
+                    <input type="text" value={content.finalCta.title} onChange={(e) => handleUpdateField('finalCta', 'title', e.target.value)} className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">الوصف التفصيلي</label>
+                    <textarea value={content.finalCta.description} onChange={(e) => handleUpdateField('finalCta', 'description', e.target.value)} className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px] resize-none" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">رمز الأيقونة (مثل rocket_launch, school)</label>
+                      <input type="text" value={content.finalCta.icon || 'school'} onChange={(e) => handleUpdateField('finalCta', 'icon', e.target.value)} className="border border-slate-200 rounded-xl p-3 text-[10px] bg-white outline-none font-mono text-left" dir="ltr" />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">نص placeholder لحقل البريد</label>
+                      <input type="text" value={content.finalCta.emailPlaceholder || 'البريد الإلكتروني'} onChange={(e) => handleUpdateField('finalCta', 'emailPlaceholder', e.target.value)} className="border border-slate-200 rounded-xl p-3 text-[10px] bg-white outline-none font-medium" />
+                    </div>
+                    <div className="flex flex-col gap-1 col-span-2">
+                      <label className="text-[11px] font-bold text-slate-600">نص زر الإرسال</label>
+                      <input type="text" value={content.finalCta.buttonText || 'اشترك الآن'} onChange={(e) => handleUpdateField('finalCta', 'buttonText', e.target.value)} className="border border-slate-200 rounded-xl p-3 text-[11px] bg-white outline-none font-bold" />
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 grid grid-cols-4 gap-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold text-slate-600">لون الخلفية</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input type="color" value={content.finalCta.accentColor || '#E9DDFF'} onChange={(e) => handleUpdateField('finalCta', 'accentColor', e.target.value)} className="w-7 h-7 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none" />
+                        <span className="text-[8px] font-mono font-bold text-slate-500 uppercase">{content.finalCta.accentColor || '#E9DDFF'}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold text-slate-600">لون النص</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input type="color" value={content.finalCta.textColor || '#1a1c1d'} onChange={(e) => handleUpdateField('finalCta', 'textColor', e.target.value)} className="w-7 h-7 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none" />
+                        <span className="text-[8px] font-mono font-bold text-slate-500 uppercase">{content.finalCta.textColor || '#1a1c1d'}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold text-slate-600">خلفية زر الإرسال</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input type="color" value={content.finalCta.buttonBgColor || '#4f378a'} onChange={(e) => handleUpdateField('finalCta', 'buttonBgColor', e.target.value)} className="w-7 h-7 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none" />
+                        <span className="text-[8px] font-mono font-bold text-slate-500 uppercase">{content.finalCta.buttonBgColor || '#4f378a'}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold text-slate-600">نص زر الإرسال</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input type="color" value={content.finalCta.buttonTextColor || '#ffffff'} onChange={(e) => handleUpdateField('finalCta', 'buttonTextColor', e.target.value)} className="w-7 h-7 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none" />
+                        <span className="text-[8px] font-mono font-bold text-slate-500 uppercase">{content.finalCta.buttonTextColor || '#ffffff'}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1866,24 +2823,14 @@ export default function PageBuilderPage() {
                 <div className="space-y-4">
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] font-bold text-slate-600">نص حقوق الملكية والنشر</label>
-                    <input
-                      type="text"
-                      value={content.footer.text}
-                      onChange={(e) => handleUpdateField('footer', 'text', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
+                    <input type="text" value={content.footer.text} onChange={(e) => handleUpdateField('footer', 'text', e.target.value)} className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium" />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1">
                       <label className="text-[11px] font-bold text-slate-600">خلفية الفوتر</label>
                       <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.footer.backgroundColor}
-                          onChange={(e) => handleUpdateField('footer', 'backgroundColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
+                        <input type="color" value={content.footer.backgroundColor} onChange={(e) => handleUpdateField('footer', 'backgroundColor', e.target.value)} className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none" />
                         <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.footer.backgroundColor}</span>
                       </div>
                     </div>
@@ -1891,12 +2838,7 @@ export default function PageBuilderPage() {
                     <div className="flex flex-col gap-1">
                       <label className="text-[11px] font-bold text-slate-600">لون نصوص الفوتر</label>
                       <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.footer.textColor}
-                          onChange={(e) => handleUpdateField('footer', 'textColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
+                        <input type="color" value={content.footer.textColor} onChange={(e) => handleUpdateField('footer', 'textColor', e.target.value)} className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none" />
                         <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.footer.textColor}</span>
                       </div>
                     </div>

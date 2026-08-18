@@ -89,65 +89,78 @@ const DEFAULT_CONTENT = {
 
 function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT) {
   const navbarNode = nodes.find(n => n.type === 'navbar');
-  const heroNode = nodes.find(n => n.type === 'hero');
-  const aboutNode = nodes.find(n => n.type === 'about');
-  const featuresNode = nodes.find(n => n.type === 'features');
-  const pricingNode = nodes.find(n => n.type === 'pricing');
-  const faqNode = nodes.find(n => n.type === 'faq');
-  const contactNode = nodes.find(n => n.type === 'contact');
+  const heroNode = nodes.find(n => n.type === 'hero' || n.type === 'hero_section' || n.type === 'hero-banner' || n.type === 'slider_hero');
+  const aboutNode = nodes.find(n => n.type === 'about' || n.type === 'about_section');
+  const featuresNode = nodes.find(n => n.type === 'features' || n.type === 'features_section' || n.type === 'course-cards');
+  const pricingNode = nodes.find(n => n.type === 'pricing' || n.type === 'pricing_section');
+  const faqNode = nodes.find(n => n.type === 'faq' || n.type === 'faq_section');
+  const contactNode = nodes.find(n => n.type === 'contact' || n.type === 'contact_section');
   const footerNode = nodes.find(n => n.type === 'footer');
 
+  const navbarProps = navbarNode?.props;
+  const heroProps = heroNode?.props?.items?.[0]?.props ?? heroNode?.props?.items?.[0] ?? heroNode?.props;
+  const aboutProps = aboutNode?.props;
+  const featuresProps = featuresNode?.props;
+  const pricingProps = pricingNode?.props;
+  const faqProps = faqNode?.props;
+  const contactProps = contactNode?.props;
+  const footerProps = footerNode?.props;
+
   return {
-    navbar: navbarNode?.props ? {
-      title: navbarNode.props.title ?? fallback.navbar.title,
-      logo: navbarNode.props.logo ?? fallback.navbar.logo,
-      bgColor: navbarNode.props.bgColor ?? navbarNode.props.bg_color ?? fallback.navbar.bgColor,
-      textColor: navbarNode.props.textColor ?? navbarNode.props.text_color ?? fallback.navbar.textColor,
+    navbar: navbarProps ? {
+      title: navbarProps.title ?? navbarProps.logo_text ?? navbarProps.logoText ?? navbarProps.name ?? fallback.navbar.title,
+      logo: navbarProps.logo ?? navbarProps.logo_image ?? navbarProps.logoImage ?? fallback.navbar.logo,
+      bgColor: navbarProps.bgColor ?? navbarProps.bg_color ?? navbarProps.background_color ?? navbarProps.backgroundColor ?? fallback.navbar.bgColor,
+      textColor: navbarProps.textColor ?? navbarProps.text_color ?? fallback.navbar.textColor,
     } : fallback.navbar,
-    hero: heroNode?.props ? {
-      title: heroNode.props.title ?? fallback.hero.title,
-      subtitle: heroNode.props.subtitle ?? fallback.hero.subtitle,
-      description: heroNode.props.description ?? fallback.hero.description,
-      buttonText: heroNode.props.buttonText ?? heroNode.props.button_text ?? fallback.hero.buttonText,
-      buttonLink: heroNode.props.buttonLink ?? heroNode.props.button_link ?? fallback.hero.buttonLink,
-      image: heroNode.props.image ?? fallback.hero.image,
-      backgroundColor: heroNode.props.backgroundColor ?? heroNode.props.background_color ?? fallback.hero.backgroundColor,
-      textColor: heroNode.props.textColor ?? heroNode.props.text_color ?? fallback.hero.textColor,
+    hero: heroProps ? {
+      title: heroProps.title ?? heroProps.main_title ?? fallback.hero.title,
+      subtitle: heroProps.subtitle ?? heroProps.sub_title ?? fallback.hero.subtitle,
+      description: heroProps.description ?? heroProps.desc ?? fallback.hero.description,
+      buttonText: heroProps.buttonText ?? heroProps.button_text ?? heroProps.btnText ?? heroProps.btn_text ?? fallback.hero.buttonText,
+      buttonLink: heroProps.buttonLink ?? heroProps.button_link ?? heroProps.btnLink ?? heroProps.btn_link ?? fallback.hero.buttonLink,
+      image: heroProps.image ?? heroProps.heroImage ?? heroProps.hero_image ?? heroProps.bg_image ?? heroProps.bgImage ?? heroProps.side_image ?? heroProps.sideImage ?? heroProps.image_url ?? heroProps.imageUrl ?? fallback.hero.image,
+      backgroundColor: heroProps.backgroundColor ?? heroProps.background_color ?? heroProps.bg_color ?? heroProps.bgColor ?? fallback.hero.backgroundColor,
+      textColor: heroProps.textColor ?? heroProps.text_color ?? fallback.hero.textColor,
+      titleColor: heroProps.titleColor ?? heroProps.title_color,
+      subtitleColor: heroProps.subtitleColor ?? heroProps.subtitle_color,
+      buttonColor: heroProps.buttonColor ?? heroProps.button_color,
+      buttonTextColor: heroProps.buttonTextColor ?? heroProps.button_text_color,
     } : fallback.hero,
-    about: aboutNode?.props ? {
-      title: aboutNode.props.title ?? fallback.about.title,
-      subtitle: aboutNode.props.subtitle ?? fallback.about.subtitle,
-      image: aboutNode.props.image ?? fallback.about.image,
-      backgroundColor: aboutNode.props.backgroundColor ?? aboutNode.props.background_color ?? fallback.about.backgroundColor,
-      textColor: aboutNode.props.textColor ?? aboutNode.props.text_color ?? fallback.about.textColor,
+    about: aboutProps ? {
+      title: aboutProps.title ?? fallback.about.title,
+      subtitle: aboutProps.subtitle ?? fallback.about.subtitle,
+      image: aboutProps.image ?? aboutProps.side_image ?? aboutProps.sideImage ?? fallback.about.image,
+      backgroundColor: aboutProps.backgroundColor ?? aboutProps.background_color ?? aboutProps.bg_color ?? aboutProps.bgColor ?? fallback.about.backgroundColor,
+      textColor: aboutProps.textColor ?? aboutProps.text_color ?? fallback.about.textColor,
     } : fallback.about,
-    features: featuresNode?.props ? {
-      title: featuresNode.props.title ?? fallback.features.title,
-      subtitle: featuresNode.props.subtitle ?? fallback.features.subtitle,
-      items: featuresNode.props.items ?? fallback.features.items,
-      backgroundColor: featuresNode.props.backgroundColor ?? featuresNode.props.background_color ?? fallback.features.backgroundColor,
-      textColor: featuresNode.props.textColor ?? featuresNode.props.text_color ?? fallback.features.textColor,
+    features: featuresProps ? {
+      title: featuresProps.title ?? fallback.features.title,
+      subtitle: featuresProps.subtitle ?? fallback.features.subtitle,
+      items: featuresProps.items ?? fallback.features.items,
+      backgroundColor: featuresProps.backgroundColor ?? featuresProps.background_color ?? featuresProps.bg_color ?? featuresProps.bgColor ?? fallback.features.backgroundColor,
+      textColor: featuresProps.textColor ?? featuresProps.text_color ?? fallback.features.textColor,
     } : fallback.features,
-    pricing: pricingNode?.props ? {
-      title: pricingNode.props.title ?? fallback.pricing.title,
-      subtitle: pricingNode.props.subtitle ?? fallback.pricing.subtitle,
-      items: pricingNode.props.items ?? fallback.pricing.items,
-      backgroundColor: pricingNode.props.backgroundColor ?? pricingNode.props.background_color ?? fallback.pricing.backgroundColor,
-      textColor: pricingNode.props.textColor ?? pricingNode.props.text_color ?? fallback.pricing.textColor,
+    pricing: pricingProps ? {
+      title: pricingProps.title ?? fallback.pricing.title,
+      subtitle: pricingProps.subtitle ?? fallback.pricing.subtitle,
+      items: pricingProps.items ?? fallback.pricing.items,
+      backgroundColor: pricingProps.backgroundColor ?? pricingProps.background_color ?? pricingProps.bg_color ?? pricingProps.bgColor ?? fallback.pricing.backgroundColor,
+      textColor: pricingProps.textColor ?? pricingProps.text_color ?? fallback.pricing.textColor,
     } : fallback.pricing,
-    faq: faqNode?.props ? {
-      title: faqNode.props.title ?? fallback.faq.title,
-      items: faqNode.props.items ?? fallback.faq.items,
-      backgroundColor: faqNode.props.backgroundColor ?? faqNode.props.background_color ?? fallback.faq.backgroundColor,
-      textColor: faqNode.props.textColor ?? faqNode.props.text_color ?? fallback.faq.textColor,
+    faq: faqProps ? {
+      title: faqProps.title ?? fallback.faq.title,
+      items: faqProps.items ?? fallback.faq.items,
+      backgroundColor: faqProps.backgroundColor ?? faqProps.background_color ?? faqProps.bg_color ?? faqProps.bgColor ?? fallback.faq.backgroundColor,
+      textColor: faqProps.textColor ?? faqProps.text_color ?? fallback.faq.textColor,
     } : fallback.faq,
-    contact: contactNode?.props ? {
-      title: contactNode.props.title ?? fallback.contact.title,
-      description: contactNode.props.description ?? fallback.contact.description,
-      phoneNumber: contactNode.props.phoneNumber ?? contactNode.props.phone_number ?? fallback.contact.phoneNumber,
-      buttonText: contactNode.props.buttonText ?? contactNode.props.button_text ?? fallback.contact.buttonText,
-      backgroundColor: contactNode.props.backgroundColor ?? contactNode.props.background_color ?? fallback.contact.backgroundColor,
-      textColor: contactNode.props.textColor ?? contactNode.props.text_color ?? fallback.contact.textColor,
+    contact: contactProps ? {
+      title: contactProps.title ?? fallback.contact.title,
+      description: contactProps.description ?? fallback.contact.description,
+      phoneNumber: contactProps.phoneNumber ?? contactProps.phone_number ?? fallback.contact.phoneNumber,
+      buttonText: contactProps.buttonText ?? contactProps.button_text ?? contactProps.btnText ?? contactProps.btn_text ?? fallback.contact.buttonText,
+      backgroundColor: contactProps.backgroundColor ?? contactProps.background_color ?? contactProps.bg_color ?? contactProps.bgColor ?? fallback.contact.backgroundColor,
+      textColor: contactProps.textColor ?? contactProps.text_color ?? fallback.contact.textColor,
     } : fallback.contact,
     footer: footerNode?.props ? {
       text: footerNode.props.text ?? fallback.footer.text,
