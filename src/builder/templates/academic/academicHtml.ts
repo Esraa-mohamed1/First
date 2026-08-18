@@ -94,6 +94,14 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
   const aboutImg = content?.about?.image || (content?.about as any)?.img || (content?.about as any)?.video || '';
   const aboutBg = content?.about?.backgroundColor || (content?.about as any)?.background_color || (content?.about as any)?.bg_color || '#ffffff';
   const aboutTextColor = content?.about?.textColor || (content?.about as any)?.text_color || '#1b1b24';
+  const analyticsTitle = (content?.about as any)?.analyticsTitle || 'رؤى الأداء المؤسسي';
+  const analyticsBars = (content?.about as any)?.analyticsBars || [40, 65, 85, 50, 95];
+  const analyticsColor = (content?.about as any)?.analyticsColor || '#3525cd';
+  const bar1 = analyticsBars[0] ?? 40;
+  const bar2 = analyticsBars[1] ?? 65;
+  const bar3 = analyticsBars[2] ?? 85;
+  const bar4 = analyticsBars[3] ?? 50;
+  const bar5 = analyticsBars[4] ?? 95;
 
   const featuresTitle = content?.features?.title || 'نظام بيئي أكاديمي متكامل';
   const featuresSubtitle = content?.features?.subtitle || 'مجموعة شاملة ومتطورة من الأدوات لإدارة كل جانب من جوانب رحلة التعلم المؤسسية.';
@@ -117,6 +125,27 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
   const footerText = content?.footer?.text || '© 2024 إديوكور الأكاديمية. جميع الحقوق محفوظة.';
   const footerBg = content?.footer?.backgroundColor || (content?.footer as any)?.background_color || (content?.footer as any)?.bg_color || '#ffffff';
   const footerTextColor = content?.footer?.textColor || (content?.footer as any)?.text_color || '#1b1b24';
+
+  const videoTag = (content?.about as any)?.videoTag || 'شاهد وتعلّم';
+  const videoTitle = (content?.about as any)?.videoTitle || 'تعرف على فلسفتنا التعليمية في ٣ دقائق';
+  const videoDesc = (content?.about as any)?.videoDesc || 'نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.';
+  const videoLink = (content?.about as any)?.videoLink || (content?.about as any)?.videoImage || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop';
+
+  const newsletterTitle = (content?.footer as any)?.newsletterTitle || 'اشترك في نشرتنا البريدية المعرفية';
+  const newsletterDesc = (content?.footer as any)?.newsletterDesc || 'احصل على أحدث المقالات التحليلية، والمناهج الجديدة، والماستركلاسز الحصرية مباشرة في بريدك الإلكتروني أسبوعياً.';
+  const newsletterBtnText = (content?.footer as any)?.newsletterBtnText || 'اشترك الآن';
+
+  const testimonialsTitle = (content?.pricing as any)?.testimonialsTitle || 'ماذا يقول شركاؤنا وطلابنا؟';
+  const testimonialsSubtitle = (content?.pricing as any)?.testimonialsSubtitle || 'قصص نجاح ملهمة وتجارب واقعية يعبر عنها شركاؤنا الأكاديميون وطلابنا المتميزون.';
+  const testimonial1Text = (content?.pricing as any)?.testimonial1Text || 'سهولة إدارة المحتوى التعليمي والتحليلات الدقيقة المتاحة مكنتنا كإدارة من تتبع الأداء وتحسين المخرجات التعليمية بشكل ملموس وسريع.';
+  const testimonial1Author = (content?.pricing as any)?.testimonial1Author || 'أ.د. محمد الشمري';
+  const testimonial1Role = (content?.pricing as any)?.testimonial1Role || 'عميد القبول والتسجيل';
+  const testimonial2Text = (content?.pricing as any)?.testimonial2Text || 'سهولة التصفح، والوصول الفوري للمقررات والامتحانات التفاعلية، أتاح لي تنظيم وقتي والمذاكرة بذكاء وبدون تشتت تماماً.';
+  const testimonial2Author = (content?.pricing as any)?.testimonial2Author || 'رنا عبدالله';
+  const testimonial2Role = (content?.pricing as any)?.testimonial2Role || 'طالبة هندسة برمجيات';
+  const testimonial3Text = (content?.pricing as any)?.testimonial3Text || 'كأستاذ، مكنتني بوابة المعلم من متابعة الواجبات وإعطاء تقييمات تفصيلية فورية لكل طالب وطالبة بسهولة مطلقة ووقت قياسي.';
+  const testimonial3Author = (content?.pricing as any)?.testimonial3Author || 'م. عاصم العتيبي';
+  const testimonial3Role = (content?.pricing as any)?.testimonial3Role || 'عضو هيئة التدريس';
 
   return `<!DOCTYPE html>
 <html class="light" dir="rtl" lang="ar">
@@ -369,20 +398,20 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 </section>
 
 <!-- Video Intro Section -->
-<section class="w-full bg-surface">
+<section data-section="video" id="about-video" class="w-full bg-surface section-hover cursor-pointer">
   <div class="max-w-container-max mx-auto py-20 px-margin-mobile md:px-margin-desktop">
     <div class="bg-primary-container/10 border border-primary/20 rounded-[2.5rem] p-8 md:p-16 grid grid-cols-1 lg:grid-cols-2 gap-stack-lg items-center">
       <div class="space-y-6">
-        <span class="text-label-md font-label-md text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">شاهد وتعلّم</span>
-        <h2 class="text-headline-lg font-headline-lg text-on-surface leading-tight">تعرف على فلسفتنا التعليمية في ٣ دقائق</h2>
-        <p class="text-body-lg font-body-lg text-on-surface-variant leading-relaxed">نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.</p>
+        <span class="text-label-md font-label-md text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">${videoTag}</span>
+        <h2 class="text-headline-lg font-headline-lg text-on-surface leading-tight">${videoTitle}</h2>
+        <p class="text-body-lg font-body-lg text-on-surface-variant leading-relaxed">${videoDesc}</p>
         <div class="flex items-center gap-4 text-primary font-bold">
           <span class="material-symbols-outlined text-[32px] animate-bounce">play_arrow</span>
           <span>اضغط على المشغل لمشاهدة العرض التعريفي</span>
         </div>
       </div>
       <div class="relative h-[300px] md:h-[400px] rounded-3xl overflow-hidden bg-slate-900 shadow-2xl border border-outline-variant/30 flex items-center justify-center group cursor-pointer">
-        <div class="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-700 group-hover:scale-105" style="background-image: url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop');"></div>
+        <div class="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-700 group-hover:scale-105" style="background-image: url('${videoLink}');"></div>
         <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
         <div class="relative z-10 w-20 h-20 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300">
           <span class="material-symbols-outlined text-[40px] fill">play_arrow</span>
@@ -393,19 +422,42 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 </section>
 
 <!-- Smart Analytics Section -->
-<section data-section="about" class="w-full transition-all duration-300 section-hover cursor-pointer" style="background-color: ${aboutBg}; color: ${aboutTextColor};">
+<section data-section="about" id="about-analytics" class="w-full transition-all duration-300 section-hover cursor-pointer" style="background-color: ${aboutBg}; color: ${aboutTextColor};">
 <div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-stack-xl items-center">
-<div class="relative h-[450px] bg-surface-container-lowest rounded-3xl border border-outline-variant/50 shadow-xl overflow-hidden">
+<div class="relative h-[450px] bg-surface-container-lowest rounded-3xl border border-outline-variant/50 shadow-xl overflow-hidden p-8 flex flex-col justify-between">
   ${aboutImg
     ? renderMedia(aboutImg, 'w-full h-full object-cover', 'about')
-    : `<div class="w-full h-full flex flex-col items-center justify-center p-8">
-        <h3 class="text-headline-md font-headline-md text-on-surface mb-6">رؤى الأداء المؤسسي</h3>
-        <div class="flex items-end gap-4 h-40 w-full px-4">
-          <div class="flex-1 bg-primary/20 rounded-t-xl h-1/3"></div>
-          <div class="flex-1 bg-secondary/30 rounded-t-xl h-1/2"></div>
-          <div class="flex-1 bg-tertiary-fixed-dim/40 rounded-t-xl h-3/4"></div>
-          <div class="flex-1 bg-primary rounded-t-xl h-full"></div>
+    : `<div class="w-full h-full flex flex-col justify-between">
+        <div class="flex items-center justify-between border-b border-outline-variant/20 pb-4 mb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-3.5 h-3.5 rounded-full shadow-sm" style="background-color: ${analyticsColor};"></div>
+            <h3 class="text-headline-md font-headline-md text-on-surface font-extrabold">${analyticsTitle}</h3>
+          </div>
+          <span class="text-xs font-bold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">تحديث مباشر ⚡</span>
+        </div>
+        
+        <div class="relative flex-1 w-full flex items-end justify-between gap-3 pt-6 pb-2 px-2">
+          <!-- Smooth SVG Background Curve -->
+          <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-25" preserveAspectRatio="none" viewBox="0 0 100 100">
+            <path d="M 0 ${100 - bar1} Q 25 ${100 - bar2}, 50 ${100 - bar3} T 100 ${100 - bar5} L 100 100 L 0 100 Z" fill="${analyticsColor}" />
+            <path d="M 0 ${100 - bar1} Q 25 ${100 - bar2}, 50 ${100 - bar3} T 100 ${100 - bar5}" fill="none" stroke="${analyticsColor}" stroke-width="3" />
+          </svg>
+
+          <!-- 5 Dynamic Curved Glass Bars -->
+          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar1}%; background: linear-gradient(to top, ${analyticsColor}22, ${analyticsColor});"></div>
+          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar2}%; background: linear-gradient(to top, ${analyticsColor}33, ${analyticsColor});"></div>
+          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar3}%; background: linear-gradient(to top, ${analyticsColor}44, ${analyticsColor});"></div>
+          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar4}%; background: linear-gradient(to top, ${analyticsColor}66, ${analyticsColor});"></div>
+          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar5}%; background: linear-gradient(to top, ${analyticsColor}aa, ${analyticsColor});"></div>
+        </div>
+
+        <div class="flex items-center justify-between text-[11px] text-on-surface-variant font-bold border-t border-outline-variant/20 pt-3">
+          <span>الربع الأول</span>
+          <span>الربع الثاني</span>
+          <span>الربع الثالث</span>
+          <span>الربع الرابع</span>
+          <span>المجموع السنوي</span>
         </div>
       </div>`
   }
@@ -472,7 +524,7 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 </section>
 
 <!-- 2. Academic Management (Stats / Pricing items) -->
-<section data-section="pricing" class="w-full border-y border-outline-variant/30 bg-surface transition-all duration-300 section-hover cursor-pointer" style="background-color: ${pricingBg}; color: ${pricingTextColor};">
+<section data-section="pricing" id="pricing-plans" class="w-full border-y border-outline-variant/30 bg-surface transition-all duration-300 section-hover cursor-pointer" style="background-color: ${pricingBg}; color: ${pricingTextColor};">
 <div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
 <div class="text-center mb-10">
   <h3 class="text-headline-md font-headline-md text-on-surface mb-2">${pricingTitle}</h3>
@@ -493,44 +545,50 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 </section>
 
 <!-- Testimonials Section -->
-<section class="w-full bg-surface-container/50 border-y border-outline-variant/30">
+<section data-section="testimonials" id="testimonials" class="w-full bg-surface-container/50 border-y border-outline-variant/30 section-hover cursor-pointer" style="background-color: ${pricingBg}; color: ${pricingTextColor};">
 <div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
 <div class="text-center mb-16">
   <span class="text-label-md font-label-md text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">آراء وقصص النجاح</span>
-  <h2 class="text-headline-lg font-headline-lg text-on-surface mt-4 mb-2">ماذا يقول شركاؤنا وطلابنا؟</h2>
-  <p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mx-auto">تجارب حقيقية من قادة المؤسسات التعليمية والطلاب الذين حققوا التميز الأكاديمي والمهني معنا.</p>
+  <h2 class="text-headline-lg font-headline-lg text-on-surface mt-4 mb-2">${testimonialsTitle}</h2>
+  <p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mx-auto">${testimonialsSubtitle}</p>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
   <!-- Card 1 -->
-  <div class="bg-surface border border-outline-variant/50 p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
-    <p class="text-body-md font-body-md text-on-surface-variant italic mb-8">"إديوكور نقل إدارتنا التعليمية لمستوى آخر من الكفاءة والدقة. تحليلات لوحة التحكم ساعدتنا في اتخاذ قرارات فورية حسنت من مستوى الطلاب بنسبة ٢٥٪."</p>
+  <div data-testimonial="0" class="bg-surface border border-outline-variant/50 p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
+    <p class="text-body-md font-body-md text-on-surface-variant italic mb-8">"${testimonial1Text}"</p>
     <div class="flex items-center gap-4">
-      <div class="w-12 h-12 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center font-bold text-primary text-sm">أ.د</div>
+      <div class="w-12 h-12 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center font-bold text-primary text-sm">
+        ${testimonial1Author.slice(0, 2)}
+      </div>
       <div>
-        <h4 class="font-extrabold text-sm text-on-surface">أ.د. محمد الشمري</h4>
-        <p class="text-xs text-slate-500 font-bold">عميد القبول والتسجيل</p>
+        <h4 class="font-extrabold text-sm text-on-surface">${testimonial1Author}</h4>
+        <p class="text-xs text-slate-500 font-bold">${testimonial1Role}</p>
       </div>
     </div>
   </div>
   <!-- Card 2 -->
-  <div class="bg-surface border border-outline-variant/50 p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
-    <p class="text-body-md font-body-md text-on-surface-variant italic mb-8">"سهولة التصفح، والوصول الفوري للمقررات والامتحانات التفاعلية، أتاح لي تنظيم وقتي والمذاكرة بذكاء وبدون تشتت تماماً."</p>
+  <div data-testimonial="1" class="bg-surface border border-outline-variant/50 p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
+    <p class="text-body-md font-body-md text-on-surface-variant italic mb-8">"${testimonial2Text}"</p>
     <div class="flex items-center gap-4">
-      <div class="w-12 h-12 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center font-bold text-primary text-sm">ر.ع</div>
+      <div class="w-12 h-12 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center font-bold text-primary text-sm">
+        ${testimonial2Author.slice(0, 2)}
+      </div>
       <div>
-        <h4 class="font-extrabold text-sm text-on-surface">رنا عبدالله</h4>
-        <p class="text-xs text-slate-500 font-bold">طالبة هندسة برمجيات</p>
+        <h4 class="font-extrabold text-sm text-on-surface">${testimonial2Author}</h4>
+        <p class="text-xs text-slate-500 font-bold">${testimonial2Role}</p>
       </div>
     </div>
   </div>
   <!-- Card 3 -->
-  <div class="bg-surface border border-outline-variant/50 p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
-    <p class="text-body-md font-body-md text-on-surface-variant italic mb-8">"كأستاذ، مكنتني بوابة المعلم من متابعة الواجبات وإعطاء تقييمات تفصيلية فورية لكل طالب وطالبة بسهولة مطلقة ووقت قياسي."</p>
+  <div data-testimonial="2" class="bg-surface border border-outline-variant/50 p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
+    <p class="text-body-md font-body-md text-on-surface-variant italic mb-8">"${testimonial3Text}"</p>
     <div class="flex items-center gap-4">
-      <div class="w-12 h-12 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center font-bold text-primary text-sm">م.ع</div>
+      <div class="w-12 h-12 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center font-bold text-primary text-sm">
+        ${testimonial3Author.slice(0, 2)}
+      </div>
       <div>
-        <h4 class="font-extrabold text-sm text-on-surface">م. علي عمر</h4>
-        <p class="text-xs text-slate-500 font-bold">محاضر علوم حاسب</p>
+        <h4 class="font-extrabold text-sm text-on-surface">${testimonial3Author}</h4>
+        <p class="text-xs text-slate-500 font-bold">${testimonial3Role}</p>
       </div>
     </div>
   </div>
@@ -539,15 +597,15 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 </section>
 
 <!-- Newsletter Section -->
-<section class="w-full bg-surface-container border-y border-outline-variant/30">
+<section data-section="footer" id="newsletter" class="w-full bg-surface-container border-y border-outline-variant/30 section-hover cursor-pointer">
   <div class="max-w-container-max mx-auto py-20 px-margin-mobile md:px-margin-desktop">
     <div class="max-w-3xl mx-auto text-center space-y-8">
       <span class="material-symbols-outlined text-primary text-[48px] fill">mail</span>
-      <h2 class="text-headline-lg font-headline-lg text-on-surface">اشترك في نشرتنا البريدية المعرفية</h2>
-      <p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl mx-auto leading-relaxed">احصل على أحدث المقالات التحليلية، والمناهج الجديدة، والماستركلاسز الحصرية مباشرة في بريدك الإلكتروني أسبوعياً.</p>
+      <h2 class="text-headline-lg font-headline-lg text-on-surface">${newsletterTitle}</h2>
+      <p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl mx-auto leading-relaxed">${newsletterDesc}</p>
       <div class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
         <input type="email" placeholder="أدخل بريدك الإلكتروني هنا" class="flex-grow px-6 py-4 rounded-full border border-outline-variant bg-white text-on-surface outline-none focus:border-primary transition-colors text-sm" />
-        <button class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-8 py-4 rounded-full shadow-md transition-colors duration-300 shrink-0">اشترك الآن</button>
+        <button class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-8 py-4 rounded-full shadow-md transition-colors duration-300 shrink-0">${newsletterBtnText}</button>
       </div>
     </div>
   </div>
@@ -576,7 +634,7 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 </section>
 </main>
 <!-- Footer -->
-<footer data-section="footer" class="w-full py-stack-lg px-margin-mobile md:px-margin-desktop mt-stack-lg border-t border-outline-variant/30 bg-surface-container-lowest transition-all duration-300 section-hover cursor-pointer" style="background-color: ${footerBg}; color: ${footerTextColor};">
+<footer data-section="footer" id="footer-bar" class="w-full py-stack-lg px-margin-mobile md:px-margin-desktop mt-stack-lg border-t border-outline-variant/30 bg-surface-container-lowest transition-all duration-300 section-hover cursor-pointer" style="background-color: ${footerBg}; color: ${footerTextColor};">
 <div class="max-w-container-max mx-auto flex flex-col md:flex-row items-center justify-between gap-stack-md">
 <div class="flex items-center gap-3">
 <span class="text-headline-md font-headline-md text-primary font-bold" style="color: ${footerTextColor};">${navbarTitle}</span>

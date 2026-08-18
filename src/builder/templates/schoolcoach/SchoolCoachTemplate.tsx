@@ -29,6 +29,10 @@ const DEFAULT_CONTENT = {
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBsvCKkFFgnTqd7h7Fw_WOHLv_-bXegAz36jnJ-dSBDWKiA81BP1TWumr1WnjULNWm_0CcbVBTge22QX2XN-cBPri3M3xbxSbAGqLIcFlI4XbbEacN9CKm1uRjQqkRnAfjumbe4cbh_txOhsTy_-6Eph6WwWNqlfr7j35tkwUU103Z7NEEpLCcfSvulZ4QoKpglkx4KRxtXU9TRhBm3eChxdvC43k04A-fnMk-IjFugUk9FdZ1nyfYQsA',
     backgroundColor: '#ffffff',
     textColor: '#1a1f29',
+    videoTag: 'شاهد وتعلّم',
+    videoTitle: 'تعرف على فلسفتنا التعليمية في ٣ دقائق',
+    videoDesc: 'نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.',
+    videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
   },
   features: {
     title: 'المواد الدراسية',
@@ -90,6 +94,8 @@ const DEFAULT_CONTENT = {
     ],
     backgroundColor: '#f7f8fa',
     textColor: '#1a1f29',
+    testimonialsTitle: 'ماذا يقول طلابنا وأولياء الأمور؟',
+    testimonialsSubtitle: 'تجارب واقعية وقصص نجاح يرويها شركاء النجاح من الطلاب المتميزين وعائلاتهم الداعمة.',
   },
   contact: {
     title: 'ابدأ رحلة تفوقك اليوم',
@@ -103,6 +109,9 @@ const DEFAULT_CONTENT = {
     text: '© ٢٠٢٦ الأستاذ أحمد محمد. جميع الحقوق محفوظة.',
     backgroundColor: '#0a1628',
     textColor: '#ffffff',
+    newsletterTitle: 'اشترك في نشرتنا البريدية المعرفية',
+    newsletterDesc: 'احصل على أحدث المقالات التحليلية، والمناهج الجديدة، والماستركلاسز الحصرية مباشرة في بريدك الإلكتروني أسبوعياً.',
+    newsletterBtnText: 'اشترك الآن',
   },
 };
 
@@ -139,6 +148,10 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT) 
       image: aboutNode.props.image ?? fallback.about.image,
       backgroundColor: aboutNode.props.backgroundColor ?? aboutNode.props.background_color ?? fallback.about.backgroundColor,
       textColor: aboutNode.props.textColor ?? aboutNode.props.text_color ?? fallback.about.textColor,
+      videoTag: aboutNode.props.videoTag ?? aboutNode.props.video_tag ?? fallback.about.videoTag,
+      videoTitle: aboutNode.props.videoTitle ?? aboutNode.props.video_title ?? fallback.about.videoTitle,
+      videoDesc: aboutNode.props.videoDesc ?? aboutNode.props.video_desc ?? fallback.about.videoDesc,
+      videoLink: aboutNode.props.videoLink ?? aboutNode.props.video_link ?? fallback.about.videoLink,
     } : fallback.about,
     features: featuresNode?.props ? {
       title: featuresNode.props.title ?? fallback.features.title,
@@ -159,6 +172,8 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT) 
       items: faqNode.props.items ?? fallback.faq.items,
       backgroundColor: faqNode.props.backgroundColor ?? faqNode.props.background_color ?? fallback.faq.backgroundColor,
       textColor: faqNode.props.textColor ?? faqNode.props.text_color ?? fallback.faq.textColor,
+      testimonialsTitle: faqNode.props.testimonialsTitle ?? faqNode.props.testimonials_title ?? fallback.faq.testimonialsTitle,
+      testimonialsSubtitle: faqNode.props.testimonialsSubtitle ?? faqNode.props.testimonials_subtitle ?? fallback.faq.testimonialsSubtitle,
     } : fallback.faq,
     contact: contactNode?.props ? {
       title: contactNode.props.title ?? fallback.contact.title,

@@ -61,6 +61,27 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
 
   const footerText = content?.footer?.text || '© 2024 Deep Knowledge Academy. All rights reserved.';
 
+  const videoTag = (content?.about as any)?.videoTag || 'شاهد وتعلّم';
+  const videoTitle = (content?.about as any)?.videoTitle || 'تعرف على فلسفتنا التعليمية في ٣ دقائق';
+  const videoDesc = (content?.about as any)?.videoDesc || 'نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.';
+  const videoLink = (content?.about as any)?.videoLink || (content?.about as any)?.videoImage || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop';
+
+  const newsletterTitle = (content?.footer as any)?.newsletterTitle || 'اشترك في نشرتنا البريدية المعرفية';
+  const newsletterDesc = (content?.footer as any)?.newsletterDesc || 'احصل على أحدث المقالات التحليلية، والمناهج الجديدة، والماستركلاسز الحصرية مباشرة في بريدك الإلكتروني أسبوعياً.';
+  const newsletterBtnText = (content?.footer as any)?.newsletterBtnText || 'اشترك الآن';
+
+  const testimonialsTitle = (content?.pricing as any)?.testimonialsTitle || 'ماذا يقول النخبة؟';
+  const testimonialsSubtitle = (content?.pricing as any)?.testimonialsSubtitle || 'تجارب حقيقية ورؤى ملهمة من طلابنا وقادتنا الذين غيروا مسارهم الأكاديمي والمهني.';
+  const testimonial1Text = (content?.pricing as any)?.testimonial1Text || 'الماستركلاسز والدروس الفلسفية المعمقة أعادت صياغة طريقتي في التفكير واتخاذ القرارات الاستراتيجية. تجربة دراسية استثنائية ونخبوية حقاً.';
+  const testimonial1Author = (content?.pricing as any)?.testimonial1Author || 'خالد منصور';
+  const testimonial1Role = (content?.pricing as any)?.testimonial1Role || 'مستشار إداري وتطوير أعمال';
+  const testimonial2Text = (content?.pricing as any)?.testimonial2Text || 'من أفضل القرارات المعرفية التي اتخذتها. منهجية التدريب والتحليل بالبيانات لا تدع مجالاً للعشوائية أو التخمين.';
+  const testimonial2Author = (content?.pricing as any)?.testimonial2Author || 'سارة العلي';
+  const testimonial2Role = (content?.pricing as any)?.testimonial2Role || 'رائدة أعمال تكنولوجية';
+  const testimonial3Text = (content?.pricing as any)?.testimonial3Text || 'المحتوى الأكاديمي والتحليل العميق وفر لي رؤى لم أجدها في المراجع التقليدية. التوجيه الشخصي مع د. طارق كان فارقاً في مساري العلمي.';
+  const testimonial3Author = (content?.pricing as any)?.testimonial3Author || 'أحمد حماد';
+  const testimonial3Role = (content?.pricing as any)?.testimonial3Role || 'باحث أكاديمي في الفلسفة';
+
   return `<!DOCTYPE html>
 <html class="light" dir="rtl" lang="ar">
 <head>
@@ -293,19 +314,19 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
 </section>
 
 <!-- Video Intro Section -->
-<section class="py-20 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto mb-20">
+<section data-section="video" id="about-video" class="py-20 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto mb-20 section-hover cursor-pointer">
   <div class="bg-primary-container/10 border border-primary/20 rounded-[2.5rem] p-8 md:p-16 grid grid-cols-1 lg:grid-cols-2 gap-stack-lg items-center">
     <div class="space-y-6">
-      <span class="text-label-md font-label-md text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">شاهد وتعلّم</span>
-      <h2 class="text-headline-lg font-headline-lg text-on-surface leading-tight">تعرف على فلسفتنا التعليمية في ٣ دقائق</h2>
-      <p class="text-body-lg font-body-lg text-on-surface-variant leading-relaxed">نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.</p>
+      <span class="text-label-md font-label-md text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">${videoTag}</span>
+      <h2 class="text-headline-lg font-headline-lg text-on-surface leading-tight">${videoTitle}</h2>
+      <p class="text-body-lg font-body-lg text-on-surface-variant leading-relaxed">${videoDesc}</p>
       <div class="flex items-center gap-4 text-primary font-bold">
         <span class="material-symbols-outlined text-[32px] animate-bounce">play_arrow</span>
         <span>اضغط على المشغل لمشاهدة العرض التعريفي</span>
       </div>
     </div>
     <div class="relative h-[300px] md:h-[400px] rounded-3xl overflow-hidden bg-slate-900 shadow-2xl border border-outline-variant/30 flex items-center justify-center group cursor-pointer">
-      <div class="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-700 group-hover:scale-105" style="background-image: url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop');"></div>
+      <div class="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-700 group-hover:scale-105" style="background-image: url('${videoLink}');"></div>
       <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
       <div class="relative z-10 w-20 h-20 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300">
         <span class="material-symbols-outlined text-[40px] fill">play_arrow</span>
@@ -370,7 +391,7 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
 </section>
 
 <!-- Section 2: Masterclass Series -->
-<section data-section="pricing" class="py-24 px-margin-mobile md:px-margin-desktop bg-background section-hover cursor-pointer">
+<section data-section="pricing" id="pricing-plans" class="py-24 px-margin-mobile md:px-margin-desktop bg-background section-hover cursor-pointer">
 <div class="max-w-container-max mx-auto">
 <div class="flex justify-between items-end mb-12">
 <div>
@@ -458,46 +479,52 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
 </div>
 </div>
 <!-- Testimonials Section -->
-<section class="py-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto bg-surface-container/50 border border-outline-variant/20 rounded-[2.5rem] mb-24 relative">
+<section data-section="testimonials" id="testimonials" class="py-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto bg-surface-container/50 border border-outline-variant/20 rounded-[2.5rem] mb-24 relative section-hover cursor-pointer" style="${content?.pricing?.backgroundColor ? `background-color: ${content.pricing.backgroundColor};` : ''} ${content?.pricing?.textColor ? `color: ${content.pricing.textColor};` : ''}">
 <div class="text-center mb-16">
   <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-tertiary/30 bg-surface-container-low mb-4">
     <span class="material-symbols-outlined text-tertiary text-label-sm" style="font-variation-settings: 'FILL' 1;">reviews</span>
     <span class="font-label-sm text-label-sm text-tertiary uppercase tracking-widest">تجارب وقصص نجاح</span>
   </div>
-  <h2 class="font-headline-md text-headline-md text-on-surface">ماذا يقول النخبة؟</h2>
-  <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mx-auto mt-2">تجارب حقيقية ورؤى ملهمة من طلابنا وقادتنا الذين غيروا مسارهم الأكاديمي والمهني.</p>
+  <h2 class="font-headline-md text-headline-md text-on-surface">${testimonialsTitle}</h2>
+  <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mx-auto mt-2">${testimonialsSubtitle}</p>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
   <!-- Card 1 -->
-  <div class="bg-surface-container border border-outline-variant/40 p-8 flex flex-col justify-between hover:bg-surface-container-highest transition-all duration-300">
-    <p class="font-body-md text-body-md text-on-surface-variant italic mb-8">"الماستركلاسز والدروس الفلسفية المعمقة أعادت صياغة طريقتي في التفكير واتخاذ القرارات الاستراتيجية. تجربة دراسية استثنائية ونخبوية حقاً."</p>
+  <div data-testimonial="0" class="bg-surface-container border border-outline-variant/40 p-8 flex flex-col justify-between hover:bg-surface-container-highest transition-all duration-300">
+    <p class="font-body-md text-body-md text-on-surface-variant italic mb-8">"${testimonial1Text}"</p>
     <div class="flex items-center gap-4">
-      <div class="w-12 h-12 rounded bg-tertiary/20 flex items-center justify-center font-bold text-tertiary">خ.م</div>
+      <div class="w-12 h-12 rounded bg-tertiary/20 flex items-center justify-center font-bold text-tertiary">
+        ${testimonial1Author.slice(0, 2)}
+      </div>
       <div>
-        <h4 class="font-body-lg text-body-lg font-bold text-on-surface">خالد منصور</h4>
-        <p class="font-label-sm text-label-sm text-tertiary">مستشار إداري وتطوير أعمال</p>
+        <h4 class="font-body-lg text-body-lg font-bold text-on-surface">${testimonial1Author}</h4>
+        <p class="font-label-sm text-label-sm text-tertiary">${testimonial1Role}</p>
       </div>
     </div>
   </div>
   <!-- Card 2 -->
-  <div class="bg-surface-container border border-outline-variant/40 p-8 flex flex-col justify-between hover:bg-surface-container-highest transition-all duration-300">
-    <p class="font-body-md text-body-md text-on-surface-variant italic mb-8">"من أفضل القرارات المعرفية التي اتخذتها. منهجية التدريب والتحليل بالبيانات لا تدع مجالاً للعشوائية أو التخمين."</p>
+  <div data-testimonial="1" class="bg-surface-container border border-outline-variant/40 p-8 flex flex-col justify-between hover:bg-surface-container-highest transition-all duration-300">
+    <p class="font-body-md text-body-md text-on-surface-variant italic mb-8">"${testimonial2Text}"</p>
     <div class="flex items-center gap-4">
-      <div class="w-12 h-12 rounded bg-tertiary/20 flex items-center justify-center font-bold text-tertiary">س.ع</div>
+      <div class="w-12 h-12 rounded bg-tertiary/20 flex items-center justify-center font-bold text-tertiary">
+        ${testimonial2Author.slice(0, 2)}
+      </div>
       <div>
-        <h4 class="font-body-lg text-body-lg font-bold text-on-surface">سارة العلي</h4>
-        <p class="font-label-sm text-label-sm text-tertiary">رائدة أعمال تكنولوجية</p>
+        <h4 class="font-body-lg text-body-lg font-bold text-on-surface">${testimonial2Author}</h4>
+        <p class="font-label-sm text-label-sm text-tertiary">${testimonial2Role}</p>
       </div>
     </div>
   </div>
   <!-- Card 3 -->
-  <div class="bg-surface-container border border-outline-variant/40 p-8 flex flex-col justify-between hover:bg-surface-container-highest transition-all duration-300">
-    <p class="font-body-md text-body-md text-on-surface-variant italic mb-8">"المحتوى الأكاديمي والتحليل العميق وفر لي رؤى لم أجدها في المراجع التقليدية. التوجيه الشخصي مع د. طارق كان فارقاً في مساري العلمي."</p>
+  <div data-testimonial="2" class="bg-surface-container border border-outline-variant/40 p-8 flex flex-col justify-between hover:bg-surface-container-highest transition-all duration-300">
+    <p class="font-body-md text-body-md text-on-surface-variant italic mb-8">"${testimonial3Text}"</p>
     <div class="flex items-center gap-4">
-      <div class="w-12 h-12 rounded bg-tertiary/20 flex items-center justify-center font-bold text-tertiary">أ.ح</div>
+      <div class="w-12 h-12 rounded bg-tertiary/20 flex items-center justify-center font-bold text-tertiary">
+        ${testimonial3Author.slice(0, 2)}
+      </div>
       <div>
-        <h4 class="font-body-lg text-body-lg font-bold text-on-surface">أحمد حماد</h4>
-        <p class="font-label-sm text-label-sm text-tertiary">باحث أكاديمي في الفلسفة</p>
+        <h4 class="font-body-lg text-body-lg font-bold text-on-surface">${testimonial3Author}</h4>
+        <p class="font-label-sm text-label-sm text-tertiary">${testimonial3Role}</p>
       </div>
     </div>
   </div>
@@ -505,21 +532,21 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
 </section>
 
 <!-- Newsletter Section -->
-<section class="py-20 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto mb-20 bg-surface-container border border-outline-variant/30 rounded-[2.5rem]">
+<section data-section="footer" id="newsletter" class="py-20 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto mb-20 bg-surface-container border border-outline-variant/30 rounded-[2.5rem] section-hover cursor-pointer">
   <div class="max-w-3xl mx-auto text-center space-y-8">
     <span class="material-symbols-outlined text-primary text-[48px] fill">mail</span>
-    <h2 class="text-headline-lg font-headline-lg text-on-surface">اشترك في نشرتنا البريدية المعرفية</h2>
-    <p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl mx-auto leading-relaxed">احصل على أحدث المقالات التحليلية، والمناهج الجديدة، والماستركلاسز الحصرية مباشرة في بريدك الإلكتروني أسبوعياً.</p>
+    <h2 class="text-headline-lg font-headline-lg text-on-surface">${newsletterTitle}</h2>
+    <p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl mx-auto leading-relaxed">${newsletterDesc}</p>
     <div class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
       <input type="email" placeholder="أدخل بريدك الإلكتروني هنا" class="flex-grow px-6 py-4 rounded-full border border-outline-variant bg-white text-on-surface outline-none focus:border-primary transition-colors text-sm" />
-      <button class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-8 py-4 rounded-full shadow-md transition-colors duration-300 shrink-0">اشترك الآن</button>
+      <button class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-8 py-4 rounded-full shadow-md transition-colors duration-300 shrink-0">${newsletterBtnText}</button>
     </div>
   </div>
 </section>
 
 </main>
 <!-- Footer -->
-<footer data-section="contact" class="bg-surface-container-lowest text-outline py-12 border-t border-outline-variant full-width flat no shadows section-hover cursor-pointer">
+<footer data-section="footer" id="footer-bar" class="bg-surface-container-lowest text-outline py-12 border-t border-outline-variant full-width flat no shadows section-hover cursor-pointer">
 <div class="grid grid-cols-1 md:grid-cols-4 gap-gutter px-margin-desktop max-w-container-max mx-auto">
 <div class="col-span-1 md:col-span-2 mb-8 md:mb-0">
 <span class="font-headline-md text-headline-md text-tertiary block mb-4">${contactTitle}</span>

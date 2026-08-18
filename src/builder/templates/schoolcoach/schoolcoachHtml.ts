@@ -75,6 +75,18 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
 
   const footerText = content?.footer?.text || '© ٢٠٢٦ الأستاذ أحمد محمد. جميع الحقوق محفوظة.';
 
+  const videoTag = (content?.about as any)?.videoTag || 'شاهد وتعلّم';
+  const videoTitle = (content?.about as any)?.videoTitle || 'تعرف على فلسفتنا التعليمية في ٣ دقائق';
+  const videoDesc = (content?.about as any)?.videoDesc || 'نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.';
+  const videoLink = (content?.about as any)?.videoLink || (content?.about as any)?.videoImage || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop';
+
+  const newsletterTitle = (content?.footer as any)?.newsletterTitle || 'اشترك في نشرتنا المعرفية';
+  const newsletterDesc = (content?.footer as any)?.newsletterDesc || 'احصل على أحدث المقالات التحليلية، والمناهج الجديدة، والماستركلاسز الحصرية مباشرة في بريدك الإلكتروني أسبوعياً.';
+  const newsletterBtnText = (content?.footer as any)?.newsletterBtnText || 'اشترك الآن';
+
+  const testimonialsTitle = (content?.faq as any)?.testimonialsTitle || 'آراء وقصص نجاح الطلاب';
+  const testimonialsSubtitle = (content?.faq as any)?.testimonialsSubtitle || 'ماذا يقول أولياء الأمور وطلابنا بعد تحقيق الدرجة الكاملة والتفوق في امتحاناتهم.';
+
   return `<!DOCTYPE html>
 <html class="light" dir="rtl" lang="ar">
 <head>
@@ -392,7 +404,7 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
     </section>
 
     <!-- 3. About Section -->
-    <section id="about" data-section="about" class="py-24 px-margin-mobile md:px-margin-desktop bg-[var(--color-offwhite)] mb-20 section-hover cursor-pointer">
+    <section id="about-analytics" data-section="about" class="py-24 px-margin-mobile md:px-margin-desktop bg-[var(--color-offwhite)] mb-20 section-hover cursor-pointer">
       <div class="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         <div class="flex justify-center">
           <div class="relative w-full max-w-[400px] aspect-square rounded-[30%_70%_70%_30%_/_30%_30%_70%_70%] overflow-hidden border-2 border-[var(--color-gold-500)] shadow-xl bg-white">
@@ -420,19 +432,19 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
     </section>
 
     <!-- Video Intro Section -->
-    <section class="py-20 px-margin-mobile md:px-margin-desktop max-w-[1200px] mx-auto mb-20">
+    <section data-section="video" id="about-video" class="py-20 px-margin-mobile md:px-margin-desktop max-w-[1200px] mx-auto mb-20 section-hover cursor-pointer">
       <div class="bg-[var(--color-navy-900)] border border-navy-700/40 rounded-3xl p-8 md:p-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center text-white">
         <div class="space-y-6">
-          <span class="text-xs font-bold text-[var(--color-gold-500)] bg-[var(--color-gold-500)]/10 px-4 py-1.5 rounded-full border border-[var(--color-gold-500)]/20">شاهد وتعلّم</span>
-          <h2 class="text-3xl font-extrabold leading-tight">تعرف على فلسفتنا التعليمية في ٣ دقائق</h2>
-          <p class="text-body-lg text-gray-400 leading-relaxed">نقدم لك جولة سريعة داخل مجموعاتنا التفاعلية المباشرة، ونوضح طريقة المتابعة والتقييمات الدورية للطلاب.</p>
+          <span class="text-xs font-bold text-[var(--color-gold-500)] bg-[var(--color-gold-500)]/10 px-4 py-1.5 rounded-full border border-[var(--color-gold-500)]/20">${videoTag}</span>
+          <h2 class="text-3xl font-extrabold leading-tight">${videoTitle}</h2>
+          <p class="text-body-lg text-gray-400 leading-relaxed">${videoDesc}</p>
           <div class="flex items-center gap-4 text-[var(--color-gold-500)] font-bold">
             <span class="material-symbols-outlined text-[32px] animate-bounce">play_arrow</span>
             <span>اضغط على المشغل لمشاهدة العرض التعريفي</span>
           </div>
         </div>
         <div class="relative h-[300px] md:h-[400px] rounded-2xl overflow-hidden bg-slate-900 shadow-2xl border border-navy-700/50 flex items-center justify-center group cursor-pointer">
-          <div class="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-700 group-hover:scale-105" style="background-image: url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop');"></div>
+          <div class="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-700 group-hover:scale-105" style="background-image: url('${videoLink}');"></div>
           <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
           <div class="relative z-10 w-20 h-20 rounded-full bg-[var(--color-gold-500)] text-[var(--color-navy-950)] flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300">
             <span class="material-symbols-outlined text-[40px] fill">play_arrow</span>
@@ -537,10 +549,10 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
     </section>
 
     <!-- 7. Testimonials ("آراء الطلاب") -->
-    <section id="testimonials" class="py-24 px-margin-mobile md:px-margin-desktop max-w-[1200px] mx-auto mb-20">
+    <section id="testimonials" data-section="testimonials" class="py-24 px-margin-mobile md:px-margin-desktop max-w-[1200px] mx-auto mb-20 section-hover cursor-pointer">
       <div class="text-center mb-16">
-        <h2 class="section-title text-center">آراء وقصص نجاح الطلاب</h2>
-        <p class="text-body-lg text-gray-600 max-w-2xl mx-auto">ماذا يقول أولياء الأمور وطلابنا بعد تحقيق الدرجة الكاملة والتفوق في امتحاناتهم.</p>
+        <h2 class="section-title text-center">${testimonialsTitle}</h2>
+        <p class="text-body-lg text-gray-600 max-w-2xl mx-auto">${testimonialsSubtitle}</p>
       </div>
       
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -567,14 +579,14 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
     </section>
 
     <!-- Newsletter Section -->
-    <section class="py-20 px-margin-mobile md:px-margin-desktop max-w-[1200px] mx-auto mb-20 bg-gray-100 border border-gray-200/50 rounded-3xl">
+    <section data-section="footer" class="py-20 px-margin-mobile md:px-margin-desktop max-w-[1200px] mx-auto mb-20 bg-gray-100 border border-gray-200/50 rounded-3xl section-hover cursor-pointer">
       <div class="max-w-3xl mx-auto text-center space-y-6">
         <span class="material-symbols-outlined text-[var(--color-gold-500)] text-[48px] fill">mail</span>
-        <h2 class="text-[32px] font-extrabold text-[var(--color-gray-900)]">اشترك في نشرتنا المعرفية</h2>
-        <p class="text-body-lg text-gray-600 max-w-xl mx-auto leading-relaxed">احصل على نماذج امتحانات، ملخصات ومذكرات للمراجعة مباشرة في بريدك الإلكتروني.</p>
+        <h2 class="text-[32px] font-extrabold text-[var(--color-gray-900)]">${newsletterTitle}</h2>
+        <p class="text-body-lg text-gray-600 max-w-xl mx-auto leading-relaxed">${newsletterDesc}</p>
         <div class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
           <input type="email" placeholder="أدخل بريدك الإلكتروني هنا" class="flex-grow px-6 py-4 rounded-full border border-gray-300 bg-white text-gray-900 outline-none focus:border-[var(--color-gold-500)] transition-colors text-sm" />
-          <button class="btn-primary text-xs py-4 px-8 shrink-0">اشترك الآن</button>
+          <button class="btn-primary text-xs py-4 px-8 shrink-0">${newsletterBtnText}</button>
         </div>
       </div>
     </section>
