@@ -2667,15 +2667,15 @@ export default function CourseDetailsPage() {
                     </div>
 
                     {/* Left Live Scaled Canvas Preview Panel (8 cols) */}
-                    <div className="lg:col-span-8 bg-slate-950 p-4 flex flex-col items-center justify-start h-full overflow-hidden relative">
-                      <div className="w-full flex-1 overflow-y-auto flex items-start justify-center p-2 custom-scrollbar">
+                    <div className="lg:col-span-8 bg-slate-950 p-4 flex flex-col h-full overflow-hidden relative">
+                      <div className="w-full flex-1 overflow-y-auto p-1 custom-scrollbar">
                         <div
-                          className={`transition-all duration-300 bg-white rounded-2xl shadow-2xl overflow-hidden origin-top ${
+                          className={`transition-all duration-300 bg-white rounded-2xl shadow-2xl overflow-hidden min-h-full ${
                             inlineViewport === 'desktop'
-                              ? 'w-[1050px] scale-[0.58] sm:scale-[0.62] xl:scale-[0.68] -mb-[35%] border-4 border-slate-700 shadow-blue-500/10'
+                              ? 'w-full border border-slate-700 shadow-xl'
                               : inlineViewport === 'tablet'
-                              ? 'w-[768px] scale-[0.75] -mb-[20%] border-6 border-slate-800 rounded-[2rem]'
-                              : 'w-[375px] scale-[0.95] border-8 border-slate-800 rounded-[2.5rem]'
+                              ? 'w-full max-w-[720px] mx-auto border-4 border-slate-700 rounded-[1.5rem] shadow-xl'
+                              : 'w-full max-w-[375px] mx-auto border-8 border-slate-700 rounded-[2.5rem] shadow-2xl'
                           }`}
                         >
                           <LandingRenderer
@@ -2871,7 +2871,7 @@ export default function CourseDetailsPage() {
                     <button 
                       type="button"
                       onClick={() => handleStartInlineEdit(courseTemplate)}
-                      className="flex-1 lg:flex-none px-5 py-2.5 bg-primary hover:bg-primary-container text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-500/10 cursor-pointer animate-fade-in"
+                      className="flex-1 lg:flex-none px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-500/10 cursor-pointer animate-fade-in"
                     >
                       <span className="material-symbols-outlined text-sm">edit</span>
                       تعديل الصفحة
@@ -2881,7 +2881,7 @@ export default function CourseDetailsPage() {
                       onClick={() => {
                         window.open(`/landing/${course?.slug || id}`, '_blank');
                       }}
-                      className="flex-1 lg:flex-none px-5 py-2.5 border border-primary text-primary rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary/5 transition-all cursor-pointer"
+                      className="flex-1 lg:flex-none px-5 py-2.5 border border-blue-600 text-blue-600 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-50 transition-all cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-sm">visibility</span>
                       معاينة
@@ -2889,10 +2889,11 @@ export default function CourseDetailsPage() {
                     <button 
                       type="button"
                       onClick={handleCopyDefaultLink}
-                      className="p-2.5 text-on-surface-variant hover:bg-slate-50 border border-outline-variant/60 rounded-xl transition-all cursor-pointer"
-                      title="نسخ رابط الصفحة"
+                      className="flex-1 lg:flex-none px-4 py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                      title="مشاركة ورابط الصفحة الافتراضية"
                     >
-                      <LinkIcon className="w-4 h-4" />
+                      <span className="material-symbols-outlined text-sm">share</span>
+                      مشاركة الرابط
                     </button>
                   </div>
                 </div>

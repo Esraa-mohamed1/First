@@ -236,6 +236,7 @@ export default function CreateCourseClient() {
   const [collapsedUnits, setCollapsedUnits] = useState<Record<number, boolean>>({});
 
   // Custom landing pages states
+  const [courseSlug, setCourseSlug] = useState<string>('');
   const [landingPages, setLandingPages] = useState<any[]>([]);
   const [loadingLandingPages, setLoadingLandingPages] = useState(false);
   const [previewLandingPageId, setPreviewLandingPageId] = useState<string | number | null>(null);
@@ -688,14 +689,48 @@ export default function CreateCourseClient() {
       infoIndex++;
     });
 
+    const clearDraftCache = () => {
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem(DRAFT_CACHE_KEY);
+          localStorage.removeItem(`darb_create_course_image_${courseTypeParam || 'recorded'}`);
+        }
+      } catch (e) {
+        console.error('Failed to clear draft cache:', e);
+      }
+    };
+
     try {
       if (courseId) {
-        await updateCourse(courseId, payload);
+        const updated = await updateCourse(courseId, payload);
+        const returnedSlug = (updated as any)?.slug || (updated as any)?.data?.slug || (updated as any)?.course?.slug || slug;
+        if (returnedSlug) setCourseSlug(returnedSlug);
+        try {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('darab_last_created_course_id', String(courseId));
+            if (returnedSlug) localStorage.setItem('darab_last_created_course_slug', returnedSlug);
+            localStorage.setItem(`darab_course_cache_${courseId}`, JSON.stringify(updated || payload));
+            if (returnedSlug) localStorage.setItem(`darab_course_cache_${returnedSlug}`, JSON.stringify(updated || payload));
+          }
+        } catch (e) {}
+        clearDraftCache();
         toast.success('تم تحديث بيانات الدورة بنجاح');
         return courseId;
       } else {
         const created = await createCourse(payload);
         setCourseId(created.id);
+        const returnedSlug = (created as any)?.slug || (created as any)?.data?.slug || (created as any)?.course?.slug || slug;
+        if (returnedSlug) setCourseSlug(returnedSlug);
+        try {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('darab_last_created_course_id', String(created.id));
+            if (returnedSlug) localStorage.setItem('darab_last_created_course_slug', returnedSlug);
+            const courseObj = { ...payload, id: created.id, slug: returnedSlug };
+            localStorage.setItem(`darab_course_cache_${created.id}`, JSON.stringify(courseObj));
+            if (returnedSlug) localStorage.setItem(`darab_course_cache_${returnedSlug}`, JSON.stringify(courseObj));
+          }
+        } catch (e) {}
+        clearDraftCache();
         toast.success('تم حفظ الدورة بنجاح');
         return created.id;
       }
@@ -723,8 +758,7 @@ export default function CreateCourseClient() {
       await ensureCourseCreated('published');
       setStatus('published');
       toast.success('تم نشر الدورة بنجاح!');
-      localStorage.removeItem(DRAFT_CACHE_KEY);
-      localStorage.removeItem(`darb_create_course_image_${courseTypeParam || 'recorded'}`);
+      clearDraftCache();
     } catch (err) {
       // Handled inside
     } finally {
@@ -973,7 +1007,8 @@ export default function CreateCourseClient() {
 
   const handleCopyCustomLink = (page: any) => {
     if (typeof window !== 'undefined') {
-      const link = `${window.location.origin}/${page.slug || 'preview'}?lp_id=${page.id}`;
+      const targetSlug = page.slug || courseSlug || slug || (courseId ? String(courseId) : 'draft');
+      const link = `${window.location.origin}/landing/${targetSlug}?lp_id=${page.id}`;
       navigator.clipboard.writeText(link);
       toast.success('تم نسخ رابط صفحة البيع بنجاح!');
     }
@@ -981,7 +1016,8 @@ export default function CreateCourseClient() {
 
   const handleCopyDefaultLink = () => {
     if (typeof window !== 'undefined') {
-      const link = `${window.location.origin}/${slug || courseId}`;
+      const targetSlug = courseSlug || slug || (courseId ? String(courseId) : 'draft');
+      const link = `${window.location.origin}/landing/${targetSlug}`;
       navigator.clipboard.writeText(link);
       toast.success('تم نسخ رابط صفحة البيع الافتراضية بنجاح!');
     }
@@ -2280,6 +2316,27 @@ export default function CreateCourseClient() {
                             <span className="material-symbols-outlined text-sm">edit</span>
                             تعديل الصفحة
                           </button>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const targetSlug = courseSlug || slug || (courseId ? String(courseId) : 'draft');
+                              const landingUrl = `/landing/${targetSlug}`;
+                              window.open(landingUrl, '_blank');
+                            }}
+                            className="flex-1 lg:flex-none px-5 py-2.5 border border-blue-600 text-blue-600 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-50 transition-all cursor-pointer"
+                          >
+                            <span className="material-symbols-outlined text-sm">visibility</span>
+                            معاينة
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={handleCopyDefaultLink}
+                            className="flex-1 lg:flex-none px-4 py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                            title="مشاركة ورابط الصفحة الافتراضية"
+                          >
+                            <span className="material-symbols-outlined text-sm">share</span>
+                            مشاركة الرابط
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -2378,7 +2435,8 @@ export default function CreateCourseClient() {
                                 <button 
                                   type="button"
                                   onClick={() => {
-                                    window.open(`/${page.slug || 'preview'}?lp_id=${page.id}`, '_blank');
+                                    const targetSlug = page.slug || courseSlug || slug || (courseId ? String(courseId) : 'draft');
+                                    window.open(`/landing/${targetSlug}?lp_id=${page.id}`, '_blank');
                                   }}
                                   className="text-slate-500 hover:bg-slate-100 p-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center" 
                                   title="معاينة كطالب"

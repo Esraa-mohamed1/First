@@ -23,6 +23,17 @@ export default function DedicatedLandingPage() {
   useEffect(() => {
     async function loadCourse() {
       if (!slug) return;
+
+      if (typeof window !== 'undefined') {
+        const cachedStr = localStorage.getItem(`darab_course_cache_${slug}`);
+        if (cachedStr) {
+          try {
+            const cachedObj = JSON.parse(cachedStr);
+            if (cachedObj) setCourse(cachedObj);
+          } catch (e) {}
+        }
+      }
+
       try {
         const data = await getStudentCourse(slug);
         if (data) setCourse(data);
