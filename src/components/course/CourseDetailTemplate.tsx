@@ -4,7 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useModal } from '@/context/ModalContext';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { ArrowRight, Share2, Clipboard, Edit3 } from 'lucide-react';
+import { ArrowRight, Share2, Clipboard, Edit3, CheckCircle2, Clock, Lock } from 'lucide-react';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
 
 interface Lesson {
   id: number;
@@ -68,6 +72,14 @@ export default function CourseDetailTemplate({
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [expandedUnits, setExpandedUnits] = useState<number[]>([]);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showFloatingWidget, setShowFloatingWidget] = useState(true);
+  const [isRetrying, setIsRetrying] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      return searchParams.get('retry') === 'true';
+    }
+    return false;
+  });
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -144,7 +156,7 @@ export default function CourseDetailTemplate({
   // Handle Share Course Action
   const handleShareCourse = () => {
     if (typeof window !== 'undefined') {
-      const shareUrl = `${window.location.origin}/${course.slug || `course-${course.id}`}`;
+      const shareUrl = `${window.location.origin}/${course.slug || course.id}`;
       if (navigator.share) {
         navigator
           .share({
@@ -161,7 +173,7 @@ export default function CourseDetailTemplate({
 
   const copyToClipboard = () => {
     if (typeof window !== 'undefined') {
-      const shareUrl = `${window.location.origin}/${course.slug || `course-${course.id}`}`;
+      const shareUrl = `${window.location.origin}/${course.slug || course.id}`;
       navigator.clipboard.writeText(shareUrl);
       toast.success('تم نسخ رابط الدورة بنجاح!');
       setShowShareModal(false);
@@ -260,7 +272,7 @@ export default function CourseDetailTemplate({
       )}
 
       {/* Main course detail section */}
-      <main className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-8 relative w-full flex-grow">
+      <main className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 relative w-full flex-grow">
         {/* Right Column: Course Details */}
         <div className="lg:col-span-8 space-y-12">
           {/* Hero Section */}
@@ -480,78 +492,140 @@ export default function CourseDetailTemplate({
         <div className="lg:col-span-4">
           <div className="sticky top-24 space-y-6">
             {/* Pricing Card */}
-            <div className="bg-white rounded-[2rem] p-8 shadow-[0_20px_50px_rgba(0,92,134,0.12)] border border-white relative overflow-hidden">
+            <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-[0_20px_50px_rgba(0,92,134,0.12)] border border-white relative overflow-hidden">
               {/* Glassy Accent */}
               <div className="absolute -top-12 -right-12 w-32 h-32 bg-[#c9e6ff]/20 blur-3xl rounded-full"></div>
-              <div className="relative z-10 space-y-8">
-                <div>
-                  <p className="text-[#4c616c] font-medium mb-1">استثمار الدورة</p>
-                  {course.price_type === 'free' ? (
-                    <div className="flex items-end gap-3">
-                      <span className="text-4xl font-black text-green-600 font-headline">مجانية</span>
+              <div id="payment-section" className="relative z-10 space-y-6">
+                {isEnrolled ? (
+                  <div className="space-y-4 text-center">
+                    <div className="w-12 h-12 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+                      <CheckCircle2 size={24} />
                     </div>
-                  ) : (
-                    <div className="flex items-end gap-3">
-                      <span className="text-5xl font-black text-on-surface font-headline">
-                        {course.final_price || course.price}
-                      </span>
-                      <span className="text-xl font-bold text-[#005c86] pb-1">
-                        {course.currency || 'ريال'}
-                      </span>
-                      {Number(course.price) > Number(course.final_price) && (
-                        <span className="text-lg text-outline line-through pb-1 px-2">
-                          {course.price} {course.currency || 'ريال'}
-                        </span>
+                    <h3 className="text-lg font-black text-slate-900">أنت مشترك بالفعل</h3>
+                    <p className="text-slate-500 font-bold text-xs leading-relaxed">استمتع برحلتك التعليمية وابدأ الآن في مشاهدة الدروس.</p>
+                    <button 
+                      onClick={onLearnClick}
+                      className="w-full py-3 bg-gradient-to-br from-[#005c86] to-[#0e76a8] text-white rounded-xl font-bold text-base shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/35 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                    >
+                      <span className="material-symbols-outlined font-black text-lg">play_circle</span>
+                      <span>ابدأ التعلم الآن</span>
+                    </button>
+                  </div>
+                ) : (course.subscription_status === 'pending' || course.subscription_status === 'penidng') ? (
+                  <div className="space-y-4 text-center">
+                    <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+                      <Clock size={24} />
+                    </div>
+                    <h3 className="text-lg font-black text-slate-900">طلب الاشتراك قيد المراجعة</h3>
+                    <p className="text-slate-500 font-bold text-xs leading-relaxed">لقد قمت بتقديم طلب اشتراك لهذه الدورة. طلبك قيد المراجعة حالياً من قبل الإدارة وسنقوم بتفعيله قريباً.</p>
+                    <button 
+                      disabled
+                      className="w-full py-3 bg-purple-100 text-purple-500 rounded-xl font-bold text-base cursor-not-allowed"
+                    >
+                      قيد الانتظار (المراجعة)
+                    </button>
+                  </div>
+                ) : (course.subscription_status === 'rejected' || course.subscription_status === 'cancelled') && !isRetrying ? (
+                  <div className="space-y-4 text-center">
+                    <div className="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+                      <Lock size={24} />
+                    </div>
+                    <h3 className="text-lg font-black text-slate-900 text-red-600">طلب الاشتراك مرفوض</h3>
+                    <p className="text-slate-500 font-bold text-xs leading-relaxed">
+                      {course.rejection_reason || 'تم رفض طلب اشتراكك في هذه الدورة من قبل الإدارة.'}
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      <button 
+                        onClick={() => {
+                          if (course.rejection_reason) {
+                            MySwal.fire({
+                              title: 'سبب الرفض',
+                              text: course.rejection_reason,
+                              icon: 'info',
+                              confirmButtonText: 'حسناً',
+                              confirmButtonColor: '#006692'
+                            });
+                          } else {
+                            toast.error('تم رفض طلب الاشتراك.');
+                          }
+                        }}
+                        className="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-bold text-sm border border-red-100 transition-all flex items-center justify-center gap-2"
+                      >
+                        تفاصيل الرفض
+                      </button>
+                      <button 
+                        onClick={() => setIsRetrying(true)}
+                        className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md shadow-blue-500/10 transition-all"
+                      >
+                        إعادة محاولة الاشتراك
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <p className="text-[#4c616c] font-medium mb-1">استثمار الدورة</p>
+                      {course.price_type === 'free' || Number(course.final_price || course.price || 0) === 0 ? (
+                        <div className="flex items-end gap-3">
+                          <span className="text-4xl font-black text-green-600 font-headline">مجانية</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-end gap-3">
+                          <span className="text-5xl font-black text-on-surface font-headline">
+                            {course.final_price || course.price}
+                          </span>
+                          <span className="text-xl font-bold text-[#005c86] pb-1">
+                            {course.currency || 'SAR'}
+                          </span>
+                          {Number(course.price) > Number(course.final_price) && (
+                            <span className="text-lg text-outline line-through pb-1 px-2">
+                              {course.price} {course.currency || 'SAR'}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {course.price_type !== 'free' && Number(course.price) > Number(course.final_price) && (
+                        <p className="text-[#7e4b00] font-bold text-sm mt-3 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[18px]">alarm</span>
+                          خصم 50% ينتهي قريباً!
+                        </p>
                       )}
                     </div>
-                  )}
-                  {course.price_type !== 'free' && Number(course.price) > Number(course.final_price) && (
-                    <p className="text-[#7e4b00] font-bold text-sm mt-3 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[18px]">alarm</span>
-                      خصم 50% ينتهي قريباً!
-                    </p>
-                  )}
-                </div>
 
-                <div className="space-y-4">
-                  {isEnrolled ? (
-                    <button
-                      onClick={onLearnClick}
-                      className="w-full bg-gradient-to-br from-[#005c86] to-[#0e76a8] text-white py-5 rounded-2xl font-bold text-xl shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all active:scale-[0.98]"
-                    >
-                      ابدأ التعلم الآن
-                    </button>
-                  ) : isOwnerReview ? (
-                    <button
-                      onClick={() => router.push(`/academic/courses/${course.id}`)}
-                      className="w-full bg-gradient-to-br from-[#005c86] to-[#0e76a8] text-white py-5 rounded-2xl font-bold text-xl shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all active:scale-[0.98]"
-                    >
-                      تعديل الدورة ومحتواها
-                    </button>
-                  ) : (
-                    <>
+                    <div className="space-y-4">
+                      {isOwnerReview ? (
+                        <button
+                          onClick={() => router.push(`/academic/courses/${course.id}`)}
+                          className="w-full bg-gradient-to-br from-[#005c86] to-[#0e76a8] text-white py-3.5 rounded-xl font-bold text-base shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/35 transition-all active:scale-[0.98]"
+                        >
+                          تعديل الدورة ومحتواها
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            onClick={onSubscribe}
+                            className="w-full bg-gradient-to-br from-[#005c86] to-[#0e76a8] text-white py-3.5 rounded-xl font-bold text-base shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/35 transition-all active:scale-[0.98]"
+                          >
+                            {(course.price_type === 'free' || Number(course.final_price || course.price || 0) === 0) ? 'التحاق مجاني بالدورة' : 'اشترك الآن'}
+                          </button>
+                          <button
+                            onClick={() => toast.success('تمت إضافة الدورة إلى سلة المشتريات')}
+                            className="w-full bg-[#f3f4f5] text-[#40484f] py-3 rounded-xl font-bold text-base hover:bg-[#e7e8e9] transition-colors"
+                          >
+                            إضافة للسلة
+                          </button>
+                        </>
+                      )}
                       <button
-                        onClick={onSubscribe}
-                        className="w-full bg-gradient-to-br from-[#005c86] to-[#0e76a8] text-white py-5 rounded-2xl font-bold text-xl shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all active:scale-[0.98]"
+                        onClick={handleShareCourse}
+                        className="w-full flex items-center justify-center gap-2 border border-slate-200 text-[#4c616c] hover:bg-slate-50 py-3 rounded-xl font-bold text-base transition-all"
                       >
-                        اشترك الآن
+                        <Share2 size={16} />
+                        <span>مشاركة الدورة</span>
                       </button>
-                      <button
-                        onClick={() => toast.success('تمت إضافة الدورة إلى سلة المشتريات')}
-                        className="w-full bg-[#f3f4f5] text-[#40484f] py-4 rounded-2xl font-bold text-lg hover:bg-[#e7e8e9] transition-colors"
-                      >
-                        إضافة للسلة
-                      </button>
-                    </>
-                  )}
-                  <button
-                    onClick={handleShareCourse}
-                    className="w-full flex items-center justify-center gap-2 border border-slate-200 text-[#4c616c] hover:bg-slate-50 py-3.5 rounded-2xl font-bold transition-all"
-                  >
-                    <Share2 size={16} />
-                    <span>مشاركة الدورة</span>
-                  </button>
-                </div>
+                    </div>
+                  </>
+                )}
 
                 <div className="space-y-4 pt-6 border-t border-[#edeeef]">
                   <p className="font-bold text-on-surface">تتضمن الدورة:</p>
@@ -668,7 +742,7 @@ export default function CourseDetailTemplate({
               <input 
                 type="text" 
                 readOnly 
-                value={typeof window !== 'undefined' ? `${window.location.origin}/${course.slug || `course-${course.id}`}` : ''}
+                value={typeof window !== 'undefined' ? `${window.location.origin}/${course.slug || course.id}` : ''}
                 className="bg-transparent border-none focus:ring-0 text-xs text-left w-full outline-none font-mono text-slate-600 select-all"
               />
             </div>

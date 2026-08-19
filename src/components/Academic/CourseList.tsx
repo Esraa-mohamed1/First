@@ -273,12 +273,9 @@ export default function CourseList({ typeFilter, title, description, createType 
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (course.slug) {
-                              navigator.clipboard.writeText(`${window.location.origin}/${course.slug}`);
-                              toast.success('تم نسخ رابط الدورة بنجاح');
-                            } else {
-                              toast.error('لا يوجد رابط مخصص لهذه الدورة بعد');
-                            }
+                            const shareUrl = `${window.location.origin}/${course.slug || course.id}`;
+                            navigator.clipboard.writeText(shareUrl);
+                            toast.success('تم نسخ رابط الدورة بنجاح');
                           }}
                           className="p-2 text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors" 
                           title="نسخ الرابط"
@@ -288,20 +285,16 @@ export default function CourseList({ typeFilter, title, description, createType 
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (course.slug) {
-                              const shareUrl = `${window.location.origin}/${course.slug}`;
-                              if (navigator.share) {
-                                navigator.share({
-                                  title: course.title,
-                                  text: course.description?.replace(/<[^>]*>/g, '') || '',
-                                  url: shareUrl
-                                }).catch(() => {});
-                              } else {
-                                navigator.clipboard.writeText(shareUrl);
-                                toast.success('تم نسخ رابط الدورة لمشاركتها على فيسبوك وإنستغرام!');
-                              }
+                            const shareUrl = `${window.location.origin}/${course.slug || course.id}`;
+                            if (navigator.share) {
+                              navigator.share({
+                                title: course.title,
+                                text: course.description?.replace(/<[^>]*>/g, '') || '',
+                                url: shareUrl
+                              }).catch(() => {});
                             } else {
-                              toast.error('لا يوجد رابط مخصص لهذه الدورة بعد');
+                              navigator.clipboard.writeText(shareUrl);
+                              toast.success('تم نسخ رابط المشاركة بنجاح لمشاركتها على وسائل التواصل!');
                             }
                           }}
                           className="p-2 text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors" 
