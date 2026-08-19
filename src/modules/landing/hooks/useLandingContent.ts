@@ -63,7 +63,7 @@ const DEMO_COURSE_DATA = {
   ]
 };
 
-export function useLandingContent(options: { courseId?: string | number; courseSlug?: string; landingPageId?: string }) {
+export function useLandingContent(options: { courseId?: string | number; courseSlug?: string; landingPageId?: string; isEditable?: boolean }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -74,6 +74,12 @@ export function useLandingContent(options: { courseId?: string | number; courseS
 
   useEffect(() => {
     const loadContent = async () => {
+      // In editor mode, if store already has content and courseData, preserve live edits and skip re-fetch
+      if (options.isEditable && useLandingStore.getState().content && useLandingStore.getState().courseData) {
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
       try {

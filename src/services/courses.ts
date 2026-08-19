@@ -337,3 +337,20 @@ export const getDashboard = async (): Promise<any> => {
   }
 };
 
+export const getCourseSubscribers = async (courseId: number | string): Promise<any[]> => {
+  try {
+    // Try dedicated course subscribers endpoint first
+    const response = await academyApi.get<ApiResponse<any[]>>(`courses/${courseId}/subscriptions`);
+    return response.data.data || [];
+  } catch {
+    try {
+      // Fallback: general subscriptions filtered by course
+      const response = await academyApi.get<ApiResponse<any[]>>(`subscriptions?course_id=${courseId}`);
+      return response.data.data || [];
+    } catch {
+      return [];
+    }
+  }
+};
+
+

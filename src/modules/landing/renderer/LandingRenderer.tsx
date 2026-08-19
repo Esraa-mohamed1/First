@@ -2,6 +2,7 @@ import React from 'react';
 import { useLandingContent } from '../hooks/useLandingContent';
 import { useLandingStore } from '../store/landingStore';
 import { getThemeBySlug } from '@/builder/templates/themeStyles';
+import { getTemplateDefaultContent } from '../constants/defaultContent';
 import HeroSection from '../components/HeroSection';
 import LearningSection from '../components/LearningSection';
 import ChapterSection from '../components/ChapterSection';
@@ -39,14 +40,17 @@ export default function LandingRenderer({
   isPaymentModalOpen,
   setIsPaymentModalOpen,
 }: LandingRendererProps) {
-  const { loading, error } = useLandingContent({ courseId, courseSlug, landingPageId: landingPageId ? String(landingPageId) : undefined });
+  const { loading, error } = useLandingContent({ courseId, courseSlug, landingPageId: landingPageId ? String(landingPageId) : undefined, isEditable });
   
-  const content = useLandingStore(state => state.content);
+  const contentFromStore = useLandingStore(state => state.content);
   const courseData = useLandingStore(state => state.courseData);
-  const templateName = useLandingStore(state => state.templateName);
+  const templateName = useLandingStore(state => state.templateName) || 'template_1';
   const setActiveSectionId = useLandingStore(state => state.setActiveSectionId);
 
-  if (loading) {
+  // Fallback to default template UI if content is not yet in store
+  const content = contentFromStore || (courseData ? getTemplateDefaultContent(courseData, templateName) : null);
+
+  if (loading && !content) {
     return (
       <div className="min-h-[400px] flex items-center justify-center font-bold text-slate-700 bg-slate-50/50" dir="rtl">
         جاري تحميل قالب صفحة الهبوط...
@@ -54,7 +58,7 @@ export default function LandingRenderer({
     );
   }
 
-  if (error || !content || !courseData) {
+  if ((error && !content) || !content || !courseData) {
     return (
       <div className="min-h-[400px] flex items-center justify-center font-bold text-red-500 bg-red-50" dir="rtl">
         {error || 'فشل تحميل بيانات الصفحة'}
@@ -109,7 +113,7 @@ export default function LandingRenderer({
   } as React.CSSProperties;
 
   return (
-    <div style={cssVariables} className="min-h-screen w-full transition-all duration-300 relative pb-20 md:pb-0" dir="rtl">
+    <div style={cssVariables} className="min-h-screen w-full max-w-full overflow-x-hidden transition-all duration-300 relative pb-20 md:pb-0" dir="rtl">
       {/* Mobile Top Header */}
       <MobileHeader courseTitle={courseData?.title} />
 

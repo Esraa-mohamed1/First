@@ -810,7 +810,14 @@ export default function CreateCourseClient() {
     setLoadingLandingPages(true);
     try {
       const list = await getLandingPagesList();
-      const coursePages = list.filter((item: any) => Number(item.course_id) === Number(courseId));
+      const coursePages = list.filter((item: any) => {
+        const isCourseMatch = Number(item.course_id) === Number(courseId);
+        const campaignName = item.content?.campaignName || item.campaignName || '';
+        const isDummy = campaignName.includes('حمله إضافيه') || 
+                        campaignName.includes('حملة إضافية') || 
+                        item.slug === 'landing';
+        return isCourseMatch && !isDummy;
+      });
       setLandingPages(coursePages);
       
       // Sync to localStorage
@@ -2280,13 +2287,21 @@ export default function CreateCourseClient() {
 
                   {/* Additional Sales Pages Section */}
                   <section className="space-y-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-4">
                       <div>
                         <h3 className="text-lg font-bold text-gray-900">صفحات بيع إضافية</h3>
                         <p className="text-xs text-slate-500 mt-1">
                           أنشئ صفحات بيع مختلفة لنفس الدورة لتناسب الحملات والعروض المختلفة.
                         </p>
                       </div>
+                      <button 
+                        type="button"
+                        onClick={() => setIsCreateLandingModalOpen(true)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer shrink-0"
+                      >
+                        <Plus size={16} />
+                        <span>إضافة صفحة بيع جديدة</span>
+                      </button>
                     </div>
 
                     {loadingLandingPages ? (

@@ -111,7 +111,7 @@ export default function LearningSection({
                     </div>
                     
                     <h3 style={{ color: localText }} className="text-base font-extrabold">
-                      {card.info_key || 'فائدة علمية'}
+                      {card.info_key === 'what_you_will_learn' ? (i === 0 ? 'إتقان الأساسيات والمبادئ' : i === 1 ? 'تطبيقات عملية ومشاريع واقعية' : 'تطوير المهارات وتطبيقها') : (card.info_key || 'فائدة علمية')}
                     </h3>
                     
                     <p style={{ color: `rgba(${textRgb}, 0.75)` }} className="text-sm leading-relaxed">
