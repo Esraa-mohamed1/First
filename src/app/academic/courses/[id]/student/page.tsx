@@ -35,6 +35,27 @@ export default function CourseStudentViewPage() {
         if ((data as any).chapters) {
           data.units = (data as any).chapters;
         }
+
+        // Extract learning_points from infos
+        const infosLearning = Array.isArray(data.infos)
+          ? data.infos
+              .filter((info: any) => info.info_key === 'what_you_will_learn' || info.key === 'what_you_will_learn')
+              .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+              .map((info: any) => info.info_value || info.value)
+          : [];
+        if (infosLearning.length > 0) data.learning_points = infosLearning;
+
+        // Map receiver_accounts to payment_methods
+        const rawAccounts = (data as any).receiver_accounts || data.payment_methods || [];
+        data.payment_methods = rawAccounts.map((item: any) => ({
+          methodId: String(item.id || item.methodId || ''),
+          methodName: item.name || item.methodName || '',
+          type: 'account_number' as const,
+          value: item.account_value || item.value || '',
+          currency: item.currency || data.currency || 'EGP',
+          logo: item.logo || undefined,
+        }));
+
         setCourse(data);
         if (data.units && data.units.length > 0) {
           setExpandedUnits([data.units[0].id]);

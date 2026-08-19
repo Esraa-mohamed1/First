@@ -113,6 +113,7 @@ export interface Course {
   receiver_accounts?: { method_id: number; currency: string }[];
   coach?: string;
   payment_methods?: any[];
+  learning_points?: string[];
   created_at?: string;
   updated_at?: string;
 }

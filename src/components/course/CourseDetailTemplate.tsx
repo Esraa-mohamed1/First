@@ -7,6 +7,8 @@ import toast from 'react-hot-toast';
 import { ArrowRight, Share2, Clipboard, Edit3, CheckCircle2, Clock, Lock } from 'lucide-react';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { PaymentMethodCard } from '@/components/payment/PaymentMethodCard';
+import { PaymentMethodModal } from '@/components/payment/PaymentMethodModal';
 
 const MySwal = withReactContent(Swal);
 
@@ -31,7 +33,11 @@ interface CourseDetailTemplateProps {
     id: any;
     title: string;
     description: string;
-    instructor?: any;
+    instructor?: {
+      name?: string;
+      image?: string;
+      avatar?: string;
+    } | string | any;
     instructor_name?: string;
     category?: any;
     price: string | number;
@@ -49,6 +55,8 @@ interface CourseDetailTemplateProps {
     slug?: string;
     updated_at?: string;
     created_at?: string;
+    rating?: any;
+    reviews_count?: any;
   };
   isSubscribed?: boolean;
   isOwnerReview?: boolean;
@@ -80,6 +88,23 @@ export default function CourseDetailTemplate({
     }
     return false;
   });
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (course?.payment_methods && course.payment_methods.length > 0 && !selectedPaymentMethod) {
+      setSelectedPaymentMethod(course.payment_methods[0]);
+    }
+  }, [course?.payment_methods]);
+
+  const handleSubscribeClick = () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      openModal('registration');
+      return;
+    }
+    setIsPaymentModalOpen(true);
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -116,11 +141,8 @@ export default function CourseDetailTemplate({
   // Format date
   const getFormattedDate = () => {
     const rawDate = course.updated_at || course.created_at;
-    if (rawDate) {
-      const date = new Date(rawDate);
-      return date.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long' });
-    }
-    return 'أكتوبر 2023';
+    const date = rawDate ? new Date(rawDate) : new Date();
+    return date.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long' });
   };
 
   // Instructor Info
@@ -128,25 +150,21 @@ export default function CourseDetailTemplate({
     course.instructor_name ||
     (typeof course.instructor === 'object' && course.instructor !== null
       ? course.instructor.name
-      : String(course.instructor || 'أحمد محمد'));
+      : (typeof course.instructor === 'string' ? course.instructor : null));
+
+  const instructorImage =
+    (typeof course.instructor === 'object' && course.instructor !== null
+      ? course.instructor.profile_image || course.instructor.image || course.instructor.avatar
+      : null) || null;
 
   // Course Image
-  const courseImage =
-    course.image ||
-    'https://images.unsplash.com/photo-1586717791821-3f44a563de4c?auto=format&fit=crop&q=80&w=1200';
+  const courseImage = course.image || null;
 
-  // Learning Points (Bento Grid)
-  const defaultLearningPoints = [
-    'بناء أنظمة التصميم (Design Systems) القابلة للتوسع بشكل احترافي.',
-    'فهم سيكولوجية المستخدم وتطبيق مبادئ UX في قراراتك التصميمية.',
-    'إتقان التصميم المتجاوب للهواتف والويب باستخدام أحدث أدوات Figma.',
-    'تحويل التصاميم إلى بروتوتايب تفاعلي يحاكي الواقع تماماً.',
-  ];
-
+  // Learning Points
   const learningPoints =
     course.learning_points && course.learning_points.length > 0
       ? course.learning_points
-      : defaultLearningPoints;
+      : [];
 
   // Total course details
   const totalUnitsCount = course.units?.length || 0;
@@ -209,127 +227,87 @@ export default function CourseDetailTemplate({
         </div>
       )}
 
-      {/* Header section (only shown when not embedded in dashboard) */}
-      {!hideHeaderFooter && (
-        <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl font-['Tajawal','Manrope'] font-bold leading-relaxed docked full-width top-0 z-40 bg-slate-50 border-none shadow-[0_12px_40px_rgba(14,118,168,0.06)] flex flex-row-reverse justify-between items-center px-6 h-16 w-full sticky">
-          <div className="flex flex-row-reverse items-center gap-6">
-            <span
-              onClick={() => router.push(currentUser ? '/student' : '/')}
-              className="text-2xl font-black text-cyan-800 cursor-pointer"
-            >
-              دَرّب
-            </span>
-            <nav className="hidden md:flex flex-row-reverse items-center gap-8">
-              <span
-                onClick={() => router.push(currentUser ? '/student' : '/')}
-                className="text-slate-500 font-medium hover:bg-cyan-50/50 transition-colors px-3 py-1 rounded-lg cursor-pointer"
-              >
-                الرئيسية
-              </span>
-              <span
-                onClick={() => router.push(currentUser ? '/student/courses' : '/')}
-                className="text-cyan-700 font-bold border-b-2 border-cyan-700 px-3 py-1 cursor-pointer"
-              >
-                الدورات
-              </span>
-              <span className="text-slate-500 font-medium hover:bg-cyan-50/50 transition-colors px-3 py-1 rounded-lg cursor-pointer">
-                عن المنصة
-              </span>
-            </nav>
-          </div>
-          <div className="flex flex-row-reverse items-center gap-4">
-            <div className="flex items-center bg-[#f3f4f5] px-4 py-2 rounded-full border-none">
-              <span className="material-symbols-outlined text-[#707880] ml-2">search</span>
-              <input
-                className="bg-transparent border-none focus:ring-0 text-sm w-48 text-right outline-none"
-                placeholder="ابحث عن دورة..."
-                type="text"
-              />
-            </div>
-            <button className="material-symbols-outlined text-[#4c616c] hover:text-[#005c86] transition-colors">
-              notifications
-            </button>
-            <button className="material-symbols-outlined text-[#4c616c] hover:text-[#005c86] transition-colors">
-              shopping_cart
-            </button>
-            {currentUser ? (
-              <img
-                alt="صورة الطالب الشخصية"
-                className="w-10 h-10 rounded-full border-2 border-[#c9e6ff] object-cover cursor-pointer"
-                src={currentUser.image || 'https://lh3.googleusercontent.com/aida-public/AB6AXuC1V60WHXi5oTXHf8sc0_5WlwL4ZoXxW0Al68gIGZE7Xr4IPhVxx57YWpdBoNS5aG4LLBmiVCcEDFTdJM8HfuWhh_t39Hb_fp27k55c_qYO-wAdJilnsmGPK5oEG0hBGjR6u1eYZuLOaaUuDa1fSkztcfJAjE_me6t0QXjM0UAS8AQ6L2z_IhH_-YOum27PRyG7MjE4Y3oPeawTvdDrPZSlxF2HXC5JJPpaz2k2JqRc59zVZuf6W8ytOwC04pR3vrMr8ZGcJXq1emA'}
-                onClick={() => router.push('/student/profile')}
-              />
-            ) : (
-              <button
-                onClick={() => openModal('login')}
-                className="bg-[#005c86] text-white px-5 py-2 rounded-full font-bold text-sm hover:bg-[#0e76a8] transition-colors"
-              >
-                تسجيل الدخول
-              </button>
-            )}
-          </div>
-        </header>
-      )}
+
+
+      {/* Back Button */}
+      <div className="max-w-7xl mx-auto px-6 pt-8 w-full flex justify-start">
+        <button onClick={() => router.back()} className="flex items-center gap-1 text-[#4c616c] font-bold text-sm hover:text-[#005c86] transition-colors">
+          <span className="material-symbols-outlined">arrow_forward</span>
+          رجوع
+        </button>
+      </div>
 
       {/* Main course detail section */}
       <main className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 relative w-full flex-grow">
         {/* Right Column: Course Details */}
-        <div className="lg:col-span-8 space-y-12">
+        <div className="lg:col-span-7 space-y-12">
           {/* Hero Section */}
           <section className="space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ffdcbc] text-[#2c1700] text-xs font-bold uppercase tracking-wider">
-              <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                star
-              </span>
-              أعلى تقييماً
-            </div>
+            {course.rating && (
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ffdcbc] text-[#2c1700] text-xs font-bold uppercase tracking-wider">
+                <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  star
+                </span>
+                {course.rating} ★
+              </div>
+            )}
             <h1 className="text-4xl md:text-5xl font-black text-on-surface leading-tight tracking-tight">
               {course.title}
             </h1>
             <div className="flex flex-wrap items-center gap-6 py-4">
-              <div className="flex items-center gap-3">
-                <img
-                  alt="Instructor Avatar"
-                  className="w-12 h-12 rounded-xl object-cover shadow-sm"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyAVXG3CvzqjBr5txbKMW-xLHX0Zz9kujry2170bKLdjCYESyh9tV-dQYbLOuxtUSppVwk1AbIlJg2Dj8LLfKc1o92BtwC5NqHKhMA_OHMnReMFdGqBK1L_dKKMKVE_6YgNjRNqrRAsUGB3H1DD976LzOgorbjrrH7zsD1UFUcOiZ2AB5Brx40j7Q7nzrbZwO1wBfkfCRf4_bOpbFWhIT_je3BNrNvX3zYwMPT_CNmadp6HkQnFvAN8cDXcDr4Wf758IHrU_VDs1g"
-                />
-                <div>
-                  <p className="text-[#4c616c] text-xs">المدرب</p>
-                  <p className="font-bold text-on-surface">{instructorName}</p>
+              {instructorName && (
+                <div className="flex items-center gap-3">
+                  {instructorImage && (
+                    <img
+                      alt="Instructor Avatar"
+                      className="w-12 h-12 rounded-xl object-cover shadow-sm"
+                      src={instructorImage}
+                    />
+                  )}
+                  <div>
+                    <p className="text-[#4c616c] text-xs">المدرب</p>
+                    <p className="font-bold text-on-surface">{instructorName}</p>
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="h-8 w-px bg-[#bfc7d0]/30"></div>
               <div>
                 <p className="text-[#4c616c] text-xs">آخر تحديث</p>
                 <p className="font-bold text-on-surface">{getFormattedDate()}</p>
               </div>
-              <div className="h-8 w-px bg-[#bfc7d0]/30"></div>
-              <div className="flex items-center gap-1">
-                <span className="material-symbols-outlined text-[#7e4b00]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                  star
-                </span>
-                <span className="font-bold text-on-surface">4.9</span>
-                <span className="text-[#4c616c] text-sm">(1,240 تقييم)</span>
-              </div>
+              {course.rating && (
+                <>
+                  <div className="h-8 w-px bg-[#bfc7d0]/30"></div>
+                  <div className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[#7e4b00]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                      star
+                    </span>
+                    <span className="font-bold text-on-surface">{course.rating}</span>
+                    {course.reviews_count && <span className="text-[#4c616c] text-sm">({course.reviews_count} تقييم)</span>}
+                  </div>
+                </>
+              )}
             </div>
 
-            <div className="aspect-video w-full rounded-3xl overflow-hidden relative group cursor-pointer shadow-2xl">
-              <img
-                alt="Course Preview"
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                src={courseImage}
-              />
-              <div className="absolute inset-0 bg-[#005c86]/20 backdrop-blur-[2px] flex items-center justify-center group-hover:bg-[#005c86]/10 transition-colors">
-                <div className="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center shadow-2xl scale-100 group-hover:scale-110 transition-transform">
-                  <span
-                    className="material-symbols-outlined text-[#005c86] text-4xl mr-1"
-                    style={{ fontVariationSettings: "'FILL' 1" }}
-                  >
-                    play_arrow
-                  </span>
+            {courseImage && (
+              <div className="aspect-video w-full rounded-3xl overflow-hidden relative group cursor-pointer shadow-2xl">
+                <img
+                  alt="Course Preview"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  src={courseImage}
+                />
+                <div className="absolute inset-0 bg-[#005c86]/20 backdrop-blur-[2px] flex items-center justify-center group-hover:bg-[#005c86]/10 transition-colors">
+                  <div className="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center shadow-2xl scale-100 group-hover:scale-110 transition-transform">
+                    <span
+                      className="material-symbols-outlined text-[#005c86] text-4xl mr-1"
+                      style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
+                      play_arrow
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </section>
 
           {/* Description */}
@@ -343,46 +321,35 @@ export default function CourseDetailTemplate({
             />
           </section>
 
-          {/* Learning Objectives Bento Grid */}
-          <section className="space-y-6">
-            <h2 className="text-2xl font-bold text-on-surface border-r-4 border-[#005c86] pr-4">
-              ماذا ستتعلم؟
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-6 rounded-3xl bg-white border border-[#e7e8e9] shadow-sm flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-[#c9e6ff] flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-[#005c86]">architecture</span>
-                </div>
-                <p className="text-on-surface font-medium leading-relaxed">
-                  {learningPoints[0] || 'بناء أنظمة التصميم (Design Systems) القابلة للتوسع بشكل احترافي.'}
-                </p>
+          {/* Learning Objectives — dynamic from API */}
+          {learningPoints.length > 0 && (
+            <section className="space-y-6">
+              <h2 className="text-2xl font-bold text-on-surface border-r-4 border-[#005c86] pr-4">
+                ماذا ستتعلم؟
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {learningPoints.map((point, idx) => {
+                  const iconStyles = [
+                    { bg: 'bg-[#c9e6ff]', text: 'text-[#005c86]', icon: 'architecture' },
+                    { bg: 'bg-[#cfe6f2]', text: 'text-[#4c616c]', icon: 'psychology' },
+                    { bg: 'bg-[#ffdcbc]', text: 'text-[#7e4b00]', icon: 'devices' },
+                    { bg: 'bg-[#e1e3e4]', text: 'text-[#40484f]', icon: 'auto_awesome' },
+                    { bg: 'bg-[#d4f4e2]', text: 'text-[#1b6b3a]', icon: 'check_circle' },
+                    { bg: 'bg-[#f3d4f4]', text: 'text-[#6b1b6b]', icon: 'star' },
+                  ];
+                  const style = iconStyles[idx % iconStyles.length];
+                  return (
+                    <div key={idx} className="p-6 rounded-3xl bg-white border border-[#e7e8e9] shadow-sm flex items-start gap-4">
+                      <div className={`w-10 h-10 rounded-full ${style.bg} flex items-center justify-center shrink-0`}>
+                        <span className={`material-symbols-outlined ${style.text}`}>{style.icon}</span>
+                      </div>
+                      <p className="text-on-surface font-medium leading-relaxed">{point}</p>
+                    </div>
+                  );
+                })}
               </div>
-              <div className="p-6 rounded-3xl bg-white border border-[#e7e8e9] shadow-sm flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-[#cfe6f2] flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-[#4c616c]">psychology</span>
-                </div>
-                <p className="text-on-surface font-medium leading-relaxed">
-                  {learningPoints[1] || 'فهم سيكولوجية المستخدم وتطبيق مبادئ UX في قراراتك التصميمية.'}
-                </p>
-              </div>
-              <div className="p-6 rounded-3xl bg-white border border-[#e7e8e9] shadow-sm flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-[#ffdcbc] flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-[#7e4b00]">devices</span>
-                </div>
-                <p className="text-on-surface font-medium leading-relaxed">
-                  {learningPoints[2] || 'إتقان التصميم المتجاوب للهواتف والويب باستخدام أحدث أدوات Figma.'}
-                </p>
-              </div>
-              <div className="p-6 rounded-3xl bg-white border border-[#e7e8e9] shadow-sm flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-[#e1e3e4] flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-[#40484f]">auto_awesome</span>
-                </div>
-                <p className="text-on-surface font-medium leading-relaxed">
-                  {learningPoints[3] || 'تحويل التصاميم إلى بروتوتايب تفاعلي يحاكي الواقع تماماً.'}
-                </p>
-              </div>
-            </div>
-          </section>
+            </section>
+          )}
 
           {/* Course Content Preview Accordion */}
           <section className="space-y-6">
@@ -489,7 +456,7 @@ export default function CourseDetailTemplate({
         </div>
 
         {/* Left Column: Pricing & CTA Sidebar */}
-        <div className="lg:col-span-4">
+        <div className="lg:col-span-4 lg:col-start-9">
           <div className="sticky top-24 space-y-6">
             {/* Pricing Card */}
             <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-[0_20px_50px_rgba(0,92,134,0.12)] border border-white relative overflow-hidden">
@@ -503,13 +470,22 @@ export default function CourseDetailTemplate({
                     </div>
                     <h3 className="text-lg font-black text-slate-900">أنت مشترك بالفعل</h3>
                     <p className="text-slate-500 font-bold text-xs leading-relaxed">استمتع برحلتك التعليمية وابدأ الآن في مشاهدة الدروس.</p>
-                    <button 
-                      onClick={onLearnClick}
-                      className="w-full py-3 bg-gradient-to-br from-[#005c86] to-[#0e76a8] text-white rounded-xl font-bold text-base shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/35 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-                    >
-                      <span className="material-symbols-outlined font-black text-lg">play_circle</span>
-                      <span>ابدأ التعلم الآن</span>
-                    </button>
+                    <div className="flex gap-3">
+                      <button 
+                        onClick={onLearnClick}
+                        className="flex-grow py-3 bg-gradient-to-br from-[#005c86] to-[#0e76a8] text-white rounded-xl font-bold text-sm shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/35 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                      >
+                        <span className="material-symbols-outlined font-black text-lg">play_circle</span>
+                        <span>ابدأ التعلم</span>
+                      </button>
+                      <button
+                        onClick={handleShareCourse}
+                        className="w-12 h-12 flex items-center justify-center border border-slate-200 text-[#4c616c] hover:bg-slate-50 rounded-xl transition-all shadow-sm shrink-0"
+                        title="مشاركة الدورة"
+                      >
+                        <Share2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 ) : (course.subscription_status === 'pending' || course.subscription_status === 'penidng') ? (
                   <div className="space-y-4 text-center">
@@ -520,7 +496,7 @@ export default function CourseDetailTemplate({
                     <p className="text-slate-500 font-bold text-xs leading-relaxed">لقد قمت بتقديم طلب اشتراك لهذه الدورة. طلبك قيد المراجعة حالياً من قبل الإدارة وسنقوم بتفعيله قريباً.</p>
                     <button 
                       disabled
-                      className="w-full py-3 bg-purple-100 text-purple-500 rounded-xl font-bold text-base cursor-not-allowed"
+                      className="w-full py-3 bg-purple-100 text-purple-500 rounded-xl font-bold text-sm cursor-not-allowed"
                     >
                       قيد الانتظار (المراجعة)
                     </button>
@@ -592,81 +568,72 @@ export default function CourseDetailTemplate({
                       )}
                     </div>
 
-                    <div className="space-y-4">
+                    {/* Payment Method Selection */}
+                    {!(course.price_type === 'free' || Number(course.final_price || course.price || 0) === 0) && (
+                      <div className="space-y-2 mb-4">
+                        <div className="text-right">
+                          <span className="text-slate-900 font-black text-xs">اختر وسيلة الدفع</span>
+                        </div>
+                        {course.payment_methods && course.payment_methods.length > 0 ? (
+                          <div className="grid grid-cols-2 gap-2">
+                            {course.payment_methods.map((pm: any) => (
+                              <PaymentMethodCard
+                                key={pm.methodId}
+                                id={pm.methodId}
+                                name={pm.methodName}
+                                type={pm.type}
+                                logo={pm.logo}
+                                isSelected={selectedPaymentMethod?.methodId === pm.methodId}
+                                onSelect={() => setSelectedPaymentMethod(pm)}
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                            <p className="text-[10px] text-gray-400 font-bold">لا تتوفر وسائل دفع مفعلة حالياً لهذه الدورة.</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex gap-3">
                       {isOwnerReview ? (
                         <button
                           onClick={() => router.push(`/academic/courses/${course.id}`)}
-                          className="w-full bg-gradient-to-br from-[#005c86] to-[#0e76a8] text-white py-3.5 rounded-xl font-bold text-base shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/35 transition-all active:scale-[0.98]"
+                          className="flex-grow bg-gradient-to-br from-[#005c86] to-[#0e76a8] text-white py-3.5 rounded-xl font-bold text-sm shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/35 transition-all active:scale-[0.98]"
                         >
                           تعديل الدورة ومحتواها
                         </button>
                       ) : (
-                        <>
-                          <button
-                            onClick={onSubscribe}
-                            className="w-full bg-gradient-to-br from-[#005c86] to-[#0e76a8] text-white py-3.5 rounded-xl font-bold text-base shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/35 transition-all active:scale-[0.98]"
-                          >
-                            {(course.price_type === 'free' || Number(course.final_price || course.price || 0) === 0) ? 'التحاق مجاني بالدورة' : 'اشترك الآن'}
-                          </button>
-                          <button
-                            onClick={() => toast.success('تمت إضافة الدورة إلى سلة المشتريات')}
-                            className="w-full bg-[#f3f4f5] text-[#40484f] py-3 rounded-xl font-bold text-base hover:bg-[#e7e8e9] transition-colors"
-                          >
-                            إضافة للسلة
-                          </button>
-                        </>
+                        <button
+                          onClick={() => {
+                            if (course.price_type === 'free' || Number(course.final_price || course.price || 0) === 0) {
+                              if (onSubscribe) onSubscribe();
+                            } else {
+                              if (!selectedPaymentMethod) {
+                                toast.error('الرجاء اختيار وسيلة الدفع أولاً');
+                                return;
+                              }
+                              handleSubscribeClick();
+                            }
+                          }}
+                          className="flex-grow bg-gradient-to-br from-[#005c86] to-[#0e76a8] text-white py-3.5 rounded-xl font-bold text-sm shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/35 transition-all active:scale-[0.98]"
+                        >
+                          {(course.price_type === 'free' || Number(course.final_price || course.price || 0) === 0) ? 'التحاق مجاني' : 'اشترك الآن'}
+                        </button>
                       )}
                       <button
                         onClick={handleShareCourse}
-                        className="w-full flex items-center justify-center gap-2 border border-slate-200 text-[#4c616c] hover:bg-slate-50 py-3 rounded-xl font-bold text-base transition-all"
+                        className="w-12 h-12 flex items-center justify-center border border-slate-200 text-[#4c616c] hover:bg-slate-50 rounded-xl transition-all shadow-sm shrink-0"
+                        title="مشاركة الدورة"
                       >
                         <Share2 size={16} />
-                        <span>مشاركة الدورة</span>
                       </button>
                     </div>
                   </>
                 )}
 
-                <div className="space-y-4 pt-6 border-t border-[#edeeef]">
-                  <p className="font-bold text-on-surface">تتضمن الدورة:</p>
-                  <ul className="space-y-3">
-                    <li className="flex items-center gap-3 text-[#4c616c] text-sm">
-                      <span className="material-symbols-outlined text-[#005c86] text-[20px]">
-                        indeterminate_question_box
-                      </span>
-                      وصول مدى الحياة للمحتوى
-                    </li>
-                    <li className="flex items-center gap-3 text-[#4c616c] text-sm">
-                      <span className="material-symbols-outlined text-[#005c86] text-[20px]">
-                        workspace_premium
-                      </span>
-                      شهادة إتمام معتمدة
-                    </li>
-                    <li className="flex items-center gap-3 text-[#4c616c] text-sm">
-                      <span className="material-symbols-outlined text-[#005c86] text-[20px]">
-                        download_for_offline
-                      </span>
-                      موارد وملفات قابلة للتحميل
-                    </li>
-                    <li className="flex items-center gap-3 text-[#4c616c] text-sm">
-                      <span className="material-symbols-outlined text-[#005c86] text-[20px]">
-                        support_agent
-                      </span>
-                      دعم فني مباشر من المدرب
-                    </li>
-                  </ul>
-                </div>
 
-                <div className="flex items-center justify-center gap-4 pt-4">
-                  <span className="text-[10px] text-[#707880] font-bold tracking-widest uppercase">
-                    وسائل دفع آمنة
-                  </span>
-                  <div className="flex gap-2">
-                    <div className="w-8 h-5 bg-[#e7e8e9] rounded-sm"></div>
-                    <div className="w-8 h-5 bg-[#e7e8e9] rounded-sm"></div>
-                    <div className="w-8 h-5 bg-[#e7e8e9] rounded-sm"></div>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -686,43 +653,15 @@ export default function CourseDetailTemplate({
         </div>
       </main>
 
-      {/* Footer (only shown when not embedded in dashboard) */}
-      {!hideHeaderFooter && (
-        <footer className="mt-20 border-t border-[#edeeef] py-12 px-6 bg-white w-full">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-            <div className="space-y-4 text-center md:text-right">
-              <span className="text-2xl font-black text-cyan-800">دَرّب</span>
-              <p className="text-[#4c616c] max-w-sm text-sm">
-                منصة التعلم الذكي الرائدة في العالم العربي لتمكين الكوادر الوطنية في مجالات التقنية والتصميم.
-              </p>
-            </div>
-            <div className="flex gap-8">
-              <a className="text-[#4c616c] hover:text-[#005c86] transition-colors text-sm font-bold" href="#">
-                سياسة الخصوصية
-              </a>
-              <a className="text-[#4c616c] hover:text-[#005c86] transition-colors text-sm font-bold" href="#">
-                الشروط والأحكام
-              </a>
-              <a className="text-[#4c616c] hover:text-[#005c86] transition-colors text-sm font-bold" href="#">
-                تواصل معنا
-              </a>
-            </div>
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-[#e7e8e9] flex items-center justify-center text-[#4c616c] hover:bg-[#c9e6ff] hover:text-[#005c86] cursor-pointer transition-all">
-                <span className="material-symbols-outlined text-xl">alternate_email</span>
-              </div>
-              <div
-                onClick={handleShareCourse}
-                className="w-10 h-10 rounded-full bg-[#e7e8e9] flex items-center justify-center text-[#4c616c] hover:bg-[#c9e6ff] hover:text-[#005c86] cursor-pointer transition-all"
-              >
-                <span className="material-symbols-outlined text-xl">share</span>
-              </div>
-            </div>
-          </div>
-          <div className="text-center mt-12 text-[#707880] text-xs font-bold">
-            © 2026 دَرّب. جميع الحقوق محفوظة.
-          </div>
-        </footer>
+      {course && (
+        <PaymentMethodModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          methods={selectedPaymentMethod ? [selectedPaymentMethod] : (course.payment_methods || [])}
+          courseId={course.id}
+          coursePrice={course.final_price || course.price}
+          courseCurrency={course.currency || 'SAR'}
+        />
       )}
 
       {/* Share Modal Dialog (Fallback for Desktop browsers without Web Share support) */}

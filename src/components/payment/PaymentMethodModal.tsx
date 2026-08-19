@@ -43,8 +43,11 @@ export const PaymentMethodModal = ({
       setCopied(false);
       setScreenshot(null);
       if (previewUrl) { URL.revokeObjectURL(previewUrl); setPreviewUrl(null); }
+    } else if (methods && methods.length === 1) {
+      setSelectedMethod(methods[0]);
+      setStep(2);
     }
-  }, [isOpen]);
+  }, [isOpen, methods]);
 
   useEffect(() => {
     return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };

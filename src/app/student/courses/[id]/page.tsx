@@ -30,9 +30,28 @@ export default function StudentCourseDetailsPage() {
         const data = await getMyCourseDetails(id);
         
         // Normalize structure (chapters vs units)
+        const infosLearning = Array.isArray(data.infos)
+          ? data.infos
+              .filter((info: any) => info.info_key === 'what_you_will_learn' || info.key === 'what_you_will_learn')
+              .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+              .map((info: any) => info.info_value || info.value)
+          : [];
+
+        const rawAccounts = data.receiver_accounts || data.payment_methods || [];
+        const mappedPaymentMethods = rawAccounts.map((item: any) => ({
+          methodId: String(item.id || item.methodId || ''),
+          methodName: item.name || item.methodName || '',
+          type: 'account_number' as const,
+          value: item.account_value || item.value || '',
+          currency: item.currency || data.currency || 'EGP',
+          logo: item.logo || undefined,
+        }));
+
         const normalizedCourse = {
           ...data,
           units: data.units || data.chapters || [],
+          learning_points: infosLearning.length > 0 ? infosLearning : (data.learning_points || []),
+          payment_methods: mappedPaymentMethods,
         };
         
         setCourse(normalizedCourse);
