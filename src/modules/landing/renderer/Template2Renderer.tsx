@@ -58,7 +58,7 @@ export default function Template2Renderer({
   };
 
   return (
-    <div className="bg-[#faf8ff] text-[#191b23] antialiased min-h-screen w-full relative pb-20 md:pb-0 font-sans" dir="rtl">
+    <div className="bg-[#faf8ff] text-[#191b23] antialiased min-h-screen w-full max-w-full overflow-x-hidden relative pb-20 md:pb-0 font-sans" dir="rtl">
       {/* Mobile Top Header */}
       <MobileHeader courseTitle={courseData?.title} />
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye, Landmark, X, Check, User as UserIcon, Loader2, Globe, Copy, MoreVertical, ExternalLink, Clock, Share2, ImagePlus, Info, GraduationCap, History, CreditCard, Tag, Sparkles, Layers, Star, LayoutGrid, Link as LinkIcon } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp, Play, FileText, FilePieChart as FilePowerpoint, Trash2, Pencil, Video, CheckCircle2, Upload, Eye, Landmark, X, Check, User as UserIcon, Loader2, Globe, Copy, MoreVertical, ExternalLink, Clock, Share2, ImagePlus, Info, GraduationCap, History, CreditCard, Tag, Sparkles, Layers, Star, LayoutGrid, Link as LinkIcon, Monitor, Tablet, Smartphone } from 'lucide-react';
 import { getCourse, deleteUnit, deleteLesson, createUnit, updateCourse, getCategories, createCategory } from '@/services/courses';
 import { getGrades, getTerms, getSubjects, getAcademicYears, ClassificationItem } from '@/services/academic-classification';
 import { getProfileStatus } from '@/services/auth';
@@ -355,6 +355,40 @@ export default function CourseDetailsPage() {
   const [landingPages, setLandingPages] = useState<any[]>([]);
   const [loadingLandingPages, setLoadingLandingPages] = useState(false);
   const [previewLandingPageId, setPreviewLandingPageId] = useState<string | number | null>(null);
+
+  // Inline Landing Editor State (No Navigation)
+  const [inlineEditingTemplate, setInlineEditingTemplate] = useState<string | null>(null);
+  const [inlineEditingPage, setInlineEditingPage] = useState<any | null>(null);
+  const [inlineViewport, setInlineViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+
+  const handleStartInlineEdit = (templateName: string, pageData?: any) => {
+    if (!course) return;
+    const store = useLandingStore.getState();
+    store.setCourseData(course);
+    if (pageData) {
+      store.setLandingPageData({
+        id: pageData.id,
+        template_name: pageData.template_name || templateName,
+        is_active: pageData.is_active,
+        content: pageData.content,
+        course_id: pageData.course_id,
+        user_id: pageData.user_id || currentUser?.id || 1
+      });
+      setInlineEditingPage(pageData);
+    } else {
+      store.setTemplateName(templateName);
+      const defaults = getTemplateDefaultContent(course, templateName);
+      store.setLandingPageData({
+        template_name: templateName,
+        content: defaults,
+        course_id: Number(id),
+        user_id: currentUser?.id || 1
+      });
+      setInlineEditingPage(null);
+    }
+    setInlineEditingTemplate(templateName);
+    store.setActiveSectionId('hero');
+  };
 
   // New Landing Page Creation Dialog State
   const [isCreateLandingModalOpen, setIsCreateLandingModalOpen] = useState(false);
@@ -1054,7 +1088,14 @@ export default function CourseDetailsPage() {
     setLoadingLandingPages(true);
     try {
       const list = await getLandingPagesList();
-      const coursePages = list.filter((item: any) => Number(item.course_id) === Number(id));
+      const coursePages = list.filter((item: any) => {
+        const isCourseMatch = Number(item.course_id) === Number(id);
+        const campaignName = item.content?.campaignName || item.campaignName || '';
+        const isDummy = campaignName.includes('حمله إضافيه') || 
+                        campaignName.includes('حملة إضافية') || 
+                        item.slug === 'landing';
+        return isCourseMatch && !isDummy;
+      });
       setLandingPages(coursePages);
       
       // Sync to localStorage for hook compatibility
@@ -1067,24 +1108,7 @@ export default function CourseDetailsPage() {
   };
 
   const handleOpenEditor = (page: any) => {
-    if (!course) return;
-    const store = useLandingStore.getState();
-    
-    // Set course details for defaults lookup
-    store.setCourseData(course);
-    
-    store.setLandingPageData({
-      id: page.id,
-      template_name: page.template_name,
-      is_active: page.is_active,
-      content: page.content,
-      course_id: page.course_id,
-      user_id: currentUser?.id || 1
-    });
-
-    setPreviewLandingPageId(page.id);
-    setPreviewTemplateId(page.template_name);
-    store.setActiveSectionId(null);
+    handleStartInlineEdit(page.template_name || 'template_1', page);
   };
 
   const handleTogglePublish = async (page: any) => {
@@ -2490,29 +2514,206 @@ export default function CourseDetailsPage() {
               </div>
             </div>
 
+            {/* Landing Page Editor Modal Overlay (Responsive Scaled Preview) */}
+            {inlineEditingTemplate && (
+              <div 
+                className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200" 
+                dir="rtl"
+                onClick={() => {
+                  setInlineEditingTemplate(null);
+                  setInlineEditingPage(null);
+                }}
+              >
+                <div 
+                  className="bg-white rounded-[2rem] w-[95vw] max-w-7xl h-[90vh] shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Header Bar */}
+                  <div className="bg-slate-900 text-white px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 shrink-0 border-b border-slate-800">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-blue-600/20 text-blue-400 rounded-xl flex items-center justify-center font-bold">
+                        <Sparkles size={16} />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-white text-sm">
+                          محرر صفحة البيع المباشر — {inlineEditingTemplate === 'template_1' ? 'القالب الملكي الكلاسيكي' : inlineEditingTemplate === 'template_2' ? 'قالب الدروس التفاعلي' : 'القالب العصري'}
+                        </h3>
+                        <p className="text-[10px] text-slate-400 font-medium">تعديل الأقسام والمحتوى مع المعاينة الاستجابية الحية</p>
+                      </div>
+                    </div>
+
+                    {/* Viewport Switcher */}
+                    <div className="hidden sm:flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700 gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setInlineViewport('desktop')}
+                        className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold transition-all ${inlineViewport === 'desktop' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                      >
+                        <Monitor size={12} /> كمبيوتر (1080p)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setInlineViewport('tablet')}
+                        className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold transition-all ${inlineViewport === 'tablet' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                      >
+                        <Tablet size={12} /> تابلت (768p)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setInlineViewport('mobile')}
+                        className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold transition-all ${inlineViewport === 'mobile' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                      >
+                        <Smartphone size={12} /> جوال (375p)
+                      </button>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const success = await handleSave(currentUser?.id);
+                          if (success) {
+                            toast.success('تم حفظ التعديلات بنجاح!');
+                            fetchLandingPages();
+                          }
+                        }}
+                        disabled={saving}
+                        className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                      >
+                        {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                        <span>{saving ? 'جاري الحفظ...' : 'حفظ التعديلات'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const courseSlug = course?.slug || id;
+                          const url = inlineEditingPage?.id ? `/landing/${courseSlug}?lp_id=${inlineEditingPage.id}` : `/landing/${courseSlug}`;
+                          window.open(url, '_blank');
+                        }}
+                        className="p-2 text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 transition-all cursor-pointer flex items-center justify-center"
+                        title="معاينة كطالب في نافذة جديدة"
+                      >
+                        <Eye size={16} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setInlineEditingTemplate(null);
+                          setInlineEditingPage(null);
+                        }}
+                        className="p-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 transition-all cursor-pointer flex items-center justify-center"
+                        title="إغلاق المحرر"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Editor Body */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 flex-1 min-h-0 overflow-hidden bg-slate-50">
+                    {/* Right Inspector Form Panel (5 cols) */}
+                    <div className="lg:col-span-4 bg-white border-l border-slate-200 p-4 text-slate-900 flex flex-col space-y-3 h-full overflow-y-auto">
+                      <div className="space-y-1 pb-2.5 border-b border-slate-100 shrink-0">
+                        <label className="text-[11px] font-black text-slate-700 block">اختر القسم للتعديل والتخصيص:</label>
+                        <select
+                          className="w-full border border-slate-200 rounded-xl p-2.5 text-xs bg-slate-50 font-bold focus:outline-none focus:border-blue-600 cursor-pointer"
+                          value={activeSectionId || ''}
+                          onChange={(e) => setActiveSectionId(e.target.value || null)}
+                        >
+                          <option value="">-- اختر قسماً من القائمة --</option>
+                          <option value="hero">البانر الرئيسي (الهيرو)</option>
+                          <option value="learning">ماذا ستتعلم؟</option>
+                          <option value="chapters">المنهج والدروس</option>
+                          <option value="payment">وسائل الدفع</option>
+                          <option value="faq">الأسئلة الشائعة</option>
+                          <option value="reviews">آراء الطلاب والتقييمات</option>
+                          <option value="whatsapp">زر تواصل واتساب</option>
+                          <option value="footer">تذييل الصفحة (الفوتر)</option>
+                        </select>
+                      </div>
+
+                      <div className="flex-1 overflow-y-auto pt-1 space-y-3">
+                        {(() => {
+                          const sec = (activeSectionId || '').toLowerCase().trim();
+                          const key =
+                            ['hero', 'overview', 'intro', 'banner', 'header', 'main'].includes(sec) ? 'hero' :
+                            ['learning', 'features', 'benefits', 'outcomes', 'about'].includes(sec) ? 'learning' :
+                            ['chapters', 'curriculum', 'syllabus', 'content', 'modules', 'units'].includes(sec) ? 'chapters' :
+                            ['payment', 'pricing', 'packages', 'checkout'].includes(sec) ? 'payment' :
+                            ['faq', 'questions', 'help'].includes(sec) ? 'faq' :
+                            ['reviews', 'testimonials', 'ratings', 'students'].includes(sec) ? 'reviews' :
+                            ['whatsapp', 'contact', 'support', 'chat'].includes(sec) ? 'whatsapp' :
+                            ['footer', 'bottom'].includes(sec) ? 'footer' : (sec ? 'hero' : '');
+
+                          if (key === 'hero') return <HeroEditor />;
+                          if (key === 'learning') return <LearningEditor />;
+                          if (key === 'chapters') return <ChapterEditor />;
+                          if (key === 'payment') return <PaymentEditor />;
+                          if (key === 'faq') return <FAQEditor />;
+                          if (key === 'reviews') return <ReviewsEditor />;
+                          if (key === 'whatsapp') return <WhatsAppEditor />;
+                          if (key === 'footer') return <FooterEditor />;
+
+                          return (
+                            <div className="text-center py-12 text-slate-400 font-bold text-xs space-y-2">
+                              <p>👈 اختر قسماً من القائمة أعلاه لتعديل إعداداته هنا.</p>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Left Live Scaled Canvas Preview Panel (8 cols) */}
+                    <div className="lg:col-span-8 bg-slate-950 p-4 flex flex-col h-full overflow-hidden relative">
+                      <div className="w-full flex-1 overflow-y-auto p-1 custom-scrollbar">
+                        <div
+                          className={`transition-all duration-300 bg-white rounded-2xl shadow-2xl overflow-hidden min-h-full ${
+                            inlineViewport === 'desktop'
+                              ? 'w-full border border-slate-700 shadow-xl'
+                              : inlineViewport === 'tablet'
+                              ? 'w-full max-w-[720px] mx-auto border-4 border-slate-700 rounded-[1.5rem] shadow-xl'
+                              : 'w-full max-w-[375px] mx-auto border-8 border-slate-700 rounded-[2.5rem] shadow-2xl'
+                          }`}
+                        >
+                          <LandingRenderer
+                            courseId={id}
+                            landingPageId={inlineEditingPage?.id}
+                            isEditable={true}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Section 3: Landing Page Templates selection */}
-            <section className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm text-right">
+            <section className="bg-white border-2 border-slate-200 rounded-2xl p-6 shadow-sm text-right">
               <div className="flex items-center gap-2 mb-4">
-                <span className="material-symbols-outlined text-primary">auto_awesome_motion</span>
+                <span className="material-symbols-outlined text-blue-600">auto_awesome_motion</span>
                 <div>
-                  <h3 className="font-title-md text-title-md text-gray-900">قالب صفحة البيع الافتراضية</h3>
-                  <p className="text-xs text-on-surface-variant font-medium mt-1">اختر التصميم المناسب لعرض صفحة التسويق والبيع لطلابك</p>
+                  <h3 className="font-title-md text-title-md text-slate-900 font-bold">قالب صفحة البيع الافتراضية</h3>
+                  <p className="text-xs text-slate-500 font-medium mt-1">اختر التصميم المناسب لعرض صفحة التسويق والبيع لطلابك</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                 {/* Template 1 Card */}
-                <div className={`border-2 rounded-[24px] p-5 flex flex-col justify-between transition-all ${courseTemplate === 'template_1' ? 'border-primary bg-primary/5 ring-2 ring-primary/10' : 'border-outline-variant bg-white hover:border-primary/50'}`}>
+                <div className={`border-2 rounded-[24px] p-5 flex flex-col justify-between transition-all ${courseTemplate === 'template_1' ? 'border-blue-600 bg-blue-50/30 ring-2 ring-blue-600/20 shadow-sm' : 'border-slate-200 bg-white hover:border-blue-400 hover:shadow-md'}`}>
                   <div>
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-bold text-gray-900 text-sm">القالب الأول (الكلاسيكي الملكي)</h4>
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${courseTemplate === 'template_1' ? 'border-primary bg-primary' : 'border-outline-variant'}`}>
+                      <h4 className="font-bold text-slate-900 text-sm">القالب الأول (الكلاسيكي الملكي)</h4>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${courseTemplate === 'template_1' ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`}>
                         {courseTemplate === 'template_1' && <div className="w-2 h-2 bg-white rounded-full" />}
                       </div>
                     </div>
                     
                     {/* Full UI Template Mockup */}
-                    <div className="aspect-video rounded-xl mb-4 overflow-hidden border border-outline-variant bg-surface-container relative shadow-sm group/mockup">
+                    <div className="aspect-video rounded-xl mb-4 overflow-hidden border border-slate-200 bg-slate-50 relative shadow-sm group/mockup">
                       {/* Preview Button */}
                       <div
                         role="button"
@@ -2539,23 +2740,23 @@ export default function CourseDetailsPage() {
                       />
                     </div>
                     
-                    <p className="text-xs text-on-surface-variant leading-relaxed">
+                    <p className="text-xs text-slate-600 leading-relaxed">
                       يتميز بتصميم زمردي دافئ، أركان مزخرفة، شريط أرقام الإحصائيات، فوائد الدورة ومحاضرها، وكاروسيل آراء الطلاب.
                     </p>
                   </div>
                   
-                  <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                  <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
                     <button 
                       type="button"
                       onClick={() => changeTemplate('template_1')}
-                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${courseTemplate === 'template_1' ? 'bg-primary text-white font-black' : 'border border-outline-variant text-gray-700 hover:bg-gray-50'}`}
+                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${courseTemplate === 'template_1' ? 'bg-blue-600 text-white font-black shadow-sm' : 'border border-slate-200 text-slate-700 hover:bg-slate-50'}`}
                     >
                       {courseTemplate === 'template_1' ? 'محدد' : 'تحديد القالب'}
                     </button>
                     <button 
                       type="button"
-                      onClick={() => setPreviewTemplateId('template_1')}
-                      className="text-xs text-primary font-bold flex items-center gap-1 hover:underline"
+                      onClick={() => handleStartInlineEdit('template_1')}
+                      className="text-xs text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1 hover:underline cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[16px]">edit</span> تخصيص وتعديل
                     </button>
@@ -2563,29 +2764,29 @@ export default function CourseDetailsPage() {
                 </div>
 
                 {/* Template 2 Card */}
-                <div className={`border-2 rounded-[24px] p-5 flex flex-col justify-between transition-all ${courseTemplate === 'template_2' ? 'border-primary bg-primary/5 ring-2 ring-primary/10' : 'border-outline-variant bg-white hover:border-primary/50'}`}>
+                <div className={`border-2 rounded-[24px] p-5 flex flex-col justify-between transition-all ${courseTemplate === 'template_2' ? 'border-blue-600 bg-blue-50/30 ring-2 ring-blue-600/20 shadow-sm' : 'border-slate-200 bg-white hover:border-blue-400 hover:shadow-md'}`}>
                   <div>
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-bold text-gray-900 text-sm">قالب صفحة الدروس التفاعلية (الافتراضي)</h4>
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${courseTemplate === 'template_2' ? 'border-primary bg-primary' : 'border-outline-variant'}`}>
+                      <h4 className="font-bold text-slate-900 text-sm">قالب صفحة الدروس التفاعلية (الافتراضي)</h4>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${courseTemplate === 'template_2' ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`}>
                         {courseTemplate === 'template_2' && <div className="w-2 h-2 bg-white rounded-full" />}
                       </div>
                     </div>
                     
                     {/* Full UI Template Mockup */}
-                    <div className="aspect-video rounded-xl mb-4 overflow-hidden border border-outline-variant bg-surface-container relative shadow-sm group/mockup">
+                    <div className="aspect-video rounded-xl mb-4 overflow-hidden border border-slate-200 bg-slate-50 relative shadow-sm group/mockup">
                       {/* Preview Button */}
                       <div
                         role="button"
                         tabIndex={0}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setPreviewTemplate('template_2');
+                          window.open(`/landing/${course?.slug || id}?template=template_2`, '_blank');
                         }}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.stopPropagation();
-                            setPreviewTemplate('template_2');
+                            window.open(`/landing/${course?.slug || id}?template=template_2`, '_blank');
                           }
                         }}
                         className="absolute top-2 left-2 z-20 bg-white/95 hover:bg-white text-blue-700 hover:text-blue-800 px-3 py-1.5 rounded-lg shadow-md flex items-center gap-1.5 text-xs font-black border border-slate-200 hover:scale-105 active:scale-95 transition-all cursor-pointer"
@@ -2600,23 +2801,23 @@ export default function CourseDetailsPage() {
                       />
                     </div>
                     
-                    <p className="text-xs text-on-surface-variant leading-relaxed">
+                    <p className="text-xs text-slate-600 leading-relaxed">
                       تصميم تعليمي كلاسيكي مع مشغل فيديو بارز في الهيدر، وعرض تفاعلي للأقسام والدروس، وجدول المخرجات بلمسات عصرية.
                     </p>
                   </div>
                   
-                  <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                  <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
                     <button 
                       type="button"
                       onClick={() => changeTemplate('template_2')}
-                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${courseTemplate === 'template_2' ? 'bg-primary text-white font-black' : 'border border-outline-variant text-gray-700 hover:bg-gray-50'}`}
+                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${courseTemplate === 'template_2' ? 'bg-blue-600 text-white font-black shadow-sm' : 'border border-slate-200 text-slate-700 hover:bg-slate-50'}`}
                     >
                       {courseTemplate === 'template_2' ? 'محدد' : 'تحديد القالب'}
                     </button>
                     <button 
                       type="button"
-                      onClick={() => setPreviewTemplateId('template_2')}
-                      className="text-xs text-primary font-bold flex items-center gap-1 hover:underline"
+                      onClick={() => handleStartInlineEdit('template_2')}
+                      className="text-xs text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1 hover:underline cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[16px]">edit</span> تخصيص وتعديل
                     </button>
@@ -2627,17 +2828,17 @@ export default function CourseDetailsPage() {
 
             {/* Default Sales Page Section */}
             <section className="space-y-4">
-              <h3 className="font-title-md text-title-md text-gray-900 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">auto_awesome</span>
+              <h3 className="font-title-md text-title-md text-slate-900 font-bold flex items-center gap-2">
+                <span className="material-symbols-outlined text-blue-600">auto_awesome</span>
                 صفحة البيع الافتراضية
               </h3>
-              <div className="bg-white border-2 border-primary/20 rounded-2xl p-6 relative overflow-hidden shadow-sm">
-                <div className="absolute left-0 top-0 h-full w-1.5 bg-primary"></div>
+              <div className="bg-white border-2 border-blue-200 hover:border-blue-400 transition-all rounded-2xl p-6 relative overflow-hidden shadow-sm">
+                <div className="absolute left-0 top-0 h-full w-1.5 bg-blue-600"></div>
                 <div className="flex flex-col lg:flex-row gap-8 items-start lg:items-center">
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-3 mb-2">
-                      <h4 className="font-title-md text-title-md text-gray-900 font-black">{course.title}</h4>
-                      <span className="bg-primary/10 text-primary text-label-sm px-3 py-1 rounded-full font-bold">تم إنشاؤها تلقائياً</span>
+                      <h4 className="font-title-md text-title-md text-slate-900 font-black">{course.title}</h4>
+                      <span className="bg-blue-50 text-blue-600 text-label-sm px-3 py-1 rounded-full font-bold border border-blue-100">تم إنشاؤها تلقائياً</span>
                     </div>
                     <p className="text-body-md text-on-surface-variant max-w-2xl leading-relaxed">
                       تم إنشاء هذه الصفحة تلقائياً من بيانات الدورة، ويمكنك تعديلها في أي وقت أو استخدامها كأساس لإنشاء صفحات بيع جديدة.
@@ -2669,11 +2870,8 @@ export default function CourseDetailsPage() {
                   <div className="flex flex-wrap lg:flex-nowrap items-center gap-3 w-full lg:w-auto shrink-0 pt-4 lg:pt-0">
                     <button 
                       type="button"
-                      onClick={() => {
-                        setPreviewLandingPageId(null);
-                        setPreviewTemplateId(courseTemplate);
-                      }}
-                      className="flex-1 lg:flex-none px-5 py-2.5 bg-primary hover:bg-primary-container text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-500/10 cursor-pointer animate-fade-in"
+                      onClick={() => handleStartInlineEdit(courseTemplate)}
+                      className="flex-1 lg:flex-none px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-500/10 cursor-pointer animate-fade-in"
                     >
                       <span className="material-symbols-outlined text-sm">edit</span>
                       تعديل الصفحة
@@ -2681,9 +2879,9 @@ export default function CourseDetailsPage() {
                     <button 
                       type="button"
                       onClick={() => {
-                        window.open(`/${course?.slug || id}`, '_blank');
+                        window.open(`/landing/${course?.slug || id}`, '_blank');
                       }}
-                      className="flex-1 lg:flex-none px-5 py-2.5 border border-primary text-primary rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary/5 transition-all cursor-pointer"
+                      className="flex-1 lg:flex-none px-5 py-2.5 border border-blue-600 text-blue-600 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-50 transition-all cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-sm">visibility</span>
                       معاينة
@@ -2691,10 +2889,11 @@ export default function CourseDetailsPage() {
                     <button 
                       type="button"
                       onClick={handleCopyDefaultLink}
-                      className="p-2.5 text-on-surface-variant hover:bg-slate-50 border border-outline-variant/60 rounded-xl transition-all cursor-pointer"
-                      title="نسخ رابط الصفحة"
+                      className="flex-1 lg:flex-none px-4 py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                      title="مشاركة ورابط الصفحة الافتراضية"
                     >
-                      <LinkIcon className="w-4 h-4" />
+                      <span className="material-symbols-outlined text-sm">share</span>
+                      مشاركة الرابط
                     </button>
                   </div>
                 </div>
@@ -2703,13 +2902,21 @@ export default function CourseDetailsPage() {
 
             {/* Additional Sales Pages Section */}
             <section className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
                 <div>
                   <h3 className="font-title-md text-title-md text-gray-900">صفحات بيع إضافية</h3>
                   <p className="text-label-md text-on-surface-variant mt-1">
                     أنشئ صفحات بيع مختلفة لنفس الدورة لتناسب الحملات والعروض المختلفة.
                   </p>
                 </div>
+                <button 
+                  type="button"
+                  onClick={() => setIsCreateLandingModalOpen(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 shadow-lg shadow-blue-500/10 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer shrink-0"
+                >
+                  <Plus size={16} />
+                  <span>إضافة صفحة بيع جديدة</span>
+                </button>
               </div>
 
               {loadingLandingPages ? (
@@ -2786,7 +2993,7 @@ export default function CourseDetailsPage() {
                           <button 
                             type="button"
                             onClick={() => {
-                              window.open(`/${page.slug || 'preview'}?lp_id=${page.id}`, '_blank');
+                              window.open(`/landing/${page.slug || course?.slug || id}?lp_id=${page.id}`, '_blank');
                             }}
                             className="text-on-surface-variant hover:bg-slate-100 p-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center" 
                             title="معاينة كطالب"

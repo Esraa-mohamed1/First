@@ -63,7 +63,7 @@ const DEMO_COURSE_DATA = {
   ]
 };
 
-export function useLandingContent(options: { courseId?: string | number; courseSlug?: string; landingPageId?: string }) {
+export function useLandingContent(options: { courseId?: string | number; courseSlug?: string; landingPageId?: string; isEditable?: boolean }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -74,6 +74,12 @@ export function useLandingContent(options: { courseId?: string | number; courseS
 
   useEffect(() => {
     const loadContent = async () => {
+      // In editor mode, if store already has content and courseData, preserve live edits and skip re-fetch
+      if (options.isEditable && useLandingStore.getState().content && useLandingStore.getState().courseData) {
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
       try {
@@ -186,14 +192,31 @@ export function useLandingContent(options: { courseId?: string | number; courseS
               landingPage = await getLandingPageByCourseSlug(course.slug, course.id);
             }
           } else if (options.courseSlug) {
-            // Public Student view mode
-            course = await getStudentCourse(options.courseSlug);
-            if (course) {
-              const chapters = await getStudentChaptersByCourse(course.id);
-              course.units = chapters.length > 0 ? chapters : (course.chapters || course.units || []);
+            // Public Student view mode: check local cache first for instant load of created course
+            if (typeof window !== 'undefined') {
+              const cachedStr = localStorage.getItem(`darab_course_cache_${options.courseSlug}`);
+              if (cachedStr) {
+                try {
+                  course = JSON.parse(cachedStr);
+                } catch (e) {}
+              }
             }
+
+            try {
+              const fetched = await getStudentCourse(options.courseSlug);
+              if (fetched) {
+                course = fetched;
+                const chapters = await getStudentChaptersByCourse(course.id);
+                course.units = chapters.length > 0 ? chapters : (course.chapters || course.units || []);
+              }
+            } catch (e) {
+              console.warn('API getStudentCourse failed, using cached course data:', e);
+            }
+
             if (course && course.slug) {
-              landingPage = await getStudentLandingPageByCourseSlug(course.slug, course.id);
+              try {
+                landingPage = await getStudentLandingPageByCourseSlug(course.slug, course.id);
+              } catch (e) {}
             }
           }
         }
