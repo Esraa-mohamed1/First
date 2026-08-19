@@ -13,7 +13,7 @@ import { getCourse } from '@/services/courses';
 import { Course, Unit } from '@/types/api';
 import toast from 'react-hot-toast';
 import { twMerge } from 'tailwind-merge';
-import LandingRenderer from '@/modules/landing/renderer/LandingRenderer';
+import CourseDetailTemplate from '@/components/course/CourseDetailTemplate';
 
 export default function CourseStudentViewPage() {
   const params = useParams();
@@ -127,11 +127,12 @@ export default function CourseStudentViewPage() {
   if (!course) return <div className="min-h-screen flex items-center justify-center font-bold text-slate-900">لم يتم العثور على الدورة</div>;
 
   return (
-    <LandingRenderer
-      courseId={id}
-      isEditable={false}
-      onSubscribe={async () => { toast.success('هذه معاينة تجريبية فقط'); }}
-      isSubscribing={false}
+    <CourseDetailTemplate
+      course={course as any}
+      isSubscribed={false}
+      onSubscribe={() => { toast.success('هذه معاينة تجريبية فقط للأكاديمية'); }}
+      onLearnClick={() => { toast.success('هذه معاينة تجريبية فقط للأكاديمية'); }}
+      hideHeaderFooter={true}
     />
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, Eye, BarChart3, Video, Radio, MapPin, Users, CreditCard, Settings2, Copy, Link as LinkIcon, Pencil } from 'lucide-react';
+import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, Eye, BarChart3, Video, Radio, MapPin, Users, CreditCard, Settings2, Copy, Link as LinkIcon, Pencil, Share2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCourses, deleteCourse } from '@/services/courses';
@@ -284,6 +284,30 @@ export default function CourseList({ typeFilter, title, description, createType 
                           title="نسخ الرابط"
                         >
                           <LinkIcon className="w-4 h-4 text-slate-500" />
+                        </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (course.slug) {
+                              const shareUrl = `${window.location.origin}/${course.slug}`;
+                              if (navigator.share) {
+                                navigator.share({
+                                  title: course.title,
+                                  text: course.description?.replace(/<[^>]*>/g, '') || '',
+                                  url: shareUrl
+                                }).catch(() => {});
+                              } else {
+                                navigator.clipboard.writeText(shareUrl);
+                                toast.success('تم نسخ رابط الدورة لمشاركتها على فيسبوك وإنستغرام!');
+                              }
+                            } else {
+                              toast.error('لا يوجد رابط مخصص لهذه الدورة بعد');
+                            }
+                          }}
+                          className="p-2 text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors" 
+                          title="مشاركة الدورة"
+                        >
+                          <Share2 className="w-4 h-4 text-slate-500" />
                         </button>
                       </div>
                       

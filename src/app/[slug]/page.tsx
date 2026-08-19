@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { getStudentCourse, getMySubscriptions } from '@/services/student-courses';
 import { Course } from '@/types/api';
 import { PaymentMethodModal } from '@/components/payment/PaymentMethodModal';
 import LandingRenderer from '@/modules/landing/renderer/LandingRenderer';
+import CourseDetailTemplate from '@/components/course/CourseDetailTemplate';
 import { getThemeBySlug } from '@/builder/templates/themeStyles';
 import { useModal } from '@/context/ModalContext';
 
@@ -35,6 +36,7 @@ const STATIC_COURSE_FALLBACK = {
 
 export default function CourseStudentViewPage() {
   const params = useParams();
+  const router = useRouter();
   const slug = params.slug as string;
   const [course, setCourse] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -261,6 +263,16 @@ export default function CourseStudentViewPage() {
     setIsPaymentModalOpen(true);
   };
 
+  const [showLandingPage, setShowLandingPage] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const isLP = searchParams.get('lp') === 'true' || searchParams.get('lp_id') || searchParams.get('marketing') === 'true';
+      setShowLandingPage(!!isLP);
+    }
+  }, []);
+
   if (loading) return <div className="min-h-screen flex items-center justify-center font-bold text-slate-900">جاري التحميل...</div>;
   if (!course) return <div className="min-h-screen flex items-center justify-center font-bold text-slate-900">لم يتم العثور على الدورة</div>;
 
@@ -279,13 +291,22 @@ export default function CourseStudentViewPage() {
     <div style={cssVariables} className="min-h-screen w-full transition-all duration-300 flex flex-col justify-between" dir="rtl">
       {/* Main Course Content */}
       <div className="w-full flex-grow">
-        <LandingRenderer
-          courseSlug={slug}
-          isEditable={false}
-          onSubscribe={handleSubscribe}
-          isPaymentModalOpen={isPaymentModalOpen}
-          setIsPaymentModalOpen={handleSetPaymentModalOpen}
-        />
+        {showLandingPage ? (
+          <LandingRenderer
+            courseSlug={slug}
+            isEditable={false}
+            onSubscribe={handleSubscribe}
+            isPaymentModalOpen={isPaymentModalOpen}
+            setIsPaymentModalOpen={handleSetPaymentModalOpen}
+          />
+        ) : (
+          <CourseDetailTemplate
+            course={course}
+            isSubscribed={course.is_subscribed}
+            onSubscribe={handleSubscribe}
+            onLearnClick={() => router.push(`/student/courses/${course.id}/learn`)}
+          />
+        )}
       </div>
 
       {course && (
