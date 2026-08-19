@@ -43,8 +43,11 @@ export const PaymentMethodModal = ({
       setCopied(false);
       setScreenshot(null);
       if (previewUrl) { URL.revokeObjectURL(previewUrl); setPreviewUrl(null); }
+    } else if (methods && methods.length === 1) {
+      setSelectedMethod(methods[0]);
+      setStep(2);
     }
-  }, [isOpen]);
+  }, [isOpen, methods]);
 
   useEffect(() => {
     return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
@@ -235,17 +238,17 @@ export const PaymentMethodModal = ({
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
             <div className="p-6 overflow-y-auto flex-1 space-y-5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full">
               {/* Amount + account */}
-              <div className="bg-blue-50/70 rounded-2xl p-4 border border-blue-100/60 space-y-3">
+              <div className="bg-blue-50/70 rounded-2xl p-6 border border-blue-100/60 space-y-4 shadow-sm">
                 <div className="text-center">
-                  <p className="text-[11px] text-blue-500 font-black uppercase tracking-wide">المبلغ المطلوب تحويله</p>
-                  <p className="text-2xl font-black text-blue-900 mt-0.5">{coursePrice} <span className="text-sm font-bold">{courseCurrency}</span></p>
+                  <p className="text-[11px] text-blue-500 font-black uppercase tracking-wide mb-1">المبلغ المطلوب تحويله</p>
+                  <p className="text-2xl font-black text-blue-900">{coursePrice} <span className="text-sm font-bold">{courseCurrency}</span></p>
                 </div>
-                <div className="bg-white rounded-xl p-3 border border-blue-200/50 flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <span className="text-[10px] text-gray-400 font-bold block">{selectedMethod.methodName}</span>
+                <div className="bg-white rounded-xl p-5 border border-blue-200/50 flex items-center justify-between gap-4 shadow-sm">
+                  <div className="min-w-0 text-right">
+                    <span className="text-[10px] text-gray-400 font-bold block mb-1">{selectedMethod.methodName}</span>
                     <span className="font-mono text-sm font-black text-gray-900 select-all break-all">{selectedMethod.value}</span>
                   </div>
-                  <button type="button" onClick={handleCopy} className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-black rounded-xl hover:bg-blue-700 transition shrink-0">
+                  <button type="button" onClick={handleCopy} className="flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 text-white text-xs font-black rounded-xl hover:bg-blue-700 transition shrink-0 shadow-md shadow-blue-500/10">
                     {copied ? <Check size={13} /> : <Copy size={13} />}
                     {copied ? 'تم' : 'نسخ'}
                   </button>

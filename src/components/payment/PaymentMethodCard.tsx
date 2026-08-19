@@ -13,6 +13,7 @@ interface PaymentMethodCardProps {
   type: PaymentMethodType;
   isSelected: boolean;
   onSelect: () => void;
+  logo?: string;
 }
 
 export const PaymentMethodCard = React.memo(({
@@ -20,8 +21,12 @@ export const PaymentMethodCard = React.memo(({
   type,
   isSelected,
   onSelect,
+  logo,
 }: PaymentMethodCardProps) => {
   const getIcon = () => {
+    if (logo) {
+      return <img src={logo} alt={name} className="w-8 h-8 object-contain" />;
+    }
     switch (type) {
       case 'mobile': return <Smartphone size={24} />;
       case 'email': return <Mail size={24} />;
