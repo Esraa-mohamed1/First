@@ -605,6 +605,17 @@ export default function CreateCourseClient() {
     return 'recorded';
   };
 
+  const clearDraftCache = () => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(DRAFT_CACHE_KEY);
+        localStorage.removeItem(`darb_create_course_image_${courseTypeParam || 'recorded'}`);
+      }
+    } catch (e) {
+      console.error('Failed to clear draft cache:', e);
+    }
+  };
+
   const ensureCourseCreated = async (overriddenStatus?: string) => {
     if (courseId && !overriddenStatus) return courseId;
 
@@ -688,17 +699,6 @@ export default function CreateCourseClient() {
       payload[`infos[${infoIndex}][order]`] = pointIndex + 1;
       infoIndex++;
     });
-
-    const clearDraftCache = () => {
-      try {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem(DRAFT_CACHE_KEY);
-          localStorage.removeItem(`darb_create_course_image_${courseTypeParam || 'recorded'}`);
-        }
-      } catch (e) {
-        console.error('Failed to clear draft cache:', e);
-      }
-    };
 
     try {
       if (courseId) {
