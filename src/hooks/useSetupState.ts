@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { createAccountInfoAcademy, login } from '@/services/auth';
+import { createAccount, createAccountInfoAcademy, login } from '@/services/auth';
 import { useCountry } from '@/hooks/useCountry';
 import { triggerPageLoader } from '@/components/PageLoader';
 import { Country } from '@/types/country';
@@ -10,6 +10,7 @@ export function useSetupState() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const { countries, selectedCountry, setSelectedCountry } = useCountry();
+  const [registrationMethod, setRegistrationMethod] = useState<'email' | 'phone'>('email');
 
   // Step 1: Card selection
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
@@ -38,26 +39,72 @@ export function useSetupState() {
   const domainSuffix = '.darab.academy';
 
   useEffect(() => {
-    // Clear any stale tenant key and token from a previous session.
+    // Clear any stale tenant key from a previous session.
     localStorage.removeItem('academy_link_name');
-    localStorage.removeItem('token');
+
+    // Detect registration method
+    const pendingStr = localStorage.getItem('pending_registration');
+    const pendingData = pendingStr ? JSON.parse(pendingStr) : null;
+    const savedMethod = (localStorage.getItem('registration_method') || pendingData?.contactMethod) as 'email' | 'phone' | null;
+    const cachedPhone = pendingData?.phone || localStorage.getItem('user_phone') || '';
+    const cachedEmail = pendingData?.email || localStorage.getItem('user_email') || '';
+
+    if (savedMethod === 'phone' || (cachedPhone && !cachedEmail)) {
+      setRegistrationMethod('phone');
+      setEmail('');
+      if (cachedPhone) setPhone(cachedPhone);
+    } else if (savedMethod === 'email' || (cachedEmail && !cachedPhone)) {
+      setRegistrationMethod('email');
+      setPhone('');
+      if (cachedEmail) setEmail(cachedEmail);
+    } else {
+      setRegistrationMethod(savedMethod === 'phone' ? 'phone' : 'email');
+    }
 
     // Prefill data from registration step
     const cachedAcademyName = localStorage.getItem('user_academy_name') || localStorage.getItem('user_name') || '';
-    const cachedPhone = localStorage.getItem('user_phone') || '';
-    const cachedEmail = localStorage.getItem('user_email') || '';
     if (cachedAcademyName) setAcademyName(cachedAcademyName);
-    if (cachedPhone) setPhone(cachedPhone);
-    if (cachedEmail) setEmail(cachedEmail);
   }, []);
 
   const selectCard = (cardIndex: number, field: string) => {
     setSelectedCardIndex(cardIndex);
     setSelectedField(field);
+    goToStep(2);
+  };
 
-    setTimeout(() => {
+  const validateStep1 = (): boolean => {
+    setFieldErrors({});
+    const pendingStr = typeof window !== 'undefined' ? localStorage.getItem('pending_registration') : null;
+    const pendingData = pendingStr ? JSON.parse(pendingStr) : null;
+    const isPhoneReg = registrationMethod === 'phone' || pendingData?.contactMethod === 'phone' || (typeof window !== 'undefined' && localStorage.getItem('registration_method') === 'phone');
+
+    if (isPhoneReg) {
+      const currentPhone = phone || pendingData?.phone || localStorage.getItem('user_phone') || '';
+      if (!currentPhone) {
+        setFieldErrors({ phone: 'يرجى إدخال رقم الجوال' });
+        toast.error('يرجى إدخال رقم الجوال');
+        return false;
+      }
+    } else {
+      const currentEmail = email || pendingData?.email || localStorage.getItem('user_email') || '';
+      if (!currentEmail) {
+        setFieldErrors({ email: 'يرجى إدخال البريد الإلكتروني' });
+        toast.error('يرجى إدخال البريد الإلكتروني');
+        return false;
+      }
+      if (!/\S+@\S+\.\S+/.test(currentEmail)) {
+        setFieldErrors({ email: 'البريد الإلكتروني غير صالح' });
+        toast.error('البريد الإلكتروني غير صالح');
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const handleNextStep1 = () => {
+    if (validateStep1()) {
       goToStep(2);
-    }, 600);
+    }
   };
 
   const goToStep = (step: number) => {
@@ -92,6 +139,23 @@ export function useSetupState() {
   };
 
   const handleSubmit = async () => {
+    // Guard: Final submit ONLY runs on Step 2
+    if (currentStep !== 2) {
+      handleNextStep1();
+      return;
+    }
+
+    if (!validateStep1()) {
+      goToStep(1);
+      return;
+    }
+
+    if (!academyName && !localStorage.getItem('user_academy_name')) {
+      toast.error('يرجى إدخال اسم الأكاديمية');
+      setFieldErrors(prev => ({ ...prev, username: 'يرجى إدخال اسم الأكاديمية', academy_name: 'يرجى إدخال اسم الأكاديمية' }));
+      return;
+    }
+
     if (!domainPrefix) {
       toast.error('يرجى كتابة رابط المنصة');
       return;
@@ -112,16 +176,75 @@ export function useSetupState() {
         return match ? decodeURIComponent(match[1]) : '';
       };
 
-      const userInfoStr = localStorage.getItem('user_info');
-      const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
-      const cachedEmail = email || localStorage.getItem('user_email') || userInfo?.email || getCookie('backup_email') || '';
-      const cachedPhone = phone || localStorage.getItem('user_phone') || userInfo?.phone || getCookie('backup_phone') || '';
-      const finalPhone = phone || cachedPhone || '';
-      const finalEmail = email || cachedEmail || '';
+      // 1. Call createAccount first
+      const pendingStr = localStorage.getItem('pending_registration');
+      const pendingData = pendingStr ? JSON.parse(pendingStr) : null;
+      const userPassword = localStorage.getItem('user_password') || getCookie('backup_password');
 
+      const isPhoneReg = registrationMethod === 'phone' || pendingData?.contactMethod === 'phone' || (localStorage.getItem('registration_method') === 'phone');
+
+      let finalEmail = '';
+      let finalPhone = '';
+
+      if (isPhoneReg) {
+        finalPhone = phone || pendingData?.phone || localStorage.getItem('user_phone') || '';
+      } else {
+        finalEmail = email || pendingData?.email || localStorage.getItem('user_email') || '';
+      }
+
+      let existingToken = localStorage.getItem('token');
+
+      if (!existingToken) {
+        const accountPayload: any = {
+          name: academyName || pendingData?.name || (isPhoneReg ? finalPhone : finalEmail.split('@')[0]),
+          academy_name: academyName ? `${academyName}'s Academy` : (pendingData?.academy_name || 'Academy'),
+          password: userPassword || pendingData?.password,
+          package_id: pendingData?.package_id,
+        };
+
+        if (isPhoneReg) {
+          accountPayload.phone = finalPhone;
+          accountPayload.country_code = activeCountry?.isoCode || pendingData?.country_code || 'EG';
+        } else {
+          accountPayload.email = finalEmail;
+        }
+
+        try {
+          const createRes = await createAccount(accountPayload);
+          const resObj: any = createRes;
+          let token = resObj.data?.token || resObj.token || resObj.data?.access_token || resObj.access_token;
+          if (!token && resObj.meta?.access_token) token = resObj.meta.access_token;
+          if (!token && resObj.data?.meta?.access_token) token = resObj.data.meta.access_token;
+          if (token) {
+            existingToken = token;
+            localStorage.setItem('token', token);
+            document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+          }
+        } catch (createAccErr: any) {
+          console.error('Account Creation API Error in Setup:', createAccErr);
+          let rawMessage = createAccErr?.message || (typeof createAccErr === 'string' ? createAccErr : 'حدث خطأ أثناء إنشاء الحساب');
+          if (createAccErr?.errors && typeof createAccErr.errors === 'object') {
+            const errObj = createAccErr.errors as Record<string, string | string[]>;
+            const getFirst = (v: string | string[]) => (Array.isArray(v) ? v[0] : v) || '';
+            
+            if (isPhoneReg && errObj.phone) {
+              rawMessage = getFirst(errObj.phone);
+            } else if (!isPhoneReg && errObj.email) {
+              rawMessage = getFirst(errObj.email);
+            } else {
+              const allMsgs = Object.values(errObj).map(v => translateErrorToArabic(getFirst(v))).filter(Boolean);
+              if (allMsgs.length > 0) rawMessage = allMsgs[0];
+            }
+          }
+          toast.error(translateErrorToArabic(rawMessage) || 'فشل إنشاء الحساب');
+          setLoading(false);
+          return; // STOP execution
+        }
+      }
+
+      // 2. Call createAccountInfoAcademy ONLY after createAccount succeeds
       const payload: any = {
         username: academyName || 'أكاديمي',
-        phone_academy: finalPhone || '0500000000',
         country_code: activeCountry?.isoCode || 'EG',
         specialties: selectedField,
         role: selectedField,
@@ -130,8 +253,20 @@ export function useSetupState() {
         link_academy: fullLink.toLowerCase()
       };
 
-      if (finalEmail) {
+      if (isPhoneReg) {
+        payload.phone = finalPhone;
+        payload.phone_academy = finalPhone || '0500000000';
+        if (email && email.trim()) {
+          payload.email = email.trim();
+        }
+      } else {
         payload.email = finalEmail;
+        if (finalPhone) {
+          payload.phone_academy = finalPhone;
+          payload.phone = finalPhone;
+        } else {
+          payload.phone_academy = '0500000000';
+        }
       }
 
       const setupResponse = (await createAccountInfoAcademy(payload)) as any;
@@ -155,14 +290,14 @@ export function useSetupState() {
       toast.success('تم حفظ معلومات الأكاديمية بنجاح');
 
       // Auto login logic
-      const password = localStorage.getItem('user_password') || getCookie('backup_password');
+      const password = userPassword;
       let loginSuccess = false;
 
-      if (password && (cachedEmail || finalPhone)) {
+      if (password && (isPhoneReg ? finalPhone : finalEmail)) {
         try {
           const loginResponse = await login({
-            email: cachedEmail || undefined,
-            phone: cachedEmail ? undefined : (finalPhone || undefined),
+            email: isPhoneReg ? undefined : (finalEmail || undefined),
+            phone: isPhoneReg ? (finalPhone || undefined) : undefined,
             password: password
           });
 
@@ -174,8 +309,8 @@ export function useSetupState() {
             if (loginResponse.data) {
               localStorage.setItem('user_info', JSON.stringify({
                 name: loginResponse.data.name,
-                email: loginResponse.data.email || cachedEmail,
-                phone: loginResponse.data.phone || finalPhone || cachedPhone,
+                email: loginResponse.data.email || finalEmail,
+                phone: loginResponse.data.phone || finalPhone,
                 role: 'الادمن'
               }));
             }
@@ -191,6 +326,7 @@ export function useSetupState() {
       }
 
       localStorage.removeItem('user_password');
+      localStorage.removeItem('pending_registration');
 
       const isLocal = typeof window !== 'undefined' && window.location.hostname.includes('localhost');
       const defaultSuffix = isLocal ? '.darab.academy.localhost:3000' : '.darab.academy';
@@ -271,13 +407,13 @@ export function useSetupState() {
 
   const getProgLineWidth = () => {
     if (currentStep === 1) return '0%';
-    if (currentStep === 2) return '50%';
     return '100%';
   };
 
   return {
     currentStep,
     loading,
+    registrationMethod,
     selectedCardIndex,
     activeCountry,
     saudiCountry,
@@ -296,6 +432,7 @@ export function useSetupState() {
     domainSuffix,
     selectCard,
     goToStep,
+    handleNextStep1,
     handleCountrySelect,
     handleDomainChange,
     handleSubmit,

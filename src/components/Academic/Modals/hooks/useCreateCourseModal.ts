@@ -159,7 +159,11 @@ export const useCreateCourseModal = ({
           await updateCourse(courseId, payload);
           toast.success('تم تحديث الدورة بنجاح');
         } else {
-          await createCourse(payload);
+          const created = await createCourse(payload);
+          if (created?.id && typeof window !== 'undefined') {
+            localStorage.setItem('createCourseId', String(created.id));
+            if (created.slug) localStorage.setItem('createCourseSlug', created.slug);
+          }
           toast.success('تم إنشاء الدورة بنجاح');
         }
         onClose();

@@ -601,6 +601,11 @@ export default function CreateCourseClient() {
       } else {
         const created = await createCourse(payload);
         setCourseId(created.id);
+        if (created.slug) setSlug(created.slug);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('createCourseId', String(created.id));
+          if (created.slug) localStorage.setItem('createCourseSlug', created.slug);
+        }
         toast.success('تم حفظ الدورة بنجاح');
         return created.id;
       }
@@ -818,7 +823,13 @@ export default function CreateCourseClient() {
 
   const handleCopyDefaultLink = () => {
     if (typeof window !== 'undefined') {
-      const link = `${window.location.origin}/${slug || courseId}`;
+      const activeId = courseId || localStorage.getItem('createCourseId');
+      const activeSlug = (slug && slug !== 'design-basics') ? slug : (localStorage.getItem('createCourseSlug') || activeId);
+      if (!activeId && !activeSlug) {
+        toast.error('يرجى حفظ الدورة أولاً للتمكن من نسخ رابط صفحة البيع.');
+        return;
+      }
+      const link = `${window.location.origin}/${activeSlug || activeId}`;
       navigator.clipboard.writeText(link);
       toast.success('تم نسخ رابط صفحة البيع الافتراضية بنجاح!');
     }
@@ -2088,7 +2099,13 @@ export default function CreateCourseClient() {
                           <button 
                             type="button"
                             onClick={() => {
-                              window.open(`/${slug || courseId}`, '_blank');
+                              const activeId = courseId || (typeof window !== 'undefined' ? localStorage.getItem('createCourseId') : null);
+                              const activeSlug = (slug && slug !== 'design-basics') ? slug : (typeof window !== 'undefined' ? localStorage.getItem('createCourseSlug') : null);
+                              if (!activeId && !activeSlug) {
+                                toast.error('يرجى حفظ الدورة أولاً للتمكن من معاينة صفحة الهبوط.');
+                                return;
+                              }
+                              window.open(`/${activeSlug || activeId}`, '_blank');
                             }}
                             className="flex-1 lg:flex-none px-5 py-2.5 border border-blue-600 text-blue-600 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-50 transition-all cursor-pointer"
                           >

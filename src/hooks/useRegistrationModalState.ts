@@ -217,12 +217,31 @@ export function useRegistrationModalState() {
                     password_confirmation: formData.confirmPassword,
                     role: 'student'
                 });
+
+                const resObj: any = response;
+                let token = resObj.data?.token || resObj.token || resObj.data?.access_token || resObj.access_token;
+                if (!token && resObj.meta?.access_token) {
+                    token = resObj.meta.access_token;
+                }
+                if (!token && resObj.data?.meta?.access_token) {
+                    token = resObj.data.meta.access_token;
+                }
+
+                if (token) {
+                    localStorage.setItem('token', token);
+                    document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+                }
+
+                toast.success('تم إنشاء الحساب بنجاح');
+                handleComplete();
             } else {
+                // Academy User: Defer createAccount until Setup Info submission
                 const accountPayload: any = {
                     name: (contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone),
                     academy_name: (contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone) + "'s Academy",
                     password: formData.password,
-                    package_id: data?.package_id
+                    package_id: data?.package_id,
+                    contactMethod
                 };
 
                 if (contactMethod === 'email') {
@@ -232,39 +251,28 @@ export function useRegistrationModalState() {
                     accountPayload.country_code = selectedCountry?.isoCode;
                 }
 
-                response = await createAccount(accountPayload);
-            }
+                localStorage.setItem('registration_method', contactMethod);
+                localStorage.setItem('pending_registration', JSON.stringify(accountPayload));
+                localStorage.removeItem('user_info');
+                localStorage.removeItem('token');
+                document.cookie = `token=; path=/; max-age=0; SameSite=Lax`;
 
-            const resObj: any = response;
-            let token = resObj.data?.token || resObj.token || resObj.data?.access_token || resObj.access_token;
-            if (!token && resObj.meta?.access_token) {
-                token = resObj.meta.access_token;
-            }
-            if (!token && resObj.data?.meta?.access_token) {
-                token = resObj.data.meta.access_token;
-            }
+                if (contactMethod === 'email') {
+                    localStorage.setItem('user_email', formData.email);
+                    localStorage.removeItem('user_phone');
+                    document.cookie = `backup_email=${encodeURIComponent(formData.email)}; path=/; max-age=3600; SameSite=Lax`;
+                    document.cookie = `backup_phone=; path=/; max-age=0; SameSite=Lax`;
+                } else {
+                    localStorage.setItem('user_phone', formData.phone);
+                    localStorage.removeItem('user_email');
+                    document.cookie = `backup_phone=${encodeURIComponent(formData.phone)}; path=/; max-age=3600; SameSite=Lax`;
+                    document.cookie = `backup_email=; path=/; max-age=0; SameSite=Lax`;
+                }
+                localStorage.setItem('user_password', formData.password);
+                document.cookie = `backup_password=${encodeURIComponent(formData.password)}; path=/; max-age=3600; SameSite=Lax`;
 
-            if (token) {
-                localStorage.setItem('token', token);
-                document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+                handleComplete();
             }
-
-            if (contactMethod === 'email') {
-                localStorage.setItem('user_email', formData.email);
-                localStorage.removeItem('user_phone');
-                document.cookie = `backup_email=${encodeURIComponent(formData.email)}; path=/; max-age=3600; SameSite=Lax`;
-                document.cookie = `backup_phone=; path=/; max-age=0; SameSite=Lax`;
-            } else {
-                localStorage.setItem('user_phone', formData.phone);
-                localStorage.removeItem('user_email');
-                document.cookie = `backup_phone=${encodeURIComponent(formData.phone)}; path=/; max-age=3600; SameSite=Lax`;
-                document.cookie = `backup_email=; path=/; max-age=0; SameSite=Lax`;
-            }
-            localStorage.setItem('user_password', formData.password);
-            document.cookie = `backup_password=${encodeURIComponent(formData.password)}; path=/; max-age=3600; SameSite=Lax`;
-
-            toast.success('تم إنشاء الحساب بنجاح');
-            handleComplete();
         } catch (error: any) {
             if (error?.errors && typeof error.errors === 'object') {
                 const serverErrors: typeof errors = { email: '', phone: '', password: '', confirmPassword: '' };
@@ -280,9 +288,9 @@ export function useRegistrationModalState() {
                 setErrors(serverErrors);
 
                 const allMsgs = Object.values(errObj).map(v => translateErrorToArabic(getFirst(v))).filter(Boolean);
-                toast.error(allMsgs.length > 0 ? allMsgs[0] : (translateErrorToArabic(error.message) || 'حدث خطأ أثناء إنشاء الحساب'));
+                toast.error(allMsgs.length > 0 ? allMsgs[0] : (translateErrorToArabic(error.message) || 'حدث خطأ أثناء إدخال البيانات'));
             } else {
-                toast.error(translateErrorToArabic(error.message || 'حدث خطأ أثناء إنشاء الحساب'));
+                toast.error(translateErrorToArabic(error.message || 'حدث خطأ أثناء إدخال البيانات'));
             }
         } finally {
             setIsLoading(false);

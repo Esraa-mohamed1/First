@@ -29,15 +29,16 @@ export const getCoachHtml = (content: TemplateContent) => {
   const heroCoachingCardText = (content?.hero as any)?.coachingCardTextColor || '#49454f';
 
   // 3. About
-  const aboutTitle = content?.about?.title || 'عن الكوتش';
-  const aboutSubtitle = content?.about?.subtitle || 'خبرة عملية وتوجيه مستمر للوصول إلى أهدافك التعليمية.';
-  const aboutDesc = (content?.about as any)?.description || (content?.about as any)?.bio || 'أهلاً بك! أنا مدربك في هذه الأكاديمية. أسعى لتقديم محتوى تعليمي عملي ومباشر يجمع بين الفهم النظري والتطبيق الفعلي، دون تعقيد أو حشو غير ضروري.';
-  const aboutBio = (content?.about as any)?.biography || (content?.about as any)?.cvText || 'هدفنا هنا ليس مجرد مشاهدة الدروس، بل التأكد من قدرتك على تطبيق كل معلومة تتعلمها، وتطوير مهاراتك خطوة بخطوة للحصول على نتائج ملموسة.';
+  const aboutTitle = content?.about?.title ?? 'عن الكوتش';
+  const aboutSubtitle = content?.about?.subtitle;
+  const aboutDesc = (content?.about as any)?.description !== undefined ? (content?.about as any)?.description : ((content?.about as any)?.bio ?? 'أهلاً بك! أنا مدربك في هذه الأكاديمية. أسعى لتقديم محتوى تعليمي عملي ومباشر يجمع بين الفهم النظري والتطبيق الفعلي، دون تعقيد أو حشو غير ضروري.');
+  const rawBio = (content?.about as any)?.biography !== undefined ? (content?.about as any)?.biography : (content?.about as any)?.cvText;
+  const aboutBio = rawBio !== undefined ? rawBio : 'هدفنا هنا ليس مجرد مشاهدة الدروس، بل التأكد من قدرتك على تطبيق كل معلومة تتعلمها، وتطوير مهاراتك خطوة بخطوة للحصول على نتائج ملموسة.';
   const aboutCoachTitle = (content?.about as any)?.coachTitle || 'مدرب وموجه تعليمي';
   const aboutImage = content?.about?.image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop';
   const aboutBg = content?.about?.backgroundColor || '#ffffff';
   const aboutTextColor = content?.about?.textColor || '#1a1c1d';
-  const aboutTitleColor = (content?.about as any)?.titleColor || '#4f378a';
+  const aboutTitleColor = (content?.about as any)?.titleColor || aboutTextColor || '#4f378a';
   const aboutSkills = (content?.about as any)?.skills || ['منهجية مبسطة', 'توجيه شخصي'];
 
   // 4. Features / Courses
@@ -332,14 +333,11 @@ export const getCoachHtml = (content: TemplateContent) => {
       <div class="lg:col-span-7 flex flex-col items-start space-y-4">
         <span class="text-xs font-extrabold uppercase tracking-wider text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/15">المدرب الشخصي</span>
         <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold" style="color: ${aboutTitleColor};">${aboutTitle}</h2>
+        ${aboutSubtitle ? `<p class="text-sm font-bold text-primary opacity-90">${aboutSubtitle}</p>` : ''}
         
-        <p class="text-base sm:text-lg leading-relaxed font-semibold text-slate-800">
-          ${aboutDesc}
-        </p>
+        ${aboutDesc ? `<p class="text-base sm:text-lg leading-relaxed font-semibold" style="color: ${aboutTextColor};">${aboutDesc}</p>` : ''}
         
-        <p class="text-sm sm:text-base leading-relaxed text-slate-600">
-          ${aboutBio}
-        </p>
+        ${aboutBio ? `<p class="text-sm sm:text-base leading-relaxed" style="color: ${aboutTextColor}; opacity: 0.85;">${aboutBio}</p>` : ''}
 
         <!-- Feature Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full pt-4">
@@ -366,16 +364,20 @@ export const getCoachHtml = (content: TemplateContent) => {
   <div class="max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-12">
     <div class="text-center mb-12 sm:mb-16 max-w-2xl mx-auto">
       <span class="text-xs font-extrabold uppercase tracking-wider text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/15 inline-block mb-3">الدورات التدريبية</span>
-      <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900">${content?.features?.title || 'الدورات التدريبية والكورسات'}</h2>
-      <p class="text-sm sm:text-base text-slate-600 mt-3 leading-relaxed">${content?.features?.subtitle || 'دورات متخصصة مصممة بعناية لتناسب جميع المستويات مع تطبيقات عملية ومتابعة مستمرة.'}</p>
+      <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold" style="color: ${(content?.features as any)?.titleColor || content?.features?.textColor || '#1a1c1d'};">${content?.features?.title || 'الدورات التدريبية والكورسات'}</h2>
+      <p class="text-sm sm:text-base mt-3 leading-relaxed" style="color: ${(content?.features as any)?.subtitleColor || '#49454f'};">${content?.features?.subtitle || 'دورات متخصصة مصممة بعناية لتناسب جميع المستويات مع تطبيقات عملية ومتابعة مستمرة.'}</p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
-      ${featuresItems.map((item: any, idx: number) => `
+      ${featuresItems.map((item: any, idx: number) => {
+        const itemCtaText = item.ctaText || (content?.features as any)?.ctaText || 'عرض الكورس';
+        const itemLevel = item.level || 'كورس تطبيقي';
+        const courseUrl = `/courses/${item.slug || item.id || (idx + 1)}`;
+        return `
         <div data-section="features" data-index="${idx}" class="group border border-slate-200/80 rounded-[16px] bg-white p-5 sm:p-6 hover:shadow-md hover:border-primary/40 transition-all duration-300 cursor-pointer flex flex-col h-full">
           <div class="w-full aspect-[16/9] mb-5 overflow-hidden rounded-xl bg-slate-100 relative border border-slate-100">
-            <img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" src="${item.icon || 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop'}" alt="${item.title}"/>
-            <div class="absolute top-2.5 right-2.5 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg text-xs font-extrabold text-primary border border-slate-200/60">كورس تطبيقي</div>
+            <img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" src="${item.icon || item.image || 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop'}" alt="${item.title}"/>
+            <div class="absolute top-2.5 right-2.5 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg text-xs font-extrabold text-primary border border-slate-200/60">${itemLevel}</div>
           </div>
           
           <h3 class="text-base sm:text-lg font-bold text-slate-900 group-hover:text-primary transition-colors mb-2 leading-snug">${item.title}</h3>
@@ -384,15 +386,16 @@ export const getCoachHtml = (content: TemplateContent) => {
           <div class="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
             <div class="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
               <span class="material-symbols-outlined text-sm">schedule</span>
-              <span>دروس مسجلة + تطبيقات</span>
+              <span>${item.duration || 'دروس مسجلة + تطبيقات'}</span>
             </div>
             
-            <button onclick="event.stopPropagation(); const target = document.getElementById('course-${item.id || idx}') || document.getElementById('pricing') || document.getElementById('courses'); if(target) { target.scrollIntoView({behavior: 'smooth', block: 'start'}); target.classList.add('ring-4', 'ring-primary'); setTimeout(() => target.classList.remove('ring-4', 'ring-primary'), 2000); }" class="px-4 py-2 rounded-[10px] bg-primary/10 text-primary hover:bg-primary hover:text-white font-bold text-xs transition-all duration-200 cursor-pointer">
-              ${item.ctaText || 'عرض الكورس'}
-            </button>
+            <a href="${courseUrl}" onclick="event.stopPropagation(); window.location.href='${courseUrl}';" class="px-4 py-2 rounded-[10px] bg-primary/10 text-primary hover:bg-primary hover:text-white font-bold text-xs transition-all duration-200 cursor-pointer inline-block text-center">
+              ${itemCtaText}
+            </a>
           </div>
         </div>
-      `).join('')}
+      `;
+      }).join('')}
     </div>
   </div>
 </section>

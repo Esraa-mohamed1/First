@@ -9,6 +9,7 @@ export default function SetupPage() {
   const {
     currentStep,
     loading,
+    registrationMethod,
     selectedCardIndex,
     activeCountry,
     saudiCountry,
@@ -27,6 +28,7 @@ export default function SetupPage() {
     domainSuffix,
     selectCard,
     goToStep,
+    handleNextStep1,
     handleCountrySelect,
     handleDomainChange,
     handleSubmit,
@@ -48,7 +50,7 @@ export default function SetupPage() {
 
       <main className="pt-32 pb-20 px-4 sm:px-6 md:px-0 flex flex-col items-center max-w-5xl mx-auto">
         {/* Progress Indicator */}
-        <div className="w-full max-w-2xl mb-12 flex justify-between items-center relative">
+        <div className="w-full max-w-xs mb-12 flex justify-between items-center relative mx-auto">
           <div className="absolute top-1/2 left-0 w-full h-0.5 bg-[#d9e3f4] -z-10 -translate-y-1/2"></div>
           <div
             className="absolute top-1/2 right-0 h-0.5 bg-[#004ac6] -z-10 -translate-y-1/2 transition-all duration-700"
@@ -71,15 +73,6 @@ export default function SetupPage() {
           >
             ٢
           </div>
-
-          {/* Step 3 Dot */}
-          <div
-            onClick={() => goToStep(3)}
-            className={`w-8 h-8 rounded-full flex items-center justify-center font-bold transition-colors duration-500 cursor-pointer z-10 ${currentStep >= 3 ? 'bg-[#004ac6] text-white shadow-lg shadow-[#004ac6]/20' : 'bg-[#d9e3f4] text-[#434655]'
-              }`}
-          >
-            ٣
-          </div>
         </div>
 
         {/* Back Button */}
@@ -100,13 +93,13 @@ export default function SetupPage() {
           <section className="w-full max-w-4xl step-transition animate-slide-up-fade">
             <div className="text-center mb-12">
               <h1 className="text-3xl sm:text-4xl font-bold text-[#111827] mb-4">مرحبًا بك في درب</h1>
-              <p className="text-lg text-[#434655]">دعنا نخصص المنصة لتناسب طريقة عملك.</p>
+              <p className="text-lg text-[#434655]">اختر نوع عملك للمتابعة.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Card 1 */}
               <div
-                className={`group bg-white border border-[#E5E7EB] p-8 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col h-full ${selectedCardIndex === 1 ? 'card-active' : selectedCardIndex !== null ? 'card-inactive' : ''
+                className={`group bg-white border border-[#E5E7EB] p-8 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col h-full cursor-pointer ${selectedCardIndex === 1 ? 'card-active' : selectedCardIndex !== null ? 'card-inactive' : ''
                   }`}
                 onClick={() => selectCard(1, 'schoolteacher')}
               >
@@ -129,7 +122,7 @@ export default function SetupPage() {
 
               {/* Card 2 */}
               <div
-                className={`group bg-white border border-[#E5E7EB] p-8 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col h-full ${selectedCardIndex === 2 ? 'card-active' : selectedCardIndex !== null ? 'card-inactive' : ''
+                className={`group bg-white border border-[#E5E7EB] p-8 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col h-full cursor-pointer ${selectedCardIndex === 2 ? 'card-active' : selectedCardIndex !== null ? 'card-inactive' : ''
                   }`}
                 onClick={() => selectCard(2, 'coach')}
               >
@@ -152,7 +145,7 @@ export default function SetupPage() {
 
               {/* Card 3 */}
               <div
-                className={`group bg-white border border-[#E5E7EB] p-8 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col h-full ${selectedCardIndex === 3 ? 'card-active' : selectedCardIndex !== null ? 'card-inactive' : ''
+                className={`group bg-white border border-[#E5E7EB] p-8 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col h-full cursor-pointer ${selectedCardIndex === 3 ? 'card-active' : selectedCardIndex !== null ? 'card-inactive' : ''
                   }`}
                 onClick={() => selectCard(3, 'academy')}
               >
@@ -176,12 +169,12 @@ export default function SetupPage() {
           </section>
         )}
 
-        {/* Step 2: Country Selection */}
+        {/* Step 2: Information, Country & Domain Selection */}
         {currentStep === 2 && (
           <section className="w-full max-w-xl step-transition animate-slide-up-fade">
             <div className="text-center mb-12">
-              <h1 className="text-3xl font-bold text-[#111827] mb-4">اختر الدولة</h1>
-              <p className="text-sm text-[#434655]">سنقوم بضبط العملة والمنطقة الزمنية تلقائيًا.</p>
+              <h1 className="text-3xl font-bold text-[#111827] mb-4">معلومات وتفاصيل المنصة</h1>
+              <p className="text-sm text-[#434655]">اختر الدولة، أدخل اسم الأكاديمية ورابط المنصة الخاص بك.</p>
             </div>
 
             <div className="relative w-full space-y-6">
@@ -226,39 +219,7 @@ export default function SetupPage() {
                 })}
               </div>
 
-              {/* Additional optional inputs if missing */}
               <div className="space-y-4 pt-2">
-                {/* Email Input */}
-                <div className="relative group">
-                  {fieldErrors.email && (
-                    <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>{fieldErrors.email}</span>
-                      <div className="absolute -bottom-1 right-4 w-2 h-2 bg-red-600 rotate-45"></div>
-                    </div>
-                  )}
-                  <label className="block text-xs font-bold text-gray-700 mb-1 text-right">البريد الإلكتروني الأساسي</label>
-                  <input
-                    type="email"
-                    value={email}
-                    title={fieldErrors.email || ''}
-                    onChange={e => {
-                      setEmail(e.target.value);
-                      if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: '' }));
-                    }}
-                    placeholder="admin@academy.com"
-                    className={`w-full p-4 border rounded-xl bg-white focus:outline-none text-sm font-medium text-[#111827] transition-all ${
-                      fieldErrors.email ? 'border-red-500 bg-red-50/20 focus:border-red-500' : 'border-slate-300 focus:border-[#004ac6]'
-                    }`}
-                  />
-                  {fieldErrors.email && (
-                    <p className="mt-1 text-red-500 text-xs font-semibold flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      {fieldErrors.email}
-                    </p>
-                  )}
-                </div>
-
                 {/* Academy Name Input */}
                 <div className="relative group">
                   {(fieldErrors.username || fieldErrors.academy_name) && (
@@ -292,124 +253,73 @@ export default function SetupPage() {
                   )}
                 </div>
 
-                {/* Phone Input */}
-                <div className="relative group">
-                  {(fieldErrors.phone || fieldErrors.phone_academy) && (
+                {/* Domain Selection Section */}
+                <div className="relative group pt-4">
+                  <label className="block text-xs font-bold text-gray-700 mb-1 text-right">رابط المنصة الخاص بك</label>
+                  {(fieldErrors.link_academy || domainError) && (
                     <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
                       <AlertCircle className="w-4 h-4" />
-                      <span>{fieldErrors.phone || fieldErrors.phone_academy}</span>
+                      <span>{fieldErrors.link_academy || domainError}</span>
                       <div className="absolute -bottom-1 right-4 w-2 h-2 bg-red-600 rotate-45"></div>
                     </div>
                   )}
-                  <label className="block text-xs font-bold text-gray-700 mb-1 text-right">رقم الجوال الأساسي</label>
-                  <input
-                    type="text"
-                    value={phone}
-                    title={fieldErrors.phone || fieldErrors.phone_academy || ''}
-                    onChange={e => {
-                      setPhone(e.target.value.replace(/\D/g, ''));
-                      if (fieldErrors.phone || fieldErrors.phone_academy) {
-                        setFieldErrors(prev => ({ ...prev, phone: '', phone_academy: '' }));
-                      }
-                    }}
-                    placeholder="أدخل رقم الجوال"
-                    dir="ltr"
-                    className={`w-full p-4 border rounded-xl bg-white focus:outline-none text-sm font-medium text-left text-[#111827] transition-all ${
-                      fieldErrors.phone || fieldErrors.phone_academy ? 'border-red-500 bg-red-50/20 focus:border-red-500' : 'border-slate-300 focus:border-[#004ac6]'
-                    }`}
-                  />
-                  {(fieldErrors.phone || fieldErrors.phone_academy) && (
-                    <p className="mt-1 text-red-500 text-xs font-semibold flex items-center gap-1">
+                  <div className={`flex items-center border rounded-xl overflow-hidden transition-colors bg-white ${domainError || fieldErrors.link_academy ? 'border-red-500 focus-within:border-red-500 bg-red-50/20' : 'border-slate-300 focus-within:border-[#004ac6]'}`}>
+                    <input
+                      type="text"
+                      dir="ltr"
+                      value={domainPrefix}
+                      title={fieldErrors.link_academy || domainError || ''}
+                      onChange={(e) => {
+                        handleDomainChange(e);
+                        if (fieldErrors.link_academy) setFieldErrors(prev => ({ ...prev, link_academy: '' }));
+                      }}
+                      placeholder="اسم-منصتك"
+                      className="flex-grow p-4 border-none text-lg font-medium placeholder:text-[#434655]/40 text-left outline-none text-[#111827]"
+                    />
+                    <div className="bg-[#eef4ff] px-4 py-4 text-[#434655] font-medium border-l border-slate-300 select-none">
+                      {domainSuffix}
+                    </div>
+                  </div>
+
+                  {domainPrefix.length > 2 && !domainError && !fieldErrors.link_academy && (
+                    <div className="mt-2 text-[#006a61] text-xs font-semibold flex items-center gap-1">
+                      <CheckCircle2 className="w-4 h-4" />
+                      صيغة الدومين متاحة للاستخدام
+                    </div>
+                  )}
+                  {(domainError || fieldErrors.link_academy) && (
+                    <div className="mt-2 text-red-500 text-xs font-semibold flex items-center gap-1">
                       <AlertCircle className="w-4 h-4" />
-                      {fieldErrors.phone || fieldErrors.phone_academy}
-                    </p>
+                      {fieldErrors.link_academy || domainError}
+                    </div>
                   )}
+                </div>
+
+                <div className="bg-[#eef4ff] p-6 rounded-xl border border-dashed border-[#c3c6d7] text-center mt-4">
+                  <p className="text-[#434655] text-sm mb-2">معاينة رابط المنصة:</p>
+                  <p className="text-[#004ac6] font-bold text-xl dir-ltr">
+                    https://{domainPrefix || '...'}{domainSuffix}
+                  </p>
                 </div>
               </div>
             </div>
 
-            <button
-              className="w-full mt-10 bg-[#004ac6] text-white py-4 rounded-xl font-bold text-lg hover:bg-[#2563eb] transition-all active:scale-95 shadow-lg shadow-[#004ac6]/20"
-              onClick={() => goToStep(3)}
-            >
-              المتابعة
-            </button>
-          </section>
-        )}
-
-        {/* Step 3: Domain Selection */}
-        {currentStep === 3 && (
-          <section className="w-full max-w-xl step-transition animate-slide-up-fade">
-            <div className="text-center mb-12">
-              <h1 className="text-3xl font-bold text-[#111827] mb-4">اختر رابط منصتك</h1>
-              <p className="text-sm text-[#434655]">هذا هو العنوان الذي سيستخدمه طلابك للوصول إلى دروسك.</p>
-            </div>
-
-            <div className="space-y-6">
-              <div className="relative group">
-                {(fieldErrors.link_academy || domainError) && (
-                  <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
-                    <AlertCircle className="w-4 h-4" />
-                    <span>{fieldErrors.link_academy || domainError}</span>
-                    <div className="absolute -bottom-1 right-4 w-2 h-2 bg-red-600 rotate-45"></div>
-                  </div>
+            <div className="pt-6">
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={loading}
+                className="w-full bg-[#004ac6] text-white py-4 rounded-xl font-bold text-lg hover:bg-[#2563eb] transition-all active:scale-95 shadow-lg shadow-[#004ac6]/20 disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <span className="inline-block animate-spin text-xl">◌</span>
+                    جاري إنشاء منصتك...
+                  </>
+                ) : (
+                  'ابدأ استخدام درب'
                 )}
-                <div className={`flex items-center border rounded-xl overflow-hidden transition-colors bg-white ${domainError || fieldErrors.link_academy ? 'border-red-500 focus-within:border-red-500 bg-red-50/20' : 'border-slate-300 focus-within:border-[#004ac6]'}`}>
-                  <input
-                    type="text"
-                    dir="ltr"
-                    value={domainPrefix}
-                    title={fieldErrors.link_academy || domainError || ''}
-                    onChange={(e) => {
-                      handleDomainChange(e);
-                      if (fieldErrors.link_academy) setFieldErrors(prev => ({ ...prev, link_academy: '' }));
-                    }}
-                    placeholder="اسم-منصتك"
-                    className="flex-grow p-4 border-none text-lg font-medium placeholder:text-[#434655]/40 text-left outline-none text-[#111827]"
-                  />
-                  <div className="bg-[#eef4ff] px-4 py-4 text-[#434655] font-medium border-l border-slate-300 select-none">
-                    {domainSuffix}
-                  </div>
-                </div>
-
-                {domainPrefix.length > 2 && !domainError && !fieldErrors.link_academy && (
-                  <div className="mt-2 text-[#006a61] text-xs font-semibold flex items-center gap-1">
-                    <CheckCircle2 className="w-4 h-4" />
-                    صيغة الدومين متاحة للاستخدام
-                  </div>
-                )}
-                {(domainError || fieldErrors.link_academy) && (
-                  <div className="mt-2 text-red-500 text-xs font-semibold flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {fieldErrors.link_academy || domainError}
-                  </div>
-                )}
-              </div>
-
-              <div className="bg-[#eef4ff] p-6 rounded-xl border border-dashed border-[#c3c6d7] text-center">
-                <p className="text-[#434655] text-sm mb-2">معاينة رابط المنصة:</p>
-                <p className="text-[#004ac6] font-bold text-xl dir-ltr">
-                  https://{domainPrefix || '...'}{domainSuffix}
-                </p>
-              </div>
-
-              <div className="pt-6">
-                <button
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className="w-full bg-[#004ac6] text-white py-4 rounded-xl font-bold text-lg hover:bg-[#2563eb] transition-all active:scale-95 shadow-lg shadow-[#004ac6]/20 disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {loading ? (
-                    <>
-                      <span className="inline-block animate-spin text-xl">◌</span>
-                      جاري إنشاء منصتك...
-                    </>
-                  ) : (
-                    'ابدأ استخدام درب'
-                  )}
-                </button>
-
-              </div>
+              </button>
             </div>
           </section>
         )}
