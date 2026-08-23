@@ -123,13 +123,14 @@ export function useSetupState() {
       const finalPhone = phone || cachedPhone || '';
       const finalEmail = email || cachedEmail || '';
 
-      // 1. Sequential Step 1: Create Account if token is missing
+      const pendingStr = localStorage.getItem('pending_registration');
+      const pending = pendingStr ? JSON.parse(pendingStr) : {};
+      const regMethod = registrationMethod || localStorage.getItem('registration_method') || (pending.email || cachedEmail ? 'email' : 'phone');
+
+      // 1. Step 1: Call createAccount FIRST with cached registration data
       let token = localStorage.getItem('token');
       if (!token) {
-        const pendingStr = localStorage.getItem('pending_registration');
-        const pending = pendingStr ? JSON.parse(pendingStr) : {};
-        const regMethod = registrationMethod || localStorage.getItem('registration_method') || 'email';
-        const name = (regMethod === 'email' ? (finalEmail ? finalEmail.split('@')[0] : '') : finalPhone) || academyName || 'أكاديمي';
+        const name = academyName || (regMethod === 'email' ? (finalEmail ? finalEmail.split('@')[0] : '') : finalPhone) || 'أكاديمي';
 
         const accountPayload: any = {
           name: name,
@@ -142,7 +143,7 @@ export function useSetupState() {
           accountPayload.email = finalEmail;
         } else {
           accountPayload.phone = finalPhone;
-          accountPayload.country_code = activeCountry?.isoCode || pending.country_code || 'EG';
+          accountPayload.country_code = activeCountry?.isoCode || pending.country_code || 'SA';
         }
 
         const accountRes: any = await createAccount(accountPayload);
@@ -153,11 +154,10 @@ export function useSetupState() {
         }
       }
 
-      // 2. Sequential Step 2: Create Account Info Academy (Only executes if createAccount succeeded)
-      const payload: any = {
-        username: academyName || 'أكاديمي',
-        phone_academy: finalPhone || '0500000000',
-        country_code: activeCountry?.isoCode || 'EG',
+      // 2. Step 2: Call createAccountInfoAcademy SECOND with setup info
+      const setupPayload: any = {
+        username: academyName || (regMethod === 'email' ? (finalEmail ? finalEmail.split('@')[0] : '') : finalPhone) || 'أكاديمي',
+        country_code: activeCountry?.isoCode || 'SA',
         specialties: selectedField,
         role: selectedField,
         account_type: selectedField,
@@ -165,11 +165,13 @@ export function useSetupState() {
         link_academy: fullLink.toLowerCase()
       };
 
-      if (finalEmail) {
-        payload.email = finalEmail;
+      if (regMethod === 'email') {
+        setupPayload.email = finalEmail;
+      } else {
+        setupPayload.phone_academy = finalPhone;
       }
 
-      const setupResponse = (await createAccountInfoAcademy(payload)) as any;
+      const setupResponse = (await createAccountInfoAcademy(setupPayload)) as any;
 
       const responseLink = setupResponse?.data?.link_academy || setupResponse?.link_academy || setupResponse?.data?.academy?.link_academy;
       let finalLink = fullLink.toLowerCase();
@@ -187,7 +189,8 @@ export function useSetupState() {
       localStorage.setItem('academy_link_name', finalLink);
       localStorage.setItem('user_account_type', selectedField);
       localStorage.setItem('user_role', selectedField);
-      toast.success('تم حفظ معلومات الأكاديمية بنجاح');
+
+      toast.success('تم إنشاء الحساب وحفظ معلومات الأكاديمية بنجاح');
 
       // Auto login logic
       const password = localStorage.getItem('user_password') || getCookie('backup_password');
