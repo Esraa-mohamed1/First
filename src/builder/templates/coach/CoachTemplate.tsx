@@ -116,7 +116,7 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT) 
     hero: heroProps ? {
       title: heroProps.title ?? heroProps.main_title ?? fallback.hero.title,
       subtitle: heroProps.subtitle ?? heroProps.sub_title ?? fallback.hero.subtitle,
-      description: heroProps.description ?? heroProps.desc ?? fallback.hero.description,
+      description: (aboutProps?.cvText ?? aboutProps?.biography ?? aboutProps?.bio ?? aboutProps?.description) || (heroProps?.description ?? heroProps?.desc ?? fallback.hero.description),
       buttonText: heroProps.buttonText ?? heroProps.button_text ?? heroProps.btnText ?? heroProps.btn_text ?? fallback.hero.buttonText,
       buttonLink: heroProps.buttonLink ?? heroProps.button_link ?? heroProps.btnLink ?? heroProps.btn_link ?? fallback.hero.buttonLink,
       image: heroProps.image ?? heroProps.heroImage ?? heroProps.hero_image ?? heroProps.bg_image ?? heroProps.bgImage ?? heroProps.side_image ?? heroProps.sideImage ?? heroProps.image_url ?? heroProps.imageUrl ?? fallback.hero.image,
@@ -134,7 +134,6 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT) 
       biography: aboutProps.biography ?? aboutProps.cvText,
       coachTitle: aboutProps.coachTitle,
       cvText: aboutProps.cvText,
-      skills: aboutProps.skills,
       image: aboutProps.image ?? aboutProps.side_image ?? aboutProps.sideImage ?? fallback.about.image,
       backgroundColor: aboutProps.backgroundColor ?? aboutProps.background_color ?? aboutProps.bg_color ?? aboutProps.bgColor ?? fallback.about.backgroundColor,
       textColor: aboutProps.textColor ?? aboutProps.text_color ?? fallback.about.textColor,

@@ -6,11 +6,25 @@ export const getCoachHtml = (content: TemplateContent) => {
   const navbarBg = content?.navbar?.bgColor || '#faf9fb';
   const navbarText = content?.navbar?.textColor || '#4f378a';
   const navbarLogo = content?.navbar?.logo || '';
+  const navBtnText = (content as any)?.navbar?.buttonText || (content as any)?.hero?.buttonText || 'ابدأ الآن';
 
-  // 2. Hero
+  // 3. About
+  const aboutTitle = content?.about?.title ?? 'عن الكوتش';
+  const aboutSubtitle = content?.about?.subtitle;
+  const aboutDesc = (content?.about as any)?.description !== undefined ? (content?.about as any)?.description : ((content?.about as any)?.bio ?? 'أهلاً بك! أنا مدربك في هذه الأكاديمية. أسعى لتقديم محتوى تعليمي عملي ومباشر يجمع بين الفهم النظري والتطبيق الفعلي، دون تعقيد أو حشو غير ضروري.');
+  const rawBio = (content?.about as any)?.biography !== undefined ? (content?.about as any)?.biography : (content?.about as any)?.cvText;
+  const aboutBio = rawBio !== undefined ? rawBio : 'هدفنا هنا ليس مجرد مشاهدة الدروس، بل التأكد من قدرتك على تطبيق كل معلومة تتعلمها، وتطوير مهاراتك خطوة بخطوة للحصول على نتائج ملموسة.';
+  const aboutCoachTitle = (content?.about as any)?.coachTitle || 'مدرب وموجه تعليمي';
+  const aboutImage = content?.about?.image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop';
+  const aboutBg = content?.about?.backgroundColor || '#ffffff';
+  const aboutTextColor = content?.about?.textColor || '#1a1c1d';
+  const aboutTitleColor = (content?.about as any)?.titleColor || aboutTextColor || '#4f378a';
+
+  // 2. Hero (using Biography / CV from About)
+  const coachBiographyText = (content?.about as any)?.cvText || (content?.about as any)?.biography || (content?.about as any)?.bio || (content?.about as any)?.description;
   const heroSubtitle = content?.hero?.subtitle !== undefined ? content?.hero?.subtitle : 'أكاديمية التدريب الشخصي';
   const heroTitle = content?.hero?.title || 'تعلّم بوضوح. <br/> طوّر مهاراتك بثقة.';
-  const heroDesc = content?.hero?.description || 'أكاديمية تعليمية وتدريبية متخصصة تحت إشراف الكوتش مباشرة. نقدم لك كورسات عملية ومبسطة تساعدك على بناء مهارات حقيقية والوصول لأهدافك بخطوات مدروسة.';
+  const heroDesc = coachBiographyText || content?.hero?.description || 'أكاديمية تعليمية وتدريبية متخصصة تحت إشراف الكوتش مباشرة. نقدم لك كورسات عملية ومبسطة تساعدك على بناء مهارات حقيقية والوصول لأهدافك بخطوات مدروسة.';
   const heroBtnText = content?.hero?.buttonText || 'استكشف الكورسات';
   const heroBtnLink = content?.hero?.buttonLink || '#courses';
   const heroSecondaryBtnText = (content?.hero as any)?.secondaryButtonText || 'تعرّف على الكوتش';
@@ -27,19 +41,6 @@ export const getCoachHtml = (content: TemplateContent) => {
   const heroSecondaryBtnTextColor = (content?.hero as any)?.secondaryButtonTextColor || '#4f378a';
   const heroCoachingCardBg = (content?.hero as any)?.coachingCardBgColor || '#ffffff';
   const heroCoachingCardText = (content?.hero as any)?.coachingCardTextColor || '#49454f';
-
-  // 3. About
-  const aboutTitle = content?.about?.title ?? 'عن الكوتش';
-  const aboutSubtitle = content?.about?.subtitle;
-  const aboutDesc = (content?.about as any)?.description !== undefined ? (content?.about as any)?.description : ((content?.about as any)?.bio ?? 'أهلاً بك! أنا مدربك في هذه الأكاديمية. أسعى لتقديم محتوى تعليمي عملي ومباشر يجمع بين الفهم النظري والتطبيق الفعلي، دون تعقيد أو حشو غير ضروري.');
-  const rawBio = (content?.about as any)?.biography !== undefined ? (content?.about as any)?.biography : (content?.about as any)?.cvText;
-  const aboutBio = rawBio !== undefined ? rawBio : 'هدفنا هنا ليس مجرد مشاهدة الدروس، بل التأكد من قدرتك على تطبيق كل معلومة تتعلمها، وتطوير مهاراتك خطوة بخطوة للحصول على نتائج ملموسة.';
-  const aboutCoachTitle = (content?.about as any)?.coachTitle || 'مدرب وموجه تعليمي';
-  const aboutImage = content?.about?.image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop';
-  const aboutBg = content?.about?.backgroundColor || '#ffffff';
-  const aboutTextColor = content?.about?.textColor || '#1a1c1d';
-  const aboutTitleColor = (content?.about as any)?.titleColor || aboutTextColor || '#4f378a';
-  const aboutSkills = (content?.about as any)?.skills || ['منهجية مبسطة', 'توجيه شخصي'];
 
   // 4. Features / Courses
   const featuresItems = content?.features?.items || [
@@ -81,19 +82,6 @@ export const getCoachHtml = (content: TemplateContent) => {
     }
   ];
 
-  // 6. Learning Journey
-  const journeyTitle = (content as any)?.journey?.title || 'رحلة التعلم مع الكوتش';
-  const journeySubtitle = (content as any)?.journey?.subtitle || 'خطوات متسلسلة ومنظمة تحول المعرفة إلى مهارات تطبيقية ملموسة.';
-  const journeySteps = (content as any)?.journey?.steps || [
-    { id: 'j1', stepNumber: '01', title: 'اختر الكورس', description: 'حدد الكورس المناسب لهدفك الحالي.' },
-    { id: 'j2', stepNumber: '02', title: 'ابدأ التعلم', description: 'شاهد الدروس المسجلة في أي وقت.' },
-    { id: 'j3', stepNumber: '03', title: 'طبّق التمارين', description: 'نفّذ المهام التطبيقية المرفقة.' },
-    { id: 'j4', stepNumber: '04', title: 'احصل على التوجيه', description: 'احصل على ملاحظات وإجابات الكوتش.' },
-    { id: 'j5', stepNumber: '05', title: 'طوّر مستواك', description: 'حقّق نتائج ملموسة وواصل النمو.' }
-  ];
-  const journeyBg = (content as any)?.journey?.backgroundColor || '#faf9fb';
-  const journeyTextColor = (content as any)?.journey?.textColor || '#1a1c1d';
-
   // 7. Testimonials
   const testimonialsTitle = (content as any)?.testimonials?.title || 'آراء الطلاب والمشاركين';
   const testimonialsSubtitle = (content as any)?.testimonials?.subtitle || 'تجارب واقعية من متعلمين استفادوا من الكورسات والتوجيه المباشر.';
@@ -118,22 +106,26 @@ export const getCoachHtml = (content: TemplateContent) => {
   const ctaDesc = (content as any)?.finalCta?.description || (content as any)?.cta?.subtitle || 'اشترك في النشرة التعليمية ليصلك أحدث الكورسات والدروس المجانية والنصائح العملية مباشرة على بريدك.';
   const ctaPlaceholder = (content as any)?.finalCta?.emailPlaceholder || (content as any)?.cta?.placeholder || 'البريد الإلكتروني';
   const ctaBtnText = (content as any)?.finalCta?.buttonText || (content as any)?.cta?.buttonText || 'اشترك الآن';
-  const ctaBg = (content as any)?.finalCta?.backgroundColor || '#4f378a';
-  const ctaButtonBg = (content as any)?.finalCta?.buttonBgColor || '#4f378a';
-  const ctaButtonTextColor = (content as any)?.finalCta?.buttonTextColor || '#ffffff';
+  const ctaBg = (content as any)?.finalCta?.backgroundColor || (content as any)?.finalCta?.accentColor || (content as any)?.finalCta?.bg_color || '#faf9fb';
+  const ctaTextColor = (content as any)?.finalCta?.textColor || (content as any)?.finalCta?.text_color || '#1a1c1d';
+  const ctaTitleColor = (content as any)?.finalCta?.titleColor || (content as any)?.finalCta?.title_color || ctaTextColor;
+  const ctaButtonBg = (content as any)?.finalCta?.buttonBgColor || (content as any)?.finalCta?.button_bg_color || '#4f378a';
+  const ctaButtonTextColor = (content as any)?.finalCta?.buttonTextColor || (content as any)?.finalCta?.button_text_color || '#ffffff';
 
   // 10. Contact
   const contactTitle = content?.contact?.title || 'Deep Knowledge Academy';
   const contactDesc = content?.contact?.description || 'أكاديمية تعليمية وتدريبية متخصصة تحت إشراف الكوتش مباشرة لبناء مهارات عملية ملموسة.';
   const contactPhone = content?.contact?.phoneNumber || (content?.contact as any)?.phone || '';
   const contactEmail = (content?.contact as any)?.email || '';
-  const contactWhatsapp = (content?.contact as any)?.whatsapp || '';
-  const contactWhatsappText = (content?.contact as any)?.whatsappText || 'تواصل واتساب';
-  const contactEmailText = (content?.contact as any)?.emailText || 'راسلنا عبر البريد';
-  const contactPhoneText = (content?.contact as any)?.phoneText || 'اتصل بنا';
+  const contactWhatsapp = (content?.contact as any)?.whatsapp || content?.contact?.phoneNumber || (content?.contact as any)?.phone || '';
+  const contactWhatsappText = (content?.contact as any)?.whatsappText || (content?.contact as any)?.whatsapp_text || (content?.contact as any)?.buttonText || 'تواصل واتساب';
+  const contactEmailText = (content?.contact as any)?.emailText || (content?.contact as any)?.email_text || 'راسلنا عبر البريد';
+  const contactPhoneText = (content?.contact as any)?.phoneText || (content?.contact as any)?.phone_text || 'اتصل بنا';
 
   // 11. Footer
   const footerText = content?.footer?.text || '© 2024 Deep Knowledge Academy. جميع الحقوق محفوظة.';
+  const footerBg = content?.footer?.backgroundColor || (content?.footer as any)?.bg_color || '#faf9fb';
+  const footerTextColor = content?.footer?.textColor || (content?.footer as any)?.text_color || '#1a1c1d';
 
   return `<!DOCTYPE html>
 <html dir="rtl" lang="ar">
@@ -208,13 +200,12 @@ export const getCoachHtml = (content: TemplateContent) => {
       <li><a class="text-primary pb-1 border-b-2 border-primary" href="#home">الرئيسية</a></li>
       <li><a class="text-slate-600 hover:text-primary transition-colors duration-200" href="#about">عن الكوتش</a></li>
       <li><a class="text-slate-600 hover:text-primary transition-colors duration-200" href="#courses">الكورسات</a></li>
-      <li><a class="text-slate-600 hover:text-primary transition-colors duration-200" href="#journey">رحلة التعلم</a></li>
       <li><a class="text-slate-600 hover:text-primary transition-colors duration-200" href="#testimonials">آراء الطلاب</a></li>
       <li><a class="text-slate-600 hover:text-primary transition-colors duration-200" href="#faq">الأسئلة الشائعة</a></li>
     </ul>
 
     <a href="#courses" class="hidden md:inline-flex items-center justify-center px-5 py-2.5 rounded-[10px] bg-primary text-white font-bold text-xs shadow-xs hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
-      ابدأ الآن
+      ${navBtnText}
     </a>
   </div>
 </nav>
@@ -281,38 +272,7 @@ export const getCoachHtml = (content: TemplateContent) => {
   </div>
 </section>
 
-<!-- 3. Features Bar / Value Proposition -->
-<section class="border-b border-slate-200/60 bg-white/80 py-8">
-  <div class="max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-12">
-    <p class="text-center text-xs font-extrabold text-slate-400 mb-6 uppercase tracking-wider">مميزات التجربة التعليمية مع الكوتش</p>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-center">
-      <div class="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50/70 border border-slate-100">
-        <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-          <span class="material-symbols-outlined text-xl">play_circle</span>
-        </div>
-        <span class="text-xs sm:text-sm font-bold text-slate-800">دروس مسجلة عالية الجودة</span>
-      </div>
-      <div class="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50/70 border border-slate-100">
-        <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-          <span class="material-symbols-outlined text-xl">assignment_turned_in</span>
-        </div>
-        <span class="text-xs sm:text-sm font-bold text-slate-800">تمارين وتطبيقات عملية</span>
-      </div>
-      <div class="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50/70 border border-slate-100">
-        <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-          <span class="material-symbols-outlined text-xl">forum</span>
-        </div>
-        <span class="text-xs sm:text-sm font-bold text-slate-800">متابعة وتوجيه مباشر</span>
-      </div>
-      <div class="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50/70 border border-slate-100">
-        <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-          <span class="material-symbols-outlined text-xl">update</span>
-        </div>
-        <span class="text-xs sm:text-sm font-bold text-slate-800">محتوى متجدد باستمرار</span>
-      </div>
-    </div>
-  </div>
-</section>
+
 
 <!-- 4. About the Coach Section -->
 <section id="about" data-section="about" class="py-16 sm:py-24 border-b border-slate-200/50 section-hover cursor-pointer" style="background-color: ${aboutBg}; color: ${aboutTextColor};">
@@ -338,21 +298,6 @@ export const getCoachHtml = (content: TemplateContent) => {
         ${aboutDesc ? `<p class="text-base sm:text-lg leading-relaxed font-semibold" style="color: ${aboutTextColor};">${aboutDesc}</p>` : ''}
         
         ${aboutBio ? `<p class="text-sm sm:text-base leading-relaxed" style="color: ${aboutTextColor}; opacity: 0.85;">${aboutBio}</p>` : ''}
-
-        <!-- Feature Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full pt-4">
-          <div class="p-5 border border-slate-200/80 rounded-[14px] bg-slate-50/60 hover:bg-white hover:shadow-sm transition-all duration-200">
-            <span class="material-symbols-outlined text-primary text-2xl mb-1.5">psychology</span>
-            <h4 class="font-bold text-sm text-slate-900">${aboutSkills[0] || 'منهجية مبسطة'}</h4>
-            <p class="text-xs text-slate-500 mt-1 leading-relaxed">تفكيك المفاهيم المعقدة إلى خطوات واضحة وقابلة للتطبيق المباشر.</p>
-          </div>
-
-          <div class="p-5 border border-slate-200/80 rounded-[14px] bg-slate-50/60 hover:bg-white hover:shadow-sm transition-all duration-200">
-            <span class="material-symbols-outlined text-primary text-2xl mb-1.5">groups</span>
-            <h4 class="font-bold text-sm text-slate-900">${aboutSkills[1] || 'توجيه شخصي'}</h4>
-            <p class="text-xs text-slate-500 mt-1 leading-relaxed">متابعة دقيقة وتغذية راجعة مستمرة للإجابة عن تساؤلات المتعلمين.</p>
-          </div>
-        </div>
       </div>
 
     </div>
@@ -400,26 +345,6 @@ export const getCoachHtml = (content: TemplateContent) => {
   </div>
 </section>
 
-<!-- 6. Learning Journey Section -->
-<section id="journey" data-section="journey" class="py-16 sm:py-24 border-b border-slate-200/50 section-hover cursor-pointer" style="background-color: ${journeyBg}; color: ${journeyTextColor};">
-  <div class="max-w-[1000px] mx-auto px-4 sm:px-8">
-    <div class="text-center mb-12 sm:mb-16">
-      <span class="text-xs font-extrabold uppercase tracking-wider text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/15 inline-block mb-3">مسار التعلم</span>
-      <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900">${journeyTitle}</h2>
-      <p class="text-sm sm:text-base text-slate-600 mt-2">${journeySubtitle}</p>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-${Math.min(journeySteps.length, 5)} gap-4 sm:gap-6">
-      ${journeySteps.map((step: any, idx: number) => `
-        <div data-section="journey" data-index="${idx}" class="p-5 border border-slate-200/80 rounded-[14px] bg-white text-center flex flex-col items-center hover:shadow-md hover:border-primary/40 transition-all duration-300 cursor-pointer">
-          <div class="w-11 h-11 rounded-[12px] bg-primary text-white font-extrabold flex items-center justify-center mb-3 text-sm shadow-xs">${step.stepNumber || `0${idx + 1}`}</div>
-          <h4 class="font-bold text-sm text-slate-900 mb-1.5">${step.title}</h4>
-          <p class="text-xs text-slate-500 leading-relaxed">${step.description}</p>
-        </div>
-      `).join('')}
-    </div>
-  </div>
-</section>
 
 <!-- 7. Student Reviews Section -->
 <section id="testimonials" data-section="testimonials" class="py-16 sm:py-24 border-b border-slate-200/50 section-hover cursor-pointer" style="background-color: ${testimonialsBg}; color: ${testimonialsTextColor};">
@@ -514,15 +439,15 @@ export const getCoachHtml = (content: TemplateContent) => {
 </section>
 
 <!-- 10. Final CTA Section -->
-<section id="finalCta" data-section="finalCta" class="py-16 sm:py-20 section-hover cursor-pointer">
+<section id="finalCta" data-section="finalCta" class="py-16 sm:py-20 section-hover cursor-pointer" style="background-color: ${ctaBg}; color: ${ctaTextColor};">
   <div class="max-w-[850px] mx-auto px-4 sm:px-8">
-    <div class="p-8 sm:p-12 rounded-[20px] border border-primary/20 text-center shadow-md bg-gradient-to-b from-primary/5 to-primary/10">
-      <div class="w-14 h-14 rounded-2xl bg-primary text-white flex items-center justify-center mx-auto mb-5 shadow-xs">
+    <div class="p-8 sm:p-12 rounded-[20px] border border-slate-200/80 text-center shadow-xs" style="background-color: ${ctaBg}; color: ${ctaTextColor};">
+      <div class="w-14 h-14 rounded-2xl bg-primary text-white flex items-center justify-center mx-auto mb-5 shadow-xs" style="background-color: ${ctaButtonBg}; color: ${ctaButtonTextColor};">
         <span class="material-symbols-outlined text-3xl">${(content as any)?.finalCta?.icon || 'school'}</span>
       </div>
       
-      <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-3">${ctaTitle}</h2>
-      <p class="text-xs sm:text-sm text-slate-600 mb-8 max-w-md mx-auto leading-relaxed">
+      <h2 class="text-2xl sm:text-3xl font-extrabold mb-3" style="color: ${ctaTitleColor};">${ctaTitle}</h2>
+      <p class="text-xs sm:text-sm mb-8 max-w-md mx-auto leading-relaxed" style="color: ${ctaTextColor}; opacity: 0.9;">
         ${ctaDesc}
       </p>
 
@@ -539,35 +464,34 @@ export const getCoachHtml = (content: TemplateContent) => {
 </main>
 
 <!-- 11. Footer Section -->
-<footer id="footer" data-section="footer" class="border-t border-slate-200/80 section-hover cursor-pointer" style="background-color: ${content?.footer?.backgroundColor || '#faf9fb'}; color: ${content?.footer?.textColor || '#1a1c1d'};">
+<footer id="footer" data-section="footer" class="border-t border-slate-200/80 section-hover cursor-pointer" style="background-color: ${footerBg}; color: ${footerTextColor};">
   <div class="max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-12 py-12">
     <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center text-right">
       
       <!-- Contact Info (col-span-5) -->
       <div id="contact" data-section="contact" class="md:col-span-5 space-y-3">
         <div class="text-lg font-extrabold text-primary" style="color: ${content?.contact?.textColor || '#4f378a'};">${contactTitle}</div>
-        <p class="text-xs text-slate-600 max-w-sm leading-relaxed">${contactDesc}</p>
+        <p class="text-xs max-w-sm leading-relaxed" style="color: ${footerTextColor}; opacity: 0.85;">${contactDesc}</p>
         
         <div class="flex flex-wrap gap-2 pt-2">
-          ${contactWhatsapp ? `<a href="https://wa.me/${contactWhatsapp.replace(/[^\d]/g, '')}" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 bg-emerald-600 text-white rounded-[10px] hover:bg-emerald-700 shadow-2xs transition-all"><span class="material-symbols-outlined text-sm">chat</span><span>${contactWhatsappText}</span></a>` : ''}
-          ${contactEmail ? `<a href="mailto:${contactEmail}" class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 bg-primary text-white rounded-[10px] hover:bg-primary-hover shadow-2xs transition-all"><span class="material-symbols-outlined text-sm">mail</span><span>${contactEmailText}</span></a>` : ''}
-          ${contactPhone ? `<a href="tel:${contactPhone}" class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 border border-slate-300 text-slate-700 bg-white rounded-[10px] hover:bg-slate-50 transition-all"><span class="material-symbols-outlined text-sm">call</span><span>${contactPhoneText}</span></a>` : ''}
+          ${(contactWhatsapp || contactWhatsappText) ? `<a href="${contactWhatsapp ? `https://wa.me/${contactWhatsapp.replace(/[^\d]/g, '')}` : '#whatsapp'}" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 bg-emerald-600 text-white rounded-[10px] hover:bg-emerald-700 shadow-2xs transition-all"><span class="material-symbols-outlined text-sm">chat</span><span>${contactWhatsappText}</span></a>` : ''}
+          ${(contactEmail || contactEmailText) ? `<a href="${contactEmail ? `mailto:${contactEmail}` : '#email'}" class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 bg-primary text-white rounded-[10px] hover:bg-primary-hover shadow-2xs transition-all"><span class="material-symbols-outlined text-sm">mail</span><span>${contactEmailText}</span></a>` : ''}
+          ${(contactPhone || contactPhoneText) ? `<a href="${contactPhone ? `tel:${contactPhone}` : '#phone'}" class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 border border-slate-300 text-slate-700 bg-white rounded-[10px] hover:bg-slate-50 transition-all"><span class="material-symbols-outlined text-sm">call</span><span>${contactPhoneText}</span></a>` : ''}
         </div>
       </div>
 
       <!-- Quick Links (col-span-7) -->
-      <div class="md:col-span-7 flex flex-wrap justify-start md:justify-end gap-6 text-xs sm:text-sm font-bold text-slate-600">
-        <a class="hover:text-primary transition-colors" href="#home">الرئيسية</a>
-        <a class="hover:text-primary transition-colors" href="#about">عن الكوتش</a>
-        <a class="hover:text-primary transition-colors" href="#courses">الكورسات</a>
-        <a class="hover:text-primary transition-colors" href="#journey">رحلة التعلم</a>
-        <a class="hover:text-primary transition-colors" href="#testimonials">آراء الطلاب</a>
-        <a class="hover:text-primary transition-colors" href="#faq">الأسئلة الشائعة</a>
+      <div class="md:col-span-7 flex flex-wrap justify-start md:justify-end gap-6 text-xs sm:text-sm font-bold">
+        <a class="hover:text-primary transition-colors" href="#home" style="color: ${footerTextColor};">الرئيسية</a>
+        <a class="hover:text-primary transition-colors" href="#about" style="color: ${footerTextColor};">عن الكوتش</a>
+        <a class="hover:text-primary transition-colors" href="#courses" style="color: ${footerTextColor};">الكورسات</a>
+        <a class="hover:text-primary transition-colors" href="#testimonials" style="color: ${footerTextColor};">آراء الطلاب</a>
+        <a class="hover:text-primary transition-colors" href="#faq" style="color: ${footerTextColor};">الأسئلة الشائعة</a>
       </div>
 
     </div>
 
-    <div class="text-center pt-8 mt-8 border-t border-slate-200/60 text-xs text-slate-500 font-medium">
+    <div class="text-center pt-8 mt-8 border-t border-slate-200/60 text-xs font-medium" style="color: ${footerTextColor}; opacity: 0.8;">
       ${footerText}
     </div>
   </div>
