@@ -1,27 +1,51 @@
 'use client';
 
-import React, { useState } from 'react';
-import { X, Save, Loader2, User as UserIcon, Mail, Phone, Lock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Save, Loader2, User as UserIcon, Mail, Phone, Lock, BookOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createUser } from '@/services/users';
-import { User } from '@/types/api';
+import { addCourseSubscriber, getCourses } from '@/services/courses';
+import { User, Course } from '@/types/api';
 
 interface AddStudentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onStudentAdded: (student: User) => void;
+  onStudentAdded: (student?: any) => void;
+  courseId?: number | string;
 }
 
-export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: AddStudentModalProps) {
+export default function AddStudentModal({ isOpen, onClose, onStudentAdded, courseId }: AddStudentModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [coursesList, setCoursesList] = useState<Course[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<string | number>(courseId || '');
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     password: '',
-    role: 'student', // default role
+    role: 'student',
     status: 'active'
   });
+
+  useEffect(() => {
+    if (courseId) {
+      setSelectedCourseId(courseId);
+    }
+  }, [courseId]);
+
+  useEffect(() => {
+    if (isOpen && !courseId) {
+      getCourses()
+        .then(res => {
+          setCoursesList(res || []);
+          if (res && res.length > 0) {
+            setSelectedCourseId(res[0].id);
+          }
+        })
+        .catch(() => setCoursesList([]));
+    }
+  }, [isOpen, courseId]);
 
   if (!isOpen) return null;
 
@@ -30,17 +54,48 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
   };
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.email || !formData.password) {
-      toast.error('يرجى تعبئة الحقول المطلوبة');
+    if (!formData.name || (!formData.email && !formData.phone)) {
+      toast.error('يرجى تعبئة الاسم والبريد الإلكتروني أو رقم الجوال');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const newStudent = await createUser(formData);
-      toast.success('تمت إضافة الطالب بنجاح');
-      onStudentAdded(newStudent);
+      const activeCourseId = courseId || selectedCourseId;
+
+      // 1. Create user account if password is specified
+      let createdUser: any = null;
+      if (formData.password) {
+        try {
+          createdUser = await createUser(formData);
+        } catch {
+          /* ignore if user already exists */
+        }
+      }
+
+      // 2. Post User Subscription to the course via user_subscribes endpoint
+      if (activeCourseId) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        await addCourseSubscriber({
+          course_id: activeCourseId,
+          email: formData.email || undefined,
+          phone: formData.phone || undefined,
+          name: formData.name,
+          user_id: createdUser?.id,
+          status: formData.status || 'active',
+          starts_at: todayStr
+        });
+        toast.success('تمت إضافة الاشتراك في الدورة بنجاح');
+      } else {
+        if (!createdUser) {
+          createdUser = await createUser(formData);
+        }
+        toast.success('تمت إضافة الطالب بنجاح');
+      }
+
+      onStudentAdded(createdUser);
       onClose();
+
       // Reset form
       setFormData({
         name: '',
@@ -51,7 +106,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
         status: 'active'
       });
     } catch (error: any) {
-      toast.error(error?.message || 'فشل إضافة الطالب');
+      toast.error(error?.message || error?.data?.message || 'فشل إضافة المشترك في الدورة');
     } finally {
       setIsSubmitting(false);
     }
@@ -70,8 +125,10 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
               <UserIcon size={24} />
             </div>
             <div>
-              <h2 className="text-xl font-black text-gray-900">إضافة طالب جديد</h2>
-              <p className="text-sm font-bold text-gray-400 mt-1">قم بإدخال بيانات الطالب لإنشاء حسابه</p>
+              <h2 className="text-xl font-black text-gray-900">
+                {courseId ? 'إضافة مشترك للدورة' : 'إضافة مشترك جديد'}
+              </h2>
+              <p className="text-sm font-bold text-gray-400 mt-1">قم بإدخال بيانات المشترك للاشتراك في الدورة</p>
             </div>
           </div>
           <button 
@@ -84,6 +141,28 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
 
         {/* Body */}
         <div className="p-8 space-y-6">
+          {!courseId && coursesList.length > 0 && (
+            <div className="space-y-2">
+              <label className="block text-sm font-black text-gray-900">
+                اختر الدورة <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <BookOpen className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <select
+                  value={selectedCourseId}
+                  onChange={(e) => setSelectedCourseId(e.target.value)}
+                  className="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all appearance-none text-gray-900"
+                >
+                  {coursesList.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Name */}
             <div className="space-y-2">
@@ -106,7 +185,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
             {/* Email */}
             <div className="space-y-2">
               <label className="block text-sm font-black text-gray-900">
-                البريد الإلكتروني <span className="text-red-500">*</span>
+                البريد الإلكتروني
               </label>
               <div className="relative">
                 <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -138,10 +217,10 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
               </div>
             </div>
 
-            {/* Password */}
+            {/* Password (Optional for quick subscription) */}
             <div className="space-y-2">
               <label className="block text-sm font-black text-gray-900">
-                كلمة المرور <span className="text-red-500">*</span>
+                كلمة المرور (اختياري)
               </label>
               <div className="relative">
                 <Lock className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -150,29 +229,9 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="كلمة مرور قوية"
+                  placeholder="كلمة مرور الحساب (إن وجد)"
                   className="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
                 />
-              </div>
-            </div>
-
-            {/* Role Dropdown */}
-            <div className="space-y-2">
-              <label className="block text-sm font-black text-gray-900">
-                الدور <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <UserIcon className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  className="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all appearance-none text-gray-900"
-                >
-                  <option value="student">طالب</option>
-                  <option value="admin">مسؤول</option>
-                  <option value="academy">مدرب</option>
-                </select>
               </div>
             </div>
           </div>
@@ -196,7 +255,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
             ) : (
               <Save size={18} />
             )}
-            <span>حفظ بيانات الطالب</span>
+            <span>حفظ المشترك والتسجيل</span>
           </button>
         </div>
       </div>

@@ -43,6 +43,7 @@ import { getErrorMessage } from '@/lib/utils';
 import { getGrades, getTerms, getSubjects, getAcademicYears, ClassificationItem } from '@/services/academic-classification';
 import { getProfileStatus } from '@/services/auth';
 import { getUsers } from '@/services/users';
+import ManageSubscribersView from '@/components/Academic/Subscribers/ManageSubscribersView';
 import { User, ReceiverAccount } from '@/types/api';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
 import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdown';
@@ -2489,9 +2490,8 @@ export default function CreateCourseClient() {
 
           {/* Tab 4: Subscribers & Reports */}
           {activeTab === 'subscribers' && (
-            <div className="max-w-4xl bg-white border border-slate-300 rounded-2xl p-10 text-center text-slate-500 shadow-xs">
-              <h3 className="text-xl font-bold mb-2 text-slate-900">تقرير المشتركين والمبيعات</h3>
-              <p className="text-sm font-medium">سيتم عرض قائمة الطلاب المشتركين والتقارير عند نشر الدورة وتلقي الاشتراكات.</p>
+            <div className="w-full bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+              <ManageSubscribersView showTopHeader={false} courseId={courseId || undefined} />
             </div>
           )}
 

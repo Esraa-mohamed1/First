@@ -360,7 +360,7 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
         )}
       </div>
 
-      <AddStudentModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onStudentAdded={fetchStudents} />
+      <AddStudentModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onStudentAdded={fetchStudents} courseId={courseId} />
       {editingStudent && (
         <EditUserModal
           isOpen={!!editingStudent}

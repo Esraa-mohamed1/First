@@ -339,18 +339,46 @@ export const getDashboard = async (): Promise<any> => {
 
 export const getCourseSubscribers = async (courseId: number | string): Promise<any[]> => {
   try {
-    // Try dedicated course subscribers endpoint first
-    const response = await academyApi.get<ApiResponse<any[]>>(`courses/${courseId}/subscriptions`);
+    // Primary User subscription endpoint: user_subscribes
+    const response = await academyApi.get<ApiResponse<any[]>>(`user_subscribes?course_id=${courseId}`);
     return response.data.data || [];
   } catch {
     try {
-      // Fallback: general subscriptions filtered by course
-      const response = await academyApi.get<ApiResponse<any[]>>(`subscriptions?course_id=${courseId}`);
+      const response = await academyApi.get<ApiResponse<any[]>>(`courses/${courseId}/subscriptions`);
       return response.data.data || [];
     } catch {
       return [];
     }
   }
 };
+
+export const addCourseSubscriber = async (payload: {
+  course_id: number | string;
+  email?: string;
+  phone?: string;
+  name?: string;
+  user_id?: number | string;
+  status?: string;
+  starts_at?: string;
+  ends_at?: string;
+  price?: number;
+  amount?: number;
+}): Promise<any> => {
+  const todayStr = new Date().toISOString().split('T')[0];
+  const body = {
+    starts_at: todayStr,
+    status: 'active',
+    ...payload,
+  };
+
+  try {
+    const response = await academyApi.post<ApiResponse<any>>('user_subscribes', body);
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to add course subscriber:', error);
+    throw error.response?.data || error;
+  }
+};
+
 
 
