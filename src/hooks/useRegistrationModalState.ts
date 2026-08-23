@@ -206,10 +206,9 @@ export function useRegistrationModalState() {
                 }
             }
 
-            let response;
             if (isStudent) {
                 const name = contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone;
-                response = await registerStudent({
+                const response = await registerStudent({
                     name,
                     email: contactMethod === 'email' ? formData.email : undefined,
                     phone: contactMethod === 'phone' ? formData.phone : undefined,
@@ -217,36 +216,33 @@ export function useRegistrationModalState() {
                     password_confirmation: formData.confirmPassword,
                     role: 'student'
                 });
-            } else {
-                const accountPayload: any = {
-                    name: (contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone),
-                    academy_name: (contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone) + "'s Academy",
-                    password: formData.password,
-                    package_id: data?.package_id
-                };
 
-                if (contactMethod === 'email') {
-                    accountPayload.email = formData.email;
-                } else {
-                    accountPayload.phone = formData.phone;
-                    accountPayload.country_code = selectedCountry?.isoCode;
+                const resObj: any = response;
+                let token = resObj.data?.token || resObj.token || resObj.data?.access_token || resObj.access_token;
+                if (!token && resObj.meta?.access_token) {
+                    token = resObj.meta.access_token;
+                }
+                if (!token && resObj.data?.meta?.access_token) {
+                    token = resObj.data.meta.access_token;
                 }
 
-                response = await createAccount(accountPayload);
-            }
+                if (token) {
+                    localStorage.setItem('token', token);
+                    document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+                }
 
-            const resObj: any = response;
-            let token = resObj.data?.token || resObj.token || resObj.data?.access_token || resObj.access_token;
-            if (!token && resObj.meta?.access_token) {
-                token = resObj.meta.access_token;
-            }
-            if (!token && resObj.data?.meta?.access_token) {
-                token = resObj.data.meta.access_token;
-            }
+                toast.success('تم إنشاء الحساب بنجاح');
+            } else {
+                localStorage.setItem('registration_method', contactMethod);
 
-            if (token) {
-                localStorage.setItem('token', token);
-                document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+                const pendingRegistration = {
+                    email: contactMethod === 'email' ? formData.email : undefined,
+                    phone: contactMethod === 'phone' ? formData.phone : undefined,
+                    password: formData.password,
+                    country_code: contactMethod === 'phone' ? selectedCountry?.isoCode : undefined,
+                    package_id: data?.package_id
+                };
+                localStorage.setItem('pending_registration', JSON.stringify(pendingRegistration));
             }
 
             if (contactMethod === 'email') {
@@ -263,7 +259,6 @@ export function useRegistrationModalState() {
             localStorage.setItem('user_password', formData.password);
             document.cookie = `backup_password=${encodeURIComponent(formData.password)}; path=/; max-age=3600; SameSite=Lax`;
 
-            toast.success('تم إنشاء الحساب بنجاح');
             handleComplete();
         } catch (error: any) {
             if (error?.errors && typeof error.errors === 'object') {
@@ -280,9 +275,9 @@ export function useRegistrationModalState() {
                 setErrors(serverErrors);
 
                 const allMsgs = Object.values(errObj).map(v => translateErrorToArabic(getFirst(v))).filter(Boolean);
-                toast.error(allMsgs.length > 0 ? allMsgs[0] : (translateErrorToArabic(error.message) || 'حدث خطأ أثناء إنشاء الحساب'));
+                toast.error(allMsgs.length > 0 ? allMsgs[0] : (translateErrorToArabic(error.message) || 'حدث خطأ أثناء إدخال البيانات'));
             } else {
-                toast.error(translateErrorToArabic(error.message || 'حدث خطأ أثناء إنشاء الحساب'));
+                toast.error(translateErrorToArabic(error.message || 'حدث خطأ أثناء إدخال البيانات'));
             }
         } finally {
             setIsLoading(false);

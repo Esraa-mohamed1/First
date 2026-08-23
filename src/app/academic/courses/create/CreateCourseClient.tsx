@@ -707,6 +707,8 @@ export default function CreateCourseClient() {
         if (returnedSlug) setCourseSlug(returnedSlug);
         try {
           if (typeof window !== 'undefined') {
+            localStorage.setItem('createCourseId', String(courseId));
+            if (returnedSlug) localStorage.setItem('createCourseSlug', returnedSlug);
             localStorage.setItem('darab_last_created_course_id', String(courseId));
             if (returnedSlug) localStorage.setItem('darab_last_created_course_slug', returnedSlug);
             localStorage.setItem(`darab_course_cache_${courseId}`, JSON.stringify(updated || payload));
@@ -723,6 +725,8 @@ export default function CreateCourseClient() {
         if (returnedSlug) setCourseSlug(returnedSlug);
         try {
           if (typeof window !== 'undefined') {
+            localStorage.setItem('createCourseId', created.id.toString());
+            if (returnedSlug) localStorage.setItem('createCourseSlug', returnedSlug);
             localStorage.setItem('darab_last_created_course_id', String(created.id));
             if (returnedSlug) localStorage.setItem('darab_last_created_course_slug', returnedSlug);
             const courseObj = { ...payload, id: created.id, slug: returnedSlug };
@@ -1093,8 +1097,11 @@ export default function CreateCourseClient() {
             <div className="flex items-center gap-2.5 flex-wrap">
               <button
                 onClick={() => {
-                  if (courseId) {
-                    router.push(`/academic/courses/${courseId}/student`);
+                  const cachedId = localStorage.getItem('createCourseId');
+                  const cachedSlug = localStorage.getItem('createCourseSlug');
+                  const targetPath = slug || cachedSlug || courseSlug || cachedId || (courseId ? String(courseId) : null);
+                  if (targetPath) {
+                    window.open(`/${targetPath}`, '_blank');
                   } else {
                     toast.error('يرجى حفظ الدورة أولاً للمعاينة');
                   }

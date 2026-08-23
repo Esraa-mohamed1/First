@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { createAccountInfoAcademy, login } from '@/services/auth';
+import { createAccountInfoAcademy, login, createAccount } from '@/services/auth';
 import { useCountry } from '@/hooks/useCountry';
 import { triggerPageLoader } from '@/components/PageLoader';
 import { Country } from '@/types/country';
@@ -27,6 +27,7 @@ export function useSetupState() {
   const egyptCountry = countries?.find(c => c.isoCode === 'EG') || { name: 'مصر', isoCode: 'EG', flagUrl: 'https://flagcdn.com/w80/eg.png', flagEmoji: '🇪🇬', dialCode: '+20' };
 
   // Form details
+  const [registrationMethod, setRegistrationMethod] = useState<'email' | 'phone'>('email');
   const [email, setEmail] = useState('');
   const [academyName, setAcademyName] = useState('');
   const [phone, setPhone] = useState('');
@@ -41,6 +42,9 @@ export function useSetupState() {
     // Clear any stale tenant key and token from a previous session.
     localStorage.removeItem('academy_link_name');
     localStorage.removeItem('token');
+
+    const storedMethod = (localStorage.getItem('registration_method') as 'email' | 'phone') || 'email';
+    setRegistrationMethod(storedMethod);
 
     // Prefill data from registration step
     const cachedAcademyName = localStorage.getItem('user_academy_name') || localStorage.getItem('user_name') || '';
@@ -119,6 +123,37 @@ export function useSetupState() {
       const finalPhone = phone || cachedPhone || '';
       const finalEmail = email || cachedEmail || '';
 
+      // 1. Sequential Step 1: Create Account if token is missing
+      let token = localStorage.getItem('token');
+      if (!token) {
+        const pendingStr = localStorage.getItem('pending_registration');
+        const pending = pendingStr ? JSON.parse(pendingStr) : {};
+        const regMethod = registrationMethod || localStorage.getItem('registration_method') || 'email';
+        const name = (regMethod === 'email' ? (finalEmail ? finalEmail.split('@')[0] : '') : finalPhone) || academyName || 'أكاديمي';
+
+        const accountPayload: any = {
+          name: name,
+          academy_name: academyName || `${name}'s Academy`,
+          password: pending.password || localStorage.getItem('user_password') || getCookie('backup_password'),
+          package_id: pending.package_id
+        };
+
+        if (regMethod === 'email') {
+          accountPayload.email = finalEmail;
+        } else {
+          accountPayload.phone = finalPhone;
+          accountPayload.country_code = activeCountry?.isoCode || pending.country_code || 'EG';
+        }
+
+        const accountRes: any = await createAccount(accountPayload);
+        token = accountRes?.data?.token || accountRes?.token || accountRes?.data?.access_token || accountRes?.access_token || accountRes?.meta?.access_token || accountRes?.data?.meta?.access_token;
+        if (token) {
+          localStorage.setItem('token', token);
+          document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+        }
+      }
+
+      // 2. Sequential Step 2: Create Account Info Academy (Only executes if createAccount succeeded)
       const payload: any = {
         username: academyName || 'أكاديمي',
         phone_academy: finalPhone || '0500000000',
@@ -208,7 +243,7 @@ export function useSetupState() {
       const tenantSuffix = process.env.NEXT_PUBLIC_TENANT_DOMAIN_SUFFIX || defaultSuffix;
       const dashboardPath = process.env.NEXT_PUBLIC_TENANT_DASHBOARD_PATH || '/academic';
       const protocol = window.location.protocol;
-      const token = localStorage.getItem('token');
+      token = localStorage.getItem('token');
 
       const tenantUrl = `${protocol}//${finalDomainPrefix}${tenantSuffix}${dashboardPath}${token ? `?token=${token}` : ''}`;
 
@@ -239,14 +274,14 @@ export function useSetupState() {
           const translated = newErrors.link_academy || newErrors.domainPrefix;
           setDomainError(translated);
           toast.error(translated);
-          goToStep(3);
+          goToStep(2);
           handled = true;
         }
 
         if (newErrors.email || newErrors.phone || newErrors.phone_academy || newErrors.username || newErrors.academy_name) {
           const errKey = newErrors.email ? 'email' : (newErrors.phone ? 'phone' : (newErrors.phone_academy ? 'phone_academy' : 'username'));
           const msg = newErrors[errKey];
-          toast.error(msg || 'يرجى مراجعة الحقول المدخلة');
+          toast.error(msg || 'يرجى مراجعة البيانات');
           goToStep(2);
           handled = true;
         }
@@ -271,7 +306,6 @@ export function useSetupState() {
 
   const getProgLineWidth = () => {
     if (currentStep === 1) return '0%';
-    if (currentStep === 2) return '50%';
     return '100%';
   };
 
@@ -283,6 +317,7 @@ export function useSetupState() {
     saudiCountry,
     kuwaitCountry,
     egyptCountry,
+    registrationMethod,
     email,
     setEmail,
     academyName,

@@ -14,12 +14,8 @@ export default function SetupPage() {
     saudiCountry,
     kuwaitCountry,
     egyptCountry,
-    email,
-    setEmail,
     academyName,
     setAcademyName,
-    phone,
-    setPhone,
     fieldErrors,
     setFieldErrors,
     domainPrefix,
@@ -48,7 +44,7 @@ export default function SetupPage() {
 
       <main className="pt-32 pb-20 px-4 sm:px-6 md:px-0 flex flex-col items-center max-w-5xl mx-auto">
         {/* Progress Indicator */}
-        <div className="w-full max-w-2xl mb-12 flex justify-between items-center relative">
+        <div className="w-full max-w-xl mb-12 flex justify-between items-center relative">
           <div className="absolute top-1/2 left-0 w-full h-0.5 bg-[#d9e3f4] -z-10 -translate-y-1/2"></div>
           <div
             className="absolute top-1/2 right-0 h-0.5 bg-[#004ac6] -z-10 -translate-y-1/2 transition-all duration-700"
@@ -70,15 +66,6 @@ export default function SetupPage() {
               }`}
           >
             ٢
-          </div>
-
-          {/* Step 3 Dot */}
-          <div
-            onClick={() => goToStep(3)}
-            className={`w-8 h-8 rounded-full flex items-center justify-center font-bold transition-colors duration-500 cursor-pointer z-10 ${currentStep >= 3 ? 'bg-[#004ac6] text-white shadow-lg shadow-[#004ac6]/20' : 'bg-[#d9e3f4] text-[#434655]'
-              }`}
-          >
-            ٣
           </div>
         </div>
 
@@ -176,17 +163,19 @@ export default function SetupPage() {
           </section>
         )}
 
-        {/* Step 2: Country Selection */}
+        {/* Step 2: Merged Country & Domain Setup */}
         {currentStep === 2 && (
-          <section className="w-full max-w-xl step-transition animate-slide-up-fade">
-            <div className="text-center mb-12">
-              <h1 className="text-3xl font-bold text-[#111827] mb-4">اختر الدولة</h1>
-              <p className="text-sm text-[#434655]">سنقوم بضبط العملة والمنطقة الزمنية تلقائيًا.</p>
+          <section className="w-full max-w-xl step-transition animate-slide-up-fade space-y-8">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-[#111827] mb-3">اختر الدولة ورابط المنصة</h1>
+              <p className="text-sm text-[#434655]">سنقوم بضبط العملة والمنطقة الزمنية وإعداد رابط منصتك تلقائيًا.</p>
             </div>
 
-            <div className="relative w-full space-y-6">
-              {/* 3 Circular Country Selectors */}
-              <div className="flex justify-center items-center gap-6 sm:gap-10 py-4">
+            {/* Country Selection */}
+            <div className="space-y-4">
+              <label className="block text-xs font-bold text-gray-700 text-center">اختر الدولة</label>
+              <div className="flex justify-center items-center gap-6 sm:gap-10 py-2">
                 {[
                   { id: 'EG', label: 'مصر', country: egyptCountry },
                   { id: 'SA', label: 'السعودية', country: saudiCountry },
@@ -198,10 +187,10 @@ export default function SetupPage() {
                       key={id}
                       type="button"
                       onClick={() => handleCountrySelect(country)}
-                      className="flex flex-col items-center gap-3 group transition-all duration-300 focus:outline-none"
+                      className="flex flex-col items-center gap-2 group transition-all duration-300 focus:outline-none"
                     >
                       <div
-                        className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center border-4 overflow-hidden transition-all duration-300 shadow-sm relative ${
+                        className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center border-4 overflow-hidden transition-all duration-300 shadow-sm relative ${
                           isSelected
                             ? 'border-[#004ac6] bg-[#eef4ff] scale-105 shadow-md shadow-[#004ac6]/15'
                             : 'border-slate-200 bg-white hover:border-slate-300 hover:scale-102 hover:shadow-md'
@@ -211,142 +200,60 @@ export default function SetupPage() {
                           <img
                             src={id === 'KW' ? country.flagUrl : country.flagUrl.replace('/w40/', '/w80/')}
                             alt={label}
-                            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border border-slate-100 shadow-inner"
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-slate-100 shadow-inner"
                           />
                         ) : (
-                          <span className="text-3xl sm:text-4xl">{country.flagEmoji}</span>
+                          <span className="text-2xl sm:text-3xl">{country.flagEmoji}</span>
                         )}
                         <div className={`absolute inset-0 rounded-full bg-[#004ac6]/5 transition-opacity duration-300 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
                       </div>
-                      <span className={`text-sm font-bold transition-colors ${isSelected ? 'text-[#004ac6]' : 'text-[#434655] group-hover:text-[#111827]'}`}>
+                      <span className={`text-xs font-bold transition-colors ${isSelected ? 'text-[#004ac6]' : 'text-[#434655] group-hover:text-[#111827]'}`}>
                         {label}
                       </span>
                     </button>
                   );
                 })}
               </div>
-
-              {/* Additional optional inputs if missing */}
-              <div className="space-y-4 pt-2">
-                {/* Email Input */}
-                <div className="relative group">
-                  {fieldErrors.email && (
-                    <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>{fieldErrors.email}</span>
-                      <div className="absolute -bottom-1 right-4 w-2 h-2 bg-red-600 rotate-45"></div>
-                    </div>
-                  )}
-                  <label className="block text-xs font-bold text-gray-700 mb-1 text-right">البريد الإلكتروني الأساسي</label>
-                  <input
-                    type="email"
-                    value={email}
-                    title={fieldErrors.email || ''}
-                    onChange={e => {
-                      setEmail(e.target.value);
-                      if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: '' }));
-                    }}
-                    placeholder="admin@academy.com"
-                    className={`w-full p-4 border rounded-xl bg-white focus:outline-none text-sm font-medium text-[#111827] transition-all ${
-                      fieldErrors.email ? 'border-red-500 bg-red-50/20 focus:border-red-500' : 'border-slate-300 focus:border-[#004ac6]'
-                    }`}
-                  />
-                  {fieldErrors.email && (
-                    <p className="mt-1 text-red-500 text-xs font-semibold flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      {fieldErrors.email}
-                    </p>
-                  )}
-                </div>
-
-                {/* Academy Name Input */}
-                <div className="relative group">
-                  {(fieldErrors.username || fieldErrors.academy_name) && (
-                    <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>{fieldErrors.username || fieldErrors.academy_name}</span>
-                      <div className="absolute -bottom-1 right-4 w-2 h-2 bg-red-600 rotate-45"></div>
-                    </div>
-                  )}
-                  <label className="block text-xs font-bold text-gray-700 mb-1 text-right">اسم الأكاديمية / المنصة</label>
-                  <input
-                    type="text"
-                    value={academyName}
-                    title={fieldErrors.username || fieldErrors.academy_name || ''}
-                    onChange={e => {
-                      setAcademyName(e.target.value);
-                      if (fieldErrors.username || fieldErrors.academy_name) {
-                        setFieldErrors(prev => ({ ...prev, username: '', academy_name: '' }));
-                      }
-                    }}
-                    placeholder="أدخل اسم أكاديميتك"
-                    className={`w-full p-4 border rounded-xl bg-white focus:outline-none text-sm font-medium text-[#111827] transition-all ${
-                      fieldErrors.username || fieldErrors.academy_name ? 'border-red-500 bg-red-50/20 focus:border-red-500' : 'border-slate-300 focus:border-[#004ac6]'
-                    }`}
-                  />
-                  {(fieldErrors.username || fieldErrors.academy_name) && (
-                    <p className="mt-1 text-red-500 text-xs font-semibold flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      {fieldErrors.username || fieldErrors.academy_name}
-                    </p>
-                  )}
-                </div>
-
-                {/* Phone Input */}
-                <div className="relative group">
-                  {(fieldErrors.phone || fieldErrors.phone_academy) && (
-                    <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>{fieldErrors.phone || fieldErrors.phone_academy}</span>
-                      <div className="absolute -bottom-1 right-4 w-2 h-2 bg-red-600 rotate-45"></div>
-                    </div>
-                  )}
-                  <label className="block text-xs font-bold text-gray-700 mb-1 text-right">رقم الجوال الأساسي</label>
-                  <input
-                    type="text"
-                    value={phone}
-                    title={fieldErrors.phone || fieldErrors.phone_academy || ''}
-                    onChange={e => {
-                      setPhone(e.target.value.replace(/\D/g, ''));
-                      if (fieldErrors.phone || fieldErrors.phone_academy) {
-                        setFieldErrors(prev => ({ ...prev, phone: '', phone_academy: '' }));
-                      }
-                    }}
-                    placeholder="أدخل رقم الجوال"
-                    dir="ltr"
-                    className={`w-full p-4 border rounded-xl bg-white focus:outline-none text-sm font-medium text-left text-[#111827] transition-all ${
-                      fieldErrors.phone || fieldErrors.phone_academy ? 'border-red-500 bg-red-50/20 focus:border-red-500' : 'border-slate-300 focus:border-[#004ac6]'
-                    }`}
-                  />
-                  {(fieldErrors.phone || fieldErrors.phone_academy) && (
-                    <p className="mt-1 text-red-500 text-xs font-semibold flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      {fieldErrors.phone || fieldErrors.phone_academy}
-                    </p>
-                  )}
-                </div>
-              </div>
             </div>
 
-            <button
-              className="w-full mt-10 bg-[#004ac6] text-white py-4 rounded-xl font-bold text-lg hover:bg-[#2563eb] transition-all active:scale-95 shadow-lg shadow-[#004ac6]/20"
-              onClick={() => goToStep(3)}
-            >
-              المتابعة
-            </button>
-          </section>
-        )}
-
-        {/* Step 3: Domain Selection */}
-        {currentStep === 3 && (
-          <section className="w-full max-w-xl step-transition animate-slide-up-fade">
-            <div className="text-center mb-12">
-              <h1 className="text-3xl font-bold text-[#111827] mb-4">اختر رابط منصتك</h1>
-              <p className="text-sm text-[#434655]">هذا هو العنوان الذي سيستخدمه طلابك للوصول إلى دروسك.</p>
-            </div>
-
-            <div className="space-y-6">
+            {/* Domain & Academy Name Details */}
+            <div className="space-y-6 pt-4 border-t border-slate-200/60">
+              {/* Academy Name Input */}
               <div className="relative group">
+                <label className="block text-xs font-bold text-gray-700 mb-2 text-right">اسم الأكاديمية / المنصة</label>
+                {(fieldErrors.username || fieldErrors.academy_name) && (
+                  <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>{fieldErrors.username || fieldErrors.academy_name}</span>
+                    <div className="absolute -bottom-1 right-4 w-2 h-2 bg-red-600 rotate-45"></div>
+                  </div>
+                )}
+                <input
+                  type="text"
+                  value={academyName}
+                  title={fieldErrors.username || fieldErrors.academy_name || ''}
+                  onChange={e => {
+                    setAcademyName(e.target.value);
+                    if (fieldErrors.username || fieldErrors.academy_name) {
+                      setFieldErrors(prev => ({ ...prev, username: '', academy_name: '' }));
+                    }
+                  }}
+                  placeholder="أدخل اسم أكاديميتك"
+                  className={`w-full p-4 border rounded-xl bg-white focus:outline-none text-sm font-medium text-[#111827] transition-all ${
+                    fieldErrors.username || fieldErrors.academy_name ? 'border-red-500 bg-red-50/20 focus:border-red-500' : 'border-slate-300 focus:border-[#004ac6]'
+                  }`}
+                />
+                {(fieldErrors.username || fieldErrors.academy_name) && (
+                  <p className="mt-1 text-red-500 text-xs font-semibold flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {fieldErrors.username || fieldErrors.academy_name}
+                  </p>
+                )}
+              </div>
+
+              {/* Domain Prefix Input */}
+              <div className="relative group">
+                <label className="block text-xs font-bold text-gray-700 mb-2 text-right">رابط المنصة</label>
                 {(fieldErrors.link_academy || domainError) && (
                   <div className="absolute -top-10 right-0 z-20 hidden group-hover:flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none">
                     <AlertCircle className="w-4 h-4" />
@@ -393,11 +300,11 @@ export default function SetupPage() {
                 </p>
               </div>
 
-              <div className="pt-6">
+              <div className="pt-4">
                 <button
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="w-full bg-[#004ac6] text-white py-4 rounded-xl font-bold text-lg hover:bg-[#2563eb] transition-all active:scale-95 shadow-lg shadow-[#004ac6]/20 disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full bg-[#004ac6] text-white py-4 rounded-xl font-bold text-lg hover:bg-[#2563eb] transition-all active:scale-95 shadow-lg shadow-[#004ac6]/20 disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {loading ? (
                     <>
@@ -408,7 +315,6 @@ export default function SetupPage() {
                     'ابدأ استخدام درب'
                   )}
                 </button>
-
               </div>
             </div>
           </section>
