@@ -67,12 +67,21 @@ export const getStudentCourse = async (slug: string): Promise<Course> => {
   }
 };
 
-export const subscribeToCourse = async (courseId: number, price: number): Promise<any> => {
+export const subscribeToCourse = async (
+  courseId: number | string,
+  price?: number,
+  receiverAccountId?: number | string
+): Promise<any> => {
   try {
-    const response = await studentApi.post<any>('user-subscribe', {
+    const payload: any = {
       course_id: courseId,
       amount: price,
-    });
+      starts_at: new Date().toISOString().split('T')[0],
+    };
+    if (receiverAccountId) {
+      payload.receiver_account_id = receiverAccountId;
+    }
+    const response = await studentApi.post<any>('user-subscribe', payload);
     return response.data;
   } catch (error: any) {
     console.error('Failed to subscribe to course:', error);
@@ -80,15 +89,24 @@ export const subscribeToCourse = async (courseId: number, price: number): Promis
   }
 };
 
-export const enrollInCourse = async (courseId: number | string, methodId: number | string, receipt: File): Promise<any> => {
+export const enrollInCourse = async (
+  courseId: number | string,
+  methodId: number | string,
+  receipt: File,
+  receiverAccountId?: number | string
+): Promise<any> => {
   try {
+    const targetReceiverId = receiverAccountId || methodId;
     const formData = new FormData();
     formData.append('course_id', String(courseId));
     formData.append('courseId', String(courseId));
-    formData.append('method_id', String(methodId));
-    formData.append('methodId', String(methodId));
+    formData.append('receiver_account_id', String(targetReceiverId));
+    formData.append('receiverAccountId', String(targetReceiverId));
+    formData.append('method_id', String(targetReceiverId));
+    formData.append('methodId', String(targetReceiverId));
     formData.append('receipt_file', receipt);
     formData.append('receipt', receipt);
+    formData.append('starts_at', new Date().toISOString().split('T')[0]);
 
     const response = await studentApi.post<any>('user-subscribe', formData, {
       headers: {

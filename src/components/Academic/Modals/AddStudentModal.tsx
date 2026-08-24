@@ -1,24 +1,19 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { X, Save, Loader2, User as UserIcon, Mail, Phone, Lock, BookOpen } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Save, Loader2, User as UserIcon, Mail, Phone, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createUser } from '@/services/users';
-import { addCourseSubscriber, getCourses } from '@/services/courses';
-import { User, Course } from '@/types/api';
+import { User } from '@/types/api';
 
 interface AddStudentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onStudentAdded: (student?: any) => void;
-  courseId?: number | string;
+  onStudentAdded: (student: User) => void;
 }
 
-export default function AddStudentModal({ isOpen, onClose, onStudentAdded, courseId }: AddStudentModalProps) {
+export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: AddStudentModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [coursesList, setCoursesList] = useState<Course[]>([]);
-  const [selectedCourseId, setSelectedCourseId] = useState<string | number>(courseId || '');
-
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -28,25 +23,6 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, cours
     status: 'active'
   });
 
-  useEffect(() => {
-    if (courseId) {
-      setSelectedCourseId(courseId);
-    }
-  }, [courseId]);
-
-  useEffect(() => {
-    if (isOpen && !courseId) {
-      getCourses()
-        .then(res => {
-          setCoursesList(res || []);
-          if (res && res.length > 0) {
-            setSelectedCourseId(res[0].id);
-          }
-        })
-        .catch(() => setCoursesList([]));
-    }
-  }, [isOpen, courseId]);
-
   if (!isOpen) return null;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -54,48 +30,17 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, cours
   };
 
   const handleSubmit = async () => {
-    if (!formData.name || (!formData.email && !formData.phone)) {
-      toast.error('يرجى تعبئة الاسم والبريد الإلكتروني أو رقم الجوال');
+    if (!formData.name || (!formData.email && !formData.phone) || !formData.password) {
+      toast.error('يرجى تعبئة الحقول المطلوبة');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const activeCourseId = courseId || selectedCourseId;
-
-      // 1. Create user account if password is specified
-      let createdUser: any = null;
-      if (formData.password) {
-        try {
-          createdUser = await createUser(formData);
-        } catch {
-          /* ignore if user already exists */
-        }
-      }
-
-      // 2. Post User Subscription to the course via user_subscribes endpoint
-      if (activeCourseId) {
-        const todayStr = new Date().toISOString().split('T')[0];
-        await addCourseSubscriber({
-          course_id: activeCourseId,
-          email: formData.email || undefined,
-          phone: formData.phone || undefined,
-          name: formData.name,
-          user_id: createdUser?.id,
-          status: formData.status || 'active',
-          starts_at: todayStr
-        });
-        toast.success('تمت إضافة الاشتراك في الدورة بنجاح');
-      } else {
-        if (!createdUser) {
-          createdUser = await createUser(formData);
-        }
-        toast.success('تمت إضافة الطالب بنجاح');
-      }
-
-      onStudentAdded(createdUser);
+      const newStudent = await createUser(formData);
+      toast.success('تمت إضافة الطالب بنجاح');
+      onStudentAdded(newStudent);
       onClose();
-
       // Reset form
       setFormData({
         name: '',
@@ -106,7 +51,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, cours
         status: 'active'
       });
     } catch (error: any) {
-      toast.error(error?.message || error?.data?.message || 'فشل إضافة المشترك في الدورة');
+      toast.error(error?.message || error?.data?.message || 'فشل إضافة الطالب');
     } finally {
       setIsSubmitting(false);
     }
@@ -125,15 +70,13 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, cours
               <UserIcon size={24} />
             </div>
             <div>
-              <h2 className="text-xl font-black text-gray-900">
-                {courseId ? 'إضافة مشترك للدورة' : 'إضافة مشترك جديد'}
-              </h2>
-              <p className="text-sm font-bold text-gray-400 mt-1">قم بإدخال بيانات المشترك للاشتراك في الدورة</p>
+              <h2 className="text-xl font-black text-gray-900">إضافة طالب جديد</h2>
+              <p className="text-sm font-bold text-gray-400 mt-1">قم بإدخال بيانات الطالب لإنشاء حسابه</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
           >
             <X size={24} />
           </button>
@@ -141,28 +84,6 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, cours
 
         {/* Body */}
         <div className="p-8 space-y-6">
-          {!courseId && coursesList.length > 0 && (
-            <div className="space-y-2">
-              <label className="block text-sm font-black text-gray-900">
-                اختر الدورة <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <BookOpen className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <select
-                  value={selectedCourseId}
-                  onChange={(e) => setSelectedCourseId(e.target.value)}
-                  className="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all appearance-none text-gray-900"
-                >
-                  {coursesList.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          )}
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Name */}
             <div className="space-y-2">
@@ -185,7 +106,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, cours
             {/* Email */}
             <div className="space-y-2">
               <label className="block text-sm font-black text-gray-900">
-                البريد الإلكتروني
+                البريد الإلكتروني <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -217,10 +138,10 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, cours
               </div>
             </div>
 
-            {/* Password (Optional for quick subscription) */}
+            {/* Password */}
             <div className="space-y-2">
               <label className="block text-sm font-black text-gray-900">
-                كلمة المرور (اختياري)
+                كلمة المرور <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <Lock className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -229,9 +150,29 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, cours
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="كلمة مرور الحساب (إن وجد)"
+                  placeholder="كلمة مرور الحساب"
                   className="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
                 />
+              </div>
+            </div>
+
+            {/* Role Dropdown */}
+            <div className="space-y-2">
+              <label className="block text-sm font-black text-gray-900">
+                الدور <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <UserIcon className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <select
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  className="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all appearance-none text-gray-900"
+                >
+                  <option value="student">طالب</option>
+                  <option value="admin">مسؤول</option>
+                  <option value="academy">مدرب</option>
+                </select>
               </div>
             </div>
           </div>
@@ -240,22 +181,24 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded, cours
         {/* Footer */}
         <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex items-center justify-end gap-3">
           <button 
+            type="button"
             onClick={onClose}
-            className="px-8 py-3.5 bg-white text-gray-600 border border-gray-200 font-black rounded-2xl hover:bg-gray-50 transition-all text-sm"
+            className="px-8 py-3.5 bg-white text-gray-600 border border-gray-200 font-black rounded-2xl hover:bg-gray-50 transition-all text-sm cursor-pointer"
           >
             إلغاء
           </button>
           <button 
+            type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="px-8 py-3.5 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all text-sm disabled:opacity-70 flex items-center gap-2"
+            className="px-8 py-3.5 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all text-sm disabled:opacity-70 flex items-center gap-2 cursor-pointer"
           >
             {isSubmitting ? (
               <Loader2 className="animate-spin" size={18} />
             ) : (
               <Save size={18} />
             )}
-            <span>حفظ المشترك والتسجيل</span>
+            <span>حفظ بيانات الطالب</span>
           </button>
         </div>
       </div>
