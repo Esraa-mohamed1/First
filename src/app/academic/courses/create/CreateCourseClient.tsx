@@ -43,6 +43,7 @@ import { getErrorMessage } from '@/lib/utils';
 import { getGrades, getTerms, getSubjects, getAcademicYears, ClassificationItem } from '@/services/academic-classification';
 import { getProfileStatus } from '@/services/auth';
 import { getUsers } from '@/services/users';
+import ManageSubscribersView from '@/components/Academic/Subscribers/ManageSubscribersView';
 import { User, ReceiverAccount } from '@/types/api';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
 import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdown';
@@ -707,6 +708,8 @@ export default function CreateCourseClient() {
         if (returnedSlug) setCourseSlug(returnedSlug);
         try {
           if (typeof window !== 'undefined') {
+            localStorage.setItem('createCourseId', String(courseId));
+            if (returnedSlug) localStorage.setItem('createCourseSlug', returnedSlug);
             localStorage.setItem('darab_last_created_course_id', String(courseId));
             if (returnedSlug) localStorage.setItem('darab_last_created_course_slug', returnedSlug);
             localStorage.setItem(`darab_course_cache_${courseId}`, JSON.stringify(updated || payload));
@@ -723,6 +726,8 @@ export default function CreateCourseClient() {
         if (returnedSlug) setCourseSlug(returnedSlug);
         try {
           if (typeof window !== 'undefined') {
+            localStorage.setItem('createCourseId', created.id.toString());
+            if (returnedSlug) localStorage.setItem('createCourseSlug', returnedSlug);
             localStorage.setItem('darab_last_created_course_id', String(created.id));
             if (returnedSlug) localStorage.setItem('darab_last_created_course_slug', returnedSlug);
             const courseObj = { ...payload, id: created.id, slug: returnedSlug };
@@ -1093,8 +1098,11 @@ export default function CreateCourseClient() {
             <div className="flex items-center gap-2.5 flex-wrap">
               <button
                 onClick={() => {
-                  if (courseId) {
-                    router.push(`/academic/courses/${courseId}/student`);
+                  const cachedId = localStorage.getItem('createCourseId');
+                  const cachedSlug = localStorage.getItem('createCourseSlug');
+                  const targetPath = slug || cachedSlug || courseSlug || cachedId || (courseId ? String(courseId) : null);
+                  if (targetPath) {
+                    window.open(`/${targetPath}`, '_blank');
                   } else {
                     toast.error('يرجى حفظ الدورة أولاً للمعاينة');
                   }
@@ -2482,9 +2490,8 @@ export default function CreateCourseClient() {
 
           {/* Tab 4: Subscribers & Reports */}
           {activeTab === 'subscribers' && (
-            <div className="max-w-4xl bg-white border border-slate-300 rounded-2xl p-10 text-center text-slate-500 shadow-xs">
-              <h3 className="text-xl font-bold mb-2 text-slate-900">تقرير المشتركين والمبيعات</h3>
-              <p className="text-sm font-medium">سيتم عرض قائمة الطلاب المشتركين والتقارير عند نشر الدورة وتلقي الاشتراكات.</p>
+            <div className="w-full bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+              <ManageSubscribersView showTopHeader={false} courseId={courseId || undefined} />
             </div>
           )}
 

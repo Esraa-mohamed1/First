@@ -156,10 +156,19 @@ export const useCreateCourseModal = ({
 
       try {
         if (courseId) {
-          await updateCourse(courseId, payload);
+          const updated = await updateCourse(courseId, payload);
+          const returnedSlug = (updated as any)?.slug || (updated as any)?.data?.slug || (updated as any)?.course?.slug;
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('createCourseId', courseId.toString());
+            if (returnedSlug) localStorage.setItem('createCourseSlug', returnedSlug);
+          }
           toast.success('تم تحديث الدورة بنجاح');
         } else {
-          await createCourse(payload);
+          const created = await createCourse(payload);
+          if (typeof window !== 'undefined' && created) {
+            if (created.id) localStorage.setItem('createCourseId', created.id.toString());
+            if (created.slug) localStorage.setItem('createCourseSlug', created.slug);
+          }
           toast.success('تم إنشاء الدورة بنجاح');
         }
         onClose();

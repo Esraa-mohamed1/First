@@ -120,7 +120,8 @@ export const PaymentMethodModal = ({
     if (!selectedMethod) return;
     setLoading(true);
     try {
-      await enrollInCourse(courseId, selectedMethod.methodId, screenshot);
+      const receiverAccountId = (selectedMethod as any)?.receiver_account_id || (selectedMethod as any)?.receiverAccountId || selectedMethod.methodId;
+      await enrollInCourse(courseId, selectedMethod.methodId, screenshot, receiverAccountId);
       await showAlert.success('تم إرسال طلب التسجيل ✅', 'سيتم مراجعة الإيصال وتفعيل الدورة قريباً.');
       handleClose();
     } catch (error: any) {

@@ -19,7 +19,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
     email: '',
     phone: '',
     password: '',
-    role: 'student', // default role
+    role: 'student',
     status: 'active'
   });
 
@@ -30,7 +30,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
   };
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.email || !formData.password) {
+    if (!formData.name || (!formData.email && !formData.phone) || !formData.password) {
       toast.error('يرجى تعبئة الحقول المطلوبة');
       return;
     }
@@ -51,7 +51,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
         status: 'active'
       });
     } catch (error: any) {
-      toast.error(error?.message || 'فشل إضافة الطالب');
+      toast.error(error?.message || error?.data?.message || 'فشل إضافة الطالب');
     } finally {
       setIsSubmitting(false);
     }
@@ -76,7 +76,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
           </div>
           <button 
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
           >
             <X size={24} />
           </button>
@@ -150,7 +150,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="كلمة مرور قوية"
+                  placeholder="كلمة مرور الحساب"
                   className="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all text-gray-900"
                 />
               </div>
@@ -181,15 +181,17 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
         {/* Footer */}
         <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex items-center justify-end gap-3">
           <button 
+            type="button"
             onClick={onClose}
-            className="px-8 py-3.5 bg-white text-gray-600 border border-gray-200 font-black rounded-2xl hover:bg-gray-50 transition-all text-sm"
+            className="px-8 py-3.5 bg-white text-gray-600 border border-gray-200 font-black rounded-2xl hover:bg-gray-50 transition-all text-sm cursor-pointer"
           >
             إلغاء
           </button>
           <button 
+            type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="px-8 py-3.5 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all text-sm disabled:opacity-70 flex items-center gap-2"
+            className="px-8 py-3.5 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all text-sm disabled:opacity-70 flex items-center gap-2 cursor-pointer"
           >
             {isSubmitting ? (
               <Loader2 className="animate-spin" size={18} />

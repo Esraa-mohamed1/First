@@ -3,11 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { deleteUser } from '@/services/users';
 import { getCourseSubscribers } from '@/services/courses';
+import { getStudentPurchaseRequests, updateStudentPurchaseRequestStatus } from '@/services/finance';
 import { User } from '@/types/api';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import AddStudentModal from '@/components/Academic/Modals/AddStudentModal';
+import AddSubscriberModal from '@/components/Academic/Modals/AddSubscriberModal';
 import EditUserModal from '@/components/Academic/Modals/EditUserModal';
 
 const MySwal = withReactContent(Swal);
@@ -26,6 +27,7 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
   const [editingStudent, setEditingStudent] = useState<User | null>(null);
   const [drawerStudent, setDrawerStudent] = useState<any | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [previewReceiptUrl, setPreviewReceiptUrl] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -40,7 +42,10 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
       let data: any[] = [];
       if (courseId) {
         data = await getCourseSubscribers(courseId);
+      } else {
+        data = await getStudentPurchaseRequests();
       }
+
       const avatarColors = [
         'bg-blue-100 text-blue-700',
         'bg-emerald-100 text-emerald-700',
@@ -50,14 +55,19 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
       ];
       const normalized = (data || []).map((item: any, idx: number) => {
         const user = item.user || item.student || item;
+        const receiptUrl = item.receipt || item.receipt_url || item.receipt_file || item.attachment || item.file || item.image_url || null;
+
         return {
           id: item.id || user.id,
+          subId: item.id,
           name: user.name || item.name || null,
           email: user.email || item.email || null,
           phone: user.phone || item.phone || null,
           status: item.status || user.status || 'active',
-          created_at: item.created_at || item.subscribed_at || user.created_at || null,
+          receipt: receiptUrl,
+          created_at: item.starts_at || item.created_at || item.subscribed_at || user.created_at || null,
           amount: item.amount || item.paid_amount || null,
+          course_title: item.course?.title || item.course_title || null,
           avatarLetter: (user.name || item.name || '?').charAt(0),
           avatarBg: avatarColors[idx % avatarColors.length],
         };
@@ -68,6 +78,48 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
       setStudents([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApproveStatus = async (e: React.MouseEvent, id: number | string) => {
+    e.stopPropagation();
+    try {
+      await updateStudentPurchaseRequestStatus(id, 'accepted');
+      setStudents(prev => prev.map(s => (s.id === id || s.subId === id ? { ...s, status: 'active' } : s)));
+      if (drawerStudent && (drawerStudent.id === id || drawerStudent.subId === id)) {
+        setDrawerStudent((prev: any) => (prev ? { ...prev, status: 'active' } : null));
+      }
+      toast.success('تم قبول وتفعيل طلب الاشتراك بنجاح ✅');
+    } catch (err: any) {
+      toast.error(err?.message || 'فشل قبول الطلب');
+    }
+  };
+
+  const handleDenyStatus = async (e: React.MouseEvent, id: number | string) => {
+    e.stopPropagation();
+    const result = await MySwal.fire({
+      title: 'رفض طلب الاشتراك',
+      text: 'هل أنت متأكد من رفض طلب هذا المشترك؟',
+      input: 'textarea',
+      inputPlaceholder: 'اكتب سبب الرفض (اختياري)...',
+      showCancelButton: true,
+      confirmButtonColor: '#ba1a1a',
+      cancelButtonColor: '#727687',
+      confirmButtonText: 'تأكيد الرفض',
+      cancelButtonText: 'إلغاء',
+      reverseButtons: true,
+    });
+    if (result.isConfirmed) {
+      try {
+        await updateStudentPurchaseRequestStatus(id, 'rejected', result.value);
+        setStudents(prev => prev.map(s => (s.id === id || s.subId === id ? { ...s, status: 'rejected' } : s)));
+        if (drawerStudent && (drawerStudent.id === id || drawerStudent.subId === id)) {
+          setDrawerStudent((prev: any) => (prev ? { ...prev, status: 'rejected' } : null));
+        }
+        toast.success('تم رفض طلب الاشتراك');
+      } catch (err: any) {
+        toast.error(err?.message || 'فشل رفض الطلب');
+      }
     }
   };
 
@@ -96,12 +148,13 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
   const closeDrawer = () => setIsDrawerOpen(false);
 
   const handleExportCSV = () => {
-    const headers = ['الاسم', 'البريد', 'الهاتف', 'تاريخ الاشتراك', 'الحالة', 'المبلغ'];
+    const headers = ['الاسم', 'البريد', 'الهاتف', 'تاريخ الاشتراك', 'الحالة', 'المبلغ', 'الإيصال'];
     const rows = filteredStudents.map(s => [
       s.name || '', s.email || '', s.phone || '',
       s.created_at ? new Date(s.created_at).toLocaleDateString('ar-EG') : '',
-      s.status === 'active' ? 'نشط' : s.status === 'pending' ? 'معلق' : 'متوقف',
+      s.status === 'active' || s.status === 'accepted' ? 'نشط' : s.status === 'pending' ? 'معلق' : 'مرفوض',
       s.amount || '',
+      s.receipt || '',
     ].map(v => `"${v}"`));
     const csv = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -116,7 +169,11 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
   const filteredStudents = students.filter(s => {
     const q = searchTerm.toLowerCase();
     const matchesSearch = !q || s.name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q) || s.phone?.includes(q);
-    const matchesStatus = statusFilter === 'all' || s.status === statusFilter || (statusFilter === 'active' && !s.status);
+    const matchesStatus =
+      statusFilter === 'all' ||
+      s.status === statusFilter ||
+      (statusFilter === 'active' && (s.status === 'accepted' || !s.status)) ||
+      (statusFilter === 'inactive' && (s.status === 'rejected' || s.status === 'cancelled'));
     return matchesSearch && matchesStatus;
   });
 
@@ -124,16 +181,16 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
   const currentStudents = filteredStudents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const getStatus = (status: string) => {
-    if (status === 'active') return { label: 'نشط', cls: 'bg-emerald-100 text-emerald-700' };
-    if (status === 'pending') return { label: 'معلق', cls: 'bg-amber-100 text-amber-700' };
-    return { label: 'متوقف', cls: 'bg-red-100 text-red-700' };
+    if (status === 'active' || status === 'accepted') return { label: 'نشط (مقبول)', cls: 'bg-emerald-100 text-emerald-700' };
+    if (status === 'pending') return { label: 'معلق (بانتظار المراجعة)', cls: 'bg-amber-100 text-amber-700 font-bold' };
+    return { label: 'مرفوض', cls: 'bg-red-100 text-red-700' };
   };
 
   return (
     <div className="bg-white rounded-2xl text-on-background" dir="rtl">
       {showTopHeader && (
         <header className="h-16 w-full sticky top-0 z-30 bg-white border-b border-outline-variant flex items-center justify-between px-6 mb-6 shadow-sm">
-          <h2 className="font-bold text-lg text-on-surface">إدارة المشتركين</h2>
+          <h2 className="font-bold text-lg text-on-surface">إدارة المشتركين والطلبات</h2>
           <button onClick={() => setIsAddModalOpen(true)} className="bg-primary text-on-primary px-5 py-2 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 transition-all active:scale-95 cursor-pointer text-sm">
             <span className="material-symbols-outlined text-[18px]">person_add</span>
             <span>إضافة مشترك</span>
@@ -142,8 +199,8 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
       )}
 
       <div className="space-y-6 p-2 md:p-4">
-        {/* KPI Cards - only real countable data */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-white p-5 rounded-2xl border border-outline-variant shadow-sm">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -165,7 +222,20 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
               <div>
                 <p className="text-sm text-on-surface-variant font-medium">المشتركون النشطون</p>
                 <h3 className="text-2xl font-black text-on-surface mt-0.5">
-                  {loading ? '...' : students.filter(s => s.status === 'active' || !s.status).length.toLocaleString('ar-EG') || '0'}
+                  {loading ? '...' : students.filter(s => s.status === 'active' || s.status === 'accepted' || !s.status).length.toLocaleString('ar-EG') || '0'}
+                </h3>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-2xl border border-outline-variant shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                <span className="material-symbols-outlined text-amber-600 text-[24px]">pending_actions</span>
+              </div>
+              <div>
+                <p className="text-sm text-on-surface-variant font-medium">طلبات قيد المراجعة</p>
+                <h3 className="text-2xl font-black text-on-surface mt-0.5">
+                  {loading ? '...' : students.filter(s => s.status === 'pending').length.toLocaleString('ar-EG') || '0'}
                 </h3>
               </div>
             </div>
@@ -189,7 +259,7 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
               <option value="all">الكل</option>
               <option value="active">النشطون</option>
               <option value="pending">المعلقون</option>
-              <option value="inactive">المتوقفون</option>
+              <option value="inactive">المرفوضون</option>
             </select>
             <button onClick={handleExportCSV} className="px-4 py-2.5 rounded-xl border border-outline-variant text-sm flex items-center gap-2 hover:bg-gray-50 transition-colors bg-white font-bold cursor-pointer">
               <span className="material-symbols-outlined text-[18px]">file_download</span>
@@ -218,9 +288,6 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
                 <p className="text-on-surface-variant font-bold">
                   {students.length === 0 ? 'لا يوجد مشتركون في هذه الدورة حتى الآن' : 'لا يوجد نتائج مطابقة'}
                 </p>
-                <p className="text-on-surface-variant/60 text-sm">
-                  {students.length === 0 ? 'سيظهر المشتركون هنا بعد اشتراكهم في الدورة' : ''}
-                </p>
               </div>
             ) : (
               <table className="w-full text-right">
@@ -228,10 +295,11 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
                   <tr>
                     <th className="px-5 py-3.5 text-xs font-black text-on-surface-variant uppercase tracking-wide">المشترك</th>
                     <th className="px-5 py-3.5 text-xs font-black text-on-surface-variant uppercase tracking-wide">الهاتف / البريد</th>
+                    <th className="px-5 py-3.5 text-xs font-black text-on-surface-variant uppercase tracking-wide">إيصال الدفع</th>
                     <th className="px-5 py-3.5 text-xs font-black text-on-surface-variant uppercase tracking-wide">تاريخ الاشتراك</th>
                     <th className="px-5 py-3.5 text-xs font-black text-on-surface-variant uppercase tracking-wide">المبلغ</th>
                     <th className="px-5 py-3.5 text-xs font-black text-on-surface-variant uppercase tracking-wide">الحالة</th>
-                    <th className="px-5 py-3.5 text-xs font-black text-on-surface-variant uppercase tracking-wide">إجراءات</th>
+                    <th className="px-5 py-3.5 text-xs font-black text-on-surface-variant uppercase tracking-wide">إجراءات Admin</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant/50">
@@ -244,7 +312,10 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
                             <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${student.avatarBg}`}>
                               {student.avatarLetter}
                             </div>
-                            <span className="font-bold text-sm text-on-surface">{student.name || 'بدون اسم'}</span>
+                            <div>
+                              <span className="font-bold text-sm text-on-surface block">{student.name || 'بدون اسم'}</span>
+                              {student.course_title && <span className="text-[11px] text-slate-400 font-medium block">{student.course_title}</span>}
+                            </div>
                           </div>
                         </td>
                         <td className="px-5 py-4 text-sm text-on-surface-variant">
@@ -253,6 +324,23 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
                             {student.phone && <p className="text-xs text-on-surface-variant/70">{student.phone}</p>}
                             {!student.email && !student.phone && <span className="text-on-surface-variant/40">—</span>}
                           </div>
+                        </td>
+                        <td className="px-5 py-4">
+                          {student.receipt ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPreviewReceiptUrl(student.receipt);
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold flex items-center gap-1 hover:bg-blue-100 transition-all cursor-pointer"
+                              title="معاينة إيصال الدفع"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">receipt_long</span>
+                              <span>معاينة الإيصال</span>
+                            </button>
+                          ) : (
+                            <span className="text-xs text-slate-400 font-medium">لا يوجد إيصال</span>
+                          )}
                         </td>
                         <td className="px-5 py-4 text-sm text-on-surface-variant">
                           {student.created_at
@@ -266,11 +354,31 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
                           <span className={`px-2.5 py-1 rounded-full text-xs font-black ${st.cls}`}>{st.label}</span>
                         </td>
                         <td className="px-5 py-4">
-                          <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                            <button onClick={() => setEditingStudent(student)} className="p-2 hover:bg-gray-100 rounded-full text-on-surface-variant transition-colors" title="تعديل">
+                          <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                            {/* Approve Button */}
+                            {student.status !== 'active' && student.status !== 'accepted' && (
+                              <button
+                                onClick={(e) => handleApproveStatus(e, student.subId || student.id)}
+                                className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-all"
+                                title="قبول وتفعيل الاشتراك"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                              </button>
+                            )}
+                            {/* Deny Button */}
+                            {student.status !== 'rejected' && student.status !== 'cancelled' && (
+                              <button
+                                onClick={(e) => handleDenyStatus(e, student.subId || student.id)}
+                                className="p-1.5 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg transition-all"
+                                title="رفض الطلب"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">cancel</span>
+                              </button>
+                            )}
+                            <button onClick={() => setEditingStudent(student)} className="p-1.5 hover:bg-gray-100 rounded-lg text-on-surface-variant transition-colors" title="تعديل">
                               <span className="material-symbols-outlined text-[18px]">edit</span>
                             </button>
-                            <button onClick={e => handleDeleteStudent(e, student.id)} className="p-2 hover:bg-red-50 rounded-full text-red-500 transition-colors" title="حذف">
+                            <button onClick={e => handleDeleteStudent(e, student.id)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors" title="حذف">
                               <span className="material-symbols-outlined text-[18px]">delete</span>
                             </button>
                           </div>
@@ -314,7 +422,7 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
       {/* Subscriber Details Drawer */}
       <div className={`fixed left-0 top-0 h-full w-full max-w-sm bg-white z-[70] shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col ${isDrawerOpen ? 'translate-x-0' : '-translate-x-full'}`} dir="rtl">
         <div className="p-5 border-b border-outline-variant flex items-center justify-between bg-gray-50">
-          <h3 className="font-bold text-base text-on-surface">تفاصيل المشترك</h3>
+          <h3 className="font-bold text-base text-on-surface">تفاصيل طلب المشترك</h3>
           <button className="p-2 hover:bg-gray-200 rounded-full cursor-pointer transition-colors" onClick={closeDrawer}>
             <span className="material-symbols-outlined text-[20px]">close</span>
           </button>
@@ -334,6 +442,34 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
                 {getStatus(drawerStudent.status).label}
               </span>
             </div>
+
+            {/* Receipt Preview in Drawer */}
+            {drawerStudent.receipt ? (
+              <div className="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-700">إيصال الدفع المرفق:</span>
+                  <a
+                    href={drawerStudent.receipt}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-600 font-bold hover:underline"
+                  >
+                    فتح الصورة
+                  </a>
+                </div>
+                <img
+                  src={drawerStudent.receipt}
+                  alt="إيصال الدفع"
+                  onClick={() => setPreviewReceiptUrl(drawerStudent.receipt)}
+                  className="w-full max-h-48 object-cover rounded-lg border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity"
+                />
+              </div>
+            ) : (
+              <div className="p-3 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-center text-xs font-bold text-gray-400">
+                لم يتم إرفاق إيصال دفع لهذا الطلب
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-gray-50 rounded-xl border border-outline-variant">
                 <p className="text-xs text-on-surface-variant font-bold">تاريخ الاشتراك</p>
@@ -346,12 +482,34 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
                 <p className="text-sm font-black text-on-surface mt-1">{drawerStudent.amount || '—'}</p>
               </div>
             </div>
-            <div className="flex gap-2">
-              <button onClick={() => setEditingStudent(drawerStudent)} className="flex-1 px-4 py-2.5 border border-outline-variant rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-gray-50 cursor-pointer transition-all">
+
+            {/* Admin Action Buttons in Drawer */}
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <p className="text-xs font-bold text-slate-600 mb-1">قرارات Admin:</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={(e) => handleApproveStatus(e, drawerStudent.subId || drawerStudent.id)}
+                  className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                  <span>قبول وتفعيل</span>
+                </button>
+                <button
+                  onClick={(e) => handleDenyStatus(e, drawerStudent.subId || drawerStudent.id)}
+                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px]">cancel</span>
+                  <span>رفض الطلب</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button onClick={() => setEditingStudent(drawerStudent)} className="flex-1 px-4 py-2 border border-outline-variant rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-gray-50 cursor-pointer transition-all">
                 <span className="material-symbols-outlined text-[18px]">edit</span>
                 <span>تعديل</span>
               </button>
-              <button onClick={async (e) => { await handleDeleteStudent(e as any, drawerStudent.id); }} className="flex-1 px-4 py-2.5 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-red-100 cursor-pointer transition-all">
+              <button onClick={async (e) => { await handleDeleteStudent(e as any, drawerStudent.id); }} className="flex-1 px-4 py-2 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-red-100 cursor-pointer transition-all">
                 <span className="material-symbols-outlined text-[18px]">delete</span>
                 <span>حذف</span>
               </button>
@@ -360,7 +518,38 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
         )}
       </div>
 
-      <AddStudentModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onStudentAdded={fetchStudents} />
+      {/* Full-screen Receipt Image Preview Modal */}
+      {previewReceiptUrl && (
+        <div
+          className="fixed inset-0 bg-black/80 z-[300] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setPreviewReceiptUrl(null)}
+          dir="rtl"
+        >
+          <div
+            className="relative max-w-3xl w-full bg-white rounded-3xl p-4 shadow-2xl flex flex-col items-center gap-4 max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-full flex justify-between items-center px-4 pt-2">
+              <h3 className="font-black text-slate-900 text-base">معاينة إيصال الدفع المرفق</h3>
+              <button
+                onClick={() => setPreviewReceiptUrl(null)}
+                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-all cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto w-full flex items-center justify-center p-2">
+              <img
+                src={previewReceiptUrl}
+                alt="إيصال الدفع"
+                className="max-h-[75vh] w-auto max-w-full object-contain rounded-xl shadow-md"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <AddSubscriberModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSubscriberAdded={fetchStudents} courseId={courseId} />
       {editingStudent && (
         <EditUserModal
           isOpen={!!editingStudent}
