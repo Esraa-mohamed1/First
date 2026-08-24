@@ -97,6 +97,7 @@ export default function StudentRegisterPage() {
                 name: formData.name,
                 email: formData.email,
                 phone: formData.phone,
+                country_code: selectedCountry?.isoCode || 'SA',
                 password: formData.password,
                 password_confirmation: formData.confirmPassword,
                 role: 'student'

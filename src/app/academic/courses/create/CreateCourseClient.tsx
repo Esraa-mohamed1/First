@@ -216,9 +216,6 @@ export default function CreateCourseClient() {
   const [status, setStatus] = useState<'published' | 'draft'>('draft');
   const [price, setPrice] = useState('100');
   const [currency, setCurrency] = useState<'EGP' | 'SAR' | 'USD'>('EGP');
-  const [isDiscounted, setIsDiscounted] = useState(false);
-  const [discountPrice, setDiscountPrice] = useState('');
-  const [discountEndDate, setDiscountEndDate] = useState('');
 
   // Access Duration
   const [accessDurationType, setAccessDurationType] = useState<'lifetime' | 'days' | 'until_date'>('lifetime');
@@ -301,9 +298,6 @@ export default function CreateCourseClient() {
           if (cached.pricingType) setPricingType(cached.pricingType);
           if (cached.price) setPrice(cached.price);
           if (cached.currency) setCurrency(cached.currency);
-          if (typeof cached.isDiscounted === 'boolean') setIsDiscounted(cached.isDiscounted);
-          if (cached.discountPrice) setDiscountPrice(cached.discountPrice);
-          if (cached.discountEndDate) setDiscountEndDate(cached.discountEndDate);
           if (cached.accessDurationType) setAccessDurationType(cached.accessDurationType);
           if (cached.accessDays) setAccessDays(cached.accessDays);
           if (cached.accessUntilDate) setAccessUntilDate(cached.accessUntilDate);
@@ -369,9 +363,6 @@ export default function CreateCourseClient() {
       price,
       currency,
       selectedPaymentMethods,
-      isDiscounted,
-      discountPrice,
-      discountEndDate,
       accessDurationType,
       accessDays,
       accessUntilDate,
@@ -400,9 +391,6 @@ export default function CreateCourseClient() {
     price,
     currency,
     selectedPaymentMethods,
-    isDiscounted,
-    discountPrice,
-    discountEndDate,
     accessDurationType,
     accessDays,
     accessUntilDate,
@@ -662,7 +650,7 @@ export default function CreateCourseClient() {
       who_is_this_for: targetAudienceStr || shortDescription || undefined,
       target_audience: targetAudienceStr || shortDescription || undefined,
       price: pricingType === 'free' ? 0 : Number(price || 0),
-      final_price: pricingType === 'free' ? 0 : isDiscounted && discountPrice ? Number(discountPrice) : Number(price || 0),
+      final_price: pricingType === 'free' ? 0 : Number(price || 0),
       status: targetStatus,
       coach: coachName || currentUser?.name || '',
       receiver_accounts: selectedPaymentMethods.map((m: any) => Number(m.methodId)),
@@ -672,11 +660,6 @@ export default function CreateCourseClient() {
       image: selectedFile || undefined,
 
       // Pricing & Access Options
-      is_discounted: isDiscounted ? 1 : 0,
-      isDiscounted: isDiscounted,
-      discount_price: isDiscounted && discountPrice ? Number(discountPrice) : undefined,
-      discountPrice: isDiscounted && discountPrice ? Number(discountPrice) : undefined,
-      discount_end_date: isDiscounted && discountEndDate ? discountEndDate : undefined,
       access_duration_type: accessDurationType,
       access_days: accessDurationType === 'days' && accessDays ? Number(accessDays) : undefined,
       access_until_date: ((accessDurationType as string) === 'until_date' || (accessDurationType as string) === 'date') && accessUntilDate ? accessUntilDate : undefined,
@@ -1046,8 +1029,7 @@ export default function CreateCourseClient() {
   };
 
   const basePriceNum = parseFloat(price) || 0;
-  const discountPriceNum = parseFloat(discountPrice) || 0;
-  const effectivePrice = pricingType === 'free' ? 0 : (isDiscounted && discountPriceNum > 0 ? discountPriceNum : basePriceNum);
+  const effectivePrice = pricingType === 'free' ? 0 : basePriceNum;
   const commission = effectivePrice * 0.05;
   const netProfit = effectivePrice - commission;
 
@@ -1571,49 +1553,6 @@ export default function CreateCourseClient() {
                             </div>
                           </div>
 
-                          {/* Discount Toggle */}
-                          <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-300">
-                            <div className="flex items-center gap-3">
-                              <span className="material-symbols-outlined text-blue-600">sell</span>
-                              <div>
-                                <p className="text-sm font-bold text-slate-900">تفعيل الخصم</p>
-                                <p className="text-xs text-slate-500 font-medium">حدد سعراً مخفضاً لفترة زمنية</p>
-                              </div>
-                            </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={isDiscounted}
-                                onChange={(e) => setIsDiscounted(e.target.checked)}
-                                className="sr-only peer"
-                              />
-                              <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                            </label>
-                          </div>
-
-                          {isDiscounted && (
-                            <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-300">
-                              <div>
-                                <label className="block text-sm font-bold mb-2 text-slate-800">سعر الخصم</label>
-                                <input
-                                  type="number"
-                                  value={discountPrice}
-                                  onChange={(e) => setDiscountPrice(e.target.value)}
-                                  placeholder="0.00"
-                                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm text-slate-900 font-medium outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-bold mb-2 text-slate-800">ينتهي في</label>
-                                <input
-                                  type="date"
-                                  value={discountEndDate}
-                                  onChange={(e) => setDiscountEndDate(e.target.value)}
-                                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm text-slate-900 font-medium outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10"
-                                />
-                              </div>
-                            </div>
-                          )}
                         </div>
                       )}
                     </div>
@@ -1624,11 +1563,6 @@ export default function CreateCourseClient() {
                       <div>
                         {pricingType === 'free' ? (
                           <h4 className="text-3xl font-bold text-emerald-400">مجاناً</h4>
-                        ) : isDiscounted && discountPriceNum > 0 ? (
-                          <div className="flex flex-col items-center">
-                            <span className="text-xs line-through text-slate-400 mb-1">{basePriceNum} {currency}</span>
-                            <h4 className="text-3xl font-bold text-emerald-400">{discountPriceNum} {currency}</h4>
-                          </div>
                         ) : (
                           <h4 className="text-3xl font-bold text-emerald-400">{basePriceNum} {currency}</h4>
                         )}
