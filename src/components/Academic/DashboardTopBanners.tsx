@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getProfileStatus, getMyUsageLimit, getMyPackage } from '@/services/auth';
+import { getDashboard } from '@/services/courses';
 import { 
   Sparkles, 
   ArrowLeft, 
@@ -19,15 +20,17 @@ export default function DashboardTopBanners() {
   const [userData, setUserData] = useState<any>(null);
   const [usageLimits, setUsageLimits] = useState<any[]>([]);
   const [packageInfo, setPackageInfo] = useState<any>(null);
+  const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProfileAndLimits = async () => {
       try {
-        const [profileRes, limitsRes, pkgRes] = await Promise.all([
+        const [profileRes, limitsRes, pkgRes, dashRes] = await Promise.all([
           getProfileStatus(),
           getMyUsageLimit().catch(() => null),
           getMyPackage().catch(() => null),
+          getDashboard().catch(() => null),
         ]);
 
         const profile = profileRes?.data || profileRes;
@@ -45,6 +48,10 @@ export default function DashboardTopBanners() {
         } else if (pkg) {
           setPackageInfo(pkg);
         }
+
+        if (dashRes) {
+          setDashboardData(dashRes);
+        }
       } catch (err) {
         console.error('Failed to load user profile for banners:', err);
       } finally {
@@ -57,29 +64,75 @@ export default function DashboardTopBanners() {
 
   if (loading || !userData) return null;
 
-  // 1. Calculate Real 14-Day Free Trial Countdown
-  const createdAtMs = userData?.created_at ? new Date(userData.created_at).getTime() : Date.now();
-  const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000;
-  const expiryTimeMs = createdAtMs + fourteenDaysMs;
+  // 1. Calculate Real Free Trial/Package Countdown
   const nowMs = Date.now();
-  const diffMs = Math.max(0, expiryTimeMs - nowMs);
-  const remainingDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  let remainingDays = 0;
+  let totalDays = 14; // Default fallback
+
+  if (packageInfo?.start_date && packageInfo?.end_date) {
+    const startMs = new Date(packageInfo.start_date).getTime();
+    const endMs = new Date(packageInfo.end_date).getTime();
+    
+    if (!isNaN(startMs) && !isNaN(endMs)) {
+      const totalMs = endMs - startMs;
+      if (totalMs > 0) {
+        totalDays = Math.ceil(totalMs / (1000 * 60 * 60 * 24));
+      }
+      const diffMs = Math.max(0, endMs - nowMs);
+      remainingDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    } else {
+      const createdAtMs = userData?.created_at ? new Date(userData.created_at).getTime() : Date.now();
+      const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000;
+      const expiryTimeMs = createdAtMs + fourteenDaysMs;
+      const diffMs = Math.max(0, expiryTimeMs - nowMs);
+      remainingDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    }
+  } else {
+    const createdAtMs = userData?.created_at ? new Date(userData.created_at).getTime() : Date.now();
+    const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000;
+    const expiryTimeMs = createdAtMs + fourteenDaysMs;
+    const diffMs = Math.max(0, expiryTimeMs - nowMs);
+    remainingDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  }
   const isTrialActive = remainingDays > 0;
-  const isFreePackage = !packageInfo || parseFloat(packageInfo?.price || '0') === 0 || packageInfo?.name?.includes('مجاني') || packageInfo?.name?.includes('تجريبية');
+  const packageName = packageInfo?.package_name || packageInfo?.name || '';
+  const isFreePackage = !packageInfo || parseFloat(packageInfo?.price || '0') === 0 || packageName.includes('مجاني') || packageName.includes('تجريبية');
 
   // 2. Extract Usage Limits (Courses, Storage, Students)
-  const coursesLimitObj = usageLimits.find((l: any) => l.slug === 'courses_limit' || l.name === 'عدد الدورات');
-  const storageLimitObj = usageLimits.find((l: any) => l.slug === 'storage_limit' || l.name === 'المساحة');
-  const studentsLimitObj = usageLimits.find((l: any) => l.slug === 'students_limit' || l.name === 'عدد الطلاب');
+  const coursesLimitObj = usageLimits.find((l: any) => l.feature_slug === 'max_courses' || l.slug === 'courses_limit' || l.name === 'عدد الدورات');
+  const storageLimitObj = usageLimits.find((l: any) => l.feature_slug === 'storage_limit' || l.slug === 'storage_limit' || l.name === 'المساحة');
+  const studentsLimitObj = usageLimits.find((l: any) => l.feature_slug === 'max_students' || l.slug === 'students_limit' || l.name === 'عدد الطلاب');
 
-  const coursesUsed = userData?.courses_count || coursesLimitObj?.used || 0;
-  const coursesLimit = coursesLimitObj?.limit || 5;
+  // Extract real numbers from dashboardData if available
+  let dashboardCoursesCount = undefined;
+  let dashboardStudentsCount = undefined;
 
-  const storageUsedGB = storageLimitObj?.used ? `${storageLimitObj.used} جيجابايت` : '0.5 جيجابايت';
-  const storageLimitGB = storageLimitObj?.limit ? `${storageLimitObj.limit} جيجابايت` : '10 جيجابايت';
+  if (dashboardData) {
+    dashboardCoursesCount = (dashboardData.courses && typeof dashboardData.courses === 'object' && !Array.isArray(dashboardData.courses))
+      ? dashboardData.courses.total
+      : (Array.isArray(dashboardData.courses) ? dashboardData.courses.length : (dashboardData.published_courses ?? dashboardData.stats?.published_courses));
 
-  const studentsUsed = userData?.students_count || studentsLimitObj?.used || 0;
-  const studentsLimit = studentsLimitObj?.limit || 50;
+    dashboardStudentsCount = dashboardData.new_students?.total ?? dashboardData.active_students ?? dashboardData.stats?.active_students;
+  }
+
+  const coursesUsed = dashboardCoursesCount ?? userData?.courses_count ?? (coursesLimitObj ? parseFloat(coursesLimitObj.used_amount ?? coursesLimitObj.used ?? '0') : 0);
+  const coursesLimit = coursesLimitObj ? parseFloat(coursesLimitObj.total_limit ?? coursesLimitObj.limit ?? '5') : 5;
+
+  const rawStorageUsed = storageLimitObj ? parseFloat(storageLimitObj.used_amount ?? storageLimitObj.used ?? '0') : null;
+  const rawStorageLimit = storageLimitObj ? parseFloat(storageLimitObj.total_limit ?? storageLimitObj.limit ?? '10') : 10;
+
+  let storageUsedGB = '0.5 جيجابايت';
+  if (rawStorageUsed !== null) {
+    if (rawStorageUsed > 100) {
+      storageUsedGB = `${(rawStorageUsed / 1024).toFixed(2)} جيجابايت`;
+    } else {
+      storageUsedGB = `${rawStorageUsed} جيجابايت`;
+    }
+  }
+  const storageLimitGB = `${rawStorageLimit} جيجابايت`;
+
+  const studentsUsed = dashboardStudentsCount ?? userData?.students_count ?? (studentsLimitObj ? parseFloat(studentsLimitObj.used_amount ?? studentsLimitObj.used ?? '0') : 0);
+  const studentsLimit = studentsLimitObj ? parseFloat(studentsLimitObj.total_limit ?? studentsLimitObj.limit ?? '50') : 50;
 
   // 3. Verification State
   const isEmailVerified = !!userData?.email_verified_at;
@@ -106,7 +159,7 @@ export default function DashboardTopBanners() {
                 
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold">
                   <Clock className="w-3.5 h-3.5 text-amber-600" />
-                  متبقي {remainingDays} يوماً من أصل 14 يوماً
+                  متبقي {remainingDays} يوماً من أصل {totalDays} يوماً
                 </span>
               </div>
 
@@ -115,7 +168,7 @@ export default function DashboardTopBanners() {
               </h3>
 
               <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed font-normal">
-                استمتع بجميع مميزات المنصة مجاناً لمدة 14 يوماً. يمكنك إنشاء دوراتك، رفع محتواك، وإضافة طلابك بسهولة قبل اختيار الباقة المناسبة لأكاديميتك.
+                استمتع بجميع مميزات المنصة مجاناً لمدة {totalDays} يوماً. يمكنك إنشاء دوراتك، رفع محتواك، وإضافة طلابك بسهولة قبل اختيار الباقة المناسبة لأكاديميتك.
               </p>
 
               {/* Package Usage Stats Bar */}
