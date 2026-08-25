@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { login } from '@/services/auth';
 import toast from 'react-hot-toast';
 import { useCountry } from '@/hooks/useCountry';
+import { clearUserSessionAndCache } from '@/lib/auth-storage';
 
 export function useLoginState() {
     const router = useRouter();
+
+    useEffect(() => {
+        clearUserSessionAndCache();
+    }, []);
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');

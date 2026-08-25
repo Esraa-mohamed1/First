@@ -8,6 +8,7 @@ import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Image from 'next/image';
 import SelectCourseTypeModal from './Modals/SelectCourseTypeModal';
+import { clearUserSessionAndCache } from '@/lib/auth-storage';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -306,7 +307,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               <span>مركز المساعدة</span>
             </button>
             <button
-              onClick={() => { localStorage.clear(); window.location.href = '/'; }}
+              onClick={() => {
+                clearUserSessionAndCache();
+                window.location.href = '/auth/login';
+              }}
               className="flex items-center gap-3 text-red-500 hover:text-red-600 transition-colors font-bold text-sm group"
             >
               <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center group-hover:bg-red-100 transition-colors">
