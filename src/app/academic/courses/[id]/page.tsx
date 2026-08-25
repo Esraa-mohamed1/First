@@ -1746,9 +1746,8 @@ export default function CourseDetailsPage() {
                         }
                         if (errors.user_id) setErrors(prev => ({ ...prev, user_id: null }));
                       }}
-                      placeholder="اختر مدرب"
+                      placeholder="اختر مدرب (اختياري)"
                       error={errors.user_id ? translateErrorToArabic(Array.isArray(errors.user_id) ? errors.user_id[0] : String(errors.user_id)) : undefined}
-                      required
                     />
                   </div>
                 )}
@@ -2047,45 +2046,7 @@ export default function CourseDetailsPage() {
                       </div>
                     </div>
 
-                    {/* Discount Toggle Switch */}
-                    <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-lg border border-outline-variant">
-                      <div className="flex items-center gap-3">
-                        <span className="material-symbols-outlined text-primary">sell</span>
-                        <div>
-                          <p className="text-label-md font-bold text-gray-900">تفعيل الخصم</p>
-                          <p className="text-label-sm text-on-surface-variant font-medium">حدد سعراً مخفضاً لفترة زمنية</p>
-                        </div>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          checked={isDiscounted}
-                          onChange={(e) => setIsDiscounted(e.target.checked)}
-                          className="sr-only peer" 
-                        />
-                        <div className="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                      </label>
-                    </div>
 
-                    {isDiscounted && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-300">
-                        <div>
-                          <label className="block text-label-md mb-2 text-gray-900">سعر الخصم</label>
-                          <div className="relative">
-                            <input 
-                              type="number" 
-                              value={discountPrice}
-                              onChange={(e) => setDiscountPrice(e.target.value)}
-                              placeholder="0.00" 
-                              className="w-full border border-outline-variant rounded-lg px-4 py-2 pl-12 text-sm font-bold text-gray-900 bg-white" 
-                            />
-                            <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-on-surface-variant pointer-events-none font-bold text-xs">
-                              {currency}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>

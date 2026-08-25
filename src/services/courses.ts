@@ -363,6 +363,7 @@ export const addCourseSubscriber = async (payload: {
   ends_at?: string;
   price?: number;
   amount?: number;
+  token?: string;
 }): Promise<any> => {
   const todayStr = new Date().toISOString().split('T')[0];
   const body = {

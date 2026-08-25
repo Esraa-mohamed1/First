@@ -78,6 +78,11 @@ export default function CourseList({ typeFilter, title, description, createType 
     }
   };
 
+  const handleEditCourse = (id: number) => {
+    setSelectedCourseId(id);
+    setIsEditModalOpen(true);
+  };
+
   const calculateReadiness = (course: Course) => {
     let score = 0;
     const max = 6;
@@ -361,7 +366,7 @@ export default function CourseList({ typeFilter, title, description, createType 
                                 }}
                                 className="w-full px-4 py-2.5 text-right text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center justify-end gap-3 transition-colors"
                               >
-                                <span>تعديل الاسم والنوع</span>
+                                <span>تعديل الدورة</span>
                                 <Pencil className="w-4 h-4 text-blue-600" />
                               </button>
                               <button

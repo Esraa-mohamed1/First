@@ -53,6 +53,31 @@ export default function DedicatedLandingPage() {
     setIsPaymentModalOpen(true);
   };
 
+  const getMappedMethods = () => {
+    if (!course) return [];
+    if (course.payment_methods && course.payment_methods.length > 0) {
+      return course.payment_methods;
+    }
+    if (course.receiver_accounts && course.receiver_accounts.length > 0) {
+      return course.receiver_accounts.map((acc: any) => {
+        const logoUrl = acc.receiver_account?.logo || '';
+        const fullLogoUrl = logoUrl && !logoUrl.startsWith('http') 
+          ? `https://api.darab.academy${logoUrl.startsWith('/') ? '' : '/'}${logoUrl}`
+          : logoUrl;
+
+        return {
+          methodId: acc.id || acc.receiver_account?.id || '',
+          methodName: acc.receiver_account?.name || 'حساب استقبال',
+          type: acc.receiver_account?.key || 'mobile',
+          value: acc.account_value || '',
+          logo: fullLogoUrl,
+          receiver_account_id: acc.id || acc.receiver_account?.id || ''
+        };
+      });
+    }
+    return [];
+  };
+
   return (
     <div className="min-h-screen w-full bg-white" dir="rtl">
       <LandingRenderer
@@ -69,7 +94,7 @@ export default function DedicatedLandingPage() {
         <PaymentMethodModal
           isOpen={isPaymentModalOpen}
           onClose={() => setIsPaymentModalOpen(false)}
-          methods={course.payment_methods || []}
+          methods={getMappedMethods()}
           courseId={course.id}
           coursePrice={course.final_price || course.price}
           courseCurrency={course.currency || 'SAR'}

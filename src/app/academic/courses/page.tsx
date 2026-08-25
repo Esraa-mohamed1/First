@@ -391,12 +391,12 @@ export default function CoursesPage() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleEditCourse(course.id);
+                                  router.push(`/academic/courses/${course.id}`);
                                   setActiveDropdownId(null);
                                 }}
                                 className="w-full px-4 py-2.5 text-right text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center justify-end gap-3 transition-colors"
                               >
-                                <span>تعديل الاسم والنوع</span>
+                                <span>تعديل الدورة</span>
                                 <Pencil className="w-4 h-4 text-blue-600" />
                               </button>
                               <button

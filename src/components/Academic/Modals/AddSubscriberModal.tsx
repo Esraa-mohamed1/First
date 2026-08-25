@@ -3,9 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Loader2, User as UserIcon, Mail, Phone, Lock, BookOpen, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import { createUser, getUsers } from '@/services/users';
 import { addCourseSubscriber, getCourses } from '@/services/courses';
 import { User, Course } from '@/types/api';
+
+const MySwal = withReactContent(Swal);
 
 interface AddSubscriberModalProps {
   isOpen: boolean;
@@ -120,35 +124,34 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
     }
 
     setIsSubmitting(true);
-    try {
-      // Always send current date now for subscription starts_at
-      const todayStr = new Date().toISOString().split('T')[0];
+    // Always send current date now for subscription starts_at
+    const todayStr = new Date().toISOString().split('T')[0];
+    let targetUserId: number | string | undefined = undefined;
+    let targetEmail: string | undefined = undefined;
+    let targetPhone: string | undefined = undefined;
+    let targetName: string | undefined = undefined;
 
-      let targetUserId: number | string | undefined = undefined;
-      let targetEmail: string | undefined = undefined;
-      let targetPhone: string | undefined = undefined;
-      let targetName: string | undefined = undefined;
-
-      if (subMode === 'existing') {
-        const selectedStudent = existingStudents.find((s) => String(s.id) === String(selectedUserId));
-        targetUserId = selectedUserId || selectedStudent?.id;
-        targetEmail = selectedStudent?.email || formData.email || undefined;
-        targetPhone = selectedStudent?.phone || formData.phone || undefined;
-        targetName = selectedStudent?.name || formData.name;
-      } else {
-        // Create new user first if needed
-        let createdUser: any = null;
-        try {
-          createdUser = await createUser(formData);
-        } catch {
-          /* user may exist */
-        }
-        targetUserId = createdUser?.id;
-        targetEmail = formData.email || undefined;
-        targetPhone = formData.phone || undefined;
-        targetName = formData.name;
+    if (subMode === 'existing') {
+      const selectedStudent = existingStudents.find((s) => String(s.id) === String(selectedUserId));
+      targetUserId = selectedUserId || selectedStudent?.id;
+      targetEmail = selectedStudent?.email || formData.email || undefined;
+      targetPhone = selectedStudent?.phone || formData.phone || undefined;
+      targetName = selectedStudent?.name || formData.name;
+    } else {
+      // Create new user first if needed
+      let createdUser: any = null;
+      try {
+        createdUser = await createUser(formData);
+      } catch {
+        /* user may exist */
       }
+      targetUserId = createdUser?.id;
+      targetEmail = formData.email || undefined;
+      targetPhone = formData.phone || undefined;
+      targetName = formData.name;
+    }
 
+    try {
       // Post User Subscription with current date now (starts_at)
       await addCourseSubscriber({
         course_id: activeCourseId,
@@ -174,7 +177,59 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
         status: 'active'
       });
     } catch (error: any) {
-      toast.error(error?.message || error?.data?.message || 'فشل إضافة المشترك في الدورة');
+      const errorData = error.response?.data || error;
+      const token = errorData?.token || errorData?.data?.token;
+
+      if (token) {
+        // Show approval/confirmation modal from the academy
+        const confirmResult = await MySwal.fire({
+          title: 'تنبيه الاشتراك',
+          text: 'هذا الطالب مشترك بالفعل في هذه الدورة. هل ترغب في إعادة تسجيل اشتراكه وتأكيد التفعيل؟',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#2563eb',
+          cancelButtonColor: '#727687',
+          confirmButtonText: 'نعم، أوافق على إعادة الاشتراك',
+          cancelButtonText: 'إلغاء',
+          reverseButtons: true,
+        });
+
+        if (confirmResult.isConfirmed) {
+          setIsSubmitting(true);
+          try {
+            await addCourseSubscriber({
+              course_id: activeCourseId,
+              user_id: targetUserId,
+              email: targetEmail,
+              phone: targetPhone,
+              name: targetName,
+              status: formData.status || 'active',
+              starts_at: todayStr,
+              token: token
+            });
+
+            toast.success('تمت إعادة الاشتراك وتأكيد تفعيل الطالب بنجاح');
+            onSubscriberAdded();
+            onClose();
+
+            // Reset form
+            setFormData({
+              name: '',
+              email: '',
+              phone: '',
+              password: '',
+              role: 'student',
+              status: 'active'
+            });
+          } catch (resubError: any) {
+            toast.error(resubError?.message || resubError?.data?.message || 'فشل إعادة الاشتراك');
+          } finally {
+            setIsSubmitting(false);
+          }
+        }
+      } else {
+        toast.error(error?.message || error?.data?.message || 'فشل إضافة المشترك في الدورة');
+      }
     } finally {
       setIsSubmitting(false);
     }
