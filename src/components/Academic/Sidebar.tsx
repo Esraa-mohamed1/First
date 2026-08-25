@@ -128,15 +128,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     {
       label: 'الموقع',
       icon: Globe,
-      href: '/academic/templates',
+      href: `/academic/website/builder?templateId=${activeTemplate}&pageId=${activePage}`,
       subItems: [
-        { label: 'اختيار القوالب', href: '/academic/templates' },
-        { label: 'القالب النشط', href: '/academic/website/active-template' },
         { label: 'باني الصفحات', href: `/academic/website/builder?templateId=${activeTemplate}&pageId=${activePage}` },
-        // { label: 'الهوية والألوان', href: '/academic/website/colors' },
         { label: 'الدومين المخصص', href: '/academic/domain' },
-        // { label: 'الصفحات', href: '/academic/website/pages' },
-        // { label: 'القوائم', href: '/academic/website/menus' },
       ]
     },
     {
