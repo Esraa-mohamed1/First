@@ -81,6 +81,7 @@ const RegistrationModal = () => {
                                     <PhoneInput
                                         name="phone"
                                         label=""
+                                        placeholder="اكتب رقمك"
                                         value={formData.phone}
                                         onChange={handleChange}
                                         className={`w-full p-3.5 pr-11 text-left bg-[#f8faff] border rounded-2xl focus:bg-white focus:border-[#2563eb] outline-none transition-all font-bold text-sm ${errors.phone ? 'border-red-500' : 'border-[#e2e8f0]'}`}

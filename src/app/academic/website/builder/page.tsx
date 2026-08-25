@@ -37,6 +37,7 @@ import { syncHomepageCache } from '@/lib/homepage-cache';
 import { getAcademicHtml } from '@/builder/templates/academic/academicHtml';
 import { getCoachHtml } from '@/builder/templates/coach/coachHtml';
 import { getSchoolCoachHtml } from '@/builder/templates/schoolcoach/schoolcoachHtml';
+import { getCourses } from '@/services/courses';
 
 const MySwal = withReactContent(Swal);
 
@@ -145,12 +146,29 @@ interface FooterConfig {
   newsletterBtnText?: string;
 }
 
+interface CoursesConfig {
+  title: string;
+  subtitle?: string;
+  limit: number;
+  showPrice?: boolean;
+  showStudentsCount?: boolean;
+  gridCols?: string;
+  buttonBg?: string;
+  cardBg?: string;
+  titleColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  courses?: any[];
+  items?: any[];
+}
+
 interface TemplateContent {
   navbar: NavbarConfig;
   hero: HeroConfig;
   about: AboutConfig;
   video?: any;
   features: FeaturesConfig;
+  courses?: CoursesConfig;
   pricing: PricingConfig;
   testimonials?: any;
   faq: FAQConfig;
@@ -212,6 +230,20 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
           ],
           backgroundColor: '#eef0f3',
           textColor: '#1a1f29'
+        },
+        courses: {
+          title: 'المواد والدروس التعليمية',
+          subtitle: 'اختر مادتك وابدأ التفوق الدراسي فوراً مع شروحات وتطبيقات شاملة.',
+          limit: 6,
+          showPrice: true,
+          showStudentsCount: true,
+          gridCols: '3',
+          buttonBg: '#3525cd',
+          cardBg: '#ffffff',
+          titleColor: '#1a1f29',
+          backgroundColor: '#ffffff',
+          textColor: '#1a1f29',
+          items: [],
         },
         pricing: {
           title: 'المجموعات الدراسية المتاحة',
@@ -387,6 +419,20 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         backgroundColor: '#fbfafc',
         textColor: '#1c1a22'
       },
+      courses: {
+        title: 'المسارات والماستركلاسز المتقدمة',
+        subtitle: 'محاضرات تدريبية وورش عمل مصممة لبناء المهارات القيادية والمعرفية.',
+        limit: 6,
+        showPrice: true,
+        showStudentsCount: true,
+        gridCols: '3',
+        buttonBg: '#6750a4',
+        cardBg: '#ffffff',
+        titleColor: '#1c1a22',
+        backgroundColor: '#fbfafc',
+        textColor: '#1c1a22',
+        items: [],
+      },
       pricing: {
         title: 'سلسلة الماستركلاس',
         subtitle: 'محاضرات مكثفة مسجلة بأعلى جودة سينمائية.',
@@ -480,6 +526,20 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         backgroundColor: '#f5f2ff',
         textColor: '#1b1b24'
       },
+      courses: {
+        title: 'أحدث الدورات والبرامج الأكاديمية',
+        subtitle: 'استكشف مساراتنا التدريبية المتخصصة لتطوير مهاراتك والارتقاء بمسيرتك المهنية.',
+        limit: 6,
+        showPrice: true,
+        showStudentsCount: true,
+        gridCols: '3',
+        buttonBg: '#3525cd',
+        cardBg: '#ffffff',
+        titleColor: '#1b1b24',
+        backgroundColor: '#ffffff',
+        textColor: '#1b1b24',
+        items: [],
+      },
       pricing: {
         title: 'المخرجات والنتائج الإحصائية',
         subtitle: 'معدلات تقدم وتحليلات رقمية للفصول الدراسية',
@@ -553,8 +613,7 @@ export default function PageBuilderPage() {
   const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
   const [openIconPickerIdx, setOpenIconPickerIdx] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  // Ordered list of section types from the API (drives the sidebar dropdown)
-  const [sectionsList, setSectionsList] = useState<string[]>(['navbar','hero','about','video','features','pricing','testimonials','faq','contact','footer']);
+  const [sectionsList, setSectionsList] = useState<string[]>(['navbar','hero','about','video','features','courses','testimonials','faq','contact']);
   const [saving, setSaving] = useState<boolean>(false);
 
   // Dynamic template content configurations
@@ -743,6 +802,15 @@ export default function PageBuilderPage() {
         }
       }
     });
+
+    // Courses
+    if (content.courses) {
+      updateText('[data-section="courses"] h2.text-headline-lg, [data-section="courses"] h2, #courses h2', content.courses.title || 'أحدث الدورات والبرامج الأكاديمية');
+      const coursesDesc = doc.querySelector('[data-section="courses"] .text-center p, #courses .text-center p');
+      if (coursesDesc && coursesDesc.innerHTML !== content.courses.subtitle) {
+        coursesDesc.innerHTML = content.courses.subtitle || '';
+      }
+    }
 
     // 5. Pricing
     updateText('#pricing-plans h2, #pricing-plans h3, #groups h2', content.pricing.title);
@@ -1058,9 +1126,11 @@ export default function PageBuilderPage() {
             const editorNodes = apiToEditor(apiSections);
 
             // Drive sidebar dropdown from the actual API section order
-            const KNOWN_SECTION_TYPES = ['navbar','hero','about','video','features','pricing','testimonials','faq','contact','footer'];
+            const KNOWN_SECTION_TYPES = currentRole === 'academy'
+              ? ['navbar','hero','about','video','features','courses','testimonials','faq','contact']
+              : ['navbar','hero','about','video','features','courses','testimonials','faq','contact','footer'];
             const apiSectionTypes = editorNodes
-              .map(n => n.type)
+              .map(n => (n.type === 'course-cards' || n.type === 'courses') ? 'courses' : n.type)
               .filter(t => KNOWN_SECTION_TYPES.includes(t));
             // Merge so we always show all sections; API order wins for sections present
             const merged = [
@@ -1069,13 +1139,27 @@ export default function PageBuilderPage() {
             ];
             setSectionsList(merged);
             
+            let realCoursesData: any[] = [];
+            try {
+              const res = await getCourses();
+              if (res && Array.isArray(res)) {
+                realCoursesData = res;
+              }
+            } catch (e) {
+              console.warn('Failed to load courses for builder preview', e);
+            }
+
             // Reconstruct content state from database sections!
             const fallback = getDefaultContent(currentRole, activeTemplateId);
+            if (fallback.courses && realCoursesData.length > 0) {
+              fallback.courses.items = realCoursesData;
+            }
             
             const navbarNode = editorNodes.find(n => n.type === 'navbar');
             const heroNode = editorNodes.find(n => n.type === 'hero');
             const aboutNode = editorNodes.find(n => n.type === 'about');
             const featuresNode = editorNodes.find(n => n.type === 'features');
+            const courseNode = editorNodes.find(n => n.type === 'course-cards' || n.type === 'courses');
             const pricingNode = editorNodes.find(n => n.type === 'pricing');
             const faqNode = editorNodes.find(n => n.type === 'faq');
             const contactNode = editorNodes.find(n => n.type === 'contact');
@@ -1141,6 +1225,22 @@ export default function PageBuilderPage() {
                 backgroundColor: sv(featuresNode.props.backgroundColor ?? featuresNode.props.background_color ?? featuresNode.props.bg_color, fallback.features.backgroundColor),
                 textColor: sv(featuresNode.props.textColor ?? featuresNode.props.text_color, fallback.features.textColor),
               } : fallback.features,
+
+              courses: courseNode?.props ? {
+                title: sv(courseNode.props.title, fallback.courses?.title || 'أحدث الدورات والبرامج الأكاديمية'),
+                subtitle: sv(courseNode.props.subtitle, fallback.courses?.subtitle || 'استكشف مساراتنا التدريبية المتخصصة لتطوير مهاراتك والارتقاء بمسيرتك المهنية.'),
+                limit: courseNode.props.limit ? Number(courseNode.props.limit) : (fallback.courses?.limit ?? 6),
+                showPrice: courseNode.props.showPrice !== undefined ? Boolean(courseNode.props.showPrice) : (fallback.courses?.showPrice ?? true),
+                showStudentsCount: courseNode.props.showStudentsCount !== undefined ? Boolean(courseNode.props.showStudentsCount) : (fallback.courses?.showStudentsCount ?? true),
+                gridCols: sv(courseNode.props.gridCols, fallback.courses?.gridCols || '3'),
+                buttonBg: sv(courseNode.props.buttonBg, fallback.courses?.buttonBg || '#3525cd'),
+                cardBg: sv(courseNode.props.cardBg, fallback.courses?.cardBg || '#ffffff'),
+                titleColor: sv(courseNode.props.titleColor, fallback.courses?.titleColor || '#111827'),
+                backgroundColor: sv(courseNode.props.backgroundColor ?? courseNode.props.background_color ?? courseNode.props.bg_color, fallback.courses?.backgroundColor || '#ffffff'),
+                textColor: sv(courseNode.props.textColor ?? courseNode.props.text_color, fallback.courses?.textColor || '#1b1b24'),
+                items: fallback.courses?.items || [],
+                courses: courseNode.props.courses || fallback.courses?.courses || [],
+              } : fallback.courses,
 
               pricing: pricingNode?.props ? {
                 title: sv(pricingNode.props.title, fallback.pricing.title),
@@ -1215,6 +1315,12 @@ export default function PageBuilderPage() {
         }
       }
       const defaults = getDefaultContent(currentRole, activeTemplateId);
+      try {
+        const res = await getCourses();
+        if (res && Array.isArray(res) && defaults.courses) {
+          defaults.courses.items = res;
+        }
+      } catch (e) {}
       setContent(defaults);
       setPreviewContent(defaults);
       setInitialHtml(getHtmlForRole(currentRole, defaults));
@@ -1243,10 +1349,11 @@ export default function PageBuilderPage() {
         { id: 'hero', type: 'hero', props: content.hero },
         { id: 'about', type: 'about', props: content.about },
         { id: 'features', type: 'features', props: content.features },
+        ...(content.courses ? [{ id: 'courses', type: 'course-cards', props: content.courses }] : []),
         { id: 'pricing', type: 'pricing', props: content.pricing },
         { id: 'faq', type: 'faq', props: content.faq },
         { id: 'contact', type: 'contact', props: content.contact },
-        { id: 'footer', type: 'footer', props: content.footer }
+        ...(currentRole !== 'academy' ? [{ id: 'footer', type: 'footer', props: content.footer }] : []),
       ];
 
       const apiSections = editorToApi(nodes, activePageId);
@@ -1314,10 +1421,11 @@ export default function PageBuilderPage() {
         { id: 'hero', type: 'hero', props: content.hero },
         { id: 'about', type: 'about', props: content.about },
         { id: 'features', type: 'features', props: content.features },
+        ...(content.courses ? [{ id: 'courses', type: 'course-cards', props: content.courses }] : []),
         { id: 'pricing', type: 'pricing', props: content.pricing },
         { id: 'faq', type: 'faq', props: content.faq },
         { id: 'contact', type: 'contact', props: content.contact },
-        { id: 'footer', type: 'footer', props: content.footer }
+        ...(currentRole !== 'academy' ? [{ id: 'footer', type: 'footer', props: content.footer }] : []),
       ];
 
       const apiSections = editorToApi(nodes, activePageId);
@@ -1576,7 +1684,7 @@ export default function PageBuilderPage() {
                     about:        'النبذة والتعريف (About Section)',
                     video:        'فيديو العرض التعريفي (Video Intro)',
                     features:     'مميزات الأكاديمية (Features)',
-                    pricing:      'الدورات والأسعار (Curriculum/Pricing)',
+                    courses:      'الدورات والبرامج التدريبية (Courses)',
                     testimonials: 'آراء العملاء والتقييمات (Testimonials)',
                     faq:          'الأسئلة الشائعة (FAQ Accordions)',
                     contact:      'أزرار التواصل (Contact/WhatsApp)',
@@ -2119,148 +2227,116 @@ export default function PageBuilderPage() {
               </div>
             )}
 
-            {/* Courses / Pricing Editor */}
-            {activeSection === 'pricing' && (
+            {/* Courses Editor */}
+            {activeSection === 'courses' && content.courses && (
               <div className="space-y-5">
                 <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
                   <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص الكورسات والأسعار</h3>
+                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص قسم الدورات التدريبية</h3>
+                </div>
+
+                <div className="bg-blue-50/70 border border-blue-200 p-3.5 rounded-xl text-[11px] text-blue-900 font-bold leading-relaxed flex items-start gap-2">
+                  <span className="material-symbols-outlined text-[18px] text-blue-600 shrink-0 mt-0.5">info</span>
+                  <div>
+                    يتم جلب وعرض بيانات الدورات الحقيقية تلقائياً من المنصة. يمكنك تخصيص العناوين، والحد الأقصى للدورات المعروضة، والخيارات أدناه:
+                  </div>
                 </div>
 
                 <div className="space-y-4">
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم الكورسات / التسعير</label>
+                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم الدورات</label>
                     <input
                       type="text"
-                      value={content.pricing.title}
-                      onChange={(e) => handleUpdateField('pricing', 'title', e.target.value)}
+                      value={content.courses.title}
+                      onChange={(e) => handleUpdateField('courses', 'title', e.target.value)}
                       className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
                     />
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان فرعي لقسم التسعير</label>
-                    <input
-                      type="text"
-                      value={content.pricing.subtitle}
-                      onChange={(e) => handleUpdateField('pricing', 'subtitle', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                    <label className="text-[11px] font-bold text-slate-600">وصف / عنوان فرعي للقسم</label>
+                    <textarea
+                      value={content.courses.subtitle || ''}
+                      onChange={(e) => handleUpdateField('courses', 'subtitle', e.target.value)}
+                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px] resize-none"
                     />
                   </div>
-                </div>
 
-                {/* Pricing Plans List */}
-                <div className="space-y-3 pt-3 border-t border-slate-100">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-slate-500">بطاقات الباقات / الدورات:</span>
-                    <button
-                      type="button"
-                      onClick={() => handleAddListItem('pricing', 'items', { title: 'باقة تدريبية جديدة', price: '١٠٠ ريال / شهرياً', features: ['تحديث دوري للمواد الدراسية', 'أوراق عمل شاملة'] })}
-                      className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-0.5"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      إضافة باقة
-                    </button>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">الحد الأقصى للدورات</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="24"
+                        value={content.courses.limit || 6}
+                        onChange={(e) => handleUpdateField('courses', 'limit', parseInt(e.target.value, 10) || 6)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">تخطيط الأعمدة</label>
+                      <select
+                        value={content.courses.gridCols || '3'}
+                        onChange={(e) => handleUpdateField('courses', 'gridCols', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      >
+                        <option value="2">عمودين (2)</option>
+                        <option value="3">3 أعمدة (3)</option>
+                        <option value="4">4 أعمدة (4)</option>
+                      </select>
+                    </div>
                   </div>
 
-                  <div className="space-y-4">
-                    {content.pricing.items.map((item, idx) => (
-                      <div
-                        key={idx}
-                        id={`editor-item-pricing-${idx}`}
-                        className={`border rounded-xl p-3 relative flex flex-col gap-2.5 transition-all duration-300 ${
-                          activeSection === 'pricing' && activeItemIndex === idx
-                            ? 'bg-blue-50/50 border-blue-500 ring-2 ring-blue-500/20 shadow-md scale-[1.01]'
-                            : 'bg-slate-50 border-slate-200'
-                        }`}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveListItem('pricing', 'items', idx)}
-                          className="absolute top-2 left-2 text-slate-400 hover:text-red-500 transition-colors"
-                          title="حذف الباقة"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                        
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">اسم الكورس أو الباقة</label>
-                          <input
-                            type="text"
-                            value={item.title}
-                            onChange={(e) => handleUpdateNestedField('pricing', 'items', idx, 'title', e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-bold"
-                          />
-                        </div>
+                  <div className="space-y-3 pt-2 border-t border-slate-100">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={content.courses.showPrice !== false}
+                        onChange={(e) => handleUpdateField('courses', 'showPrice', e.target.checked)}
+                        className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500"
+                      />
+                      <span className="text-xs font-bold text-slate-700">إظهار أسعار الدورات</span>
+                    </label>
 
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">السعر المعروض</label>
-                          <input
-                            type="text"
-                            value={item.price}
-                            onChange={(e) => handleUpdateNestedField('pricing', 'items', idx, 'price', e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-extrabold text-slate-800"
-                          />
-                        </div>
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={content.courses.showStudentsCount !== false}
+                        onChange={(e) => handleUpdateField('courses', 'showStudentsCount', e.target.checked)}
+                        className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500"
+                      />
+                      <span className="text-xs font-bold text-slate-700">إظهار عدد الطلاب المسجلين</span>
+                    </label>
+                  </div>
 
-                        {(() => {
-                          const itemFeatures = Array.isArray(item.features) ? item.features : [];
-                          const hasImg = itemFeatures.some(f => typeof f === 'string' && (f.startsWith('http') || f.includes('/')));
-                          const imgUrl = itemFeatures.find(f => typeof f === 'string' && (f.startsWith('http') || f.includes('/')));
-
-                          return (
-                            <>
-                              <div className="flex flex-col gap-1">
-                                <label className="text-[9px] font-bold text-slate-500">الميزات المشمولة (مفصولة بفاصلة)</label>
-                                <input
-                                  type="text"
-                                  value={itemFeatures.filter(f => typeof f === 'string' && !f.startsWith('http') && !f.includes('/')).join('، ')}
-                                  onChange={(e) => {
-                                    const arrText = e.target.value.split(/[،,]/).map(s => s.trim()).filter(Boolean);
-                                    const arrImgs = itemFeatures.filter(f => typeof f === 'string' && (f.startsWith('http') || f.includes('/')));
-                                    handleUpdateNestedField('pricing', 'items', idx, 'features', [...arrText, ...arrImgs]);
-                                  }}
-                                  className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none text-slate-700 font-medium"
-                                  placeholder="ميزة ١ ، ميزة ٢ ، ميزة ٣"
-                                />
-                              </div>
-
-                              {/* If there is an image in features, or if the role is coach, allow editing it explicitly */}
-                              {(hasImg || currentRole === 'coach') && (
-                                <div className="flex flex-col gap-1 mt-1">
-                                  <label className="text-[9px] font-bold text-slate-500">رابط صورة الكارت / الماستركلاس</label>
-                                  <div className="flex gap-2 items-center">
-                                    {imgUrl && (
-                                      <img 
-                                        src={imgUrl} 
-                                        className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0" 
-                                        alt="preview" 
-                                      />
-                                    )}
-                                    <input
-                                      type="text"
-                                      value={imgUrl || ''}
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        const arrText = itemFeatures.filter(f => typeof f === 'string' && !f.startsWith('http') && !f.includes('/'));
-                                        if (val.trim()) {
-                                          handleUpdateNestedField('pricing', 'items', idx, 'features', [...arrText, val.trim()]);
-                                        } else {
-                                          handleUpdateNestedField('pricing', 'items', idx, 'features', arrText);
-                                        }
-                                      }}
-                                      className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-mono flex-grow text-left"
-                                      placeholder="https://..."
-                                      dir="ltr"
-                                    />
-                                  </div>
-                                </div>
-                              )}
-                            </>
-                          );
-                        })()}
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">لون الأزرار / الشارة</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input
+                          type="color"
+                          value={content.courses.buttonBg || '#3525cd'}
+                          onChange={(e) => handleUpdateField('courses', 'buttonBg', e.target.value)}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                        />
+                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.courses.buttonBg || '#3525cd'}</span>
                       </div>
-                    ))}
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input
+                          type="color"
+                          value={content.courses.backgroundColor || '#ffffff'}
+                          onChange={(e) => handleUpdateField('courses', 'backgroundColor', e.target.value)}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                        />
+                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.courses.backgroundColor || '#ffffff'}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2550,7 +2626,7 @@ export default function PageBuilderPage() {
             )}
 
             {/* Footer Editor */}
-            {activeSection === 'footer' && (
+            {activeSection === 'footer' && currentRole !== 'academy' && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
                   <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
@@ -2843,67 +2919,45 @@ export default function PageBuilderPage() {
                   </div>
                 </div>
 
-                {/* Curriculum / Pricing Section */}
-                <div
-                  onClick={() => { setActiveSection('pricing'); setActiveItemIndex(null); }}
-                  style={{ backgroundColor: content.pricing.backgroundColor, color: content.pricing.textColor }}
-                  className={`p-8 sm:p-12 space-y-8 cursor-pointer border-t border-slate-100 transition-all relative group ${
-                    activeSection === 'pricing' 
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
-                      : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                  }`}
-                >
-                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
-                    <Pencil className="w-2.5 h-2.5" />
-                    <span>تعديل الدورات والأسعار</span>
-                  </div>
-                  <div className="text-center space-y-1.5">
-                    <h3 className="text-lg font-black">{content.pricing.title}</h3>
-                    <p className="text-xs text-slate-500 font-bold">{content.pricing.subtitle}</p>
-                  </div>
+                {/* Courses Section */}
+                {content.courses && (
+                  <div
+                    onClick={() => { setActiveSection('courses'); setActiveItemIndex(null); }}
+                    style={{ backgroundColor: content.courses.backgroundColor || '#ffffff', color: content.courses.textColor || '#1b1b24' }}
+                    className={`p-8 sm:p-12 space-y-8 cursor-pointer border-t border-slate-100 transition-all relative group ${
+                      activeSection === 'courses' 
+                        ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                        : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
+                    }`}
+                  >
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
+                      <Pencil className="w-2.5 h-2.5" />
+                      <span>تعديل قسم الدورات</span>
+                    </div>
+                    <div className="text-center space-y-1.5">
+                      <h3 className="text-lg font-black">{content.courses.title || 'أحدث الدورات والبرامج الأكاديمية'}</h3>
+                      <p className="text-xs text-slate-500 font-bold">{content.courses.subtitle}</p>
+                    </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
-                    {content.pricing.items.map((item, i) => (
-                      <div
-                        key={i}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSelectSectionItem('pricing', i);
-                        }}
-                        className={`bg-white border-2 rounded-3xl p-6 flex flex-col justify-between shadow-xs cursor-pointer transition-all relative group/item ${
-                          activeSection === 'pricing' && activeItemIndex === i
-                            ? 'border-blue-500 ring-2 ring-blue-500/40 scale-[1.02] z-20 shadow-md'
-                            : 'border-slate-200 hover:border-blue-400 hover:shadow-sm'
-                        }`}
-                      >
-                        <div className="absolute top-2 left-2 opacity-0 group-hover/item:opacity-100 transition-opacity bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm z-30 pointer-events-none flex items-center gap-0.5">
-                          <Pencil className="w-2 h-2" />
-                          <span>تعديل الباقة</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {[1, 2, 3].map((num) => (
+                        <div key={num} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col justify-between">
+                          <div>
+                            <div className="w-full aspect-video bg-slate-200 rounded-xl mb-3 flex items-center justify-center text-slate-400">
+                              <BookOpen className="w-6 h-6" />
+                            </div>
+                            <h4 className="text-xs font-black text-slate-900 mb-1">دورة تدريبية نموذجية #{num}</h4>
+                            <p className="text-[10px] text-slate-500 font-bold">المحاضر المعتمد</p>
+                          </div>
+                          <div className="mt-3 pt-2 border-t border-slate-200 flex justify-between items-center text-[10px] font-bold text-blue-600">
+                            <span>{content.courses?.showPrice ? '٢٥٠ ر.س' : ''}</span>
+                            <span>{content.courses?.showStudentsCount ? '١٢٠ طالب' : ''}</span>
+                          </div>
                         </div>
-                        <div>
-                          <h4 className="text-sm font-extrabold text-slate-900 mb-2">{item.title}</h4>
-                          <div className="text-xl font-black text-blue-600 mb-4">{item.price}</div>
-                          <ul className="space-y-2 text-[10px] text-slate-500 font-bold">
-                            {(Array.isArray(item.features) ? item.features : []).map((feat, fIdx) => (
-                              <li key={fIdx} className="flex items-center gap-1.5">
-                                <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                                <span>{feat}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div className="mt-5">
-                          <button
-                            type="button"
-                            className="w-full py-2 bg-slate-900 text-white rounded-xl text-[10px] font-extrabold"
-                          >
-                            اشترك الآن
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* FAQ Section */}
                 <div
@@ -2984,21 +3038,23 @@ export default function PageBuilderPage() {
                 </div>
 
                 {/* Footer Section */}
-                <div
-                  onClick={() => { setActiveSection('footer'); setActiveItemIndex(null); }}
-                  style={{ backgroundColor: content.footer.backgroundColor, color: content.footer.textColor }}
-                  className={`py-6 px-6 text-center text-[10px] cursor-pointer opacity-90 border-t border-slate-100 transition-all relative group ${
-                    activeSection === 'footer' 
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
-                      : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                  }`}
-                >
-                  <div className="absolute top-1 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
-                    <Pencil className="w-2.5 h-2.5" />
-                    <span>تعديل التذييل</span>
+                {currentRole !== 'academy' && (
+                  <div
+                    onClick={() => { setActiveSection('footer'); setActiveItemIndex(null); }}
+                    style={{ backgroundColor: content.footer.backgroundColor, color: content.footer.textColor }}
+                    className={`py-6 px-6 text-center text-[10px] cursor-pointer opacity-90 border-t border-slate-100 transition-all relative group ${
+                      activeSection === 'footer' 
+                        ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                        : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
+                    }`}
+                  >
+                    <div className="absolute top-1 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
+                      <Pencil className="w-2.5 h-2.5" />
+                      <span>تعديل التذييل</span>
+                    </div>
+                    <p className="font-bold opacity-80">{content.footer.text}</p>
                   </div>
-                  <p className="font-bold opacity-80">{content.footer.text}</p>
-                </div>
+                )}
 
               </div>
             )}

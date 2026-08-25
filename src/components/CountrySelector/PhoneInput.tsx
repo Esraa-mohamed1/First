@@ -37,7 +37,7 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
                 "placeholder:text-zinc-400 bg-white placeholder-shown:truncate",
                 className
               )}
-              placeholder="555 000 0000"
+              placeholder="اكتب رقمك"
               dir="ltr"
               {...props}
             />
