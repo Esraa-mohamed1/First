@@ -97,6 +97,7 @@ export default function StudentRegisterPage() {
                 name: formData.name,
                 email: formData.email,
                 phone: formData.phone,
+                country_code: selectedCountry?.isoCode || 'SA',
                 password: formData.password,
                 password_confirmation: formData.confirmPassword,
                 role: 'student'
@@ -197,6 +198,7 @@ export default function StudentRegisterPage() {
                                 <PhoneInput
                                     name="phone"
                                     label=""
+                                    placeholder="اكتب رقمك"
                                     value={formData.phone}
                                     onChange={handleChange}
                                     className={`p-4 pr-12 text-left bg-gray-50 border-2 rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all duration-300 font-bold text-gray-900 ${errors.phone ? 'border-red-500' : 'border-transparent'}`}

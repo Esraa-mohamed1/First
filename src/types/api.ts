@@ -116,6 +116,9 @@ export interface Course {
   learning_points?: string[];
   created_at?: string;
   updated_at?: string;
+  access_duration_type?: 'lifetime' | 'days' | 'until_date' | string;
+  access_days?: number;
+  access_until_date?: string;
 }
 
 export interface CreateCoursePayload {

@@ -24,6 +24,17 @@ export interface TemplateContent {
     backgroundColor: string;
     textColor: string;
   };
+  courses?: {
+    title?: string;
+    subtitle?: string;
+    items?: any[];
+    limit?: number;
+    showPrice?: boolean;
+    showStudentsCount?: boolean;
+    buttonBg?: string;
+    backgroundColor?: string;
+    textColor?: string;
+  };
   pricing: {
     title: string;
     subtitle: string;
@@ -109,6 +120,14 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
   const featuresBg = content?.features?.backgroundColor || (content?.features as any)?.background_color || (content?.features as any)?.bg_color || '#f5f2ff';
   const featuresTextColor = content?.features?.textColor || (content?.features as any)?.text_color || '#1b1b24';
 
+  const coursesTitle = content?.courses?.title || 'أحدث الدورات والبرامج الأكاديمية';
+  const coursesSubtitle = content?.courses?.subtitle || 'استكشف مساراتنا التدريبية المتخصصة لتطوير مهاراتك والارتقاء بمسيرتك المهنية.';
+  const coursesLimit = content?.courses?.limit || 6;
+  const showPrice = content?.courses?.showPrice ?? true;
+  const showStudentsCount = content?.courses?.showStudentsCount ?? true;
+  const rawCourses = content?.courses?.items || [];
+  const coursesList = rawCourses.slice(0, coursesLimit);
+
   const pricingTitle = content?.pricing?.title || 'المخرجات والنتائج الإحصائية';
   const pricingSubtitle = content?.pricing?.subtitle || 'معدلات تقدم وتحليلات رقمية للفصول الدراسية';
   const pricingItems = content?.pricing?.items || [];
@@ -130,10 +149,6 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
   const videoTitle = (content?.about as any)?.videoTitle || 'تعرف على فلسفتنا التعليمية في ٣ دقائق';
   const videoDesc = (content?.about as any)?.videoDesc || 'نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.';
   const videoLink = (content?.about as any)?.videoLink || (content?.about as any)?.videoImage || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop';
-
-  const newsletterTitle = (content?.footer as any)?.newsletterTitle || 'اشترك في نشرتنا البريدية المعرفية';
-  const newsletterDesc = (content?.footer as any)?.newsletterDesc || 'احصل على أحدث المقالات التحليلية، والمناهج الجديدة، والماستركلاسز الحصرية مباشرة في بريدك الإلكتروني أسبوعياً.';
-  const newsletterBtnText = (content?.footer as any)?.newsletterBtnText || 'اشترك الآن';
 
   const testimonialsTitle = (content?.pricing as any)?.testimonialsTitle || 'ماذا يقول شركاؤنا وطلابنا؟';
   const testimonialsSubtitle = (content?.pricing as any)?.testimonialsSubtitle || 'قصص نجاح ملهمة وتجارب واقعية يعبر عنها شركاؤنا الأكاديميون وطلابنا المتميزون.';
@@ -298,7 +313,7 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 <!-- Desktop Nav -->
 <nav class="hidden md:flex items-center gap-stack-lg">
 <a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="#">الرئيسية</a>
-<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="#">الدورات</a>
+<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="#courses">الدورات</a>
 <a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="#">المدربون</a>
 <a class="text-primary text-label-md font-label-md border-b-2 border-primary pb-1 hover:text-primary transition-colors duration-200" href="#">أكاديمي</a>
 <a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="#">الموارد</a>
@@ -325,7 +340,7 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 <a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="#">
 <span class="material-symbols-outlined">home</span> الرئيسية
                 </a>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="#">
+<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="#courses">
 <span class="material-symbols-outlined">menu_book</span> الدورات
                 </a>
 <a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="#">
@@ -499,6 +514,93 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 </div>
 </section>
 
+<!-- Courses Section -->
+<section data-section="courses" id="courses" class="w-full bg-surface transition-all duration-300 section-hover cursor-pointer">
+  <div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
+    <div class="text-center mb-16">
+      <span class="text-label-md font-label-md text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">البرامج التدريبية</span>
+      <h2 class="text-headline-lg font-headline-lg text-on-surface mt-4 mb-2">${coursesTitle}</h2>
+      <p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mx-auto">${coursesSubtitle}</p>
+    </div>
+
+    ${coursesList.length === 0 ? `
+      <div class="bg-surface-container-lowest border border-dashed border-outline-variant/60 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-3 my-4">
+        <span class="material-symbols-outlined text-outline text-[48px]">menu_book</span>
+        <h3 class="text-headline-md font-headline-md text-on-surface">لا توجد دورات متاحة حالياً</h3>
+        <p class="text-body-md font-body-md text-on-surface-variant max-w-md">تابعنا قريباً للمزيد من الدورات وورش العمل الجديدة.</p>
+        ${isEditing ? `
+          <a href="/academic/courses/create" class="mt-4 inline-flex items-center gap-2 bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-6 py-3 rounded-full transition-all shadow-sm">
+            <span class="material-symbols-outlined text-[18px]">add</span>
+            <span>إضافة دورة جديدة</span>
+          </a>
+        ` : ''}
+      </div>
+    ` : `
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+        ${coursesList.map((course: any, idx: number) => {
+          const courseHref = `/${course.slug || course.id}`;
+          const courseTitle = course.title || 'دورة تدريبية';
+          const courseImg = course.image || course.cover_image || 'https://images.unsplash.com/photo-1586717791821-3f44a563de4c?auto=format&fit=crop&q=80&w=600';
+          const instructorName = typeof course.instructor === 'object' && course.instructor?.name
+            ? course.instructor.name
+            : (course.instructor || course.instructor_name || course.coach || '');
+          const duration = course.duration || (course.units?.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0) ? `${course.units.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0)} درس` : '');
+          const students = course.students_count ?? course.students;
+          const isFree = Number(course.price) === 0 || course.price_type === 'free';
+          const priceDisplay = isFree
+            ? 'مجانًا'
+            : (course.final_price ? `${course.final_price} ${course.currency || 'ر.س'}` : (course.price ? `${course.price} ${course.currency || 'ر.س'}` : 'مجانًا'));
+
+          return `
+            <a href="${courseHref}" target="_top" data-course-index="${idx}" class="group block bg-surface-container-lowest border border-outline-variant/60 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:border-primary/40 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between">
+              <div>
+                <div class="relative w-full aspect-video overflow-hidden bg-surface-container">
+                  <img src="${courseImg}" alt="${courseTitle}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  ${showPrice ? `
+                    <span class="absolute top-3 left-3 bg-surface/90 backdrop-blur-md text-primary font-extrabold text-xs px-3 py-1 rounded-full shadow-sm">
+                      ${priceDisplay}
+                    </span>
+                  ` : ''}
+                </div>
+                <div class="p-6">
+                  ${instructorName ? `
+                    <div class="flex items-center gap-2 mb-3 text-outline text-xs font-bold">
+                      <span class="material-symbols-outlined text-[16px] text-primary">person</span>
+                      <span>${instructorName}</span>
+                    </div>
+                  ` : ''}
+                  <h3 class="text-headline-md font-headline-md text-on-surface text-lg font-bold mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                    ${courseTitle}
+                  </h3>
+                  ${course.description ? `
+                    <p class="text-body-md text-on-surface-variant text-xs line-clamp-2 mb-4 leading-relaxed opacity-80">
+                      ${course.description}
+                    </p>
+                  ` : ''}
+                </div>
+              </div>
+              <div class="px-6 pb-6 pt-2 border-t border-outline-variant/20 flex items-center justify-between text-xs text-on-surface-variant font-bold">
+                ${showStudentsCount && students !== undefined ? `
+                  <span class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px] text-primary">groups</span>
+                    <span>${students} طالب</span>
+                  </span>
+                ` : '<span></span>'}
+                ${duration ? `
+                  <span class="flex items-center gap-1 text-slate-500">
+                    <span class="material-symbols-outlined text-[16px]">schedule</span>
+                    <span>${duration}</span>
+                  </span>
+                ` : ''}
+              </div>
+            </a>
+          `;
+        }).join('')}
+      </div>
+    `}
+  </div>
+</section>
+
 <!-- Stats Section -->
 <section class="w-full bg-primary/5">
   <div class="max-w-container-max mx-auto py-20 px-margin-mobile md:px-margin-desktop">
@@ -596,21 +698,6 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 </div>
 </section>
 
-<!-- Newsletter Section -->
-<section data-section="footer" id="newsletter" class="w-full bg-surface-container border-y border-outline-variant/30 section-hover cursor-pointer">
-  <div class="max-w-container-max mx-auto py-20 px-margin-mobile md:px-margin-desktop">
-    <div class="max-w-3xl mx-auto text-center space-y-8">
-      <span class="material-symbols-outlined text-primary text-[48px] fill">mail</span>
-      <h2 class="text-headline-lg font-headline-lg text-on-surface">${newsletterTitle}</h2>
-      <p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl mx-auto leading-relaxed">${newsletterDesc}</p>
-      <div class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-        <input type="email" placeholder="أدخل بريدك الإلكتروني هنا" class="flex-grow px-6 py-4 rounded-full border border-outline-variant bg-white text-on-surface outline-none focus:border-primary transition-colors text-sm" />
-        <button class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-8 py-4 rounded-full shadow-md transition-colors duration-300 shrink-0">${newsletterBtnText}</button>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- Final CTA -->
 <section data-section="contact" class="py-32 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto text-center mb-16 transition-all duration-300 section-hover cursor-pointer rounded-3xl">
 <div class="max-w-4xl mx-auto bg-primary/5 border border-primary/20 rounded-[3rem] p-stack-lg md:p-24 relative overflow-hidden shadow-2xl">
@@ -633,20 +720,6 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 </div>
 </section>
 </main>
-<!-- Footer -->
-<footer data-section="footer" id="footer-bar" class="w-full py-stack-lg px-margin-mobile md:px-margin-desktop mt-stack-lg border-t border-outline-variant/30 bg-surface-container-lowest transition-all duration-300 section-hover cursor-pointer" style="background-color: ${footerBg}; color: ${footerTextColor};">
-<div class="max-w-container-max mx-auto flex flex-col md:flex-row items-center justify-between gap-stack-md">
-<div class="flex items-center gap-3">
-<span class="text-headline-md font-headline-md text-primary font-bold" style="color: ${footerTextColor};">${navbarTitle}</span>
-<span class="text-body-md font-body-md text-on-surface-variant text-sm mr-4">${footerText}</span>
-</div>
-<nav class="flex items-center gap-stack-lg">
-<a class="text-on-surface-variant text-body-md font-body-md hover:text-primary transition-colors duration-200" href="#">سياسة الخصوصية</a>
-<a class="text-on-surface-variant text-body-md font-body-md hover:text-primary transition-colors duration-200" href="#">شروط الخدمة</a>
-<a class="text-on-surface-variant text-body-md font-body-md hover:text-primary transition-colors duration-200" href="#">اتصل بالدعم</a>
-</nav>
-</div>
-</footer>
 <script>
         // Mobile Drawer Toggle
         const menuBtn = document.querySelector('.md\\\\:hidden');

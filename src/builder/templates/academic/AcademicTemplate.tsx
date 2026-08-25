@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { getAcademicHtml } from './academicHtml';
 import { getPublicPages, getPublicSections, apiToEditor } from '@/services/pages';
+import { getCourses } from '@/services/courses';
+import { getStudentCourses } from '@/services/student-courses';
 import { useBuilderStore } from '../../store/builderStore';
 
 const TEMPLATE_SLUGS = ['academy-dashboard', 'template_1', 'template_2', 'template_3', 'template_4'];
@@ -45,6 +47,15 @@ const DEFAULT_CONTENT = {
     ],
     backgroundColor: '#f5f2ff',
     textColor: '#1b1b24',
+  },
+  courses: {
+    title: 'أحدث الدورات والبرامج الأكاديمية',
+    subtitle: 'استكشف مساراتنا التدريبية المتخصصة لتطوير مهاراتك والارتقاء بمسيرتك المهنية.',
+    items: [],
+    limit: 6,
+    showPrice: true,
+    showStudentsCount: true,
+    buttonBg: '#3525cd',
   },
   pricing: {
     title: 'المخرجات والنتائج الإحصائية',
@@ -95,15 +106,20 @@ const DEFAULT_CONTENT = {
   },
 };
 
-function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT) {
+function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, realCourses: any[] = [], isEditing: boolean = false) {
   const navbarNode = nodes.find(n => n.type === 'navbar');
   const heroNode = nodes.find(n => n.type === 'hero');
   const aboutNode = nodes.find(n => n.type === 'about');
   const featuresNode = nodes.find(n => n.type === 'features');
+  const courseNode = nodes.find(n => n.type === 'course-cards' || n.type === 'courses');
   const pricingNode = nodes.find(n => n.type === 'pricing');
   const faqNode = nodes.find(n => n.type === 'faq');
   const contactNode = nodes.find(n => n.type === 'contact');
   const footerNode = nodes.find(n => n.type === 'footer');
+
+  const coursesList = realCourses.length > 0
+    ? realCourses
+    : (isEditing && courseNode?.props?.courses ? courseNode.props.courses : []);
 
   return {
     navbar: navbarNode?.props ? {
@@ -140,6 +156,15 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT) 
       backgroundColor: featuresNode.props.backgroundColor ?? featuresNode.props.background_color ?? fallback.features.backgroundColor,
       textColor: featuresNode.props.textColor ?? featuresNode.props.text_color ?? fallback.features.textColor,
     } : fallback.features,
+    courses: {
+      title: courseNode?.props?.title || 'أحدث الدورات والبرامج الأكاديمية',
+      subtitle: courseNode?.props?.subtitle || 'استكشف مساراتنا التدريبية المتخصصة لتطوير مهاراتك والارتقاء بمسيرتك المهنية.',
+      items: coursesList,
+      limit: courseNode?.props?.limit || 6,
+      showPrice: courseNode?.props?.showPrice ?? true,
+      showStudentsCount: courseNode?.props?.showStudentsCount ?? true,
+      buttonBg: courseNode?.props?.buttonBg || '#3525cd',
+    },
     pricing: pricingNode?.props ? {
       title: pricingNode.props.title ?? fallback.pricing.title,
       subtitle: pricingNode.props.subtitle ?? fallback.pricing.subtitle,
@@ -161,8 +186,8 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT) 
     faq: faqNode?.props ? {
       title: faqNode.props.title ?? fallback.faq.title,
       items: faqNode.props.items ?? fallback.faq.items,
-      backgroundColor: faqNode.props.backgroundColor ?? faqNode.props.background_color ?? fallback.faq.backgroundColor,
-      textColor: faqNode.props.textColor ?? faqNode.props.text_color ?? fallback.faq.textColor,
+      backgroundColor: faqNode.props.backgroundColor ?? fallback.faq.backgroundColor,
+      textColor: faqNode.props.textColor ?? fallback.faq.textColor,
     } : fallback.faq,
     contact: contactNode?.props ? {
       title: contactNode.props.title ?? fallback.contact.title,
@@ -176,16 +201,35 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT) 
       text: footerNode.props.text ?? fallback.footer.text,
       backgroundColor: footerNode.props.backgroundColor ?? footerNode.props.background_color ?? fallback.footer.backgroundColor,
       textColor: footerNode.props.textColor ?? footerNode.props.text_color ?? fallback.footer.textColor,
-      newsletterTitle: footerNode.props.newsletterTitle ?? footerNode.props.newsletter_title ?? fallback.footer.newsletterTitle,
-      newsletterDesc: footerNode.props.newsletterDesc ?? footerNode.props.newsletter_desc ?? fallback.footer.newsletterDesc,
-      newsletterBtnText: footerNode.props.newsletterBtnText ?? footerNode.props.newsletter_btn_text ?? fallback.footer.newsletterBtnText,
+      newsletterTitle: footerNode.props.newsletterTitle ?? fallback.footer.newsletterTitle,
+      newsletterDesc: footerNode.props.newsletterDesc ?? fallback.footer.newsletterDesc,
+      newsletterBtnText: footerNode.props.newsletterBtnText ?? fallback.footer.newsletterBtnText,
     } : fallback.footer,
   };
 }
 
 export default function AcademicTemplate({ sections: sectionsProp }: AcademicTemplateProps) {
   const [content, setContent] = useState<any>(null);
+  const [realCourses, setRealCourses] = useState<any[]>([]);
   const { isEditing } = useBuilderStore();
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchCourses() {
+      try {
+        const data = isEditing ? await getCourses() : await getStudentCourses();
+        if (isMounted && data && Array.isArray(data)) {
+          setRealCourses(data);
+        }
+      } catch (err) {
+        console.error('[AcademicTemplate] Failed to fetch courses:', err);
+      }
+    }
+    fetchCourses();
+    return () => {
+      isMounted = false;
+    };
+  }, [isEditing]);
 
   useEffect(() => {
     async function load() {
@@ -193,7 +237,7 @@ export default function AcademicTemplate({ sections: sectionsProp }: AcademicTem
 
       // 1. If sections were passed directly as a prop — use them immediately
       if (sectionsProp && sectionsProp.length > 0) {
-        const parsed = parseSectionsToContent(sectionsProp, fallback);
+        const parsed = parseSectionsToContent(sectionsProp, fallback, realCourses, isEditing);
         setContent(parsed);
         return;
       }
@@ -219,7 +263,7 @@ export default function AcademicTemplate({ sections: sectionsProp }: AcademicTem
           const apiSections = await getPublicSections(activePage.id);
           if (apiSections && apiSections.length > 0) {
             const editorNodes = apiToEditor(apiSections);
-            const parsed = parseSectionsToContent(editorNodes, fallback);
+            const parsed = parseSectionsToContent(editorNodes, fallback, realCourses, isEditing);
             setContent(parsed);
             return;
           }
@@ -229,11 +273,11 @@ export default function AcademicTemplate({ sections: sectionsProp }: AcademicTem
       }
 
       // 3. Fallback to defaults
-      setContent(fallback);
+      setContent(parseSectionsToContent([], fallback, realCourses, isEditing));
     }
 
     load();
-  }, [sectionsProp]);
+  }, [sectionsProp, realCourses, isEditing]);
 
   if (!content) return null;
 

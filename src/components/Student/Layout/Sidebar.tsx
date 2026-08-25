@@ -15,6 +15,7 @@ import {
   ChevronRight,
   ChevronLeft
 } from 'lucide-react';
+import { clearUserSessionAndCache } from '@/lib/auth-storage';
 
 const sidebarGroups = [
   {
@@ -52,10 +53,8 @@ export const StudentSidebar = () => {
   const [isCollapsed, setIsCollapsed] = React.useState(true);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user_info');
-    document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-    router.push('/auth/login');
+    clearUserSessionAndCache();
+    window.location.href = '/auth/login';
   };
 
   return (

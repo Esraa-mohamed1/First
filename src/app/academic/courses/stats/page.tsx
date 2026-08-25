@@ -57,29 +57,29 @@ export default function StatsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatCard
               title="عدد الطلاب النشطة"
-              value={stats?.active_students || '2,689'}
-              trend={{ value: 8.5, isPositive: true }}
+              value={stats?.active_students || '0'}
+              trend={{ value: 0, isPositive: true }}
               icon={Users}
               color="blue"
             />
             <StatCard
               title="عدد الدورات المنشورة"
-              value={stats?.published_courses || '211'}
-              trend={{ value: 1.2, isPositive: false }}
+              value={stats?.published_courses || '0'}
+              trend={{ value: 0, isPositive: true }}
               icon={Video}
               color="red"
             />
             <StatCard
               title="عدد المدربين"
-              value={stats?.instructors_count || '40,689'}
-              trend={{ value: 2.6, isPositive: true }}
+              value={stats?.instructors_count || '0'}
+              trend={{ value: 0, isPositive: true }}
               icon={GraduationCap}
               color="orange"
             />
             <StatCard
               title="اجمالي الايراد هذا الشهر"
-              value={stats?.total_revenue || '40,689'}
-              trend={{ value: 2.6, isPositive: true }}
+              value={stats?.total_revenue || '0'}
+              trend={{ value: 0, isPositive: true }}
               icon={CreditCard}
               color="purple"
             />

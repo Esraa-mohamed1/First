@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, X, BarChart3, Eye, Plus, Video, Radio, MapPin, Users, CreditCard, Settings2, Copy, Link as LinkIcon, Pencil } from 'lucide-react';
+import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, X, BarChart3, Eye, Plus, Video, Radio, MapPin, Users, CreditCard, Settings2, Link as LinkIcon, Pencil, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCourses, deleteCourse } from '@/services/courses';
@@ -146,6 +146,36 @@ export default function CoursesPage() {
     }
   };
 
+  const getAccessDurationText = (course: Course): string | null => {
+    const durationType = course.access_duration_type || (course as any).accessDurationType;
+    const accessDays = course.access_days || (course as any).accessDays;
+    const untilDate = course.access_until_date || (course as any).accessUntilDate;
+
+    if (durationType === 'lifetime') {
+      return 'مدى الحياة';
+    }
+    if (durationType === 'days' && accessDays !== undefined && accessDays !== null && accessDays !== '') {
+      return `مدة الوصول: ${accessDays} يوم`;
+    }
+    if (durationType === 'until_date' && untilDate) {
+      try {
+        const formattedDate = new Date(untilDate).toLocaleDateString('ar-EG');
+        return `ينتهي في: ${formattedDate}`;
+      } catch {
+        return `ينتهي في: ${untilDate}`;
+      }
+    }
+    if (untilDate) {
+      try {
+        const formattedDate = new Date(untilDate).toLocaleDateString('ar-EG');
+        return `ينتهي في: ${formattedDate}`;
+      } catch {
+        return `ينتهي في: ${untilDate}`;
+      }
+    }
+    return null;
+  };
+
   const filteredCourses = courses.filter(course =>
     course.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -223,6 +253,7 @@ export default function CoursesPage() {
               const studentCount = (course as any).students_count ?? 0;
               const totalSales = studentCount * Number(course.final_price || course.price || 0);
               const typeLabel = getCourseTypeAr(course.type || 'registered');
+              const durationText = getAccessDurationText(course);
 
               return (
                 <div
@@ -268,7 +299,7 @@ export default function CoursesPage() {
                       {(course as any).short_description || 'تعلم الدورة مع نخبة من كبار المحاضرين.'}
                     </p>
 
-                    <div className="grid grid-cols-2 gap-4 mb-5 p-3 bg-surface-container-low rounded-lg border border-slate-50">
+                    <div className="grid grid-cols-2 gap-4 mb-3 p-3 bg-surface-container-low rounded-lg border border-slate-50">
                       <div className="flex flex-col">
                         <span className="text-[10px] text-on-surface-variant mb-0.5">الطلاب</span>
                         <div className="flex items-center gap-1">
@@ -284,6 +315,13 @@ export default function CoursesPage() {
                         </div>
                       </div>
                     </div>
+
+                    {durationText && (
+                      <div className="flex items-center gap-1.5 text-xs text-slate-600 font-bold mb-4 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                        <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                        <span>{durationText}</span>
+                      </div>
+                    )}
 
                     <div className="mb-5">
                       <div className="flex items-center justify-between text-[11px] font-bold mb-1.5">
@@ -311,16 +349,6 @@ export default function CoursesPage() {
                           title="إدارة الإعدادات"
                         >
                           <Settings2 className="w-4 h-4 text-blue-600" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toast('ميزة تكرار الدورة ستتوفر قريباً');
-                          }}
-                          className="p-2 text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors"
-                          title="تكرار الدورة"
-                        >
-                          <Copy className="w-4 h-4 text-slate-500" />
                         </button>
                         <button
                           onClick={(e) => {
@@ -363,12 +391,12 @@ export default function CoursesPage() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleEditCourse(course.id);
+                                  router.push(`/academic/courses/${course.id}`);
                                   setActiveDropdownId(null);
                                 }}
                                 className="w-full px-4 py-2.5 text-right text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center justify-end gap-3 transition-colors"
                               >
-                                <span>تعديل الاسم والنوع</span>
+                                <span>تعديل الدورة</span>
                                 <Pencil className="w-4 h-4 text-blue-600" />
                               </button>
                               <button

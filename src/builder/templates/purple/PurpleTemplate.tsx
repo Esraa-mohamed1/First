@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import * as Lucide from 'lucide-react';
 import { getIconComponent } from '@/lib/iconMap';
 import { BuilderNode } from '../../interfaces';
 import { useBuilderStore } from '../../store/builderStore';
 import SectionShapeOverlay, { ShapeType } from '../../components/SectionShapeOverlay';
+import { getCourses } from '@/services/courses';
+import { getStudentCourses } from '@/services/student-courses';
 
 interface TemplateProps {
   sections: BuilderNode[];
@@ -103,20 +106,20 @@ function ProgressRing({ percent, inView }: { percent: number; inView: boolean })
   );
 }
 
-function CourseCard({ tag, title, duration, university, progress, image }: {
-  tag: string; title: string; duration: string; university: string; progress: number; image?: string;
+function CourseCard({ tag, title, duration, university, progress, image, href, isEditing }: {
+  tag: string; title: string; duration: string; university: string; progress: number; image?: string; href?: string; isEditing?: boolean;
 }) {
   const { ref, inView } = useInView(0.2);
   const thumbStyle = image ? { backgroundImage: `url(${image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {};
   
-  return (
-    <div ref={ref as React.RefObject<HTMLDivElement>} className="lst-course-card">
+  const card = (
+    <div ref={ref as React.RefObject<HTMLDivElement>} className="lst-course-card group hover:-translate-y-1 transition-all duration-300">
       <div className="lst-course-thumb" style={thumbStyle}>
         {!image && <span className="lst-course-tag">{tag}</span>}
         {image && <span className="lst-course-tag" style={{ position: 'absolute', bottom: 10, right: 10 }}>{tag}</span>}
       </div>
       <div className="lst-course-body">
-        <h3 className="lst-course-title">{title}</h3>
+        <h3 className="lst-course-title group-hover:text-purple-600 transition-colors">{title}</h3>
         <div className="lst-course-footer">
           <div className="lst-course-meta">
             <span>{duration}</span>
@@ -128,6 +131,12 @@ function CourseCard({ tag, title, duration, university, progress, image }: {
       </div>
     </div>
   );
+
+  if (!isEditing && href) {
+    return <Link href={href} className="block text-inherit no-underline">{card}</Link>;
+  }
+
+  return card;
 }
 
 const BarChartIcon = () => (
@@ -531,10 +540,35 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
   const [navScrolled, setNavScrolled] = useState(false);
   const [testimonialIdx, setTestimonialIdx] = useState(0);
   const [heroVisible, setHeroVisible] = useState(false);
+  const [realCourses, setRealCourses] = useState<any[]>([]);
+  const [isCoursesLoading, setIsCoursesLoading] = useState(true);
   const rootRef = useRef<HTMLDivElement>(null);
 
   // Read editor builder store for active status
   const { isEditing, selectedNodeId, setSelectedNodeId } = useBuilderStore();
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchCourses() {
+      try {
+        setIsCoursesLoading(true);
+        const data = isEditing ? await getCourses() : await getStudentCourses();
+        if (isMounted && data && Array.isArray(data)) {
+          setRealCourses(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch courses in PurpleTemplate:', err);
+      } finally {
+        if (isMounted) {
+          setIsCoursesLoading(false);
+        }
+      }
+    }
+    fetchCourses();
+    return () => {
+      isMounted = false;
+    };
+  }, [isEditing]);
 
   useEffect(() => {
     const navSection = sections.find(s => s.type === 'navbar');
@@ -641,22 +675,18 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
 
   // 4. Featured Courses
   const courseNode = sections.find(s => s.type === 'course-cards');
-  const defaultCourses = [
-    { tag: 'الذكاء الاصطناعي', title: 'الاحتراف في تعلّم الآلة التطبيقي', duration: '١٤ ساعة', university: 'د. يوسف سلامة', progress: 72 },
-    { tag: 'البرمجة', title: 'هندسة الأنظمة وتطبيقات الويب', duration: '١٠ ساعات', university: 'د. ريما العتيبي', progress: 45 },
-    { tag: 'إدارة الأعمال', title: 'النمذجة المالية والتخطيط الإستراتيجي', duration: '٨ ساعات', university: 'أ. خالد الإبراهيم', progress: 88 },
-    { tag: 'التصميم', title: 'أساسيات تصميم واجهات التفاعل UI/UX', duration: '١٢ ساعة', university: 'أ. نورة الغامدي', progress: 30 },
-  ];
-  const courses = courseNode?.props?.courses?.map((c: any) => {
-    return {
-      tag: c.tag || 'التكنولوجيا والبيانات',
-      title: c.title || 'برنامج المحاضرات والورش',
-      duration: c.duration || '١٠ ساعات',
-      university: c.instructor || c.university || 'المحاضر المعتمد',
-      progress: parseInt(c.students) || 50,
-      image: c.image || c.imageUrl || ''
-    };
-  }) || defaultCourses;
+  const courses = React.useMemo(() => {
+    return realCourses.map((c: any) => ({
+      id: String(c.id),
+      slug: c.slug || String(c.id),
+      tag: (typeof c.category === 'object' && c.category?.name) ? c.category.name : (c.category || 'دورة تدريبية'),
+      title: c.title || 'دورة تدريبية',
+      duration: c.duration || (c.units?.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0) ? `${c.units.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0)} درس` : 'غير محدد'),
+      university: c.instructor || c.instructor_name || c.coach || 'المحاضر المعتمد',
+      progress: Math.min(100, Math.max(10, parseInt(c.students_count ?? c.students ?? 0) || 50)),
+      image: c.image || c.cover_image || ''
+    }));
+  }, [realCourses]);
 
   // 5. Steps (How it works)
   const featNode = sections.find(s => s.type === 'features_section');
@@ -946,13 +976,39 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
                   <h2 className="lst-h2">{courseNode.props?.title || 'أبرز الدورات المتاحة لهذا الفصل الدراسي'}</h2>
                   <p className="lst-section-sub">{courseNode.props?.subtitle || 'دورات مختارة بعناية تحت إشراف أفضل المحاضرين والخبراء.'}</p>
                 </Reveal>
-                <div className="lst-courses-grid">
-                  {courses.map((c: { tag: string; title: string; duration: string; university: string; progress: number; image?: string }, i: number) => (
-                    <div key={i} style={{ '--delay': `${i * 90}ms` } as React.CSSProperties}>
-                      <CourseCard {...c} />
-                    </div>
-                  ))}
-                </div>
+
+                {isCoursesLoading ? (
+                  <div className="lst-courses-grid">
+                    {Array.from({ length: Math.min(Number(courseNode.props?.limit) || 4, 4) }).map((_, i) => (
+                      <div key={i} className="lst-course-card animate-pulse">
+                        <div className="lst-course-thumb bg-slate-200" />
+                        <div className="lst-course-body space-y-3">
+                          <div className="h-4 bg-slate-200 rounded w-3/4" />
+                          <div className="h-3 bg-slate-100 rounded w-1/2" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : courses.length === 0 ? (
+                  <div className="bg-white/80 border border-dashed border-purple-200 rounded-3xl p-10 text-center flex flex-col items-center justify-center gap-3 text-slate-500 my-4 max-w-xl mx-auto">
+                    <Lucide.BookOpen className="w-9 h-9 text-purple-300" />
+                    <p className="text-sm font-bold text-slate-700">لا توجد دورات متاحة حالياً</p>
+                    <p className="text-xs text-slate-400">تابعنا قريباً للمزيد من الدورات وورش العمل الجديدة.</p>
+                    {isEditing && (
+                      <Link href="/academic/courses/create" className="mt-2 inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-sm">
+                        <span>إضافة دورة جديدة</span>
+                      </Link>
+                    )}
+                  </div>
+                ) : (
+                  <div className="lst-courses-grid">
+                    {courses.slice(0, Number(courseNode.props?.limit) || courses.length).map((c, i: number) => (
+                      <div key={c.id || i} style={{ '--delay': `${i * 90}ms` } as React.CSSProperties}>
+                        <CourseCard {...c} href={`/${c.slug || c.id}`} isEditing={isEditing} />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </SectionWrapper>

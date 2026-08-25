@@ -186,10 +186,14 @@ export const updateLesson = async (id: number, payload: any): Promise<Lesson> =>
 
 export const deleteUnit = async (id: number): Promise<void> => {
   try {
-    await academyApi.delete(`units/${id}`);
+    await academyApi.delete(`chapters/${id}`);
   } catch (error: any) {
-    console.error('Failed to delete unit:', error);
-    throw error.response?.data || error;
+    try {
+      await academyApi.delete(`units/${id}`);
+    } catch (e) {
+      console.error('Failed to delete unit:', error);
+      throw error.response?.data || error;
+    }
   }
 };
 
@@ -214,10 +218,10 @@ export const getCategories = async (): Promise<any[]> => {
 
 export const getStats = async (): Promise<any> => {
   return {
-    active_students: "2,689",
-    published_courses: "211",
-    instructors_count: "18",
-    total_revenue: "40,689"
+    active_students: "0",
+    published_courses: "0",
+    instructors_count: "0",
+    total_revenue: "0"
   };
 };
 
@@ -363,6 +367,7 @@ export const addCourseSubscriber = async (payload: {
   ends_at?: string;
   price?: number;
   amount?: number;
+  token?: string;
 }): Promise<any> => {
   const todayStr = new Date().toISOString().split('T')[0];
   const body = {

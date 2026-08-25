@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Smartphone, Mail, Hash, X, Upload, Check, Copy, Loader2,
-  FileText, ShieldCheck, ChevronRight, ArrowRight, CreditCard
+  FileText, ShieldCheck, ChevronRight, ArrowRight, CreditCard, Landmark
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { showAlert } from '@/lib/sweetalert';
@@ -35,6 +35,7 @@ export const PaymentMethodModal = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!isOpen) {
@@ -132,9 +133,17 @@ export const PaymentMethodModal = ({
   };
 
   const getIcon = (type: string) => {
-    if (type === 'mobile') return <Smartphone size={20} />;
-    if (type === 'email') return <Mail size={20} />;
-    return <Hash size={20} />;
+    const t = type?.toLowerCase() || '';
+    if (t === 'mobile' || t.includes('cash') || t.includes('wallet') || t === 'vodafone_cash') {
+      return <Smartphone size={20} />;
+    }
+    if (t === 'email') {
+      return <Mail size={20} />;
+    }
+    if (t.includes('bank') || t === 'bank_account' || t === 'instapay' || t === 'landmark') {
+      return <Landmark size={20} />;
+    }
+    return <CreditCard size={20} />;
   };
 
   return (
@@ -204,8 +213,17 @@ export const PaymentMethodModal = ({
                           isSel ? 'border-blue-600 bg-blue-50/60 shadow-sm' : 'border-gray-100 bg-gray-50 hover:border-blue-200 hover:bg-blue-50/20'
                         )}
                       >
-                        <div className={clsx('w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors', isSel ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-500')}>
-                          {m.logo ? <img src={m.logo} alt={m.methodName} className="w-6 h-6 object-contain" /> : getIcon(m.type)}
+                        <div className={clsx('w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors overflow-hidden p-1 bg-white', isSel ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border border-gray-200 text-gray-500')}>
+                          {m.logo && !imageErrors[m.methodId] ? (
+                            <img 
+                              src={m.logo} 
+                              alt={m.methodName} 
+                              className="w-full h-full object-contain" 
+                              onError={() => setImageErrors(prev => ({ ...prev, [m.methodId]: true }))}
+                            />
+                          ) : (
+                            getIcon(m.type)
+                          )}
                         </div>
                         <div className="flex-1 min-w-0 text-right">
                           <p className={clsx('font-black text-sm', isSel ? 'text-blue-800' : 'text-gray-800')}>{m.methodName}</p>

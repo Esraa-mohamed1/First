@@ -58,35 +58,44 @@ export default function CourseCards(props: CourseCardsProps) {
   const isUdemy = currentTemplate?.id === 'template_2';
 
   const [realCourses, setRealCourses] = React.useState<any[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
+    let isMounted = true;
     async function fetchRealData() {
       try {
+        setIsLoading(true);
         const data = isEditing ? await getCourses() : await getStudentCourses();
-        if (data && data.length > 0) {
+        if (isMounted && data && Array.isArray(data)) {
           setRealCourses(data);
         }
       } catch (err) {
         console.error('Failed to fetch courses in CourseCards:', err);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
     fetchRealData();
+    return () => {
+      isMounted = false;
+    };
   }, [isEditing]);
 
   const formattedCourses = React.useMemo(() => {
-    if (realCourses.length === 0) return courses;
     return realCourses.map(course => ({
       id: String(course.id),
       slug: course.slug || String(course.id),
       title: course.title,
-      instructor: course.instructor || course.instructor_name || course.coach || 'أحمد محمد',
+      instructor: course.instructor || course.instructor_name || course.coach || 'المحاضر المعتمد',
       price: Number(course.price) === 0 ? 'مجانًا' : `${course.price} ر.س`,
       students: `${course.students_count ?? course.students ?? 0} طالب`,
       duration: course.duration || (course.units?.reduce((acc: number, unit: any) => acc + (unit.lessons?.length || 0), 0) ? `${course.units.reduce((acc: number, unit: any) => acc + (unit.lessons?.length || 0), 0)} درس` : 'غير محدد'),
-      image: course.image || course.cover_image || 'https://images.unsplash.com/photo-1586717791821-3f44a563fa4c',
+      image: course.image || course.cover_image || 'https://images.unsplash.com/photo-1586717791821-3f44a563de4c',
       description: course.description
     }));
-  }, [realCourses, courses]);
+  }, [realCourses]);
 
   const filteredCourses = React.useMemo(() => {
     if (!searchTerm.trim()) return formattedCourses;
@@ -186,22 +195,191 @@ export default function CourseCards(props: CourseCardsProps) {
         </div>
       )}
 
-      <div className={isUdemy ? "flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden t2-animate-on-scroll" : `grid gap-6 ${gridClass}`}>
-        {coursesToRender.map((course, idx) => {
-          const isSelected = isEditing && selectedNodeId === sectionId && selectedItemIndex === idx;
-          const isHovered = isEditing && hoveredItemIndex === idx;
+      {isLoading ? (
+        <div className={isUdemy ? "flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden" : `grid gap-6 ${gridClass}`}>
+          {Array.from({ length: Math.min(Number(limit) || 3, 3) }).map((_, i) => (
+            <div key={i} className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm animate-pulse flex flex-col justify-between space-y-4 min-w-[280px]">
+              <div className="h-44 bg-slate-200/70 rounded-2xl w-full" />
+              <div className="space-y-2">
+                <div className="h-4 bg-slate-200/80 rounded w-3/4" />
+                <div className="h-3 bg-slate-100 rounded w-1/2" />
+              </div>
+              <div className="pt-4 border-t border-slate-50 flex justify-between items-center">
+                <div className="h-4 bg-slate-200/60 rounded w-16" />
+                <div className="h-8 bg-slate-200/80 rounded-xl w-24" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : coursesToRender.length === 0 ? (
+        <div className="bg-slate-50/80 border border-dashed border-slate-200 rounded-3xl p-10 text-center flex flex-col items-center justify-center gap-3 text-slate-500 my-4">
+          <BookOpen className="w-9 h-9 text-slate-400" />
+          <p className="text-sm font-bold text-slate-700">لا توجد دورات متاحة حالياً</p>
+          <p className="text-xs text-slate-400">تابعنا قريباً للمزيد من الدورات وورش العمل الجديدة.</p>
+          {isEditing && (
+            <Link href="/academic/courses/create" className="mt-2 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-sm">
+              <span>إضافة دورة جديدة</span>
+            </Link>
+          )}
+        </div>
+      ) : (
+        <div className={isUdemy ? "flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden t2-animate-on-scroll" : `grid gap-6 ${gridClass}`}>
+          {coursesToRender.map((course, idx) => {
+            const isSelected = isEditing && selectedNodeId === sectionId && selectedItemIndex === idx;
+            const isHovered = isEditing && hoveredItemIndex === idx;
 
-          const isPurpleTheme = buttonBg === '#7c3aed';
+            const isPurpleTheme = buttonBg === '#7c3aed';
 
-          const courseHref = `/${course.slug || course.id}`;
-          const CardWrapper = ({ children }: { children: React.ReactNode }) =>
-            isEditing ? <div>{children}</div> : <Link href={courseHref} className="block">{children}</Link>;
+            const courseHref = `/${course.slug || course.id}`;
+            const CardWrapper = ({ children }: { children: React.ReactNode }) =>
+              isEditing ? <div>{children}</div> : <Link href={courseHref} className="block">{children}</Link>;
 
-          if (isUdemy) {
+            if (isUdemy) {
+              return (
+                <CardWrapper key={course.id}>
+                <div 
+                  key={course.id} 
+                  onClick={(e) => {
+                    if (isEditing && sectionId) {
+                      e.stopPropagation();
+                      setSelectedNodeId(sectionId);
+                      setSelectedItemIndex(idx);
+                    }
+                  }}
+                  onMouseEnter={() => isEditing && setHoveredItemIndex(idx)}
+                  onMouseLeave={() => isEditing && setHoveredItemIndex(null)}
+                  className={`bg-[var(--t2-white)] rounded-[20px] overflow-hidden hover:shadow-[0_15px_30px_rgba(27,26,58,0.08)] hover:-translate-y-2 transition-all duration-500 flex flex-col justify-between group cursor-pointer border border-[var(--t2-indigo-3)]/10 min-w-[300px] sm:min-w-[340px] snap-center ${
+                    isSelected ? 'ring-2 ring-[var(--t2-gold)] ring-offset-2 ring-offset-[var(--t2-canvas)]' : isHovered ? 'ring-2 ring-[var(--t2-teal)] ring-offset-2 ring-offset-[var(--t2-canvas)]' : ''
+                  }`}
+                >
+                  {/* Course Image cover */}
+                  <div className="h-48 w-full overflow-hidden bg-[var(--t2-canvas-2)] relative">
+                    <img 
+                      src={course.image || 'https://images.unsplash.com/photo-1586717791821-3f44a563fa4c'} 
+                      alt={course.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    {/* Category tag */}
+                    <span className="absolute top-4 right-4 bg-[var(--t2-white)]/90 backdrop-blur-sm text-[var(--t2-ink)] text-[10px] font-['IBM_Plex_Mono'] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm">
+                      {idx % 2 === 0 ? 'تطوير' : 'تصميم'}
+                    </span>
+                  </div>
+
+                  {/* Course details */}
+                  <div className="p-6 flex-1 flex flex-col justify-between gap-4 text-right">
+                    <div className="space-y-3">
+                      <h4 className="text-lg font-black text-[var(--t2-ink)] leading-snug group-hover:text-[var(--t2-teal)] transition-colors line-clamp-2 min-h-[56px] font-['Fraunces']">
+                        {course.title}
+                      </h4>
+                      
+                      <div className="flex items-center justify-between text-xs font-['Inter']">
+                        <p className="text-[var(--t2-ink)]/70 font-medium">
+                          {course.instructor}
+                        </p>
+                        <div className="flex items-center gap-1 flex-row-reverse text-[var(--t2-gold)] font-bold" dir="ltr">
+                          <span className="text-xs text-[var(--t2-ink)]/70 mr-1.5">({120 + idx * 15})</span>
+                          <span className="text-[13px]">{idx === 1 ? "4.5" : "4.8"}</span>
+                          <span>★</span>
+                        </div>
+                      </div>
+
+                      {/* Metadata */}
+                      <div className="flex items-center gap-4 text-xs text-[var(--t2-ink)]/60 font-medium pt-2 font-['Inter']">
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="w-4 h-4" />
+                          {course.duration}
+                        </span>
+                        {showStudentsCount && (
+                          <span className="flex items-center gap-1.5">
+                            <Users className="w-4 h-4" />
+                            {course.students}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-between items-center pt-5 border-t border-[var(--t2-indigo-3)]/10 mt-2">
+                      {showPrice && (
+                        <span className="text-base font-black text-[var(--t2-ink)] font-['Inter']">
+                          {course.price || 'مجانًا'}
+                        </span>
+                      )}
+                      <button 
+                        className="text-[var(--t2-gold)] border-[1.5px] border-[var(--t2-gold)] font-bold text-xs px-5 py-2 rounded-full hover:bg-[var(--t2-gold)] hover:text-[var(--t2-ink)] transition-all font-['Inter']"
+                      >
+                        انضم الآن
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                </CardWrapper>
+              );
+            }
+
+            if (isPurpleTheme) {
+              return (
+                <CardWrapper key={course.id}>
+                <div 
+                  onClick={(e) => {
+                    if (isEditing && sectionId) {
+                      e.stopPropagation();
+                      setSelectedNodeId(sectionId);
+                      setSelectedItemIndex(idx);
+                    }
+                  }}
+                  onMouseEnter={() => isEditing && setHoveredItemIndex(idx)}
+                  onMouseLeave={() => isEditing && setHoveredItemIndex(null)}
+                  className={`bg-white border border-slate-150 rounded-3xl overflow-hidden hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between group cursor-pointer ${
+                    isSelected ? 'ring-4 ring-purple-500 ring-offset-2' : isHovered ? 'ring-4 ring-purple-300 ring-offset-1' : 'shadow-sm'
+                  }`}
+                >
+                  {/* Course Image cover */}
+                  <div className="h-44 w-full overflow-hidden bg-slate-100 relative">
+                    <img 
+                      src={course.image || 'https://images.unsplash.com/photo-1586717791821-3f44a563fa4c'} 
+                      alt={course.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  </div>
+
+                  {/* Course details */}
+                  <div className="p-6 flex-1 flex flex-col justify-between space-y-4 text-right">
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-black text-slate-800 leading-snug group-hover:text-purple-600 transition-colors">
+                        {course.title}
+                      </h4>
+                      {course.description ? (
+                        <div
+                          className="text-[11px] text-slate-500 leading-relaxed font-semibold line-clamp-2"
+                          dangerouslySetInnerHTML={{ __html: course.description }}
+                        />
+                      ) : (
+                        <p className="text-[11px] text-slate-500 leading-relaxed font-semibold">
+                          تعلم مبادئ التصميم خطوة بخطوة وكيفية التعامل مع الألوان والخطوط لبناء واجهات سهلة الاستخدام ومحترفة.
+                        </p>
+                      )}
+                    </div>
+                    
+                    <div className="flex justify-between items-center pt-3 border-t border-slate-100">
+                      <div className="flex items-center gap-1 text-[11px] font-black text-purple-600 group-hover:gap-2 transition-all">
+                        <span>عرض التفاصيل</span>
+                        <span className="text-sm font-black">←</span>
+                      </div>
+                      {showPrice && (
+                        <span className="text-xs font-black text-slate-400">
+                          {course.price || 'مجانًا'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                </CardWrapper>
+              );
+            }
+
             return (
               <CardWrapper key={course.id}>
               <div 
-                key={course.id} 
                 onClick={(e) => {
                   if (isEditing && sectionId) {
                     e.stopPropagation();
@@ -211,208 +389,68 @@ export default function CourseCards(props: CourseCardsProps) {
                 }}
                 onMouseEnter={() => isEditing && setHoveredItemIndex(idx)}
                 onMouseLeave={() => isEditing && setHoveredItemIndex(null)}
-                className={`bg-[var(--t2-white)] rounded-[20px] overflow-hidden hover:shadow-[0_15px_30px_rgba(27,26,58,0.08)] hover:-translate-y-2 transition-all duration-500 flex flex-col justify-between group cursor-pointer border border-[var(--t2-indigo-3)]/10 min-w-[300px] sm:min-w-[340px] snap-center ${
-                  isSelected ? 'ring-2 ring-[var(--t2-gold)] ring-offset-2 ring-offset-[var(--t2-canvas)]' : isHovered ? 'ring-2 ring-[var(--t2-teal)] ring-offset-2 ring-offset-[var(--t2-canvas)]' : ''
+                className={`${isTransparentBg ? 'bg-white/70 border-white/40 shadow-lg shadow-slate-900/5 backdrop-blur-md' : 'bg-white border-slate-100/80 shadow-[0_12px_30px_rgba(25,28,29,0.02)]'} rounded-3xl overflow-hidden hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group cursor-pointer ${
+                  isSelected ? 'ring-4 ring-blue-500 ring-offset-2' : isHovered ? 'ring-4 ring-blue-300 ring-offset-1' : ''
                 }`}
               >
-                {/* Course Image cover */}
-                <div className="h-48 w-full overflow-hidden bg-[var(--t2-canvas-2)] relative">
+
+                {/* Image Header with styled avatar overlay */}
+                <div className="h-40 relative overflow-hidden bg-[#0a192f] flex items-center justify-center p-4">
                   <img 
-                    src={course.image || 'https://images.unsplash.com/photo-1586717791821-3f44a563fa4c'} 
+                    src={course.image} 
                     alt={course.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="w-20 h-20 rounded-full border-2 border-white/60 object-cover shadow-sm bg-slate-700 relative z-10 transition-transform duration-500 group-hover:scale-105"
                   />
-                  {/* Category tag */}
-                  <span className="absolute top-4 right-4 bg-[var(--t2-white)]/90 backdrop-blur-sm text-[var(--t2-ink)] text-[10px] font-['IBM_Plex_Mono'] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm">
-                    {idx % 2 === 0 ? 'تطوير' : 'تصميم'}
-                  </span>
+                  {/* Blur design backgrounds */}
+                  <div className="absolute inset-0 bg-slate-950/40 z-0" />
+                  <div className="absolute bottom-3 right-4 text-right z-10">
+                    <span className="text-[10px] font-black text-blue-400 block tracking-wider uppercase">محاضرة معتمدة</span>
+                    <span className="text-xs font-black text-white block mt-0.5">{course.instructor}</span>
+                  </div>
                 </div>
 
-                {/* Course details */}
-                <div className="p-6 flex-1 flex flex-col justify-between gap-4 text-right">
-                  <div className="space-y-3">
-                    <h4 className="text-lg font-black text-[var(--t2-ink)] leading-snug group-hover:text-[var(--t2-teal)] transition-colors line-clamp-2 min-h-[56px] font-['Fraunces']">
-                      {course.title}
-                    </h4>
-                    
-                    <div className="flex items-center justify-between text-xs font-['Inter']">
-                      <p className="text-[var(--t2-ink)]/70 font-medium">
-                        {course.instructor}
-                      </p>
-                      <div className="flex items-center gap-1 flex-row-reverse text-[var(--t2-gold)] font-bold" dir="ltr">
-                        <span className="text-xs text-[var(--t2-ink)]/70 mr-1.5">({120 + idx * 15})</span>
-                        <span className="text-[13px]">{idx === 1 ? "4.5" : "4.8"}</span>
-                        <span>★</span>
-                      </div>
-                    </div>
-
-                    {/* Metadata */}
-                    <div className="flex items-center gap-4 text-xs text-[var(--t2-ink)]/60 font-medium pt-2 font-['Inter']">
-                      <span className="flex items-center gap-1.5">
-                        <Clock className="w-4 h-4" />
-                        {course.duration}
-                      </span>
-                      {showStudentsCount && (
-                        <span className="flex items-center gap-1.5">
-                          <Users className="w-4 h-4" />
-                          {course.students}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                {/* Course Information details */}
+                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                  <h4 className="text-xs font-black text-slate-800 leading-snug group-hover:text-blue-600 transition-colors min-h-[36px]">
+                    {course.title}
+                  </h4>
                   
-                  <div className="flex justify-between items-center pt-5 border-t border-[var(--t2-indigo-3)]/10 mt-2">
-                    {showPrice && (
-                      <span className="text-base font-black text-[var(--t2-ink)] font-['Inter']">
-                        {course.price || 'مجانًا'}
+                  <div className="flex items-center justify-between text-[9px] text-slate-400 font-black pt-3 border-t border-slate-50">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {course.duration}
+                    </span>
+                    
+                    {showStudentsCount && (
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3 h-3 text-blue-500" />
+                        {course.students}
                       </span>
                     )}
+                  </div>
+
+                  <div className="flex justify-between items-center pt-2">
+                    {showPrice ? (
+                      <span className="text-sm font-black text-slate-800">
+                        {course.price}
+                      </span>
+                    ) : <span className="w-1"></span>}
+
                     <button 
-                      className="text-[var(--t2-gold)] border-[1.5px] border-[var(--t2-gold)] font-bold text-xs px-5 py-2 rounded-full hover:bg-[var(--t2-gold)] hover:text-[var(--t2-ink)] transition-all font-['Inter']"
+                      style={{ backgroundColor: buttonBg }}
+                      className="hover:brightness-110 text-white font-black text-[9px] px-3.5 py-2 rounded-lg transition-all shadow-sm shadow-blue-500/10 active:scale-95"
                     >
                       انضم الآن
                     </button>
                   </div>
                 </div>
+
               </div>
               </CardWrapper>
             );
-          }
-
-          if (isPurpleTheme) {
-            return (
-              <CardWrapper key={course.id}>
-              <div 
-                onClick={(e) => {
-                  if (isEditing && sectionId) {
-                    e.stopPropagation();
-                    setSelectedNodeId(sectionId);
-                    setSelectedItemIndex(idx);
-                  }
-                }}
-                onMouseEnter={() => isEditing && setHoveredItemIndex(idx)}
-                onMouseLeave={() => isEditing && setHoveredItemIndex(null)}
-                className={`bg-white border border-slate-150 rounded-3xl overflow-hidden hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between group cursor-pointer ${
-                  isSelected ? 'ring-4 ring-purple-500 ring-offset-2' : isHovered ? 'ring-4 ring-purple-300 ring-offset-1' : 'shadow-sm'
-                }`}
-              >
-                {/* Course Image cover */}
-                <div className="h-44 w-full overflow-hidden bg-slate-100 relative">
-                  <img 
-                    src={course.image || 'https://images.unsplash.com/photo-1586717791821-3f44a563fa4c'} 
-                    alt={course.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-
-                {/* Course details */}
-                <div className="p-6 flex-1 flex flex-col justify-between space-y-4 text-right">
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-black text-slate-800 leading-snug group-hover:text-purple-600 transition-colors">
-                      {course.title}
-                    </h4>
-                    {course.description ? (
-                      <div
-                        className="text-[11px] text-slate-500 leading-relaxed font-semibold line-clamp-2"
-                        dangerouslySetInnerHTML={{ __html: course.description }}
-                      />
-                    ) : (
-                      <p className="text-[11px] text-slate-500 leading-relaxed font-semibold">
-                        تعلم مبادئ التصميم خطوة بخطوة وكيفية التعامل مع الألوان والخطوط لبناء واجهات سهلة الاستخدام ومحترفة.
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="flex justify-between items-center pt-3 border-t border-slate-100">
-                    <div className="flex items-center gap-1 text-[11px] font-black text-purple-600 group-hover:gap-2 transition-all">
-                      <span>عرض التفاصيل</span>
-                      <span className="text-sm font-black">←</span>
-                    </div>
-                    {showPrice && (
-                      <span className="text-xs font-black text-slate-400">
-                        {course.price || 'مجانًا'}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-              </CardWrapper>
-            );
-          }
-
-          return (
-            <CardWrapper key={course.id}>
-            <div 
-              onClick={(e) => {
-                if (isEditing && sectionId) {
-                  e.stopPropagation();
-                  setSelectedNodeId(sectionId);
-                  setSelectedItemIndex(idx);
-                }
-              }}
-              onMouseEnter={() => isEditing && setHoveredItemIndex(idx)}
-              onMouseLeave={() => isEditing && setHoveredItemIndex(null)}
-              className={`${isTransparentBg ? 'bg-white/70 border-white/40 shadow-lg shadow-slate-900/5 backdrop-blur-md' : 'bg-white border-slate-100/80 shadow-[0_12px_30px_rgba(25,28,29,0.02)]'} rounded-3xl overflow-hidden hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group cursor-pointer ${
-                isSelected ? 'ring-4 ring-blue-500 ring-offset-2' : isHovered ? 'ring-4 ring-blue-300 ring-offset-1' : ''
-              }`}
-            >
-
-              {/* Image Header with styled avatar overlay */}
-              <div className="h-40 relative overflow-hidden bg-[#0a192f] flex items-center justify-center p-4">
-                <img 
-                  src={course.image} 
-                  alt={course.title}
-                  className="w-20 h-20 rounded-full border-2 border-white/60 object-cover shadow-sm bg-slate-700 relative z-10 transition-transform duration-500 group-hover:scale-105"
-                />
-                {/* Blur design backgrounds */}
-                <div className="absolute inset-0 bg-slate-950/40 z-0" />
-                <div className="absolute bottom-3 right-4 text-right z-10">
-                  <span className="text-[10px] font-black text-blue-400 block tracking-wider uppercase">محاضرة معتمدة</span>
-                  <span className="text-xs font-black text-white block mt-0.5">{course.instructor}</span>
-                </div>
-              </div>
-
-              {/* Course Information details */}
-              <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                <h4 className="text-xs font-black text-slate-800 leading-snug group-hover:text-blue-600 transition-colors min-h-[36px]">
-                  {course.title}
-                </h4>
-                
-                <div className="flex items-center justify-between text-[9px] text-slate-400 font-black pt-3 border-t border-slate-50">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {course.duration}
-                  </span>
-                  
-                  {showStudentsCount && (
-                    <span className="flex items-center gap-1">
-                      <Users className="w-3 h-3 text-blue-500" />
-                      {course.students}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex justify-between items-center pt-2">
-                  {showPrice ? (
-                    <span className="text-sm font-black text-slate-800">
-                      {course.price}
-                    </span>
-                  ) : <span className="w-1"></span>}
-
-                  <button 
-                    style={{ backgroundColor: buttonBg }}
-                    className="hover:brightness-110 text-white font-black text-[9px] px-3.5 py-2 rounded-lg transition-all shadow-sm shadow-blue-500/10 active:scale-95"
-                  >
-                    انضم الآن
-                  </button>
-                </div>
-              </div>
-
-            </div>
-            </CardWrapper>
-          );
-        })}
-      </div>
+          })}
+        </div>
+      )}
 
     </div>
   );
