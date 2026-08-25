@@ -3,9 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Loader2, User as UserIcon, Mail, Phone, Lock, BookOpen, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import { createUser, getUsers } from '@/services/users';
-import { addCourseSubscriber, getCourses } from '@/services/courses';
+import { addCourseSubscriber, getCourses, getCourseSubscribers } from '@/services/courses';
 import { User, Course } from '@/types/api';
+
+const MySwal = withReactContent(Swal);
 
 interface AddSubscriberModalProps {
   isOpen: boolean;
@@ -25,6 +29,7 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
   const [existingStudents, setExistingStudents] = useState<User[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | number>('');
   const [loadingStudents, setLoadingStudents] = useState<boolean>(false);
+  const [courseSubscribers, setCourseSubscribers] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -40,6 +45,22 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
       setSelectedCourseId(courseId);
     }
   }, [courseId]);
+
+  useEffect(() => {
+    const activeId = courseId || selectedCourseId;
+    if (isOpen && activeId) {
+      getCourseSubscribers(activeId)
+        .then((res) => setCourseSubscribers(res || []))
+        .catch(() => setCourseSubscribers([]));
+    }
+  }, [isOpen, courseId, selectedCourseId]);
+
+  const activeSubscribedStudent = subMode === 'existing' && selectedUserId ? courseSubscribers.find(s => {
+    const u = s.user || s.student || s;
+    return String(u.id || s.id) === String(selectedUserId);
+  }) : null;
+
+  const isAlreadySubscribedAndValid = !!(activeSubscribedStudent && (activeSubscribedStudent.status === 'active' || activeSubscribedStudent.status === 'accepted' || !activeSubscribedStudent.status));
 
   useEffect(() => {
     if (isOpen) {
@@ -120,37 +141,36 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
     }
 
     setIsSubmitting(true);
-    try {
-      // Always send current date now for subscription starts_at
-      const todayStr = new Date().toISOString().split('T')[0];
+    // Always send current date now for subscription starts_at
+    const todayStr = new Date().toISOString().split('T')[0];
+    let targetUserId: number | string | undefined = undefined;
+    let targetEmail: string | undefined = undefined;
+    let targetPhone: string | undefined = undefined;
+    let targetName: string | undefined = undefined;
 
-      let targetUserId: number | string | undefined = undefined;
-      let targetEmail: string | undefined = undefined;
-      let targetPhone: string | undefined = undefined;
-      let targetName: string | undefined = undefined;
-
-      if (subMode === 'existing') {
-        const selectedStudent = existingStudents.find((s) => String(s.id) === String(selectedUserId));
-        targetUserId = selectedUserId || selectedStudent?.id;
-        targetEmail = selectedStudent?.email || formData.email || undefined;
-        targetPhone = selectedStudent?.phone || formData.phone || undefined;
-        targetName = selectedStudent?.name || formData.name;
-      } else {
-        // Create new user first if needed
-        let createdUser: any = null;
-        try {
-          createdUser = await createUser(formData);
-        } catch {
-          /* user may exist */
-        }
-        targetUserId = createdUser?.id;
-        targetEmail = formData.email || undefined;
-        targetPhone = formData.phone || undefined;
-        targetName = formData.name;
+    if (subMode === 'existing') {
+      const selectedStudent = existingStudents.find((s) => String(s.id) === String(selectedUserId));
+      targetUserId = selectedUserId || selectedStudent?.id;
+      targetEmail = selectedStudent?.email || formData.email || undefined;
+      targetPhone = selectedStudent?.phone || formData.phone || undefined;
+      targetName = selectedStudent?.name || formData.name;
+    } else {
+      // Create new user first if needed
+      let createdUser: any = null;
+      try {
+        createdUser = await createUser(formData);
+      } catch {
+        /* user may exist */
       }
+      targetUserId = createdUser?.id;
+      targetEmail = formData.email || undefined;
+      targetPhone = formData.phone || undefined;
+      targetName = formData.name;
+    }
 
+    try {
       // Post User Subscription with current date now (starts_at)
-      await addCourseSubscriber({
+      const res = await addCourseSubscriber({
         course_id: activeCourseId,
         user_id: targetUserId,
         email: targetEmail,
@@ -159,6 +179,10 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
         status: formData.status || 'active',
         starts_at: todayStr
       });
+
+      if (res && (res.status === false || res.success === false)) {
+        throw res;
+      }
 
       toast.success('تمت إضافة الاشتراك في الدورة بنجاح');
       onSubscriberAdded();
@@ -174,7 +198,64 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
         status: 'active'
       });
     } catch (error: any) {
-      toast.error(error?.message || error?.data?.message || 'فشل إضافة المشترك في الدورة');
+      const errorData = error.response?.data || error;
+      const token = errorData?.token || errorData?.data?.token || errorData?.meta?.token;
+
+      if (token) {
+        // Show approval/confirmation modal from the academy
+        const confirmResult = await MySwal.fire({
+          title: 'تنبيه الاشتراك',
+          text: 'هذا الطالب مشترك بالفعل في هذه الدورة. هل ترغب في إعادة تسجيل اشتراكه وتأكيد التفعيل؟',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#2563eb',
+          cancelButtonColor: '#727687',
+          confirmButtonText: 'نعم، أوافق على إعادة الاشتراك',
+          cancelButtonText: 'إلغاء',
+          reverseButtons: true,
+        });
+
+        if (confirmResult.isConfirmed) {
+          setIsSubmitting(true);
+          try {
+            const resubRes = await addCourseSubscriber({
+              course_id: activeCourseId,
+              user_id: targetUserId,
+              email: targetEmail,
+              phone: targetPhone,
+              name: targetName,
+              status: formData.status || 'active',
+              starts_at: todayStr,
+              token: token
+            });
+
+            if (resubRes && (resubRes.status === false || resubRes.success === false)) {
+              throw resubRes;
+            }
+
+            toast.success('تمت إعادة الاشتراك وتأكيد تفعيل الطالب بنجاح');
+            onSubscriberAdded();
+            onClose();
+
+            // Reset form
+            setFormData({
+              name: '',
+              email: '',
+              phone: '',
+              password: '',
+              role: 'student',
+              status: 'active'
+            });
+          } catch (resubError: any) {
+            const resubErrorData = resubError.response?.data || resubError;
+            toast.error(resubErrorData?.message || resubErrorData?.data?.message || 'فشل إعادة الاشتراك');
+          } finally {
+            setIsSubmitting(false);
+          }
+        }
+      } else {
+        toast.error(errorData?.message || errorData?.data?.message || error?.message || 'فشل إضافة المشترك في الدورة');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -314,6 +395,12 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
                   {formData.email && <p><span className="text-blue-600">البريد:</span> {formData.email}</p>}
                   {formData.phone && <p><span className="text-blue-600">الهاتف:</span> {formData.phone}</p>}
                   <p className="text-[10px] text-blue-500 pt-1">سيتم ربط هذا الطالب بالدورة وتحديد تاريخ الاشتراك باليوم الحالي تلقائياً.</p>
+                  {isAlreadySubscribedAndValid && (
+                    <div className="mt-2 p-3 bg-amber-100/90 border border-amber-300 text-amber-900 rounded-xl text-xs font-black flex items-center gap-2 shadow-sm">
+                      <span className="material-symbols-outlined text-[18px] text-amber-700">warning</span>
+                      <span>هذا الطالب مشترك بالفعل في هذه الدورة واشتراكه لا يزال سارياً.</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

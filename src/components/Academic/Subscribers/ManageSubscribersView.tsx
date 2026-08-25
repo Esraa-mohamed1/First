@@ -70,6 +70,7 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
           course_title: item.course?.title || item.course_title || null,
           avatarLetter: (user.name || item.name || '?').charAt(0),
           avatarBg: avatarColors[idx % avatarColors.length],
+          rejection_reason: item.rejection_reason || item.message || item.reject_reason || null,
         };
       });
       setStudents(normalized);
@@ -85,9 +86,9 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
     e.stopPropagation();
     try {
       await updateStudentPurchaseRequestStatus(id, 'accepted');
-      setStudents(prev => prev.map(s => (s.id === id || s.subId === id ? { ...s, status: 'active' } : s)));
+      setStudents(prev => prev.map(s => (s.id === id || s.subId === id ? { ...s, status: 'active', rejection_reason: null } : s)));
       if (drawerStudent && (drawerStudent.id === id || drawerStudent.subId === id)) {
-        setDrawerStudent((prev: any) => (prev ? { ...prev, status: 'active' } : null));
+        setDrawerStudent((prev: any) => (prev ? { ...prev, status: 'active', rejection_reason: null } : null));
       }
       toast.success('تم قبول وتفعيل طلب الاشتراك بنجاح ✅');
     } catch (err: any) {
@@ -112,9 +113,9 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
     if (result.isConfirmed) {
       try {
         await updateStudentPurchaseRequestStatus(id, 'rejected', result.value);
-        setStudents(prev => prev.map(s => (s.id === id || s.subId === id ? { ...s, status: 'rejected' } : s)));
+        setStudents(prev => prev.map(s => (s.id === id || s.subId === id ? { ...s, status: 'rejected', rejection_reason: result.value } : s)));
         if (drawerStudent && (drawerStudent.id === id || drawerStudent.subId === id)) {
-          setDrawerStudent((prev: any) => (prev ? { ...prev, status: 'rejected' } : null));
+          setDrawerStudent((prev: any) => (prev ? { ...prev, status: 'rejected', rejection_reason: result.value } : null));
         }
         toast.success('تم رفض طلب الاشتراك');
       } catch (err: any) {
@@ -351,7 +352,27 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
                           {student.amount || <span className="text-on-surface-variant/40">—</span>}
                         </td>
                         <td className="px-5 py-4">
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-black ${st.cls}`}>{st.label}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-black ${st.cls}`}>{st.label}</span>
+                            {(student.status === 'rejected' || student.status === 'cancelled') && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  MySwal.fire({
+                                    title: 'سبب الرفض',
+                                    text: student.rejection_reason || 'لا يوجد سبب رفض مسجل.',
+                                    icon: 'info',
+                                    confirmButtonText: 'حسناً',
+                                    confirmButtonColor: '#2563eb',
+                                  });
+                                }}
+                                className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors cursor-pointer flex items-center justify-center border border-red-200 bg-red-50/50"
+                                title="عرض سبب الرفض"
+                              >
+                                <span className="material-symbols-outlined text-[16px] font-bold">info</span>
+                              </button>
+                            )}
+                          </div>
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
@@ -483,26 +504,47 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
               </div>
             </div>
 
-            {/* Admin Action Buttons in Drawer */}
-            <div className="space-y-2 pt-2 border-t border-slate-100">
-              <p className="text-xs font-bold text-slate-600 mb-1">قرارات Admin:</p>
-              <div className="flex gap-2">
-                <button
-                  onClick={(e) => handleApproveStatus(e, drawerStudent.subId || drawerStudent.id)}
-                  className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                  <span>قبول وتفعيل</span>
-                </button>
-                <button
-                  onClick={(e) => handleDenyStatus(e, drawerStudent.subId || drawerStudent.id)}
-                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[18px]">cancel</span>
-                  <span>رفض الطلب</span>
-                </button>
+            {/* Rejection Message if Rejected */}
+            {(drawerStudent.status === 'rejected' || drawerStudent.status === 'cancelled') && (
+              <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-xs text-red-800 font-bold space-y-1">
+                <p className="flex items-center gap-1 text-red-600 font-black">
+                  <span className="material-symbols-outlined text-[16px]">info</span>
+                  <span>سبب الرفض:</span>
+                </p>
+                <p className="leading-relaxed font-medium">{drawerStudent.rejection_reason || 'لا يوجد سبب رفض مسجل.'}</p>
               </div>
-            </div>
+            )}
+
+            {/* Admin Action Buttons in Drawer */}
+            {(drawerStudent.status === 'pending' || 
+              drawerStudent.status === 'active' || 
+              drawerStudent.status === 'accepted' || 
+              drawerStudent.status === 'rejected' || 
+              drawerStudent.status === 'cancelled') && (
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <p className="text-xs font-bold text-slate-600 mb-1">قرارات Admin:</p>
+                <div className="flex gap-2">
+                  {drawerStudent.status !== 'active' && drawerStudent.status !== 'accepted' && (
+                    <button
+                      onClick={(e) => handleApproveStatus(e, drawerStudent.subId || drawerStudent.id)}
+                      className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                      <span>قبول وتفعيل</span>
+                    </button>
+                  )}
+                  {drawerStudent.status !== 'rejected' && drawerStudent.status !== 'cancelled' && (
+                    <button
+                      onClick={(e) => handleDenyStatus(e, drawerStudent.subId || drawerStudent.id)}
+                      className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">cancel</span>
+                      <span>رفض الطلب</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-2 pt-2">
               <button onClick={() => setEditingStudent(drawerStudent)} className="flex-1 px-4 py-2 border border-outline-variant rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-gray-50 cursor-pointer transition-all">
