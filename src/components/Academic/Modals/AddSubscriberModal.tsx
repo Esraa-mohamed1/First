@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { createUser, getUsers } from '@/services/users';
-import { addCourseSubscriber, getCourses } from '@/services/courses';
+import { addCourseSubscriber, getCourses, getCourseSubscribers } from '@/services/courses';
 import { User, Course } from '@/types/api';
 
 const MySwal = withReactContent(Swal);
@@ -29,6 +29,7 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
   const [existingStudents, setExistingStudents] = useState<User[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | number>('');
   const [loadingStudents, setLoadingStudents] = useState<boolean>(false);
+  const [courseSubscribers, setCourseSubscribers] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -44,6 +45,22 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
       setSelectedCourseId(courseId);
     }
   }, [courseId]);
+
+  useEffect(() => {
+    const activeId = courseId || selectedCourseId;
+    if (isOpen && activeId) {
+      getCourseSubscribers(activeId)
+        .then((res) => setCourseSubscribers(res || []))
+        .catch(() => setCourseSubscribers([]));
+    }
+  }, [isOpen, courseId, selectedCourseId]);
+
+  const activeSubscribedStudent = subMode === 'existing' && selectedUserId ? courseSubscribers.find(s => {
+    const u = s.user || s.student || s;
+    return String(u.id || s.id) === String(selectedUserId);
+  }) : null;
+
+  const isAlreadySubscribedAndValid = !!(activeSubscribedStudent && (activeSubscribedStudent.status === 'active' || activeSubscribedStudent.status === 'accepted' || !activeSubscribedStudent.status));
 
   useEffect(() => {
     if (isOpen) {
@@ -153,7 +170,7 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
 
     try {
       // Post User Subscription with current date now (starts_at)
-      await addCourseSubscriber({
+      const res = await addCourseSubscriber({
         course_id: activeCourseId,
         user_id: targetUserId,
         email: targetEmail,
@@ -162,6 +179,10 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
         status: formData.status || 'active',
         starts_at: todayStr
       });
+
+      if (res && (res.status === false || res.success === false)) {
+        throw res;
+      }
 
       toast.success('تمت إضافة الاشتراك في الدورة بنجاح');
       onSubscriberAdded();
@@ -178,7 +199,7 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
       });
     } catch (error: any) {
       const errorData = error.response?.data || error;
-      const token = errorData?.token || errorData?.data?.token;
+      const token = errorData?.token || errorData?.data?.token || errorData?.meta?.token;
 
       if (token) {
         // Show approval/confirmation modal from the academy
@@ -197,7 +218,7 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
         if (confirmResult.isConfirmed) {
           setIsSubmitting(true);
           try {
-            await addCourseSubscriber({
+            const resubRes = await addCourseSubscriber({
               course_id: activeCourseId,
               user_id: targetUserId,
               email: targetEmail,
@@ -207,6 +228,10 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
               starts_at: todayStr,
               token: token
             });
+
+            if (resubRes && (resubRes.status === false || resubRes.success === false)) {
+              throw resubRes;
+            }
 
             toast.success('تمت إعادة الاشتراك وتأكيد تفعيل الطالب بنجاح');
             onSubscriberAdded();
@@ -222,13 +247,14 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
               status: 'active'
             });
           } catch (resubError: any) {
-            toast.error(resubError?.message || resubError?.data?.message || 'فشل إعادة الاشتراك');
+            const resubErrorData = resubError.response?.data || resubError;
+            toast.error(resubErrorData?.message || resubErrorData?.data?.message || 'فشل إعادة الاشتراك');
           } finally {
             setIsSubmitting(false);
           }
         }
       } else {
-        toast.error(error?.message || error?.data?.message || 'فشل إضافة المشترك في الدورة');
+        toast.error(errorData?.message || errorData?.data?.message || error?.message || 'فشل إضافة المشترك في الدورة');
       }
     } finally {
       setIsSubmitting(false);
@@ -369,6 +395,12 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
                   {formData.email && <p><span className="text-blue-600">البريد:</span> {formData.email}</p>}
                   {formData.phone && <p><span className="text-blue-600">الهاتف:</span> {formData.phone}</p>}
                   <p className="text-[10px] text-blue-500 pt-1">سيتم ربط هذا الطالب بالدورة وتحديد تاريخ الاشتراك باليوم الحالي تلقائياً.</p>
+                  {isAlreadySubscribedAndValid && (
+                    <div className="mt-2 p-3 bg-amber-100/90 border border-amber-300 text-amber-900 rounded-xl text-xs font-black flex items-center gap-2 shadow-sm">
+                      <span className="material-symbols-outlined text-[18px] text-amber-700">warning</span>
+                      <span>هذا الطالب مشترك بالفعل في هذه الدورة واشتراكه لا يزال سارياً.</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
