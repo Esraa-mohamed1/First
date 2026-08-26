@@ -59,3 +59,37 @@ export const clearUserSessionAndCache = () => {
     console.error('Error clearing user session and cache:', e);
   }
 };
+
+export const purgeAllCourseDraftCache = () => {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const keysToRemove: string[] = [
+      'createCourseId',
+      'createCourseSlug',
+      'darab_last_created_course_id',
+      'darab_last_created_course_slug',
+    ];
+
+    const types = ['recorded', 'online', 'physical', 'live-online', 'in-person'];
+    types.forEach(t => {
+      keysToRemove.push(`darb_create_course_draft_cache_${t}`);
+      keysToRemove.push(`darb_create_course_image_${t}`);
+    });
+
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && (
+        key.startsWith('darb_create_course_') || 
+        key.startsWith('darab_course_cache_') ||
+        key.startsWith('darab_course_edit_')
+      )) {
+        keysToRemove.push(key);
+      }
+    }
+
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+  } catch (e) {
+    console.error('Error purging course draft cache:', e);
+  }
+};

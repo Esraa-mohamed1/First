@@ -4,6 +4,8 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { X, Video, Monitor, Users, ArrowRight } from 'lucide-react';
 
+import { purgeAllCourseDraftCache } from '@/lib/auth-storage';
+
 interface SelectCourseTypeModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -37,8 +39,9 @@ export default function SelectCourseTypeModal({ isOpen, onClose }: SelectCourseT
   ];
 
   const handleSelectType = (type: string) => {
+    purgeAllCourseDraftCache();
     onClose();
-    router.push(`/academic/courses/create?type=${type}`);
+    router.push(`/academic/courses/create?type=${type}&new=true`);
   };
 
   if (!isOpen) return null;

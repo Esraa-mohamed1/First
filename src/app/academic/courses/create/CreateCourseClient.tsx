@@ -40,6 +40,7 @@ import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { createCourse, createUnit, deleteUnit, getCategories, getCourse, getCourses, updateCourse, createCategory } from '@/services/courses';
 import { getErrorMessage } from '@/lib/utils';
+import { purgeAllCourseDraftCache } from '@/lib/auth-storage';
 import { getGrades, getTerms, getSubjects, getAcademicYears, ClassificationItem } from '@/services/academic-classification';
 import { getProfileStatus } from '@/services/auth';
 import { getUsers } from '@/services/users';
@@ -276,8 +277,34 @@ export default function CreateCourseClient() {
     }
   };
 
-  // 1. Load draft from localStorage on mount if within 7 minutes
+  // 1. Load draft from localStorage on mount if within 30 minutes
   useEffect(() => {
+    const isNewRequest = searchParams.get('new') === 'true' || searchParams.get('fresh') === 'true';
+    if (isNewRequest) {
+      purgeAllCourseDraftCache();
+      setTitle('');
+      setSlug('');
+      setCategory('');
+      setShortDescription('');
+      setDescription('');
+      setGradeLevel('');
+      setSemester('');
+      setSubject('');
+      setAcademicYear('');
+      setLearningOutcomes(['']);
+      setTargetAudience(['']);
+      setPricingType('paid');
+      setPrice('');
+      setAccessDurationType('days');
+      setAccessDays('30');
+      setAccessUntilDate('');
+      setCourseId(null);
+      setUnits([]);
+      setPreviewUrl(null);
+      setSelectedFile(null);
+      return;
+    }
+
     try {
       const cachedStr = localStorage.getItem(DRAFT_CACHE_KEY);
       if (cachedStr) {
@@ -333,14 +360,13 @@ export default function CreateCourseClient() {
 
           toast.success('تم استعادة بيانات المسودة المحفوظة مؤقتاً');
         } else {
-          localStorage.removeItem(DRAFT_CACHE_KEY);
-          localStorage.removeItem(`darb_create_course_image_${courseTypeParam || 'recorded'}`);
+          purgeAllCourseDraftCache();
         }
       }
     } catch (err) {
       console.error('Error restoring draft:', err);
     }
-  }, [DRAFT_CACHE_KEY]);
+  }, [DRAFT_CACHE_KEY, searchParams]);
 
   // 2. Save draft to localStorage whenever form state changes
   useEffect(() => {
@@ -596,20 +622,7 @@ export default function CreateCourseClient() {
 
   const clearDraftCache = () => {
     try {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(DRAFT_CACHE_KEY);
-        localStorage.removeItem(`darb_create_course_image_${courseTypeParam || 'recorded'}`);
-        localStorage.removeItem('createCourseId');
-        localStorage.removeItem('createCourseSlug');
-        localStorage.removeItem('darab_last_created_course_id');
-        localStorage.removeItem('darab_last_created_course_slug');
-        if (courseId) {
-          localStorage.removeItem(`darab_course_cache_${courseId}`);
-        }
-        if (courseSlug) {
-          localStorage.removeItem(`darab_course_cache_${courseSlug}`);
-        }
-      }
+      purgeAllCourseDraftCache();
     } catch (e) {
       console.error('Failed to clear draft cache:', e);
     }
