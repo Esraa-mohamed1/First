@@ -8,10 +8,11 @@ import { twMerge } from "tailwind-merge";
 interface PhoneInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
   containerClassName?: string;
   label?: string;
+  allowedCountryCodes?: string[];
 }
 
 export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
-  ({ className, containerClassName = "", label = "رقم الجوال", ...props }, ref) => {
+  ({ className, containerClassName = "", label = "رقم الجوال", allowedCountryCodes, ...props }, ref) => {
     return (
       <div className={twMerge("flex flex-col gap-1.5 w-full", containerClassName)} dir="rtl">
         {label && (
@@ -23,7 +24,11 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
         <div className="flex relative items-stretch gap-2">
           <div className="w-[105px] sm:w-[125px] flex-shrink-0 relative">
             {/* Override CountrySelect internally if needed, or rely on its own transparent styling */}
-            <CountrySelect className="h-full rounded-xl bg-[#f8faff] border-[#e2e8f0] shadow-sm hover:bg-[#f1f5f9] transition-all" compact={true} />
+            <CountrySelect 
+              className="h-full rounded-xl bg-[#f8faff] border-[#e2e8f0] shadow-sm hover:bg-[#f1f5f9] transition-all" 
+              compact={true} 
+              allowedCountryCodes={allowedCountryCodes}
+            />
           </div>
 
           <div className="relative flex-1 min-w-0">
