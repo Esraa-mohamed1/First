@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Package, CreditCard, FileText, Settings, LogOut, X, Globe, User } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { clearUserSessionAndCache } from '@/lib/auth-storage';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -170,7 +171,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       {/* Logout */}
       <div className="p-4 border-t border-gray-50">
         <button 
-          onClick={() => { localStorage.clear(); document.cookie = 'token=; path=/; max-age=0; SameSite=Lax'; window.location.href = '/'; }}
+          onClick={() => {
+            clearUserSessionAndCache();
+            window.location.href = '/auth/login';
+          }}
           className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-500 hover:bg-red-50 transition-all duration-200"
         >
           <LogOut size={20} />

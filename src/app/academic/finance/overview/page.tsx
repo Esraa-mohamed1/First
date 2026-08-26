@@ -50,9 +50,9 @@ const FinanceOverview = () => {
   const stats = [
     {
       label: 'اجمالي المبيعات',
-      value: '40,689',
+      value: '0',
       currency: '$',
-      trend: '8.5% زيادة عن أمس',
+      trend: '0%',
       isPositive: true,
       icon: TrendingUp,
       bgColor: 'bg-green-50',
@@ -60,9 +60,9 @@ const FinanceOverview = () => {
     },
     {
       label: 'الرصيد المتاح للسحب',
-      value: '30,689',
+      value: '0',
       currency: '$',
-      trend: '8.5% زيادة عن أمس',
+      trend: '0%',
       isPositive: true,
       icon: Wallet,
       bgColor: 'bg-blue-50',
@@ -70,9 +70,9 @@ const FinanceOverview = () => {
     },
     {
       label: 'الرصيد المعلق',
-      value: '10,000',
+      value: '0',
       currency: '$',
-      trend: '1.2% تراجع عن أمس',
+      trend: '0%',
       isPositive: false,
       icon: Clock,
       bgColor: 'bg-amber-50',

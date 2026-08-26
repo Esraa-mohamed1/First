@@ -1,6 +1,7 @@
 import api from '@/lib/api';
 import academyApi from '@/lib/academy-api';
 import { ApiResponse, Package, CreatePackagePayload, Feature } from '@/types/api';
+import { getStoredAuthToken } from '@/lib/auth-storage';
 
 const SUPER_ADMIN_API_URL = 'https://api.darab.academy/api/superAdmin';
 
@@ -93,8 +94,12 @@ export const getPackageById = async (id: number): Promise<Package | null> => {
 
 export const updatePackage = async (id: number, payload: CreatePackagePayload): Promise<ApiResponse<Package>> => {
   try {
+    const token = getStoredAuthToken();
     const response = await api.put<ApiResponse<Package>>(`/packages/${id}`, payload, {
-      baseURL: SUPER_ADMIN_API_URL
+      baseURL: SUPER_ADMIN_API_URL,
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
     });
     return response.data;
   } catch (error: any) {

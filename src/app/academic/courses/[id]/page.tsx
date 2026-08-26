@@ -2424,29 +2424,17 @@ export default function CourseDetailsPage() {
             </div>
 
             {/* Performance Overview Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white border border-outline-variant p-6 rounded-2xl shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                    <span className="material-symbols-outlined">visibility</span>
-                  </div>
-                  <span className="text-label-sm text-green-600 bg-green-50 px-2 py-0.5 rounded font-bold">+12%</span>
-                </div>
-                <p className="text-on-surface-variant text-label-md">إجمالي الزيارات</p>
-                <h4 className="text-3xl font-black text-gray-900 mt-1">
-                  {(12300 + landingPages.reduce((acc, p) => acc + (p.content?.visits || 0), 0)).toLocaleString('ar-EG')}
-                </h4>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-6">
               <div className="bg-white border border-outline-variant p-6 rounded-2xl shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
                   <div className="p-2 bg-green-50 text-green-600 rounded-lg">
                     <span className="material-symbols-outlined">payments</span>
                   </div>
-                  <span className="text-label-sm text-green-600 bg-green-50 px-2 py-0.5 rounded font-bold">+8%</span>
+                  <span className="text-label-sm text-slate-500 bg-slate-50 px-2 py-0.5 rounded font-bold">0%</span>
                 </div>
                 <p className="text-on-surface-variant text-label-md">إجمالي المبيعات</p>
                 <h4 className="text-3xl font-black text-gray-900 mt-1">
-                  {(540 + landingPages.reduce((acc, p) => acc + (p.content?.sales || 0), 0)).toLocaleString('ar-EG')}
+                  {landingPages.reduce((acc, p) => acc + (p.content?.sales || 0), 0).toLocaleString('ar-EG')}
                 </h4>
               </div>
               <div className="bg-white border border-outline-variant p-6 rounded-2xl shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
@@ -2468,7 +2456,7 @@ export default function CourseDetailsPage() {
                 </div>
                 <p className="text-on-surface-variant text-label-md">أفضل صفحة بيع</p>
                 <h4 className="text-lg font-black text-gray-900 mt-1 leading-snug line-clamp-1">
-                  {landingPages.length > 0 && landingPages.some(p => (p.content?.sales || 0) > 540)
+                  {landingPages.length > 0 && landingPages.some(p => (p.content?.sales || 0) > 0)
                     ? (landingPages.reduce((max, p) => (p.content?.sales || 0) > (max.content?.sales || 0) ? p : max, landingPages[0]).content?.campaignName || 'صفحة إضافية')
                     : 'صفحة البيع الافتراضية'}
                 </h4>

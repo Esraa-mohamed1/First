@@ -1,25 +1,61 @@
-const LEARNER_ROLES = new Set(['student', 'طالب', 'admin', 'الادمن', 'academy', 'coach', 'instructor', 'teacher']);
+export const getStoredAuthToken = (overrideToken?: string | null): string | null => {
+  if (overrideToken) return overrideToken;
+  if (typeof window === 'undefined') return null;
+  try {
+    const token = localStorage.getItem('token');
+    if (token) return token;
+    
+    // Cookie fallback
+    const match = document.cookie.match(/(?:^|; )\s*token=([^;]*)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  } catch (e) {
+    return null;
+  }
+};
 
-export function getCookieToken(): string | null {
-  if (typeof document === 'undefined') return null;
-  const match = document.cookie.match(/(?:^|;\s*)token=([^;]*)/);
-  return match?.[1] ? decodeURIComponent(match[1]) : null;
-}
+export const persistAuthToken = (token: string): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem('token', token);
+    document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+  } catch (e) {
+    console.error('Failed to persist auth token:', e);
+  }
+};
 
-export function getStoredAuthToken(urlToken?: string | null): string | null {
-  const fromUrl = urlToken?.trim() || null;
-  const fromCookie = getCookieToken();
-  const fromStorage =
-    typeof window !== 'undefined' ? localStorage.getItem('token')?.trim() || null : null;
-  return fromUrl || fromCookie || fromStorage;
-}
+export const canAccessStudentLearning = (role?: string | null): boolean => {
+  if (role) {
+    const r = role.toLowerCase();
+    return r === 'student' || r === 'user' || r === 'admin' || r === 'academy' || r === 'schoolteacher';
+  }
+  const token = getStoredAuthToken();
+  return Boolean(token);
+};
 
-export function persistAuthToken(token: string): void {
-  localStorage.setItem('token', token);
-  document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
-}
+export const clearUserSessionAndCache = () => {
+  if (typeof window === 'undefined') return;
 
-export function canAccessStudentLearning(role: unknown): boolean {
-  if (role == null || role === '') return true;
-  return LEARNER_ROLES.has(String(role));
-}
+  try {
+    // 1. Purge localStorage completely
+    localStorage.clear();
+
+    // 2. Purge sessionStorage completely
+    sessionStorage.clear();
+
+    // 3. Purge all auth and backup cookies
+    const cookiesToClear = [
+      'token',
+      'backup_email',
+      'backup_phone',
+      'backup_password',
+      'academy_link_name',
+      'subdomain'
+    ];
+
+    cookiesToClear.forEach(cookieName => {
+      document.cookie = `${cookieName}=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax`;
+    });
+  } catch (e) {
+    console.error('Error clearing user session and cache:', e);
+  }
+};

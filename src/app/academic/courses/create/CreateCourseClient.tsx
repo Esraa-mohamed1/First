@@ -38,7 +38,7 @@ import {
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { createCourse, createUnit, getCategories, getCourse, updateCourse, createCategory } from '@/services/courses';
+import { createCourse, createUnit, deleteUnit, getCategories, getCourse, getCourses, updateCourse, createCategory } from '@/services/courses';
 import { getErrorMessage } from '@/lib/utils';
 import { getGrades, getTerms, getSubjects, getAcademicYears, ClassificationItem } from '@/services/academic-classification';
 import { getProfileStatus } from '@/services/auth';
@@ -599,6 +599,16 @@ export default function CreateCourseClient() {
       if (typeof window !== 'undefined') {
         localStorage.removeItem(DRAFT_CACHE_KEY);
         localStorage.removeItem(`darb_create_course_image_${courseTypeParam || 'recorded'}`);
+        localStorage.removeItem('createCourseId');
+        localStorage.removeItem('createCourseSlug');
+        localStorage.removeItem('darab_last_created_course_id');
+        localStorage.removeItem('darab_last_created_course_slug');
+        if (courseId) {
+          localStorage.removeItem(`darab_course_cache_${courseId}`);
+        }
+        if (courseSlug) {
+          localStorage.removeItem(`darab_course_cache_${courseSlug}`);
+        }
       }
     } catch (e) {
       console.error('Failed to clear draft cache:', e);
@@ -685,6 +695,51 @@ export default function CreateCourseClient() {
     });
 
     try {
+      // Check existing user courses for duplicates before creating/updating
+      if (effectiveTitle.trim()) {
+        try {
+          const allCourses = await getCourses(userId, currentUser?.role);
+          const existingCourse = allCourses.find((c: any) => 
+            c.title?.trim().toLowerCase() === effectiveTitle.trim().toLowerCase() && 
+            (!courseId || Number(c.id) !== Number(courseId))
+          );
+
+          if (existingCourse) {
+            const result = await MySwal.fire({
+              title: 'تنبيه: هذه الدورة موجودة بالفعل ⚠️',
+              text: `دورة بعنوان "${effectiveTitle.trim()}" موجودة بالفعل بحسابك. هل ترغب في تكرارها (إنشاء نسخة مطابقة)؟`,
+              icon: 'warning',
+              showCancelButton: true,
+              confirmButtonColor: '#2563eb',
+              cancelButtonColor: '#64748b',
+              confirmButtonText: 'نعم، قم بالتكرار 📋',
+              cancelButtonText: 'إلغاء',
+              reverseButtons: true,
+            });
+            if (result.isConfirmed) {
+              payload.title = `${effectiveTitle.trim()} (نسخة)`;
+              setTitle(payload.title);
+              // Clear current courseId so it creates a NEW duplicate instance
+              setCourseId(null);
+              const created = await createCourse(payload);
+              setCourseId(created.id);
+              const returnedSlug = (created as any)?.slug || (created as any)?.data?.slug || (created as any)?.course?.slug || slug;
+              if (returnedSlug) setCourseSlug(returnedSlug);
+              clearDraftCache();
+              if (overriddenStatus !== 'published') {
+                toast.success('تم تكرار وحفظ الدورة بنجاح');
+              }
+              return created.id;
+            } else {
+              throw new Error('User cancelled duplicate course creation');
+            }
+          }
+        } catch (err: any) {
+          if (err.message === 'User cancelled duplicate course creation') throw err;
+          // Ignore general fetch errors and continue
+        }
+      }
+
       if (courseId) {
         const updated = await updateCourse(courseId, payload);
         const returnedSlug = (updated as any)?.slug || (updated as any)?.data?.slug || (updated as any)?.course?.slug || slug;
@@ -700,10 +755,56 @@ export default function CreateCourseClient() {
           }
         } catch (e) {}
         clearDraftCache();
-        toast.success('تم تحديث بيانات الدورة بنجاح');
+        if (overriddenStatus !== 'published') {
+          toast.success('تم تحديث بيانات الدورة بنجاح');
+        }
         return courseId;
       } else {
-        const created = await createCourse(payload);
+        let created: any;
+        try {
+          created = await createCourse(payload);
+        } catch (err: any) {
+          if (err?.already_exists || err?.status === 409 || err?.message?.includes('already exists') || err?.message?.includes('موجود')) {
+            const result = await MySwal.fire({
+              title: 'تنبيه: هذه الدورة موجودة بالفعل ⚠️',
+              text: `دورة بعنوان "${payload.title}" موجودة بالفعل. هل ترغب في تكرارها (إنشاء نسخة مطابقة)؟`,
+              icon: 'warning',
+              showCancelButton: true,
+              confirmButtonColor: '#2563eb',
+              cancelButtonColor: '#64748b',
+              confirmButtonText: 'نعم، قم بالتكرار 📋',
+              cancelButtonText: 'إلغاء',
+              reverseButtons: true,
+            });
+            if (result.isConfirmed) {
+              payload.title = `${payload.title} (نسخة)`;
+              created = await createCourse(payload);
+            } else {
+              throw err;
+            }
+          } else {
+            throw err;
+          }
+        }
+
+        if (created?.already_exists || created?.exists || created?.is_duplicate) {
+          const result = await MySwal.fire({
+            title: 'تنبيه: هذه الدورة موجودة بالفعل ⚠️',
+            text: `دورة بعنوان "${payload.title}" موجودة بالفعل. هل ترغب في تكرارها (إنشاء نسخة مطابقة)؟`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#2563eb',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'نعم، قم بالتكرار 📋',
+            cancelButtonText: 'إلغاء',
+            reverseButtons: true,
+          });
+          if (result.isConfirmed) {
+            payload.title = `${payload.title} (نسخة)`;
+            created = await createCourse(payload);
+          }
+        }
+
         setCourseId(created.id);
         const returnedSlug = (created as any)?.slug || (created as any)?.data?.slug || (created as any)?.course?.slug || slug;
         if (returnedSlug) setCourseSlug(returnedSlug);
@@ -719,17 +820,22 @@ export default function CreateCourseClient() {
           }
         } catch (e) {}
         clearDraftCache();
-        toast.success('تم حفظ الدورة بنجاح');
+        if (overriddenStatus !== 'published') {
+          toast.success('تم حفظ الدورة بنجاح');
+        }
         return created.id;
       }
     } catch (error: any) {
-      console.error(error);
-      toast.error(getErrorMessage(error, 'حدث خطأ أثناء حفظ الدورة'));
+      if (error?.message !== 'User cancelled duplicate course creation') {
+        console.error(error);
+        toast.error(getErrorMessage(error, 'حدث خطأ أثناء حفظ الدورة'));
+      }
       throw error;
     }
   };
 
   const handleSave = async () => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       await ensureCourseCreated('draft');
@@ -741,6 +847,7 @@ export default function CreateCourseClient() {
   };
 
   const handlePublish = async () => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       await ensureCourseCreated('published');
@@ -1815,11 +1922,81 @@ export default function CreateCourseClient() {
                       type="button"
                       onClick={async () => {
                         if (!newUnitTitle.trim()) return;
+
+                        let targetTitle = newUnitTitle.trim();
+                        const existingUnit = units.find((u: any) => u.title?.trim().toLowerCase() === targetTitle.toLowerCase());
+
+                        if (existingUnit) {
+                          const result = await MySwal.fire({
+                            title: 'تنبيه: هذه الوحدة موجودة بالفعل ⚠️',
+                            text: `الوحدة "${targetTitle}" موجودة بالفعل في هذا المنهج. هل ترغب في تكرارها (إنشاء نسخة مطابقة)؟`,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#2563eb',
+                            cancelButtonColor: '#64748b',
+                            confirmButtonText: 'نعم، قم بالتكرار 📋',
+                            cancelButtonText: 'إلغاء',
+                            reverseButtons: true,
+                          });
+                          if (!result.isConfirmed) return;
+                          targetTitle = `${targetTitle} (نسخة)`;
+                        }
+
                         const id = await ensureCourseCreated();
-                        await createUnit({ course_id: id, title: newUnitTitle, description: '', order: units.length + 1 });
-                        await refreshUnits(id);
-                        setNewUnitTitle('');
-                        setIsAddingUnit(false);
+                        try {
+                          const res: any = await createUnit({ course_id: id, title: targetTitle, description: '', order: units.length + 1 });
+                          if (res?.already_exists || res?.exists || res?.is_duplicate) {
+                            const result = await MySwal.fire({
+                              title: 'تنبيه: هذه الوحدة موجودة بالفعل ⚠️',
+                              text: `الوحدة "${targetTitle}" موجودة بالفعل. هل ترغب في تكرارها (إنشاء نسخة مطابقة)؟`,
+                              icon: 'warning',
+                              showCancelButton: true,
+                              confirmButtonColor: '#2563eb',
+                              cancelButtonColor: '#64748b',
+                              confirmButtonText: 'نعم، قم بالتكرار 📋',
+                              cancelButtonText: 'إلغاء',
+                              reverseButtons: true,
+                            });
+                            if (result.isConfirmed) {
+                              await createUnit({ course_id: id, title: `${targetTitle} (نسخة)`, description: '', order: units.length + 1 });
+                              await refreshUnits(id);
+                              setNewUnitTitle('');
+                              setIsAddingUnit(false);
+                              toast.success('تم تكرار وحفظ الوحدة بنجاح');
+                              return;
+                            } else {
+                              return;
+                            }
+                          }
+                          await refreshUnits(id);
+                          setNewUnitTitle('');
+                          setIsAddingUnit(false);
+                          toast.success('تم حفظ الوحدة بنجاح');
+                        } catch (err: any) {
+                          if (err?.already_exists || err?.status === 409 || err?.message?.includes('already exists') || err?.message?.includes('موجود')) {
+                            const result = await MySwal.fire({
+                              title: 'تنبيه: هذه الوحدة موجودة بالفعل ⚠️',
+                              text: `الوحدة "${targetTitle}" موجودة بالفعل. هل ترغب في تكرارها (إنشاء نسخة مطابقة)؟`,
+                              icon: 'warning',
+                              showCancelButton: true,
+                              confirmButtonColor: '#2563eb',
+                              cancelButtonColor: '#64748b',
+                              confirmButtonText: 'نعم، قم بالتكرار 📋',
+                              cancelButtonText: 'إلغاء',
+                              reverseButtons: true,
+                            });
+                            if (result.isConfirmed) {
+                              await createUnit({ course_id: id, title: `${targetTitle} (نسخة)`, description: '', order: units.length + 1 });
+                              await refreshUnits(id);
+                              setNewUnitTitle('');
+                              setIsAddingUnit(false);
+                              toast.success('تم تكرار وحفظ الوحدة بنجاح');
+                              return;
+                            }
+                          } else {
+                            toast.error(getErrorMessage(err, 'فشل حفظ الوحدة'));
+                          }
+                        }
                       }}
                       className="px-5 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-sm"
                     >
@@ -1899,6 +2076,38 @@ export default function CreateCourseClient() {
                               title="تعديل الوحدة"
                             >
                               <span className="material-symbols-outlined text-xl">edit</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                const result = await MySwal.fire({
+                                  title: 'هل أنت متأكد من حذف الوحدة؟',
+                                  text: 'سيتم حذف هذه الوحدة وجميع الدروس التابعة لها.',
+                                  icon: 'warning',
+                                  showCancelButton: true,
+                                  confirmButtonColor: '#ef4444',
+                                  cancelButtonColor: '#64748b',
+                                  confirmButtonText: 'نعم، احذف',
+                                  cancelButtonText: 'إلغاء',
+                                  reverseButtons: true,
+                                });
+                                if (result.isConfirmed) {
+                                  try {
+                                    if (unit.id) {
+                                      await deleteUnit(unit.id);
+                                    }
+                                    setUnits((prev: any[]) => prev.filter((u: any) => u.id !== unit.id));
+                                    toast.success('تم حذف الوحدة بنجاح');
+                                  } catch (err: any) {
+                                    toast.error(getErrorMessage(err, 'فشل حذف الوحدة'));
+                                  }
+                                }
+                              }}
+                              className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                              title="حذف الوحدة"
+                            >
+                              <span className="material-symbols-outlined text-xl">delete</span>
                             </button>
                             <button
                               type="button"
@@ -2154,29 +2363,17 @@ export default function CreateCourseClient() {
                   </div>
 
                   {/* Performance Overview Stats */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div className="bg-white border border-slate-300 p-6 rounded-2xl shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                          <span className="material-symbols-outlined">visibility</span>
-                        </div>
-                        <span className="text-[10px] text-green-600 bg-green-50 px-2 py-0.5 rounded font-bold">+12%</span>
-                      </div>
-                      <p className="text-slate-500 text-xs font-bold">إجمالي الزيارات</p>
-                      <h4 className="text-3xl font-black text-gray-900 mt-1">
-                        {(12300 + landingPages.reduce((acc, p) => acc + (p.content?.visits || 0), 0)).toLocaleString('ar-EG')}
-                      </h4>
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-6">
                     <div className="bg-white border border-slate-300 p-6 rounded-2xl shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
                       <div className="flex items-center justify-between mb-4">
                         <div className="p-2 bg-green-50 text-green-600 rounded-lg">
                           <span className="material-symbols-outlined">payments</span>
                         </div>
-                        <span className="text-[10px] text-green-600 bg-green-50 px-2 py-0.5 rounded font-bold">+8%</span>
+                        <span className="text-[10px] text-slate-500 bg-slate-50 px-2 py-0.5 rounded font-bold">0%</span>
                       </div>
                       <p className="text-slate-500 text-xs font-bold">إجمالي المبيعات</p>
                       <h4 className="text-3xl font-black text-gray-900 mt-1">
-                        {(540 + landingPages.reduce((acc, p) => acc + (p.content?.sales || 0), 0)).toLocaleString('ar-EG')}
+                        {landingPages.reduce((acc, p) => acc + (p.content?.sales || 0), 0).toLocaleString('ar-EG')}
                       </h4>
                     </div>
                     <div className="bg-white border border-slate-300 p-6 rounded-2xl shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
@@ -2198,7 +2395,7 @@ export default function CreateCourseClient() {
                       </div>
                       <p className="text-slate-500 text-xs font-bold">أفضل صفحة بيع</p>
                       <h4 className="text-base font-black text-gray-900 mt-1 leading-snug line-clamp-1">
-                        {landingPages.length > 0 && landingPages.some(p => (p.content?.sales || 0) > 540)
+                        {landingPages.length > 0 && landingPages.some(p => (p.content?.sales || 0) > 0)
                           ? (landingPages.reduce((max, p) => (p.content?.sales || 0) > (max.content?.sales || 0) ? p : max, landingPages[0]).content?.campaignName || 'صفحة إضافية')
                           : 'صفحة البيع الافتراضية'}
                       </h4>
@@ -2232,11 +2429,11 @@ export default function CreateCourseClient() {
                             </div>
                             <div>
                               <p className="text-xs text-slate-500 font-bold">الزيارات</p>
-                              <p className="font-black text-gray-900 text-sm mt-1.5">١٢,٣٠٠</p>
+                              <p className="font-black text-gray-900 text-sm mt-1.5">٠</p>
                             </div>
                             <div>
                               <p className="text-xs text-slate-500 font-bold">المبيعات</p>
-                              <p className="font-black text-gray-900 text-sm mt-1.5">٥٤٠</p>
+                              <p className="font-black text-gray-900 text-sm mt-1.5">٠</p>
                             </div>
                             <div>
                               <p className="text-xs text-slate-500 font-bold">آخر تحديث</p>
