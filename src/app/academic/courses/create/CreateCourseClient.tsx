@@ -370,7 +370,16 @@ export default function CreateCourseClient() {
 
   // 2. Save draft to localStorage whenever form state changes
   useEffect(() => {
-    if (!title && !category && !description && !price && !courseId) return;
+    if (courseId) {
+      // Clear draft cache if it was created, so that it doesn't linger after successful creation
+      try {
+        localStorage.removeItem(DRAFT_CACHE_KEY);
+        localStorage.removeItem(`darb_create_course_image_${courseTypeParam || 'recorded'}`);
+      } catch (e) {}
+      return;
+    }
+
+    if (!title && !category && !description && !price) return;
 
     const draft = {
       timestamp: Date.now(),
@@ -392,7 +401,7 @@ export default function CreateCourseClient() {
       accessDurationType,
       accessDays,
       accessUntilDate,
-      courseId,
+      courseId: null, // Always null for new creation draft
       units,
     };
 
@@ -847,11 +856,26 @@ export default function CreateCourseClient() {
     }
   };
 
+  const handleNextTab = () => {
+    if (activeTab === 'info') setActiveTab('content');
+    else if (activeTab === 'content') setActiveTab('landing_pages');
+    else if (activeTab === 'landing_pages') setActiveTab('subscribers');
+  };
+
+  const handleBackTab = () => {
+    if (activeTab === 'content') setActiveTab('info');
+    else if (activeTab === 'landing_pages') setActiveTab('content');
+    else if (activeTab === 'subscribers') setActiveTab('landing_pages');
+  };
+
   const handleSave = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await ensureCourseCreated('draft');
+      const createdId = await ensureCourseCreated('draft');
+      if (createdId && !courseId) {
+        router.push(`/academic/courses/${createdId}`);
+      }
     } catch (err) {
       // Handled inside
     } finally {
@@ -863,10 +887,13 @@ export default function CreateCourseClient() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await ensureCourseCreated('published');
+      const createdId = await ensureCourseCreated('published');
       setStatus('published');
       toast.success('تم نشر الدورة بنجاح!');
       clearDraftCache();
+      if (createdId && !courseId) {
+        router.push(`/academic/courses/${createdId}`);
+      }
     } catch (err) {
       // Handled inside
     } finally {
@@ -1198,37 +1225,6 @@ export default function CreateCourseClient() {
             </div>
 
             <div className="flex items-center gap-2.5 flex-wrap">
-              <button
-                onClick={() => {
-                  const cachedId = localStorage.getItem('createCourseId');
-                  const cachedSlug = localStorage.getItem('createCourseSlug');
-                  const targetPath = slug || cachedSlug || courseSlug || cachedId || (courseId ? String(courseId) : null);
-                  if (targetPath) {
-                    window.open(`/${targetPath}`, '_blank');
-                  } else {
-                    toast.error('يرجى حفظ الدورة أولاً للمعاينة');
-                  }
-                }}
-                className="px-4 py-2.5 text-sm border border-slate-300 rounded-xl flex items-center gap-2 bg-white hover:bg-slate-50 hover:border-slate-400 transition-all font-bold text-slate-700 shadow-xs active:scale-[0.98]"
-              >
-                <Eye className="w-4 h-4" />
-                معاينة
-              </button>
-              <button
-                onClick={() => {
-                  if (navigator.clipboard && courseId) {
-                    navigator.clipboard.writeText(`${window.location.origin}/courses/${courseId}`);
-                    toast.success('تم نسخ رابط الدورة بنجاح');
-                  } else {
-                    toast.error('احفظ الدورة أولاً للمشاركة');
-                  }
-                }}
-                className="px-4 py-2.5 text-sm border border-slate-300 rounded-xl flex items-center gap-2 bg-white hover:bg-slate-50 hover:border-slate-400 transition-all font-bold text-slate-700 shadow-xs active:scale-[0.98]"
-              >
-                <Share2 className="w-4 h-4" />
-                مشاركة
-                <ChevronDown className="w-4 h-4" />
-              </button>
               <button
                 onClick={handleSave}
                 disabled={isSubmitting}
@@ -2639,7 +2635,30 @@ export default function CreateCourseClient() {
             </div>
           )}
 
+        </div>
 
+        {/* Sticky Bottom Navigation Bar for Next/Back */}
+        <div className="sticky bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 py-4 px-6 flex items-center justify-between z-40 shadow-md mt-6 animate-in slide-in-from-bottom duration-300">
+          <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
+            <button
+              type="button"
+              onClick={handleBackTab}
+              disabled={activeTab === 'info'}
+              className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 font-bold rounded-xl flex items-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+            >
+              <ChevronRight size={18} />
+              <span>السابق</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleNextTab}
+              disabled={activeTab === 'subscribers'}
+              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl flex items-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+            >
+              <span>التالي</span>
+              <ChevronLeft size={18} />
+            </button>
+          </div>
         </div>
       </main>
 

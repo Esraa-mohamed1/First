@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, X, BarChart3, Eye, Plus, Video, Radio, MapPin, Users, CreditCard, Settings2, Link as LinkIcon, Pencil, Clock, ExternalLink, ArrowUpRight } from 'lucide-react';
+import { Search, ChevronDown, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, X, BarChart3, Eye, Plus, Video, Radio, MapPin, Users, CreditCard, Settings2, Link as LinkIcon, Pencil, Clock, ExternalLink, ArrowUpRight, Share2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCourses, deleteCourse } from '@/services/courses';
@@ -261,9 +261,9 @@ export default function CoursesPage() {
                   key={course.id}
                   className="bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col hover:shadow-lg transition-shadow group relative"
                 >
-                  {/* Course Image Header - Clicking opens course edit mode */}
+                  {/* Course Image Header - Clicking opens course content tab */}
                   <div
-                    onClick={() => router.push(`/academic/courses/${course.id}`)}
+                    onClick={() => router.push(`/academic/courses/${course.id}?tab=content`)}
                     className="relative h-48 overflow-hidden cursor-pointer group/img"
                   >
                     <img
@@ -279,25 +279,24 @@ export default function CoursesPage() {
                       </span>
                     </div>
 
-                    {/* Arrow Button for Course Review */}
+                    {/* Edit Button in the up of the card */}
                     <div className="absolute top-3 left-3 z-10">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          const targetUrl = course.slug ? `/${course.slug}` : `/academic/courses/${course.id}/view`;
-                          window.open(targetUrl, '_blank');
+                          router.push(`/academic/courses/${course.id}`);
                         }}
                         className="w-9 h-9 bg-white/90 hover:bg-white text-slate-800 rounded-xl shadow-md flex items-center justify-center transition-all hover:scale-110 active:scale-95 border border-white/50 backdrop-blur-md"
-                        title="معاينة الدورة"
+                        title="تعديل الدورة"
                       >
-                        <ArrowUpRight className="w-5 h-5 text-blue-600" />
+                        <Pencil className="w-5 h-5 text-blue-600" />
                       </button>
                     </div>
 
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity flex items-end justify-between p-4 z-15">
                       <span className="text-white text-xs font-bold flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-lg backdrop-blur-sm">
                         <Pencil className="w-3.5 h-3.5 text-blue-400" />
-                        تعديل الدورة
+                        تعديل محتوى الدورة
                       </span>
                       <button
                         onClick={(e) => {
@@ -328,7 +327,7 @@ export default function CoursesPage() {
                     <div
                       onClick={(e) => {
                         e.stopPropagation();
-                        router.push(`/academic/courses/stats?course_id=${course.id}`);
+                        router.push(`/academic/courses/${course.id}?tab=subscribers`);
                       }}
                       className="grid grid-cols-2 gap-4 mb-3 p-3 bg-surface-container-low rounded-lg border border-slate-100 cursor-pointer hover:bg-blue-50/60 hover:border-blue-200 transition-all group/stats"
                       title="عرض الإحصائيات التفصيلية"
@@ -386,28 +385,37 @@ export default function CoursesPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            const targetUrl = course.slug ? `${window.location.origin}/${course.slug}` : `${window.location.origin}/courses/${course.id}`;
-                            if (navigator.clipboard) {
-                              navigator.clipboard.writeText(targetUrl);
-                              toast.success('تم نسخ رابط الدورة بنجاح');
-                            }
+                            const shareUrl = course.slug ? `${window.location.origin}/${course.slug}` : `${window.location.origin}/courses/${course.id}`;
+                            navigator.clipboard.writeText(shareUrl);
+                            toast.success('تم نسخ رابط الدورة بنجاح');
                           }}
                           className="p-2 text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors"
                           title="نسخ الرابط"
                         >
                           <LinkIcon className="w-4 h-4 text-slate-500" />
                         </button>
-                        {/* Review Course Arrow Button */}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            const targetUrl = course.slug ? `/${course.slug}` : `/academic/courses/${course.id}/view`;
-                            window.open(targetUrl, '_blank');
+                            const shareUrl = course.slug ? `${window.location.origin}/${course.slug}` : `${window.location.origin}/courses/${course.id}`;
+                            if (navigator.share) {
+                              navigator.share({
+                                title: course.title,
+                                text: course.description?.replace(/<[^>]*>/g, '') || '',
+                                url: shareUrl
+                              }).catch(() => {
+                                navigator.clipboard.writeText(shareUrl);
+                                toast.success('تم نسخ رابط الدورة بنجاح');
+                              });
+                            } else {
+                              navigator.clipboard.writeText(shareUrl);
+                              toast.success('تم نسخ رابط الدورة بنجاح! يمكنك مشاركته على وسائل التواصل الاجتماعي.');
+                            }
                           }}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
-                          title="معاينة الدورة"
+                          className="p-2 text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors"
+                          title="مشاركة الدورة"
                         >
-                          <ArrowUpRight className="w-4 h-4 text-blue-600" />
+                          <Share2 className="w-4 h-4 text-slate-500" />
                         </button>
                       </div>
 
@@ -432,6 +440,21 @@ export default function CoursesPage() {
                               }}
                             />
                             <div className="absolute left-0 bottom-full mb-2 w-48 bg-white border border-gray-100 rounded-2xl shadow-xl z-[101] py-2 animate-in fade-in zoom-in slide-in-from-bottom-2 duration-200">
+                              {/* Statistics Header */}
+                              <div className="px-4 py-2 border-b border-gray-100 text-right bg-slate-50/50">
+                                <span className="text-[10px] text-gray-400 font-bold block mb-1">إحصائيات الدورة</span>
+                                <div className="flex flex-col gap-1 text-xs text-gray-600 font-bold">
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <span>الطلاب: {studentCount.toLocaleString('ar-EG')}</span>
+                                    <Users className="w-3.5 h-3.5 text-blue-600" />
+                                  </div>
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <span>المبيعات: {Number(totalSales).toLocaleString('ar-EG')} {currency}</span>
+                                    <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
+                                  </div>
+                                </div>
+                              </div>
+
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -446,7 +469,7 @@ export default function CoursesPage() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  router.push(`/academic/courses/stats?course_id=${course.id}`);
+                                  router.push(`/academic/courses/${course.id}?tab=subscribers`);
                                   setActiveDropdownId(null);
                                 }}
                                 className="w-full px-4 py-2.5 text-right text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center justify-end gap-3 transition-colors"

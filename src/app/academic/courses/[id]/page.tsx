@@ -328,6 +328,16 @@ export default function CourseDetailsPage() {
   // Tabs State
   const [activeTab, setActiveTab] = useState<'info' | 'content' | 'pricing' | 'landing_pages' | 'subscribers'>('info');
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const tabParam = searchParams.get('tab');
+      if (tabParam && ['info', 'content', 'pricing', 'landing_pages', 'subscribers'].includes(tabParam)) {
+        setActiveTab(tabParam as any);
+      }
+    }
+  }, []);
+
   const getActiveTabErrors = () => {
     const infoFields = ['title', 'category_id', 'description', 'image', 'user_id', 'coach'];
     const pricingFields = ['price', 'receiver_accounts', 'currency', 'price_type'];
@@ -1483,8 +1493,20 @@ export default function CourseDetailsPage() {
               type="button"
               onClick={() => {
                 if (typeof window !== 'undefined') {
-                  navigator.clipboard.writeText(`${window.location.origin}/${course?.slug || id}`);
-                  toast.success('تم نسخ رابط الدورة بنجاح!');
+                  const shareUrl = `${window.location.origin}/${course?.slug || id}`;
+                  if (navigator.share) {
+                    navigator.share({
+                      title: courseInfo.title || course?.title || 'دورة تعليمية',
+                      text: (courseInfo.description || course?.description || '')?.replace(/<[^>]*>/g, '') || '',
+                      url: shareUrl
+                    }).catch(() => {
+                      navigator.clipboard.writeText(shareUrl);
+                      toast.success('تم نسخ رابط الدورة بنجاح!');
+                    });
+                  } else {
+                    navigator.clipboard.writeText(shareUrl);
+                    toast.success('تم نسخ رابط الدورة بنجاح! يمكنك مشاركته على وسائل التواصل الاجتماعي.');
+                  }
                 }
               }}
               className="px-4 py-2 text-label-md border border-outline-variant rounded-lg flex items-center gap-2 bg-white text-gray-700 hover:bg-surface-container transition-all font-bold shadow-sm"
