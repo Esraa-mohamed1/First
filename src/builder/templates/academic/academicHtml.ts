@@ -538,7 +538,7 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
     ` : `
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
         ${coursesList.map((course: any, idx: number) => {
-          const courseHref = `/${course.slug || course.id}`;
+          const courseHref = `/courses/${course.slug || course.id}`;
           const courseTitle = course.title || 'دورة تدريبية';
           const courseImg = course.image || course.cover_image || 'https://images.unsplash.com/photo-1586717791821-3f44a563de4c?auto=format&fit=crop&q=80&w=600';
           const instructorName = typeof course.instructor === 'object' && course.instructor?.name

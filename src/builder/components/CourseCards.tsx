@@ -230,7 +230,7 @@ export default function CourseCards(props: CourseCardsProps) {
 
             const isPurpleTheme = buttonBg === '#7c3aed';
 
-            const courseHref = `/${course.slug || course.id}`;
+            const courseHref = `/courses/${course.slug || course.id}`;
             const CardWrapper = ({ children }: { children: React.ReactNode }) =>
               isEditing ? <div>{children}</div> : <Link href={courseHref} className="block">{children}</Link>;
 

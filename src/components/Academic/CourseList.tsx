@@ -254,7 +254,7 @@ export default function CourseList({ typeFilter, title, description, createType 
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          const targetUrl = course.slug ? `/${course.slug}` : `/academic/courses/${course.id}/view`;
+                          const targetUrl = course.slug ? `/courses/${course.slug}` : `/courses/${course.id}`;
                           window.open(targetUrl, '_blank');
                         }}
                         className="bg-white/90 hover:bg-white text-slate-900 px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all backdrop-blur-md"
@@ -338,7 +338,7 @@ export default function CourseList({ typeFilter, title, description, createType 
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            const shareUrl = course.slug ? `${window.location.origin}/${course.slug}` : `${window.location.origin}/courses/${course.id}`;
+                            const shareUrl = `${window.location.origin}/courses/${course.slug || course.id}`;
                             navigator.clipboard.writeText(shareUrl);
                             toast.success('تم نسخ رابط الدورة بنجاح');
                           }}
@@ -350,7 +350,7 @@ export default function CourseList({ typeFilter, title, description, createType 
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            const shareUrl = course.slug ? `${window.location.origin}/${course.slug}` : `${window.location.origin}/courses/${course.id}`;
+                            const shareUrl = `${window.location.origin}/courses/${course.slug || course.id}`;
                             if (navigator.share) {
                               navigator.share({
                                 title: course.title,

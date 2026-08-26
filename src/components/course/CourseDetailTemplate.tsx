@@ -174,7 +174,7 @@ export default function CourseDetailTemplate({
   // Handle Share Course Action
   const handleShareCourse = () => {
     if (typeof window !== 'undefined') {
-      const shareUrl = `${window.location.origin}/${course.slug || course.id}`;
+      const shareUrl = `${window.location.origin}/courses/${course.slug || course.id}`;
       if (navigator.share) {
         navigator
           .share({
@@ -191,7 +191,7 @@ export default function CourseDetailTemplate({
 
   const copyToClipboard = () => {
     if (typeof window !== 'undefined') {
-      const shareUrl = `${window.location.origin}/${course.slug || course.id}`;
+      const shareUrl = `${window.location.origin}/courses/${course.slug || course.id}`;
       navigator.clipboard.writeText(shareUrl);
       toast.success('تم نسخ رابط الدورة بنجاح!');
       setShowShareModal(false);
@@ -664,24 +664,80 @@ export default function CourseDetailTemplate({
         />
       )}
 
-      {/* Share Modal Dialog (Fallback for Desktop browsers without Web Share support) */}
+      {/* Share Modal Dialog */}
       {showShareModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl p-6 relative" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-black text-slate-900 mb-4 text-right">مشاركة الدورة</h3>
-            <p className="text-slate-500 text-sm mb-6 text-right">انسخ الرابط لمشاركته على فيسبوك أو إنستغرام أو أي منصة تواصل أخرى:</p>
+            <h3 className="text-lg font-black text-slate-900 mb-2 text-right">مشاركة الدورة</h3>
+            <p className="text-slate-500 text-xs mb-6 text-right">اختر المنصة لمشاركة رابط الدورة مباشرة أو انسخ الرابط:</p>
             
+            {/* Social Share Buttons Grid */}
+            {(() => {
+              const fullUrl = typeof window !== 'undefined' ? `${window.location.origin}/courses/${course.slug || course.id}` : '';
+              const encodedUrl = encodeURIComponent(fullUrl);
+              const encodedText = encodeURIComponent(course.title || 'دورة تدريبية');
+
+              return (
+                <div className="grid grid-cols-4 gap-3 mb-6">
+                  {/* WhatsApp */}
+                  <a
+                    href={`https://api.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-all text-xs font-bold border border-emerald-100"
+                  >
+                    <span className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm">W</span>
+                    <span>واتساب</span>
+                  </a>
+
+                  {/* Telegram */}
+                  <a
+                    href={`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-sky-50 hover:bg-sky-100 text-sky-700 transition-all text-xs font-bold border border-sky-100"
+                  >
+                    <span className="w-8 h-8 rounded-full bg-sky-500 text-white flex items-center justify-center font-bold text-sm">T</span>
+                    <span>تلجرام</span>
+                  </a>
+
+                  {/* Facebook */}
+                  <a
+                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-700 transition-all text-xs font-bold border border-blue-100"
+                  >
+                    <span className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">F</span>
+                    <span>فيسبوك</span>
+                  </a>
+
+                  {/* Twitter / X */}
+                  <a
+                    href={`https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-all text-xs font-bold border border-slate-200"
+                  >
+                    <span className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs">X</span>
+                    <span>تويتر</span>
+                  </a>
+                </div>
+              );
+            })()}
+
             <div className="flex items-center gap-2 bg-[#f3f4f5] p-3 rounded-2xl border border-slate-100 mb-6">
               <button 
                 onClick={copyToClipboard}
-                className="p-2 bg-white text-blue-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm flex items-center justify-center"
+                className="p-2 bg-white text-blue-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm flex items-center justify-center cursor-pointer"
+                title="نسخ الرابط"
               >
                 <Clipboard size={18} />
               </button>
               <input 
                 type="text" 
                 readOnly 
-                value={typeof window !== 'undefined' ? `${window.location.origin}/${course.slug || course.id}` : ''}
+                value={typeof window !== 'undefined' ? `${window.location.origin}/courses/${course.slug || course.id}` : ''}
                 className="bg-transparent border-none focus:ring-0 text-xs text-left w-full outline-none font-mono text-slate-600 select-all"
               />
             </div>
@@ -689,7 +745,7 @@ export default function CourseDetailTemplate({
             <div className="flex gap-3 justify-end">
               <button 
                 onClick={() => setShowShareModal(false)}
-                className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors"
+                className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors cursor-pointer"
               >
                 إغلاق
               </button>
