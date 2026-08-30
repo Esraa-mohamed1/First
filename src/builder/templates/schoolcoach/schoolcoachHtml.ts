@@ -343,10 +343,10 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
         <span class="text-[22px] font-extrabold" style="color: ${navbarText};">${navbarTitle}</span>
       </div>
       <nav class="hidden md:flex items-center gap-8 text-sm font-bold text-gray-400">
-        <a class="hover:text-[var(--color-gold-500)] transition-colors" href="#about">عن المدرس</a>
-        <a class="hover:text-[var(--color-gold-500)] transition-colors" href="#subjects">المواد الدراسية</a>
-        <a class="hover:text-[var(--color-gold-500)] transition-colors" href="#groups">المجموعات</a>
-        <a class="hover:text-[var(--color-gold-500)] transition-colors" href="#testimonials">آراء الطلاب</a>
+        <a class="hover:text-[var(--color-gold-500)] transition-colors" href="/" ${isEditing ? '' : 'target="_parent"'}>الرئيسية</a>
+        <a class="hover:text-[var(--color-gold-500)] transition-colors" href="/courses" ${isEditing ? '' : 'target="_parent"'}>الدورات</a>
+        <a class="hover:text-[var(--color-gold-500)] transition-colors" href="/bags" ${isEditing ? '' : 'target="_parent"'}>الحقائب</a>
+        <a class="hover:text-[var(--color-gold-500)] transition-colors" href="/#about" ${isEditing ? '' : 'target="_parent"'}>عن المدرس</a>
       </nav>
       <div>
         <a href="#contact" class="btn-primary text-xs py-3.5 px-6 block text-center">${heroBtnText}</a>

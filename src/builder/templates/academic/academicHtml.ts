@@ -312,15 +312,13 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 </div>
 <!-- Desktop Nav -->
 <nav class="hidden md:flex items-center gap-stack-lg">
-<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="#">الرئيسية</a>
-<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="#courses">الدورات</a>
-<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="#">المدربون</a>
-<a class="text-primary text-label-md font-label-md border-b-2 border-primary pb-1 hover:text-primary transition-colors duration-200" href="#">أكاديمي</a>
-<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="#">الموارد</a>
-<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="#">حول</a>
+<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="/" target="_top">الرئيسية</a>
+<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="/courses" target="_top">الدورات</a>
+<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="/bags" target="_top">الحقائب</a>
+<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="/#about" target="_top">حول</a>
 </nav>
 <div class="flex items-center gap-stack-md">
-<a class="text-label-md font-label-md text-primary hover:opacity-80 transition-opacity hidden sm:block" href="#">تسجيل الدخول</a>
+<a class="text-label-md font-label-md text-primary hover:opacity-80 transition-opacity hidden sm:block" href="#" target="_top">تسجيل الدخول</a>
 <button class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all duration-200 hidden sm:block">
     ابدأ الآن
 </button>
@@ -337,29 +335,23 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 <span class="text-headline-md font-headline-md text-primary">مركز التعلم</span>
 </div>
 <nav class="flex flex-col gap-stack-sm px-4">
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="#">
+<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/" target="_top">
 <span class="material-symbols-outlined">home</span> الرئيسية
                 </a>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="#courses">
+<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/courses" target="_top">
 <span class="material-symbols-outlined">menu_book</span> الدورات
                 </a>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="#">
-<span class="material-symbols-outlined">groups</span> المدربون
+<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/bags" target="_top">
+<span class="material-symbols-outlined">shopping_bag</span> الحقائب
                 </a>
-<a class="bg-primary/10 text-primary flex items-center gap-4 px-4 py-3 rounded-xl transition-all text-label-md font-label-md" href="#">
-<span class="material-symbols-outlined fill">school</span> أكاديمي
-                </a>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="#">
-<span class="material-symbols-outlined">folder_shared</span> الموارد
-                </a>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="#">
+<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/#about" target="_top">
 <span class="material-symbols-outlined">info</span> حول
                 </a>
 <div class="h-px bg-outline-variant/30 my-4"></div>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="#">
+<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="#" target="_top">
 <span class="material-symbols-outlined">login</span> تسجيل الدخول
                 </a>
-<a class="bg-primary text-on-primary flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-primary-container transition-all text-label-md font-label-md" href="#">
+<a class="bg-primary text-on-primary flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-primary-container transition-all text-label-md font-label-md" href="#" target="_top">
 <span class="material-symbols-outlined">person_add</span> ابدأ الآن
                 </a>
 </nav>

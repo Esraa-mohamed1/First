@@ -46,11 +46,11 @@ export default function NavbarBlock(props: NavbarBlockProps) {
     borderColor = '#e2e8f0',
     isLandingPage: propIsLandingPage,
     links = [
-      { label: 'الرئيسية', href: '#hero-t1' },
-      { label: 'نبذة عني', href: '#about-t1' },
-      { label: 'الدورات', href: '#courses-t1' },
-      { label: 'أعمالي', href: '#gallery-t1' },
-      { label: 'آراء الطلاب', href: '#testimonials-t1' }
+      { label: 'الرئيسية', href: '/' },
+      { label: 'الدورات', href: '/courses' },
+      { label: 'الحقائب', href: '/bags' },
+      { label: 'نبذة عني', href: '/#about-t1' },
+      { label: 'آراء الطلاب', href: '/#testimonials-t1' }
     ],
     buttonText = 'التسجيل',
     buttonLink = '#',
