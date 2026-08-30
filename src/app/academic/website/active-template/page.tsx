@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Edit3, ArrowLeft } from 'lucide-react';
+import { Edit3 } from 'lucide-react';
 
 import { getPages, getSections, apiToEditor } from '@/services/pages';
 import { getTemplateById } from '@/builder/utils/templates';
@@ -119,14 +119,6 @@ export default function ActiveTemplatePage() {
 
       {/* Floating action bar */}
       <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-white/90 backdrop-blur-lg border border-slate-200 rounded-2xl px-4 py-2.5 shadow-lg">
-        <Link
-          href="/academic/templates"
-          className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          تغيير القالب
-        </Link>
-        <span className="w-px h-4 bg-slate-200"></span>
         <Link
           href={`/academic/website/builder?templateId=${activeTemplateId}${activePageId ? `&pageId=${activePageId}` : ''}`}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#005c86] text-white font-bold text-xs hover:bg-[#0e76a8] transition-all shadow-sm"

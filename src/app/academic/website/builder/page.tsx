@@ -613,7 +613,7 @@ export default function PageBuilderPage() {
   const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
   const [openIconPickerIdx, setOpenIconPickerIdx] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [sectionsList, setSectionsList] = useState<string[]>(['navbar','hero','about','video','features','courses','testimonials','faq','contact']);
+  const [sectionsList, setSectionsList] = useState<string[]>(['navbar', 'hero', 'about', 'video', 'features', 'courses', 'testimonials', 'faq', 'contact']);
   const [saving, setSaving] = useState<boolean>(false);
 
   // Dynamic template content configurations
@@ -655,7 +655,7 @@ export default function PageBuilderPage() {
         if (el) {
           el.style.setProperty(styleProp, value);
         }
-      } catch (e) {}
+      } catch (e) { }
     };
 
     // Live Background & Text Color Updates across all section banners
@@ -720,7 +720,7 @@ export default function PageBuilderPage() {
         updateText('#about-analytics h3', content.about.analyticsTitle || 'رؤى الأداء المؤسسي');
         const chartColor = content.about.analyticsColor || '#3525cd';
         const bars = content.about.analyticsBars || [40, 65, 85, 50, 95];
-        
+
         // Dynamic Glass Bars Update
         const barEls = doc.querySelectorAll('#about-analytics div.relative.z-10.flex-1');
         barEls.forEach((barEl, i) => {
@@ -746,10 +746,10 @@ export default function PageBuilderPage() {
           const b5 = bars[4] ?? 95;
           const dArea = `M 0 ${100 - b1} Q 25 ${100 - b2}, 50 ${100 - b3} T 100 ${100 - b5} L 100 100 L 0 100 Z`;
           const dLine = `M 0 ${100 - b1} Q 25 ${100 - b2}, 50 ${100 - b3} T 100 ${100 - b5}`;
-          
+
           (svgPaths[0] as SVGPathElement).setAttribute('d', dArea);
           (svgPaths[0] as SVGPathElement).setAttribute('fill', chartColor);
-          
+
           (svgPaths[1] as SVGPathElement).setAttribute('d', dLine);
           (svgPaths[1] as SVGPathElement).setAttribute('stroke', chartColor);
         }
@@ -836,20 +836,20 @@ export default function PageBuilderPage() {
     // 6. Testimonials
     updateText('#testimonials h2.text-headline-lg, #testimonials h2.section-title, #testimonials h2', content.pricing.testimonialsTitle || content.faq.testimonialsTitle || '');
     updateText('#testimonials p.text-body-lg.max-w-2xl, #testimonials p.text-body-lg.max-w-xl, #testimonials p.text-body-md', content.pricing.testimonialsSubtitle || content.faq.testimonialsSubtitle || '');
-    
+
     for (let i = 1; i <= 3; i++) {
       const textVal = (content.pricing as any)[`testimonial${i}Text`];
       const authorVal = (content.pricing as any)[`testimonial${i}Author`];
       const roleVal = (content.pricing as any)[`testimonial${i}Role`];
-      
+
       if (textVal !== undefined) {
-        updateText(`[data-testimonial="${i-1}"] p.italic, [data-testimonial="${i-1}"] p.text-on-surface-variant`, textVal ? `"${textVal}"` : '');
+        updateText(`[data-testimonial="${i - 1}"] p.italic, [data-testimonial="${i - 1}"] p.text-on-surface-variant`, textVal ? `"${textVal}"` : '');
       }
       if (authorVal !== undefined) {
-        updateText(`[data-testimonial="${i-1}"] h4`, authorVal || '');
+        updateText(`[data-testimonial="${i - 1}"] h4`, authorVal || '');
       }
       if (roleVal !== undefined) {
-        updateText(`[data-testimonial="${i-1}"] p.text-slate-500, [data-testimonial="${i-1}"] p.text-gray-400, [data-testimonial="${i-1}"] p.text-tertiary`, roleVal || '');
+        updateText(`[data-testimonial="${i - 1}"] p.text-slate-500, [data-testimonial="${i - 1}"] p.text-gray-400, [data-testimonial="${i - 1}"] p.text-tertiary`, roleVal || '');
       }
     }
 
@@ -948,7 +948,7 @@ export default function PageBuilderPage() {
         event.stopPropagation();
 
         const sectionName = sectionEl.getAttribute('data-section') as keyof TemplateContent;
-        
+
         // Update iframe visual classes
         doc.querySelectorAll('[data-section]').forEach(el => el.classList.remove('active-section'));
         sectionEl.classList.add('active-section');
@@ -978,12 +978,12 @@ export default function PageBuilderPage() {
           const indexStr = itemEl.getAttribute('data-index');
           if (indexStr !== null) {
             const idx = parseInt(indexStr, 10);
-            
+
             doc.querySelectorAll('[data-index]').forEach(el => el.classList.remove('active-item'));
             itemEl.classList.add('active-item');
-            
+
             setActiveItemIndex(idx);
-            
+
             // Scroll sidebar list to target item
             setTimeout(() => {
               const el = document.getElementById(`editor-item-${sectionName}-${idx}`);
@@ -1090,18 +1090,18 @@ export default function PageBuilderPage() {
     async function loadPageData() {
       if (!currentRole) return;
       setLoading(true);
-      
+
       let resolvedPageId: string | null = null;
       try {
         const apiPages = await getPages(true);
         // Find a page matching templateIdParam
         let page = apiPages.find((p: any) => p.title === templateIdParam || p.template === templateIdParam || p.template_id === templateIdParam);
-        
+
         // If not found, look for any active page or first page
         if (!page) {
           page = apiPages.find((p: any) => p.is_active === 1 || p.is_active === true);
         }
-        
+
         if (page) {
           resolvedPageId = String(page.id);
           setActivePageId(resolvedPageId);
@@ -1118,7 +1118,7 @@ export default function PageBuilderPage() {
           resolvedPageId = String(created.id);
           setActivePageId(resolvedPageId);
         }
-        
+
         // Now fetch sections for resolvedPageId
         if (resolvedPageId) {
           const apiSections = await getSections(resolvedPageId);
@@ -1127,8 +1127,8 @@ export default function PageBuilderPage() {
 
             // Drive sidebar dropdown from the actual API section order
             const KNOWN_SECTION_TYPES = currentRole === 'academy'
-              ? ['navbar','hero','about','video','features','courses','testimonials','faq','contact']
-              : ['navbar','hero','about','video','features','courses','testimonials','faq','contact','footer'];
+              ? ['navbar', 'hero', 'about', 'video', 'features', 'courses', 'testimonials', 'faq', 'contact']
+              : ['navbar', 'hero', 'about', 'video', 'features', 'courses', 'testimonials', 'faq', 'contact', 'footer'];
             const apiSectionTypes = editorNodes
               .map(n => (n.type === 'course-cards' || n.type === 'courses') ? 'courses' : n.type)
               .filter(t => KNOWN_SECTION_TYPES.includes(t));
@@ -1138,7 +1138,7 @@ export default function PageBuilderPage() {
               ...KNOWN_SECTION_TYPES.filter(t => !apiSectionTypes.includes(t))
             ];
             setSectionsList(merged);
-            
+
             let realCoursesData: any[] = [];
             try {
               const res = await getCourses();
@@ -1154,7 +1154,7 @@ export default function PageBuilderPage() {
             if (fallback.courses && realCoursesData.length > 0) {
               fallback.courses.items = realCoursesData;
             }
-            
+
             const navbarNode = editorNodes.find(n => n.type === 'navbar');
             const heroNode = editorNodes.find(n => n.type === 'hero');
             const aboutNode = editorNodes.find(n => n.type === 'about');
@@ -1298,7 +1298,7 @@ export default function PageBuilderPage() {
       } catch (err) {
         console.error('Failed to load page data from backend:', err);
       }
-      
+
       // Fallback: check localStorage or load default content
       const cacheKey = `darab_active_template_config_${currentRole}_${activeTemplateId}`;
       const cached = localStorage.getItem(cacheKey);
@@ -1320,19 +1320,19 @@ export default function PageBuilderPage() {
         if (res && Array.isArray(res) && defaults.courses) {
           defaults.courses.items = res;
         }
-      } catch (e) {}
+      } catch (e) { }
       setContent(defaults);
       setPreviewContent(defaults);
       setInitialHtml(getHtmlForRole(currentRole, defaults));
       setLoading(false);
     }
-    
+
     loadPageData();
   }, [currentRole, activeTemplateId, templateIdParam]);
 
   // --- Navigation & Action Handlers ---
   const handleGoBack = () => {
-    router.push('/academic/templates');
+    router.push('/academic/website/builder');
   };
 
   const handleSaveDraft = async () => {
@@ -1383,7 +1383,7 @@ export default function PageBuilderPage() {
 
   const handlePublish = async () => {
     if (!content || !activePageId) return;
-    
+
     const confirmResult = await MySwal.fire({
       title: 'هل تريد نشر هذا المظهر للموقع الآن؟',
       text: 'سيتم تطبيق التعديلات والألوان ونشرها لجميع الزوار فوراً.',
@@ -1408,7 +1408,7 @@ export default function PageBuilderPage() {
       localStorage.setItem('darab_active_page_id', activePageId);
       const cacheKey = `darab_active_template_config_${currentRole}_${activeTemplateId}`;
       localStorage.setItem(cacheKey, JSON.stringify(content));
-      
+
       localStorage.setItem(`darab_published_template_config`, JSON.stringify({
         role: currentRole,
         templateId: activeTemplateId,
@@ -1560,20 +1560,20 @@ export default function PageBuilderPage() {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#F8FAFC] font-sans antialiased" dir="rtl">
-      
+
       {/* 1. Top Bar Navigation & Controls */}
       <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between z-50 shadow-sm shrink-0">
-        
+
         {/* Right Info & Role Status */}
         <div className="flex items-center gap-4">
           <button
             onClick={handleGoBack}
             className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 hover:text-slate-900 transition-colors border border-slate-200"
-            title="رجوع للقوالب"
+            title="الرجوع للرئيسية"
           >
             <ArrowRight className="w-4 h-4" />
           </button>
-          
+
           <div className="leading-tight text-right">
             <h1 className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5">
               <span>مخصّص صفحات الموقع</span>
@@ -1589,27 +1589,24 @@ export default function PageBuilderPage() {
         <div className="flex bg-slate-100 rounded-xl p-1 items-center border border-slate-200 select-none">
           <button
             onClick={() => setDeviceMode('desktop')}
-            className={`p-2 rounded-lg text-xs font-bold transition-all ${
-              deviceMode === 'desktop' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-950'
-            }`}
+            className={`p-2 rounded-lg text-xs font-bold transition-all ${deviceMode === 'desktop' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-950'
+              }`}
             title="شاشة كمبيوتر"
           >
             <Monitor className="w-4 h-4" />
           </button>
           <button
             onClick={() => setDeviceMode('tablet')}
-            className={`p-2 rounded-lg text-xs font-bold transition-all ${
-              deviceMode === 'tablet' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-950'
-            }`}
+            className={`p-2 rounded-lg text-xs font-bold transition-all ${deviceMode === 'tablet' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-950'
+              }`}
             title="شاشة تابلت"
           >
             <Tablet className="w-4 h-4" />
           </button>
           <button
             onClick={() => setDeviceMode('mobile')}
-            className={`p-2 rounded-lg text-xs font-bold transition-all ${
-              deviceMode === 'mobile' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-950'
-            }`}
+            className={`p-2 rounded-lg text-xs font-bold transition-all ${deviceMode === 'mobile' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-950'
+              }`}
             title="شاشة جوال"
           >
             <Smartphone className="w-4 h-4" />
@@ -1623,17 +1620,15 @@ export default function PageBuilderPage() {
           <div className="flex bg-slate-100 border border-slate-200 p-1 rounded-xl">
             <button
               onClick={() => setActiveTemplateId('template_1')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${
-                activeTemplateId === 'template_1' ? 'bg-white shadow-xs text-blue-600' : 'text-slate-500 hover:text-slate-900'
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${activeTemplateId === 'template_1' ? 'bg-white shadow-xs text-blue-600' : 'text-slate-500 hover:text-slate-900'
+                }`}
             >
               القالب الأول
             </button>
             <button
               onClick={() => setActiveTemplateId('template_2')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${
-                activeTemplateId === 'template_2' ? 'bg-white shadow-xs text-blue-600' : 'text-slate-500 hover:text-slate-900'
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${activeTemplateId === 'template_2' ? 'bg-white shadow-xs text-blue-600' : 'text-slate-500 hover:text-slate-900'
+                }`}
             >
               القالب الثاني
             </button>
@@ -1647,7 +1642,7 @@ export default function PageBuilderPage() {
             <Save className="w-3.5 h-3.5" />
             <span>حفظ كمسودة</span>
           </button>
-          
+
           <button
             onClick={handlePublish}
             disabled={saving}
@@ -1661,10 +1656,10 @@ export default function PageBuilderPage() {
 
       {/* 2. Main Split View Grid (Left: Inspector Panel, Right: Live Interactive Simulation Preview) */}
       <div className="flex-grow flex overflow-hidden min-h-0">
-        
+
         {/* Left Column: Editor inspector Panel (350px width) */}
         <div className="w-[360px] bg-white border-l border-slate-200 shadow-xs flex flex-col min-h-0 overflow-hidden shrink-0">
-          
+
           {/* Quick Section Switcher — driven by API sections order */}
           <div className="p-5 border-b border-slate-200/80 bg-slate-50/50 shrink-0 space-y-2">
             <span className="text-[10px] font-black text-slate-500 block">اختر القسم لتخصيص محتوياته:</span>
@@ -1679,16 +1674,16 @@ export default function PageBuilderPage() {
               >
                 {sectionsList.map((sectionType) => {
                   const SECTION_LABELS: Record<string, string> = {
-                    navbar:       'شريط التنقل العلوي (Navbar)',
-                    hero:         'البانر الترحيبي (Hero Banner)',
-                    about:        'النبذة والتعريف (About Section)',
-                    video:        'فيديو العرض التعريفي (Video Intro)',
-                    features:     'مميزات الأكاديمية (Features)',
-                    courses:      'الدورات والبرامج التدريبية (Courses)',
+                    navbar: 'شريط التنقل العلوي (Navbar)',
+                    hero: 'البانر الترحيبي (Hero Banner)',
+                    about: 'النبذة والتعريف (About Section)',
+                    video: 'فيديو العرض التعريفي (Video Intro)',
+                    features: 'مميزات الأكاديمية (Features)',
+                    courses: 'الدورات والبرامج التدريبية (Courses)',
                     testimonials: 'آراء العملاء والتقييمات (Testimonials)',
-                    faq:          'الأسئلة الشائعة (FAQ Accordions)',
-                    contact:      'أزرار التواصل (Contact/WhatsApp)',
-                    footer:       'تذييل الصفحة (Footer Bar)',
+                    faq: 'الأسئلة الشائعة (FAQ Accordions)',
+                    contact: 'أزرار التواصل (Contact/WhatsApp)',
+                    footer: 'تذييل الصفحة (Footer Bar)',
                   };
                   return (
                     <option key={sectionType} value={sectionType}>
@@ -1706,1004 +1701,1001 @@ export default function PageBuilderPage() {
           {/* Section Dynamic Editors (Scrollable) */}
           <div className="flex-1 overflow-y-auto p-5">
             <div key={activeSection} className="border border-blue-200 bg-blue-50/10 rounded-2xl p-5 space-y-6 shadow-inner ring-2 ring-blue-600/5 animate-in fade-in duration-300">
-              
+
               {/* Navbar Editor */}
-            {activeSection === 'navbar' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص شريط التنقل</h3>
-                </div>
-                
+              {activeSection === 'navbar' && (
                 <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">اسم شعار الأكاديمية / المعلم</label>
-                    <input
-                      type="text"
-                      value={content.navbar.title}
-                      onChange={(e) => handleUpdateField('navbar', 'title', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص شريط التنقل</h3>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-4">
                     <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية الشريط</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.navbar.bgColor}
-                          onChange={(e) => handleUpdateField('navbar', 'bgColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.navbar.bgColor}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون نصوص الشعار</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.navbar.textColor}
-                          onChange={(e) => handleUpdateField('navbar', 'textColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.navbar.textColor}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Hero Editor */}
-            {activeSection === 'hero' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص البانر الرئيسي (الهيرو)</h3>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">العنوان الترحيبي العريض</label>
-                    <textarea
-                      value={content.hero.title}
-                      onChange={(e) => handleUpdateField('hero', 'title', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px] resize-none"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">العبارة التعريفية الصغيرة (شارة المقدمة)</label>
-                    <input
-                      type="text"
-                      value={content.hero.subtitle}
-                      onChange={(e) => handleUpdateField('hero', 'subtitle', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">شرح وتفاصيل البانر</label>
-                    <textarea
-                      value={content.hero.description}
-                      onChange={(e) => handleUpdateField('hero', 'description', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[110px]"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">نص الزر الإرشادي (CTA Button)</label>
+                      <label className="text-[11px] font-bold text-slate-600">اسم شعار الأكاديمية / المعلم</label>
                       <input
                         type="text"
-                        value={content.hero.buttonText}
-                        onChange={(e) => handleUpdateField('hero', 'buttonText', e.target.value)}
+                        value={content.navbar.title}
+                        onChange={(e) => handleUpdateField('navbar', 'title', e.target.value)}
                         className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
                       />
                     </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">رابط الزر (Link / ID)</label>
-                      <input
-                        type="text"
-                        value={content.hero.buttonLink || '#'}
-                        onChange={(e) => handleUpdateField('hero', 'buttonLink', e.target.value)}
-                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
-                        dir="ltr"
-                        placeholder="#contact"
-                      />
-                    </div>
-                  </div>
 
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">رابط صورة الهيرو المعبرة</label>
-                    <div className="flex gap-2 items-center">
-                      {content.hero.image && (
-                        <img src={content.hero.image} className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0" alt="hero preview" />
-                      )}
-                      <input
-                        type="text"
-                        value={content.hero.image}
-                        onChange={(e) => handleUpdateField('hero', 'image', e.target.value)}
-                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left flex-grow"
-                        dir="ltr"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية البانر</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.hero.backgroundColor}
-                          onChange={(e) => handleUpdateField('hero', 'backgroundColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.hero.backgroundColor}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون نصوص البانر</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.hero.textColor}
-                          onChange={(e) => handleUpdateField('hero', 'textColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.hero.textColor}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* About Editor */}
-            {activeSection === 'about' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص النبذة والتعريف</h3>
-                </div>
-
-                <div className="space-y-4">
-                  <div id="about-analytics-editor-header" className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم النبذة</label>
-                    <input
-                      type="text"
-                      value={content.about.title}
-                      onChange={(e) => handleUpdateField('about', 'title', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">تفاصيل وسيرة ذاتية (محتوى النبذة)</label>
-                    <textarea
-                      value={content.about.subtitle}
-                      onChange={(e) => handleUpdateField('about', 'subtitle', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[140px]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">صورة التعريف / البورتفوليو</label>
-                    <div className="flex gap-2 items-center">
-                      {content.about.image && (
-                        <img src={content.about.image} className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0" alt="about preview" />
-                      )}
-                      <input
-                        type="text"
-                        value={content.about.image}
-                        onChange={(e) => handleUpdateField('about', 'image', e.target.value)}
-                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left flex-grow"
-                        dir="ltr"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.about.backgroundColor}
-                          onChange={(e) => handleUpdateField('about', 'backgroundColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.backgroundColor}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون نصوص النبذة</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.about.textColor}
-                          onChange={(e) => handleUpdateField('about', 'textColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.textColor}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Analytics Chart Controls */}
-                  {!content.about.image && (
-                    <div className="border-t border-slate-100 pt-3 mt-3 space-y-3">
-                      <h4 id="about-analytics-editor-header" className="text-[11px] font-extrabold text-slate-700">تخصيص مخطط ورؤى الأداء (Analytics Chart)</h4>
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="flex flex-col gap-1">
-                        <label className="text-[11px] font-bold text-slate-600">عنوان المخطط الإحصائي</label>
+                        <label className="text-[11px] font-bold text-slate-600">خلفية الشريط</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.navbar.bgColor}
+                            onChange={(e) => handleUpdateField('navbar', 'bgColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.navbar.bgColor}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون نصوص الشعار</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.navbar.textColor}
+                            onChange={(e) => handleUpdateField('navbar', 'textColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.navbar.textColor}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Hero Editor */}
+              {activeSection === 'hero' && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص البانر الرئيسي (الهيرو)</h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">العنوان الترحيبي العريض</label>
+                      <textarea
+                        value={content.hero.title}
+                        onChange={(e) => handleUpdateField('hero', 'title', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px] resize-none"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">العبارة التعريفية الصغيرة (شارة المقدمة)</label>
+                      <input
+                        type="text"
+                        value={content.hero.subtitle}
+                        onChange={(e) => handleUpdateField('hero', 'subtitle', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">شرح وتفاصيل البانر</label>
+                      <textarea
+                        value={content.hero.description}
+                        onChange={(e) => handleUpdateField('hero', 'description', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[110px]"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">نص الزر الإرشادي (CTA Button)</label>
                         <input
                           type="text"
-                          value={content.about.analyticsTitle || 'رؤى الأداء المؤسسي'}
-                          onChange={(e) => handleUpdateField('about', 'analyticsTitle', e.target.value)}
+                          value={content.hero.buttonText}
+                          onChange={(e) => handleUpdateField('hero', 'buttonText', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">رابط الزر (Link / ID)</label>
+                        <input
+                          type="text"
+                          value={content.hero.buttonLink || '#'}
+                          onChange={(e) => handleUpdateField('hero', 'buttonLink', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                          dir="ltr"
+                          placeholder="#contact"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">رابط صورة الهيرو المعبرة</label>
+                      <div className="flex gap-2 items-center">
+                        {content.hero.image && (
+                          <img src={content.hero.image} className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0" alt="hero preview" />
+                        )}
+                        <input
+                          type="text"
+                          value={content.hero.image}
+                          onChange={(e) => handleUpdateField('hero', 'image', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left flex-grow"
+                          dir="ltr"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">خلفية البانر</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.hero.backgroundColor}
+                            onChange={(e) => handleUpdateField('hero', 'backgroundColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.hero.backgroundColor}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون نصوص البانر</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.hero.textColor}
+                            onChange={(e) => handleUpdateField('hero', 'textColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.hero.textColor}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* About Editor */}
+              {activeSection === 'about' && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص النبذة والتعريف</h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div id="about-analytics-editor-header" className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">عنوان قسم النبذة</label>
+                      <input
+                        type="text"
+                        value={content.about.title}
+                        onChange={(e) => handleUpdateField('about', 'title', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">تفاصيل وسيرة ذاتية (محتوى النبذة)</label>
+                      <textarea
+                        value={content.about.subtitle}
+                        onChange={(e) => handleUpdateField('about', 'subtitle', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[140px]"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">صورة التعريف / البورتفوليو</label>
+                      <div className="flex gap-2 items-center">
+                        {content.about.image && (
+                          <img src={content.about.image} className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0" alt="about preview" />
+                        )}
+                        <input
+                          type="text"
+                          value={content.about.image}
+                          onChange={(e) => handleUpdateField('about', 'image', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left flex-grow"
+                          dir="ltr"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.about.backgroundColor}
+                            onChange={(e) => handleUpdateField('about', 'backgroundColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.backgroundColor}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون نصوص النبذة</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.about.textColor}
+                            onChange={(e) => handleUpdateField('about', 'textColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.textColor}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Analytics Chart Controls */}
+                    {!content.about.image && (
+                      <div className="border-t border-slate-100 pt-3 mt-3 space-y-3">
+                        <h4 id="about-analytics-editor-header" className="text-[11px] font-extrabold text-slate-700">تخصيص مخطط ورؤى الأداء (Analytics Chart)</h4>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] font-bold text-slate-600">عنوان المخطط الإحصائي</label>
+                          <input
+                            type="text"
+                            value={content.about.analyticsTitle || 'رؤى الأداء المؤسسي'}
+                            onChange={(e) => handleUpdateField('about', 'analyticsTitle', e.target.value)}
+                            className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                          />
+                        </div>
+
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] font-bold text-slate-600">لون أعمدة التحليلات</label>
+                          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                            <input
+                              type="color"
+                              value={content.about.analyticsColor || '#3525cd'}
+                              onChange={(e) => handleUpdateField('about', 'analyticsColor', e.target.value)}
+                              className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                            />
+                            <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.analyticsColor || '#3525cd'}</span>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 pt-1">
+                          <label className="text-[11px] font-bold text-slate-600 block">منحنيات وارتفاعات الأعمدة (الأداء %):</label>
+                          {([0, 1, 2, 3, 4]).map((barIdx) => {
+                            const bars = content.about.analyticsBars || [40, 65, 85, 50, 95];
+                            const val = bars[barIdx] ?? 50;
+                            return (
+                              <div key={barIdx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                                <span className="text-[10px] font-bold text-slate-600 w-14 shrink-0">عمود {barIdx + 1}:</span>
+                                <input
+                                  type="range"
+                                  min="15"
+                                  max="100"
+                                  value={val}
+                                  onChange={(e) => {
+                                    const newBars = [...(content.about.analyticsBars || [40, 65, 85, 50, 95])];
+                                    newBars[barIdx] = parseInt(e.target.value, 10);
+                                    handleUpdateField('about', 'analyticsBars', newBars);
+                                  }}
+                                  className="flex-grow accent-blue-600 cursor-pointer"
+                                />
+                                <span className="text-[10px] font-mono font-extrabold text-blue-600 w-8 text-left">{val}%</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Video Intro Editor */}
+              {activeSection === 'video' && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص فيديو الفلسفة التعليمية (Video Intro)</h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div id="about-video-editor-header" className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">شارة الفيديو (Tag)</label>
+                      <input
+                        type="text"
+                        value={content.about.videoTag || ''}
+                        onChange={(e) => handleUpdateField('about', 'videoTag', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">عنوان الفيديو</label>
+                      <input
+                        type="text"
+                        value={content.about.videoTitle || ''}
+                        onChange={(e) => handleUpdateField('about', 'videoTitle', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">وصف الفيديو</label>
+                      <textarea
+                        value={content.about.videoDesc || ''}
+                        onChange={(e) => handleUpdateField('about', 'videoDesc', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[80px]"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">رابط الفيديو / صورة العرض (Video Link / Thumbnail)</label>
+                      <input
+                        type="text"
+                        value={content.about.videoLink || ''}
+                        onChange={(e) => handleUpdateField('about', 'videoLink', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                        dir="ltr"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">خلفية قسم الفيديو</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.about.backgroundColor}
+                            onChange={(e) => handleUpdateField('about', 'backgroundColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.backgroundColor}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون النصوص</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.about.textColor}
+                            onChange={(e) => handleUpdateField('about', 'textColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.textColor}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Features Editor */}
+              {activeSection === 'features' && (
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص المميزات والخصائص</h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">عنوان قسم المميزات الرئيسي</label>
+                      <input
+                        type="text"
+                        value={content.features.title}
+                        onChange={(e) => handleUpdateField('features', 'title', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">عنوان فرعي قصير للقسم</label>
+                      <input
+                        type="text"
+                        value={content.features.subtitle}
+                        onChange={(e) => handleUpdateField('features', 'subtitle', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Features Items list */}
+                  <div className="space-y-3 pt-3 border-t border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black text-slate-500">عناصر الميزات:</span>
+                      <button
+                        type="button"
+                        onClick={() => handleAddListItem('features', 'items', { icon: 'Award', title: 'ميزة جديدة', description: 'اكتب وصف الميزة هنا بشكل مبسط وجاذب.' })}
+                        className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-0.5"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        إضافة ميزة
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {content.features.items.map((item, idx) => (
+                        <div
+                          key={idx}
+                          id={`editor-item-features-${idx}`}
+                          className={`border rounded-xl p-3 relative flex flex-col gap-2.5 transition-all duration-300 ${activeSection === 'features' && activeItemIndex === idx
+                              ? 'bg-blue-50/50 border-blue-500 ring-2 ring-blue-500/20 shadow-md scale-[1.01]'
+                              : 'bg-slate-50 border-slate-200'
+                            }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveListItem('features', 'items', idx)}
+                            className="absolute top-2 left-2 text-slate-400 hover:text-red-500 transition-colors"
+                            title="حذف الميزة"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">أيقونة الميزة</label>
+                            {/* Visual Icon Picker without raw text name input */}
+                            <div className="border border-slate-200 rounded-xl bg-white overflow-hidden">
+                              <div className="flex items-center justify-between bg-slate-50 border border-slate-200/80 rounded-xl p-2">
+                                <div className="flex items-center gap-2.5">
+                                  <div className="w-8 h-8 rounded-lg bg-blue-100/80 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 shadow-sm">
+                                    {item.icon && (item.icon.startsWith('http') || item.icon.includes('/') || item.icon.startsWith('data:')) ? (
+                                      <img src={item.icon} className="w-7 h-7 rounded object-cover" alt="icon preview" />
+                                    ) : (
+                                      <span className="material-symbols-outlined text-[20px]">{item.icon || 'star'}</span>
+                                    )}
+                                  </div>
+                                  <span className="text-[10px] font-bold text-slate-600">الأيقونة المحددة</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setOpenIconPickerIdx(openIconPickerIdx === idx ? null : idx)}
+                                  className="px-2.5 py-1 bg-white border border-slate-200 hover:border-blue-500 hover:bg-blue-50 text-blue-600 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1"
+                                >
+                                  <span className="material-symbols-outlined text-sm">{openIconPickerIdx === idx ? 'close' : 'grid_view'}</span>
+                                  {openIconPickerIdx === idx ? 'إغلاق' : 'تغيير الأيقونة'}
+                                </button>
+                              </div>
+                              {/* Material Symbols grid picker (collapsible) */}
+                              {openIconPickerIdx === idx && (
+                                <div className="border-t border-slate-100 p-2">
+                                  <div className="flex items-center justify-between mb-1.5">
+                                    <p className="text-[9px] text-slate-400 font-bold">اختر أيقونة:</p>
+                                    <button
+                                      type="button"
+                                      onClick={() => setOpenIconPickerIdx(null)}
+                                      className="text-[9px] text-slate-400 hover:text-red-500 font-bold flex items-center gap-0.5"
+                                    >
+                                      <X className="w-3 h-3" /> إغلاق
+                                    </button>
+                                  </div>
+                                  <div className="grid grid-cols-8 gap-1">
+                                    {['school', 'menu_book', 'star', 'verified', 'check_circle', 'rocket_launch', 'psychology', 'lightbulb', 'emoji_events', 'workspace_premium', 'military_tech', 'grade', 'local_library', 'auto_stories', 'science', 'calculate', 'draw', 'edit', 'history_edu', 'sports_esports', 'devices', 'laptop', 'tablet_mac', 'phone_iphone', 'cloud', 'data_usage', 'analytics', 'bar_chart', 'trending_up', 'timeline', 'groups', 'people', 'person', 'supervisor_account', 'support_agent', 'headset_mic', 'chat', 'forum', 'language', 'translate', 'public', 'travel_explore', 'apartment', 'business', 'corporate_fare', 'account_balance', 'hub', 'bolt', 'diamond', 'favorite'].map((iconName) => (
+                                      <button
+                                        key={iconName}
+                                        type="button"
+                                        title={iconName}
+                                        onClick={() => {
+                                          handleUpdateNestedField('features', 'items', idx, 'icon', iconName);
+                                          setOpenIconPickerIdx(null);
+                                        }}
+                                        className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:bg-blue-100 hover:text-blue-600 ${item.icon === iconName
+                                            ? 'bg-blue-600 text-white'
+                                            : 'text-slate-600 bg-slate-50'
+                                          }`}
+                                      >
+                                        <span className="material-symbols-outlined" style={{ fontSize: '16px', fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20" }}>
+                                          {iconName}
+                                        </span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">عنوان الميزة</label>
+                            <input
+                              type="text"
+                              value={item.title}
+                              onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'title', e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-bold"
+                            />
+                          </div>
+
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">وصف الميزة</label>
+                            <textarea
+                              value={item.description}
+                              onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'description', e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none min-h-[50px] resize-none"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Courses Editor */}
+              {activeSection === 'courses' && content.courses && (
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص قسم الدورات التدريبية</h3>
+                  </div>
+
+                  <div className="bg-blue-50/70 border border-blue-200 p-3.5 rounded-xl text-[11px] text-blue-900 font-bold leading-relaxed flex items-start gap-2">
+                    <span className="material-symbols-outlined text-[18px] text-blue-600 shrink-0 mt-0.5">info</span>
+                    <div>
+                      يتم جلب وعرض بيانات الدورات الحقيقية تلقائياً من المنصة. يمكنك تخصيص العناوين، والحد الأقصى للدورات المعروضة، والخيارات أدناه:
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">عنوان قسم الدورات</label>
+                      <input
+                        type="text"
+                        value={content.courses.title}
+                        onChange={(e) => handleUpdateField('courses', 'title', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">وصف / عنوان فرعي للقسم</label>
+                      <textarea
+                        value={content.courses.subtitle || ''}
+                        onChange={(e) => handleUpdateField('courses', 'subtitle', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px] resize-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">الحد الأقصى للدورات</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="24"
+                          value={content.courses.limit || 6}
+                          onChange={(e) => handleUpdateField('courses', 'limit', parseInt(e.target.value, 10) || 6)}
                           className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
                         />
                       </div>
 
                       <div className="flex flex-col gap-1">
-                        <label className="text-[11px] font-bold text-slate-600">لون أعمدة التحليلات</label>
+                        <label className="text-[11px] font-bold text-slate-600">تخطيط الأعمدة</label>
+                        <select
+                          value={content.courses.gridCols || '3'}
+                          onChange={(e) => handleUpdateField('courses', 'gridCols', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                        >
+                          <option value="2">عمودين (2)</option>
+                          <option value="3">3 أعمدة (3)</option>
+                          <option value="4">4 أعمدة (4)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-2 border-t border-slate-100">
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={content.courses.showPrice !== false}
+                          onChange={(e) => handleUpdateField('courses', 'showPrice', e.target.checked)}
+                          className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500"
+                        />
+                        <span className="text-xs font-bold text-slate-700">إظهار أسعار الدورات</span>
+                      </label>
+
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={content.courses.showStudentsCount !== false}
+                          onChange={(e) => handleUpdateField('courses', 'showStudentsCount', e.target.checked)}
+                          className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500"
+                        />
+                        <span className="text-xs font-bold text-slate-700">إظهار عدد الطلاب المسجلين</span>
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون الأزرار / الشارة</label>
                         <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
                           <input
                             type="color"
-                            value={content.about.analyticsColor || '#3525cd'}
-                            onChange={(e) => handleUpdateField('about', 'analyticsColor', e.target.value)}
+                            value={content.courses.buttonBg || '#3525cd'}
+                            onChange={(e) => handleUpdateField('courses', 'buttonBg', e.target.value)}
                             className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                           />
-                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.analyticsColor || '#3525cd'}</span>
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.courses.buttonBg || '#3525cd'}</span>
                         </div>
                       </div>
 
-                      <div className="space-y-2 pt-1">
-                        <label className="text-[11px] font-bold text-slate-600 block">منحنيات وارتفاعات الأعمدة (الأداء %):</label>
-                        {([0, 1, 2, 3, 4]).map((barIdx) => {
-                          const bars = content.about.analyticsBars || [40, 65, 85, 50, 95];
-                          const val = bars[barIdx] ?? 50;
-                          return (
-                            <div key={barIdx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
-                              <span className="text-[10px] font-bold text-slate-600 w-14 shrink-0">عمود {barIdx + 1}:</span>
-                              <input
-                                type="range"
-                                min="15"
-                                max="100"
-                                value={val}
-                                onChange={(e) => {
-                                  const newBars = [...(content.about.analyticsBars || [40, 65, 85, 50, 95])];
-                                  newBars[barIdx] = parseInt(e.target.value, 10);
-                                  handleUpdateField('about', 'analyticsBars', newBars);
-                                }}
-                                className="flex-grow accent-blue-600 cursor-pointer"
-                              />
-                              <span className="text-[10px] font-mono font-extrabold text-blue-600 w-8 text-left">{val}%</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Video Intro Editor */}
-            {activeSection === 'video' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص فيديو الفلسفة التعليمية (Video Intro)</h3>
-                </div>
-
-                <div className="space-y-4">
-                  <div id="about-video-editor-header" className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">شارة الفيديو (Tag)</label>
-                    <input
-                      type="text"
-                      value={content.about.videoTag || ''}
-                      onChange={(e) => handleUpdateField('about', 'videoTag', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان الفيديو</label>
-                    <input
-                      type="text"
-                      value={content.about.videoTitle || ''}
-                      onChange={(e) => handleUpdateField('about', 'videoTitle', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">وصف الفيديو</label>
-                    <textarea
-                      value={content.about.videoDesc || ''}
-                      onChange={(e) => handleUpdateField('about', 'videoDesc', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[80px]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">رابط الفيديو / صورة العرض (Video Link / Thumbnail)</label>
-                    <input
-                      type="text"
-                      value={content.about.videoLink || ''}
-                      onChange={(e) => handleUpdateField('about', 'videoLink', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
-                      dir="ltr"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية قسم الفيديو</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.about.backgroundColor}
-                          onChange={(e) => handleUpdateField('about', 'backgroundColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.backgroundColor}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون النصوص</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.about.textColor}
-                          onChange={(e) => handleUpdateField('about', 'textColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.textColor}</span>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.courses.backgroundColor || '#ffffff'}
+                            onChange={(e) => handleUpdateField('courses', 'backgroundColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.courses.backgroundColor || '#ffffff'}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Features Editor */}
-            {activeSection === 'features' && (
-              <div className="space-y-5">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص المميزات والخصائص</h3>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم المميزات الرئيسي</label>
-                    <input
-                      type="text"
-                      value={content.features.title}
-                      onChange={(e) => handleUpdateField('features', 'title', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان فرعي قصير للقسم</label>
-                    <input
-                      type="text"
-                      value={content.features.subtitle}
-                      onChange={(e) => handleUpdateField('features', 'subtitle', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-                </div>
-
-                {/* Features Items list */}
-                <div className="space-y-3 pt-3 border-t border-slate-100">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-slate-500">عناصر الميزات:</span>
-                    <button
-                      type="button"
-                      onClick={() => handleAddListItem('features', 'items', { icon: 'Award', title: 'ميزة جديدة', description: 'اكتب وصف الميزة هنا بشكل مبسط وجاذب.' })}
-                      className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-0.5"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      إضافة ميزة
-                    </button>
+              {/* Testimonials Editor (Standalone Section) */}
+              {activeSection === 'testimonials' && (
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص آراء العملاء والتقييمات</h3>
                   </div>
 
                   <div className="space-y-4">
-                    {content.features.items.map((item, idx) => (
-                      <div
-                        key={idx}
-                        id={`editor-item-features-${idx}`}
-                        className={`border rounded-xl p-3 relative flex flex-col gap-2.5 transition-all duration-300 ${
-                          activeSection === 'features' && activeItemIndex === idx
-                            ? 'bg-blue-50/50 border-blue-500 ring-2 ring-blue-500/20 shadow-md scale-[1.01]'
-                            : 'bg-slate-50 border-slate-200'
-                        }`}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveListItem('features', 'items', idx)}
-                          className="absolute top-2 left-2 text-slate-400 hover:text-red-500 transition-colors"
-                          title="حذف الميزة"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                        
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">عنوان قسم الآراء الرئيسي</label>
+                      <input
+                        type="text"
+                        value={content.pricing.testimonialsTitle || ''}
+                        onChange={(e) => handleUpdateField('pricing', 'testimonialsTitle', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">عنوان فرعي لقسم الآراء</label>
+                      <input
+                        type="text"
+                        value={content.pricing.testimonialsSubtitle || ''}
+                        onChange={(e) => handleUpdateField('pricing', 'testimonialsSubtitle', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    {/* Testimonials Items 1, 2, 3 */}
+                    {[1, 2, 3].map((num) => (
+                      <div key={num} className="border border-slate-200 bg-slate-50 rounded-xl p-3 space-y-2">
+                        <span className="text-[10px] font-extrabold text-slate-700 block border-b border-slate-200 pb-1">الرأي {num}:</span>
                         <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">أيقونة الميزة</label>
-                          {/* Visual Icon Picker without raw text name input */}
-                          <div className="border border-slate-200 rounded-xl bg-white overflow-hidden">
-                            <div className="flex items-center justify-between bg-slate-50 border border-slate-200/80 rounded-xl p-2">
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-lg bg-blue-100/80 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 shadow-sm">
-                                  {item.icon && (item.icon.startsWith('http') || item.icon.includes('/') || item.icon.startsWith('data:')) ? (
-                                    <img src={item.icon} className="w-7 h-7 rounded object-cover" alt="icon preview" />
-                                  ) : (
-                                    <span className="material-symbols-outlined text-[20px]">{item.icon || 'star'}</span>
-                                  )}
-                                </div>
-                                <span className="text-[10px] font-bold text-slate-600">الأيقونة المحددة</span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => setOpenIconPickerIdx(openIconPickerIdx === idx ? null : idx)}
-                                className="px-2.5 py-1 bg-white border border-slate-200 hover:border-blue-500 hover:bg-blue-50 text-blue-600 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1"
-                              >
-                                <span className="material-symbols-outlined text-sm">{openIconPickerIdx === idx ? 'close' : 'grid_view'}</span>
-                                {openIconPickerIdx === idx ? 'إغلاق' : 'تغيير الأيقونة'}
-                              </button>
-                            </div>
-                            {/* Material Symbols grid picker (collapsible) */}
-                            {openIconPickerIdx === idx && (
-                              <div className="border-t border-slate-100 p-2">
-                                <div className="flex items-center justify-between mb-1.5">
-                                  <p className="text-[9px] text-slate-400 font-bold">اختر أيقونة:</p>
-                                  <button
-                                    type="button"
-                                    onClick={() => setOpenIconPickerIdx(null)}
-                                    className="text-[9px] text-slate-400 hover:text-red-500 font-bold flex items-center gap-0.5"
-                                  >
-                                    <X className="w-3 h-3" /> إغلاق
-                                  </button>
-                                </div>
-                                <div className="grid grid-cols-8 gap-1">
-                                  {['school','menu_book','star','verified','check_circle','rocket_launch','psychology','lightbulb','emoji_events','workspace_premium','military_tech','grade','local_library','auto_stories','science','calculate','draw','edit','history_edu','sports_esports','devices','laptop','tablet_mac','phone_iphone','cloud','data_usage','analytics','bar_chart','trending_up','timeline','groups','people','person','supervisor_account','support_agent','headset_mic','chat','forum','language','translate','public','travel_explore','apartment','business','corporate_fare','account_balance','hub','bolt','diamond','favorite'].map((iconName) => (
-                                    <button
-                                      key={iconName}
-                                      type="button"
-                                      title={iconName}
-                                      onClick={() => {
-                                        handleUpdateNestedField('features', 'items', idx, 'icon', iconName);
-                                        setOpenIconPickerIdx(null);
-                                      }}
-                                      className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:bg-blue-100 hover:text-blue-600 ${
-                                        item.icon === iconName
-                                          ? 'bg-blue-600 text-white'
-                                          : 'text-slate-600 bg-slate-50'
-                                      }`}
-                                    >
-                                      <span className="material-symbols-outlined" style={{ fontSize: '16px', fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20" }}>
-                                        {iconName}
-                                      </span>
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
+                          <label className="text-[9px] font-bold text-slate-500">نص الرأي</label>
+                          <textarea
+                            value={(content.pricing as any)[`testimonial${num}Text`] || ''}
+                            onChange={(e) => handleUpdateField('pricing', `testimonial${num}Text`, e.target.value)}
+                            className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 min-h-[60px]"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">صاحب الرأي</label>
+                            <input
+                              type="text"
+                              value={(content.pricing as any)[`testimonial${num}Author`] || ''}
+                              onChange={(e) => handleUpdateField('pricing', `testimonial${num}Author`, e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-bold"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">الوظيفة / الصفة</label>
+                            <input
+                              type="text"
+                              value={(content.pricing as any)[`testimonial${num}Role`] || ''}
+                              onChange={(e) => handleUpdateField('pricing', `testimonial${num}Role`, e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600"
+                            />
                           </div>
                         </div>
-
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">عنوان الميزة</label>
-                          <input
-                            type="text"
-                            value={item.title}
-                            onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'title', e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-bold"
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">وصف الميزة</label>
-                          <textarea
-                            value={item.description}
-                            onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'description', e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none min-h-[50px] resize-none"
-                          />
-                        </div>
                       </div>
                     ))}
-                  </div>
-                </div>
-              </div>
-            )}
 
-            {/* Courses Editor */}
-            {activeSection === 'courses' && content.courses && (
-              <div className="space-y-5">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص قسم الدورات التدريبية</h3>
-                </div>
-
-                <div className="bg-blue-50/70 border border-blue-200 p-3.5 rounded-xl text-[11px] text-blue-900 font-bold leading-relaxed flex items-start gap-2">
-                  <span className="material-symbols-outlined text-[18px] text-blue-600 shrink-0 mt-0.5">info</span>
-                  <div>
-                    يتم جلب وعرض بيانات الدورات الحقيقية تلقائياً من المنصة. يمكنك تخصيص العناوين، والحد الأقصى للدورات المعروضة، والخيارات أدناه:
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم الدورات</label>
-                    <input
-                      type="text"
-                      value={content.courses.title}
-                      onChange={(e) => handleUpdateField('courses', 'title', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">وصف / عنوان فرعي للقسم</label>
-                    <textarea
-                      value={content.courses.subtitle || ''}
-                      onChange={(e) => handleUpdateField('courses', 'subtitle', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px] resize-none"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">الحد الأقصى للدورات</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="24"
-                        value={content.courses.limit || 6}
-                        onChange={(e) => handleUpdateField('courses', 'limit', parseInt(e.target.value, 10) || 6)}
-                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">تخطيط الأعمدة</label>
-                      <select
-                        value={content.courses.gridCols || '3'}
-                        onChange={(e) => handleUpdateField('courses', 'gridCols', e.target.value)}
-                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                      >
-                        <option value="2">عمودين (2)</option>
-                        <option value="3">3 أعمدة (3)</option>
-                        <option value="4">4 أعمدة (4)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 pt-2 border-t border-slate-100">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={content.courses.showPrice !== false}
-                        onChange={(e) => handleUpdateField('courses', 'showPrice', e.target.checked)}
-                        className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500"
-                      />
-                      <span className="text-xs font-bold text-slate-700">إظهار أسعار الدورات</span>
-                    </label>
-
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={content.courses.showStudentsCount !== false}
-                        onChange={(e) => handleUpdateField('courses', 'showStudentsCount', e.target.checked)}
-                        className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500"
-                      />
-                      <span className="text-xs font-bold text-slate-700">إظهار عدد الطلاب المسجلين</span>
-                    </label>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 pt-2">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون الأزرار / الشارة</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.courses.buttonBg || '#3525cd'}
-                          onChange={(e) => handleUpdateField('courses', 'buttonBg', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.courses.buttonBg || '#3525cd'}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.courses.backgroundColor || '#ffffff'}
-                          onChange={(e) => handleUpdateField('courses', 'backgroundColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.courses.backgroundColor || '#ffffff'}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Testimonials Editor (Standalone Section) */}
-            {activeSection === 'testimonials' && (
-              <div className="space-y-5">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص آراء العملاء والتقييمات</h3>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم الآراء الرئيسي</label>
-                    <input
-                      type="text"
-                      value={content.pricing.testimonialsTitle || ''}
-                      onChange={(e) => handleUpdateField('pricing', 'testimonialsTitle', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان فرعي لقسم الآراء</label>
-                    <input
-                      type="text"
-                      value={content.pricing.testimonialsSubtitle || ''}
-                      onChange={(e) => handleUpdateField('pricing', 'testimonialsSubtitle', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-
-                  {/* Testimonials Items 1, 2, 3 */}
-                  {[1, 2, 3].map((num) => (
-                    <div key={num} className="border border-slate-200 bg-slate-50 rounded-xl p-3 space-y-2">
-                      <span className="text-[10px] font-extrabold text-slate-700 block border-b border-slate-200 pb-1">الرأي {num}:</span>
+                    <div className="grid grid-cols-2 gap-3 pt-2">
                       <div className="flex flex-col gap-1">
-                        <label className="text-[9px] font-bold text-slate-500">نص الرأي</label>
-                        <textarea
-                          value={(content.pricing as any)[`testimonial${num}Text`] || ''}
-                          onChange={(e) => handleUpdateField('pricing', `testimonial${num}Text`, e.target.value)}
-                          className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 min-h-[60px]"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">صاحب الرأي</label>
+                        <label className="text-[11px] font-bold text-slate-600">خلفية قسم الآراء</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
                           <input
-                            type="text"
-                            value={(content.pricing as any)[`testimonial${num}Author`] || ''}
-                            onChange={(e) => handleUpdateField('pricing', `testimonial${num}Author`, e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-bold"
+                            type="color"
+                            value={content.pricing.backgroundColor}
+                            onChange={(e) => handleUpdateField('pricing', 'backgroundColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                           />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">الوظيفة / الصفة</label>
-                          <input
-                            type="text"
-                            value={(content.pricing as any)[`testimonial${num}Role`] || ''}
-                            onChange={(e) => handleUpdateField('pricing', `testimonial${num}Role`, e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600"
-                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.pricing.backgroundColor}</span>
                         </div>
                       </div>
-                    </div>
-                  ))}
 
-                  <div className="grid grid-cols-2 gap-3 pt-2">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية قسم الآراء</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.pricing.backgroundColor}
-                          onChange={(e) => handleUpdateField('pricing', 'backgroundColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.pricing.backgroundColor}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون نصوص الآراء</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.pricing.textColor}
-                          onChange={(e) => handleUpdateField('pricing', 'textColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.pricing.textColor}</span>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون نصوص الآراء</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.pricing.textColor}
+                            onChange={(e) => handleUpdateField('pricing', 'textColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.pricing.textColor}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* FAQ Editor */}
-            {activeSection === 'faq' && (
-              <div className="space-y-5">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص الأسئلة الشائعة</h3>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم الأسئلة الرئيسي</label>
-                    <input
-                      type="text"
-                      value={content.faq.title}
-                      onChange={(e) => handleUpdateField('faq', 'title', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-                </div>
-
-                {/* FAQ Items List */}
-                <div className="space-y-3 pt-3 border-t border-slate-100">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-slate-500">قائمة الأسئلة والإجابات:</span>
-                    <button
-                      type="button"
-                      onClick={() => handleAddListItem('faq', 'items', { question: 'سؤال افتراضي جديد؟', answer: 'اكتب الإجابة المفصلة للطلاب هنا.' })}
-                      className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-0.5"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      إضافة سؤال
-                    </button>
+              {/* FAQ Editor */}
+              {activeSection === 'faq' && (
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص الأسئلة الشائعة</h3>
                   </div>
 
                   <div className="space-y-4">
-                    {content.faq.items.map((item, idx) => (
-                      <div
-                        key={idx}
-                        id={`editor-item-faq-${idx}`}
-                        className={`border rounded-xl p-3 relative flex flex-col gap-2.5 transition-all duration-300 ${
-                          activeSection === 'faq' && activeItemIndex === idx
-                            ? 'bg-blue-50/50 border-blue-500 ring-2 ring-blue-500/20 shadow-md scale-[1.01]'
-                            : 'bg-slate-50 border-slate-200'
-                        }`}
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">عنوان قسم الأسئلة الرئيسي</label>
+                      <input
+                        type="text"
+                        value={content.faq.title}
+                        onChange={(e) => handleUpdateField('faq', 'title', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  {/* FAQ Items List */}
+                  <div className="space-y-3 pt-3 border-t border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black text-slate-500">قائمة الأسئلة والإجابات:</span>
+                      <button
+                        type="button"
+                        onClick={() => handleAddListItem('faq', 'items', { question: 'سؤال افتراضي جديد؟', answer: 'اكتب الإجابة المفصلة للطلاب هنا.' })}
+                        className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-0.5"
                       >
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveListItem('faq', 'items', idx)}
-                          className="absolute top-2 left-2 text-slate-400 hover:text-red-500 transition-colors"
-                          title="حذف السؤال"
+                        <Plus className="w-3.5 h-3.5" />
+                        إضافة سؤال
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {content.faq.items.map((item, idx) => (
+                        <div
+                          key={idx}
+                          id={`editor-item-faq-${idx}`}
+                          className={`border rounded-xl p-3 relative flex flex-col gap-2.5 transition-all duration-300 ${activeSection === 'faq' && activeItemIndex === idx
+                              ? 'bg-blue-50/50 border-blue-500 ring-2 ring-blue-500/20 shadow-md scale-[1.01]'
+                              : 'bg-slate-50 border-slate-200'
+                            }`}
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                        
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">السؤال المطروح</label>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveListItem('faq', 'items', idx)}
+                            className="absolute top-2 left-2 text-slate-400 hover:text-red-500 transition-colors"
+                            title="حذف السؤال"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">السؤال المطروح</label>
+                            <input
+                              type="text"
+                              value={item.question}
+                              onChange={(e) => handleUpdateNestedField('faq', 'items', idx, 'question', e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-bold"
+                            />
+                          </div>
+
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">الإجابة</label>
+                            <textarea
+                              value={item.answer}
+                              onChange={(e) => handleUpdateNestedField('faq', 'items', idx, 'answer', e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none min-h-[60px] resize-none text-slate-600"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">خلفية قسم الأسئلة</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
                           <input
-                            type="text"
-                            value={item.question}
-                            onChange={(e) => handleUpdateNestedField('faq', 'items', idx, 'question', e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-bold"
+                            type="color"
+                            value={content.faq.backgroundColor}
+                            onChange={(e) => handleUpdateField('faq', 'backgroundColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                           />
-                        </div>
-
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">الإجابة</label>
-                          <textarea
-                            value={item.answer}
-                            onChange={(e) => handleUpdateNestedField('faq', 'items', idx, 'answer', e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none min-h-[60px] resize-none text-slate-600"
-                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.faq.backgroundColor}</span>
                         </div>
                       </div>
-                    ))}
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-3 pt-2">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية قسم الأسئلة</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.faq.backgroundColor}
-                          onChange={(e) => handleUpdateField('faq', 'backgroundColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.faq.backgroundColor}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون نصوص الأسئلة</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.faq.textColor}
-                          onChange={(e) => handleUpdateField('faq', 'textColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.faq.textColor}</span>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون نصوص الأسئلة</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.faq.textColor}
+                            onChange={(e) => handleUpdateField('faq', 'textColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.faq.textColor}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Contact Editor */}
-            {activeSection === 'contact' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص أزرار التواصل</h3>
-                </div>
-
+              {/* Contact Editor */}
+              {activeSection === 'contact' && (
                 <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم تواصل معنا</label>
-                    <input
-                      type="text"
-                      value={content.contact.title}
-                      onChange={(e) => handleUpdateField('contact', 'title', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص أزرار التواصل</h3>
                   </div>
 
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">الوصف والدعوة للاتصال</label>
-                    <textarea
-                      value={content.contact.description}
-                      onChange={(e) => handleUpdateField('contact', 'description', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px] resize-none"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">رقم الواتساب الاستشاري (مع رمز الدولة)</label>
-                    <input
-                      type="text"
-                      value={content.contact.phoneNumber}
-                      onChange={(e) => handleUpdateField('contact', 'phoneNumber', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
-                      dir="ltr"
-                      placeholder="مثال: 966500000000"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">نص زر التواصل / الواتساب</label>
-                    <input
-                      type="text"
-                      value={content.contact.buttonText}
-                      onChange={(e) => handleUpdateField('contact', 'buttonText', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div className="space-y-4">
                     <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.contact.backgroundColor}
-                          onChange={(e) => handleUpdateField('contact', 'backgroundColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.contact.backgroundColor}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون النصوص</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.contact.textColor}
-                          onChange={(e) => handleUpdateField('contact', 'textColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.contact.textColor}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Footer Editor */}
-            {activeSection === 'footer' && currentRole !== 'academy' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص تذييل الصفحة (الفوتر)</h3>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">نص حقوق الملكية والنشر</label>
-                    <input
-                      type="text"
-                      value={content.footer.text}
-                      onChange={(e) => handleUpdateField('footer', 'text', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-
-                  <div className="border-t border-slate-100 pt-3 mt-3 space-y-3">
-                    <h4 className="text-[11px] font-extrabold text-slate-700">تعديل النشرة البريدية (Newsletter)</h4>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">عنوان النشرة البريدية</label>
+                      <label className="text-[11px] font-bold text-slate-600">عنوان قسم تواصل معنا</label>
                       <input
                         type="text"
-                        value={content.footer.newsletterTitle || ''}
-                        onChange={(e) => handleUpdateField('footer', 'newsletterTitle', e.target.value)}
+                        value={content.contact.title}
+                        onChange={(e) => handleUpdateField('contact', 'title', e.target.value)}
                         className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
                       />
                     </div>
+
                     <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">وصف النشرة البريدية</label>
+                      <label className="text-[11px] font-bold text-slate-600">الوصف والدعوة للاتصال</label>
                       <textarea
-                        value={content.footer.newsletterDesc || ''}
-                        onChange={(e) => handleUpdateField('footer', 'newsletterDesc', e.target.value)}
-                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[60px]"
+                        value={content.contact.description}
+                        onChange={(e) => handleUpdateField('contact', 'description', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px] resize-none"
                       />
                     </div>
+
                     <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">نص زر الاشتراك</label>
+                      <label className="text-[11px] font-bold text-slate-600">رقم الواتساب الاستشاري (مع رمز الدولة)</label>
                       <input
                         type="text"
-                        value={content.footer.newsletterBtnText || ''}
-                        onChange={(e) => handleUpdateField('footer', 'newsletterBtnText', e.target.value)}
+                        value={content.contact.phoneNumber}
+                        onChange={(e) => handleUpdateField('contact', 'phoneNumber', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                        dir="ltr"
+                        placeholder="مثال: 966500000000"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">نص زر التواصل / الواتساب</label>
+                      <input
+                        type="text"
+                        value={content.contact.buttonText}
+                        onChange={(e) => handleUpdateField('contact', 'buttonText', e.target.value)}
                         className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
                       />
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية الفوتر</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.footer.backgroundColor}
-                          onChange={(e) => handleUpdateField('footer', 'backgroundColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.footer.backgroundColor}</span>
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.contact.backgroundColor}
+                            onChange={(e) => handleUpdateField('contact', 'backgroundColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.contact.backgroundColor}</span>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون نصوص الفوتر</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.footer.textColor}
-                          onChange={(e) => handleUpdateField('footer', 'textColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.footer.textColor}</span>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون النصوص</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.contact.textColor}
+                            onChange={(e) => handleUpdateField('contact', 'textColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.contact.textColor}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* Footer Editor */}
+              {activeSection === 'footer' && currentRole !== 'academy' && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص تذييل الصفحة (الفوتر)</h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">نص حقوق الملكية والنشر</label>
+                      <input
+                        type="text"
+                        value={content.footer.text}
+                        onChange={(e) => handleUpdateField('footer', 'text', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    <div className="border-t border-slate-100 pt-3 mt-3 space-y-3">
+                      <h4 className="text-[11px] font-extrabold text-slate-700">تعديل النشرة البريدية (Newsletter)</h4>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">عنوان النشرة البريدية</label>
+                        <input
+                          type="text"
+                          value={content.footer.newsletterTitle || ''}
+                          onChange={(e) => handleUpdateField('footer', 'newsletterTitle', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">وصف النشرة البريدية</label>
+                        <textarea
+                          value={content.footer.newsletterDesc || ''}
+                          onChange={(e) => handleUpdateField('footer', 'newsletterDesc', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[60px]"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">نص زر الاشتراك</label>
+                        <input
+                          type="text"
+                          value={content.footer.newsletterBtnText || ''}
+                          onChange={(e) => handleUpdateField('footer', 'newsletterBtnText', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">خلفية الفوتر</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.footer.backgroundColor}
+                            onChange={(e) => handleUpdateField('footer', 'backgroundColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.footer.backgroundColor}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون نصوص الفوتر</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.footer.textColor}
+                            onChange={(e) => handleUpdateField('footer', 'textColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.footer.textColor}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
             </div>
           </div>
@@ -2722,28 +2714,27 @@ export default function PageBuilderPage() {
 
         {/* Right Column: Live Interactive Simulation Preview */}
         <div className="flex-1 bg-slate-100 p-6 flex flex-col items-center justify-center overflow-hidden relative">
-          
+
           {/* Active section bubble tag floating indicator */}
           <div className="absolute top-4 right-6 bg-slate-900/80 backdrop-blur-md text-white text-[10px] px-3.5 py-1.5 rounded-full z-10 font-bold shadow-md flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping"></span>
             <span>معاينة حية:</span>
             <span className="text-amber-400 font-extrabold">
               {activeSection === 'navbar' ? 'الهيدر' :
-               activeSection === 'hero' ? 'البانر الترحيبي' :
-               activeSection === 'about' ? 'سيرة المعلم / من نحن' :
-               activeSection === 'features' ? 'المميزات الرئيسية' :
-               activeSection === 'pricing' ? 'الكورسات والباقات' :
-               activeSection === 'faq' ? 'الأسئلة المتكررة' :
-               activeSection === 'contact' ? 'تواصل واتساب' : 'الفوتر'}
+                activeSection === 'hero' ? 'البانر الترحيبي' :
+                  activeSection === 'about' ? 'سيرة المعلم / من نحن' :
+                    activeSection === 'features' ? 'المميزات الرئيسية' :
+                      activeSection === 'pricing' ? 'الكورسات والباقات' :
+                        activeSection === 'faq' ? 'الأسئلة المتكررة' :
+                          activeSection === 'contact' ? 'تواصل واتساب' : 'الفوتر'}
             </span>
           </div>
 
           {/* Preview canvas shell scaling depending on deviceMode */}
           <div
-            className={`bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden flex flex-col transition-all duration-300 ease-out w-full h-full ${
-              deviceMode === 'desktop' ? 'max-w-full' :
-              deviceMode === 'tablet' ? 'max-w-2xl h-[90%]' : 'max-w-sm h-[85%]'
-            }`}
+            className={`bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden flex flex-col transition-all duration-300 ease-out w-full h-full ${deviceMode === 'desktop' ? 'max-w-full' :
+                deviceMode === 'tablet' ? 'max-w-2xl h-[90%]' : 'max-w-sm h-[85%]'
+              }`}
           >
             {/* Simulation Header Address Bar */}
             <div className="bg-slate-50 px-4 py-2 border-b border-slate-200 flex items-center gap-2 select-none shrink-0">
@@ -2769,16 +2760,15 @@ export default function PageBuilderPage() {
               />
             ) : (
               <div className="flex-1 overflow-y-auto bg-white select-none">
-                
+
                 {/* Navbar Section */}
                 <div
                   onClick={() => { setActiveSection('navbar'); setActiveItemIndex(null); }}
                   style={{ backgroundColor: content.navbar.bgColor, color: content.navbar.textColor }}
-                  className={`py-4 px-6 flex justify-between items-center cursor-pointer border-b border-slate-100 transition-all relative group ${
-                    activeSection === 'navbar' 
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                  className={`py-4 px-6 flex justify-between items-center cursor-pointer border-b border-slate-100 transition-all relative group ${activeSection === 'navbar'
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
                       : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                  }`}
+                    }`}
                 >
                   <div className="absolute top-1 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
                     <Pencil className="w-2.5 h-2.5" />
@@ -2800,11 +2790,10 @@ export default function PageBuilderPage() {
                 <div
                   onClick={() => { setActiveSection('hero'); setActiveItemIndex(null); }}
                   style={{ backgroundColor: content.hero.backgroundColor, color: content.hero.textColor }}
-                  className={`p-8 sm:p-12 grid grid-cols-1 md:grid-cols-2 gap-6 items-center cursor-pointer transition-all relative group ${
-                    activeSection === 'hero' 
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                  className={`p-8 sm:p-12 grid grid-cols-1 md:grid-cols-2 gap-6 items-center cursor-pointer transition-all relative group ${activeSection === 'hero'
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
                       : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                  }`}
+                    }`}
                 >
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
                     <Pencil className="w-2.5 h-2.5" />
@@ -2842,11 +2831,10 @@ export default function PageBuilderPage() {
                 <div
                   onClick={() => { setActiveSection('about'); setActiveItemIndex(null); }}
                   style={{ backgroundColor: content.about.backgroundColor, color: content.about.textColor }}
-                  className={`p-8 sm:p-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center cursor-pointer border-t border-slate-100 transition-all relative group ${
-                    activeSection === 'about' 
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                  className={`p-8 sm:p-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center cursor-pointer border-t border-slate-100 transition-all relative group ${activeSection === 'about'
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
                       : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                  }`}
+                    }`}
                 >
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
                     <Pencil className="w-2.5 h-2.5" />
@@ -2871,11 +2859,10 @@ export default function PageBuilderPage() {
                 <div
                   onClick={() => { setActiveSection('features'); setActiveItemIndex(null); }}
                   style={{ backgroundColor: content.features.backgroundColor, color: content.features.textColor }}
-                  className={`p-8 sm:p-12 space-y-8 cursor-pointer border-t border-slate-100 transition-all relative group ${
-                    activeSection === 'features' 
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                  className={`p-8 sm:p-12 space-y-8 cursor-pointer border-t border-slate-100 transition-all relative group ${activeSection === 'features'
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
                       : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                  }`}
+                    }`}
                 >
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
                     <Pencil className="w-2.5 h-2.5" />
@@ -2894,11 +2881,10 @@ export default function PageBuilderPage() {
                           e.stopPropagation();
                           handleSelectSectionItem('features', i);
                         }}
-                        className={`bg-white border p-4 rounded-2xl flex flex-col gap-2.5 shadow-xs cursor-pointer transition-all relative group/item ${
-                          activeSection === 'features' && activeItemIndex === i
+                        className={`bg-white border p-4 rounded-2xl flex flex-col gap-2.5 shadow-xs cursor-pointer transition-all relative group/item ${activeSection === 'features' && activeItemIndex === i
                             ? 'border-blue-500 ring-2 ring-blue-500/40 scale-[1.03] z-20 shadow-md'
                             : 'border-slate-200 hover:border-blue-400 hover:shadow-sm'
-                        }`}
+                          }`}
                       >
                         <div className="absolute top-1 left-1 opacity-0 group-hover/item:opacity-100 transition-opacity bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm z-30 pointer-events-none flex items-center gap-0.5">
                           <Pencil className="w-2 h-2" />
@@ -2906,11 +2892,11 @@ export default function PageBuilderPage() {
                         </div>
                         <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200">
                           {item.icon === 'BookOpen' ? <BookOpen className="w-4 h-4" /> :
-                           item.icon === 'Award' ? <Award className="w-4 h-4" /> :
-                           item.icon === 'Clock' ? <Clock className="w-4 h-4" /> :
-                           item.icon === 'Laptop' ? <Laptop className="w-4 h-4" /> :
-                           item.icon === 'Phone' ? <Phone className="w-4 h-4" /> :
-                           <Sparkles className="w-4 h-4" />}
+                            item.icon === 'Award' ? <Award className="w-4 h-4" /> :
+                              item.icon === 'Clock' ? <Clock className="w-4 h-4" /> :
+                                item.icon === 'Laptop' ? <Laptop className="w-4 h-4" /> :
+                                  item.icon === 'Phone' ? <Phone className="w-4 h-4" /> :
+                                    <Sparkles className="w-4 h-4" />}
                         </div>
                         <h4 className="text-xs font-black text-slate-900">{item.title}</h4>
                         <p className="text-[10px] text-slate-500 leading-relaxed font-bold">{item.description}</p>
@@ -2924,11 +2910,10 @@ export default function PageBuilderPage() {
                   <div
                     onClick={() => { setActiveSection('courses'); setActiveItemIndex(null); }}
                     style={{ backgroundColor: content.courses.backgroundColor || '#ffffff', color: content.courses.textColor || '#1b1b24' }}
-                    className={`p-8 sm:p-12 space-y-8 cursor-pointer border-t border-slate-100 transition-all relative group ${
-                      activeSection === 'courses' 
-                        ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                    className={`p-8 sm:p-12 space-y-8 cursor-pointer border-t border-slate-100 transition-all relative group ${activeSection === 'courses'
+                        ? 'ring-4 ring-blue-500 z-10 shadow-md'
                         : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                    }`}
+                      }`}
                   >
                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
                       <Pencil className="w-2.5 h-2.5" />
@@ -2963,11 +2948,10 @@ export default function PageBuilderPage() {
                 <div
                   onClick={() => { setActiveSection('faq'); setActiveItemIndex(null); }}
                   style={{ backgroundColor: content.faq.backgroundColor, color: content.faq.textColor }}
-                  className={`p-8 sm:p-12 space-y-6 cursor-pointer border-t border-slate-100 transition-all relative group ${
-                    activeSection === 'faq' 
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                  className={`p-8 sm:p-12 space-y-6 cursor-pointer border-t border-slate-100 transition-all relative group ${activeSection === 'faq'
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
                       : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                  }`}
+                    }`}
                 >
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
                     <Pencil className="w-2.5 h-2.5" />
@@ -2985,11 +2969,10 @@ export default function PageBuilderPage() {
                           e.stopPropagation();
                           handleSelectSectionItem('faq', i);
                         }}
-                        className={`bg-white border rounded-xl p-4 flex gap-3 text-right cursor-pointer transition-all relative group/item ${
-                          activeSection === 'faq' && activeItemIndex === i
+                        className={`bg-white border rounded-xl p-4 flex gap-3 text-right cursor-pointer transition-all relative group/item ${activeSection === 'faq' && activeItemIndex === i
                             ? 'border-blue-500 ring-2 ring-blue-500/40 scale-[1.02] z-20 shadow-md'
                             : 'border-slate-200 hover:border-blue-400 hover:shadow-sm'
-                        }`}
+                          }`}
                       >
                         <div className="absolute top-2 left-2 opacity-0 group-hover/item:opacity-100 transition-opacity bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm z-30 pointer-events-none flex items-center gap-0.5">
                           <Pencil className="w-2 h-2" />
@@ -3011,11 +2994,10 @@ export default function PageBuilderPage() {
                 <div
                   onClick={() => { setActiveSection('contact'); setActiveItemIndex(null); }}
                   style={{ backgroundColor: content.contact.backgroundColor, color: content.contact.textColor }}
-                  className={`p-8 sm:p-10 text-center space-y-4 cursor-pointer border-t border-slate-100 transition-all relative group ${
-                    activeSection === 'contact' 
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                  className={`p-8 sm:p-10 text-center space-y-4 cursor-pointer border-t border-slate-100 transition-all relative group ${activeSection === 'contact'
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
                       : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                  }`}
+                    }`}
                 >
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
                     <Pencil className="w-2.5 h-2.5" />
@@ -3042,11 +3024,10 @@ export default function PageBuilderPage() {
                   <div
                     onClick={() => { setActiveSection('footer'); setActiveItemIndex(null); }}
                     style={{ backgroundColor: content.footer.backgroundColor, color: content.footer.textColor }}
-                    className={`py-6 px-6 text-center text-[10px] cursor-pointer opacity-90 border-t border-slate-100 transition-all relative group ${
-                      activeSection === 'footer' 
-                        ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                    className={`py-6 px-6 text-center text-[10px] cursor-pointer opacity-90 border-t border-slate-100 transition-all relative group ${activeSection === 'footer'
+                        ? 'ring-4 ring-blue-500 z-10 shadow-md'
                         : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                    }`}
+                      }`}
                   >
                     <div className="absolute top-1 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
                       <Pencil className="w-2.5 h-2.5" />
