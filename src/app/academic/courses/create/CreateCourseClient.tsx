@@ -875,6 +875,13 @@ export default function CreateCourseClient() {
     setIsSubmitting(true);
     try {
       const createdId = await ensureCourseCreated('draft');
+      setStatus('draft');
+      const totalLessons = units.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0);
+      if (totalLessons === 0) {
+        toast.success('تم حفظ الدورة كمسودة بنجاح. يرجى إضافة دروس لتتمكن من النشر لاحقاً.');
+      } else {
+        toast.success('تم حفظ بيانات الدورة بنجاح.');
+      }
       if (createdId && !courseId) {
         router.push(`/academic/courses/${createdId}`);
       }
@@ -889,6 +896,17 @@ export default function CreateCourseClient() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
+      const totalLessons = units.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0);
+      if (totalLessons === 0) {
+        toast.error('لا يمكن نشر الدورة بدون وجود دروس تعليمية. تم حفظ الدورة كمسودة.');
+        const createdId = await ensureCourseCreated('draft');
+        setStatus('draft');
+        if (createdId && !courseId) {
+          router.push(`/academic/courses/${createdId}`);
+        }
+        return;
+      }
+
       const createdId = await ensureCourseCreated('published');
       setStatus('published');
       toast.success('تم نشر الدورة بنجاح!');

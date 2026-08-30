@@ -732,6 +732,14 @@ export default function CourseDetailsPage() {
     try {
       const targetAudienceStr = targetAudienceList.filter(Boolean).join('، ');
 
+      const totalLessons = course?.units?.reduce((acc: number, unit: any) => acc + (unit.lessons?.length || 0), 0) || 0;
+      let targetStatus = status;
+      if (targetStatus === 'published' && totalLessons === 0) {
+        toast.error('لا يمكن نشر الدورة بدون وجود دروس تعليمية. تم تحويل الدورة لمسودة.');
+        targetStatus = 'draft';
+        setStatus('draft');
+      }
+
       const payload: any = {
         title: courseInfo.title,
         description: courseInfo.description || undefined,
@@ -742,7 +750,7 @@ export default function CourseDetailsPage() {
         category_id: courseInfo.category_id || undefined,
         user_id: courseInfo.user_id || undefined,
         coach: coachName,
-        status: status,
+        status: targetStatus,
         slug: slug || undefined,
         price: pricingType === 'free' ? 0 : Number(price || 0),
         final_price: pricingType === 'free' ? 0 : (isDiscounted && discountPrice ? Number(discountPrice) : Number(price || 0)),
@@ -859,8 +867,16 @@ export default function CourseDetailsPage() {
     }
 
     try {
+      const totalLessons = course?.units?.reduce((acc: number, unit: any) => acc + (unit.lessons?.length || 0), 0) || 0;
+      let targetStatus = status;
+      if (targetStatus === 'published' && totalLessons === 0) {
+        toast.error('لا يمكن نشر الدورة بدون وجود دروس تعليمية. تم تحويل الدورة لمسودة.');
+        targetStatus = 'draft';
+        setStatus('draft');
+      }
+
       // Validate before saving if publishing
-      if (status === 'published') {
+      if (targetStatus === 'published') {
         const missing = [];
         if (!courseInfo.title) missing.push('عنوان الدورة');
         if (!courseInfo.description) missing.push('وصف الدورة');
@@ -880,7 +896,7 @@ export default function CourseDetailsPage() {
         final_price: pricingType === 'free' ? 0 : (isDiscounted && discountPrice ? Number(discountPrice) : Number(price)),
         price_type: pricingType,
         currency: currency,
-        status: status,
+        status: targetStatus,
         receiver_accounts: selectedPaymentMethods.map(m => Number(m.methodId)),
 
         // Pricing & Access Options
@@ -1525,6 +1541,13 @@ export default function CourseDetailsPage() {
               <button 
                 type="button"
                 onClick={async () => {
+                  const totalLessons = course?.units?.reduce((acc: number, unit: any) => acc + (unit.lessons?.length || 0), 0) || 0;
+                  if (totalLessons === 0) {
+                    toast.error('لا يمكن نشر الدورة بدون وجود دروس تعليمية. تم حفظ التغييرات كمسودة.');
+                    await handleSaveCourseInfo(false);
+                    return;
+                  }
+
                   const missing = [];
                   if (!courseInfo.title) missing.push('عنوان الدورة');
                   if (!courseInfo.description || courseInfo.description === '<p><br></p>') missing.push('وصف الدورة');
