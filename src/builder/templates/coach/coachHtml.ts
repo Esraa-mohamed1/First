@@ -10,6 +10,8 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
   const heroDesc = content?.hero?.description || 'مساحة حصرية مصممة للمفكرين والقادة. استكشف مناهج متقدمة وتواصل مع خبراء عالميين في بيئة دراسية مصممة للتركيز العميق والتميز الأكاديمي.';
   const heroBtnText = content?.hero?.buttonText || (content?.hero as any)?.button_text || 'ابدأ رحلتك';
   const heroBtnLink = content?.hero?.buttonLink || (content?.hero as any)?.button_link || '#';
+  const heroSecondaryBtnText = content?.hero?.secondaryButtonText || (content?.hero as any)?.secondary_button_text || (content?.hero as any)?.demoButtonText || 'استكشف المناهج';
+  const heroSecondaryBtnLink = content?.hero?.secondaryButtonLink || (content?.hero as any)?.secondary_button_link || (content?.hero as any)?.demoButtonLink || '#faq';
   const heroBg = content?.hero?.backgroundColor || (content?.hero as any)?.background_color || (content?.hero as any)?.bg_color || '#141218';
   const heroTextColor = content?.hero?.textColor || (content?.hero as any)?.text_color || '#e6e0e9';
 
@@ -48,6 +50,8 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
       features: ['52 دقيقة', 'https://lh3.googleusercontent.com/aida-public/AB6AXuDRQTwjFjHqFPLwD4Ia1wHj8tW3Aj0xcQvOR1DdS8lD0jwvVo4Z8mOsjlKrP3zjMBswfUBWkhBM7T1CXK0oMbhlSEYqRFRZrp_4NhP1Zy9u-pnmyE39rj7yU6Fb2ozxaVqoJWdESCHFLQXXywsipGmx4tDJoL-L9l7NFt-LiKT6Dq2A0wbgL4tV4fNVKNjmKmQk8WBlM30SKcRVu-bBJ4ulrQXnxK0_AFMOWOKxv3zOn3pnp0S1N-d-wA']
     }
   ];
+  const pricingBg = content?.pricing?.backgroundColor || (content?.pricing as any)?.background_color || '';
+  const pricingTextColor = content?.pricing?.textColor || (content?.pricing as any)?.text_color || '';
 
   const faqTitle = content?.faq?.title || 'مسارات المناهج المتقدمة';
   const faqItems = content?.faq?.items || [
@@ -55,6 +59,23 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
     { question: 'المنطق التحليلي', answer: 'التفكير النقدي المتقدم' },
     { question: 'فلسفة العلوم', answer: 'الابستيمولوجيا التطبيقية' }
   ];
+
+  const statsItems = content?.stats?.items || [
+    { value: '98%', label: 'نسبة رضا الطلاب' },
+    { value: '150+', label: 'منهج دراسي متكامل' },
+    { value: '12k+', label: 'خريج متميز' },
+    { value: '24/7', label: 'دعم أكاديمي مباشر' }
+  ];
+  const stat1Value = statsItems[0]?.value || '98%';
+  const stat1Label = statsItems[0]?.label || 'نسبة رضا الطلاب';
+  const stat2Value = statsItems[1]?.value || '150+';
+  const stat2Label = statsItems[1]?.label || 'منهج دراسي متكامل';
+  const stat3Value = statsItems[2]?.value || '12k+';
+  const stat3Label = statsItems[2]?.label || 'خريج متميز';
+  const stat4Value = statsItems[3]?.value || '24/7';
+  const stat4Label = statsItems[3]?.label || 'دعم أكاديمي مباشر';
+  const statsBg = content?.stats?.backgroundColor || (content?.stats as any)?.background_color || '';
+  const statsTextColor = content?.stats?.textColor || (content?.stats as any)?.text_color || '';
 
   const contactTitle = content?.contact?.title || 'Deep Knowledge';
   const contactDesc = content?.contact?.description || 'أكاديمية النخبة للتعليم العالي المستقل. نبني قادة الفكر للمستقبل من خلال مناهج صارمة وعميقة.';
@@ -72,6 +93,8 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
 
   const testimonialsTitle = (content?.pricing as any)?.testimonialsTitle || 'ماذا يقول النخبة؟';
   const testimonialsSubtitle = (content?.pricing as any)?.testimonialsSubtitle || 'تجارب حقيقية ورؤى ملهمة من طلابنا وقادتنا الذين غيروا مسارهم الأكاديمي والمهني.';
+  const testimonialsBg = (content?.pricing as any)?.testimonialsBg || (content?.pricing as any)?.testimonials_bg || (content?.pricing as any)?.testimonialsBackgroundColor || '';
+  const testimonialsTextColor = (content?.pricing as any)?.testimonialsTextColor || (content?.pricing as any)?.testimonials_text_color || '';
   const testimonial1Text = (content?.pricing as any)?.testimonial1Text || 'الماستركلاسز والدروس الفلسفية المعمقة أعادت صياغة طريقتي في التفكير واتخاذ القرارات الاستراتيجية. تجربة دراسية استثنائية ونخبوية حقاً.';
   const testimonial1Author = (content?.pricing as any)?.testimonial1Author || 'خالد منصور';
   const testimonial1Role = (content?.pricing as any)?.testimonial1Role || 'مستشار إداري وتطوير أعمال';
@@ -274,7 +297,7 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
 </header>
 <main class="flex-grow">
 <!-- Hero Section -->
-<section data-section="hero" class="relative min-h-[70vh] flex items-center justify-center overflow-hidden px-margin-mobile md:px-margin-desktop section-hover cursor-pointer" style="background-color: ${heroBg}; color: ${heroTextColor};">
+<section data-section="hero" id="hero" class="relative min-h-[70vh] flex items-center justify-center overflow-hidden px-margin-mobile md:px-margin-desktop section-hover cursor-pointer" style="background-color: ${heroBg}; color: ${heroTextColor};">
 <!-- Atmospheric Background Element -->
 <div class="absolute inset-0 z-0 opacity-20 pointer-events-none" style="background: radial-gradient(circle at 50% 50%, rgba(201, 167, 77, 0.15) 0%, transparent 60%);"></div>
 <div class="relative z-10 text-center max-w-4xl mx-auto flex flex-col items-center gap-8">
@@ -282,20 +305,30 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
 <span class="material-symbols-outlined text-tertiary text-label-sm" style="font-variation-settings: 'FILL' 1;">stars</span>
 <span class="font-label-sm text-label-sm text-tertiary uppercase tracking-widest">${heroSubtitle}</span>
 </div>
-<h1 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-on-surface font-extrabold leading-tight gold-glow">
+<h1 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg font-extrabold leading-tight gold-glow" style="${heroTextColor ? `color: ${heroTextColor};` : 'color: #1c1a22;'}">
                     ${heroTitle}
 </h1>
-<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mt-4">
+<p class="font-body-lg text-body-lg max-w-2xl mt-4" style="${heroTextColor ? `color: ${heroTextColor}; opacity: 0.85;` : 'color: #464555;'}">
                     ${heroDesc}
                 </p>
 <div class="flex gap-4 mt-8">
-<button class="font-label-sm text-label-sm bg-tertiary text-on-tertiary px-8 py-4 rounded hover:bg-tertiary-container transition-colors duration-300 flex items-center gap-2">
+<a data-hero-btn="primary" href="${(() => {
+  if (!heroBtnLink || heroBtnLink === '#') return '#';
+  const trimmed = heroBtnLink.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
+  return `#${trimmed}`;
+})()}" ${heroBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="font-label-sm text-label-sm bg-tertiary text-on-tertiary px-8 py-4 rounded hover:bg-tertiary-container transition-colors duration-300 flex items-center gap-2">
 <span>${heroBtnText}</span>
 <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
-</button>
-<button class="font-label-sm text-label-sm border border-outline text-on-surface px-8 py-4 rounded hover:border-tertiary hover:text-tertiary transition-colors duration-300">
-                        استكشف المناهج
-                    </button>
+</a>
+<a data-hero-btn="secondary" href="${(() => {
+  if (!heroSecondaryBtnLink || heroSecondaryBtnLink === '#') return '#faq';
+  const trimmed = heroSecondaryBtnLink.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
+  return `#${trimmed}`;
+})()}" ${heroSecondaryBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="font-label-sm text-label-sm border border-outline text-on-surface px-8 py-4 rounded hover:border-tertiary hover:text-tertiary transition-colors duration-300 inline-flex items-center justify-center">
+    <span>${heroSecondaryBtnText}</span>
+</a>
 </div>
 </div>
 </section>
@@ -369,34 +402,34 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
 </section>
 
 <!-- Stats Section -->
-<section class="py-20 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto mb-20 bg-primary/5 rounded-[2.5rem] border border-outline-variant/10">
+<section data-section="stats" id="stats-benefits" class="py-20 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto mb-20 section-hover cursor-pointer transition-all duration-300 rounded-[2.5rem] border border-outline-variant/10" style="${statsBg ? `background-color: ${statsBg};` : 'background-color: rgba(103, 80, 164, 0.05);'} ${statsTextColor ? `color: ${statsTextColor};` : ''}">
   <div class="grid grid-cols-2 md:grid-cols-4 gap-gutter">
-    <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-      <span class="block text-display-lg font-display-lg text-primary font-black mb-2">98%</span>
-      <span class="text-body-md font-body-md text-on-surface-variant font-bold">نسبة رضا الطلاب</span>
+    <div data-stat-index="0" class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
+      <span class="block text-display-lg font-display-lg font-black mb-2" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #6750a4;'}">${stat1Value}</span>
+      <span class="text-body-md font-body-md font-bold" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #464555;'}">${stat1Label}</span>
     </div>
-    <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-      <span class="block text-display-lg font-display-lg text-primary font-black mb-2">150+</span>
-      <span class="text-body-md font-body-md text-on-surface-variant font-bold">منهج دراسي متكامل</span>
+    <div data-stat-index="1" class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
+      <span class="block text-display-lg font-display-lg font-black mb-2" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #6750a4;'}">${stat2Value}</span>
+      <span class="text-body-md font-body-md font-bold" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #464555;'}">${stat2Label}</span>
     </div>
-    <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-      <span class="block text-display-lg font-display-lg text-primary font-black mb-2">12k+</span>
-      <span class="text-body-md font-body-md text-on-surface-variant font-bold">خريج متميز</span>
+    <div data-stat-index="2" class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
+      <span class="block text-display-lg font-display-lg font-black mb-2" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #6750a4;'}">${stat3Value}</span>
+      <span class="text-body-md font-body-md font-bold" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #464555;'}">${stat3Label}</span>
     </div>
-    <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-      <span class="block text-display-lg font-display-lg text-primary font-black mb-2">24/7</span>
-      <span class="text-body-md font-body-md text-on-surface-variant font-bold">دعم أكاديمي مباشر</span>
+    <div data-stat-index="3" class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
+      <span class="block text-display-lg font-display-lg font-black mb-2" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #6750a4;'}">${stat4Value}</span>
+      <span class="text-body-md font-body-md font-bold" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #464555;'}">${stat4Label}</span>
     </div>
   </div>
 </section>
 
 <!-- Section 2: Masterclass Series -->
-<section data-section="pricing" id="pricing-plans" class="py-24 px-margin-mobile md:px-margin-desktop bg-background section-hover cursor-pointer">
+<section data-section="pricing" id="pricing-plans" class="py-24 px-margin-mobile md:px-margin-desktop section-hover cursor-pointer transition-all duration-300" style="${pricingBg ? `background-color: ${pricingBg};` : 'background-color: #ffffff;'} ${pricingTextColor ? `color: ${pricingTextColor};` : ''}">
 <div class="max-w-container-max mx-auto">
 <div class="flex justify-between items-end mb-12">
 <div>
-<h2 class="font-headline-md text-headline-md text-on-surface mb-2">${pricingTitle}</h2>
-<p class="font-body-md text-body-md text-on-surface-variant">${pricingSubtitle}</p>
+<h2 class="font-headline-md text-headline-md mb-2" style="${pricingTextColor ? `color: ${pricingTextColor};` : 'color: #1c1a22;'}">${pricingTitle}</h2>
+<p class="font-body-md text-body-md" style="${pricingTextColor ? `color: ${pricingTextColor}; opacity: 0.85;` : 'color: #464555;'}">${pricingSubtitle}</p>
 </div>
 <button class="hidden md:flex items-center gap-2 font-label-sm text-label-sm text-tertiary hover:text-tertiary-container transition-colors">
                         عرض الكل <span class="material-symbols-outlined text-[16px]">arrow_back</span>
@@ -408,7 +441,7 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
     const imgUrl = item.features?.[1] || '';
     return `
       <!-- Masterclass Card -->
-      <div data-section="pricing" data-index="${idx}" class="relative group cursor-pointer overflow-hidden border border-outline-variant hover:border-tertiary/50 transition-colors duration-300">
+      <div data-section="pricing" data-index="${idx}" class="relative group cursor-pointer overflow-hidden border border-outline-variant hover:border-tertiary/50 transition-colors duration-300 rounded-2xl">
         <div class="aspect-video bg-surface-container-high relative">
           <img class="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-500" src="${imgUrl}" alt="${item.title}"/>
           <div class="absolute inset-0 flex items-center justify-center">
@@ -422,7 +455,7 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
             <span class="font-label-sm text-label-sm text-tertiary bg-tertiary/10 px-2 py-1 rounded">${item.price}</span>
             <span class="font-label-sm text-label-sm text-on-surface-variant">${duration}</span>
           </div>
-          <h3 class="font-headline-md text-headline-md text-on-surface">${item.title}</h3>
+          <h3 class="font-headline-md text-headline-md text-on-surface" style="${pricingTextColor ? `color: ${pricingTextColor};` : ''}">${item.title}</h3>
         </div>
       </div>
     `;
@@ -479,7 +512,7 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
 </div>
 </div>
 <!-- Testimonials Section -->
-<section data-section="testimonials" id="testimonials" class="py-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto bg-surface-container/50 border border-outline-variant/20 rounded-[2.5rem] mb-24 relative section-hover cursor-pointer" style="${content?.pricing?.backgroundColor ? `background-color: ${content.pricing.backgroundColor};` : ''} ${content?.pricing?.textColor ? `color: ${content.pricing.textColor};` : ''}">
+<section data-section="testimonials" id="testimonials" class="py-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto border border-outline-variant/20 rounded-[2.5rem] mb-24 relative section-hover cursor-pointer transition-all duration-300" style="${testimonialsBg ? `background-color: ${testimonialsBg};` : 'background-color: rgba(var(--color-surface-container-rgb, 243, 237, 247), 0.5);'} ${testimonialsTextColor ? `color: ${testimonialsTextColor};` : ''}">
 <div class="text-center mb-16">
   <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-tertiary/30 bg-surface-container-low mb-4">
     <span class="material-symbols-outlined text-tertiary text-label-sm" style="font-variation-settings: 'FILL' 1;">reviews</span>

@@ -7,6 +7,8 @@ import {
   Upload,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
+  ChevronLeft,
   Eye,
   Plus,
   Video,

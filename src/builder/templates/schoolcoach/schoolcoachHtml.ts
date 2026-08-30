@@ -10,6 +10,8 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
   const heroDesc = content?.hero?.description || 'مناهج دراسية مبسطة وأساليب تعليمية حديثة تساعدك على فهم المادة بعمق وتحقيق الدرجة الكاملة في امتحاناتك.';
   const heroBtnText = content?.hero?.buttonText || (content?.hero as any)?.button_text || 'احجز مكانك الآن';
   const heroBtnLink = content?.hero?.buttonLink || (content?.hero as any)?.button_link || '#';
+  const heroSecondaryBtnText = content?.hero?.secondaryButtonText || (content?.hero as any)?.secondary_button_text || (content?.hero as any)?.demoButtonText || 'اعرف المزيد عنا';
+  const heroSecondaryBtnLink = content?.hero?.secondaryButtonLink || (content?.hero as any)?.secondary_button_link || (content?.hero as any)?.demoButtonLink || '#about';
   const heroImg = content?.hero?.image || (content?.hero as any)?.img || (content?.hero as any)?.video || 'https://lh3.googleusercontent.com/aida-public/AB6AXuDdn5I4iyCWiaDe9m4F8v8n_X00tPqBgqXH4hbDxxtEpcQGhs3Iv7ye36iLKGCPaYsSeLuQ6Q56ZRbKBk10dy_efgKLS3zHuPJjJmYL6JtPlCiByhhruLtE_z5QnQirZ362M0sgpMps7B8icOJUUVS6t_6GJ1K0xma8arDq0yEal-eRoeAXPmexe9Vlvhif39sPxgQQGgyuqPwrz1R2REpb3TQmQAfrbC-2IMbqMBAUhDDImR-r8q5cEQ';
   const heroBg = content?.hero?.backgroundColor || (content?.hero as any)?.background_color || (content?.hero as any)?.bg_color || '#0a1628';
   const heroTextColor = content?.hero?.textColor || (content?.hero as any)?.text_color || '#ffffff';
@@ -86,6 +88,8 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
 
   const testimonialsTitle = (content?.faq as any)?.testimonialsTitle || 'آراء وقصص نجاح الطلاب';
   const testimonialsSubtitle = (content?.faq as any)?.testimonialsSubtitle || 'ماذا يقول أولياء الأمور وطلابنا بعد تحقيق الدرجة الكاملة والتفوق في امتحاناتهم.';
+  const testimonialsBg = (content?.pricing as any)?.testimonialsBg || (content?.pricing as any)?.testimonials_bg || (content?.faq as any)?.testimonialsBg || '';
+  const testimonialsTextColor = (content?.pricing as any)?.testimonialsTextColor || (content?.pricing as any)?.testimonials_text_color || (content?.faq as any)?.testimonialsTextColor || '';
 
   return `<!DOCTYPE html>
 <html class="light" dir="rtl" lang="ar">
@@ -357,20 +361,30 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
   <main class="w-full">
     
     <!-- 2. Hero Section -->
-    <section data-section="hero" class="hero-scribble relative pt-24 pb-44 px-margin-mobile md:px-margin-desktop text-white select-none section-hover cursor-pointer" style="color: ${heroTextColor};">
+    <section data-section="hero" id="hero" class="hero-scribble relative pt-24 pb-44 px-margin-mobile md:px-margin-desktop select-none section-hover cursor-pointer" style="color: ${heroTextColor || '#ffffff'};">
       <div class="deco-arc animate-[spin_120s_linear_infinite]"></div>
       <div class="max-w-[1200px] mx-auto flex flex-col lg:flex-row items-center gap-16 relative z-10">
         <div class="w-full lg:w-1/2 flex flex-col items-start gap-6 z-10 text-right">
           <span class="eyebrow-line">${heroSubtitle}</span>
-          <h1 class="text-[44px] md:text-[52px] font-black leading-tight">
+          <h1 class="text-[44px] md:text-[52px] font-black leading-tight" style="${heroTextColor ? `color: ${heroTextColor};` : ''}">
             ${heroTitle}
           </h1>
-          <p class="text-body-lg text-gray-400 max-w-xl leading-relaxed mt-2">
+          <p class="text-body-lg max-w-xl leading-relaxed mt-2" style="${heroTextColor ? `color: ${heroTextColor}; opacity: 0.85;` : 'color: #9ca3af;'}">
             ${heroDesc}
           </p>
           <div class="flex flex-wrap items-center gap-4 pt-6">
-            <a href="#contact" class="btn-primary text-sm">${heroBtnText}</a>
-            <a href="#about" class="btn-secondary text-sm">اعرف المزيد عنا</a>
+            <a data-hero-btn="primary" href="${(() => {
+              if (!heroBtnLink || heroBtnLink === '#') return '#contact';
+              const trimmed = heroBtnLink.trim();
+              if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
+              return `#${trimmed}`;
+            })()}" ${heroBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="btn-primary text-sm">${heroBtnText}</a>
+            <a data-hero-btn="secondary" href="${(() => {
+              if (!heroSecondaryBtnLink || heroSecondaryBtnLink === '#') return '#about';
+              const trimmed = heroSecondaryBtnLink.trim();
+              if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
+              return `#${trimmed}`;
+            })()}" ${heroSecondaryBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="btn-secondary text-sm">${heroSecondaryBtnText}</a>
           </div>
         </div>
         
@@ -549,7 +563,7 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
     </section>
 
     <!-- 7. Testimonials ("آراء الطلاب") -->
-    <section id="testimonials" data-section="testimonials" class="py-24 px-margin-mobile md:px-margin-desktop max-w-[1200px] mx-auto mb-20 section-hover cursor-pointer">
+    <section id="testimonials" data-section="testimonials" class="py-24 px-margin-mobile md:px-margin-desktop max-w-[1200px] mx-auto mb-20 section-hover cursor-pointer transition-all duration-300" style="${testimonialsBg ? `background-color: ${testimonialsBg};` : ''} ${testimonialsTextColor ? `color: ${testimonialsTextColor};` : ''}">
       <div class="text-center mb-16">
         <h2 class="section-title text-center">${testimonialsTitle}</h2>
         <p class="text-body-lg text-gray-600 max-w-2xl mx-auto">${testimonialsSubtitle}</p>

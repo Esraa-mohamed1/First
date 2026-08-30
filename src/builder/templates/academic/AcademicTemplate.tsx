@@ -56,6 +56,20 @@ const DEFAULT_CONTENT = {
     showPrice: true,
     showStudentsCount: true,
     buttonBg: '#3525cd',
+    cardBg: '#ffffff',
+    titleColor: '#1b1b24',
+    backgroundColor: '#ffffff',
+    textColor: '#1b1b24',
+  },
+  stats: {
+    items: [
+      { value: '98%', label: 'نسبة رضا الطلاب' },
+      { value: '150+', label: 'مناهج شاملة' },
+      { value: '12k+', label: 'خريج متميز' },
+      { value: '24/7', label: 'دعم أكاديمي مباشر' }
+    ],
+    backgroundColor: '',
+    textColor: '',
   },
   pricing: {
     title: 'المخرجات والنتائج الإحصائية',
@@ -110,8 +124,9 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
   const navbarNode = nodes.find(n => n.type === 'navbar');
   const heroNode = nodes.find(n => n.type === 'hero');
   const aboutNode = nodes.find(n => n.type === 'about');
-  const featuresNode = nodes.find(n => n.type === 'features');
+  const featuresNode = nodes.find(n => n.type === 'features' || n.type === 'features_section');
   const courseNode = nodes.find(n => n.type === 'course-cards' || n.type === 'courses');
+  const statsNode = nodes.find(n => n.type === 'stats' || n.type === 'kpi-cards');
   const pricingNode = nodes.find(n => n.type === 'pricing');
   const faqNode = nodes.find(n => n.type === 'faq');
   const contactNode = nodes.find(n => n.type === 'contact');
@@ -120,6 +135,29 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
   const coursesList = realCourses.length > 0
     ? realCourses
     : (isEditing && courseNode?.props?.courses ? courseNode.props.courses : []);
+
+  const safeFeatureItems = (items: any[] | undefined | null) => {
+    if (!Array.isArray(items) || items.length === 0) return fallback.features.items;
+    return items.map((it: any) => {
+      const p = it.props || it;
+      return {
+        icon: p.icon || it.icon || 'star',
+        title: p.title || it.title || '',
+        description: p.description || it.description || '',
+      };
+    });
+  };
+
+  const safeStatItems = (items: any[] | undefined | null) => {
+    if (!Array.isArray(items) || items.length === 0) return fallback.stats.items;
+    return items.map((it: any) => {
+      const p = it.props || it;
+      return {
+        value: p.value || it.value || '',
+        label: p.label || it.label || p.title || it.title || '',
+      };
+    });
+  };
 
   return {
     navbar: navbarNode?.props ? {
@@ -152,7 +190,7 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
     features: featuresNode?.props ? {
       title: featuresNode.props.title ?? fallback.features.title,
       subtitle: featuresNode.props.subtitle ?? fallback.features.subtitle,
-      items: featuresNode.props.items ?? fallback.features.items,
+      items: safeFeatureItems(featuresNode.props.items),
       backgroundColor: featuresNode.props.backgroundColor ?? featuresNode.props.background_color ?? fallback.features.backgroundColor,
       textColor: featuresNode.props.textColor ?? featuresNode.props.text_color ?? fallback.features.textColor,
     } : fallback.features,
@@ -164,7 +202,16 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
       showPrice: courseNode?.props?.showPrice ?? true,
       showStudentsCount: courseNode?.props?.showStudentsCount ?? true,
       buttonBg: courseNode?.props?.buttonBg || '#3525cd',
+      cardBg: courseNode?.props?.cardBg || '#ffffff',
+      titleColor: courseNode?.props?.titleColor || '#1b1b24',
+      backgroundColor: courseNode?.props?.backgroundColor ?? courseNode?.props?.background_color ?? '#ffffff',
+      textColor: courseNode?.props?.textColor ?? courseNode?.props?.text_color ?? '#1b1b24',
     },
+    stats: statsNode?.props ? {
+      items: safeStatItems(statsNode.props.items || statsNode.props.cards),
+      backgroundColor: statsNode.props.backgroundColor ?? statsNode.props.background_color ?? fallback.stats.backgroundColor,
+      textColor: statsNode.props.textColor ?? statsNode.props.text_color ?? fallback.stats.textColor,
+    } : fallback.stats,
     pricing: pricingNode?.props ? {
       title: pricingNode.props.title ?? fallback.pricing.title,
       subtitle: pricingNode.props.subtitle ?? fallback.pricing.subtitle,
