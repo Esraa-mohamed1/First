@@ -107,16 +107,37 @@ export default function CourseDetailTemplate({
   };
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const userStr = localStorage.getItem('user_info');
-      if (userStr) {
-        try {
-          setCurrentUser(JSON.parse(userStr));
-        } catch (e) {
-          console.error(e);
+    const loadUser = () => {
+      if (typeof window !== 'undefined') {
+        const userStr = localStorage.getItem('user_info');
+        if (userStr) {
+          try {
+            setCurrentUser(JSON.parse(userStr));
+          } catch (e) {
+            console.error(e);
+          }
         }
       }
+    };
+
+    loadUser();
+
+    const handleAuthSuccess = () => {
+      loadUser();
+      setIsPaymentModalOpen(true);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('student-registered', handleAuthSuccess);
+      window.addEventListener('student-logged-in', handleAuthSuccess);
     }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('student-registered', handleAuthSuccess);
+        window.removeEventListener('student-logged-in', handleAuthSuccess);
+      }
+    };
   }, []);
 
   useEffect(() => {

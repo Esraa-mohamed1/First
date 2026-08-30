@@ -89,26 +89,34 @@ export default function BagsPage() {
     loadBags();
   }, []);
 
-  const getSafeCategoryName = (category: any): string => {
-    if (!category) return '';
-    if (typeof category === 'object') {
-      const nameVal = category.name;
-      if (typeof nameVal === 'string') return nameVal;
-      if (nameVal && typeof nameVal === 'object') {
-        return nameVal.ar || nameVal.en || Object.values(nameVal)[0] as string || '';
+  // Helper to safely extract category name as a string
+  const getBagCategoryName = (b: any): string => {
+    if (!b || !b.category_name) return '';
+    const cat = b.category_name;
+    if (typeof cat === 'object') {
+      if (typeof cat.name === 'string') {
+        return cat.name;
       }
-      return category.name_ar || category.name_en || '';
+      if (cat.name && typeof cat.name === 'object') {
+        const localized = cat.name.ar || cat.name.en || cat.name.name || '';
+        if (typeof localized === 'string') return localized;
+      }
+      if (typeof cat.title === 'string') {
+        return cat.title;
+      }
+      return cat.name ? String(cat.name) : (cat.title ? String(cat.title) : '');
     }
-    return typeof category === 'string' ? category : '';
+    return String(cat);
   };
 
   // Unique categories list for filters
   const categories = useMemo(() => {
     const list = new Set<string>();
     bags.forEach((b) => {
-      const catName = getSafeCategoryName(b.category_name).trim();
-      if (catName) {
-        list.add(catName);
+      const catName = getBagCategoryName(b);
+      const trimmed = catName.trim();
+      if (trimmed !== '' && trimmed !== '[object Object]') {
+        list.add(trimmed);
       }
     });
     return Array.from(list);
@@ -122,8 +130,7 @@ export default function BagsPage() {
         b.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         b.short_description?.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const bCatName = getSafeCategoryName(b.category_name);
-
+      const bCatName = getBagCategoryName(b);
       const matchesCategory =
         selectedCategory === 'all' || bCatName === selectedCategory;
 
@@ -311,7 +318,7 @@ export default function BagsPage() {
                     {/* Category Overlay Tag */}
                     {bag.category_name && (
                       <span className="absolute top-4 right-4 px-2.5 py-1 bg-white/90 backdrop-blur border border-slate-100 text-[10px] font-black text-indigo-700 rounded-lg shadow-sm">
-                        {getSafeCategoryName(bag.category_name) || 'عام'}
+                        {getBagCategoryName(bag) || 'عام'}
                       </span>
                     )}
                   </div>
