@@ -1,4 +1,4 @@
-import { TemplateContent } from '../academic/academicHtml';
+import { TemplateContent, renderVideoPlayer } from '../academic/academicHtml';
 
 export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean = false) => {
   const navbarTitle = content?.navbar?.title || (content?.navbar as any)?.name || 'الأستاذ أحمد محمد';
@@ -19,6 +19,8 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
   const aboutTitle = content?.about?.title || 'عن الأستاذ أحمد';
   const aboutSubtitle = content?.about?.subtitle || 'خبرة تزيد عن ١٠ سنوات في تدريس مناهج الرياضيات للمرحلة الثانوية. نعتمد على الفهم والتحليل وتدريب الطالب على أنماط الامتحانات المختلفة لضمان الثقة والتميز.';
   const aboutImg = content?.about?.image || (content?.about as any)?.img || (content?.about as any)?.video || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBsvCKkFFgnTqd7h7Fw_WOHLv_-bXegAz36jnJ-dSBDWKiA81BP1TWumr1WnjULNWm_0CcbVBTge22QX2XN-cBPri3M3xbxSbAGqLIcFlI4XbbEacN9CKm1uRjQqkRnAfjumbe4cbh_txOhsTy_-6Eph6WwWNqlfr7j35tkwUU103Z7NEEpLCcfSvulZ4QoKpglkx4KRxtXU9TRhBm3eChxdvC43k04A-fnMk-IjFugUk9FdZ1nyfYQsA';
+  const aboutBg = content?.about?.backgroundColor || (content?.about as any)?.background_color || (content?.about as any)?.bg_color || '';
+  const aboutTextColor = content?.about?.textColor || (content?.about as any)?.text_color || '';
 
   const featuresTitle = content?.features?.title || 'المواد الدراسية';
   const featuresSubtitle = content?.features?.subtitle || 'شرح وافٍ وتطبيقات عملية لكل فرع من فروع الرياضيات لضمان الاستيعاب الشامل.';
@@ -74,6 +76,10 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
 
   const contactTitle = content?.contact?.title || 'ابدأ رحلة تفوقك اليوم';
   const contactDesc = content?.contact?.description || 'انضم لأكثر من ١٠,٠٠٠ طالب وطالبة حققوا أحلامهم الدراسية معنا.';
+  const contactPhone = content?.contact?.phoneNumber || (content?.contact as any)?.phone_number || '';
+  const contactBtnText = content?.contact?.buttonText || (content?.contact as any)?.button_text || 'ابدأ الآن';
+  const contactSecondaryBtnText = (content?.contact as any)?.secondaryButtonText || (content?.contact as any)?.secondary_button_text || (content?.contact as any)?.demoButtonText || 'طلب عرض توضيحي';
+  const contactSecondaryBtnLink = (content?.contact as any)?.secondaryButtonLink || (content?.contact as any)?.secondary_button_link || (content?.contact as any)?.demoButtonLink || '';
 
   const footerText = content?.footer?.text || '© ٢٠٢٦ الأستاذ أحمد محمد. جميع الحقوق محفوظة.';
 
@@ -81,6 +87,8 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
   const videoTitle = (content?.about as any)?.videoTitle || 'تعرف على فلسفتنا التعليمية في ٣ دقائق';
   const videoDesc = (content?.about as any)?.videoDesc || 'نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.';
   const videoLink = (content?.about as any)?.videoLink || (content?.about as any)?.videoImage || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop';
+  const videoBg = (content?.about as any)?.videoBg || (content?.about as any)?.video_bg || (content?.about as any)?.videoBackgroundColor || (content?.about as any)?.video_background_color || '';
+  const videoTextColor = (content?.about as any)?.videoTextColor || (content?.about as any)?.video_text_color || '';
 
   const newsletterTitle = (content?.footer as any)?.newsletterTitle || 'اشترك في نشرتنا المعرفية';
   const newsletterDesc = (content?.footer as any)?.newsletterDesc || 'احصل على أحدث المقالات التحليلية، والمناهج الجديدة، والماستركلاسز الحصرية مباشرة في بريدك الإلكتروني أسبوعياً.';
@@ -88,8 +96,10 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
 
   const testimonialsTitle = (content?.faq as any)?.testimonialsTitle || 'آراء وقصص نجاح الطلاب';
   const testimonialsSubtitle = (content?.faq as any)?.testimonialsSubtitle || 'ماذا يقول أولياء الأمور وطلابنا بعد تحقيق الدرجة الكاملة والتفوق في امتحاناتهم.';
-  const testimonialsBg = (content?.pricing as any)?.testimonialsBg || (content?.pricing as any)?.testimonials_bg || (content?.faq as any)?.testimonialsBg || '';
-  const testimonialsTextColor = (content?.pricing as any)?.testimonialsTextColor || (content?.pricing as any)?.testimonials_text_color || (content?.faq as any)?.testimonialsTextColor || '';
+  const testimonialsBg = (content?.pricing as any)?.testimonialsBg || (content?.pricing as any)?.testimonials_bg || (content?.faq as any)?.testimonialsBg || (content?.faq as any)?.backgroundColor || '';
+  const testimonialsTextColor = (content?.pricing as any)?.testimonialsTextColor || (content?.pricing as any)?.testimonials_text_color || (content?.faq as any)?.testimonialsTextColor || (content?.faq as any)?.textColor || '';
+  const faqBg = (content?.faq as any)?.backgroundColor || (content?.faq as any)?.background_color || testimonialsBg;
+  const faqTextColor = (content?.faq as any)?.textColor || (content?.faq as any)?.text_color || testimonialsTextColor;
 
   return `<!DOCTYPE html>
 <html class="light" dir="rtl" lang="ar">
@@ -404,21 +414,8 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
       </div>
     </section>
 
-    <!-- Partners Section -->
-    <section class="py-12 px-margin-mobile md:px-margin-desktop max-w-[1200px] mx-auto border-y border-gray-100 my-16 opacity-80">
-      <div class="flex flex-col md:flex-row items-center justify-between gap-8">
-        <span class="text-xs font-bold text-gray-600 tracking-wider text-center md:text-right shrink-0">معتمدون لدى جهات رائدة عالمياً:</span>
-        <div class="flex flex-wrap items-center justify-center gap-12 text-gray-400 font-bold text-sm">
-          <div class="flex items-center gap-2 hover:text-[var(--color-gold-500)] transition-colors cursor-pointer"><span class="material-symbols-outlined text-[24px]">school</span> ACADEMY</div>
-          <div class="flex items-center gap-2 hover:text-[var(--color-gold-500)] transition-colors cursor-pointer"><span class="material-symbols-outlined text-[24px]">globe</span> GLOBAL</div>
-          <div class="flex items-center gap-2 hover:text-[var(--color-gold-500)] transition-colors cursor-pointer"><span class="material-symbols-outlined text-[24px]">verified</span> ISO CERTIFIED</div>
-          <div class="flex items-center gap-2 hover:text-[var(--color-gold-500)] transition-colors cursor-pointer"><span class="material-symbols-outlined text-[24px]">terminal</span> TECH LAB</div>
-        </div>
-      </div>
-    </section>
-
     <!-- 3. About Section -->
-    <section id="about-analytics" data-section="about" class="py-24 px-margin-mobile md:px-margin-desktop bg-[var(--color-offwhite)] mb-20 section-hover cursor-pointer">
+    <section id="about-analytics" data-section="about" class="py-24 px-margin-mobile md:px-margin-desktop bg-[var(--color-offwhite)] mb-20 section-hover cursor-pointer" style="${aboutBg ? `background-color: ${aboutBg};` : ''} ${aboutTextColor ? `color: ${aboutTextColor};` : ''}">
       <div class="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         <div class="flex justify-center">
           <div class="relative w-full max-w-[400px] aspect-square rounded-[30%_70%_70%_30%_/_30%_30%_70%_70%] overflow-hidden border-2 border-[var(--color-gold-500)] shadow-xl bg-white">
@@ -426,8 +423,8 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
           </div>
         </div>
         <div class="flex flex-col gap-6 text-right">
-          <h2 class="section-title text-right after:right-0 after:left-auto">${aboutTitle}</h2>
-          <p class="text-body-lg text-gray-600 leading-relaxed">${aboutSubtitle}</p>
+          <h2 class="section-title text-right after:right-0 after:left-auto" style="${aboutTextColor ? `color: ${aboutTextColor};` : ''}">${aboutTitle}</h2>
+          <p class="text-body-lg text-gray-600 leading-relaxed" style="${aboutTextColor ? `color: ${aboutTextColor};` : ''}">${aboutSubtitle}</p>
           
           <!-- Stat/Credential Badges -->
           <div class="flex flex-wrap gap-3 mt-4">
@@ -446,23 +443,19 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
     </section>
 
     <!-- Video Intro Section -->
-    <section data-section="video" id="about-video" class="py-20 px-margin-mobile md:px-margin-desktop max-w-[1200px] mx-auto mb-20 section-hover cursor-pointer">
-      <div class="bg-[var(--color-navy-900)] border border-navy-700/40 rounded-3xl p-8 md:p-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center text-white">
+    <section data-section="video" id="about-video" class="py-20 px-margin-mobile md:px-margin-desktop max-w-[1200px] mx-auto mb-20 section-hover cursor-pointer rounded-3xl" style="${videoBg ? `background-color: ${videoBg};` : ''} ${videoTextColor ? `color: ${videoTextColor};` : ''}">
+      <div class="bg-[var(--color-navy-900)] border border-navy-700/40 rounded-3xl p-8 md:p-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center text-white" style="${videoBg ? `background-color: ${videoBg};` : ''}">
         <div class="space-y-6">
           <span class="text-xs font-bold text-[var(--color-gold-500)] bg-[var(--color-gold-500)]/10 px-4 py-1.5 rounded-full border border-[var(--color-gold-500)]/20">${videoTag}</span>
-          <h2 class="text-3xl font-extrabold leading-tight">${videoTitle}</h2>
-          <p class="text-body-lg text-gray-400 leading-relaxed">${videoDesc}</p>
+          <h2 class="text-3xl font-extrabold leading-tight ${videoTextColor ? '' : 'text-white'}" style="${videoTextColor ? `color: ${videoTextColor};` : ''}">${videoTitle}</h2>
+          <p class="text-body-lg ${videoTextColor ? '' : 'text-gray-400'} leading-relaxed" style="${videoTextColor ? `color: ${videoTextColor};` : ''}">${videoDesc}</p>
           <div class="flex items-center gap-4 text-[var(--color-gold-500)] font-bold">
             <span class="material-symbols-outlined text-[32px] animate-bounce">play_arrow</span>
             <span>اضغط على المشغل لمشاهدة العرض التعريفي</span>
           </div>
         </div>
-        <div class="relative h-[300px] md:h-[400px] rounded-2xl overflow-hidden bg-slate-900 shadow-2xl border border-navy-700/50 flex items-center justify-center group cursor-pointer">
-          <div class="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-700 group-hover:scale-105" style="background-image: url('${videoLink}');"></div>
-          <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
-          <div class="relative z-10 w-20 h-20 rounded-full bg-[var(--color-gold-500)] text-[var(--color-navy-950)] flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300">
-            <span class="material-symbols-outlined text-[40px] fill">play_arrow</span>
-          </div>
+        <div data-video-container class="relative h-[300px] md:h-[400px] rounded-2xl overflow-hidden bg-slate-900 shadow-2xl border border-navy-700/50 flex items-center justify-center group">
+          ${renderVideoPlayer(videoLink, 'w-full h-full rounded-2xl')}
         </div>
       </div>
     </section>
@@ -562,29 +555,29 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
       </div>
     </section>
 
-    <!-- 7. Testimonials ("آراء الطلاب") -->
-    <section id="testimonials" data-section="testimonials" class="py-24 px-margin-mobile md:px-margin-desktop max-w-[1200px] mx-auto mb-20 section-hover cursor-pointer transition-all duration-300" style="${testimonialsBg ? `background-color: ${testimonialsBg};` : ''} ${testimonialsTextColor ? `color: ${testimonialsTextColor};` : ''}">
+    <!-- 7. Testimonials / FAQ ("آراء الطلاب والأسئلة") -->
+    <section id="testimonials" data-section="faq" class="py-24 px-margin-mobile md:px-margin-desktop max-w-[1200px] mx-auto mb-20 section-hover cursor-pointer transition-all duration-300 rounded-3xl" style="${faqBg ? `background-color: ${faqBg};` : ''} ${faqTextColor ? `color: ${faqTextColor};` : ''}">
       <div class="text-center mb-16">
-        <h2 class="section-title text-center">${testimonialsTitle}</h2>
-        <p class="text-body-lg text-gray-600 max-w-2xl mx-auto">${testimonialsSubtitle}</p>
+        <h2 class="section-title text-center" style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${testimonialsTitle}</h2>
+        <p class="text-body-lg ${faqTextColor ? '' : 'text-gray-600'} max-w-2xl mx-auto" style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.85;` : ''}">${testimonialsSubtitle}</p>
       </div>
       
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         ${faqItems.map((item, idx) => `
-          <!-- Testimonial Card (card-light) -->
+          <!-- Testimonial / FAQ Card (card-light) -->
           <div data-section="faq" data-index="${idx}" class="card-light flex flex-col justify-between cursor-pointer">
             <div>
               <!-- Star rating -->
               <div class="stars mb-4 text-[var(--color-star)] text-sm font-bold">★★★★★</div>
-              <p class="text-body-md text-gray-600 italic leading-relaxed mb-6">"${item.answer}"</p>
+              <p class="text-body-md ${faqTextColor ? '' : 'text-gray-600'} italic leading-relaxed mb-6" style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.85;` : ''}">"${item.answer}"</p>
             </div>
             <div class="flex items-center gap-3 border-t border-gray-100 pt-4">
               <div class="w-10 h-10 rounded-full bg-[var(--color-gold-500)]/20 text-[var(--color-gold-500)] flex items-center justify-center font-black text-sm">
                 ${item.question.charAt(0)}
               </div>
               <div>
-                <h4 class="font-extrabold text-xs text-[var(--color-gray-900)]">${item.question}</h4>
-                <p class="text-[10px] text-gray-400 font-bold">شعبة علمي / تفوق كامل</p>
+                <h4 class="font-extrabold text-xs ${faqTextColor ? '' : 'text-[var(--color-gray-900)]'}" style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${item.question}</h4>
+                <p class="text-[10px] text-gray-400 font-bold">${(content?.pricing as any)?.[`testimonial${idx + 1}Role`] || (content?.faq as any)?.[`testimonial${idx + 1}Role`] || 'شعبة علمي / تفوق كامل'}</p>
               </div>
             </div>
           </div>
@@ -614,9 +607,22 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
           ${contactDesc}
         </p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <a href="https://wa.me/201000000000" target="_blank" class="w-full sm:w-auto btn-primary text-sm flex items-center justify-center gap-2">
-            <span class="material-symbols-outlined">chat</span> تواصل عبر الواتساب للاستفسار
-          </a>
+          ${contactPhone
+            ? `<a data-contact-btn="primary" href="tel:${contactPhone.replace(/\s+/g, '')}" class="w-full sm:w-auto btn-primary text-sm flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">call</span> ${contactBtnText}
+               </a>`
+            : `<button data-contact-btn="primary" class="w-full sm:w-auto btn-primary text-sm flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">call</span> ${contactBtnText}
+               </button>`
+          }
+          ${contactSecondaryBtnLink
+            ? `<a data-contact-btn="secondary" href="${contactSecondaryBtnLink}" ${contactSecondaryBtnLink.startsWith('http') || contactSecondaryBtnLink.startsWith('https') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="w-full sm:w-auto btn-secondary text-sm flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 px-8 py-4 rounded-xl transition-all">
+                ${contactSecondaryBtnText}
+               </a>`
+            : `<button data-contact-btn="secondary" class="w-full sm:w-auto btn-secondary text-sm flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 px-8 py-4 rounded-xl transition-all">
+                ${contactSecondaryBtnText}
+               </button>`
+          }
         </div>
       </div>
     </section>

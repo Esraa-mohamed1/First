@@ -1,4 +1,4 @@
-import { TemplateContent } from '../academic/academicHtml';
+import { TemplateContent, renderVideoPlayer } from '../academic/academicHtml';
 
 export const getCoachHtml = (content: TemplateContent, isEditing: boolean = false) => {
   const navbarTitle = content?.navbar?.title || (content?.navbar as any)?.name || 'Deep Knowledge';
@@ -86,6 +86,10 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
   const videoTitle = (content?.about as any)?.videoTitle || 'تعرف على فلسفتنا التعليمية في ٣ دقائق';
   const videoDesc = (content?.about as any)?.videoDesc || 'نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.';
   const videoLink = (content?.about as any)?.videoLink || (content?.about as any)?.videoImage || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop';
+  const videoBg = (content?.about as any)?.videoBg || (content?.about as any)?.video_bg || (content?.about as any)?.videoBackgroundColor || (content?.about as any)?.video_background_color || '';
+  const videoTextColor = (content?.about as any)?.videoTextColor || (content?.about as any)?.video_text_color || '';
+  const faqBg = (content?.faq as any)?.backgroundColor || (content?.faq as any)?.background_color || '';
+  const faqTextColor = (content?.faq as any)?.textColor || (content?.faq as any)?.text_color || '';
 
   const newsletterTitle = (content?.footer as any)?.newsletterTitle || 'اشترك في نشرتنا البريدية المعرفية';
   const newsletterDesc = (content?.footer as any)?.newsletterDesc || 'احصل على أحدث المقالات التحليلية، والمناهج الجديدة، والماستركلاسز الحصرية مباشرة في بريدك الإلكتروني أسبوعياً.';
@@ -333,37 +337,20 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
 </div>
 </section>
 
-<!-- Partners Section -->
-<section class="py-12 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto border-y border-outline-variant/20 mb-16">
-  <div class="flex flex-col md:flex-row items-center justify-between gap-8 opacity-70">
-    <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider text-center md:text-right shrink-0">معتمدون لدى جهات رائدة عالمياً:</span>
-    <div class="flex flex-wrap items-center justify-center gap-12 text-outline-variant font-bold text-headline-sm">
-      <div class="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-[28px]">school</span> ACADEMY</div>
-      <div class="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-[28px]">globe</span> GLOBAL</div>
-      <div class="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-[28px]">verified</span> ISO CERTIFIED</div>
-      <div class="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-[28px]">terminal</span> TECH LAB</div>
-    </div>
-  </div>
-</section>
-
 <!-- Video Intro Section -->
-<section data-section="video" id="about-video" class="py-20 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto mb-20 section-hover cursor-pointer">
+<section data-section="video" id="about-video" class="py-20 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto mb-20 section-hover cursor-pointer rounded-3xl" style="${videoBg ? `background-color: ${videoBg};` : ''} ${videoTextColor ? `color: ${videoTextColor};` : ''}">
   <div class="bg-primary-container/10 border border-primary/20 rounded-[2.5rem] p-8 md:p-16 grid grid-cols-1 lg:grid-cols-2 gap-stack-lg items-center">
     <div class="space-y-6">
       <span class="text-label-md font-label-md text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">${videoTag}</span>
-      <h2 class="text-headline-lg font-headline-lg text-on-surface leading-tight">${videoTitle}</h2>
-      <p class="text-body-lg font-body-lg text-on-surface-variant leading-relaxed">${videoDesc}</p>
+      <h2 class="text-headline-lg font-headline-lg ${videoTextColor ? '' : 'text-on-surface'} leading-tight" style="${videoTextColor ? `color: ${videoTextColor};` : ''}">${videoTitle}</h2>
+      <p class="text-body-lg font-body-lg ${videoTextColor ? '' : 'text-on-surface-variant'} leading-relaxed" style="${videoTextColor ? `color: ${videoTextColor};` : ''}">${videoDesc}</p>
       <div class="flex items-center gap-4 text-primary font-bold">
         <span class="material-symbols-outlined text-[32px] animate-bounce">play_arrow</span>
         <span>اضغط على المشغل لمشاهدة العرض التعريفي</span>
       </div>
     </div>
-    <div class="relative h-[300px] md:h-[400px] rounded-3xl overflow-hidden bg-slate-900 shadow-2xl border border-outline-variant/30 flex items-center justify-center group cursor-pointer">
-      <div class="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-700 group-hover:scale-105" style="background-image: url('${videoLink}');"></div>
-      <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
-      <div class="relative z-10 w-20 h-20 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300">
-        <span class="material-symbols-outlined text-[40px] fill">play_arrow</span>
-      </div>
+    <div data-video-container class="relative h-[300px] md:h-[400px] rounded-3xl overflow-hidden bg-slate-900 shadow-2xl border border-outline-variant/30 flex items-center justify-center group">
+      ${renderVideoPlayer(videoLink, 'w-full h-full rounded-3xl')}
     </div>
   </div>
 </section>
@@ -463,18 +450,18 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
 </div>
 </div>
 </section>
-<!-- Section 3: Curriculum Tree Diagram -->
-<section data-section="faq" class="py-24 px-margin-mobile md:px-margin-desktop bg-surface-container-lowest border-t border-surface-container-low section-hover cursor-pointer">
+<!-- Section 3: Curriculum Tree Diagram (FAQ) -->
+<section data-section="faq" id="faq" class="py-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto section-hover cursor-pointer rounded-3xl transition-all duration-300" style="${faqBg ? `background-color: ${faqBg};` : ''} ${faqTextColor ? `color: ${faqTextColor};` : ''}">
 <div class="max-w-container-max mx-auto text-center mb-16">
-<h2 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-on-surface mb-4">${faqTitle}</h2>
-<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">هيكلية مصممة بعناية لتأخذك من المفاهيم الأساسية إلى التطبيقات النظرية المعقدة.</p>
+<h2 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg ${faqTextColor ? '' : 'text-on-surface'} mb-4" style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${faqTitle}</h2>
+<p class="font-body-lg text-body-lg ${faqTextColor ? '' : 'text-on-surface-variant'} max-w-2xl mx-auto" style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.85;` : ''}">هيكلية مصممة بعناية لتأخذك من المفاهيم الأساسية إلى التطبيقات النظرية المعقدة.</p>
 </div>
 <!-- CSS Flex Tree Representation -->
 <div class="flex flex-col items-center w-full max-w-4xl mx-auto overflow-x-auto pb-8">
 <!-- Root Node -->
 <div data-section="faq" data-index="0" class="bg-surface-container border border-tertiary px-8 py-4 rounded z-10 shadow-[0_4px_20px_rgba(201,167,77,0.05)] cursor-pointer">
-<span class="font-headline-md text-headline-md text-tertiary block">${faqItems[0]?.question || 'الأسس المعرفية'}</span>
-<span class="font-label-sm text-label-sm text-on-surface-variant">${faqItems[0]?.answer || 'المستوى الأول'}</span>
+<span class="font-headline-md text-headline-md text-tertiary block" style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${faqItems[0]?.question || 'الأسس المعرفية'}</span>
+<span class="font-label-sm text-label-sm ${faqTextColor ? '' : 'text-on-surface-variant'}" style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.85;` : ''}">${faqItems[0]?.answer || 'المستوى الأول'}</span>
 </div>
 <div class="tree-line-v h-8"></div>
 <div class="tree-line-h w-2/3 md:w-1/2"></div>
@@ -487,7 +474,7 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
 <div class="flex justify-between w-full md:w-3/4 gap-4">
 <div data-section="faq" data-index="1" class="flex flex-col items-center flex-1 cursor-pointer">
 <div class="bg-surface-container-low border border-outline-variant px-6 py-4 rounded w-full text-center hover:border-tertiary/50 transition-colors">
-<span class="font-body-lg text-body-lg text-on-surface block mb-1">${faqItems[1]?.question || 'المنطق التحليلي'}</span>
+<span class="font-body-lg text-body-lg ${faqTextColor ? '' : 'text-on-surface'} block mb-1" style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${faqItems[1]?.question || 'المنطق التحليلي'}</span>
 <div class="flex gap-1 justify-center mt-2">
 <div class="w-2 h-2 rounded-full bg-tertiary"></div>
 <div class="w-2 h-2 rounded-full bg-surface-variant"></div>
@@ -495,11 +482,11 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
 </div>
 </div>
 <div class="tree-line-v h-8"></div>
-<div class="bg-surface border border-outline-variant/50 px-4 py-2 rounded text-sm text-on-surface-variant w-full text-center">${faqItems[1]?.answer || 'التفكير النقدي المتقدم'}</div>
+<div class="bg-surface border border-outline-variant/50 px-4 py-2 rounded text-sm ${faqTextColor ? '' : 'text-on-surface-variant'} w-full text-center" style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.85;` : ''}">${faqItems[1]?.answer || 'التفكير النقدي المتقدم'}</div>
 </div>
 <div data-section="faq" data-index="2" class="flex flex-col items-center flex-1 cursor-pointer">
 <div class="bg-surface-container-low border border-outline-variant px-6 py-4 rounded w-full text-center hover:border-tertiary/50 transition-colors">
-<span class="font-body-lg text-body-lg text-on-surface block mb-1">${faqItems[2]?.question || 'فلسفة العلوم'}</span>
+<span class="font-body-lg text-body-lg ${faqTextColor ? '' : 'text-on-surface'} block mb-1" style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${faqItems[2]?.question || 'فلسفة العلوم'}</span>
 <div class="flex gap-1 justify-center mt-2">
 <div class="w-2 h-2 rounded-full bg-tertiary"></div>
 <div class="w-2 h-2 rounded-full bg-tertiary"></div>
@@ -507,7 +494,7 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
 </div>
 </div>
 <div class="tree-line-v h-8"></div>
-<div class="bg-surface border border-outline-variant/50 px-4 py-2 rounded text-sm text-on-surface-variant w-full text-center">${faqItems[2]?.answer || 'الابستيمولوجيا التطبيقية'}</div>
+<div class="bg-surface border border-outline-variant/50 px-4 py-2 rounded text-sm ${faqTextColor ? '' : 'text-on-surface-variant'} w-full text-center" style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.85;` : ''}">${faqItems[2]?.answer || 'الابستيمولوجيا التطبيقية'}</div>
 </div>
 </div>
 </div>

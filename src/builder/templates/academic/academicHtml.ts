@@ -72,24 +72,57 @@ export interface TemplateContent {
   };
 }
 
+export const renderVideoPlayer = (url: string | undefined | null, className: string = 'w-full h-full object-cover') => {
+  if (!url) {
+    return `<div class="${className} flex items-center justify-center bg-slate-900 text-slate-400 text-xs">لا يوجد فيديو محدد</div>`;
+  }
+  const cleanUrl = url.trim();
+  const isYouTube = cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be');
+  const isVimeo = cleanUrl.includes('vimeo.com');
+  const isDirectVideo = cleanUrl.endsWith('.mp4') || cleanUrl.endsWith('.webm') || cleanUrl.endsWith('.ogg') || cleanUrl.includes('.mp4?') || cleanUrl.includes('video/');
+
+  if (isYouTube) {
+    let embedUrl = cleanUrl;
+    if (cleanUrl.includes('watch?v=')) {
+      const videoId = cleanUrl.split('watch?v=')[1]?.split('&')[0];
+      embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    } else if (cleanUrl.includes('youtu.be/')) {
+      const videoId = cleanUrl.split('youtu.be/')[1]?.split('?')[0];
+      embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    } else if (cleanUrl.includes('/shorts/')) {
+      const videoId = cleanUrl.split('/shorts/')[1]?.split('?')[0];
+      embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    } else if (cleanUrl.includes('/embed/')) {
+      embedUrl = cleanUrl;
+    }
+    return `<iframe src="${embedUrl}" class="${className}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+  }
+
+  if (isVimeo) {
+    const vimeoId = cleanUrl.split('/').pop()?.split('?')[0];
+    return `<iframe src="https://player.vimeo.com/video/${vimeoId}" class="${className}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+  }
+
+  if (isDirectVideo || !cleanUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i)) {
+    return `<video src="${cleanUrl}" controls playsinline class="${className}"></video>`;
+  }
+
+  return `
+    <div class="relative w-full h-full flex items-center justify-center group cursor-pointer">
+      <div class="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-700 group-hover:scale-105" style="background-image: url('${cleanUrl}');"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
+      <div class="relative z-10 w-20 h-20 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300">
+        <span class="material-symbols-outlined text-[40px] fill">play_arrow</span>
+      </div>
+    </div>
+  `;
+};
+
 export const renderMedia = (url: string | undefined | null, className: string = '', alt: string = 'media') => {
   if (!url) return '';
   const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('youtube') || url.includes('vimeo') || url.includes('youtu.be');
   if (isVideo) {
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      let embedUrl = url;
-      if (url.includes('watch?v=')) {
-        embedUrl = url.replace('watch?v=', 'embed/').split('&')[0];
-      } else if (url.includes('youtu.be/')) {
-        embedUrl = url.replace('youtu.be/', 'www.youtube.com/embed/').split('?')[0];
-      }
-      return `<iframe src="${embedUrl}" class="${className}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-    }
-    if (url.includes('vimeo.com')) {
-      const vimeoId = url.split('/').pop();
-      return `<iframe src="https://player.vimeo.com/video/${vimeoId}" class="${className}" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
-    }
-    return `<video src="${url}" controls autoplay loop muted class="${className} object-cover"></video>`;
+    return renderVideoPlayer(url, className);
   }
   return `<img src="${url}" alt="${alt}" class="${className} object-cover" />`;
 };
@@ -116,7 +149,7 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
   const aboutImg = content?.about?.image || (content?.about as any)?.img || (content?.about as any)?.video || '';
   const aboutBg = content?.about?.backgroundColor || (content?.about as any)?.background_color || (content?.about as any)?.bg_color || '#ffffff';
   const aboutTextColor = content?.about?.textColor || (content?.about as any)?.text_color || '#1b1b24';
-  const analyticsTitle = (content?.about as any)?.analyticsTitle || 'رؤى الأداء المؤسسي';
+  const analyticsTitle = (content?.about as any)?.analyticsTitle !== undefined ? (content?.about as any)?.analyticsTitle : ((content?.about as any)?.visionTitle || 'رؤية الأداء المؤسسي');
   const analyticsBars = (content?.about as any)?.analyticsBars || [40, 65, 85, 50, 95];
   const analyticsColor = (content?.about as any)?.analyticsColor || '#3525cd';
   const bar1 = analyticsBars[0] ?? 40;
@@ -169,8 +202,10 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 
   const contactTitle = content?.contact?.title || 'ابْنِ مستقبل التعليم';
   const contactDesc = content?.contact?.description || 'انضم إلى المؤسسات الرائدة عالميًا في تحويل التجربة الأكاديمية. ارتقِ بمستوى مؤسستك التعليمية وابدأ رحلتك نحو التميز اليوم.';
-  const contactPhone = content?.contact?.phoneNumber || (content?.contact as any)?.phone_number || '201000000000';
+  const contactPhone = content?.contact?.phoneNumber || (content?.contact as any)?.phone_number || '';
   const contactBtnText = content?.contact?.buttonText || (content?.contact as any)?.button_text || 'ابدأ الآن';
+  const contactSecondaryBtnText = (content?.contact as any)?.secondaryButtonText || (content?.contact as any)?.secondary_button_text || (content?.contact as any)?.demoButtonText || 'طلب عرض توضيحي';
+  const contactSecondaryBtnLink = (content?.contact as any)?.secondaryButtonLink || (content?.contact as any)?.secondary_button_link || (content?.contact as any)?.demoButtonLink || '';
   const contactBg = content?.contact?.backgroundColor || (content?.contact as any)?.background_color || (content?.contact as any)?.bg_color || '';
   const contactTextColor = content?.contact?.textColor || (content?.contact as any)?.text_color || '';
 
@@ -182,6 +217,16 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
   const videoTitle = (content?.about as any)?.videoTitle || 'تعرف على فلسفتنا التعليمية في ٣ دقائق';
   const videoDesc = (content?.about as any)?.videoDesc || 'نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.';
   const videoLink = (content?.about as any)?.videoLink || (content?.about as any)?.videoImage || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop';
+  const videoBg = (content?.about as any)?.videoBg || (content?.about as any)?.video_bg || (content?.about as any)?.videoBackgroundColor || (content?.about as any)?.video_background_color || '';
+  const videoTextColor = (content?.about as any)?.videoTextColor || (content?.about as any)?.video_text_color || '';
+
+  const faqTitle = content?.faq?.title || 'الأسئلة الشائعة حول إديوكور';
+  const faqItems = content?.faq?.items || [
+    { question: 'هل الحصص البث المباشر مسجلة؟', answer: 'نعم، يتم تسجيل جميع اللقاءات المباشرة ورفعها للمنصة لتعيد مشاهدتها في أي وقت.' },
+    { question: 'كيف يساهم إديوكور في تحسين الأداء الأكاديمي؟', answer: 'يوفر النظام تحليلات شاملة تمكن الإداريين والمعلمين من مراقبة التقدم واتخاذ قرارات فورية مدعومة بالبيانات.' }
+  ];
+  const faqBg = content?.faq?.backgroundColor || (content?.faq as any)?.background_color || (content?.faq as any)?.bg_color || '';
+  const faqTextColor = content?.faq?.textColor || (content?.faq as any)?.text_color || '';
 
   const testimonialsTitle = (content?.pricing as any)?.testimonialsTitle || 'ماذا يقول شركاؤنا وطلابنا؟';
   const testimonialsSubtitle = (content?.pricing as any)?.testimonialsSubtitle || 'قصص نجاح ملهمة وتجارب واقعية يعبر عنها شركاؤنا الأكاديميون وطلابنا المتميزون.';
@@ -436,38 +481,21 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 </div>
 </section>
 
-<!-- Partners Section -->
-<section class="w-full border-y border-outline-variant/20 bg-surface">
-  <div class="max-w-container-max mx-auto py-12 px-margin-mobile md:px-margin-desktop flex flex-col md:flex-row items-center justify-between gap-8 opacity-70">
-    <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider text-center md:text-right shrink-0">معتمدون لدى جهات رائدة عالمياً:</span>
-    <div class="flex flex-wrap items-center justify-center gap-12 text-outline-variant font-bold text-headline-sm">
-      <div class="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-[28px]">school</span> ACADEMY</div>
-      <div class="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-[28px]">globe</span> GLOBAL</div>
-      <div class="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-[28px]">verified</span> ISO CERTIFIED</div>
-      <div class="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-[28px]">terminal</span> TECH LAB</div>
-    </div>
-  </div>
-</section>
-
 <!-- Video Intro Section -->
-<section data-section="video" id="about-video" class="w-full bg-surface section-hover cursor-pointer">
+<section data-section="video" id="about-video" class="w-full transition-all duration-300 section-hover cursor-pointer rounded-3xl" style="${videoBg ? `background-color: ${videoBg};` : ''} ${videoTextColor ? `color: ${videoTextColor};` : ''}">
   <div class="max-w-container-max mx-auto py-20 px-margin-mobile md:px-margin-desktop">
     <div class="bg-primary-container/10 border border-primary/20 rounded-[2.5rem] p-8 md:p-16 grid grid-cols-1 lg:grid-cols-2 gap-stack-lg items-center">
       <div class="space-y-6">
         <span class="text-label-md font-label-md text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">${videoTag}</span>
-        <h2 class="text-headline-lg font-headline-lg text-on-surface leading-tight">${videoTitle}</h2>
-        <p class="text-body-lg font-body-lg text-on-surface-variant leading-relaxed">${videoDesc}</p>
+        <h2 class="text-headline-lg font-headline-lg ${videoTextColor ? '' : 'text-on-surface'} leading-tight" style="${videoTextColor ? `color: ${videoTextColor};` : ''}">${videoTitle}</h2>
+        <p class="text-body-lg font-body-lg ${videoTextColor ? '' : 'text-on-surface-variant'} leading-relaxed" style="${videoTextColor ? `color: ${videoTextColor};` : ''}">${videoDesc}</p>
         <div class="flex items-center gap-4 text-primary font-bold">
           <span class="material-symbols-outlined text-[32px] animate-bounce">play_arrow</span>
           <span>اضغط على المشغل لمشاهدة العرض التعريفي</span>
         </div>
       </div>
-      <div class="relative h-[300px] md:h-[400px] rounded-3xl overflow-hidden bg-slate-900 shadow-2xl border border-outline-variant/30 flex items-center justify-center group cursor-pointer">
-        <div class="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-700 group-hover:scale-105" style="background-image: url('${videoLink}');"></div>
-        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
-        <div class="relative z-10 w-20 h-20 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300">
-          <span class="material-symbols-outlined text-[40px] fill">play_arrow</span>
-        </div>
+      <div data-video-container class="relative h-[300px] md:h-[400px] rounded-3xl overflow-hidden bg-slate-900 shadow-2xl border border-outline-variant/30 flex items-center justify-center group">
+        ${renderVideoPlayer(videoLink, 'w-full h-full rounded-3xl')}
       </div>
     </div>
   </div>
@@ -478,45 +506,41 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 <div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-stack-xl items-center">
 <div class="relative h-[450px] bg-surface-container-lowest rounded-3xl border border-outline-variant/50 shadow-xl overflow-hidden p-8 flex flex-col justify-between">
-  ${aboutImg
-    ? renderMedia(aboutImg, 'w-full h-full object-cover', 'about')
-    : `<div class="w-full h-full flex flex-col justify-between">
-        <div class="flex items-center justify-between border-b border-outline-variant/20 pb-4 mb-4">
-          <div class="flex items-center gap-3">
-            <div class="w-3.5 h-3.5 rounded-full shadow-sm" style="background-color: ${analyticsColor};"></div>
-            <h3 class="text-headline-md font-headline-md text-on-surface font-extrabold">${analyticsTitle}</h3>
-          </div>
-          <span class="text-xs font-bold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">تحديث مباشر ⚡</span>
-        </div>
-        
-        <div class="relative flex-1 w-full flex items-end justify-between gap-3 pt-6 pb-2 px-2">
-          <!-- Smooth SVG Background Curve -->
-          <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-25" preserveAspectRatio="none" viewBox="0 0 100 100">
-            <path d="M 0 ${100 - bar1} Q 25 ${100 - bar2}, 50 ${100 - bar3} T 100 ${100 - bar5} L 100 100 L 0 100 Z" fill="${analyticsColor}" />
-            <path d="M 0 ${100 - bar1} Q 25 ${100 - bar2}, 50 ${100 - bar3} T 100 ${100 - bar5}" fill="none" stroke="${analyticsColor}" stroke-width="3" />
-          </svg>
+  <div class="w-full h-full flex flex-col justify-between">
+    <div class="flex items-center justify-between border-b border-outline-variant/20 pb-4 mb-4">
+      <div class="flex items-center gap-3">
+        <div class="w-3.5 h-3.5 rounded-full shadow-sm" style="background-color: ${analyticsColor};"></div>
+        <h3 class="text-headline-md font-headline-md text-on-surface font-extrabold">${analyticsTitle}</h3>
+      </div>
+    </div>
+    
+    <div class="relative flex-1 w-full flex items-end justify-between gap-3 pt-6 pb-2 px-2">
+      <!-- Smooth SVG Background Curve -->
+      <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-25" preserveAspectRatio="none" viewBox="0 0 100 100">
+        <path d="M 0 ${100 - bar1} Q 25 ${100 - bar2}, 50 ${100 - bar3} T 100 ${100 - bar5} L 100 100 L 0 100 Z" fill="${analyticsColor}" />
+        <path d="M 0 ${100 - bar1} Q 25 ${100 - bar2}, 50 ${100 - bar3} T 100 ${100 - bar5}" fill="none" stroke="${analyticsColor}" stroke-width="3" />
+      </svg>
 
-          <!-- 5 Dynamic Curved Glass Bars -->
-          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar1}%; background: linear-gradient(to top, ${analyticsColor}22, ${analyticsColor});"></div>
-          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar2}%; background: linear-gradient(to top, ${analyticsColor}33, ${analyticsColor});"></div>
-          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar3}%; background: linear-gradient(to top, ${analyticsColor}44, ${analyticsColor});"></div>
-          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar4}%; background: linear-gradient(to top, ${analyticsColor}66, ${analyticsColor});"></div>
-          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar5}%; background: linear-gradient(to top, ${analyticsColor}aa, ${analyticsColor});"></div>
-        </div>
+      <!-- 5 Dynamic Curved Glass Bars -->
+      <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar1}%; background: linear-gradient(to top, ${analyticsColor}22, ${analyticsColor});"></div>
+      <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar2}%; background: linear-gradient(to top, ${analyticsColor}33, ${analyticsColor});"></div>
+      <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar3}%; background: linear-gradient(to top, ${analyticsColor}44, ${analyticsColor});"></div>
+      <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar4}%; background: linear-gradient(to top, ${analyticsColor}66, ${analyticsColor});"></div>
+      <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar5}%; background: linear-gradient(to top, ${analyticsColor}aa, ${analyticsColor});"></div>
+    </div>
 
-        <div class="flex items-center justify-between text-[11px] text-on-surface-variant font-bold border-t border-outline-variant/20 pt-3">
-          <span>الربع الأول</span>
-          <span>الربع الثاني</span>
-          <span>الربع الثالث</span>
-          <span>الربع الرابع</span>
-          <span>المجموع السنوي</span>
-        </div>
-      </div>`
-  }
+    <div class="flex items-center justify-between text-[11px] text-on-surface-variant font-bold border-t border-outline-variant/20 pt-3">
+      <span>الربع الأول</span>
+      <span>الربع الثاني</span>
+      <span>الربع الثالث</span>
+      <span>الربع الرابع</span>
+      <span>المجموع السنوي</span>
+    </div>
+  </div>
 </div>
 <div class="flex flex-col gap-stack-md">
-<h2 class="text-headline-lg font-headline-lg text-on-surface">${aboutTitle}</h2>
-<p class="text-body-lg font-body-lg text-on-surface-variant mb-4">${aboutSubtitle}</p>
+<h2 class="text-headline-lg font-headline-lg text-on-surface" style="${aboutTextColor ? `color: ${aboutTextColor};` : ''}">${aboutTitle}</h2>
+<p class="text-body-lg font-body-lg text-on-surface-variant mb-4" style="${aboutTextColor ? `color: ${aboutTextColor}; opacity: 0.9;` : ''}">${aboutSubtitle}</p>
 </div>
 </div>
 </div>
@@ -733,6 +757,27 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
   </div>
 </div>
 </div>
+<!-- FAQ Section -->
+<section data-section="faq" id="faq" class="py-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto transition-all duration-300 section-hover cursor-pointer rounded-3xl mb-16" style="${faqBg ? `background-color: ${faqBg};` : ''} ${faqTextColor ? `color: ${faqTextColor};` : ''}">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-16 space-y-4">
+      <span class="text-label-md font-label-md text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">الأسئلة الشائعة</span>
+      <h2 class="text-display-sm font-display-sm ${faqTextColor ? '' : 'text-on-surface'}" style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${faqTitle}</h2>
+    </div>
+    <div class="space-y-4">
+      ${faqItems.map((item, idx) => `
+        <div data-section="faq" data-index="${idx}" class="p-6 md:p-8 bg-surface-container-lowest border border-outline-variant/30 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
+          <div class="flex items-start gap-4">
+            <span class="material-symbols-outlined text-primary text-[28px] shrink-0 mt-0.5">help_outline</span>
+            <div class="space-y-2 flex-1">
+              <h4 class="text-headline-sm font-headline-sm font-bold ${faqTextColor ? '' : 'text-on-surface'}" style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${item.question}</h4>
+              <p class="text-body-md font-body-md ${faqTextColor ? '' : 'text-on-surface-variant'} leading-relaxed" style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.85;` : ''}">${item.answer}</p>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
 </section>
 
 <!-- Final CTA -->
@@ -746,12 +791,22 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
                         ${contactDesc}
                     </p>
 <div class="flex flex-col sm:flex-row items-center justify-center gap-stack-md">
-<button class="w-full sm:w-auto bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-10 py-5 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                            ${contactBtnText}
-                        </button>
-<button class="w-full sm:w-auto bg-surface hover:bg-surface-container text-on-surface border border-outline-variant text-label-md font-label-md px-10 py-5 rounded-full hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-md">
-                            طلب عرض توضيحي
-                        </button>
+  ${contactPhone
+    ? `<a data-contact-btn="primary" href="tel:${contactPhone.replace(/\s+/g, '')}" class="w-full sm:w-auto inline-flex items-center justify-center bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-10 py-5 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer text-decoration-none">
+        ${contactBtnText}
+       </a>`
+    : `<button data-contact-btn="primary" class="w-full sm:w-auto bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-10 py-5 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+        ${contactBtnText}
+       </button>`
+  }
+  ${contactSecondaryBtnLink
+    ? `<a data-contact-btn="secondary" href="${contactSecondaryBtnLink}" ${contactSecondaryBtnLink.startsWith('http') || contactSecondaryBtnLink.startsWith('https') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="w-full sm:w-auto inline-flex items-center justify-center bg-surface hover:bg-surface-container text-on-surface border border-outline-variant text-label-md font-label-md px-10 py-5 rounded-full hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer text-decoration-none">
+        ${contactSecondaryBtnText}
+       </a>`
+    : `<button data-contact-btn="secondary" class="w-full sm:w-auto bg-surface hover:bg-surface-container text-on-surface border border-outline-variant text-label-md font-label-md px-10 py-5 rounded-full hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-md">
+        ${contactSecondaryBtnText}
+       </button>`
+  }
 </div>
 </div>
 </div>

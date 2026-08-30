@@ -34,7 +34,7 @@ import withReactContent from 'sweetalert2-react-content';
 import { getProfileStatus } from '@/services/auth';
 import { getPages, getSections, saveSections, createPage, updatePage, apiToEditor, editorToApi } from '@/services/pages';
 import { syncHomepageCache } from '@/lib/homepage-cache';
-import { getAcademicHtml } from '@/builder/templates/academic/academicHtml';
+import { getAcademicHtml, renderVideoPlayer } from '@/builder/templates/academic/academicHtml';
 import { getCoachHtml } from '@/builder/templates/coach/coachHtml';
 import { getSchoolCoachHtml } from '@/builder/templates/schoolcoach/schoolcoachHtml';
 import { getCourses } from '@/services/courses';
@@ -72,6 +72,8 @@ interface AboutConfig {
   videoTitle?: string;
   videoDesc?: string;
   videoLink?: string;
+  videoBg?: string;
+  videoTextColor?: string;
   analyticsTitle?: string;
   analyticsBars?: number[];
   analyticsColor?: string;
@@ -137,6 +139,8 @@ interface ContactConfig {
   description: string;
   phoneNumber: string;
   buttonText: string;
+  secondaryButtonText?: string;
+  secondaryButtonLink?: string;
   backgroundColor: string;
   textColor: string;
 }
@@ -219,7 +223,9 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
           videoTag: 'شاهد وتعلّم',
           videoTitle: 'تعرف على فلسفتنا التعليمية في ٣ دقائق',
           videoDesc: 'نقدم لك جولة سريعة داخل مجموعاتنا التفاعلية المباشرة، ونوضح طريقة المتابعة والتقييمات الدورية للطلاب.',
-          videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop'
+          videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
+          videoBg: '',
+          videoTextColor: ''
         },
         features: {
           title: 'المواد الدراسية',
@@ -313,8 +319,10 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         contact: {
           title: 'ابدأ رحلة تفوقك اليوم',
           description: 'انضم لأكثر من ١٠,٠٠٠ طالب وطالبة حققوا أحلامهم الدراسية معنا.',
-          phoneNumber: '201000000000',
+          phoneNumber: '01012345678',
           buttonText: 'احجز مكانك الآن',
+          secondaryButtonText: 'طلب عرض توضيحي',
+          secondaryButtonLink: 'https://example.com/demo',
           backgroundColor: '#0a1628',
           textColor: '#ffffff'
         },
@@ -440,7 +448,9 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         videoTag: 'شاهد وتعلّم',
         videoTitle: 'تعرف على فلسفتنا التعليمية في ٣ دقائق',
         videoDesc: 'نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.',
-        videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop'
+        videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
+        videoBg: '',
+        videoTextColor: ''
       },
       features: {
         title: 'المرشدون الخبراء',
@@ -533,8 +543,10 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
       contact: {
         title: 'Deep Knowledge',
         description: 'أكاديمية النخبة للتعليم العالي المستقل. نبني قادة الفكر للمستقبل من خلال مناهج صارمة وعميقة.',
-        phoneNumber: '',
-        buttonText: '',
+        phoneNumber: '01012345678',
+        buttonText: 'ابدأ الآن',
+        secondaryButtonText: 'طلب عرض توضيحي',
+        secondaryButtonLink: 'https://example.com/demo',
         backgroundColor: '#6750a4',
         textColor: '#ffffff'
       },
@@ -569,10 +581,15 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         image: '',
         backgroundColor: '#ffffff',
         textColor: '#1b1b24',
+        analyticsTitle: 'رؤية الأداء المؤسسي',
+        analyticsColor: '#3525cd',
+        analyticsBars: [40, 65, 85, 50, 95],
         videoTag: 'شاهد وتعلّم',
         videoTitle: 'تعرف على فلسفتنا التعليمية في ٣ دقائق',
         videoDesc: 'نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.',
-        videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop'
+        videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
+        videoBg: '',
+        videoTextColor: ''
       },
       features: {
         title: 'نظام بيئي أكاديمي متكامل',
@@ -646,8 +663,10 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
       contact: {
         title: 'ابْنِ مستقبل التعليم',
         description: 'انضم إلى المؤسسات الرائدة عالميًا في تحويل التجربة الأكاديمية. ارتقِ بمستوى مؤسستك التعليمية وابدأ رحلتك نحو التميز اليوم.',
-        phoneNumber: '201000000000',
+        phoneNumber: '01012345678',
         buttonText: 'ابدأ الآن',
+        secondaryButtonText: 'طلب عرض توضيحي',
+        secondaryButtonLink: 'https://example.com/demo',
         backgroundColor: '',
         textColor: ''
       },
@@ -748,8 +767,8 @@ export default function PageBuilderPage() {
     updateStyleAll('[data-section="hero"]', 'background-color', content.hero.backgroundColor);
     updateStyleAll('[data-section="hero"], [data-section="hero"] h1, [data-section="hero"] p', 'color', content.hero.textColor);
 
-    updateStyle('#about-analytics', 'background-color', content.about.backgroundColor);
-    updateStyle('#about-analytics', 'color', content.about.textColor);
+    updateStyleAll('#about-analytics, [data-section="about"]', 'background-color', content.about.backgroundColor);
+    updateStyleAll('#about-analytics, #about-analytics h2, #about-analytics p, [data-section="about"], [data-section="about"] h2, [data-section="about"] p', 'color', content.about.textColor);
 
     updateStyle('[data-section="features"]', 'background-color', content.features.backgroundColor);
     updateStyle('[data-section="features"]', 'color', content.features.textColor);
@@ -871,61 +890,83 @@ export default function PageBuilderPage() {
       if (analyticsSubtitleEl && content.about.subtitle !== undefined && analyticsSubtitleEl.innerHTML !== content.about.subtitle) {
         analyticsSubtitleEl.innerHTML = content.about.subtitle;
       }
-      if (content.about.image) {
-        const aboutImgEl = doc.querySelector('#about-analytics img') as HTMLImageElement;
-        if (aboutImgEl && aboutImgEl.src !== content.about.image) {
-          aboutImgEl.src = content.about.image;
+      if (content.about.backgroundColor) {
+        const aboutEl = doc.querySelector('#about-analytics, [data-section="about"]') as HTMLElement;
+        if (aboutEl) aboutEl.style.backgroundColor = content.about.backgroundColor;
+      }
+      if (content.about.textColor) {
+        const aboutEl = doc.querySelector('#about-analytics, [data-section="about"]') as HTMLElement;
+        if (aboutEl) {
+          aboutEl.style.color = content.about.textColor;
+          const h2El = aboutEl.querySelector('h2') as HTMLElement;
+          if (h2El) h2El.style.color = content.about.textColor;
+          const pEl = aboutEl.querySelector('p') as HTMLElement;
+          if (pEl) pEl.style.color = content.about.textColor;
         }
       }
-
       // Smart Analytics Chart Title, Bar Heights/Curves, & Bar Colors:
-      if (!content.about.image) {
-        updateText('#about-analytics h3', content.about.analyticsTitle || 'رؤى الأداء المؤسسي');
-        const chartColor = content.about.analyticsColor || '#3525cd';
-        const bars = content.about.analyticsBars || [40, 65, 85, 50, 95];
+      updateText('#about-analytics h3', content.about.analyticsTitle !== undefined ? content.about.analyticsTitle : 'رؤية الأداء المؤسسي');
+      const chartColor = content.about.analyticsColor || '#3525cd';
+      const bars = content.about.analyticsBars || [40, 65, 85, 50, 95];
 
-        // Dynamic Glass Bars Update
-        const barEls = doc.querySelectorAll('#about-analytics div.relative.z-10.flex-1');
-        barEls.forEach((barEl, i) => {
-          const el = barEl as HTMLElement;
-          if (el) {
-            if (bars[i] !== undefined) {
-              el.style.height = `${bars[i]}%`;
-            }
-            if (chartColor) {
-              const opacities = ['22', '33', '44', '66', 'aa'];
-              const op = opacities[i] || '88';
-              el.style.background = `linear-gradient(to top, ${chartColor}${op}, ${chartColor})`;
-            }
+      // Dynamic Glass Bars Update
+      const barEls = doc.querySelectorAll('#about-analytics div.relative.z-10.flex-1');
+      barEls.forEach((barEl, i) => {
+        const el = barEl as HTMLElement;
+        if (el) {
+          if (bars[i] !== undefined) {
+            el.style.height = `${bars[i]}%`;
           }
-        });
-
-        // Dynamic SVG Curve Path Update
-        const svgPaths = doc.querySelectorAll('#about-analytics svg path');
-        if (svgPaths.length >= 2) {
-          const b1 = bars[0] ?? 40;
-          const b2 = bars[1] ?? 65;
-          const b3 = bars[2] ?? 85;
-          const b5 = bars[4] ?? 95;
-          const dArea = `M 0 ${100 - b1} Q 25 ${100 - b2}, 50 ${100 - b3} T 100 ${100 - b5} L 100 100 L 0 100 Z`;
-          const dLine = `M 0 ${100 - b1} Q 25 ${100 - b2}, 50 ${100 - b3} T 100 ${100 - b5}`;
-
-          (svgPaths[0] as SVGPathElement).setAttribute('d', dArea);
-          (svgPaths[0] as SVGPathElement).setAttribute('fill', chartColor);
-
-          (svgPaths[1] as SVGPathElement).setAttribute('d', dLine);
-          (svgPaths[1] as SVGPathElement).setAttribute('stroke', chartColor);
+          if (chartColor) {
+            const opacities = ['22', '33', '44', '66', 'aa'];
+            const op = opacities[i] || '88';
+            el.style.background = `linear-gradient(to top, ${chartColor}${op}, ${chartColor})`;
+          }
         }
+      });
+
+      // Dynamic SVG Curve Path Update
+      const svgPaths = doc.querySelectorAll('#about-analytics svg path');
+      if (svgPaths.length >= 2) {
+        const b1 = bars[0] ?? 40;
+        const b2 = bars[1] ?? 65;
+        const b3 = bars[2] ?? 85;
+        const b5 = bars[4] ?? 95;
+        const dArea = `M 0 ${100 - b1} Q 25 ${100 - b2}, 50 ${100 - b3} T 100 ${100 - b5} L 100 100 L 0 100 Z`;
+        const dLine = `M 0 ${100 - b1} Q 25 ${100 - b2}, 50 ${100 - b3} T 100 ${100 - b5}`;
+
+        (svgPaths[0] as SVGPathElement).setAttribute('d', dArea);
+        (svgPaths[0] as SVGPathElement).setAttribute('fill', chartColor);
+
+        (svgPaths[1] as SVGPathElement).setAttribute('d', dLine);
+        (svgPaths[1] as SVGPathElement).setAttribute('stroke', chartColor);
       }
 
       // Video Intro:
       updateText('#about-video .text-label-md, #about-video .text-xs.font-bold', content.about.videoTag || '');
       updateText('#about-video h2.text-headline-lg, #about-video .text-headline-lg, #about-video .text-3xl.font-extrabold', content.about.videoTitle || '');
       updateText('#about-video p.text-body-lg.font-body-lg, #about-video p.leading-relaxed', content.about.videoDesc || '');
+      if (content.about.videoBg) {
+        const videoEl = doc.querySelector('#about-video, [data-section="video"]') as HTMLElement;
+        if (videoEl) videoEl.style.backgroundColor = content.about.videoBg;
+      }
+      if (content.about.videoTextColor) {
+        const videoEl = doc.querySelector('#about-video, [data-section="video"]') as HTMLElement;
+        if (videoEl) {
+          videoEl.style.color = content.about.videoTextColor;
+          const h2El = videoEl.querySelector('h2') as HTMLElement;
+          if (h2El) h2El.style.color = content.about.videoTextColor;
+          const pEl = videoEl.querySelector('p') as HTMLElement;
+          if (pEl) pEl.style.color = content.about.videoTextColor;
+        }
+      }
       if (content.about.videoLink) {
-        const videoBgEl = doc.querySelector('#about-video .bg-cover') as HTMLElement;
-        if (videoBgEl) {
-          videoBgEl.style.backgroundImage = `url('${content.about.videoLink}')`;
+        const videoContainer = doc.querySelector('#about-video [data-video-container]');
+        if (videoContainer) {
+          const currentSrc = videoContainer.querySelector('iframe')?.src || videoContainer.querySelector('video')?.src;
+          if (!currentSrc || (!currentSrc.includes(content.about.videoLink) && !content.about.videoLink.includes(currentSrc))) {
+            videoContainer.innerHTML = renderVideoPlayer(content.about.videoLink, 'w-full h-full rounded-3xl');
+          }
         }
       }
     }
@@ -1020,29 +1061,46 @@ export default function PageBuilderPage() {
         updateText(`[data-testimonial="${i - 1}"] h4`, authorVal || '');
       }
       if (roleVal !== undefined) {
-        updateText(`[data-testimonial="${i - 1}"] p.text-slate-500, [data-testimonial="${i - 1}"] p.text-gray-400, [data-testimonial="${i - 1}"] p.text-tertiary`, roleVal || '');
+        updateText(`[data-testimonial="${i - 1}"] div:last-child p, [data-testimonial="${i - 1}"] p.text-xs, [data-testimonial="${i - 1}"] p.text-slate-500, [data-testimonial="${i - 1}"] p.text-gray-400, [data-testimonial="${i - 1}"] p.text-tertiary, [data-testimonial="${i - 1}"] p.font-label-sm, [data-section="faq"][data-index="${i - 1}"] p.text-\\[10px\\]`, roleVal || '');
       }
     }
 
     // 7. FAQ
+    if (content.faq.backgroundColor) {
+      const faqSectionEl = doc.querySelector('#faq, [data-section="faq"]') as HTMLElement;
+      if (faqSectionEl) faqSectionEl.style.backgroundColor = content.faq.backgroundColor;
+    }
+    if (content.faq.textColor) {
+      const faqSectionEl = doc.querySelector('#faq, [data-section="faq"]') as HTMLElement;
+      if (faqSectionEl) faqSectionEl.style.color = content.faq.textColor;
+      const faqHeadings = doc.querySelectorAll('#faq h2, [data-section="faq"] h2, #faq h4, [data-section="faq"] h4, [data-section="faq"] span.font-headline-md, [data-section="faq"] span.font-body-lg');
+      faqHeadings.forEach((el) => {
+        (el as HTMLElement).style.color = content.faq.textColor;
+      });
+      const faqAnswers = doc.querySelectorAll('#faq p, [data-section="faq"] p, [data-section="faq"] div.bg-surface');
+      faqAnswers.forEach((el) => {
+        (el as HTMLElement).style.color = content.faq.textColor;
+      });
+    }
+
     if (currentRole === 'schoolcoach') {
       updateText('#testimonials h2.section-title, #testimonials h2', content.faq.testimonialsTitle || '');
       updateText('#testimonials p.text-body-lg.max-w-2xl', content.faq.testimonialsSubtitle || '');
       content.faq.items.forEach((item, idx) => {
         updateText(`[data-section="faq"][data-index="${idx}"] h4`, item.question);
-        updateText(`[data-section="faq"][data-index="${idx}"] p.italic`, item.answer);
+        updateText(`[data-section="faq"][data-index="${idx}"] p`, `"${item.answer}"`);
       });
     } else if (currentRole === 'coach') {
       updateText('[data-section="faq"] > div > div > h2, [data-section="faq"] h2', content.faq.title);
       content.faq.items.forEach((item, idx) => {
         updateText(`[data-section="faq"][data-index="${idx}"] span.font-headline-md, [data-section="faq"][data-index="${idx}"] span.font-body-lg`, item.question);
-        updateText(`[data-section="faq"][data-index="${idx}"] div.bg-surface`, item.answer);
+        updateText(`[data-section="faq"][data-index="${idx}"] span.font-label-sm, [data-section="faq"][data-index="${idx}"] div.bg-surface`, item.answer);
       });
     } else {
       updateText('[data-section="faq"] h2', content.faq.title);
       content.faq.items.forEach((item, idx) => {
         updateText(`[data-section="faq"][data-index="${idx}"] h4, [data-section="faq"][data-index="${idx}"] .font-body-lg`, item.question);
-        updateText(`[data-section="faq"][data-index="${idx}"] p:nth-of-type(2), [data-section="faq"][data-index="${idx}"] p.italic, [data-section="faq"][data-index="${idx}"] p.text-gray-600`, item.answer);
+        updateText(`[data-section="faq"][data-index="${idx}"] p, [data-section="faq"][data-index="${idx}"] .text-body-md`, item.answer);
       });
     }
 
@@ -1052,9 +1110,28 @@ export default function PageBuilderPage() {
     if (contactDescEl && content.contact.description !== undefined && contactDescEl.innerHTML !== content.contact.description) {
       contactDescEl.innerHTML = content.contact.description;
     }
-    const contactBtnEl = doc.querySelector('[data-section="contact"] button, [data-section="contact"] a.btn-primary');
-    if (contactBtnEl && content.contact.buttonText !== undefined && contactBtnEl.innerHTML !== content.contact.buttonText) {
-      contactBtnEl.innerHTML = content.contact.buttonText;
+    const contactBtnEl = doc.querySelector('[data-section="contact"] a[data-contact-btn="primary"], [data-section="contact"] button[data-contact-btn="primary"], [data-section="contact"] a.btn-primary, [data-section="contact"] button:first-of-type');
+    if (contactBtnEl) {
+      if (content.contact.buttonText !== undefined && contactBtnEl.textContent?.trim() !== content.contact.buttonText) {
+        contactBtnEl.textContent = content.contact.buttonText;
+      }
+      if (content.contact.phoneNumber) {
+        const telVal = `tel:${content.contact.phoneNumber.replace(/\s+/g, '')}`;
+        if (contactBtnEl.getAttribute('href') !== telVal) {
+          contactBtnEl.setAttribute('href', telVal);
+        }
+      }
+    }
+    const contactSecondaryBtnEl = doc.querySelector('[data-section="contact"] a[data-contact-btn="secondary"], [data-section="contact"] button[data-contact-btn="secondary"], [data-section="contact"] a.btn-secondary, [data-section="contact"] button:nth-of-type(2)');
+    if (contactSecondaryBtnEl) {
+      const secText = (content.contact as any).secondaryButtonText || 'طلب عرض توضيحي';
+      if (contactSecondaryBtnEl.textContent?.trim() !== secText) {
+        contactSecondaryBtnEl.textContent = secText;
+      }
+      const secLink = (content.contact as any).secondaryButtonLink || '';
+      if (secLink && contactSecondaryBtnEl.getAttribute('href') !== secLink) {
+        contactSecondaryBtnEl.setAttribute('href', secLink);
+      }
     }
 
     // 9. Footer
@@ -1142,6 +1219,11 @@ export default function PageBuilderPage() {
             event.stopPropagation();
             window.open(href, '_blank', 'noopener,noreferrer');
             return;
+          } else if (href.startsWith('tel:')) {
+            event.preventDefault();
+            event.stopPropagation();
+            window.open(href, '_self');
+            return;
           } else if (href.startsWith('#')) {
             const targetEl = doc.querySelector(href);
             if (targetEl) {
@@ -1211,7 +1293,7 @@ export default function PageBuilderPage() {
     }, true);
   };
 
-  // Keep active section and item outline sync inside the iframe document
+  // Keep active section and item outline sync inside the iframe document & auto-scroll preview
   useEffect(() => {
     const iframe = document.getElementById('website-builder-iframe') as HTMLIFrameElement;
     if (!iframe || !iframe.contentDocument) return;
@@ -1236,7 +1318,38 @@ export default function PageBuilderPage() {
         el.classList.remove('active-item');
       }
     });
-  }, [activeSection, activeItemIndex, content]);
+
+    // Auto-scroll the preview iframe to the selected section or item
+    if (activeSection) {
+      const targetSelector =
+        activeSection === 'video'
+          ? '[data-section="video"], #about-video'
+          : activeSection === 'testimonials'
+          ? '[data-section="testimonials"], #testimonials, [data-testimonial]'
+          : activeSection === 'stats'
+          ? '[data-section="stats"], #stats'
+          : activeSection === 'courses'
+          ? '[data-section="courses"], [data-section="course-cards"], #courses'
+          : activeSection === 'pricing'
+          ? '[data-section="pricing"], #pricing, #outcomes'
+          : activeSection === 'features'
+          ? '[data-section="features"], #features, #subjects'
+          : activeSection === 'about'
+          ? '[data-section="about"], #about-analytics, #about'
+          : activeSection === 'contact'
+          ? '[data-section="contact"], #contact'
+          : activeSection === 'footer'
+          ? '[data-section="footer"], #footer-bar, #newsletter, footer'
+          : activeSection === 'navbar'
+          ? '[data-section="navbar"], header, nav'
+          : `[data-section="${activeSection}"], #${activeSection}`;
+
+      const targetSectionEl = doc.querySelector(targetSelector);
+      if (targetSectionEl) {
+        targetSectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }, [activeSection, activeItemIndex]);
 
   const handleSelectSectionItem = (section: keyof TemplateContent, index: number) => {
     setActiveSection(section);
@@ -1427,9 +1540,11 @@ export default function PageBuilderPage() {
                 videoTitle: sv(aboutNode.props.videoTitle ?? aboutNode.props.video_title, fallback.about.videoTitle),
                 videoDesc: sv(aboutNode.props.videoDesc ?? aboutNode.props.video_desc, fallback.about.videoDesc),
                 videoLink: sv(aboutNode.props.videoLink ?? aboutNode.props.video_link, fallback.about.videoLink),
-                analyticsTitle: sv(aboutNode.props.analyticsTitle ?? aboutNode.props.analytics_title, fallback.about.analyticsTitle),
-                analyticsBars: Array.isArray(aboutNode.props.analyticsBars ?? aboutNode.props.analytics_bars) ? (aboutNode.props.analyticsBars ?? aboutNode.props.analytics_bars) : fallback.about.analyticsBars,
-                analyticsColor: sv(aboutNode.props.analyticsColor ?? aboutNode.props.analytics_color, fallback.about.analyticsColor),
+                videoBg: sv(aboutNode.props.videoBg ?? aboutNode.props.video_bg ?? aboutNode.props.videoBackgroundColor ?? aboutNode.props.video_background_color, fallback.about.videoBg || ''),
+                videoTextColor: sv(aboutNode.props.videoTextColor ?? aboutNode.props.video_text_color, fallback.about.videoTextColor || ''),
+                analyticsTitle: sv(aboutNode.props.analyticsTitle ?? aboutNode.props.analytics_title ?? aboutNode.props.visionTitle ?? aboutNode.props.vision_title, fallback.about.analyticsTitle || 'رؤية الأداء المؤسسي'),
+                analyticsBars: Array.isArray(aboutNode.props.analyticsBars ?? aboutNode.props.analytics_bars) ? (aboutNode.props.analyticsBars ?? aboutNode.props.analytics_bars) : (fallback.about.analyticsBars || [40, 65, 85, 50, 95]),
+                analyticsColor: sv(aboutNode.props.analyticsColor ?? aboutNode.props.analytics_color, fallback.about.analyticsColor || '#3525cd'),
               } : fallback.about,
 
               features: featuresNode?.props ? {
@@ -1497,6 +1612,8 @@ export default function PageBuilderPage() {
                 description: sv(contactNode.props.description, fallback.contact.description),
                 phoneNumber: sv(contactNode.props.phoneNumber ?? contactNode.props.phone_number, fallback.contact.phoneNumber),
                 buttonText: sv(contactNode.props.buttonText ?? contactNode.props.button_text, fallback.contact.buttonText),
+                secondaryButtonText: sv(contactNode.props.secondaryButtonText ?? contactNode.props.secondary_button_text ?? contactNode.props.demoButtonText ?? contactNode.props.demo_button_text, fallback.contact.secondaryButtonText || 'طلب عرض توضيحي'),
+                secondaryButtonLink: sv(contactNode.props.secondaryButtonLink ?? contactNode.props.secondary_button_link ?? contactNode.props.demoButtonLink ?? contactNode.props.demo_button_link, fallback.contact.secondaryButtonLink || 'https://example.com/demo'),
                 backgroundColor: sv(contactNode.props.backgroundColor ?? contactNode.props.background_color ?? contactNode.props.bg_color, fallback.contact.backgroundColor),
                 textColor: sv(contactNode.props.textColor ?? contactNode.props.text_color, fallback.contact.textColor),
               } : fallback.contact,
@@ -2160,22 +2277,6 @@ export default function PageBuilderPage() {
                       />
                     </div>
 
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">صورة التعريف / البورتفوليو</label>
-                      <div className="flex gap-2 items-center">
-                        {content.about.image && (
-                          <img src={content.about.image} className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0" alt="about preview" />
-                        )}
-                        <input
-                          type="text"
-                          value={content.about.image}
-                          onChange={(e) => handleUpdateField('about', 'image', e.target.value)}
-                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left flex-grow"
-                          dir="ltr"
-                        />
-                      </div>
-                    </div>
-
                     <div className="grid grid-cols-2 gap-3">
                       <div className="flex flex-col gap-1">
                         <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
@@ -2204,60 +2305,59 @@ export default function PageBuilderPage() {
                       </div>
                     </div>
 
-                    {/* Analytics Chart Controls */}
-                    {!content.about.image && (
-                      <div className="border-t border-slate-100 pt-3 mt-3 space-y-3">
-                        <h4 id="about-analytics-editor-header" className="text-[11px] font-extrabold text-slate-700">تخصيص مخطط ورؤى الأداء (Analytics Chart)</h4>
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[11px] font-bold text-slate-600">عنوان المخطط الإحصائي</label>
+                    {/* Analytics / Vision Chart Controls */}
+                    <div className="border-t border-slate-100 pt-3 mt-3 space-y-3">
+                      <h4 id="about-analytics-editor-header" className="text-[11px] font-extrabold text-slate-700">تخصيص رؤية الأداء المؤسسي والمخطط (Analytics & Vision)</h4>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">عنوان رؤية الأداء المؤسسي</label>
+                        <input
+                          type="text"
+                          value={content.about.analyticsTitle !== undefined ? content.about.analyticsTitle : 'رؤية الأداء المؤسسي'}
+                          onChange={(e) => handleUpdateField('about', 'analyticsTitle', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                          placeholder="رؤية الأداء المؤسسي"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون أعمدة التحليلات</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
                           <input
-                            type="text"
-                            value={content.about.analyticsTitle || 'رؤى الأداء المؤسسي'}
-                            onChange={(e) => handleUpdateField('about', 'analyticsTitle', e.target.value)}
-                            className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                            type="color"
+                            value={content.about.analyticsColor || '#3525cd'}
+                            onChange={(e) => handleUpdateField('about', 'analyticsColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                           />
-                        </div>
-
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[11px] font-bold text-slate-600">لون أعمدة التحليلات</label>
-                          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                            <input
-                              type="color"
-                              value={content.about.analyticsColor || '#3525cd'}
-                              onChange={(e) => handleUpdateField('about', 'analyticsColor', e.target.value)}
-                              className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                            />
-                            <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.analyticsColor || '#3525cd'}</span>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2 pt-1">
-                          <label className="text-[11px] font-bold text-slate-600 block">منحنيات وارتفاعات الأعمدة (الأداء %):</label>
-                          {([0, 1, 2, 3, 4]).map((barIdx) => {
-                            const bars = content.about.analyticsBars || [40, 65, 85, 50, 95];
-                            const val = bars[barIdx] ?? 50;
-                            return (
-                              <div key={barIdx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
-                                <span className="text-[10px] font-bold text-slate-600 w-14 shrink-0">عمود {barIdx + 1}:</span>
-                                <input
-                                  type="range"
-                                  min="15"
-                                  max="100"
-                                  value={val}
-                                  onChange={(e) => {
-                                    const newBars = [...(content.about.analyticsBars || [40, 65, 85, 50, 95])];
-                                    newBars[barIdx] = parseInt(e.target.value, 10);
-                                    handleUpdateField('about', 'analyticsBars', newBars);
-                                  }}
-                                  className="flex-grow accent-blue-600 cursor-pointer"
-                                />
-                                <span className="text-[10px] font-mono font-extrabold text-blue-600 w-8 text-left">{val}%</span>
-                              </div>
-                            );
-                          })}
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.analyticsColor || '#3525cd'}</span>
                         </div>
                       </div>
-                    )}
+
+                      <div className="space-y-2 pt-1">
+                        <label className="text-[11px] font-bold text-slate-600 block">منحنيات وارتفاعات الأعمدة (الأداء %):</label>
+                        {([0, 1, 2, 3, 4]).map((barIdx) => {
+                          const bars = content.about.analyticsBars || [40, 65, 85, 50, 95];
+                          const val = bars[barIdx] ?? 50;
+                          return (
+                            <div key={barIdx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                              <span className="text-[10px] font-bold text-slate-600 w-14 shrink-0">عمود {barIdx + 1}:</span>
+                              <input
+                                type="range"
+                                min="15"
+                                max="100"
+                                value={val}
+                                onChange={(e) => {
+                                  const newBars = [...(content.about.analyticsBars || [40, 65, 85, 50, 95])];
+                                  newBars[barIdx] = parseInt(e.target.value, 10);
+                                  handleUpdateField('about', 'analyticsBars', newBars);
+                                }}
+                                className="flex-grow accent-blue-600 cursor-pointer"
+                              />
+                              <span className="text-[10px] font-mono font-extrabold text-blue-600 w-8 text-left">{val}%</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -2317,24 +2417,24 @@ export default function PageBuilderPage() {
                         <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
                           <input
                             type="color"
-                            value={content.about.backgroundColor}
-                            onChange={(e) => handleUpdateField('about', 'backgroundColor', e.target.value)}
+                            value={content.about.videoBg || '#ffffff'}
+                            onChange={(e) => handleUpdateField('about', 'videoBg', e.target.value)}
                             className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                           />
-                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.backgroundColor}</span>
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.videoBg || '#ffffff'}</span>
                         </div>
                       </div>
 
                       <div className="flex flex-col gap-1">
-                        <label className="text-[11px] font-bold text-slate-600">لون النصوص</label>
+                        <label className="text-[11px] font-bold text-slate-600">لون نصوص الفيديو</label>
                         <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
                           <input
                             type="color"
-                            value={content.about.textColor}
-                            onChange={(e) => handleUpdateField('about', 'textColor', e.target.value)}
+                            value={content.about.videoTextColor || '#1b1b24'}
+                            onChange={(e) => handleUpdateField('about', 'videoTextColor', e.target.value)}
                             className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                           />
-                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.textColor}</span>
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.videoTextColor || '#1b1b24'}</span>
                         </div>
                       </div>
                     </div>
@@ -2504,93 +2604,12 @@ export default function PageBuilderPage() {
                   <div className="bg-blue-50/70 border border-blue-200 p-3.5 rounded-xl text-[11px] text-blue-900 font-bold leading-relaxed flex items-start gap-2">
                     <span className="material-symbols-outlined text-[18px] text-blue-600 shrink-0 mt-0.5">info</span>
                     <div>
-                      يتم جلب وعرض بيانات الدورات الحقيقية تلقائياً من المنصة. يمكنك تخصيص العناوين، والحد الأقصى للدورات المعروضة، والخيارات أدناه:
+                      يتم جلب وعرض بيانات الدورات الحقيقية تلقائياً من المنصة، يمكنك تخصيص الألوان فقط.
                     </div>
                   </div>
 
                   <div className="space-y-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">عنوان قسم الدورات</label>
-                      <input
-                        type="text"
-                        value={content.courses.title}
-                        onChange={(e) => handleUpdateField('courses', 'title', e.target.value)}
-                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">وصف / عنوان فرعي للقسم</label>
-                      <textarea
-                        value={content.courses.subtitle || ''}
-                        onChange={(e) => handleUpdateField('courses', 'subtitle', e.target.value)}
-                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px] resize-none"
-                      />
-                    </div>
-
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[11px] font-bold text-slate-600">الحد الأقصى للدورات</label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="24"
-                          value={content.courses.limit || 6}
-                          onChange={(e) => handleUpdateField('courses', 'limit', parseInt(e.target.value, 10) || 6)}
-                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                        />
-                      </div>
-
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[11px] font-bold text-slate-600">تخطيط الأعمدة</label>
-                        <select
-                          value={content.courses.gridCols || '3'}
-                          onChange={(e) => handleUpdateField('courses', 'gridCols', e.target.value)}
-                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                        >
-                          <option value="2">عمودين (2)</option>
-                          <option value="3">3 أعمدة (3)</option>
-                          <option value="4">4 أعمدة (4)</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3 pt-2 border-t border-slate-100">
-                      <label className="flex items-center gap-2 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={content.courses.showPrice !== false}
-                          onChange={(e) => handleUpdateField('courses', 'showPrice', e.target.checked)}
-                          className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500"
-                        />
-                        <span className="text-xs font-bold text-slate-700">إظهار أسعار الدورات</span>
-                      </label>
-
-                      <label className="flex items-center gap-2 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={content.courses.showStudentsCount !== false}
-                          onChange={(e) => handleUpdateField('courses', 'showStudentsCount', e.target.checked)}
-                          className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500"
-                        />
-                        <span className="text-xs font-bold text-slate-700">إظهار عدد الطلاب المسجلين</span>
-                      </label>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 pt-2">
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[11px] font-bold text-slate-600">لون الأزرار / الشارة</label>
-                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                          <input
-                            type="color"
-                            value={content.courses.buttonBg || '#3525cd'}
-                            onChange={(e) => handleUpdateField('courses', 'buttonBg', e.target.value)}
-                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                          />
-                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.courses.buttonBg || '#3525cd'}</span>
-                        </div>
-                      </div>
-
                       <div className="flex flex-col gap-1">
                         <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
                         <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
@@ -2602,6 +2621,32 @@ export default function PageBuilderPage() {
                           />
                           <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.courses.backgroundColor || '#ffffff'}</span>
                         </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">خلفية البطاقات</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.courses.cardBg || '#ffffff'}
+                            onChange={(e) => handleUpdateField('courses', 'cardBg', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.courses.cardBg || '#ffffff'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">لون النصوص والعناوين</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input
+                          type="color"
+                          value={content.courses.textColor || '#1b1b24'}
+                          onChange={(e) => handleUpdateField('courses', 'textColor', e.target.value)}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                        />
+                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.courses.textColor || '#1b1b24'}</span>
                       </div>
                     </div>
                   </div>
@@ -3028,7 +3073,7 @@ export default function PageBuilderPage() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
                     <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص أزرار التواصل</h3>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص أزرار التواصل والدعوة للعمل</h3>
                   </div>
 
                   <div className="space-y-4">
@@ -3051,26 +3096,62 @@ export default function PageBuilderPage() {
                       />
                     </div>
 
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">رقم الواتساب الاستشاري (مع رمز الدولة)</label>
-                      <input
-                        type="text"
-                        value={content.contact.phoneNumber}
-                        onChange={(e) => handleUpdateField('contact', 'phoneNumber', e.target.value)}
-                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
-                        dir="ltr"
-                        placeholder="مثال: 966500000000"
-                      />
+                    {/* Button 1: Start / Call Button ("ابدأ الآن") */}
+                    <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                        <span className="text-[11px] font-extrabold text-slate-800">الزر الأول (ابدأ الآن / اتصال)</span>
+                        <span className="text-[9px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-md">اتصال هاتفي</span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-500">نص الزر الأول</label>
+                        <input
+                          type="text"
+                          value={content.contact.buttonText}
+                          onChange={(e) => handleUpdateField('contact', 'buttonText', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-2.5 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
+                          placeholder="ابدأ الآن"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-500">رقم الهاتف / الاتصال (مثال: 01012345678)</label>
+                        <input
+                          type="text"
+                          value={content.contact.phoneNumber}
+                          onChange={(e) => handleUpdateField('contact', 'phoneNumber', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-2.5 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                          dir="ltr"
+                          placeholder="01012345678"
+                        />
+                      </div>
                     </div>
 
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">نص زر التواصل / الواتساب</label>
-                      <input
-                        type="text"
-                        value={content.contact.buttonText}
-                        onChange={(e) => handleUpdateField('contact', 'buttonText', e.target.value)}
-                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                      />
+                    {/* Button 2: Demo / URL Button ("طلب عرض توضيحي") */}
+                    <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                        <span className="text-[11px] font-extrabold text-slate-800">الزر الثاني (طلب عرض توضيحي / رابط URL)</span>
+                        <span className="text-[9px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md">رابط مباشر</span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-500">نص الزر الثاني</label>
+                        <input
+                          type="text"
+                          value={(content.contact as any).secondaryButtonText !== undefined ? (content.contact as any).secondaryButtonText : 'طلب عرض توضيحي'}
+                          onChange={(e) => handleUpdateField('contact', 'secondaryButtonText', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-2.5 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
+                          placeholder="طلب عرض توضيحي"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-500">رابط الزر الثاني (URL)</label>
+                        <input
+                          type="text"
+                          value={(content.contact as any).secondaryButtonLink || ''}
+                          onChange={(e) => handleUpdateField('contact', 'secondaryButtonLink', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-2.5 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                          dir="ltr"
+                          placeholder="https://example.com/demo"
+                        />
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 pt-2">
