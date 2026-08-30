@@ -1251,7 +1251,7 @@ export default function CourseDetailsPage() {
 
   const handleCopyDefaultLink = () => {
     if (typeof window !== 'undefined') {
-      const link = `${window.location.origin}/${course?.slug || id}`;
+      const link = `${window.location.origin}/courses/${course?.slug || id}`;
       navigator.clipboard.writeText(link);
       toast.success('تم نسخ رابط صفحة البيع الافتراضية بنجاح!');
     }
@@ -1479,7 +1479,7 @@ export default function CourseDetailsPage() {
               type="button"
               onClick={() => {
                 if (course?.slug) {
-                  router.push(`/${course.slug}`);
+                  router.push(`/courses/${course.slug}`);
                 } else {
                   router.push(`/academic/courses/${id}/student`);
                 }
@@ -1493,7 +1493,7 @@ export default function CourseDetailsPage() {
               type="button"
               onClick={() => {
                 if (typeof window !== 'undefined') {
-                  const shareUrl = `${window.location.origin}/${course?.slug || id}`;
+                  const shareUrl = `${window.location.origin}/courses/${course?.slug || id}`;
                   if (navigator.share) {
                     navigator.share({
                       title: courseInfo.title || course?.title || 'دورة تعليمية',
