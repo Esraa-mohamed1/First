@@ -7,10 +7,6 @@ import { clearUserSessionAndCache } from '@/lib/auth-storage';
 
 export function useLoginState() {
     const router = useRouter();
-
-    useEffect(() => {
-        clearUserSessionAndCache();
-    }, []);
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');

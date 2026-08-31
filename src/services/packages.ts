@@ -7,7 +7,9 @@ const SUPER_ADMIN_API_URL = 'https://api.darab.academy/api/superAdmin';
 
 export const getPackages = async (): Promise<Package[]> => {
   try {
-    const response = await api.get<ApiResponse<Package[]>>('/packages');
+    const response = await api.get<ApiResponse<Package[]>>('/packages', {
+      baseURL: SUPER_ADMIN_API_URL
+    });
     if (response.data.status) {
       return response.data.data;
     }
@@ -20,14 +22,14 @@ export const getPackages = async (): Promise<Package[]> => {
 
 export const subscribeToPackage = async (packageId: number, email?: string): Promise<string> => {
   try {
-    const response = await api.post<ApiResponse<any>>('create-link-payment', { 
+    const response = await api.post<ApiResponse<any>>('create-link-payment', {
       package_id: packageId,
-      email: email 
+      email: email
     });
     // Handle response formats for paymentLink
     const data = response.data as any;
     const paymentLink = data.paymentLink || data.data?.paymentLink || (typeof data.data === 'string' ? data.data : null);
-    
+
     if (paymentLink) {
       return paymentLink;
     }
