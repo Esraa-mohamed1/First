@@ -23,8 +23,11 @@ const RegistrationModal = () => {
         passwordCriteria,
         otp,
         otpRefs,
+        resendTimer,
         handleOtpChange,
         handleOtpKeyDown,
+        handleOtpPaste,
+        handleResendCode,
         handleVerifyRegistration,
         handleChange,
         handleNextStep,
@@ -230,10 +233,11 @@ const RegistrationModal = () => {
                                 ref={el => { otpRefs.current[index] = el; }}
                                 type="text" 
                                 inputMode="numeric"
-                                maxLength={1} 
+                                maxLength={4} 
                                 value={digit}
                                 onChange={(e) => handleOtpChange(index, e.target.value)}
                                 onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                                onPaste={handleOtpPaste}
                                 className={`w-16 h-20 text-center text-4xl font-black rounded-[20px] outline-none transition-all shadow-sm ${errors.phone ? 'bg-red-50 border-2 border-red-500 text-red-600' : 'bg-[#f8faff] border border-[#e2e8f0] text-gray-900 focus:border-[#2563eb] focus:bg-white focus:ring-4 focus:ring-[#2563eb]/10'}`} 
                             />
                         ))}
@@ -249,7 +253,14 @@ const RegistrationModal = () => {
                 </button>
                 
                 <p className="text-center text-sm font-bold text-[#6b7280]">
-                    لم يصلك الرمز؟ <button className="text-[#2563eb] hover:underline font-black">إعادة الإرسال</button>
+                    لم يصلك الرمز؟{' '}
+                    <button 
+                        onClick={handleResendCode}
+                        disabled={isLoading || resendTimer > 0}
+                        className="text-[#2563eb] hover:underline font-black disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {resendTimer > 0 ? `إعادة الإرسال بعد ${resendTimer} ثانية` : 'إعادة الإرسال'}
+                    </button>
                 </p>
             </div>
         );

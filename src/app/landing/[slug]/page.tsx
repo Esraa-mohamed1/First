@@ -65,13 +65,14 @@ export default function DedicatedLandingPage() {
           ? `https://api.darab.academy${logoUrl.startsWith('/') ? '' : '/'}${logoUrl}`
           : logoUrl;
 
+        const resolvedId = acc.receiver_account?.id || acc.id || '';
         return {
-          methodId: acc.id || acc.receiver_account?.id || '',
+          methodId: resolvedId,
           methodName: acc.receiver_account?.name || 'حساب استقبال',
           type: acc.receiver_account?.key || 'mobile',
           value: acc.account_value || '',
           logo: fullLogoUrl,
-          receiver_account_id: acc.id || acc.receiver_account?.id || ''
+          receiver_account_id: resolvedId
         };
       });
     }
