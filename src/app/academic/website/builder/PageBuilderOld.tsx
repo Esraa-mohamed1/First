@@ -416,8 +416,7 @@ export default function PageBuilderPage() {
   };
 
   const handleGoBack = () => {
-    // If the template was edited, go back to template list or pages manager
-    router.push('/academic/website/builder');
+    router.push('/academic');
   };
 
   if (!currentTemplate) {

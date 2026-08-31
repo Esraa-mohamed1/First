@@ -38,14 +38,17 @@ export default function StudentCourseDetailsPage() {
           : [];
 
         const rawAccounts = data.receiver_accounts || data.payment_methods || [];
-        const mappedPaymentMethods = rawAccounts.map((item: any) => ({
-          methodId: String(item.id || item.methodId || ''),
-          methodName: item.name || item.methodName || '',
-          type: 'account_number' as const,
-          value: item.account_value || item.value || '',
-          currency: item.currency || data.currency || 'EGP',
-          logo: item.logo || undefined,
-        }));
+        const mappedPaymentMethods = rawAccounts.map((item: any) => {
+          const receiverAccount = item.receiver_account || item.receiverAccount;
+          return {
+            methodId: String(receiverAccount?.id || item.id || item.methodId || ''),
+            methodName: receiverAccount?.name || item.name || item.methodName || '',
+            type: 'account_number' as const,
+            value: item.account_value || item.value || '',
+            currency: item.currency || receiverAccount?.currency || data.currency || 'EGP',
+            logo: receiverAccount?.logo || item.logo || undefined,
+          };
+        });
 
         const normalizedCourse = {
           ...data,

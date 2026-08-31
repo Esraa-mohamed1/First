@@ -77,6 +77,15 @@ export default function CourseDetailTemplate({
 }: CourseDetailTemplateProps) {
   const router = useRouter();
   const { openModal } = useModal();
+
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && document.referrer && document.referrer.includes(window.location.host)) {
+      router.back();
+    } else {
+      router.push('/courses');
+    }
+  };
+
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [expandedUnits, setExpandedUnits] = useState<number[]>([]);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -252,7 +261,7 @@ export default function CourseDetailTemplate({
 
       {/* Back Button */}
       <div className="max-w-7xl mx-auto px-6 pt-8 w-full flex justify-start">
-        <button onClick={() => router.back()} className="flex items-center gap-1 text-[#4c616c] font-bold text-sm hover:text-[#005c86] transition-colors">
+        <button onClick={handleBack} className="flex items-center gap-1 text-[#4c616c] font-bold text-sm hover:text-[#005c86] transition-colors">
           <span className="material-symbols-outlined">arrow_forward</span>
           رجوع
         </button>
@@ -425,17 +434,15 @@ export default function CourseDetailTemplate({
                                       onLearnClick();
                                     }
                                   }}
-                                  className={`flex items-center justify-between p-4 rounded-xl transition-colors ${
-                                    canWatch
+                                  className={`flex items-center justify-between p-4 rounded-xl transition-colors ${canWatch
                                       ? 'hover:bg-[#f3f4f5] cursor-pointer'
                                       : 'opacity-70 cursor-not-allowed'
-                                  }`}
+                                    }`}
                                 >
                                   <div className="flex items-center gap-3">
                                     <span
-                                      className={`material-symbols-outlined ${
-                                        canWatch ? 'text-[#005c86]' : 'text-slate-400'
-                                      }`}
+                                      className={`material-symbols-outlined ${canWatch ? 'text-[#005c86]' : 'text-slate-400'
+                                        }`}
                                       style={{ fontVariationSettings: "'FILL' 1" }}
                                     >
                                       {canWatch ? 'play_circle' : 'lock'}
@@ -492,7 +499,7 @@ export default function CourseDetailTemplate({
                     <h3 className="text-lg font-black text-slate-900">أنت مشترك بالفعل</h3>
                     <p className="text-slate-500 font-bold text-xs leading-relaxed">استمتع برحلتك التعليمية وابدأ الآن في مشاهدة الدروس.</p>
                     <div className="flex gap-3">
-                      <button 
+                      <button
                         onClick={onLearnClick}
                         className="flex-grow py-3 bg-gradient-to-br from-[#005c86] to-[#0e76a8] text-white rounded-xl font-bold text-sm shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/35 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                       >
@@ -515,7 +522,7 @@ export default function CourseDetailTemplate({
                     </div>
                     <h3 className="text-lg font-black text-slate-900">طلب الاشتراك قيد المراجعة</h3>
                     <p className="text-slate-500 font-bold text-xs leading-relaxed">لقد قمت بتقديم طلب اشتراك لهذه الدورة. طلبك قيد المراجعة حالياً من قبل الإدارة وسنقوم بتفعيله قريباً.</p>
-                    <button 
+                    <button
                       disabled
                       className="w-full py-3 bg-purple-100 text-purple-500 rounded-xl font-bold text-sm cursor-not-allowed"
                     >
@@ -532,7 +539,7 @@ export default function CourseDetailTemplate({
                       {course.rejection_reason || 'تم رفض طلب اشتراكك في هذه الدورة من قبل الإدارة.'}
                     </p>
                     <div className="flex flex-col gap-2">
-                      <button 
+                      <button
                         onClick={() => {
                           if (course.rejection_reason) {
                             MySwal.fire({
@@ -550,7 +557,7 @@ export default function CourseDetailTemplate({
                       >
                         تفاصيل الرفض
                       </button>
-                      <button 
+                      <button
                         onClick={() => setIsRetrying(true)}
                         className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md shadow-blue-500/10 transition-all"
                       >
@@ -691,7 +698,7 @@ export default function CourseDetailTemplate({
           <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl p-6 relative" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-black text-slate-900 mb-2 text-right">مشاركة الدورة</h3>
             <p className="text-slate-500 text-xs mb-6 text-right">اختر المنصة لمشاركة رابط الدورة مباشرة أو انسخ الرابط:</p>
-            
+
             {/* Social Share Buttons Grid */}
             {(() => {
               const fullUrl = typeof window !== 'undefined' ? `${window.location.origin}/courses/${course.slug || course.id}` : '';
@@ -748,23 +755,23 @@ export default function CourseDetailTemplate({
             })()}
 
             <div className="flex items-center gap-2 bg-[#f3f4f5] p-3 rounded-2xl border border-slate-100 mb-6">
-              <button 
+              <button
                 onClick={copyToClipboard}
                 className="p-2 bg-white text-blue-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm flex items-center justify-center cursor-pointer"
                 title="نسخ الرابط"
               >
                 <Clipboard size={18} />
               </button>
-              <input 
-                type="text" 
-                readOnly 
+              <input
+                type="text"
+                readOnly
                 value={typeof window !== 'undefined' ? `${window.location.origin}/courses/${course.slug || course.id}` : ''}
                 className="bg-transparent border-none focus:ring-0 text-xs text-left w-full outline-none font-mono text-slate-600 select-all"
               />
             </div>
 
             <div className="flex gap-3 justify-end">
-              <button 
+              <button
                 onClick={() => setShowShareModal(false)}
                 className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors cursor-pointer"
               >

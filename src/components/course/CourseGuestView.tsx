@@ -121,14 +121,17 @@ export default function CourseGuestView({ slug }: CourseGuestViewProps) {
 
       // Format payment methods
       const rawPaymentMethods = data.payment_methods || data.receiverAccounts || data.receiver_accounts || [];
-      const paymentMethodsData = rawPaymentMethods.map((item: any) => ({
-        methodId: (item.methodId || item.method_id || item.id)?.toString() || '',
-        methodName: item.name || item.methodName || '',
-        type: 'account_number' as const,
-        value: item.value || item.accountValue || item.account_value || '',
-        currency: item.currency || 'SAR',
-        logo: item.logo || undefined
-      }));
+      const paymentMethodsData = rawPaymentMethods.map((item: any) => {
+        const receiverAccount = item.receiver_account || item.receiverAccount;
+        return {
+          methodId: (receiverAccount?.id || item.methodId || item.method_id || item.id)?.toString() || '',
+          methodName: receiverAccount?.name || item.name || item.methodName || '',
+          type: 'account_number' as const,
+          value: item.value || item.accountValue || item.account_value || '',
+          currency: item.currency || receiverAccount?.currency || 'SAR',
+          logo: receiverAccount?.logo || item.logo || undefined
+        };
+      });
 
       const mergedCourse = {
         id: data.id,
