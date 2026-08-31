@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, CreditCard, FileText, Settings, LogOut, X, Globe, User } from 'lucide-react';
+import { LayoutDashboard, Package, CreditCard, FileText, Settings, LogOut, X, Globe, User, GraduationCap } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { clearUserSessionAndCache } from '@/lib/auth-storage';
@@ -33,6 +33,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       label: 'الملف الشخصي',
       icon: User,
       href: '/dashboard/profile',
+    },
+    {
+      label: 'إدارة الأكاديميات',
+      icon: GraduationCap,
+      href: '/dashboard/academies',
     },
     {
       label: 'ادارة الباقات',

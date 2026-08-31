@@ -48,32 +48,47 @@ function CreatePackageForm() {
         }
     }, [packageId]);
 
+    const parseDurationMonths = (val: any): number => {
+        if (typeof val === 'number' && !isNaN(val)) return val;
+        if (typeof val === 'string') {
+            if (val.includes(':')) {
+                const num = parseInt(val.split(':')[0], 10);
+                return isNaN(num) || num <= 0 ? 12 : num;
+            }
+            const num = parseInt(val, 10);
+            return isNaN(num) || num <= 0 ? 12 : num;
+        }
+        return 12;
+    };
+
     const fetchPackageDetails = async (id: number) => {
         setIsInitialLoading(true);
         try {
             const pkg = await getPackageById(id);
             if (pkg) {
+                const parsedDuration = parseDurationMonths(pkg.duration_months ?? (pkg as any).duration);
+                const fetchedFeatures = pkg.package_features || pkg.packageFeatures || pkg.features || [];
+
                 setFormData({
                     titile: pkg.titile || '',
                     description: pkg.desc || pkg.description || '',
                     price: pkg.price?.toString() || '',
-                    duration_months: pkg.duration_months || 12,
+                    duration_months: parsedDuration,
                     is_active: pkg.is_active ?? 1,
-                    max_students: pkg.max_students ?? 125,
-                    max_instructors: pkg.max_instructors ?? 25,
-                    max_courses: pkg.max_courses ?? 50,
-                    custom_domains: pkg.custom_domains ?? 35,
-                    video_hours: pkg.video_hours ?? 3,
-                    features: pkg.package_features || pkg.packageFeatures || pkg.features || [],
+                    max_students: pkg.max_students ?? 100,
+                    max_instructors: pkg.max_instructors ?? 10,
+                    max_courses: pkg.max_courses ?? 20,
+                    custom_domains: pkg.custom_domains ?? 1,
+                    video_hours: pkg.video_hours ?? 10,
+                    features: [],
                     trial_days: pkg.trial_days ?? 7,
-                    order: pkg.order ?? 2,
+                    order: pkg.order ?? 1,
                     is_popular: pkg.recomnd === 1 || pkg.is_popular || false,
                 });
 
-                const fetchedFeatures = pkg.package_features || pkg.packageFeatures || pkg.features || [];
                 setSelectedFeatures(fetchedFeatures.map((f: any) => ({
-                    id: f.feature_id || f.id,
-                    title: f.lable || f.title || '',
+                    id: f.feature_id || f.feature?.id || f.featureId || f.id,
+                    title: f.lable || f.title || f.feature?.title || '',
                     value: f.value || ''
                 })));
             } else {
@@ -123,39 +138,43 @@ function CreatePackageForm() {
             return;
         }
 
+        const invalidFeatures = selectedFeatures.filter(
+            (feature) => !feature.value || feature.value.trim() === ''
+        );
+        if (invalidFeatures.length > 0) {
+            if (invalidFeatures.length === 1) {
+                toast.error(`يرجى إدخال قيمة للميزة "${invalidFeatures[0].title || 'المحددة'}"`);
+            } else {
+                const names = invalidFeatures.map(f => `"${f.title || 'ميزة'}"`).join('، ');
+                toast.error(`يرجى إدخال قيمة للمميزات التالية: ${names}`);
+            }
+            return;
+        }
+
         setIsLoading(true);
         try {
-            let response;
-            let createdPackageId: number;
+            const { description, ...restFormData } = formData;
+            const payload = {
+                ...restFormData,
+                desc: description || '',
+                duration_months: Number(formData.duration_months) || 12,
+                features: selectedFeatures.map(f => ({
+                    feature_id: f.id,
+                    lable: f.title,
+                    title: f.title,
+                    value: f.value || ''
+                }))
+            };
 
+            let response;
             if (isEditMode) {
-                createdPackageId = parseInt(packageId!);
-                response = await updatePackage(createdPackageId, formData);
+                const targetId = parseInt(packageId!);
+                response = await updatePackage(targetId, payload as any);
             } else {
-                response = await createPackage(formData);
-                //@ts-ignore - assuming response.data has the id for the new package
-                createdPackageId = response.data?.id;
+                response = await createPackage(payload as any);
             }
 
-            if (response.status && createdPackageId) {
-                // Step 2: Associate features individually to match backend validation
-                if (selectedFeatures.length > 0) {
-                    try {
-                        const associationPromises = selectedFeatures.map(f =>
-                            associateFeatures({
-                                package_id: createdPackageId,
-                                feature_id: f.id,
-                                value: f.value || '',
-                                lable: f.title // Backend expects 'lable' instead of 'label' or 'title'
-                            })
-                        );
-                        await Promise.all(associationPromises);
-                    } catch (error) {
-                        console.error('Failed to associate some features:', error);
-                        toast.error('تم حفظ الباقة، ولكن فشل ربط بعض المميزات');
-                    }
-                }
-
+            if (response.status) {
                 toast.success(isEditMode ? 'تم تحديث الباقة بنجاح' : 'تم حفظ الباقة بنجاح');
                 router.push('/dashboard/packages');
             } else {

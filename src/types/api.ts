@@ -198,3 +198,54 @@ export interface ReceiverAccount {
   created_at: string | null;
   updated_at: string | null;
 }
+
+export interface Academy {
+  id: number;
+  name?: string;
+  academy_name?: string;
+  username?: string;
+  email?: string;
+  phone?: string;
+  phone_academy?: string;
+  country_code?: string;
+  country?: string;
+  link_academy?: string;
+  subdomain?: string;
+  domain?: string;
+  field?: string;
+  specialties?: string;
+  address?: string;
+  short_description?: string;
+  bio_paragraph_1?: string;
+  logo?: string;
+  logo_url?: string;
+  avatar_url?: string;
+  package_id?: number | null;
+  package?: Package | null;
+  is_active?: number | boolean;
+  status?: string;
+  owner?: User | null;
+  user?: User | null;
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: any;
+}
+
+export interface CreateAcademyPayload {
+  name?: string;
+  academy_name: string;
+  email: string;
+  phone?: string;
+  password?: string;
+  link_academy?: string;
+  subdomain?: string;
+  package_id?: number | string | null;
+  country_code?: string;
+  is_active?: number | boolean;
+  [key: string]: any;
+}
+
+export interface UpdateAcademyPayload extends Partial<CreateAcademyPayload> {
+  id?: number;
+}
+

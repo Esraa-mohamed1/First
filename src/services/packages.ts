@@ -147,7 +147,7 @@ export const deleteFeature = async (id: number): Promise<ApiResponse<any>> => {
 
 export const associateFeatures = async (payload: { package_id: number, feature_id: number, value: string, lable: string }): Promise<ApiResponse<any>> => {
   try {
-    const response = await api.post<ApiResponse<any>>('/feature_packages', payload, {
+    const response = await api.put<ApiResponse<any>>('/feature_packages', payload, {
       baseURL: SUPER_ADMIN_API_URL
     });
     return response.data;
