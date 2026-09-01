@@ -398,7 +398,7 @@ export default function AcademiesPage() {
                     const isActive = academy.is_active === 1 || academy.is_active === true;
                     const academyName = academy.academy_name || academy.name || 'بدون اسم';
                     const linkUrl = academy.link_academy || academy.subdomain || academy.domain;
-                    const packageName = academy.package?.titile || academy.package?.title || (academy.package_id ? `باقة #${academy.package_id}` : 'غير محدد');
+                    const packageName = academy.package?.titile || (academy.package as any)?.title || (academy.package_id ? `باقة #${academy.package_id}` : 'غير محدد');
 
                     return (
                       <tr key={academy.id} className="hover:bg-blue-50/30 transition-colors group">

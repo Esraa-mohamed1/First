@@ -24,7 +24,28 @@ export default function CoursesPage() {
         ]);
 
         const mappedCourses: Course[] = response.map((c: any) => {
-          const sub = subscriptions.find((s: any) => String(s.course_id) === String(c.id));
+          const sub = subscriptions.find((s: any) => 
+            String(s.course_id) === String(c.id) || 
+            String(s.course?.id) === String(c.id) ||
+            String(s.courseId) === String(c.id)
+          );
+          const subStatus = sub ? String(sub.status || '').toLowerCase() : null;
+          const backendEnrollStatus = c.enrollment_status ? String(c.enrollment_status).toLowerCase() : null;
+
+          const isEnrolled = 
+            c.is_enrolled === true ||
+            backendEnrollStatus === 'active' ||
+            backendEnrollStatus === 'accepted' ||
+            backendEnrollStatus === 'paid' ||
+            backendEnrollStatus === 'completed' ||
+            backendEnrollStatus === 'subscribed' ||
+            subStatus === 'active' ||
+            subStatus === 'accepted' ||
+            subStatus === 'paid' ||
+            subStatus === 'completed' ||
+            subStatus === 'subscribed' ||
+            false;
+
           return {
             id: c.id?.toString() || '',
             title: c.title || '',
@@ -35,9 +56,9 @@ export default function CoursesPage() {
             instructor: c.instructor_name || '',
             category: c.category?.name || 'General',
             status: (c.progress === 100 ? 'completed' : c.progress > 0 ? 'in-progress' : 'not-started') as any,
-            is_enrolled: c.is_enrolled || c.enrollment_status === 'active' || c.enrollment_status === 'accepted' || (sub && (sub.status === 'active' || sub.status === 'accepted')) || false,
-            subscription_status: sub ? sub.status : null,
-            enrollment_status: c.enrollment_status || (sub ? sub.status : null),
+            is_enrolled: isEnrolled,
+            subscription_status: subStatus || backendEnrollStatus || null,
+            enrollment_status: backendEnrollStatus || subStatus || null,
             rejection_reason: c.rejection_reason || (sub ? (sub.message || sub.rejection_reason || sub.rejectionReason) : '') || '',
           };
         });
@@ -52,6 +73,19 @@ export default function CoursesPage() {
     };
 
     fetchCourses();
+
+    const handleSubscriptionUpdated = () => {
+      fetchCourses();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('course-subscription-updated', handleSubscriptionUpdated);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('course-subscription-updated', handleSubscriptionUpdated);
+      }
+    };
   }, []);
 
   return (

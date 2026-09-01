@@ -227,6 +227,19 @@ export default function StudentRequestsPage() {
     };
     fetchCourses();
     loadRequests();
+
+    const handleSubscriptionUpdated = () => {
+      loadRequests();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('course-subscription-updated', handleSubscriptionUpdated);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('course-subscription-updated', handleSubscriptionUpdated);
+      }
+    };
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -257,6 +270,10 @@ export default function StudentRequestsPage() {
       
       setSubmitting(false);
       setShowAddForm(false);
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('course-subscription-updated', { detail: { courseId: selectedCourseId } }));
+      }
 
       // Reset form
       setSelectedCourseId('');

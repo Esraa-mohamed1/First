@@ -61,8 +61,10 @@ interface CourseDetailTemplateProps {
   isSubscribed?: boolean;
   isOwnerReview?: boolean;
   isStudentDashboard?: boolean;
+  isLoadingStatus?: boolean;
   onSubscribe?: () => void;
   onLearnClick?: () => void;
+  onStatusRefresh?: () => void | Promise<void>;
   hideHeaderFooter?: boolean;
 }
 
@@ -71,8 +73,10 @@ export default function CourseDetailTemplate({
   isSubscribed = false,
   isOwnerReview = false,
   isStudentDashboard = false,
+  isLoadingStatus = false,
   onSubscribe,
   onLearnClick,
+  onStatusRefresh,
   hideHeaderFooter = false,
 }: CourseDetailTemplateProps) {
   const router = useRouter();
@@ -133,21 +137,35 @@ export default function CourseDetailTemplate({
 
     const handleAuthSuccess = () => {
       loadUser();
-      setIsPaymentModalOpen(true);
+      if (!onSubscribe) {
+        setIsPaymentModalOpen(true);
+      }
+      if (onStatusRefresh) {
+        onStatusRefresh();
+      }
+    };
+
+    const handleSubscriptionUpdated = () => {
+      setIsRetrying(false);
+      if (onStatusRefresh) {
+        onStatusRefresh();
+      }
     };
 
     if (typeof window !== 'undefined') {
       window.addEventListener('student-registered', handleAuthSuccess);
       window.addEventListener('student-logged-in', handleAuthSuccess);
+      window.addEventListener('course-subscription-updated', handleSubscriptionUpdated);
     }
 
     return () => {
       if (typeof window !== 'undefined') {
         window.removeEventListener('student-registered', handleAuthSuccess);
         window.removeEventListener('student-logged-in', handleAuthSuccess);
+        window.removeEventListener('course-subscription-updated', handleSubscriptionUpdated);
       }
     };
-  }, []);
+  }, [onSubscribe, onStatusRefresh]);
 
   useEffect(() => {
     if (course.units && course.units.length > 0) {
@@ -161,12 +179,32 @@ export default function CourseDetailTemplate({
     );
   };
 
-  // Determine actual subscribed state
+  // Determine actual subscribed and payment states
+  const rawStatus = course.subscription_status ? String(course.subscription_status).toLowerCase() : null;
+
   const isEnrolled =
     isSubscribed ||
-    course.is_subscribed ||
-    course.subscription_status === 'active' ||
-    course.subscription_status === 'accepted';
+    course.is_subscribed === true ||
+    rawStatus === 'active' ||
+    rawStatus === 'accepted' ||
+    rawStatus === 'paid' ||
+    rawStatus === 'completed' ||
+    rawStatus === 'subscribed';
+
+  const isPending =
+    rawStatus === 'pending' ||
+    rawStatus === 'penidng' ||
+    rawStatus === 'under_review' ||
+    rawStatus === 'in_review';
+
+  const isRejected =
+    rawStatus === 'rejected' ||
+    rawStatus === 'refused' ||
+    rawStatus === 'declined';
+
+  const isCancelled =
+    rawStatus === 'cancelled' ||
+    rawStatus === 'canceled';
 
   // Format date
   const getFormattedDate = () => {
@@ -491,7 +529,12 @@ export default function CourseDetailTemplate({
               {/* Glassy Accent */}
               <div className="absolute -top-12 -right-12 w-32 h-32 bg-[#c9e6ff]/20 blur-3xl rounded-full"></div>
               <div id="payment-section" className="relative z-10 space-y-6">
-                {isEnrolled ? (
+                {isLoadingStatus ? (
+                  <div className="space-y-4 text-center py-6">
+                    <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+                    <p className="text-slate-500 font-bold text-xs">جاري التحقق من حالة الاشتراك...</p>
+                  </div>
+                ) : isEnrolled ? (
                   <div className="space-y-4 text-center">
                     <div className="w-12 h-12 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
                       <CheckCircle2 size={24} />
@@ -515,7 +558,7 @@ export default function CourseDetailTemplate({
                       </button>
                     </div>
                   </div>
-                ) : (course.subscription_status === 'pending' || course.subscription_status === 'penidng') ? (
+                ) : isPending ? (
                   <div className="space-y-4 text-center">
                     <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
                       <Clock size={24} />
@@ -529,19 +572,21 @@ export default function CourseDetailTemplate({
                       قيد الانتظار (المراجعة)
                     </button>
                   </div>
-                ) : (course.subscription_status === 'rejected' || course.subscription_status === 'cancelled') && !isRetrying ? (
+                ) : (isRejected || isCancelled) && !isRetrying ? (
                   <div className="space-y-4 text-center">
                     <div className="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
                       <Lock size={24} />
                     </div>
-                    <h3 className="text-lg font-black text-slate-900 text-red-600">طلب الاشتراك مرفوض</h3>
+                    <h3 className="text-lg font-black text-slate-900 text-red-600">
+                      {isCancelled ? 'تم إلغاء طلب الاشتراك' : 'طلب الاشتراك مرفوض'}
+                    </h3>
                     <p className="text-slate-500 font-bold text-xs leading-relaxed">
-                      {course.rejection_reason || 'تم رفض طلب اشتراكك في هذه الدورة من قبل الإدارة.'}
+                      {course.rejection_reason || (isCancelled ? 'تم إلغاء طلب الاشتراك في هذه الدورة.' : 'تم رفض طلب اشتراكك في هذه الدورة من قبل الإدارة.')}
                     </p>
                     <div className="flex flex-col gap-2">
-                      <button
-                        onClick={() => {
-                          if (course.rejection_reason) {
+                      {course.rejection_reason && (
+                        <button
+                          onClick={() => {
                             MySwal.fire({
                               title: 'سبب الرفض',
                               text: course.rejection_reason,
@@ -549,14 +594,12 @@ export default function CourseDetailTemplate({
                               confirmButtonText: 'حسناً',
                               confirmButtonColor: '#006692'
                             });
-                          } else {
-                            toast.error('تم رفض طلب الاشتراك.');
-                          }
-                        }}
-                        className="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-bold text-sm border border-red-100 transition-all flex items-center justify-center gap-2"
-                      >
-                        تفاصيل الرفض
-                      </button>
+                          }}
+                          className="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-bold text-sm border border-red-100 transition-all flex items-center justify-center gap-2"
+                        >
+                          تفاصيل الرفض
+                        </button>
+                      )}
                       <button
                         onClick={() => setIsRetrying(true)}
                         className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md shadow-blue-500/10 transition-all"
@@ -642,7 +685,11 @@ export default function CourseDetailTemplate({
                                 toast.error('الرجاء اختيار وسيلة الدفع أولاً');
                                 return;
                               }
-                              handleSubscribeClick();
+                              if (onSubscribe) {
+                                onSubscribe();
+                              } else {
+                                handleSubscribeClick();
+                              }
                             }
                           }}
                           className="flex-grow bg-gradient-to-br from-[#005c86] to-[#0e76a8] text-white py-3.5 rounded-xl font-bold text-sm shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/35 transition-all active:scale-[0.98]"
@@ -689,6 +736,12 @@ export default function CourseDetailTemplate({
           courseId={course.id}
           coursePrice={course.final_price || course.price}
           courseCurrency={course.currency || 'SAR'}
+          onSuccess={async () => {
+            setIsRetrying(false);
+            if (onStatusRefresh) {
+              await onStatusRefresh();
+            }
+          }}
         />
       )}
 

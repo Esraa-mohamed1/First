@@ -16,12 +16,41 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
   const [imgError, setImgError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
 
+  const rawSubStatus = course.subscription_status ? String(course.subscription_status).toLowerCase() : null;
+  const rawEnrollStatus = course.enrollment_status ? String(course.enrollment_status).toLowerCase() : null;
+
   const isActuallySubscribed = isSubscribed || 
-    course.is_enrolled || 
-    course.enrollment_status === 'active' || 
-    course.enrollment_status === 'accepted' || 
-    course.subscription_status === 'active' || 
-    course.subscription_status === 'accepted';
+    course.is_enrolled === true || 
+    rawEnrollStatus === 'active' || 
+    rawEnrollStatus === 'accepted' || 
+    rawEnrollStatus === 'paid' ||
+    rawEnrollStatus === 'completed' ||
+    rawEnrollStatus === 'subscribed' ||
+    rawSubStatus === 'active' || 
+    rawSubStatus === 'accepted' ||
+    rawSubStatus === 'paid' ||
+    rawSubStatus === 'completed' ||
+    rawSubStatus === 'subscribed';
+
+  const isPending = 
+    rawSubStatus === 'pending' || 
+    rawSubStatus === 'penidng' || 
+    rawSubStatus === 'under_review' || 
+    rawSubStatus === 'in_review' ||
+    rawEnrollStatus === 'pending' ||
+    rawEnrollStatus === 'penidng';
+
+  const isRejected = 
+    rawSubStatus === 'rejected' || 
+    rawSubStatus === 'refused' || 
+    rawSubStatus === 'declined' ||
+    rawEnrollStatus === 'rejected';
+
+  const isCancelled =
+    rawSubStatus === 'cancelled' ||
+    rawSubStatus === 'canceled' ||
+    rawEnrollStatus === 'cancelled' ||
+    rawEnrollStatus === 'canceled';
 
   // Mock payment methods if not provided
   const paymentMethods = course.paymentMethods || [
@@ -40,14 +69,14 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
           <span className="bg-blue-50 text-blue-600 text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-lg border border-blue-100/50">
             {typeof course.category === 'object' && course.category !== null ? (course.category as any).name : (course.category || 'عام')}
           </span>
-          {(course.subscription_status === 'pending' || course.subscription_status === 'penidng' || course.enrollment_status === 'pending') && (
+          {isPending && (
             <span className="text-white text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-lg shadow-sm animate-pulse" style={{ backgroundColor: '#f6c05cff' }}>
               قيد الانتظار
             </span>
           )}
-          {(course.subscription_status === 'rejected' || course.enrollment_status === 'rejected' || course.enrollment_status === 'cancelled') && (
+          {(isRejected || isCancelled) && (
             <span className="text-white text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-lg shadow-sm bg-rose-500">
-              مرفوض
+              {isCancelled ? 'ملغي' : 'مرفوض'}
             </span>
           )}
           {isActuallySubscribed && (
@@ -167,7 +196,7 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
             )
           ) : (
             <div className="flex flex-col gap-2">
-              {(course.subscription_status === 'pending' || course.subscription_status === 'penidng' || course.enrollment_status === 'pending') ? (
+              {isPending ? (
                 <div className="flex gap-2 w-full">
                   <button
                     onClick={(e) => {
@@ -187,7 +216,7 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
                     <Eye size={16} />
                   </Link>
                 </div>
-              ) : (course.subscription_status === 'rejected' || course.enrollment_status === 'rejected' || course.enrollment_status === 'cancelled') ? (
+              ) : (isRejected || isCancelled) ? (
                 <div className="flex flex-col gap-2 w-full">
                   <div className="flex gap-2 w-full">
                     <button
@@ -196,12 +225,12 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
                         if (course.rejection_reason) {
                           alert(`سبب الرفض: ${course.rejection_reason}`);
                         } else {
-                          alert('تم رفض طلب الاشتراك.');
+                          alert(isCancelled ? 'تم إلغاء طلب الاشتراك.' : 'تم رفض طلب الاشتراك.');
                         }
                       }}
                       className="flex-1 flex items-center justify-center gap-2 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-3 rounded-xl border border-rose-100 transition-all duration-300 text-sm cursor-pointer"
                     >
-                      <span>مرفوض</span>
+                      <span>{isCancelled ? 'ملغي' : 'مرفوض'}</span>
                     </button>
                     <Link
                       href={`/courses/${course.slug}?retry=true`}

@@ -18,6 +18,7 @@ interface PaymentMethodModalProps {
   courseId: string | number;
   coursePrice: number | string;
   courseCurrency: string;
+  onSuccess?: () => void | Promise<void>;
 }
 
 export const PaymentMethodModal = ({
@@ -27,6 +28,7 @@ export const PaymentMethodModal = ({
   courseId,
   coursePrice,
   courseCurrency,
+  onSuccess,
 }: PaymentMethodModalProps) => {
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedMethod, setSelectedMethod] = useState<AcademyPaymentMethod | null>(null);
@@ -123,6 +125,16 @@ export const PaymentMethodModal = ({
     try {
       const receiverAccountId = (selectedMethod as any)?.receiver_account_id || (selectedMethod as any)?.receiverAccountId || selectedMethod.methodId;
       await enrollInCourse(courseId, selectedMethod.methodId, screenshot, receiverAccountId);
+      if (onSuccess) {
+        try {
+          await onSuccess();
+        } catch (callbackErr) {
+          console.error('onSuccess callback failed:', callbackErr);
+        }
+      }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('course-subscription-updated', { detail: { courseId: String(courseId) } }));
+      }
       await showAlert.success('تم إرسال طلب التسجيل ✅', 'سيتم مراجعة الإيصال وتفعيل الدورة قريباً.');
       handleClose();
     } catch (error: any) {

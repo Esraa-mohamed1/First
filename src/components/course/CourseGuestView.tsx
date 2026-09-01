@@ -55,9 +55,30 @@ export default function CourseGuestView({ slug }: CourseGuestViewProps) {
       }
 
       const courseSubscription = Array.isArray(subscriptions)
-        ? subscriptions.find((sub: any) => String(sub.course_id) === String(data.id))
+        ? subscriptions.find((sub: any) => 
+            String(sub.course_id) === String(data.id) || 
+            String(sub.course?.id) === String(data.id) ||
+            String(sub.courseId) === String(data.id)
+          )
         : null;
-      const subStatus = courseSubscription ? courseSubscription.status : null;
+      const subStatus = courseSubscription ? String(courseSubscription.status || '').toLowerCase() : null;
+      const backendEnrollmentStatus = (data as any).enrollment_status ? String((data as any).enrollment_status).toLowerCase() : null;
+
+      const isSubscribed = 
+        (data as any).is_enrolled === true ||
+        backendEnrollmentStatus === 'active' ||
+        backendEnrollmentStatus === 'accepted' ||
+        backendEnrollmentStatus === 'paid' ||
+        backendEnrollmentStatus === 'completed' ||
+        backendEnrollmentStatus === 'subscribed' ||
+        subStatus === 'active' ||
+        subStatus === 'accepted' ||
+        subStatus === 'paid' ||
+        subStatus === 'completed' ||
+        subStatus === 'subscribed' ||
+        false;
+
+      const finalSubscriptionStatus = subStatus || backendEnrollmentStatus || null;
 
       // Extract learning points from infos
       let learningPoints: string[] = [];
@@ -147,8 +168,8 @@ export default function CourseGuestView({ slug }: CourseGuestViewProps) {
         units: data.units || (data as any).chapters || [],
         learning_points: learningPoints,
         info_sections: infoSections,
-        is_subscribed: (data as any).is_enrolled || (data as any).enrollment_status === 'active' || (data as any).enrollment_status === 'accepted' || subStatus === 'active' || subStatus === 'accepted' || false,
-        subscription_status: subStatus || (data as any).enrollment_status,
+        is_subscribed: isSubscribed,
+        subscription_status: finalSubscriptionStatus,
         rejection_reason: (data as any).rejection_reason || (courseSubscription ? (courseSubscription.message || courseSubscription.rejection_reason || courseSubscription.rejectionReason) : '') || '',
         payment_methods: paymentMethodsData,
       };
@@ -201,14 +222,20 @@ export default function CourseGuestView({ slug }: CourseGuestViewProps) {
       setIsPaymentModalOpen(true);
     };
 
+    const handleSubscriptionUpdated = async (e: any) => {
+      await loadCourseDetails();
+    };
+
     if (typeof window !== 'undefined') {
       window.addEventListener('student-registered', handleAuthSuccess);
       window.addEventListener('student-logged-in', handleAuthSuccess);
+      window.addEventListener('course-subscription-updated', handleSubscriptionUpdated);
     }
     return () => {
       if (typeof window !== 'undefined') {
         window.removeEventListener('student-registered', handleAuthSuccess);
         window.removeEventListener('student-logged-in', handleAuthSuccess);
+        window.removeEventListener('course-subscription-updated', handleSubscriptionUpdated);
       }
     };
   }, [loadCourseDetails]);
@@ -271,6 +298,7 @@ export default function CourseGuestView({ slug }: CourseGuestViewProps) {
             course={course}
             isSubscribed={course.is_subscribed}
             onSubscribe={handleSubscribe}
+            onStatusRefresh={loadCourseDetails}
             onLearnClick={() => router.push(`/student/courses/${course.id}/learn`)}
           />
         )}
@@ -284,6 +312,7 @@ export default function CourseGuestView({ slug }: CourseGuestViewProps) {
           courseId={course.id}
           coursePrice={course.final_price || course.price}
           courseCurrency={course.currency || 'SAR'}
+          onSuccess={loadCourseDetails}
         />
       )}
     </div>
