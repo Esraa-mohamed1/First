@@ -398,10 +398,10 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 <a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="/#about" ${isEditing ? '' : 'target="_parent"'}>حول</a>
 </nav>
 <div class="flex items-center gap-stack-md">
-<a class="text-label-md font-label-md text-primary hover:opacity-80 transition-opacity hidden sm:block" href="#" ${isEditing ? '' : 'target="_parent"'}>تسجيل الدخول</a>
-<button class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all duration-200 hidden sm:block">
+<a class="text-label-md font-label-md text-primary hover:opacity-80 transition-opacity hidden sm:block" href="/auth/login" ${isEditing ? '' : 'target="_parent"'}>تسجيل الدخول</a>
+<a href="/auth/register" ${isEditing ? '' : 'target="_parent"'} class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all duration-200 hidden sm:block inline-block text-center">
     ابدأ الآن
-</button>
+</a>
 <button class="md:hidden flex items-center justify-center p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors">
 <span class="material-symbols-outlined">menu</span>
 </button>
@@ -428,10 +428,10 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 <span class="material-symbols-outlined">info</span> حول
                 </a>
 <div class="h-px bg-outline-variant/30 my-4"></div>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="#" ${isEditing ? '' : 'target="_parent"'}>
+<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/auth/login" ${isEditing ? '' : 'target="_parent"'}>
 <span class="material-symbols-outlined">login</span> تسجيل الدخول
                 </a>
-<a class="bg-primary text-on-primary flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-primary-container transition-all text-label-md font-label-md" href="#" ${isEditing ? '' : 'target="_parent"'}>
+<a class="bg-primary text-on-primary flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/auth/register" ${isEditing ? '' : 'target="_parent"'}>
 <span class="material-symbols-outlined">person_add</span> ابدأ الآن
                 </a>
 </nav>

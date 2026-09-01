@@ -813,8 +813,8 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
               <a href="#stories" className="lst-nav-link">قصص النجاح</a>
             </div>
             <div className="lst-nav-right">
-              <a href="#" className="lst-signin">تسجيل الدخول</a>
-              <a href="#" className="lst-btn lst-btn-primary" style={{ height: 40, fontSize: 13, padding: '0 20px' }}>
+              <a href="/auth/login" className="lst-signin">تسجيل الدخول</a>
+              <a href="/auth/register" className="lst-btn lst-btn-primary" style={{ height: 40, fontSize: 13, padding: '0 20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                 ابدأ التعلم الآن
               </a>
             </div>
