@@ -41,7 +41,7 @@ export default function StudentCourseDetailsPage() {
         const mappedPaymentMethods = rawAccounts.map((item: any) => {
           const receiverAccount = item.receiver_account || item.receiverAccount;
           return {
-            methodId: String(receiverAccount?.id || item.id || item.methodId || ''),
+            methodId: String(item.id || item.methodId || item.method_id || receiverAccount?.id || ''),
             methodName: receiverAccount?.name || item.name || item.methodName || '',
             type: 'account_number' as const,
             value: item.account_value || item.value || '',
