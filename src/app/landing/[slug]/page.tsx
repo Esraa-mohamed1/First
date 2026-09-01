@@ -80,7 +80,7 @@ export default function DedicatedLandingPage() {
           ? `https://api.darab.academy${logoUrl.startsWith('/') ? '' : '/'}${logoUrl}`
           : logoUrl;
 
-        const resolvedId = acc.receiver_account?.id || acc.id || '';
+        const resolvedId = acc.id || acc.receiver_account_id || acc.receiver_account?.id || '';
         return {
           methodId: resolvedId,
           methodName: acc.receiver_account?.name || 'حساب استقبال',

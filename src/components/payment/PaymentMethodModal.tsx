@@ -123,7 +123,7 @@ export const PaymentMethodModal = ({
     if (!selectedMethod) return;
     setLoading(true);
     try {
-      const receiverAccountId = (selectedMethod as any)?.receiver_account_id || (selectedMethod as any)?.receiverAccountId || selectedMethod.methodId;
+      const receiverAccountId = selectedMethod.methodId || (selectedMethod as any)?.id || (selectedMethod as any)?.receiver_account_id || (selectedMethod as any)?.receiverAccountId;
       await enrollInCourse(courseId, selectedMethod.methodId, screenshot, receiverAccountId);
       if (onSuccess) {
         try {
