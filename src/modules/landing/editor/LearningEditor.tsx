@@ -17,9 +17,9 @@ export default function LearningEditor() {
     updateSectionContent('learning', { [field]: value });
   };
 
-  const handleCardChange = (cardId: string, value: string) => {
+  const handleCardChange = (cardId: string, field: 'info_key' | 'info_value', value: string) => {
     const newCards = data.cards.map(c => 
-      c.id === cardId ? { ...c, info_value: value } : c
+      c.id === cardId ? { ...c, [field]: value } : c
     );
     updateSectionContent('learning', { cards: newCards });
   };
@@ -27,8 +27,8 @@ export default function LearningEditor() {
   const handleAddCard = () => {
     const newCard: LearningCard = {
       id: `learn-${Date.now()}`,
-      info_key: 'ماذا ستتعلم؟',
-      info_value: 'أدخل المهارة أو المنفعة الجديدة هنا.',
+      info_key: 'عنوان المنفعة الجديدة',
+      info_value: 'أدخل تفاصيل المنفعة هنا.',
       icon: 'CheckCircle2',
       color: 'blue'
     };
@@ -44,7 +44,7 @@ export default function LearningEditor() {
     <div className="space-y-6 text-right font-sans" dir="rtl">
       <div>
         <h3 className="text-sm font-black text-slate-800 border-r-4 border-blue-600 pr-2">تعديل الفوائد وما ستتعلمه</h3>
-        <p className="text-[10px] text-slate-400 font-bold mt-1">أضف أو عدّل المخرجات والفوائد التطبيقية للدورة</p>
+        <p className="text-[10px] text-slate-400 font-bold mt-1">أضف أو عدّل المخرجات والفوائد التطبيقية للدورة (العناوين والأوصاف)</p>
       </div>
 
       <div className="space-y-4">
@@ -53,7 +53,7 @@ export default function LearningEditor() {
           <label className="text-xs font-bold text-slate-700">عنوان القسم الرئيسي</label>
           <input
             type="text"
-            className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600"
+            className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-bold"
             value={data.title}
             onChange={(e) => handleChange('title', e.target.value)}
           />
@@ -83,7 +83,7 @@ export default function LearningEditor() {
             </button>
           </div>
 
-          <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+          <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
             {cards.map((card, idx) => (
               <div key={card.id || idx} className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col gap-2 relative">
                 <div className="flex items-center justify-between">
@@ -97,12 +97,26 @@ export default function LearningEditor() {
                   </button>
                 </div>
 
-                <input
-                  type="text"
-                  className="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-bold"
-                  value={card.info_value}
-                  onChange={(e) => handleCardChange(card.id, e.target.value)}
-                />
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold text-slate-500">عنوان البطاقة (Label):</label>
+                  <input
+                    type="text"
+                    className="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-black text-slate-800"
+                    value={card.info_key === 'what_you_will_learn' ? '' : (card.info_key || '')}
+                    onChange={(e) => handleCardChange(card.id, 'info_key', e.target.value)}
+                    placeholder="مثال: إتقان الأساسيات والمبادئ"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold text-slate-500">وصف المنفعة (Description):</label>
+                  <textarea
+                    className="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[50px]"
+                    value={card.info_value || ''}
+                    onChange={(e) => handleCardChange(card.id, 'info_value', e.target.value)}
+                    placeholder="التفاصيل أو الشرح..."
+                  />
+                </div>
               </div>
             ))}
           </div>

@@ -37,16 +37,16 @@ export const ActiveAccountCard = React.memo(({ method, onEdit, onDelete }: Activ
             {method.currency}
           </span>
         </div>
-        <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center overflow-hidden shrink-0">
+        <div className="w-14 h-14 rounded-2xl bg-white border border-gray-200 p-1.5 text-blue-600 flex items-center justify-center overflow-hidden shrink-0 shadow-md">
           {method.logo && !imgError ? (
             <img
               src={getLogoUrl(method.logo)}
               alt={method.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.08)]"
               onError={() => setImgError(true)}
             />
           ) : (
-            <Landmark size={20} />
+            <Landmark size={24} />
           )}
         </div>
       </div>

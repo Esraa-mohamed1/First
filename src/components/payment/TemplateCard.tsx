@@ -44,12 +44,12 @@ export const TemplateCard = React.memo(({ template, onEdit, onDelete }: Template
             )}
           </div>
         </div>
-        <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-150/80 flex items-center justify-center overflow-hidden shrink-0">
+        <div className="w-12 h-12 rounded-xl bg-white border border-gray-200 p-1 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
           {template.logo && !imgError ? (
             <img
               src={getLogoUrl(template.logo)}
               alt={template.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain p-0.5"
               onError={() => setImgError(true)}
             />
           ) : (

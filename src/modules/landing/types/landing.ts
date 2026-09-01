@@ -32,6 +32,7 @@ export interface LearningSectionData {
 
 export interface ChapterSectionData {
   title: string;
+  subtitle?: string;
   showLessons: boolean;
   backgroundColor?: string;
   textColor?: string;
@@ -39,6 +40,8 @@ export interface ChapterSectionData {
 
 export interface PaymentSectionData {
   title: string;
+  description?: string;
+  subtitle?: string;
   background?: string;
   textColor?: string;
 }

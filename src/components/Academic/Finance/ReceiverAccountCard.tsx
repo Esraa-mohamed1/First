@@ -44,8 +44,8 @@ const ReceiverAccountCard: React.FC<ReceiverAccountCardProps> = ({
   return (
     <div className={twMerge("border rounded-[16px] transition-all", isOpen ? "border-blue-200 shadow-sm" : "border-gray-200")}>
       <div className="p-4 flex items-center gap-4 relative cursor-pointer" onClick={onToggleOpen}>
-        <div className="w-14 h-8 rounded flex items-center justify-center text-white font-black text-xs overflow-hidden">
-          <img src={account.logo} alt={account.name} className="w-full h-full object-cover" />
+        <div className="w-14 h-14 rounded-2xl bg-white border border-gray-200 p-1.5 flex items-center justify-center shrink-0 overflow-hidden shadow-md">
+          <img src={account.logo} alt={account.name} className="w-full h-full object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.08)]" />
         </div>
         <span className="font-black text-sm text-gray-900 flex-1">{account.name} ({account.country_name})</span>
 

@@ -180,7 +180,10 @@ export default function LearningSection({
                 className="p-6 rounded-2xl border flex items-center justify-between gap-6 group hover:border-[var(--theme-primary)] transition-all shadow-sm"
               >
                 <div style={{ color: `rgba(${textRgb}, 0.85)` }} className="font-bold leading-relaxed text-sm md:text-base text-right flex-1">
-                  {card.info_value}
+                  {card.info_key && card.info_key !== 'what_you_will_learn' && (
+                    <h4 style={{ color: localText }} className="font-extrabold text-sm mb-1">{card.info_key}</h4>
+                  )}
+                  <p className="text-xs md:text-sm text-slate-600 font-medium">{card.info_value}</p>
                 </div>
                 
                 <div 
