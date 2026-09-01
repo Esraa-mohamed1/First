@@ -22,7 +22,16 @@ export const getLandingPageByCourseSlug = async (slug: string, courseId?: number
 
 export const getStudentLandingPageByCourseSlug = async (slug: string, courseId?: number | string): Promise<any> => {
   try {
-    const response = await studentApi.get(`landing_pages`);
+    let response;
+    try {
+      response = await studentApi.get(`landing_pages`);
+    } catch (e: any) {
+      if (e?.response?.status === 404 || e?.status === 404) {
+        response = await academyApi.get(`landing_pages`);
+      } else {
+        throw e;
+      }
+    }
     const list = response.data?.data || response.data;
     if (Array.isArray(list)) {
       if (courseId) {
@@ -102,7 +111,16 @@ export const getLandingPagesList = async (): Promise<any[]> => {
 
 export const getStudentLandingPagesList = async (): Promise<any[]> => {
   try {
-    const response = await studentApi.get('landing_pages');
+    let response;
+    try {
+      response = await studentApi.get('landing_pages');
+    } catch (e: any) {
+      if (e?.response?.status === 404 || e?.status === 404) {
+        response = await academyApi.get('landing_pages');
+      } else {
+        throw e;
+      }
+    }
     const data = response.data?.data ?? response.data;
     return Array.isArray(data) ? data : [];
   } catch (error: any) {
