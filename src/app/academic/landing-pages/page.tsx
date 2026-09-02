@@ -14,7 +14,7 @@ import { getTemplateDefaultContent } from '@/modules/landing/constants/defaultCo
 import { getLandingPagesList, createLandingPage, updateLandingPage, deleteLandingPage } from '@/modules/landing/services/landing.api';
 import TemplatePreviewModal from '@/modules/landing/components/TemplatePreviewModal';
 
-// Section Editors
+// Section Editors - Template 1 (Classic/Royal)
 import HeroEditor from '@/modules/landing/editor/HeroEditor';
 import LearningEditor from '@/modules/landing/editor/LearningEditor';
 import ChapterEditor from '@/modules/landing/editor/ChapterEditor';
@@ -23,6 +23,20 @@ import FAQEditor from '@/modules/landing/editor/FAQEditor';
 import ReviewsEditor from '@/modules/landing/editor/ReviewsEditor';
 import WhatsAppEditor from '@/modules/landing/editor/WhatsAppEditor';
 import FooterEditor from '@/modules/landing/editor/FooterEditor';
+
+// Section Editors - Template 2 (Modern / Interactive)
+import Template2HeroEditor from '@/modules/landing/editor/template2/Template2HeroEditor';
+import Template2AboutEditor from '@/modules/landing/editor/template2/Template2AboutEditor';
+import Template2FeaturesEditor from '@/modules/landing/editor/template2/Template2FeaturesEditor';
+import Template2InstructorEditor from '@/modules/landing/editor/template2/Template2InstructorEditor';
+import Template2BenefitsEditor from '@/modules/landing/editor/template2/Template2BenefitsEditor';
+import Template2CtaEditor from '@/modules/landing/editor/template2/Template2CtaEditor';
+
+// Section Editors - Template 3 (UI/UX / Academy)
+import Template3HeroEditor from '@/modules/landing/editor/template3/Template3HeroEditor';
+import Template3InstructorEditor from '@/modules/landing/editor/template3/Template3InstructorEditor';
+import Template3PricingEditor from '@/modules/landing/editor/template3/Template3PricingEditor';
+
 
 interface LandingPageItem {
   id: string;
@@ -682,14 +696,40 @@ export default function LandingPagesManagementPage() {
                   onChange={(e) => setActiveSectionId(e.target.value || null)}
                 >
                   <option value="">-- اختر قسماً لتعديله --</option>
-                  <option value="hero">البانر الرئيسي (الهيرو)</option>
-                  <option value="learning">ماذا ستتعلم؟</option>
-                  <option value="chapters">المنهج والدروس</option>
-                  <option value="payment">وسائل الدفع</option>
-                  <option value="faq">الأسئلة الشائعة</option>
-                  <option value="reviews">آراء الطلاب والتقييمات</option>
-                  <option value="whatsapp">زر تواصل واتساب</option>
-                  <option value="footer">تذييل الصفحة (الفوتر)</option>
+                  {storeTemplateName === 'template_2' ? (
+                    <>
+                      <option value="hero">البانر الرئيسي (الهيرو)</option>
+                      <option value="about">عن الدورة وبطاقة الاستثمار</option>
+                      <option value="features">بنية الدورة ومميزاتها</option>
+                      <option value="chapters">المنهج ومحتوى الدورة</option>
+                      <option value="instructor">بيانات واعتمادات المدرب</option>
+                      <option value="benefits">ماذا ستحصل عليه (المخرجات)</option>
+                      <option value="cta">البانر الختامي (CTA)</option>
+                      <option value="footer">تذييل الصفحة (الفوتر)</option>
+                      <option value="whatsapp">زر تواصل واتساب</option>
+                    </>
+                  ) : storeTemplateName === 'template_3' ? (
+                    <>
+                      <option value="hero">البانر الرئيسي (الهيرو)</option>
+                      <option value="learning">ماذا ستتعلم في الدورة</option>
+                      <option value="chapters">محتوى الدورة والمنهج</option>
+                      <option value="instructor">عن المحاضر والمدرب</option>
+                      <option value="faq">الأسئلة الشائعة حول البرنامج</option>
+                      <option value="payment">بطاقة ورسوم الاشتراك</option>
+                      <option value="whatsapp">زر تواصل واتساب</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="hero">البانر الرئيسي (الهيرو)</option>
+                      <option value="learning">ماذا ستتعلم؟</option>
+                      <option value="chapters">المنهج والدروس</option>
+                      <option value="payment">وسائل الدفع</option>
+                      <option value="faq">الأسئلة الشائعة</option>
+                      <option value="reviews">آراء الطلاب والتقييمات</option>
+                      <option value="whatsapp">زر تواصل واتساب</option>
+                      <option value="footer">تذييل الصفحة (الفوتر)</option>
+                    </>
+                  )}
                 </select>
               </div>
 
@@ -697,6 +737,102 @@ export default function LandingPagesManagementPage() {
               <div className="flex-grow overflow-y-auto">
                 {(() => {
                   const sec = (activeSectionId || '').toLowerCase().trim();
+                  if (!sec) {
+                    return (
+                      <div className="text-center py-20 text-slate-400 font-bold text-xs flex flex-col items-center gap-3">
+                        <Settings className="w-12 h-12 text-slate-300 animate-pulse" />
+                        <span>👈 اختر قسماً من القائمة أعلاه أو انقر فوق أي قسم في صفحة المعاينة لتعديل إعداداته ومحتوياته مباشرة هنا.</span>
+                      </div>
+                    );
+                  }
+
+                  if (storeTemplateName === 'template_2') {
+                    switch (sec) {
+                      case 'hero':
+                      case 'overview':
+                      case 'intro':
+                      case 'banner':
+                      case 'header':
+                      case 'main':
+                        return <Template2HeroEditor />;
+                      case 'about':
+                      case 'learning':
+                        return <Template2AboutEditor />;
+                      case 'features':
+                        return <Template2FeaturesEditor />;
+                      case 'chapters':
+                      case 'curriculum':
+                      case 'syllabus':
+                      case 'content':
+                      case 'modules':
+                      case 'units':
+                        return <ChapterEditor />;
+                      case 'instructor':
+                        return <Template2InstructorEditor />;
+                      case 'benefits':
+                        return <Template2BenefitsEditor />;
+                      case 'cta':
+                      case 'payment':
+                      case 'pricing':
+                        return <Template2CtaEditor />;
+                      case 'footer':
+                      case 'bottom':
+                        return <FooterEditor />;
+                      case 'whatsapp':
+                      case 'contact':
+                      case 'support':
+                      case 'chat':
+                        return <WhatsAppEditor />;
+                      default:
+                        return <Template2HeroEditor />;
+                    }
+                  }
+
+                  if (storeTemplateName === 'template_3') {
+                    switch (sec) {
+                      case 'hero':
+                      case 'overview':
+                      case 'intro':
+                      case 'banner':
+                      case 'header':
+                      case 'main':
+                        return <Template3HeroEditor />;
+                      case 'learning':
+                      case 'features':
+                      case 'benefits':
+                      case 'outcomes':
+                      case 'about':
+                        return <LearningEditor />;
+                      case 'chapters':
+                      case 'curriculum':
+                      case 'syllabus':
+                      case 'content':
+                      case 'modules':
+                      case 'units':
+                        return <ChapterEditor />;
+                      case 'instructor':
+                      case 'trainer':
+                      case 'teacher':
+                        return <Template3InstructorEditor />;
+                      case 'faq':
+                      case 'questions':
+                      case 'help':
+                        return <FAQEditor />;
+                      case 'payment':
+                      case 'pricing':
+                      case 'packages':
+                      case 'checkout':
+                        return <Template3PricingEditor />;
+                      case 'whatsapp':
+                      case 'contact':
+                      case 'support':
+                      case 'chat':
+                        return <WhatsAppEditor />;
+                      default:
+                        return <Template3HeroEditor />;
+                    }
+                  }
+
                   const key = 
                     ['hero', 'overview', 'intro', 'banner', 'header', 'main'].includes(sec) ? 'hero' :
                     ['learning', 'features', 'benefits', 'outcomes', 'about'].includes(sec) ? 'learning' :

@@ -30,6 +30,7 @@ import TemplatePreviewModal from '@/modules/landing/components/TemplatePreviewMo
 import { useLandingSave } from '@/modules/landing/hooks/useLandingSave';
 import { getLandingPagesList, createLandingPage, updateLandingPage, deleteLandingPage } from '@/modules/landing/services/landing.api';
 import { getTemplateDefaultContent } from '@/modules/landing/constants/defaultContent';
+// Section Editors - Template 1
 import HeroEditor from '@/modules/landing/editor/HeroEditor';
 import LearningEditor from '@/modules/landing/editor/LearningEditor';
 import ChapterEditor from '@/modules/landing/editor/ChapterEditor';
@@ -38,6 +39,21 @@ import FAQEditor from '@/modules/landing/editor/FAQEditor';
 import FooterEditor from '@/modules/landing/editor/FooterEditor';
 import ReviewsEditor from '@/modules/landing/editor/ReviewsEditor';
 import WhatsAppEditor from '@/modules/landing/editor/WhatsAppEditor';
+
+// Section Editors - Template 2 (Modern)
+import Template2HeroEditor from '@/modules/landing/editor/template2/Template2HeroEditor';
+import Template2AboutEditor from '@/modules/landing/editor/template2/Template2AboutEditor';
+import Template2FeaturesEditor from '@/modules/landing/editor/template2/Template2FeaturesEditor';
+import Template2InstructorEditor from '@/modules/landing/editor/template2/Template2InstructorEditor';
+import Template2BenefitsEditor from '@/modules/landing/editor/template2/Template2BenefitsEditor';
+import Template2CtaEditor from '@/modules/landing/editor/template2/Template2CtaEditor';
+
+// Section Editors - Template 3 (UI/UX / Academy)
+import Template3HeroEditor from '@/modules/landing/editor/template3/Template3HeroEditor';
+import Template3InstructorEditor from '@/modules/landing/editor/template3/Template3InstructorEditor';
+import Template3PricingEditor from '@/modules/landing/editor/template3/Template3PricingEditor';
+
+
 import ManageSubscribersView from '@/components/Academic/Subscribers/ManageSubscribersView';
 
 const MySwal = withReactContent(Swal);
@@ -653,38 +669,13 @@ export default function CourseDetailsPage() {
   };
 
   const handleNextFromInfo = () => {
-    const newErrors: Record<string, any> = {};
-    if (!courseInfo.title.trim()) newErrors.title = 'عنوان الدورة مطلوب';
-    if (!courseInfo.description.trim() || courseInfo.description === '<p><br></p>') newErrors.description = 'وصف الدورة مطلوب';
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      toast.error('يرجى ملء الحقول المطلوبة وتصحيح الأخطاء');
-      return;
-    }
     setActiveTab('content');
   };
 
   const handleTabChange = (targetTab: 'info' | 'content' | 'pricing' | 'landing_pages' | 'subscribers') => {
-    if (targetTab === 'info') {
-      setActiveTab('info');
-      return;
-    }
-
-    if (activeTab === 'info') {
-      const newErrors: Record<string, any> = {};
-      if (!courseInfo.title.trim()) newErrors.title = 'عنوان الدورة مطلوب';
-      if (!courseInfo.description.trim() || courseInfo.description === '<p><br></p>') newErrors.description = 'وصف الدورة مطلوب';
-
-      if (Object.keys(newErrors).length > 0) {
-        setErrors(newErrors);
-        toast.error('يرجى ملء الحقول المطلوبة وتصحيح الأخطاء');
-        return;
-      }
-    }
-
     setActiveTab(targetTab);
   };
+
 
   const activeGrades = gradesList.length > 0 ? gradesList : [
     { id: 'first_sec', name: 'أولى ثانوي' },
@@ -1258,6 +1249,10 @@ export default function CourseDetailsPage() {
   };
 
   const handleCopyCustomLink = (page: any) => {
+    if (status === 'draft' || course?.status === 'draft') {
+      toast.error('لا يمكن مشاركة الدورة لأنها مسودة، يجب نشر الدورة أولاً');
+      return;
+    }
     if (typeof window !== 'undefined') {
       const link = `${window.location.origin}/${page.slug || 'preview'}?lp_id=${page.id}`;
       navigator.clipboard.writeText(link);
@@ -1266,12 +1261,17 @@ export default function CourseDetailsPage() {
   };
 
   const handleCopyDefaultLink = () => {
+    if (status === 'draft' || course?.status === 'draft') {
+      toast.error('لا يمكن مشاركة الدورة لأنها مسودة، يجب نشر الدورة أولاً');
+      return;
+    }
     if (typeof window !== 'undefined') {
       const link = `${window.location.origin}/courses/${course?.slug || id}`;
       navigator.clipboard.writeText(link);
       toast.success('تم نسخ رابط صفحة البيع الافتراضية بنجاح!');
     }
   };
+
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -2617,20 +2617,141 @@ export default function CourseDetailsPage() {
                           onChange={(e) => setActiveSectionId(e.target.value || null)}
                         >
                           <option value="">-- اختر قسماً من القائمة --</option>
-                          <option value="hero">البانر الرئيسي (الهيرو)</option>
-                          <option value="learning">ماذا ستتعلم؟</option>
-                          <option value="chapters">المنهج والدروس</option>
-                          <option value="payment">وسائل الدفع</option>
-                          <option value="faq">الأسئلة الشائعة</option>
-                          <option value="reviews">آراء الطلاب والتقييمات</option>
-                          <option value="whatsapp">زر تواصل واتساب</option>
-                          <option value="footer">تذييل الصفحة (الفوتر)</option>
+                          {inlineEditingTemplate === 'template_2' ? (
+                            <>
+                              <option value="hero">البانر الرئيسي (الهيرو)</option>
+                              <option value="about">عن الدورة وبطاقة الاستثمار</option>
+                              <option value="features">بنية الدورة ومميزاتها</option>
+                              <option value="chapters">المنهج ومحتوى الدورة</option>
+                              <option value="instructor">بيانات واعتمادات المدرب</option>
+                              <option value="benefits">ماذا ستحصل عليه (المخرجات)</option>
+                              <option value="cta">البانر الختامي (CTA)</option>
+                              <option value="footer">تذييل الصفحة (الفوتر)</option>
+                              <option value="whatsapp">زر تواصل واتساب</option>
+                            </>
+                          ) : inlineEditingTemplate === 'template_3' ? (
+                            <>
+                              <option value="hero">البانر الرئيسي (الهيرو)</option>
+                              <option value="learning">ماذا ستتعلم في الدورة</option>
+                              <option value="chapters">محتوى الدورة والمنهج</option>
+                              <option value="instructor">عن المحاضر والمدرب</option>
+                              <option value="faq">الأسئلة الشائعة حول البرنامج</option>
+                              <option value="payment">بطاقة ورسوم الاشتراك</option>
+                              <option value="whatsapp">زر تواصل واتساب</option>
+                            </>
+                          ) : (
+                            <>
+                              <option value="hero">البانر الرئيسي (الهيرو)</option>
+                              <option value="learning">ماذا ستتعلم؟</option>
+                              <option value="chapters">المنهج والدروس</option>
+                              <option value="payment">وسائل الدفع</option>
+                              <option value="faq">الأسئلة الشائعة</option>
+                              <option value="reviews">آراء الطلاب والتقييمات</option>
+                              <option value="whatsapp">زر تواصل واتساب</option>
+                              <option value="footer">تذييل الصفحة (الفوتر)</option>
+                            </>
+                          )}
                         </select>
                       </div>
 
                       <div className="flex-1 overflow-y-auto pt-1 space-y-3">
                         {(() => {
                           const sec = (activeSectionId || '').toLowerCase().trim();
+                          if (!sec) {
+                            return (
+                              <div className="text-center py-12 text-slate-400 font-bold text-xs space-y-2">
+                                <p>👈 اختر قسماً من القائمة أعلاه لتعديل إعداداته هنا.</p>
+                              </div>
+                            );
+                          }
+
+                          if (inlineEditingTemplate === 'template_2') {
+                            switch (sec) {
+                              case 'hero':
+                              case 'overview':
+                              case 'intro':
+                              case 'banner':
+                              case 'header':
+                              case 'main':
+                                return <Template2HeroEditor />;
+                              case 'about':
+                              case 'learning':
+                                return <Template2AboutEditor />;
+                              case 'features':
+                                return <Template2FeaturesEditor />;
+                              case 'chapters':
+                              case 'curriculum':
+                              case 'syllabus':
+                              case 'content':
+                              case 'modules':
+                              case 'units':
+                                return <ChapterEditor />;
+                              case 'instructor':
+                                return <Template2InstructorEditor />;
+                              case 'benefits':
+                                return <Template2BenefitsEditor />;
+                              case 'cta':
+                              case 'payment':
+                              case 'pricing':
+                                return <Template2CtaEditor />;
+                              case 'footer':
+                              case 'bottom':
+                                return <FooterEditor />;
+                              case 'whatsapp':
+                              case 'contact':
+                              case 'support':
+                              case 'chat':
+                                return <WhatsAppEditor />;
+                              default:
+                                return <Template2HeroEditor />;
+                            }
+                          }
+
+                          if (inlineEditingTemplate === 'template_3') {
+                            switch (sec) {
+                              case 'hero':
+                              case 'overview':
+                              case 'intro':
+                              case 'banner':
+                              case 'header':
+                              case 'main':
+                                return <Template3HeroEditor />;
+                              case 'learning':
+                              case 'features':
+                              case 'benefits':
+                              case 'outcomes':
+                              case 'about':
+                                return <LearningEditor />;
+                              case 'chapters':
+                              case 'curriculum':
+                              case 'syllabus':
+                              case 'content':
+                              case 'modules':
+                              case 'units':
+                                return <ChapterEditor />;
+                              case 'instructor':
+                              case 'trainer':
+                              case 'teacher':
+                                return <Template3InstructorEditor />;
+                              case 'faq':
+                              case 'questions':
+                              case 'help':
+                                return <FAQEditor />;
+                              case 'payment':
+                              case 'pricing':
+                              case 'packages':
+                              case 'checkout':
+                                return <Template3PricingEditor />;
+                              case 'whatsapp':
+                              case 'contact':
+                              case 'support':
+                              case 'chat':
+                                return <WhatsAppEditor />;
+                              default:
+                                return <Template3HeroEditor />;
+                            }
+                          }
+
                           const key =
                             ['hero', 'overview', 'intro', 'banner', 'header', 'main'].includes(sec) ? 'hero' :
                               ['learning', 'features', 'benefits', 'outcomes', 'about'].includes(sec) ? 'learning' :
@@ -3136,20 +3257,141 @@ export default function CourseDetailsPage() {
                     onChange={(e) => setActiveSectionId(e.target.value || null)}
                   >
                     <option value="">-- اختر قسماً من القائمة --</option>
-                    <option value="hero">البانر الرئيسي (الهيرو)</option>
-                    <option value="learning">ماذا ستتعلم؟</option>
-                    <option value="chapters">المنهج والدروس</option>
-                    <option value="payment">وسائل الدفع</option>
-                    <option value="faq">الأسئلة الشائعة</option>
-                    <option value="reviews">آراء الطلاب والتقييمات</option>
-                    <option value="whatsapp">زر تواصل واتساب</option>
-                    <option value="footer">تذييل الصفحة (الفوتر)</option>
+                    {(previewTemplateId === 'template_2' || courseTemplate === 'template_2') ? (
+                      <>
+                        <option value="hero">البانر الرئيسي (الهيرو)</option>
+                        <option value="about">عن الدورة وبطاقة الاستثمار</option>
+                        <option value="features">بنية الدورة ومميزاتها</option>
+                        <option value="chapters">المنهج ومحتوى الدورة</option>
+                        <option value="instructor">بيانات واعتمادات المدرب</option>
+                        <option value="benefits">ماذا ستحصل عليه (المخرجات)</option>
+                        <option value="cta">البانر الختامي (CTA)</option>
+                        <option value="footer">تذييل الصفحة (الفوتر)</option>
+                        <option value="whatsapp">زر تواصل واتساب</option>
+                      </>
+                    ) : (previewTemplateId === 'template_3' || courseTemplate === 'template_3') ? (
+                      <>
+                        <option value="hero">البانر الرئيسي (الهيرو)</option>
+                        <option value="learning">ماذا ستتعلم في الدورة</option>
+                        <option value="chapters">محتوى الدورة والمنهج</option>
+                        <option value="instructor">عن المحاضر والمدرب</option>
+                        <option value="faq">الأسئلة الشائعة حول البرنامج</option>
+                        <option value="payment">بطاقة ورسوم الاشتراك</option>
+                        <option value="whatsapp">زر تواصل واتساب</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="hero">البانر الرئيسي (الهيرو)</option>
+                        <option value="learning">ماذا ستتعلم؟</option>
+                        <option value="chapters">المنهج والدروس</option>
+                        <option value="payment">وسائل الدفع</option>
+                        <option value="faq">الأسئلة الشائعة</option>
+                        <option value="reviews">آراء الطلاب والتقييمات</option>
+                        <option value="whatsapp">زر تواصل واتساب</option>
+                        <option value="footer">تذييل الصفحة (الفوتر)</option>
+                      </>
+                    )}
                   </select>
                 </div>
 
                 <div className="flex-grow overflow-y-auto">
                   {(() => {
                     const sec = (activeSectionId || '').toLowerCase().trim();
+                    if (!sec) {
+                      return (
+                        <div className="text-center py-16 text-slate-400 font-bold text-xs">
+                          👈 اختر قسماً من القائمة أعلاه أو انقر فوق زر "تعديل القسم" مباشرة لتعديل إعداداته هنا.
+                        </div>
+                      );
+                    }
+
+                    if (previewTemplateId === 'template_2' || courseTemplate === 'template_2') {
+                      switch (sec) {
+                        case 'hero':
+                        case 'overview':
+                        case 'intro':
+                        case 'banner':
+                        case 'header':
+                        case 'main':
+                          return <Template2HeroEditor />;
+                        case 'about':
+                        case 'learning':
+                          return <Template2AboutEditor />;
+                        case 'features':
+                          return <Template2FeaturesEditor />;
+                        case 'chapters':
+                        case 'curriculum':
+                        case 'syllabus':
+                        case 'content':
+                        case 'modules':
+                        case 'units':
+                          return <ChapterEditor />;
+                        case 'instructor':
+                          return <Template2InstructorEditor />;
+                        case 'benefits':
+                          return <Template2BenefitsEditor />;
+                        case 'cta':
+                        case 'payment':
+                        case 'pricing':
+                          return <Template2CtaEditor />;
+                        case 'footer':
+                        case 'bottom':
+                          return <FooterEditor />;
+                        case 'whatsapp':
+                        case 'contact':
+                        case 'support':
+                        case 'chat':
+                          return <WhatsAppEditor />;
+                        default:
+                          return <Template2HeroEditor />;
+                      }
+                    }
+
+                    if (previewTemplateId === 'template_3' || courseTemplate === 'template_3') {
+                      switch (sec) {
+                        case 'hero':
+                        case 'overview':
+                        case 'intro':
+                        case 'banner':
+                        case 'header':
+                        case 'main':
+                          return <Template3HeroEditor />;
+                        case 'learning':
+                        case 'features':
+                        case 'benefits':
+                        case 'outcomes':
+                        case 'about':
+                          return <LearningEditor />;
+                        case 'chapters':
+                        case 'curriculum':
+                        case 'syllabus':
+                        case 'content':
+                        case 'modules':
+                        case 'units':
+                          return <ChapterEditor />;
+                        case 'instructor':
+                        case 'trainer':
+                        case 'teacher':
+                          return <Template3InstructorEditor />;
+                        case 'faq':
+                        case 'questions':
+                        case 'help':
+                          return <FAQEditor />;
+                        case 'payment':
+                        case 'pricing':
+                        case 'packages':
+                        case 'checkout':
+                          return <Template3PricingEditor />;
+                        case 'whatsapp':
+                        case 'contact':
+                        case 'support':
+                        case 'chat':
+                          return <WhatsAppEditor />;
+                        default:
+                          return <Template3HeroEditor />;
+                      }
+                    }
+
                     const key =
                       ['hero', 'overview', 'intro', 'banner', 'header', 'main'].includes(sec) ? 'hero' :
                         ['learning', 'features', 'benefits', 'outcomes', 'about'].includes(sec) ? 'learning' :

@@ -385,18 +385,26 @@ export default function CoursesPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            if (course.status === 'draft') {
+                              toast.error('لا يمكن مشاركة الدورة لأنها مسودة، يجب نشر الدورة أولاً');
+                              return;
+                            }
                             const shareUrl = `${window.location.origin}/courses/${course.slug || course.id}`;
                             navigator.clipboard.writeText(shareUrl);
                             toast.success('تم نسخ رابط الدورة بنجاح');
                           }}
-                          className="p-2 text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors"
-                          title="نسخ الرابط"
+                          className={`p-2 rounded-xl transition-colors ${course.status === 'draft' ? 'text-slate-300 opacity-60 cursor-not-allowed' : 'text-on-surface-variant hover:bg-surface-container'}`}
+                          title={course.status === 'draft' ? 'لا يمكن مشاركة الدورة لأنها مسودة، يجب نشر الدورة أولاً' : 'نسخ الرابط'}
                         >
-                          <LinkIcon className="w-4 h-4 text-slate-500" />
+                          <LinkIcon className={`w-4 h-4 ${course.status === 'draft' ? 'text-slate-300' : 'text-slate-500'}`} />
                         </button>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            if (course.status === 'draft') {
+                              toast.error('لا يمكن مشاركة الدورة لأنها مسودة، يجب نشر الدورة أولاً');
+                              return;
+                            }
                             const shareUrl = `${window.location.origin}/courses/${course.slug || course.id}`;
                             if (navigator.share) {
                               navigator.share({
@@ -412,10 +420,10 @@ export default function CoursesPage() {
                               toast.success('تم نسخ رابط الدورة بنجاح! يمكنك مشاركته على وسائل التواصل الاجتماعي.');
                             }
                           }}
-                          className="p-2 text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors"
-                          title="مشاركة الدورة"
+                          className={`p-2 rounded-xl transition-colors ${course.status === 'draft' ? 'text-slate-300 opacity-60 cursor-not-allowed' : 'text-on-surface-variant hover:bg-surface-container'}`}
+                          title={course.status === 'draft' ? 'لا يمكن مشاركة الدورة لأنها مسودة، يجب نشر الدورة أولاً' : 'مشاركة الدورة'}
                         >
-                          <Share2 className="w-4 h-4 text-slate-500" />
+                          <Share2 className={`w-4 h-4 ${course.status === 'draft' ? 'text-slate-300' : 'text-slate-500'}`} />
                         </button>
                       </div>
 

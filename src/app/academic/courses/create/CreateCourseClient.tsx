@@ -64,6 +64,7 @@ import LandingRenderer from '@/modules/landing/renderer/LandingRenderer';
 import TemplatePreviewModal from '@/modules/landing/components/TemplatePreviewModal';
 import { useLandingStore } from '@/modules/landing/store/landingStore';
 import { useLandingSave } from '@/modules/landing/hooks/useLandingSave';
+// Section Editors - Template 1
 import HeroEditor from '@/modules/landing/editor/HeroEditor';
 import LearningEditor from '@/modules/landing/editor/LearningEditor';
 import ChapterEditor from '@/modules/landing/editor/ChapterEditor';
@@ -72,6 +73,21 @@ import FAQEditor from '@/modules/landing/editor/FAQEditor';
 import ReviewsEditor from '@/modules/landing/editor/ReviewsEditor';
 import WhatsAppEditor from '@/modules/landing/editor/WhatsAppEditor';
 import FooterEditor from '@/modules/landing/editor/FooterEditor';
+
+// Section Editors - Template 2 (Modern)
+import Template2HeroEditor from '@/modules/landing/editor/template2/Template2HeroEditor';
+import Template2AboutEditor from '@/modules/landing/editor/template2/Template2AboutEditor';
+import Template2FeaturesEditor from '@/modules/landing/editor/template2/Template2FeaturesEditor';
+import Template2InstructorEditor from '@/modules/landing/editor/template2/Template2InstructorEditor';
+import Template2BenefitsEditor from '@/modules/landing/editor/template2/Template2BenefitsEditor';
+import Template2CtaEditor from '@/modules/landing/editor/template2/Template2CtaEditor';
+
+// Section Editors - Template 3 (UI/UX / Academy)
+import Template3HeroEditor from '@/modules/landing/editor/template3/Template3HeroEditor';
+import Template3InstructorEditor from '@/modules/landing/editor/template3/Template3InstructorEditor';
+import Template3PricingEditor from '@/modules/landing/editor/template3/Template3PricingEditor';
+
+
 
 const MySwal = withReactContent(Swal);
 
@@ -694,7 +710,17 @@ export default function CreateCourseClient() {
   };
 
   const ensureCourseCreated = async (overriddenStatus?: string) => {
-    if (courseId && !overriddenStatus) return courseId;
+    if (courseId) {
+      if (overriddenStatus && overriddenStatus !== status) {
+        try {
+          await updateCourse(courseId, { status: overriddenStatus });
+          setStatus(overriddenStatus as any);
+        } catch (e) {
+          console.error('Failed to update status on existing course:', e);
+        }
+      }
+      return courseId;
+    }
 
     const targetStatus = overriddenStatus || status;
 
@@ -1246,6 +1272,10 @@ export default function CreateCourseClient() {
   };
 
   const handleCopyCustomLink = (page: any) => {
+    if (status !== 'published') {
+      toast.error('لا يمكن مشاركة الدورة لأنها مسودة، يجب نشر الدورة أولاً');
+      return;
+    }
     if (typeof window !== 'undefined') {
       const targetSlug = page.slug || courseSlug || slug || (courseId ? String(courseId) : 'draft');
       const link = `${window.location.origin}/landing/${targetSlug}?lp_id=${page.id}`;
@@ -1255,6 +1285,10 @@ export default function CreateCourseClient() {
   };
 
   const handleCopyDefaultLink = () => {
+    if (status !== 'published') {
+      toast.error('لا يمكن مشاركة الدورة لأنها مسودة، يجب نشر الدورة أولاً');
+      return;
+    }
     if (typeof window !== 'undefined') {
       const targetSlug = courseSlug || slug || (courseId ? String(courseId) : 'draft');
       const link = `${window.location.origin}/landing/${targetSlug}`;
@@ -2848,20 +2882,141 @@ export default function CreateCourseClient() {
                     onChange={(e) => setActiveSectionId(e.target.value || null)}
                   >
                     <option value="">-- اختر قسماً من القائمة --</option>
-                    <option value="hero">البانر الرئيسي (الهيرو)</option>
-                    <option value="learning">ماذا ستتعلم؟</option>
-                    <option value="chapters">المنهج والدروس</option>
-                    <option value="payment">وسائل الدفع</option>
-                    <option value="faq">الأسئلة الشائعة</option>
-                    <option value="reviews">آراء الطلاب والتقييمات</option>
-                    <option value="whatsapp">زر تواصل واتساب</option>
-                    <option value="footer">تذييل الصفحة (الفوتر)</option>
+                    {(previewTemplateId === 'template_2' || newSelectedTemplate === 'template_2') ? (
+                      <>
+                        <option value="hero">البانر الرئيسي (الهيرو)</option>
+                        <option value="about">عن الدورة وبطاقة الاستثمار</option>
+                        <option value="features">بنية الدورة ومميزاتها</option>
+                        <option value="chapters">المنهج ومحتوى الدورة</option>
+                        <option value="instructor">بيانات واعتمادات المدرب</option>
+                        <option value="benefits">ماذا ستحصل عليه (المخرجات)</option>
+                        <option value="cta">البانر الختامي (CTA)</option>
+                        <option value="footer">تذييل الصفحة (الفوتر)</option>
+                        <option value="whatsapp">زر تواصل واتساب</option>
+                      </>
+                    ) : (previewTemplateId === 'template_3' || newSelectedTemplate === 'template_3') ? (
+                      <>
+                        <option value="hero">البانر الرئيسي (الهيرو)</option>
+                        <option value="learning">ماذا ستتعلم في الدورة</option>
+                        <option value="chapters">محتوى الدورة والمنهج</option>
+                        <option value="instructor">عن المحاضر والمدرب</option>
+                        <option value="faq">الأسئلة الشائعة حول البرنامج</option>
+                        <option value="payment">بطاقة ورسوم الاشتراك</option>
+                        <option value="whatsapp">زر تواصل واتساب</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="hero">البانر الرئيسي (الهيرو)</option>
+                        <option value="learning">ماذا ستتعلم؟</option>
+                        <option value="chapters">المنهج والدروس</option>
+                        <option value="payment">وسائل الدفع</option>
+                        <option value="faq">الأسئلة الشائعة</option>
+                        <option value="reviews">آراء الطلاب والتقييمات</option>
+                        <option value="whatsapp">زر تواصل واتساب</option>
+                        <option value="footer">تذييل الصفحة (الفوتر)</option>
+                      </>
+                    )}
                   </select>
                 </div>
 
                 <div className="flex-grow overflow-y-auto">
                   {(() => {
                     const sec = (activeSectionId || '').toLowerCase().trim();
+                    if (!sec) {
+                      return (
+                        <div className="text-center py-16 text-slate-400 font-bold text-xs">
+                          👈 اختر قسماً من القائمة أعلاه أو انقر فوق زر "تعديل القسم" مباشرة لتعديل إعداداته هنا.
+                        </div>
+                      );
+                    }
+
+                    if (previewTemplateId === 'template_2' || newSelectedTemplate === 'template_2') {
+                      switch (sec) {
+                        case 'hero':
+                        case 'overview':
+                        case 'intro':
+                        case 'banner':
+                        case 'header':
+                        case 'main':
+                          return <Template2HeroEditor />;
+                        case 'about':
+                        case 'learning':
+                          return <Template2AboutEditor />;
+                        case 'features':
+                          return <Template2FeaturesEditor />;
+                        case 'chapters':
+                        case 'curriculum':
+                        case 'syllabus':
+                        case 'content':
+                        case 'modules':
+                        case 'units':
+                          return <ChapterEditor />;
+                        case 'instructor':
+                          return <Template2InstructorEditor />;
+                        case 'benefits':
+                          return <Template2BenefitsEditor />;
+                        case 'cta':
+                        case 'payment':
+                        case 'pricing':
+                          return <Template2CtaEditor />;
+                        case 'footer':
+                        case 'bottom':
+                          return <FooterEditor />;
+                        case 'whatsapp':
+                        case 'contact':
+                        case 'support':
+                        case 'chat':
+                          return <WhatsAppEditor />;
+                        default:
+                          return <Template2HeroEditor />;
+                      }
+                    }
+
+                    if (previewTemplateId === 'template_3' || newSelectedTemplate === 'template_3') {
+                      switch (sec) {
+                        case 'hero':
+                        case 'overview':
+                        case 'intro':
+                        case 'banner':
+                        case 'header':
+                        case 'main':
+                          return <Template3HeroEditor />;
+                        case 'learning':
+                        case 'features':
+                        case 'benefits':
+                        case 'outcomes':
+                        case 'about':
+                          return <LearningEditor />;
+                        case 'chapters':
+                        case 'curriculum':
+                        case 'syllabus':
+                        case 'content':
+                        case 'modules':
+                        case 'units':
+                          return <ChapterEditor />;
+                        case 'instructor':
+                        case 'trainer':
+                        case 'teacher':
+                          return <Template3InstructorEditor />;
+                        case 'faq':
+                        case 'questions':
+                        case 'help':
+                          return <FAQEditor />;
+                        case 'payment':
+                        case 'pricing':
+                        case 'packages':
+                        case 'checkout':
+                          return <Template3PricingEditor />;
+                        case 'whatsapp':
+                        case 'contact':
+                        case 'support':
+                        case 'chat':
+                          return <WhatsAppEditor />;
+                        default:
+                          return <Template3HeroEditor />;
+                      }
+                    }
+
                     const key = 
                       ['hero', 'overview', 'intro', 'banner', 'header', 'main'].includes(sec) ? 'hero' :
                       ['learning', 'features', 'benefits', 'outcomes', 'about'].includes(sec) ? 'learning' :

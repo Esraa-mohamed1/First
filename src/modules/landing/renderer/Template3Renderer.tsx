@@ -267,7 +267,7 @@ export default function Template3Renderer({
               {isEditable && (
                 <button
                   type="button"
-                  onClick={(e) => triggerEdit('footer', e)}
+                  onClick={(e) => triggerEdit('instructor', e)}
                   className="absolute top-4 left-4 z-10 bg-blue-600 text-white px-3 py-1 rounded-md text-[10px] font-bold shadow-md hover:bg-blue-700 cursor-pointer"
                 >
                   تعديل بيانات المدرب
@@ -279,22 +279,30 @@ export default function Template3Renderer({
                   <img 
                     alt="Instructor" 
                     className="w-full h-full object-cover" 
-                    src={courseData?.instructor?.avatar || courseData?.user?.avatar || 'https://lh3.googleusercontent.com/aida-public/AD-v9Z-y-V_K_Z6-z-v9Z-y-V_K_Z6-z-v9Z-y-V_K_Z6-z-v9Z-y-V_K_Z6-z-v9Z-y-V_K_Z6-z-v9Z-y-V_K_Z6-z'}
+                    src={content.template3_instructor?.avatar || courseData?.instructor?.avatar || courseData?.user?.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400'}
                   />
                 </div>
                 <div>
-                  <h3 className="text-lg lg:text-xl font-black text-slate-800">{courseData?.instructor_name || courseData?.instructor?.name || courseData?.user?.name || 'أ. سارة أحمد'}</h3>
-                  <p className="text-blue-600 font-bold text-xs lg:text-sm mt-1 mb-4">{courseData?.instructor_title || 'خبير وكبير مصممي المنتجات الرقمية'}</p>
+                  <h3 className="text-lg lg:text-xl font-black text-slate-800">
+                    {content.template3_instructor?.name || courseData?.instructor_name || courseData?.instructor?.name || courseData?.user?.name || 'أ. سارة أحمد'}
+                  </h3>
+                  <p className="text-blue-600 font-bold text-xs lg:text-sm mt-1 mb-4">
+                    {content.template3_instructor?.jobTitle || courseData?.instructor_title || 'خبير وكبير مصممي المنتجات الرقمية'}
+                  </p>
                   <p className="text-slate-600 text-sm leading-relaxed font-semibold">
-                    {courseData?.instructor_bio || 'خبرة طويلة في تصميم وتطوير المنتجات الرقمية الموجهة للمستخدمين. عمل مع عدة جهات ومستشار تقني للتصميم وتطوير الهويات وتسهيل رحلة العميل.'}
+                    {content.template3_instructor?.bio || courseData?.instructor_bio || 'خبرة طويلة في تصميم وتطوير المنتجات الرقمية الموجهة للمستخدمين. عمل مع عدة جهات ومستشار تقني للتصميم وتطوير الهويات وتسهيل رحلة العميل.'}
                   </p>
                   <div className="flex gap-8 mt-6">
                     <div className="flex flex-col">
-                      <span className="text-xl lg:text-2xl font-black text-slate-900">45,000+</span>
+                      <span className="text-xl lg:text-2xl font-black text-slate-900">
+                        {content.template3_instructor?.studentsCount || '45,000+'}
+                      </span>
                       <span className="text-[10px] lg:text-xs font-bold text-slate-400 mt-0.5">طالب مستفيد</span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-xl lg:text-2xl font-black text-slate-900">12+</span>
+                      <span className="text-xl lg:text-2xl font-black text-slate-900">
+                        {content.template3_instructor?.coursesCount || '12+'}
+                      </span>
                       <span className="text-[10px] lg:text-xs font-bold text-slate-400 mt-0.5">برنامج تدريبي</span>
                     </div>
                   </div>
@@ -313,7 +321,9 @@ export default function Template3Renderer({
                   تعديل الأسئلة الشائعة
                 </button>
               )}
-              <h2 className="text-xl lg:text-2xl font-black text-slate-900 mb-8">الأسئلة الشائعة حول البرنامج</h2>
+              <h2 className="text-xl lg:text-2xl font-black text-slate-900 mb-8">
+                {content.faq?.title || 'الأسئلة الشائعة حول البرنامج'}
+              </h2>
               <div className="space-y-6">
                 {(content.faq?.items || []).map((faq: any, fIdx: number) => (
                   <div key={fIdx} className="border-b border-slate-100 pb-4 last:border-b-0 last:pb-0">
@@ -373,7 +383,9 @@ export default function Template3Renderer({
               
               {/* Badge/Price Header */}
               <div className="bg-blue-600 p-6 text-white text-center">
-                <div className="text-xs font-bold opacity-80 mb-1">رسوم الاشتراك الفوري بالدورة</div>
+                <div className="text-xs font-bold opacity-80 mb-1">
+                  {content.template3_pricing?.title || content.payment?.title || 'رسوم الاشتراك الفوري بالدورة'}
+                </div>
                 <div className="flex items-center justify-center gap-2">
                   <span className="text-4xl font-black">{price.toLocaleString('ar-EG')}</span>
                   <span className="text-sm font-bold">ريال سعودي</span>
@@ -397,7 +409,7 @@ export default function Template3Renderer({
                   className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-4 rounded-2xl font-black text-base shadow-xl shadow-blue-500/25 hover:shadow-blue-500/35 transition-all mb-4 flex items-center justify-center gap-3 cursor-pointer"
                 >
                   <ShoppingCart size={18} />
-                  <span>{isSubscribing ? 'جاري الاشتراك...' : 'اشترك وسجل بالدورة الآن'}</span>
+                  <span>{isSubscribing ? 'جاري الاشتراك...' : (content.template3_pricing?.buttonText || 'اشترك وسجل بالدورة الآن')}</span>
                 </button>
 
                 <div className="mt-6">
@@ -406,42 +418,31 @@ export default function Template3Renderer({
                     <span>ما يشتمل عليه تسجيلك:</span>
                   </h4>
                   <ul className="space-y-4">
-                    <li className="flex items-center gap-4 text-slate-600">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
-                        <Video size={16} />
-                      </div>
-                      <span className="text-xs lg:text-sm font-bold">وصول كامل لكافة المحاضرات والدروس المصورة</span>
-                    </li>
-                    <li className="flex items-center gap-4 text-slate-600">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
-                        <FileDown size={16} />
-                      </div>
-                      <span className="text-xs lg:text-sm font-bold">ملفات عمل ومصادر وتطبيقات قابلة للتحميل</span>
-                    </li>
-                    <li className="flex items-center gap-4 text-slate-600">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
-                        <GraduationCap size={16} />
-                      </div>
-                      <span className="text-xs lg:text-sm font-bold">شهادة إتمام معتمدة باسمك من منصة دَرّب</span>
-                    </li>
-                    <li className="flex items-center gap-4 text-slate-600">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
-                        <RefreshCw size={16} />
-                      </div>
-                      <span className="text-xs lg:text-sm font-bold">تحديثات دورية مجانية للمحتوى مدى الحياة</span>
-                    </li>
-                    <li className="flex items-center gap-4 text-slate-600">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
-                        <Smartphone size={16} />
-                      </div>
-                      <span className="text-xs lg:text-sm font-bold">إمكانية الحضور والمتابعة من الهاتف أو الكمبيوتر</span>
-                    </li>
+                    {((content.template3_pricing?.items && content.template3_pricing.items.length > 0) ? content.template3_pricing.items : [
+                      'وصول كامل لكافة المحاضرات والدروس المصورة',
+                      'ملفات عمل ومصادر وتطبيقات قابلة للتحميل',
+                      'شهادة إتمام معتمدة باسمك من منصة دَرّب',
+                      'تحديثات دورية مجانية للمحتوى مدى الحياة',
+                      'إمكانية الحضور والمتابعة من الهاتف أو الكمبيوتر'
+                    ]).map((item: string, iIdx: number) => {
+                      const icons = [Video, FileDown, GraduationCap, RefreshCw, Smartphone];
+                      const IconComponent = icons[iIdx % icons.length];
+                      return (
+                        <li key={iIdx} className="flex items-center gap-4 text-slate-600">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
+                            <IconComponent size={16} />
+                          </div>
+                          <span className="text-xs lg:text-sm font-bold">{item}</span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
 
                 <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between text-slate-400">
-                  <span className="text-[10px] font-black tracking-wider">ضمان استرداد الأموال كاملة</span>
-                  <span className="text-xs font-extrabold text-slate-500">خلال 30 يوماً</span>
+                  <span className="text-[10px] font-black tracking-wider">
+                    {content.template3_pricing?.guaranteeText || 'ضمان استرداد الأموال كاملة خلال 30 يوماً'}
+                  </span>
                 </div>
               </div>
             </div>
