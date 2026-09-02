@@ -210,19 +210,19 @@ export default function PackagesPostPage() {
 
                 // Collect only real limits that exist on the package
                 const realLimits: { label: string; value: any; icon: any }[] = [];
-                if (pkg.max_students !== null && pkg.max_students !== undefined && pkg.max_students !== '') {
+                if (pkg.max_students !== null && pkg.max_students !== undefined && String(pkg.max_students) !== '') {
                   realLimits.push({ label: 'طالب', value: pkg.max_students, icon: Users });
                 }
-                if (pkg.max_instructors !== null && pkg.max_instructors !== undefined && pkg.max_instructors !== '') {
+                if (pkg.max_instructors !== null && pkg.max_instructors !== undefined && String(pkg.max_instructors) !== '') {
                   realLimits.push({ label: 'مدرب', value: pkg.max_instructors, icon: GraduationCap });
                 }
-                if (pkg.max_courses !== null && pkg.max_courses !== undefined && pkg.max_courses !== '') {
+                if (pkg.max_courses !== null && pkg.max_courses !== undefined && String(pkg.max_courses) !== '') {
                   realLimits.push({ label: 'دورة', value: pkg.max_courses, icon: BookOpen });
                 }
-                if (pkg.video_hours !== null && pkg.video_hours !== undefined && pkg.video_hours !== '') {
+                if (pkg.video_hours !== null && pkg.video_hours !== undefined && String(pkg.video_hours) !== '') {
                   realLimits.push({ label: 'ساعة فيديو', value: pkg.video_hours, icon: Video });
                 }
-                if (pkg.custom_domains !== null && pkg.custom_domains !== undefined && pkg.custom_domains !== '') {
+                if (pkg.custom_domains !== null && pkg.custom_domains !== undefined && String(pkg.custom_domains) !== '') {
                   realLimits.push({ label: 'نطاق مخصص', value: pkg.custom_domains, icon: Globe });
                 }
 

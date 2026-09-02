@@ -274,57 +274,64 @@ export default function LandingPageBuilderPage() {
         {/* Right Sidebar Inspector (Editor Controls Panel) */}
         <aside className="w-full md:w-[380px] bg-slate-800 border-l border-slate-700/70 flex flex-col shrink-0 overflow-hidden shadow-2xl z-20">
           <div className="p-4 border-b border-slate-700/60 bg-slate-800/80 space-y-2">
-            <label className="text-xs font-black text-slate-300 block">اختر القسم للتعديل والتخصيص:</label>
+            <label className="text-xs font-black text-slate-300 block">أقسام القالب الأول للتعديل والتخصيص:</label>
             <select
               className="w-full border border-slate-600 rounded-xl p-2.5 text-xs bg-slate-900 text-white font-bold focus:outline-none focus:border-blue-500 cursor-pointer"
-              value={activeSectionId || ''}
-              onChange={(e) => setActiveSectionId(e.target.value || null)}
+              value={activeSectionId || 'hero'}
+              onChange={(e) => setActiveSectionId(e.target.value || 'hero')}
             >
-              <option value="">-- اختر قسماً من القائمة --</option>
-              <option value="hero">البانر الرئيسي (الهيرو)</option>
-              <option value="learning">ماذا ستتعلم؟</option>
-              <option value="chapters">المنهج والدروس</option>
-              <option value="payment">وسائل الدفع</option>
-              <option value="faq">الأسئلة الشائعة</option>
-              <option value="reviews">آراء الطلاب والتقييمات</option>
-              <option value="whatsapp">زر تواصل واتساب</option>
-              <option value="footer">تذييل الصفحة (الفوتر)</option>
+              {selectedTemplate === 'template_1' ? (
+                <>
+                  <option value="hero">البانر الرئيسي (الهيرو)</option>
+                  <option value="learning">ماذا ستتعلم؟</option>
+                  <option value="chapters">المنهج والدروس</option>
+                  <option value="payment">وسائل الدفع</option>
+                  <option value="faq">الأسئلة الشائعة</option>
+                  <option value="reviews">آراء الطلاب والتقييمات</option>
+                  <option value="whatsapp">زر تواصل واتساب</option>
+                  <option value="footer">تذييل الصفحة (الفوتر)</option>
+                </>
+              ) : (
+                <option value="hero">البانر الرئيسي (الهيرو)</option>
+              )}
             </select>
           </div>
 
           <div className="flex-1 overflow-y-auto p-5 space-y-6 text-slate-900 bg-white">
-            {(() => {
-              const sec = (activeSectionId || '').toLowerCase().trim();
-              const key =
-                ['hero', 'overview', 'intro', 'banner', 'header', 'main'].includes(sec) ? 'hero' :
-                ['learning', 'features', 'benefits', 'outcomes', 'about'].includes(sec) ? 'learning' :
-                ['chapters', 'curriculum', 'syllabus', 'content', 'modules', 'units'].includes(sec) ? 'chapters' :
-                ['payment', 'pricing', 'packages', 'checkout'].includes(sec) ? 'payment' :
-                ['faq', 'questions', 'help'].includes(sec) ? 'faq' :
-                ['reviews', 'testimonials', 'ratings', 'students'].includes(sec) ? 'reviews' :
-                ['whatsapp', 'contact', 'support', 'chat'].includes(sec) ? 'whatsapp' :
-                ['footer', 'bottom'].includes(sec) ? 'footer' : (sec ? 'hero' : '');
-
-              if (key === 'hero') return <HeroEditor />;
-              if (key === 'learning') return <LearningEditor />;
-              if (key === 'chapters') return <ChapterEditor />;
-              if (key === 'payment') return <PaymentEditor />;
-              if (key === 'faq') return <FAQEditor />;
-              if (key === 'reviews') return <ReviewsEditor />;
-              if (key === 'whatsapp') return <WhatsAppEditor />;
-              if (key === 'footer') return <FooterEditor />;
-
-              return (
-                <div className="text-center py-20 text-slate-400 font-bold text-xs space-y-3">
-                  <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
-                    <Layout size={24} />
-                  </div>
-                  <p className="max-w-xs mx-auto leading-relaxed">
-                    👈 اختر قسماً من القائمة أعلاه أو انقر فوق أي عنصر في المعاينة المباشرة لتعديل إعداداته هنا.
-                  </p>
+            {selectedTemplate === 'template_1' ? (
+              (() => {
+                const sec = (activeSectionId || 'hero').toLowerCase().trim();
+                switch (sec) {
+                  case 'hero':
+                    return <HeroEditor />;
+                  case 'learning':
+                    return <LearningEditor />;
+                  case 'chapters':
+                    return <ChapterEditor />;
+                  case 'payment':
+                    return <PaymentEditor />;
+                  case 'faq':
+                    return <FAQEditor />;
+                  case 'reviews':
+                    return <ReviewsEditor />;
+                  case 'whatsapp':
+                    return <WhatsAppEditor />;
+                  case 'footer':
+                    return <FooterEditor />;
+                  default:
+                    return <HeroEditor />;
+                }
+              })()
+            ) : (
+              <div className="text-center py-20 text-slate-400 font-bold text-xs space-y-3">
+                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
+                  <Layout size={24} />
                 </div>
-              );
-            })()}
+                <p className="max-w-xs mx-auto leading-relaxed">
+                  هذا المحرر مخصص لإدارة وتخصيص القالب الأول (الملكي الكلاسيكي).
+                </p>
+              </div>
+            )}
           </div>
         </aside>
 
