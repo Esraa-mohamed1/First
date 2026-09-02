@@ -99,7 +99,7 @@ export default function LearningSection({
               return (
                 <div 
                   key={card.id || i} 
-                  style={{ backgroundColor: '#ffffff', borderColor: `rgba(${textRgb}, 0.12)` }}
+                  style={{ backgroundColor: data.itemBackgroundColor || '#ffffff', borderColor: `rgba(${textRgb}, 0.12)` }}
                   className="border rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between text-right"
                 >
                   <div className="space-y-4">

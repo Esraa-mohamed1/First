@@ -12,11 +12,11 @@ export const getTemplateDefaultContent = (course: any, templateName: string): La
     return {
       hero: {
         title: course?.title || 'إتقان تطوير واجهات المستخدم بالتصميم الذكي',
-        subtitle: 'الدفعة الجديدة — التسجيل مفتوح الآن',
         description: course?.description || 'اكتشف أسرار تصميم واجهات مستخدم مذهلة وتجارب مستخدم سلسة في هذه الدورة الشاملة.',
         image: course?.image || 'https://images.unsplash.com/photo-1586717791821-3f44a563de4c?auto=format&fit=crop&q=80&w=1600',
         buttonText: 'سجل الآن',
         buttonLink: '#subscribe',
+        buttonBackgroundColor: '#0055d9',
         backgroundColor: '#020617',
         textColor: '#ffffff',
         typography: {
@@ -29,7 +29,11 @@ export const getTemplateDefaultContent = (course: any, templateName: string): La
         description: course?.description || 'اكتشف أسرار تصميم واجهات مستخدم مذهلة وتجارب مستخدم سلسة في هذه الدورة الشاملة. من الأساسيات إلى التطبيقات المتقدمة، ستتعلم كيف تبني منتجات رقمية يحبها الناس.',
         investmentTitle: 'استثمارك في مستقبلك',
         discountBadge: 'خصم 40% لفترة محدودة',
-        guaranteeText: 'ضمان استرداد الأموال لمدة 14 يوماً'
+        guaranteeText: 'ضمان استرداد الأموال لمدة 14 يوماً',
+        buttonText: 'سجل الآن',
+        buttonBackgroundColor: '#0055d9',
+        backgroundColor: '#faf8ff',
+        textColor: '#191b23'
       },
       features: {
         title: 'بنية الدورة المتميزة',
@@ -38,12 +42,14 @@ export const getTemplateDefaultContent = (course: any, templateName: string): La
           { id: 'f2', title: 'المدة الزمنية', subtitle: 'مرنة حسب رغبتك', icon: 'Clock' },
           { id: 'f3', title: 'الشهادة', subtitle: 'شهادة إتمام معتمدة', icon: 'Award' },
           { id: 'f4', title: 'الوصول الكامل', subtitle: 'وصول مدى الحياة', icon: 'Infinity' }
-        ]
+        ],
+        backgroundColor: '#faf8ff',
+        textColor: '#191b23'
       },
       chapters: {
         title: 'محتوى الدورة',
         showLessons: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#faf8ff',
         textColor: '#191b23'
       },
       instructor: {
@@ -52,7 +58,11 @@ export const getTemplateDefaultContent = (course: any, templateName: string): La
         jobTitle: instructorTitle,
         bio: instructorBio,
         image: instructorImage,
-        badges: ['Google Certified', 'Interaction Design Expert', 'Mentor at ADPList']
+        badges: ['Google Certified', 'Interaction Design Expert', 'Mentor at ADPList'],
+        badgeBackgroundColor: '#ffffff',
+        badgeTextColor: '#434654',
+        backgroundColor: '#faf8ff',
+        textColor: '#191b23'
       },
       benefits: {
         title: 'ماذا ستحصل عليه؟',
@@ -61,12 +71,17 @@ export const getTemplateDefaultContent = (course: any, templateName: string): La
           '15 مشروع تطبيقي لبناء معرض أعمالك، لتنتقل من النظرية إلى التطبيق الحقيقي.',
           'ملفات ومصادر قابلة للتحميل تشمل قوالب عمل ومصادر إلهام احترافية.',
           'وصول إلى مجتمع الطلاب الخاص للحصول على دعم مستمر ومراجعة لأعمالك.'
-        ]
+        ],
+        backgroundColor: '#faf8ff',
+        textColor: '#191b23'
       },
       cta: {
         title: 'جاهز لتبدأ رحلتك الإبداعية؟',
         description: 'انضم إلى آلاف الطلاب الذين غيروا مسارهم المهني من خلال إتقان فن الـ UI/UX.',
-        buttonText: 'ابدأ الآن'
+        buttonText: 'ابدأ الآن',
+        buttonBackgroundColor: '#ffffff',
+        backgroundColor: '#0040a7',
+        textColor: '#ffffff'
       },
       learning: {
         title: 'ماذا ستتعلم في هذه الدورة؟',
@@ -219,6 +234,49 @@ export const getTemplateDefaultContent = (course: any, templateName: string): La
         background: '#2563eb',
         textColor: '#ffffff'
       },
+      template3_requirements: {
+        title: 'المتطلبات الأساسية للبدء',
+        items: [
+          'لا يشترط وجود خبرة سابقة في التصميم أو التطوير.',
+          'جهاز كمبيوتر (Mac أو Windows) متصل بالإنترنت.',
+          'الالتزام والرغبة بالتطبيق والعمل والتطوير المستمر.'
+        ],
+        backgroundColor: '#ffffff',
+        textColor: '#191b23'
+      },
+      template3_learning: {
+        cards: learningCards,
+        backgroundColor: '#ffffff',
+        textColor: '#191b23'
+      },
+      template3_curriculum: {
+        title: 'محتوى الدورة منهج متكامل',
+        backgroundColor: '#ffffff',
+        textColor: '#191b23'
+      },
+      template3_instructor: {
+        title: 'عن المحاضر والمدرب',
+        name: instructorName,
+        jobTitle: instructorTitle,
+        bio: instructorBio,
+        avatar: instructorAvatar,
+        studentsCount: '45,000+',
+        studentsLabel: 'طالب مستفيد',
+        coursesCount: '12+',
+        coursesLabel: 'برنامج تدريبي',
+        backgroundColor: '#ffffff',
+        textColor: '#191b23'
+      },
+      template3_faq: {
+        title: 'الأسئلة الشائعة حول البرنامج',
+        items: [
+          { question: 'هل الدورة مناسبة للمبتدئين بدون أي خلفية في التصميم؟', answer: 'نعم، نبدأ معك من المفاهيم الأساسية وسيكولوجية المستخدم خطوة بخطوة حتى الاحتراف.' },
+          { question: 'ما هي البرامج والأدوات التي سنستخدمها في الدورة؟', answer: 'سنعتمد بشكل أساسي على أحدث إصدار من Figma بالإضافة إلى أدوات بناء الأنظمة والبروتوتايب.' },
+          { question: 'هل تشمل الدورة مشاريع عملية لمعرض الأعمال؟', answer: 'بالتأكيد، ستنفذ 3 مشاريع تطبيقية كاملة تؤهلك للتقديم على وظائف أو العمل الحر فوراً.' }
+        ],
+        backgroundColor: '#ffffff',
+        textColor: '#191b23'
+      },
       template3_pricing: {
         title: 'رسوم الاشتراك الفوري بالدورة',
         buttonText: 'اشترك وسجل بالدورة الآن',
@@ -229,16 +287,11 @@ export const getTemplateDefaultContent = (course: any, templateName: string): La
           'شهادة إتمام معتمدة باسمك من منصة دَرّب',
           'تحديثات دورية مجانية للمحتوى مدى الحياة',
           'إمكانية الحضور والمتابعة من الهاتف أو الكمبيوتر'
-        ]
-      },
-      template3_instructor: {
-        title: 'عن المحاضر والمدرب',
-        name: instructorName,
-        jobTitle: instructorTitle,
-        bio: instructorBio,
-        avatar: instructorAvatar,
-        studentsCount: '45,000+',
-        coursesCount: '12+'
+        ],
+        backgroundColor: '#ffffff',
+        textColor: '#191b23',
+        headerBackgroundColor: '#2563eb',
+        headerTextColor: '#ffffff'
       },
       whatsapp: {
         phoneNumber: '966500000000',
@@ -314,6 +367,7 @@ export const getTemplateDefaultContent = (course: any, templateName: string): La
       image: course?.image || 'https://images.unsplash.com/photo-1586717791821-3f44a563de4c?auto=format&fit=crop&q=80&w=1200',
       buttonText: 'اشترك في الدورة الآن ←',
       buttonLink: '#buy',
+      discountMessage: '⏳ الخصم ساري لفترة محدودة',
       backgroundColor: isTemplate1 ? '#082A24' : '#ffffff',
       textColor: isTemplate1 ? '#FBF7EE' : '#1f2937',
       typography: {
@@ -326,7 +380,8 @@ export const getTemplateDefaultContent = (course: any, templateName: string): La
       subtitle: 'مش مجرد فيديوهات مسجلة — منظومة تعلّم كاملة مصممة لتوصلك لنتيجة.',
       cards: learningCards,
       backgroundColor: isTemplate1 ? '#ffffff' : '#f8fafc',
-      textColor: '#1f2937'
+      textColor: '#1f2937',
+      itemBackgroundColor: '#ffffff'
     },
     chapters: {
       title: 'منهج ومحتوى الدورة بالتفصيل',
@@ -347,7 +402,9 @@ export const getTemplateDefaultContent = (course: any, templateName: string): La
         { question: 'هل أحصل على شهادة إتمام بعد الدورة؟', answer: 'بالتأكيد، يتم إصدار شهادة إتمام معتمدة باسمك فور الانتهاء من جميع المهام والمشروع النهائي.' }
       ],
       backgroundColor: isTemplate1 ? '#FBF7EE' : '#f8fafc',
-      textColor: '#1f2937'
+      textColor: '#1f2937',
+      questionBackgroundColor: '#ffffff',
+      answerBackgroundColor: '#FBF7EE'
     },
     reviews: {
       title: 'آراء وتجارب طلابنا المتميزين',
@@ -402,6 +459,7 @@ export const getTemplateDefaultContent = (course: any, templateName: string): La
       title: 'هل لديك أي استفسار آخر؟',
       subtitle: 'تواصل معنا مباشرة عبر واتساب وسيجيب فريق الدعم على كافة أسئلتك واستفساراتك في أقرب وقت.',
       buttonText: 'تواصل معنا عبر واتساب',
+      contactMessage: 'سيب اسمك ورقم موبايلك، وفريق الدورة هيتواصل معاك خلال 24 ساعة يجاوب على كل أسئلتك ويساعدك تقرر إذا كانت الدورة مناسبة لك — بدون أي التزام.',
       backgroundColor: '#499A13',
       textColor: '#ffffff'
     },

@@ -118,6 +118,49 @@ export default function Template2BenefitsEditor() {
             </button>
           </div>
         </div>
+
+        {/* Colors */}
+        <div className="border-t border-slate-100 pt-4 space-y-3">
+          <h4 className="text-xs font-black text-slate-700">ألوان قسم المخرجات والفوائد</h4>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-700">لون الخلفية</label>
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                <input
+                  type="color"
+                  className="w-8 h-8 rounded-lg border-0 cursor-pointer bg-transparent shrink-0 outline-none"
+                  value={data.backgroundColor || '#faf8ff'}
+                  onChange={(e) => updateSectionContent('benefits', { backgroundColor: e.target.value })}
+                />
+                <input
+                  type="text"
+                  className="flex-1 min-w-0 bg-transparent text-center text-xs font-bold font-mono text-slate-700 focus:outline-none"
+                  value={data.backgroundColor || '#faf8ff'}
+                  onChange={(e) => updateSectionContent('benefits', { backgroundColor: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-700">لون النصوص</label>
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                <input
+                  type="color"
+                  className="w-8 h-8 rounded-lg border-0 cursor-pointer bg-transparent shrink-0 outline-none"
+                  value={data.textColor || '#191b23'}
+                  onChange={(e) => updateSectionContent('benefits', { textColor: e.target.value })}
+                />
+                <input
+                  type="text"
+                  className="flex-1 min-w-0 bg-transparent text-center text-xs font-bold font-mono text-slate-700 focus:outline-none"
+                  value={data.textColor || '#191b23'}
+                  onChange={(e) => updateSectionContent('benefits', { textColor: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

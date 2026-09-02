@@ -5,33 +5,31 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useLandingStore } from '../../store/landingStore';
 import { getTemplateDefaultContent } from '../../constants/defaultContent';
 
-export default function Template3PricingEditor() {
+export default function Template3RequirementsEditor() {
   const storeContent = useLandingStore(state => state.content);
   const courseData = useLandingStore(state => state.courseData);
   const updateSectionContent = useLandingStore(state => state.updateSectionContent);
 
   const defaultContent = getTemplateDefaultContent(courseData, 'template_3');
-  const data = (storeContent?.template3_pricing || defaultContent.template3_pricing || {
-    title: 'رسوم الاشتراك الفوري بالدورة',
-    buttonText: 'اشترك وسجل بالدورة الآن',
-    guaranteeText: 'ضمان استرداد الأموال كاملة خلال 30 يوماً',
+  const data = (storeContent?.template3_requirements || defaultContent.template3_requirements || {
+    title: 'المتطلبات الأساسية للبدء',
     items: [
-      'وصول كامل لكافة المحاضرات والدروس المصورة',
-      'ملفات عمل ومصادر وتطبيقات قابلة للتحميل',
-      'شهادة إتمام معتمدة باسمك من منصة دَرّب',
-      'تحديثات دورية مجانية للمحتوى مدى الحياة',
-      'إمكانية الحضور والمتابعة من الهاتف أو الكمبيوتر'
+      'لا يشترط وجود خبرة سابقة في التصميم أو التطوير.',
+      'جهاز كمبيوتر (Mac أو Windows) متصل بالإنترنت.',
+      'الالتزام والرغبة بالتطبيق والعمل والتطوير المستمر.'
     ],
     backgroundColor: '#ffffff',
-    textColor: '#191b23',
-    headerBackgroundColor: '#2563eb',
-    headerTextColor: '#ffffff'
+    textColor: '#191b23'
   }) as any;
 
-  const items: string[] = data.items || [];
+  const items: string[] = data.items && data.items.length > 0 ? data.items : [
+    'لا يشترط وجود خبرة سابقة في التصميم أو التطوير.',
+    'جهاز كمبيوتر (Mac أو Windows) متصل بالإنترنت.',
+    'الالتزام والرغبة بالتطبيق والعمل والتطوير المستمر.'
+  ];
 
   const handleChange = (field: string, value: any) => {
-    updateSectionContent('template3_pricing', { [field]: value });
+    updateSectionContent('template3_requirements', { [field]: value });
   };
 
   const handleItemChange = (index: number, value: string) => {
@@ -41,7 +39,7 @@ export default function Template3PricingEditor() {
   };
 
   const handleAddItem = () => {
-    handleChange('items', [...items, 'ميزة تدريبية إضافية جديدة']);
+    handleChange('items', [...items, 'متطلب جديد للبدء بالدورة']);
   };
 
   const handleRemoveItem = (index: number) => {
@@ -52,58 +50,34 @@ export default function Template3PricingEditor() {
   return (
     <div className="space-y-6 text-right font-sans" dir="rtl">
       <div>
-        <h3 className="text-sm font-black text-slate-800 border-r-4 border-blue-600 pr-2">بطاقة التسجيل والرسوم — قالب UI/UX</h3>
-        <p className="text-[10px] text-slate-400 font-bold mt-1">تخصيص نص زر الاشتراك، عبارة الضمان، قائمة المزايا، وألوان البطاقة</p>
+        <h3 className="text-sm font-black text-slate-800 border-r-4 border-blue-600 pr-2">المتطلبات الأساسية للبدء — قالب UI/UX</h3>
+        <p className="text-[10px] text-slate-400 font-bold mt-1">تخصيص شروط ومتطلبات التسجيل والبدء بالبرنامج التدريبي</p>
       </div>
 
       <div className="space-y-4">
         {/* Title */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold text-slate-700">عنوان رأس بطاقة الرسوم</label>
+          <label className="text-xs font-bold text-slate-700">عنوان قسم المتطلبات</label>
           <input
             type="text"
             className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-bold"
             value={data.title || ''}
             onChange={(e) => handleChange('title', e.target.value)}
-            placeholder="رسوم الاشتراك الفوري بالدورة"
+            placeholder="المتطلبات الأساسية للبدء"
           />
         </div>
 
-        {/* Button Text */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold text-slate-700">نص زر الاشتراك</label>
-          <input
-            type="text"
-            className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-bold"
-            value={data.buttonText || ''}
-            onChange={(e) => handleChange('buttonText', e.target.value)}
-            placeholder="اشترك وسجل بالدورة الآن"
-          />
-        </div>
-
-        {/* Guarantee Text */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold text-slate-700">نص سياسة الضمان والاسترداد</label>
-          <input
-            type="text"
-            className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-bold"
-            value={data.guaranteeText || ''}
-            onChange={(e) => handleChange('guaranteeText', e.target.value)}
-            placeholder="ضمان استرداد الأموال كاملة خلال 30 يوماً"
-          />
-        </div>
-
-        {/* Included Items List */}
+        {/* Requirements Items */}
         <div className="space-y-3 pt-3 border-t border-slate-100">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black text-slate-800">قائمة "ما يشتمل عليه تسجيلك":</span>
+            <span className="text-xs font-black text-slate-800">قائمة المتطلبات والشروط:</span>
             <button
               type="button"
               onClick={handleAddItem}
               className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
             >
               <Plus size={14} />
-              <span>إضافة ميزة</span>
+              <span>إضافة متطلب</span>
             </button>
           </div>
 
@@ -131,7 +105,7 @@ export default function Template3PricingEditor() {
         {/* Colors */}
         <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-slate-700">لون خلفية البطاقة</label>
+            <label className="text-xs font-bold text-slate-700">لون الخلفية</label>
             <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
               <input
                 type="color"
@@ -149,7 +123,7 @@ export default function Template3PricingEditor() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-slate-700">لون نصوص البطاقة</label>
+            <label className="text-xs font-bold text-slate-700">لون النصوص</label>
             <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
               <input
                 type="color"

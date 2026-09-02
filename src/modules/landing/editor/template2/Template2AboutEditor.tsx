@@ -85,6 +85,79 @@ export default function Template2AboutEditor() {
               placeholder="ضمان استرداد الأموال لمدة 14 يوماً"
             />
           </div>
+
+          {/* Registration Button Text */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-slate-700">نص زر التسجيل في بطاقة الاستثمار</label>
+            <input
+              type="text"
+              className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-bold"
+              value={data.buttonText || ''}
+              onChange={(e) => handleChange('buttonText', e.target.value)}
+              placeholder="سجل الآن"
+            />
+          </div>
+        </div>
+
+        {/* Colors */}
+        <div className="border-t border-slate-100 pt-4 space-y-3">
+          <h4 className="text-xs font-black text-slate-700">ألوان القسم وبطاقة الاستثمار</h4>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-700">لون خلفية القسم</label>
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                <input
+                  type="color"
+                  className="w-8 h-8 rounded-lg border-0 cursor-pointer bg-transparent shrink-0 outline-none"
+                  value={data.backgroundColor || '#faf8ff'}
+                  onChange={(e) => handleChange('backgroundColor', e.target.value)}
+                />
+                <input
+                  type="text"
+                  className="flex-1 min-w-0 bg-transparent text-center text-xs font-bold font-mono text-slate-700 focus:outline-none"
+                  value={data.backgroundColor || '#faf8ff'}
+                  onChange={(e) => handleChange('backgroundColor', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-700">لون النصوص</label>
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                <input
+                  type="color"
+                  className="w-8 h-8 rounded-lg border-0 cursor-pointer bg-transparent shrink-0 outline-none"
+                  value={data.textColor || '#191b23'}
+                  onChange={(e) => handleChange('textColor', e.target.value)}
+                />
+                <input
+                  type="text"
+                  className="flex-1 min-w-0 bg-transparent text-center text-xs font-bold font-mono text-slate-700 focus:outline-none"
+                  value={data.textColor || '#191b23'}
+                  onChange={(e) => handleChange('textColor', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-700">لون زر التسجيل بالبطاقة</label>
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                <input
+                  type="color"
+                  className="w-8 h-8 rounded-lg border-0 cursor-pointer bg-transparent shrink-0 outline-none"
+                  value={data.buttonBackgroundColor || '#0055d9'}
+                  onChange={(e) => handleChange('buttonBackgroundColor', e.target.value)}
+                />
+                <input
+                  type="text"
+                  className="flex-1 min-w-0 bg-transparent text-center text-xs font-bold font-mono text-slate-700 focus:outline-none"
+                  value={data.buttonBackgroundColor || '#0055d9'}
+                  onChange={(e) => handleChange('buttonBackgroundColor', e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
