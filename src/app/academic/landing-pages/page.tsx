@@ -382,7 +382,7 @@ export default function LandingPagesManagementPage() {
                 </div>
 
                 <a
-                  href={`/${page.slug || 'preview'}?lp_id=${page.id}`}
+                  href={`/landing/${page.slug || 'preview'}?lp_id=${page.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[10px] font-black text-blue-600 bg-blue-50 border border-blue-100 hover:bg-blue-100 px-3 py-2 rounded-xl transition-colors flex items-center gap-1"
