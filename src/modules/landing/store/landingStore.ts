@@ -9,6 +9,7 @@ export interface LandingState {
   isActive: boolean;
   userId: number | null;
   content: LandingPageContent | null;
+  templateContents: Record<string, LandingPageContent>;
   isEditable: boolean;
   activeSectionId: string | null;
   courseData: any | null;
@@ -30,6 +31,7 @@ export const useLandingStore = create<LandingState>((set, get) => ({
   isActive: true,
   userId: null,
   content: null,
+  templateContents: {},
   isEditable: false,
   activeSectionId: null,
   courseData: null,
@@ -37,10 +39,16 @@ export const useLandingStore = create<LandingState>((set, get) => ({
   setCourseData: (course) => {
     const currentContent = get().content;
     const templateName = get().templateName;
+    const existingCache = get().templateContents;
+    const defaultContent = currentContent || existingCache[templateName] || getTemplateDefaultContent(course, templateName);
     set({
       courseData: course,
       courseId: course?.id ? Number(course.id) : null,
-      content: currentContent || getTemplateDefaultContent(course, templateName)
+      content: defaultContent,
+      templateContents: {
+        ...existingCache,
+        [templateName]: defaultContent
+      }
     });
   },
 
@@ -62,8 +70,18 @@ export const useLandingStore = create<LandingState>((set, get) => ({
         reviews: { ...defaults.reviews, ...(c.reviews || {}) },
         whatsapp: { ...defaults.whatsapp, ...(c.whatsapp || {}) },
         footer: { ...defaults.footer, ...(c.footer || {}) },
+        // Modern (template_2) sections
+        about: { ...(defaults.about || {}), ...(c.about || {}) },
+        features: { ...(defaults.features || {}), ...(c.features || {}) },
+        instructor: { ...(defaults.instructor || {}), ...(c.instructor || {}) },
+        benefits: { ...(defaults.benefits || {}), ...(c.benefits || {}) },
+        cta: { ...(defaults.cta || {}), ...(c.cta || {}) },
+        // UI/UX (template_3) sections
+        template3_instructor: { ...(defaults.template3_instructor || {}), ...(c.template3_instructor || {}) },
+        template3_pricing: { ...(defaults.template3_pricing || {}), ...(c.template3_pricing || {}) },
       } as any;
     }
+    const existingCache = get().templateContents;
     set({
       landingPageId: data.id !== undefined ? data.id : get().landingPageId,
       templateName,
@@ -71,19 +89,30 @@ export const useLandingStore = create<LandingState>((set, get) => ({
       courseId: data.course_id ? Number(data.course_id) : get().courseId,
       userId: data.user_id ? Number(data.user_id) : get().userId,
       content: mergedContent,
+      templateContents: {
+        ...existingCache,
+        [templateName]: mergedContent
+      }
     });
   },
 
   updateSectionContent: (section, data) => {
     const content = get().content;
+    const currentTemplate = get().templateName;
     if (!content) return;
+    const updatedContent = {
+      ...content,
+      [section]: {
+        ...(content[section] || {}),
+        ...data
+      }
+    };
+    const existingCache = get().templateContents;
     set({
-      content: {
-        ...content,
-        [section]: {
-          ...content[section],
-          ...data
-        }
+      content: updatedContent,
+      templateContents: {
+        ...existingCache,
+        [currentTemplate]: updatedContent
       }
     });
   },
@@ -94,11 +123,24 @@ export const useLandingStore = create<LandingState>((set, get) => ({
 
   setTemplateName: (name) => {
     const courseData = get().courseData;
-    const defaultForNewTemplate = getTemplateDefaultContent(courseData, name);
+    const currentTemplate = get().templateName;
+    const currentContent = get().content;
+    const existingCache = { ...get().templateContents };
+
+    // Cache current template content before switching
+    if (currentContent) {
+      existingCache[currentTemplate] = currentContent;
+    }
+
+    // Retrieve cached content for target template or create fresh defaults
+    const targetContent = existingCache[name] || getTemplateDefaultContent(courseData, name);
+    existingCache[name] = targetContent;
 
     set({
       templateName: name,
-      content: defaultForNewTemplate
+      content: targetContent,
+      templateContents: existingCache,
+      activeSectionId: 'hero'
     });
   },
 
@@ -113,8 +155,15 @@ export const useLandingStore = create<LandingState>((set, get) => ({
   resetToDefaults: () => {
     const courseData = get().courseData;
     const templateName = get().templateName;
+    const defaults = getTemplateDefaultContent(courseData, templateName);
+    const existingCache = get().templateContents;
     set({
-      content: getTemplateDefaultContent(courseData, templateName)
+      content: defaults,
+      templateContents: {
+        ...existingCache,
+        [templateName]: defaults
+      }
     });
   }
 }));
+

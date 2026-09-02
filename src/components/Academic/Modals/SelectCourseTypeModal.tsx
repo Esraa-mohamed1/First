@@ -1,10 +1,8 @@
 'use client';
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
 import { X, Video, Monitor, Users, ArrowRight } from 'lucide-react';
-
-import { purgeAllCourseDraftCache } from '@/lib/auth-storage';
+import CreateCourseNameModal from './CreateCourseNameModal';
 
 interface SelectCourseTypeModalProps {
   isOpen: boolean;
@@ -12,7 +10,15 @@ interface SelectCourseTypeModalProps {
 }
 
 export default function SelectCourseTypeModal({ isOpen, onClose }: SelectCourseTypeModalProps) {
-  const router = useRouter();
+  const [step, setStep] = useState<'type' | 'name'>('type');
+  const [selectedType, setSelectedType] = useState<string>('recorded');
+
+  useEffect(() => {
+    if (!isOpen) {
+      setStep('type');
+      setSelectedType('recorded');
+    }
+  }, [isOpen]);
 
   const courseTypes = [
     {
@@ -39,15 +45,31 @@ export default function SelectCourseTypeModal({ isOpen, onClose }: SelectCourseT
   ];
 
   const handleSelectType = (type: string) => {
-    purgeAllCourseDraftCache();
+    setSelectedType(type);
+    setStep('name');
+  };
+
+  const handleCloseAll = () => {
+    setStep('type');
+    setSelectedType('recorded');
     onClose();
-    router.push(`/academic/courses/create?type=${type}&new=true`);
   };
 
   if (!isOpen) return null;
 
+  if (step === 'name') {
+    return (
+      <CreateCourseNameModal
+        isOpen={isOpen}
+        onClose={handleCloseAll}
+        courseType={selectedType}
+        onBack={() => setStep('type')}
+      />
+    );
+  }
+
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4" dir="rtl">
       <div className="bg-white rounded-[32px] p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -56,7 +78,7 @@ export default function SelectCourseTypeModal({ isOpen, onClose }: SelectCourseT
             <p className="text-gray-500 font-bold mt-2">حدد نوع الدورة التي تريد إنشاءها</p>
           </div>
           <button 
-            onClick={onClose}
+            onClick={handleCloseAll}
             className="p-2 hover:bg-gray-100 rounded-xl transition-all"
           >
             <X size={24} className="text-gray-500" />
@@ -102,3 +124,4 @@ export default function SelectCourseTypeModal({ isOpen, onClose }: SelectCourseT
     </div>
   );
 }
+

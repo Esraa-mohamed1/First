@@ -110,6 +110,63 @@ export interface FooterSectionData {
   textColor?: string;
 }
 
+export interface ModernAboutSectionData {
+  title?: string;
+  description?: string;
+  investmentTitle?: string;
+  discountBadge?: string;
+  guaranteeText?: string;
+}
+
+export interface ModernFeatureItem {
+  id?: string;
+  title: string;
+  subtitle: string;
+  icon?: string;
+}
+
+export interface ModernFeaturesSectionData {
+  title?: string;
+  items?: ModernFeatureItem[];
+}
+
+export interface ModernInstructorSectionData {
+  title?: string;
+  name?: string;
+  jobTitle?: string;
+  bio?: string;
+  image?: string;
+  badges?: string[];
+}
+
+export interface ModernBenefitsSectionData {
+  title?: string;
+  items?: string[];
+}
+
+export interface ModernCtaSectionData {
+  title?: string;
+  description?: string;
+  buttonText?: string;
+}
+
+export interface Template3InstructorSectionData {
+  title?: string;
+  name?: string;
+  jobTitle?: string;
+  bio?: string;
+  avatar?: string;
+  studentsCount?: string;
+  coursesCount?: string;
+}
+
+export interface Template3PricingSectionData {
+  title?: string;
+  buttonText?: string;
+  guaranteeText?: string;
+  items?: string[];
+}
+
 export interface LandingPageContent {
   hero: HeroSectionData;
   learning: LearningSectionData;
@@ -119,4 +176,15 @@ export interface LandingPageContent {
   reviews: ReviewsSectionData;
   whatsapp: WhatsAppSectionData;
   footer: FooterSectionData;
+  // Modern (template_2) isolated sections
+  about?: ModernAboutSectionData;
+  features?: ModernFeaturesSectionData;
+  instructor?: ModernInstructorSectionData;
+  benefits?: ModernBenefitsSectionData;
+  cta?: ModernCtaSectionData;
+  // UI/UX (template_3) isolated sections
+  template3_instructor?: Template3InstructorSectionData;
+  template3_pricing?: Template3PricingSectionData;
 }
+
+
