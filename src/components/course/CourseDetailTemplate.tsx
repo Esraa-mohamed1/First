@@ -9,6 +9,7 @@ import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { PaymentMethodCard } from '@/components/payment/PaymentMethodCard';
 import { PaymentMethodModal } from '@/components/payment/PaymentMethodModal';
+import { formatCourseAccessDuration } from '@/lib/utils';
 
 const MySwal = withReactContent(Swal);
 
@@ -709,6 +710,17 @@ export default function CourseDetailTemplate({
                 )}
 
 
+              </div>
+            </div>
+
+            {/* Access Lifetime Badge */}
+            <div className="bg-emerald-50 border border-emerald-100 p-6 rounded-3xl flex items-center gap-4">
+              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm shrink-0 text-emerald-600">
+                <Clock size={24} />
+              </div>
+              <div>
+                <p className="font-extrabold text-slate-900 text-sm">{formatCourseAccessDuration(course)}</p>
+                <p className="text-emerald-700 font-bold text-xs">وصول كامل لجميع المحاضرات والملفات</p>
               </div>
             </div>
 
