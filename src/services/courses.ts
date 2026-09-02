@@ -1,4 +1,5 @@
 import academyApi from '@/lib/academy-api';
+import studentApi from '@/lib/student-api';
 import { ApiResponse, Course, CreateCoursePayload, CreateUnitPayload, CreateLessonPayload, Unit, Lesson } from '@/types/api';
 
 export const createCourse = async (payload: CreateCoursePayload): Promise<Course> => {
@@ -74,12 +75,30 @@ export const getCourses = async (userId?: number, userRole?: string, type?: stri
       url += `?${queryString}`;
     }
 
-    const response = await academyApi.get<ApiResponse<Course[]>>(url);
-    const data = response.data.data || [];
+    // For unauthenticated guest requests (no token), use studentApi (/api/user/courses)
+    const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
+    const client = hasToken ? academyApi : studentApi;
+
+    const response = await client.get<ApiResponse<Course[]>>(url);
+    const data = response.data?.data || [];
     return limit ? data.slice(0, limit) : data;
   } catch (error: any) {
-    console.error('Failed to get courses:', error);
-    return [];
+    // If academyApi fails (e.g., 401 for guests), fallback to studentApi (/api/user/courses)
+    try {
+      let url = 'courses';
+      if (type || limit) {
+        const params = new URLSearchParams();
+        if (type) params.append('type', type);
+        if (limit) params.append('limit', String(limit));
+        url += `?${params.toString()}`;
+      }
+      const fallbackRes = await studentApi.get<ApiResponse<Course[]>>(url);
+      const data = fallbackRes.data?.data || [];
+      return limit ? data.slice(0, limit) : data;
+    } catch (fallbackErr) {
+      console.error('Failed to get courses:', error);
+      return [];
+    }
   }
 };
 

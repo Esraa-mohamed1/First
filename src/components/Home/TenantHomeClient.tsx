@@ -47,7 +47,7 @@ export default function TenantHomeClient({
         }
 
         // Fallback: Fetch fresh pages list from public /pages endpoint
-        const pagesList = await getPublicPages();
+        const pagesList = await getPublicPages('academic');
 
         let activePage = pagesList.find(
           (p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true'

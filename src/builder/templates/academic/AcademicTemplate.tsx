@@ -291,7 +291,7 @@ export default function AcademicTemplate({ sections: sectionsProp }: AcademicTem
 
       // 2. Call the public sections endpoint directly
       try {
-        const pagesList = await getPublicPages();
+        const pagesList = await getPublicPages('academic');
 
         let activePage = pagesList.find(
           (p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true'

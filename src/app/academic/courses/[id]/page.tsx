@@ -1931,7 +1931,7 @@ export default function CourseDetailsPage() {
               })()}
 
               {/* Target Audience outcomes */}
-              <div>
+              <div className="hidden">
                 <div className="flex items-center justify-between mb-3">
                   <label className="text-label-md font-bold text-gray-900">الفئة المستهدفة</label>
                   <button

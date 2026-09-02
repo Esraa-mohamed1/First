@@ -1705,7 +1705,7 @@ export default function CreateCourseClient() {
                     </div>
 
                     {/* Target Audience */}
-                    <div>
+                    <div className="hidden">
                       <div className="flex items-center justify-between mb-3">
                         <label className="text-sm font-bold text-slate-800">الفئة المستهدفة</label>
                         <button

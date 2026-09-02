@@ -87,7 +87,7 @@ export const clearPagesCache = () => {
   pagesPromise = null;
 };
 
-export const getPages = async (forceRefresh = false): Promise<any[]> => {
+export const getPages = async (forceRefresh = false, template: string = 'academic'): Promise<any[]> => {
   const now = Date.now();
   if (!forceRefresh && pagesCache && now - pagesCache.timestamp < CACHE_TTL_MS) {
     return pagesCache.data;
@@ -98,7 +98,9 @@ export const getPages = async (forceRefresh = false): Promise<any[]> => {
 
   pagesPromise = (async () => {
     try {
-      const response = await academyApi.get<any>('/pages');
+      const response = await academyApi.get<any>('/pages', {
+        params: template ? { template } : undefined,
+      });
       const data = response.data?.data ?? response.data;
       const result = (Array.isArray(data) ? data : []) as any[];
       pagesCache = { data: result, timestamp: Date.now() };
@@ -111,9 +113,20 @@ export const getPages = async (forceRefresh = false): Promise<any[]> => {
   return pagesPromise;
 };
 
-export const getPublicPages = async (): Promise<any[]> => {
+export const getPublicPages = async (template?: string): Promise<any[]> => {
   try {
-    const response = await api.get<any>('/pages');
+    let response;
+    try {
+      response = await api.get<any>('/pages', {
+        params: template ? { template } : undefined,
+      });
+    } catch (e: any) {
+      if (e?.response?.status === 404 || e?.status === 404) {
+        response = await api.get<any>('/pages');
+      } else {
+        throw e;
+      }
+    }
     const data = response.data?.data ?? response.data;
     return (Array.isArray(data) ? data : []) as any[];
   } catch (error) {
