@@ -1254,7 +1254,8 @@ export default function CourseDetailsPage() {
       return;
     }
     if (typeof window !== 'undefined') {
-      const link = `${window.location.origin}/${page.slug || 'preview'}?lp_id=${page.id}`;
+      const targetSlug = page.slug || course?.slug || id;
+      const link = `${window.location.origin}/landing/${targetSlug}?lp_id=${page.id}`;
       navigator.clipboard.writeText(link);
       toast.success('تم نسخ رابط صفحة البيع بنجاح!');
     }
