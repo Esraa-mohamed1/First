@@ -75,7 +75,7 @@ export default function CoursesPage() {
       setLoading(true);
       try {
         const data = await getCourses();
-        const published = (data || []).filter((c) => c.status === 'published');
+        const published = (data || []).filter((c) => !c.status || c.status === 'published');
         setCourses(published);
       } catch (err) {
         console.error('Failed to fetch courses:', err);

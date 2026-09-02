@@ -118,6 +118,34 @@ export const renderVideoPlayer = (url: string | undefined | null, className: str
   `;
 };
 
+export const formatMaterialIcon = (iconName: string | undefined | null): string => {
+  if (!iconName) return 'star';
+  const clean = iconName.trim();
+  const lower = clean.toLowerCase();
+
+  const iconMap: Record<string, string> = {
+    'users': 'groups',
+    'user': 'person',
+    'playo': 'play_circle',
+    'play': 'play_circle',
+    'play_circle': 'play_circle',
+    'ab': 'workspace_premium',
+    'award': 'workspace_premium',
+    'certificate': 'workspace_premium',
+    'sparkles': 'auto_awesome',
+    'plus': 'add',
+    'helpcircle': 'help',
+    'phone': 'call',
+    'laptop': 'laptop_mac',
+    'checkcircle2': 'check_circle',
+    'eye': 'visibility',
+    'settings': 'settings',
+  };
+
+  if (iconMap[lower]) return iconMap[lower];
+  return lower.replace(/[-\s]+/g, '_');
+};
+
 export const renderMedia = (url: string | undefined | null, className: string = '', alt: string = 'media') => {
   if (!url) return '';
   const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('youtube') || url.includes('vimeo') || url.includes('youtu.be');
@@ -556,12 +584,13 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter auto-rows-[280px]">
   ${featuresItems.map((item, idx) => {
     const isImg = item.icon && (item.icon.startsWith('http') || item.icon.includes('/') || item.icon.startsWith('data:'));
+    const symbolIcon = formatMaterialIcon(item.icon);
     const colSpan = idx === 0 || idx === featuresItems.length - 1 ? 'col-span-1 lg:col-span-2' : 'col-span-1';
     const colors = ['primary', 'secondary', 'tertiary', 'primary'];
     const color = colors[idx % colors.length];
     const iconEl = isImg
       ? `<img src="${item.icon}" alt="${item.title}" class="w-14 h-14 rounded-2xl object-cover border border-outline-variant/30" />`
-      : `<div class="w-14 h-14 rounded-2xl bg-${color}/10 flex items-center justify-center mb-stack-md group-hover:scale-110 group-hover:bg-${color} transition-all duration-300"><span class="material-symbols-outlined text-${color} group-hover:text-on-${color} text-[32px] transition-colors">${item.icon || 'star'}</span></div>`;
+      : `<div class="w-14 h-14 rounded-2xl bg-${color}/10 flex items-center justify-center mb-stack-md group-hover:scale-110 group-hover:bg-${color} transition-all duration-300"><span class="material-symbols-outlined text-${color} group-hover:text-on-${color} text-[32px] transition-colors">${symbolIcon}</span></div>`;
     return `
     <div data-section="features" data-index="${idx}" class="${colSpan} row-span-1 bg-surface-container-lowest border border-outline-variant/60 rounded-3xl p-stack-lg shadow-sm hover:shadow-xl hover:border-${color}/50 hover:-translate-y-2 transition-all duration-300 group flex flex-col justify-between overflow-hidden relative">
       <div class="relative z-10">

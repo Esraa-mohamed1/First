@@ -113,11 +113,20 @@ export const getPages = async (forceRefresh = false, template: string = 'academi
   return pagesPromise;
 };
 
-export const getPublicPages = async (template: string = 'academic'): Promise<any[]> => {
+export const getPublicPages = async (template?: string): Promise<any[]> => {
   try {
-    const response = await api.get<any>('/pages', {
-      params: template ? { template } : undefined,
-    });
+    let response;
+    try {
+      response = await api.get<any>('/pages', {
+        params: template ? { template } : undefined,
+      });
+    } catch (e: any) {
+      if (e?.response?.status === 404 || e?.status === 404) {
+        response = await api.get<any>('/pages');
+      } else {
+        throw e;
+      }
+    }
     const data = response.data?.data ?? response.data;
     return (Array.isArray(data) ? data : []) as any[];
   } catch (error) {

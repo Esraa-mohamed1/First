@@ -26,10 +26,10 @@ export const getStudentLandingPageByCourseSlug = async (slug: string, courseId?:
     try {
       response = await studentApi.get(`landing_pages`);
     } catch (e: any) {
-      if (e?.response?.status === 404 || e?.status === 404) {
+      if ((e?.response?.status === 404 || e?.status === 404) && (typeof window !== 'undefined' && localStorage.getItem('token'))) {
         response = await academyApi.get(`landing_pages`);
       } else {
-        throw e;
+        return null;
       }
     }
     const list = response.data?.data || response.data;
@@ -115,10 +115,10 @@ export const getStudentLandingPagesList = async (): Promise<any[]> => {
     try {
       response = await studentApi.get('landing_pages');
     } catch (e: any) {
-      if (e?.response?.status === 404 || e?.status === 404) {
+      if ((e?.response?.status === 404 || e?.status === 404) && (typeof window !== 'undefined' && localStorage.getItem('token'))) {
         response = await academyApi.get('landing_pages');
       } else {
-        throw e;
+        return [];
       }
     }
     const data = response.data?.data ?? response.data;
