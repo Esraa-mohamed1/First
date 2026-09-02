@@ -26,27 +26,36 @@ import { getProfileStatus } from '@/services/auth';
 import { getLandingPagesList } from '@/modules/landing/services/landing.api';
 
 // Section Editors - Template 1 (Classic/Royal)
-import HeroEditor from '@/modules/landing/editor/HeroEditor';
-import LearningEditor from '@/modules/landing/editor/LearningEditor';
-import ChapterEditor from '@/modules/landing/editor/ChapterEditor';
-import PaymentEditor from '@/modules/landing/editor/PaymentEditor';
-import FAQEditor from '@/modules/landing/editor/FAQEditor';
-import ReviewsEditor from '@/modules/landing/editor/ReviewsEditor';
-import WhatsAppEditor from '@/modules/landing/editor/WhatsAppEditor';
-import FooterEditor from '@/modules/landing/editor/FooterEditor';
+import Template1HeroEditor from '@/modules/landing/editor/template1/Template1HeroEditor';
+import Template1LearningEditor from '@/modules/landing/editor/template1/Template1LearningEditor';
+import Template1ChapterEditor from '@/modules/landing/editor/template1/Template1ChapterEditor';
+import Template1PaymentEditor from '@/modules/landing/editor/template1/Template1PaymentEditor';
+import Template1FAQEditor from '@/modules/landing/editor/template1/Template1FAQEditor';
+import Template1ReviewsEditor from '@/modules/landing/editor/template1/Template1ReviewsEditor';
+import Template1WhatsAppEditor from '@/modules/landing/editor/template1/Template1WhatsAppEditor';
+import Template1FooterEditor from '@/modules/landing/editor/template1/Template1FooterEditor';
+
 
 // Section Editors - Template 2 (Modern / Interactive)
 import Template2HeroEditor from '@/modules/landing/editor/template2/Template2HeroEditor';
 import Template2AboutEditor from '@/modules/landing/editor/template2/Template2AboutEditor';
 import Template2FeaturesEditor from '@/modules/landing/editor/template2/Template2FeaturesEditor';
+import Template2CurriculumEditor from '@/modules/landing/editor/template2/Template2CurriculumEditor';
 import Template2InstructorEditor from '@/modules/landing/editor/template2/Template2InstructorEditor';
 import Template2BenefitsEditor from '@/modules/landing/editor/template2/Template2BenefitsEditor';
 import Template2CtaEditor from '@/modules/landing/editor/template2/Template2CtaEditor';
+import Template2FooterEditor from '@/modules/landing/editor/template2/Template2FooterEditor';
+
 
 // Section Editors - Template 3 (UI/UX / Academy)
 import Template3HeroEditor from '@/modules/landing/editor/template3/Template3HeroEditor';
+import Template3LearningEditor from '@/modules/landing/editor/template3/Template3LearningEditor';
+import Template3CurriculumEditor from '@/modules/landing/editor/template3/Template3CurriculumEditor';
 import Template3InstructorEditor from '@/modules/landing/editor/template3/Template3InstructorEditor';
+import Template3FAQEditor from '@/modules/landing/editor/template3/Template3FAQEditor';
+import Template3RequirementsEditor from '@/modules/landing/editor/template3/Template3RequirementsEditor';
 import Template3PricingEditor from '@/modules/landing/editor/template3/Template3PricingEditor';
+
 
 
 
@@ -333,6 +342,7 @@ export default function LandingPageBuilderPage() {
                   <option value="chapters">محتوى الدورة والمنهج</option>
                   <option value="instructor">عن المحاضر والمدرب</option>
                   <option value="faq">الأسئلة الشائعة حول البرنامج</option>
+                  <option value="requirements">المتطلبات الأساسية للبدء</option>
                   <option value="payment">بطاقة ورسوم الاشتراك</option>
                   <option value="whatsapp">زر تواصل واتساب</option>
                 </>
@@ -348,23 +358,23 @@ export default function LandingPageBuilderPage() {
                 const sec = (activeSectionId || 'hero').toLowerCase().trim();
                 switch (sec) {
                   case 'hero':
-                    return <HeroEditor />;
+                    return <Template1HeroEditor />;
                   case 'learning':
-                    return <LearningEditor />;
+                    return <Template1LearningEditor />;
                   case 'chapters':
-                    return <ChapterEditor />;
+                    return <Template1ChapterEditor />;
                   case 'payment':
-                    return <PaymentEditor />;
+                    return <Template1PaymentEditor />;
                   case 'faq':
-                    return <FAQEditor />;
+                    return <Template1FAQEditor />;
                   case 'reviews':
-                    return <ReviewsEditor />;
+                    return <Template1ReviewsEditor />;
                   case 'whatsapp':
-                    return <WhatsAppEditor />;
+                    return <Template1WhatsAppEditor />;
                   case 'footer':
-                    return <FooterEditor />;
+                    return <Template1FooterEditor />;
                   default:
-                    return <HeroEditor />;
+                    return <Template1HeroEditor />;
                 }
               })()
             ) : selectedTemplate === 'template_2' ? (
@@ -379,7 +389,7 @@ export default function LandingPageBuilderPage() {
                   case 'features':
                     return <Template2FeaturesEditor />;
                   case 'chapters':
-                    return <ChapterEditor />;
+                    return <Template2CurriculumEditor />;
                   case 'instructor':
                     return <Template2InstructorEditor />;
                   case 'benefits':
@@ -388,9 +398,9 @@ export default function LandingPageBuilderPage() {
                   case 'payment':
                     return <Template2CtaEditor />;
                   case 'footer':
-                    return <FooterEditor />;
+                    return <Template2FooterEditor />;
                   case 'whatsapp':
-                    return <WhatsAppEditor />;
+                    return <Template1WhatsAppEditor />;
                   default:
                     return <Template2HeroEditor />;
                 }
@@ -402,17 +412,19 @@ export default function LandingPageBuilderPage() {
                   case 'hero':
                     return <Template3HeroEditor />;
                   case 'learning':
-                    return <LearningEditor />;
+                    return <Template3LearningEditor />;
                   case 'chapters':
-                    return <ChapterEditor />;
+                    return <Template3CurriculumEditor />;
                   case 'instructor':
                     return <Template3InstructorEditor />;
                   case 'faq':
-                    return <FAQEditor />;
+                    return <Template3FAQEditor />;
+                  case 'requirements':
+                    return <Template3RequirementsEditor />;
                   case 'payment':
                     return <Template3PricingEditor />;
                   case 'whatsapp':
-                    return <WhatsAppEditor />;
+                    return <Template1WhatsAppEditor />;
                   default:
                     return <Template3HeroEditor />;
                 }

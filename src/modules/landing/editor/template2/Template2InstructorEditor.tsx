@@ -11,13 +11,15 @@ export default function Template2InstructorEditor() {
   const updateSectionContent = useLandingStore(state => state.updateSectionContent);
 
   const defaultContent = getTemplateDefaultContent(courseData, 'template_2');
-  const data = storeContent?.instructor || defaultContent.instructor || {
-    title: 'عن المدرب',
-    name: typeof courseData?.instructor === 'object' && courseData.instructor ? courseData.instructor.name || 'أ. سارة أحمد' : courseData?.instructor || 'أ. سارة أحمد',
-    jobTitle: courseData?.instructor?.title || 'خبير تصميم واجهات وتجربة مستخدم (Lead UI/UX Designer)',
-    bio: courseData?.instructor?.bio || 'خبرة تزيد عن 10 سنوات في تصميم المنتجات الرقمية لكبرى الشركات التقنية في المنطقة.',
-    image: courseData?.instructor?.profile_image || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400',
-    badges: ['Google Certified', 'Interaction Design Expert', 'Mentor at ADPList']
+  const instructorContent = storeContent?.instructor;
+  const badges = instructorContent?.badges !== undefined 
+    ? instructorContent.badges 
+    : (defaultContent.instructor?.badges || ['Google Certified', 'Interaction Design Expert', 'Mentor at ADPList']);
+
+  const data = {
+    ...defaultContent.instructor,
+    ...(instructorContent || {}),
+    badges
   };
 
   const [newBadge, setNewBadge] = useState('');
@@ -43,7 +45,7 @@ export default function Template2InstructorEditor() {
     <div className="space-y-6 text-right font-sans" dir="rtl">
       <div>
         <h3 className="text-sm font-black text-slate-800 border-r-4 border-blue-600 pr-2">بيانات واعتمادات المدرب — القالب التفاعلي</h3>
-        <p className="text-[10px] text-slate-400 font-bold mt-1">تخصيص الاسم، المسمى المهني، السيرة الذاتية، الصورة، والشارات المعتمدة</p>
+        <p className="text-[10px] text-slate-400 font-bold mt-1">تخصيص الاسم، المسمى المهني، السيرة الذاتية، الصورة، الشارات، والألوان</p>
       </div>
 
       <div className="space-y-4">
@@ -127,6 +129,9 @@ export default function Template2InstructorEditor() {
                 </button>
               </span>
             ))}
+            {(data.badges || []).length === 0 && (
+              <p className="text-[11px] text-slate-400 italic">تم حذف جميع الشارات (لن تظهر أي شارة في صفحة الهبوط).</p>
+            )}
           </div>
 
           <div className="flex items-center gap-2 pt-1">
@@ -151,6 +156,85 @@ export default function Template2InstructorEditor() {
               <Plus size={14} />
               <span>إضافة</span>
             </button>
+          </div>
+        </div>
+
+        {/* Colors */}
+        <div className="border-t border-slate-100 pt-4 space-y-3">
+          <h4 className="text-xs font-black text-slate-700">ألوان قسم المدرب والشارات</h4>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-700">لون خلفية القسم</label>
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                <input
+                  type="color"
+                  className="w-8 h-8 rounded-lg border-0 cursor-pointer bg-transparent shrink-0 outline-none"
+                  value={data.backgroundColor || '#faf8ff'}
+                  onChange={(e) => handleChange('backgroundColor', e.target.value)}
+                />
+                <input
+                  type="text"
+                  className="flex-1 min-w-0 bg-transparent text-center text-xs font-bold font-mono text-slate-700 focus:outline-none"
+                  value={data.backgroundColor || '#faf8ff'}
+                  onChange={(e) => handleChange('backgroundColor', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-700">لون النصوص</label>
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                <input
+                  type="color"
+                  className="w-8 h-8 rounded-lg border-0 cursor-pointer bg-transparent shrink-0 outline-none"
+                  value={data.textColor || '#191b23'}
+                  onChange={(e) => handleChange('textColor', e.target.value)}
+                />
+                <input
+                  type="text"
+                  className="flex-1 min-w-0 bg-transparent text-center text-xs font-bold font-mono text-slate-700 focus:outline-none"
+                  value={data.textColor || '#191b23'}
+                  onChange={(e) => handleChange('textColor', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-700">لون خلفية الشارات</label>
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                <input
+                  type="color"
+                  className="w-8 h-8 rounded-lg border-0 cursor-pointer bg-transparent shrink-0 outline-none"
+                  value={data.badgeBackgroundColor || '#ffffff'}
+                  onChange={(e) => handleChange('badgeBackgroundColor', e.target.value)}
+                />
+                <input
+                  type="text"
+                  className="flex-1 min-w-0 bg-transparent text-center text-xs font-bold font-mono text-slate-700 focus:outline-none"
+                  value={data.badgeBackgroundColor || '#ffffff'}
+                  onChange={(e) => handleChange('badgeBackgroundColor', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-700">لون نصوص الشارات</label>
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                <input
+                  type="color"
+                  className="w-8 h-8 rounded-lg border-0 cursor-pointer bg-transparent shrink-0 outline-none"
+                  value={data.badgeTextColor || '#434654'}
+                  onChange={(e) => handleChange('badgeTextColor', e.target.value)}
+                />
+                <input
+                  type="text"
+                  className="flex-1 min-w-0 bg-transparent text-center text-xs font-bold font-mono text-slate-700 focus:outline-none"
+                  value={data.badgeTextColor || '#434654'}
+                  onChange={(e) => handleChange('badgeTextColor', e.target.value)}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>

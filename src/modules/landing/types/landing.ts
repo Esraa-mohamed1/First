@@ -1,6 +1,6 @@
 export interface HeroSectionData {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   description: string;
   image: string;
   buttonText: string;
@@ -8,6 +8,8 @@ export interface HeroSectionData {
   backgroundColor: string;
   textColor: string;
   overlayColor?: string;
+  buttonBackgroundColor?: string;
+  discountMessage?: string;
   typography?: {
     titleSize: number;
     bodySize: number;
@@ -28,6 +30,7 @@ export interface LearningSectionData {
   cards: LearningCard[];
   backgroundColor?: string;
   textColor?: string;
+  itemBackgroundColor?: string;
 }
 
 export interface ChapterSectionData {
@@ -56,6 +59,8 @@ export interface FAQSectionData {
   items: FAQItem[];
   backgroundColor?: string;
   textColor?: string;
+  questionBackgroundColor?: string;
+  answerBackgroundColor?: string;
 }
 
 export interface ReviewItem {
@@ -94,6 +99,7 @@ export interface WhatsAppSectionData {
   title?: string;
   subtitle?: string;
   buttonText?: string;
+  contactMessage?: string;
   backgroundColor?: string;
   textColor?: string;
 }
@@ -116,6 +122,10 @@ export interface ModernAboutSectionData {
   investmentTitle?: string;
   discountBadge?: string;
   guaranteeText?: string;
+  buttonText?: string;
+  buttonBackgroundColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
 }
 
 export interface ModernFeatureItem {
@@ -128,6 +138,8 @@ export interface ModernFeatureItem {
 export interface ModernFeaturesSectionData {
   title?: string;
   items?: ModernFeatureItem[];
+  backgroundColor?: string;
+  textColor?: string;
 }
 
 export interface ModernInstructorSectionData {
@@ -137,17 +149,45 @@ export interface ModernInstructorSectionData {
   bio?: string;
   image?: string;
   badges?: string[];
+  badgeBackgroundColor?: string;
+  badgeTextColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
 }
 
 export interface ModernBenefitsSectionData {
   title?: string;
   items?: string[];
+  backgroundColor?: string;
+  textColor?: string;
 }
 
 export interface ModernCtaSectionData {
   title?: string;
   description?: string;
   buttonText?: string;
+  buttonBackgroundColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
+}
+
+export interface Template3RequirementsSectionData {
+  title?: string;
+  items?: string[];
+  backgroundColor?: string;
+  textColor?: string;
+}
+
+export interface Template3LearningSectionData {
+  cards?: any[];
+  backgroundColor?: string;
+  textColor?: string;
+}
+
+export interface Template3CurriculumSectionData {
+  title?: string;
+  backgroundColor?: string;
+  textColor?: string;
 }
 
 export interface Template3InstructorSectionData {
@@ -157,7 +197,18 @@ export interface Template3InstructorSectionData {
   bio?: string;
   avatar?: string;
   studentsCount?: string;
+  studentsLabel?: string;
   coursesCount?: string;
+  coursesLabel?: string;
+  backgroundColor?: string;
+  textColor?: string;
+}
+
+export interface Template3FAQSectionData {
+  title?: string;
+  items?: Array<{ question: string; answer: string }>;
+  backgroundColor?: string;
+  textColor?: string;
 }
 
 export interface Template3PricingSectionData {
@@ -165,6 +216,10 @@ export interface Template3PricingSectionData {
   buttonText?: string;
   guaranteeText?: string;
   items?: string[];
+  backgroundColor?: string;
+  textColor?: string;
+  headerBackgroundColor?: string;
+  headerTextColor?: string;
 }
 
 export interface LandingPageContent {
@@ -183,7 +238,11 @@ export interface LandingPageContent {
   benefits?: ModernBenefitsSectionData;
   cta?: ModernCtaSectionData;
   // UI/UX (template_3) isolated sections
+  template3_requirements?: Template3RequirementsSectionData;
+  template3_learning?: Template3LearningSectionData;
+  template3_curriculum?: Template3CurriculumSectionData;
   template3_instructor?: Template3InstructorSectionData;
+  template3_faq?: Template3FAQSectionData;
   template3_pricing?: Template3PricingSectionData;
 }
 

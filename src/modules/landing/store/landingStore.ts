@@ -77,7 +77,11 @@ export const useLandingStore = create<LandingState>((set, get) => ({
         benefits: { ...(defaults.benefits || {}), ...(c.benefits || {}) },
         cta: { ...(defaults.cta || {}), ...(c.cta || {}) },
         // UI/UX (template_3) sections
+        template3_requirements: { ...(defaults.template3_requirements || {}), ...(c.template3_requirements || {}) },
+        template3_learning: { ...(defaults.template3_learning || {}), ...(c.template3_learning || {}) },
+        template3_curriculum: { ...(defaults.template3_curriculum || {}), ...(c.template3_curriculum || {}) },
         template3_instructor: { ...(defaults.template3_instructor || {}), ...(c.template3_instructor || {}) },
+        template3_faq: { ...(defaults.template3_faq || {}), ...(c.template3_faq || {}) },
         template3_pricing: { ...(defaults.template3_pricing || {}), ...(c.template3_pricing || {}) },
       } as any;
     }

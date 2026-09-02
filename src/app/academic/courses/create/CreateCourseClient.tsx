@@ -78,14 +78,22 @@ import FooterEditor from '@/modules/landing/editor/FooterEditor';
 import Template2HeroEditor from '@/modules/landing/editor/template2/Template2HeroEditor';
 import Template2AboutEditor from '@/modules/landing/editor/template2/Template2AboutEditor';
 import Template2FeaturesEditor from '@/modules/landing/editor/template2/Template2FeaturesEditor';
+import Template2CurriculumEditor from '@/modules/landing/editor/template2/Template2CurriculumEditor';
 import Template2InstructorEditor from '@/modules/landing/editor/template2/Template2InstructorEditor';
 import Template2BenefitsEditor from '@/modules/landing/editor/template2/Template2BenefitsEditor';
 import Template2CtaEditor from '@/modules/landing/editor/template2/Template2CtaEditor';
+import Template2FooterEditor from '@/modules/landing/editor/template2/Template2FooterEditor';
+
 
 // Section Editors - Template 3 (UI/UX / Academy)
 import Template3HeroEditor from '@/modules/landing/editor/template3/Template3HeroEditor';
+import Template3LearningEditor from '@/modules/landing/editor/template3/Template3LearningEditor';
+import Template3CurriculumEditor from '@/modules/landing/editor/template3/Template3CurriculumEditor';
 import Template3InstructorEditor from '@/modules/landing/editor/template3/Template3InstructorEditor';
+import Template3FAQEditor from '@/modules/landing/editor/template3/Template3FAQEditor';
+import Template3RequirementsEditor from '@/modules/landing/editor/template3/Template3RequirementsEditor';
 import Template3PricingEditor from '@/modules/landing/editor/template3/Template3PricingEditor';
+
 
 
 
@@ -2901,6 +2909,7 @@ export default function CreateCourseClient() {
                         <option value="chapters">محتوى الدورة والمنهج</option>
                         <option value="instructor">عن المحاضر والمدرب</option>
                         <option value="faq">الأسئلة الشائعة حول البرنامج</option>
+                        <option value="requirements">المتطلبات الأساسية للبدء</option>
                         <option value="payment">بطاقة ورسوم الاشتراك</option>
                         <option value="whatsapp">زر تواصل واتساب</option>
                       </>
@@ -2950,7 +2959,7 @@ export default function CreateCourseClient() {
                         case 'content':
                         case 'modules':
                         case 'units':
-                          return <ChapterEditor />;
+                          return <Template2CurriculumEditor />;
                         case 'instructor':
                           return <Template2InstructorEditor />;
                         case 'benefits':
@@ -2961,7 +2970,7 @@ export default function CreateCourseClient() {
                           return <Template2CtaEditor />;
                         case 'footer':
                         case 'bottom':
-                          return <FooterEditor />;
+                          return <Template2FooterEditor />;
                         case 'whatsapp':
                         case 'contact':
                         case 'support':
@@ -2986,14 +2995,14 @@ export default function CreateCourseClient() {
                         case 'benefits':
                         case 'outcomes':
                         case 'about':
-                          return <LearningEditor />;
+                          return <Template3LearningEditor />;
                         case 'chapters':
                         case 'curriculum':
                         case 'syllabus':
                         case 'content':
                         case 'modules':
                         case 'units':
-                          return <ChapterEditor />;
+                          return <Template3CurriculumEditor />;
                         case 'instructor':
                         case 'trainer':
                         case 'teacher':
@@ -3001,7 +3010,11 @@ export default function CreateCourseClient() {
                         case 'faq':
                         case 'questions':
                         case 'help':
-                          return <FAQEditor />;
+                          return <Template3FAQEditor />;
+                        case 'requirements':
+                        case 'prerequisites':
+                        case 'needs':
+                          return <Template3RequirementsEditor />;
                         case 'payment':
                         case 'pricing':
                         case 'packages':
