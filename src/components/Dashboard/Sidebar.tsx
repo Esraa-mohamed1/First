@@ -15,7 +15,7 @@ interface SidebarProps {
 
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const pathname = usePathname();
-  const [expandedItems, setExpandedItems] = useState<string[]>(['ادارة الباقات']);
+  const [expandedItems, setExpandedItems] = useState<string[]>(['ادارة الباقات', 'إدارة الأكاديميات']);
 
   const toggleExpand = (label: string) => {
     setExpandedItems((prev) =>
@@ -38,6 +38,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       label: 'إدارة الأكاديميات',
       icon: GraduationCap,
       href: '/dashboard/academies',
+      subItems: [
+        { label: 'عرض الأكاديميات', href: '/dashboard/academies' },
+        { label: 'اشتراكات الأكاديميات', href: '/dashboard/academies/subscriptions' },
+      ],
     },
     {
       label: 'ادارة الباقات',
