@@ -93,8 +93,26 @@ export const useCreateCourseModal = ({
             setTitle(course.title || '');
             setCategory(course.category_id?.toString() || '');
             setDescription(course.description || '');
-            setWhatYouWillLearn((course as any).what_to_learn || (course as any).what_you_will_learn || '');
-            setWhoIsThisFor((course as any).target_audience || (course as any).who_is_this_for || '');
+
+            let learnStr = (course as any).what_to_learn || (course as any).what_you_will_learn || '';
+            let audienceStr = (course as any).target_audience || (course as any).who_is_this_for || '';
+
+            if (Array.isArray(course.infos) && course.infos.length > 0) {
+              const learnPoints = course.infos
+                .filter((i: any) => i.info_key === 'what_you_will_learn' || i.key === 'what_you_will_learn')
+                .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+                .map((i: any) => i.info_value || i.value);
+              if (learnPoints.length > 0) learnStr = learnPoints.join('\n');
+
+              const audPoints = course.infos
+                .filter((i: any) => i.info_key === 'targeted_audience' || i.key === 'targeted_audience' || i.info_key === 'target_audience' || i.key === 'target_audience' || i.info_key === 'who_is_this_for' || i.key === 'who_is_this_for')
+                .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+                .map((i: any) => i.info_value || i.value);
+              if (audPoints.length > 0) audienceStr = audPoints.join('\n');
+            }
+
+            setWhatYouWillLearn(learnStr);
+            setWhoIsThisFor(audienceStr);
             setPricingType((course as any).price_type || (Number(course.price) === 0 ? 'free' : 'paid'));
             setStatus(course.status || 'draft');
             setPrice(course.price?.toString() || '');
@@ -153,6 +171,49 @@ export const useCreateCourseModal = ({
         currency,
         image: selectedFile || undefined,
       };
+
+      const infosList: any[] = [];
+      let infoIdx = 0;
+
+      if (whatYouWillLearn) {
+        const points = whatYouWillLearn.split(/\n|,|،/).map(s => s.trim()).filter(Boolean);
+        points.forEach((pt, idx) => {
+          infosList.push({
+            key: 'what_you_will_learn',
+            info_key: 'what_you_will_learn',
+            value: pt,
+            info_value: pt,
+            order: idx + 1,
+          });
+          payload[`infos[${infoIdx}][key]`] = 'what_you_will_learn';
+          payload[`infos[${infoIdx}][info_key]`] = 'what_you_will_learn';
+          payload[`infos[${infoIdx}][value]`] = pt;
+          payload[`infos[${infoIdx}][info_value]`] = pt;
+          payload[`infos[${infoIdx}][order]`] = idx + 1;
+          infoIdx++;
+        });
+      }
+
+      if (whoIsThisFor) {
+        const points = whoIsThisFor.split(/\n|,|،/).map(s => s.trim()).filter(Boolean);
+        points.forEach((pt, idx) => {
+          infosList.push({
+            key: 'targeted_audience',
+            info_key: 'targeted_audience',
+            value: pt,
+            info_value: pt,
+            order: idx + 1,
+          });
+          payload[`infos[${infoIdx}][key]`] = 'targeted_audience';
+          payload[`infos[${infoIdx}][info_key]`] = 'targeted_audience';
+          payload[`infos[${infoIdx}][value]`] = pt;
+          payload[`infos[${infoIdx}][info_value]`] = pt;
+          payload[`infos[${infoIdx}][order]`] = idx + 1;
+          infoIdx++;
+        });
+      }
+
+      payload.infos = infosList;
 
       try {
         if (courseId) {

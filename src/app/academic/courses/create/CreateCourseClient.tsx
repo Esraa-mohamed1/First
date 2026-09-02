@@ -531,6 +531,60 @@ export default function CreateCourseClient() {
     fetchInitialData();
   }, []);
 
+  // Fetch course details if editing an existing course
+  useEffect(() => {
+    const editIdParam = searchParams.get('id') || searchParams.get('courseId') || searchParams.get('course_id');
+    if (editIdParam) {
+      const loadExistingCourse = async () => {
+        try {
+          const c: any = await getCourse(editIdParam);
+          if (c) {
+            setCourseId(c.id);
+            if (c.title) setTitle(c.title);
+            if (c.slug) setSlug(c.slug);
+            if (c.category_id) setCategory(String(c.category_id));
+            if (c.short_description) setShortDescription(c.short_description);
+            if (c.description) setDescription(c.description);
+            if (c.pricing_type || c.price_type) setPricingType(c.pricing_type || c.price_type);
+            if (c.price) setPrice(String(c.price));
+            if (c.currency) setCurrency(c.currency);
+            if (c.status) setStatus(c.status);
+            if (c.chapters || c.units) setUnits(c.chapters || c.units);
+            if (c.image) setPreviewUrl(c.image);
+
+            // Load infos for learning outcomes and target audience
+            if (Array.isArray(c.infos) && c.infos.length > 0) {
+              const learnPoints = c.infos
+                .filter((i: any) => i.info_key === 'what_you_will_learn' || i.key === 'what_you_will_learn')
+                .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+                .map((i: any) => i.info_value || i.value);
+              if (learnPoints.length > 0) setLearningOutcomes(learnPoints);
+
+              const audPoints = c.infos
+                .filter((i: any) => i.info_key === 'targeted_audience' || i.key === 'targeted_audience' || i.info_key === 'target_audience' || i.key === 'target_audience' || i.info_key === 'who_is_this_for' || i.key === 'who_is_this_for')
+                .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+                .map((i: any) => i.info_value || i.value);
+              if (audPoints.length > 0) setTargetAudience(audPoints);
+            } else {
+              if (c.what_you_will_learn) {
+                const pts = c.what_you_will_learn.split(/\n|,|،/).map((s: string) => s.trim()).filter(Boolean);
+                if (pts.length > 0) setLearningOutcomes(pts);
+              }
+              const audStr = c.target_audience || c.who_is_this_for || '';
+              if (audStr) {
+                const pts = audStr.split(/\n|,|،/).map((s: string) => s.trim()).filter(Boolean);
+                if (pts.length > 0) setTargetAudience(pts);
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Failed to load course for editing:', err);
+        }
+      };
+      loadExistingCourse();
+    }
+  }, [searchParams]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -710,13 +764,44 @@ export default function CreateCourseClient() {
       academic_year: academicYear || undefined,
     };
 
+    const infosList: any[] = [];
     let infoIndex = 0;
+
     learningOutcomes.filter((p) => p.trim() !== '').forEach((point, pointIndex) => {
+      const item = {
+        key: 'what_you_will_learn',
+        info_key: 'what_you_will_learn',
+        value: point,
+        info_value: point,
+        order: pointIndex + 1,
+      };
+      infosList.push(item);
       payload[`infos[${infoIndex}][key]`] = 'what_you_will_learn';
+      payload[`infos[${infoIndex}][info_key]`] = 'what_you_will_learn';
       payload[`infos[${infoIndex}][value]`] = point;
+      payload[`infos[${infoIndex}][info_value]`] = point;
       payload[`infos[${infoIndex}][order]`] = pointIndex + 1;
       infoIndex++;
     });
+
+    targetAudience.filter((p) => p.trim() !== '').forEach((audPoint, audIndex) => {
+      const item = {
+        key: 'targeted_audience',
+        info_key: 'targeted_audience',
+        value: audPoint,
+        info_value: audPoint,
+        order: audIndex + 1,
+      };
+      infosList.push(item);
+      payload[`infos[${infoIndex}][key]`] = 'targeted_audience';
+      payload[`infos[${infoIndex}][info_key]`] = 'targeted_audience';
+      payload[`infos[${infoIndex}][value]`] = audPoint;
+      payload[`infos[${infoIndex}][info_value]`] = audPoint;
+      payload[`infos[${infoIndex}][order]`] = audIndex + 1;
+      infoIndex++;
+    });
+
+    payload.infos = infosList;
 
     try {
       // Check existing user courses for duplicates before creating/updating

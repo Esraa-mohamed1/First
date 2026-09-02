@@ -21,7 +21,20 @@ export const createCourse = async (payload: CreateCoursePayload): Promise<Course
           });
         } else if (key === 'payment_methods') {
           // Skip — backend uses receiver_accounts
-        } else {
+        } else if (key === 'infos' && Array.isArray(value)) {
+          value.forEach((item: any, index: number) => {
+            const k = item.info_key || item.key;
+            const v = item.info_value || item.value;
+            const o = item.order || (index + 1);
+            if (k && v !== undefined) {
+              formData.append(`infos[${index}][key]`, String(k));
+              formData.append(`infos[${index}][info_key]`, String(k));
+              formData.append(`infos[${index}][value]`, String(v));
+              formData.append(`infos[${index}][info_value]`, String(v));
+              formData.append(`infos[${index}][order]`, String(o));
+            }
+          });
+        } else if (!key.startsWith('infos[')) {
           formData.append(key, String(value));
         }
       }
@@ -284,7 +297,20 @@ export const updateCourse = async (id: number, payload: any): Promise<Course> =>
             });
           } else if (key === 'payment_methods') {
             // Skip payment_methods — backend uses receiver_accounts
-          } else {
+          } else if (key === 'infos' && Array.isArray(payload[key])) {
+            payload[key].forEach((item: any, index: number) => {
+              const k = item.info_key || item.key;
+              const v = item.info_value || item.value;
+              const o = item.order || (index + 1);
+              if (k && v !== undefined) {
+                formData.append(`infos[${index}][key]`, String(k));
+                formData.append(`infos[${index}][info_key]`, String(k));
+                formData.append(`infos[${index}][value]`, String(v));
+                formData.append(`infos[${index}][info_value]`, String(v));
+                formData.append(`infos[${index}][order]`, String(o));
+              }
+            });
+          } else if (!key.startsWith('infos[')) {
             formData.append(key, String(payload[key]));
           }
         }
@@ -321,6 +347,16 @@ export const updateCourse = async (id: number, payload: any): Promise<Course> =>
       });
     }
     delete jsonPayload.payment_methods;
+
+    if (jsonPayload.infos && Array.isArray(jsonPayload.infos)) {
+      jsonPayload.infos = jsonPayload.infos.map((item: any, index: number) => ({
+        key: item.key || item.info_key,
+        info_key: item.info_key || item.key,
+        value: item.value || item.info_value,
+        info_value: item.info_value || item.value,
+        order: item.order || (index + 1)
+      }));
+    }
 
     const response = await academyApi.put<ApiResponse<Course>>(`courses/${id}`, jsonPayload);
     return response.data.data;

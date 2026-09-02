@@ -2,10 +2,11 @@
 
 import React from 'react';
 import { Course } from '@/types/student';
-import { ArrowLeft, BarChart, Image as ImageIcon, User, PlayCircle, Award, CreditCard, Eye } from 'lucide-react';
+import { ArrowLeft, BarChart, Image as ImageIcon, User, PlayCircle, Award, CreditCard, Eye, Clock } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { PaymentMethodBadge } from '@/components/payment/PaymentMethodBadge';
+import { formatCourseAccessDuration } from '@/lib/utils';
 
 interface CourseCardProps {
   course: Course & { paymentMethods?: any[] };
@@ -132,6 +133,10 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
             className="text-gray-500 text-xs line-clamp-2 leading-relaxed"
             dangerouslySetInnerHTML={{ __html: course.description }}
           />
+          <div className="flex items-center gap-1.5 text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-100/60 px-2.5 py-1 rounded-lg mt-3 w-fit">
+            <Clock size={12} className="text-emerald-600" />
+            <span>{formatCourseAccessDuration(course)}</span>
+          </div>
         </div>
 
         <div className="mt-auto pt-4 border-t border-gray-50">
