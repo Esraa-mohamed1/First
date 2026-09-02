@@ -11,6 +11,8 @@ import { Course, Unit, Lesson, User, ReceiverAccount } from '@/types/api';
 import { AcademyPaymentMethod, PaymentMethod } from '@/types/payment';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
 import AddClassificationModal from '@/components/Academic/Modals/AddClassificationModal';
+import AddCategoryModal from '@/components/Academic/Modals/AddCategoryModal';
+import AddCoachModal from '@/components/Academic/Modals/AddCoachModal';
 import EditUnitModal from '@/components/Academic/Modals/EditUnitModal';
 import EditLessonModal from '@/components/Academic/Modals/EditLessonModal';
 import toast from 'react-hot-toast';
@@ -459,7 +461,9 @@ export default function CourseDetailsPage() {
   const [subjectsList, setSubjectsList] = useState<ClassificationItem[]>([]);
   const [academicYearsList, setAcademicYearsList] = useState<ClassificationItem[]>([]);
 
-  // Modal State for adding Grade/Subject/Term/Year pop-up
+  // Modal State for adding Category/Coach/Grade/Subject/Term/Year pop-up
+  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
+  const [isAddCoachModalOpen, setIsAddCoachModalOpen] = useState(false);
   const [addClassificationModal, setAddClassificationModal] = useState<{
     isOpen: boolean;
     type: 'grade' | 'semester' | 'subject' | 'year';
@@ -1345,10 +1349,8 @@ export default function CourseDetailsPage() {
         const userData = profile.data || profile;
         if (userData) {
           setCurrentUser(userData);
-          if (userData.role === 'admin' || userData.role === 'academy') {
-            const coaches = await getUsers('academy');
-            setInstructors(coaches);
-          }
+          const coaches = await getUsers('academy');
+          setInstructors(coaches || []);
         }
       } catch (error) {
         console.error('Failed to fetch initial data:', error);
@@ -1818,40 +1820,62 @@ export default function CourseDetailsPage() {
               {/* Category and Coach selectors */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <SearchableSelect
-                    label="الفئة"
-                    options={categories.map(c => ({ id: c.id, name: c.name }))}
-                    value={courseInfo.category_id}
-                    onChange={(val) => {
-                      setCourseInfo({ ...courseInfo, category_id: val ? val.toString() : '' });
-                      if (errors.category_id) setErrors(prev => ({ ...prev, category_id: null }));
-                    }}
-                    placeholder="اختر فئة (اختياري)"
-                    error={errors.category_id ? translateErrorToArabic(Array.isArray(errors.category_id) ? errors.category_id[0] : String(errors.category_id)) : undefined}
-                  />
+                  <label className="block text-label-md mb-2 text-gray-900 font-bold">تصنيف / فئة الدورة</label>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <SearchableSelect
+                        options={categories.map(c => ({ id: c.id, name: c.name }))}
+                        value={courseInfo.category_id}
+                        onChange={(val) => {
+                          setCourseInfo({ ...courseInfo, category_id: val ? val.toString() : '' });
+                          if (errors.category_id) setErrors(prev => ({ ...prev, category_id: null }));
+                        }}
+                        placeholder="اختر فئة (اختياري)"
+                        error={errors.category_id ? translateErrorToArabic(Array.isArray(errors.category_id) ? errors.category_id[0] : String(errors.category_id)) : undefined}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddCategoryModalOpen(true)}
+                      className="p-2.5 bg-slate-100 border border-slate-300 rounded-lg hover:bg-slate-200 transition-colors flex items-center justify-center text-slate-700 cursor-pointer h-[42px] self-start"
+                      title="إضافة تصنيف جديد"
+                    >
+                      <span className="material-symbols-outlined text-lg">add</span>
+                    </button>
+                  </div>
                 </div>
 
-                {(currentUser?.role === 'admin' || currentUser?.role === 'academy') && (
-                  <div>
-                    <SearchableSelect
-                      label="المدرب"
-                      options={instructors.map(i => ({ id: i.id, name: i.name }))}
-                      value={courseInfo.user_id}
-                      onChange={(val) => {
-                        setCourseInfo({ ...courseInfo, user_id: val ? val.toString() : '' });
-                        if (val) {
-                          const selectedInst = instructors.find(i => i.id.toString() === val.toString());
-                          if (selectedInst) setCoachName(selectedInst.name || selectedInst.fullName || '');
-                        } else {
-                          setCoachName('');
-                        }
-                        if (errors.user_id) setErrors(prev => ({ ...prev, user_id: null }));
-                      }}
-                      placeholder="اختر مدرب (اختياري)"
-                      error={errors.user_id ? translateErrorToArabic(Array.isArray(errors.user_id) ? errors.user_id[0] : String(errors.user_id)) : undefined}
-                    />
+                <div>
+                  <label className="block text-label-md mb-2 text-gray-900 font-bold">المدرب / المحاضر</label>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <SearchableSelect
+                        options={instructors.map(i => ({ id: i.id, name: i.name }))}
+                        value={courseInfo.user_id}
+                        onChange={(val) => {
+                          setCourseInfo({ ...courseInfo, user_id: val ? val.toString() : '' });
+                          if (val) {
+                            const selectedInst = instructors.find(i => i.id.toString() === val.toString());
+                            if (selectedInst) setCoachName(selectedInst.name || selectedInst.fullName || '');
+                          } else {
+                            setCoachName('');
+                          }
+                          if (errors.user_id) setErrors(prev => ({ ...prev, user_id: null }));
+                        }}
+                        placeholder="اختر مدرب (افتراضي: الحساب الحالي)"
+                        error={errors.user_id ? translateErrorToArabic(Array.isArray(errors.user_id) ? errors.user_id[0] : String(errors.user_id)) : undefined}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddCoachModalOpen(true)}
+                      className="p-2.5 bg-slate-100 border border-slate-300 rounded-lg hover:bg-slate-200 transition-colors flex items-center justify-center text-slate-700 cursor-pointer h-[42px] self-start"
+                      title="إضافة مدرب جديد"
+                    >
+                      <span className="material-symbols-outlined text-lg">add</span>
+                    </button>
                   </div>
-                )}
+                </div>
               </div>
             </section>
 
@@ -3736,6 +3760,39 @@ export default function CourseDetailsPage() {
         currentGradeId={gradeLevel}
         onClose={() => setAddClassificationModal((prev) => ({ ...prev, isOpen: false }))}
         onSuccess={handleClassificationSuccess}
+      />
+
+      {/* Add Category Pop-up Modal */}
+      <AddCategoryModal
+        isOpen={isAddCategoryModalOpen}
+        onClose={() => setIsAddCategoryModalOpen(false)}
+        onSuccess={async (newCat) => {
+          try {
+            const updated = await getCategories();
+            setCategories(updated || []);
+            if (newCat?.id) setCourseInfo((prev) => ({ ...prev, category_id: String(newCat.id) }));
+          } catch (e) {
+            console.warn('Failed to refresh categories:', e);
+          }
+        }}
+      />
+
+      {/* Add Coach Pop-up Modal */}
+      <AddCoachModal
+        isOpen={isAddCoachModalOpen}
+        onClose={() => setIsAddCoachModalOpen(false)}
+        onSuccess={async (newCoach) => {
+          try {
+            const coaches = await getUsers('instructor');
+            setInstructors(coaches || []);
+            if (newCoach?.id) {
+              setCourseInfo((prev) => ({ ...prev, user_id: String(newCoach.id) }));
+              setCoachName(newCoach.name || '');
+            }
+          } catch (e) {
+            console.warn('Failed to refresh instructors:', e);
+          }
+        }}
       />
     </div>
   );

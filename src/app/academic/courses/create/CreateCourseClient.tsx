@@ -45,6 +45,8 @@ import { getErrorMessage } from '@/lib/utils';
 import { purgeAllCourseDraftCache } from '@/lib/auth-storage';
 import { getGrades, getTerms, getSubjects, getAcademicYears, ClassificationItem } from '@/services/academic-classification';
 import AddClassificationModal from '@/components/Academic/Modals/AddClassificationModal';
+import AddCategoryModal from '@/components/Academic/Modals/AddCategoryModal';
+import AddCoachModal from '@/components/Academic/Modals/AddCoachModal';
 import { getProfileStatus } from '@/services/auth';
 import { getUsers } from '@/services/users';
 import ManageSubscribersView from '@/components/Academic/Subscribers/ManageSubscribersView';
@@ -212,6 +214,8 @@ export default function CreateCourseClient() {
   const [category, setCategory] = useState('');
   const [categories, setCategories] = useState<any[]>([]);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
+  const [isAddCoachModalOpen, setIsAddCoachModalOpen] = useState(false);
   const [shortDescription, setShortDescription] = useState('');
   const [description, setDescription] = useState('');
   const [coachName, setCoachName] = useState('');
@@ -589,10 +593,8 @@ export default function CreateCourseClient() {
             setCoachName('');
             setSelectedInstructor(null);
           }
-          if (userData.role === 'admin' || userData.role === 'academy') {
-            const coaches = await getUsers('academy');
-            setInstructors(coaches);
-          }
+          const coaches = await getUsers('academy');
+          setInstructors(coaches || []);
         }
       } catch (error) {
         console.error('Failed to fetch initial data:', error);
@@ -1572,44 +1574,71 @@ export default function CreateCourseClient() {
                       </div>
                     </div>
 
-                    {/* 4. Course Category */}
-                    <div>
-                      <label className="block text-sm font-bold mb-2 text-slate-800">
-                        تصنيف الدورة <span className="text-red-500">*</span>
-                      </label>
-                      <div className="flex gap-2.5">
-                        <select
-                          value={category}
-                          onChange={(e) => setCategory(e.target.value)}
-                          className="flex-1 border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-slate-900 text-sm font-medium bg-white"
-                        >
-                          <option value="">اختر التصنيف...</option>
-                          {categories.map((cat: any) => (
-                            <option key={cat.id} value={cat.id}>
-                              {cat.name}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          type="button"
-                          onClick={() => setIsAddingCategory(true)}
-                          className="p-3 bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center text-slate-700"
-                        >
-                          <span className="material-symbols-outlined text-xl">add</span>
-                        </button>
+                    {/* 4. Course Category & Coach / Instructor */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-bold mb-2 text-slate-800">
+                          تصنيف الدورة <span className="text-red-500">*</span>
+                        </label>
+                        <div className="flex gap-2.5">
+                          <select
+                            value={category}
+                            onChange={(e) => setCategory(e.target.value)}
+                            className="flex-1 border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-slate-900 text-sm font-medium bg-white cursor-pointer"
+                          >
+                            <option value="">اختر التصنيف...</option>
+                            {categories.map((cat: any) => (
+                              <option key={cat.id} value={cat.id}>
+                                {cat.name}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => setIsAddCategoryModalOpen(true)}
+                            className="p-3 bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center text-slate-700 cursor-pointer"
+                            title="إضافة تصنيف جديد"
+                          >
+                            <span className="material-symbols-outlined text-xl">add</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold mb-2 text-slate-800">
+                          المدرب / المحاضر
+                        </label>
+                        <div className="flex gap-2.5">
+                          <select
+                            value={selectedInstructor || ''}
+                            onChange={(e) => {
+                              const val = e.target.value ? Number(e.target.value) : null;
+                              setSelectedInstructor(val);
+                              if (val) {
+                                const inst = instructors.find(i => Number(i.id) === val);
+                                if (inst) setCoachName(inst.name || (inst as any).fullName || '');
+                              }
+                            }}
+                            className="flex-1 border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-slate-900 text-sm font-medium bg-white cursor-pointer"
+                          >
+                            <option value="">اختر المدرب (افتراضي: الحساب الحالي)...</option>
+                            {instructors.map((inst: any) => (
+                              <option key={inst.id} value={inst.id}>
+                                {inst.name || inst.fullName || `مدرب ${inst.id}`}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => setIsAddCoachModalOpen(true)}
+                            className="p-3 bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center text-slate-700 cursor-pointer"
+                            title="إضافة مدرب جديد"
+                          >
+                            <span className="material-symbols-outlined text-xl">add</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
-
-                    {isAddingCategory && (
-                      <div className="p-5 bg-slate-50 rounded-2xl border border-slate-300">
-                        <CategoryFormInline
-                          onSubmit={handleCreateInlineCategory}
-                          errors={{}}
-                          isSubmitting={isSubmitting}
-                          onClose={() => setIsAddingCategory(false)}
-                        />
-                      </div>
-                    )}
                   </div>
                 </section>
 
@@ -3438,6 +3467,39 @@ export default function CreateCourseClient() {
         currentGradeId={gradeLevel}
         onClose={() => setAddClassificationModal((prev) => ({ ...prev, isOpen: false }))}
         onSuccess={handleClassificationSuccess}
+      />
+
+      {/* Add Category Pop-up Modal */}
+      <AddCategoryModal
+        isOpen={isAddCategoryModalOpen}
+        onClose={() => setIsAddCategoryModalOpen(false)}
+        onSuccess={async (newCat) => {
+          try {
+            const updated = await getCategories();
+            setCategories(updated || []);
+            if (newCat?.id) setCategory(String(newCat.id));
+          } catch (e) {
+            console.warn('Failed to refresh categories:', e);
+          }
+        }}
+      />
+
+      {/* Add Coach Pop-up Modal */}
+      <AddCoachModal
+        isOpen={isAddCoachModalOpen}
+        onClose={() => setIsAddCoachModalOpen(false)}
+        onSuccess={async (newCoach) => {
+          try {
+            const coaches = await getUsers('instructor');
+            setInstructors(coaches || []);
+            if (newCoach?.id) {
+              setSelectedInstructor(Number(newCoach.id));
+              setCoachName(newCoach.name || '');
+            }
+          } catch (e) {
+            console.warn('Failed to refresh instructors:', e);
+          }
+        }}
       />
     </div>
   );
