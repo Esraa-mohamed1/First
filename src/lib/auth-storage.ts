@@ -93,3 +93,35 @@ export const purgeAllCourseDraftCache = () => {
     console.error('Error purging course draft cache:', e);
   }
 };
+
+export const getStoredUserRole = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const directRole =
+      localStorage.getItem('user_role') ||
+      localStorage.getItem('user_account_type') ||
+      localStorage.getItem('registration_role');
+    if (directRole) return directRole;
+
+    const userInfoStr = localStorage.getItem('user_info');
+    if (userInfoStr) {
+      const parsed = JSON.parse(userInfoStr);
+      return parsed?.role || parsed?.account_type || parsed?.user_type || null;
+    }
+  } catch (e) {
+    return null;
+  }
+  return null;
+};
+
+export const isSchoolTeacherRole = (role?: string | null): boolean => {
+  if (!role) return false;
+  const normalized = role.toLowerCase().trim();
+  return (
+    normalized === 'schoolteacher' ||
+    normalized === 'school_teacher' ||
+    normalized === 'schoolcoach' ||
+    normalized === 'school'
+  );
+};
+

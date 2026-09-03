@@ -170,6 +170,8 @@ export interface User {
   email: string;
   phone?: string;
   role?: string;
+  account_type?: string;
+  password?: string;
   status?: 'active' | 'inactive' | string;
   created_at?: string;
   avatar?: string;
