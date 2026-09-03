@@ -20,29 +20,44 @@ export default function DedicatedLandingPage() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const { openModal } = useModal();
 
-  useEffect(() => {
-    async function loadCourse() {
-      if (!slug) return;
+  const loadCourse = React.useCallback(async () => {
+    if (!slug) return;
 
-      if (typeof window !== 'undefined') {
-        const cachedStr = localStorage.getItem(`darab_course_cache_${slug}`);
-        if (cachedStr) {
-          try {
-            const cachedObj = JSON.parse(cachedStr);
-            if (cachedObj) setCourse(cachedObj);
-          } catch (e) {}
-        }
-      }
-
-      try {
-        const data = await getStudentCourse(slug);
-        if (data) setCourse(data);
-      } catch (e) {
-        console.error('Failed to load course details for landing page:', e);
+    if (typeof window !== 'undefined') {
+      const cachedStr = localStorage.getItem(`darab_course_cache_${slug}`);
+      if (cachedStr) {
+        try {
+          const cachedObj = JSON.parse(cachedStr);
+          if (cachedObj) setCourse(cachedObj);
+        } catch (e) {}
       }
     }
-    loadCourse();
+
+    try {
+      const data = await getStudentCourse(slug);
+      if (data) setCourse(data);
+    } catch (e) {
+      console.error('Failed to load course details for landing page:', e);
+    }
   }, [slug]);
+
+  useEffect(() => {
+    loadCourse();
+  }, [loadCourse]);
+
+  useEffect(() => {
+    const handleSubscriptionUpdated = () => {
+      loadCourse();
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('course-subscription-updated', handleSubscriptionUpdated);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('course-subscription-updated', handleSubscriptionUpdated);
+      }
+    };
+  }, [loadCourse]);
 
   const handleSubscribe = () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -65,13 +80,14 @@ export default function DedicatedLandingPage() {
           ? `https://api.darab.academy${logoUrl.startsWith('/') ? '' : '/'}${logoUrl}`
           : logoUrl;
 
+        const resolvedId = acc.id || acc.receiver_account_id || acc.receiver_account?.id || '';
         return {
-          methodId: acc.id || acc.receiver_account?.id || '',
+          methodId: resolvedId,
           methodName: acc.receiver_account?.name || 'حساب استقبال',
           type: acc.receiver_account?.key || 'mobile',
           value: acc.account_value || '',
           logo: fullLogoUrl,
-          receiver_account_id: acc.id || acc.receiver_account?.id || ''
+          receiver_account_id: resolvedId
         };
       });
     }
@@ -98,6 +114,7 @@ export default function DedicatedLandingPage() {
           courseId={course.id}
           coursePrice={course.final_price || course.price}
           courseCurrency={course.currency || 'SAR'}
+          onSuccess={loadCourse}
         />
       )}
     </div>

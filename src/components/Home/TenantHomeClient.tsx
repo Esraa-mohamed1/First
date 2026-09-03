@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { getPublicPages, getPublicSections, apiToEditor } from '@/services/pages';
 import { getTemplateById } from '@/builder/utils/templates';
 import TemplateRenderer from '@/builder/templates/renderer/TemplateRenderer';
+import { getClientTenantKey } from '@/lib/homepage-cache';
 
 interface TenantHomeClientProps {
   initialTemplateId?: string;
@@ -24,8 +25,29 @@ export default function TenantHomeClient({
     async function loadActivePageAndSections() {
       try {
         setLoading(true);
-        // 1. Fetch fresh pages list from public /pages endpoint
-        const pagesList = await getPublicPages();
+
+        // Try loading from local tenant-cache first
+        const tenantKey = getClientTenantKey();
+        if (tenantKey) {
+          try {
+            const cacheRes = await fetch(`/tenant-cache/${tenantKey.toLowerCase()}.json`);
+            if (cacheRes.ok) {
+              const cacheData = await cacheRes.json();
+              if (cacheData && cacheData.templateId && Array.isArray(cacheData.sections)) {
+                console.log('[TenantHomeClient] Successfully loaded homepage configuration from cache');
+                setTemplateId(cacheData.templateId);
+                setSections(cacheData.sections);
+                setLoading(false);
+                return;
+              }
+            }
+          } catch (cacheErr) {
+            console.warn('[TenantHomeClient] Local cache fetch failed, falling back to API:', cacheErr);
+          }
+        }
+
+        // Fallback: Fetch fresh pages list from public /pages endpoint
+        const pagesList = await getPublicPages('academic');
 
         let activePage = pagesList.find(
           (p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true'

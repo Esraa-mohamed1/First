@@ -46,11 +46,11 @@ export default function NavbarBlock(props: NavbarBlockProps) {
     borderColor = '#e2e8f0',
     isLandingPage: propIsLandingPage,
     links = [
-      { label: 'الرئيسية', href: '#hero-t1' },
-      { label: 'نبذة عني', href: '#about-t1' },
-      { label: 'الدورات', href: '#courses-t1' },
-      { label: 'أعمالي', href: '#gallery-t1' },
-      { label: 'آراء الطلاب', href: '#testimonials-t1' }
+      { label: 'الرئيسية', href: '/' },
+      { label: 'الدورات', href: '/courses' },
+      { label: 'الحقائب', href: '/bags' },
+      { label: 'نبذة عني', href: '/#about-t1' },
+      { label: 'آراء الطلاب', href: '/#testimonials-t1' }
     ],
     buttonText = 'التسجيل',
     buttonLink = '#',
@@ -178,12 +178,12 @@ export default function NavbarBlock(props: NavbarBlockProps) {
 
         {/* Left Side: Buttons */}
         <div className="flex items-center gap-4">
-          <a href="/login" className="hidden sm:inline-block px-5 py-2 rounded-full border-[1.5px] border-[var(--t2-ink)] text-[var(--t2-ink)] font-bold text-sm hover:bg-[var(--t2-ink)] hover:text-white transition-all font-['Inter']">
+          <a href="/auth/login" className="hidden sm:inline-block px-5 py-2 rounded-full border-[1.5px] border-[var(--t2-ink)] text-[var(--t2-ink)] font-bold text-sm hover:bg-[var(--t2-ink)] hover:text-white transition-all font-['Inter']">
             تسجيل الدخول
           </a>
           {showButton && (
             <a 
-              href={buttonLink}
+              href={!buttonLink || buttonLink === '#' ? '/auth/register' : buttonLink}
               className="px-6 py-2 rounded-full bg-[var(--t2-gold)] text-[var(--t2-ink)] font-bold text-sm hover:brightness-110 hover:shadow-[0_4px_15px_rgba(232,163,61,0.4)] hover:-translate-y-0.5 transition-all font-['Inter']"
             >
               {buttonText}

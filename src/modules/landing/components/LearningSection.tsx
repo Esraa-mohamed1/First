@@ -99,7 +99,7 @@ export default function LearningSection({
               return (
                 <div 
                   key={card.id || i} 
-                  style={{ backgroundColor: '#ffffff', borderColor: `rgba(${textRgb}, 0.12)` }}
+                  style={{ backgroundColor: data.itemBackgroundColor || '#ffffff', borderColor: `rgba(${textRgb}, 0.12)` }}
                   className="border rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between text-right"
                 >
                   <div className="space-y-4">
@@ -180,7 +180,10 @@ export default function LearningSection({
                 className="p-6 rounded-2xl border flex items-center justify-between gap-6 group hover:border-[var(--theme-primary)] transition-all shadow-sm"
               >
                 <div style={{ color: `rgba(${textRgb}, 0.85)` }} className="font-bold leading-relaxed text-sm md:text-base text-right flex-1">
-                  {card.info_value}
+                  {card.info_key && card.info_key !== 'what_you_will_learn' && (
+                    <h4 style={{ color: localText }} className="font-extrabold text-sm mb-1">{card.info_key}</h4>
+                  )}
+                  <p className="text-xs md:text-sm text-slate-600 font-medium">{card.info_value}</p>
                 </div>
                 
                 <div 

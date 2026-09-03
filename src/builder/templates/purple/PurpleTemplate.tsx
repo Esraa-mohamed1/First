@@ -635,8 +635,8 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
   const heroSubtitle = activeSlide.subtitle || 'ادرس أحدث العلوم والمسارات المتقدمة تحت إشراف نخبة من كبار الأكاديميين والخبراء مع تطبيقات عملية مباشرة.';
   const heroBtnText = activeSlide.button_text || activeSlide.buttonText || 'استكشف البرامج والدورات';
   const heroBtnLink = activeSlide.button_link || activeSlide.buttonLink || '#courses';
-  const heroSecBtnText = activeSlide.secondButtonText || 'تعرف على طريقة التعلم';
-  const heroSecBtnLink = activeSlide.secondButtonLink || '#how-it-works';
+  const heroSecBtnText = activeSlide.secondaryButtonText || activeSlide.secondButtonText || 'تعرف على طريقة التعلم';
+  const heroSecBtnLink = activeSlide.secondaryButtonLink || activeSlide.secondButtonLink || '#how-it-works';
   
   // Hero split layout dynamic side image support
   const sideImage = activeSlide.side_image || activeSlide.heroImage || activeSlide.bgImage || '';
@@ -813,8 +813,8 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
               <a href="#stories" className="lst-nav-link">قصص النجاح</a>
             </div>
             <div className="lst-nav-right">
-              <a href="#" className="lst-signin">تسجيل الدخول</a>
-              <a href="#" className="lst-btn lst-btn-primary" style={{ height: 40, fontSize: 13, padding: '0 20px' }}>
+              <a href="/auth/login" className="lst-signin">تسجيل الدخول</a>
+              <a href="/auth/register" className="lst-btn lst-btn-primary" style={{ height: 40, fontSize: 13, padding: '0 20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                 ابدأ التعلم الآن
               </a>
             </div>

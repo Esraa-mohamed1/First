@@ -9,6 +9,7 @@ import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { PaymentMethodCard } from '@/components/payment/PaymentMethodCard';
 import { PaymentMethodModal } from '@/components/payment/PaymentMethodModal';
+import { formatCourseAccessDuration } from '@/lib/utils';
 
 const MySwal = withReactContent(Swal);
 
@@ -61,8 +62,10 @@ interface CourseDetailTemplateProps {
   isSubscribed?: boolean;
   isOwnerReview?: boolean;
   isStudentDashboard?: boolean;
+  isLoadingStatus?: boolean;
   onSubscribe?: () => void;
   onLearnClick?: () => void;
+  onStatusRefresh?: () => void | Promise<void>;
   hideHeaderFooter?: boolean;
 }
 
@@ -71,12 +74,23 @@ export default function CourseDetailTemplate({
   isSubscribed = false,
   isOwnerReview = false,
   isStudentDashboard = false,
+  isLoadingStatus = false,
   onSubscribe,
   onLearnClick,
+  onStatusRefresh,
   hideHeaderFooter = false,
 }: CourseDetailTemplateProps) {
   const router = useRouter();
   const { openModal } = useModal();
+
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && document.referrer && document.referrer.includes(window.location.host)) {
+      router.back();
+    } else {
+      router.push('/courses');
+    }
+  };
+
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [expandedUnits, setExpandedUnits] = useState<number[]>([]);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -107,17 +121,52 @@ export default function CourseDetailTemplate({
   };
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const userStr = localStorage.getItem('user_info');
-      if (userStr) {
-        try {
-          setCurrentUser(JSON.parse(userStr));
-        } catch (e) {
-          console.error(e);
+    const loadUser = () => {
+      if (typeof window !== 'undefined') {
+        const userStr = localStorage.getItem('user_info');
+        if (userStr) {
+          try {
+            setCurrentUser(JSON.parse(userStr));
+          } catch (e) {
+            console.error(e);
+          }
         }
       }
+    };
+
+    loadUser();
+
+    const handleAuthSuccess = () => {
+      loadUser();
+      if (!onSubscribe) {
+        setIsPaymentModalOpen(true);
+      }
+      if (onStatusRefresh) {
+        onStatusRefresh();
+      }
+    };
+
+    const handleSubscriptionUpdated = () => {
+      setIsRetrying(false);
+      if (onStatusRefresh) {
+        onStatusRefresh();
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('student-registered', handleAuthSuccess);
+      window.addEventListener('student-logged-in', handleAuthSuccess);
+      window.addEventListener('course-subscription-updated', handleSubscriptionUpdated);
     }
-  }, []);
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('student-registered', handleAuthSuccess);
+        window.removeEventListener('student-logged-in', handleAuthSuccess);
+        window.removeEventListener('course-subscription-updated', handleSubscriptionUpdated);
+      }
+    };
+  }, [onSubscribe, onStatusRefresh]);
 
   useEffect(() => {
     if (course.units && course.units.length > 0) {
@@ -131,12 +180,32 @@ export default function CourseDetailTemplate({
     );
   };
 
-  // Determine actual subscribed state
+  // Determine actual subscribed and payment states
+  const rawStatus = course.subscription_status ? String(course.subscription_status).toLowerCase() : null;
+
   const isEnrolled =
     isSubscribed ||
-    course.is_subscribed ||
-    course.subscription_status === 'active' ||
-    course.subscription_status === 'accepted';
+    course.is_subscribed === true ||
+    rawStatus === 'active' ||
+    rawStatus === 'accepted' ||
+    rawStatus === 'paid' ||
+    rawStatus === 'completed' ||
+    rawStatus === 'subscribed';
+
+  const isPending =
+    rawStatus === 'pending' ||
+    rawStatus === 'penidng' ||
+    rawStatus === 'under_review' ||
+    rawStatus === 'in_review';
+
+  const isRejected =
+    rawStatus === 'rejected' ||
+    rawStatus === 'refused' ||
+    rawStatus === 'declined';
+
+  const isCancelled =
+    rawStatus === 'cancelled' ||
+    rawStatus === 'canceled';
 
   // Format date
   const getFormattedDate = () => {
@@ -174,7 +243,7 @@ export default function CourseDetailTemplate({
   // Handle Share Course Action
   const handleShareCourse = () => {
     if (typeof window !== 'undefined') {
-      const shareUrl = `${window.location.origin}/${course.slug || course.id}`;
+      const shareUrl = `${window.location.origin}/courses/${course.slug || course.id}`;
       if (navigator.share) {
         navigator
           .share({
@@ -191,7 +260,7 @@ export default function CourseDetailTemplate({
 
   const copyToClipboard = () => {
     if (typeof window !== 'undefined') {
-      const shareUrl = `${window.location.origin}/${course.slug || course.id}`;
+      const shareUrl = `${window.location.origin}/courses/${course.slug || course.id}`;
       navigator.clipboard.writeText(shareUrl);
       toast.success('تم نسخ رابط الدورة بنجاح!');
       setShowShareModal(false);
@@ -231,7 +300,7 @@ export default function CourseDetailTemplate({
 
       {/* Back Button */}
       <div className="max-w-7xl mx-auto px-6 pt-8 w-full flex justify-start">
-        <button onClick={() => router.back()} className="flex items-center gap-1 text-[#4c616c] font-bold text-sm hover:text-[#005c86] transition-colors">
+        <button onClick={handleBack} className="flex items-center gap-1 text-[#4c616c] font-bold text-sm hover:text-[#005c86] transition-colors">
           <span className="material-symbols-outlined">arrow_forward</span>
           رجوع
         </button>
@@ -404,17 +473,15 @@ export default function CourseDetailTemplate({
                                       onLearnClick();
                                     }
                                   }}
-                                  className={`flex items-center justify-between p-4 rounded-xl transition-colors ${
-                                    canWatch
+                                  className={`flex items-center justify-between p-4 rounded-xl transition-colors ${canWatch
                                       ? 'hover:bg-[#f3f4f5] cursor-pointer'
                                       : 'opacity-70 cursor-not-allowed'
-                                  }`}
+                                    }`}
                                 >
                                   <div className="flex items-center gap-3">
                                     <span
-                                      className={`material-symbols-outlined ${
-                                        canWatch ? 'text-[#005c86]' : 'text-slate-400'
-                                      }`}
+                                      className={`material-symbols-outlined ${canWatch ? 'text-[#005c86]' : 'text-slate-400'
+                                        }`}
                                       style={{ fontVariationSettings: "'FILL' 1" }}
                                     >
                                       {canWatch ? 'play_circle' : 'lock'}
@@ -463,7 +530,12 @@ export default function CourseDetailTemplate({
               {/* Glassy Accent */}
               <div className="absolute -top-12 -right-12 w-32 h-32 bg-[#c9e6ff]/20 blur-3xl rounded-full"></div>
               <div id="payment-section" className="relative z-10 space-y-6">
-                {isEnrolled ? (
+                {isLoadingStatus ? (
+                  <div className="space-y-4 text-center py-6">
+                    <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+                    <p className="text-slate-500 font-bold text-xs">جاري التحقق من حالة الاشتراك...</p>
+                  </div>
+                ) : isEnrolled ? (
                   <div className="space-y-4 text-center">
                     <div className="w-12 h-12 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
                       <CheckCircle2 size={24} />
@@ -471,7 +543,7 @@ export default function CourseDetailTemplate({
                     <h3 className="text-lg font-black text-slate-900">أنت مشترك بالفعل</h3>
                     <p className="text-slate-500 font-bold text-xs leading-relaxed">استمتع برحلتك التعليمية وابدأ الآن في مشاهدة الدروس.</p>
                     <div className="flex gap-3">
-                      <button 
+                      <button
                         onClick={onLearnClick}
                         className="flex-grow py-3 bg-gradient-to-br from-[#005c86] to-[#0e76a8] text-white rounded-xl font-bold text-sm shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/35 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                       >
@@ -487,33 +559,35 @@ export default function CourseDetailTemplate({
                       </button>
                     </div>
                   </div>
-                ) : (course.subscription_status === 'pending' || course.subscription_status === 'penidng') ? (
+                ) : isPending ? (
                   <div className="space-y-4 text-center">
                     <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
                       <Clock size={24} />
                     </div>
                     <h3 className="text-lg font-black text-slate-900">طلب الاشتراك قيد المراجعة</h3>
                     <p className="text-slate-500 font-bold text-xs leading-relaxed">لقد قمت بتقديم طلب اشتراك لهذه الدورة. طلبك قيد المراجعة حالياً من قبل الإدارة وسنقوم بتفعيله قريباً.</p>
-                    <button 
+                    <button
                       disabled
                       className="w-full py-3 bg-purple-100 text-purple-500 rounded-xl font-bold text-sm cursor-not-allowed"
                     >
                       قيد الانتظار (المراجعة)
                     </button>
                   </div>
-                ) : (course.subscription_status === 'rejected' || course.subscription_status === 'cancelled') && !isRetrying ? (
+                ) : (isRejected || isCancelled) && !isRetrying ? (
                   <div className="space-y-4 text-center">
                     <div className="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
                       <Lock size={24} />
                     </div>
-                    <h3 className="text-lg font-black text-slate-900 text-red-600">طلب الاشتراك مرفوض</h3>
+                    <h3 className="text-lg font-black text-slate-900 text-red-600">
+                      {isCancelled ? 'تم إلغاء طلب الاشتراك' : 'طلب الاشتراك مرفوض'}
+                    </h3>
                     <p className="text-slate-500 font-bold text-xs leading-relaxed">
-                      {course.rejection_reason || 'تم رفض طلب اشتراكك في هذه الدورة من قبل الإدارة.'}
+                      {course.rejection_reason || (isCancelled ? 'تم إلغاء طلب الاشتراك في هذه الدورة.' : 'تم رفض طلب اشتراكك في هذه الدورة من قبل الإدارة.')}
                     </p>
                     <div className="flex flex-col gap-2">
-                      <button 
-                        onClick={() => {
-                          if (course.rejection_reason) {
+                      {course.rejection_reason && (
+                        <button
+                          onClick={() => {
                             MySwal.fire({
                               title: 'سبب الرفض',
                               text: course.rejection_reason,
@@ -521,15 +595,13 @@ export default function CourseDetailTemplate({
                               confirmButtonText: 'حسناً',
                               confirmButtonColor: '#006692'
                             });
-                          } else {
-                            toast.error('تم رفض طلب الاشتراك.');
-                          }
-                        }}
-                        className="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-bold text-sm border border-red-100 transition-all flex items-center justify-center gap-2"
-                      >
-                        تفاصيل الرفض
-                      </button>
-                      <button 
+                          }}
+                          className="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-bold text-sm border border-red-100 transition-all flex items-center justify-center gap-2"
+                        >
+                          تفاصيل الرفض
+                        </button>
+                      )}
+                      <button
                         onClick={() => setIsRetrying(true)}
                         className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md shadow-blue-500/10 transition-all"
                       >
@@ -614,7 +686,11 @@ export default function CourseDetailTemplate({
                                 toast.error('الرجاء اختيار وسيلة الدفع أولاً');
                                 return;
                               }
-                              handleSubscribeClick();
+                              if (onSubscribe) {
+                                onSubscribe();
+                              } else {
+                                handleSubscribeClick();
+                              }
                             }
                           }}
                           className="flex-grow bg-gradient-to-br from-[#005c86] to-[#0e76a8] text-white py-3.5 rounded-xl font-bold text-sm shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/35 transition-all active:scale-[0.98]"
@@ -634,6 +710,17 @@ export default function CourseDetailTemplate({
                 )}
 
 
+              </div>
+            </div>
+
+            {/* Access Lifetime Badge */}
+            <div className="bg-emerald-50 border border-emerald-100 p-6 rounded-3xl flex items-center gap-4">
+              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm shrink-0 text-emerald-600">
+                <Clock size={24} />
+              </div>
+              <div>
+                <p className="font-extrabold text-slate-900 text-sm">{formatCourseAccessDuration(course)}</p>
+                <p className="text-emerald-700 font-bold text-xs">وصول كامل لجميع المحاضرات والملفات</p>
               </div>
             </div>
 
@@ -661,35 +748,97 @@ export default function CourseDetailTemplate({
           courseId={course.id}
           coursePrice={course.final_price || course.price}
           courseCurrency={course.currency || 'SAR'}
+          onSuccess={async () => {
+            setIsRetrying(false);
+            if (onStatusRefresh) {
+              await onStatusRefresh();
+            }
+          }}
         />
       )}
 
-      {/* Share Modal Dialog (Fallback for Desktop browsers without Web Share support) */}
+      {/* Share Modal Dialog */}
       {showShareModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl p-6 relative" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-black text-slate-900 mb-4 text-right">مشاركة الدورة</h3>
-            <p className="text-slate-500 text-sm mb-6 text-right">انسخ الرابط لمشاركته على فيسبوك أو إنستغرام أو أي منصة تواصل أخرى:</p>
-            
+            <h3 className="text-lg font-black text-slate-900 mb-2 text-right">مشاركة الدورة</h3>
+            <p className="text-slate-500 text-xs mb-6 text-right">اختر المنصة لمشاركة رابط الدورة مباشرة أو انسخ الرابط:</p>
+
+            {/* Social Share Buttons Grid */}
+            {(() => {
+              const fullUrl = typeof window !== 'undefined' ? `${window.location.origin}/courses/${course.slug || course.id}` : '';
+              const encodedUrl = encodeURIComponent(fullUrl);
+              const encodedText = encodeURIComponent(course.title || 'دورة تدريبية');
+
+              return (
+                <div className="grid grid-cols-4 gap-3 mb-6">
+                  {/* WhatsApp */}
+                  <a
+                    href={`https://api.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-all text-xs font-bold border border-emerald-100"
+                  >
+                    <span className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm">W</span>
+                    <span>واتساب</span>
+                  </a>
+
+                  {/* Telegram */}
+                  <a
+                    href={`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-sky-50 hover:bg-sky-100 text-sky-700 transition-all text-xs font-bold border border-sky-100"
+                  >
+                    <span className="w-8 h-8 rounded-full bg-sky-500 text-white flex items-center justify-center font-bold text-sm">T</span>
+                    <span>تلجرام</span>
+                  </a>
+
+                  {/* Facebook */}
+                  <a
+                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-700 transition-all text-xs font-bold border border-blue-100"
+                  >
+                    <span className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">F</span>
+                    <span>فيسبوك</span>
+                  </a>
+
+                  {/* Twitter / X */}
+                  <a
+                    href={`https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-all text-xs font-bold border border-slate-200"
+                  >
+                    <span className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs">X</span>
+                    <span>تويتر</span>
+                  </a>
+                </div>
+              );
+            })()}
+
             <div className="flex items-center gap-2 bg-[#f3f4f5] p-3 rounded-2xl border border-slate-100 mb-6">
-              <button 
+              <button
                 onClick={copyToClipboard}
-                className="p-2 bg-white text-blue-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm flex items-center justify-center"
+                className="p-2 bg-white text-blue-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm flex items-center justify-center cursor-pointer"
+                title="نسخ الرابط"
               >
                 <Clipboard size={18} />
               </button>
-              <input 
-                type="text" 
-                readOnly 
-                value={typeof window !== 'undefined' ? `${window.location.origin}/${course.slug || course.id}` : ''}
+              <input
+                type="text"
+                readOnly
+                value={typeof window !== 'undefined' ? `${window.location.origin}/courses/${course.slug || course.id}` : ''}
                 className="bg-transparent border-none focus:ring-0 text-xs text-left w-full outline-none font-mono text-slate-600 select-all"
               />
             </div>
 
             <div className="flex gap-3 justify-end">
-              <button 
+              <button
                 onClick={() => setShowShareModal(false)}
-                className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors"
+                className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors cursor-pointer"
               >
                 إغلاق
               </button>

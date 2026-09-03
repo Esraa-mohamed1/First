@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { 
   Play, CheckCircle, ShieldCheck, Award, Clock, Signal, 
   Infinity as InfinityIcon, ChevronLeft, ChevronDown, Pen, 
-  X, Star, Users, Check, Sparkles
+  X, Star, Users, Check, Sparkles, GraduationCap, BookOpen,
+  Video, Zap, Calendar, Laptop, FileText, Layers, Globe
 } from 'lucide-react';
 import { LandingPageContent } from '../types/landing';
 import { MobileHeader, MobileStickyBar } from '../components/MobileStickyBar';
@@ -57,13 +58,48 @@ export default function Template2Renderer({
     }
   };
 
+  const getFeatureIcon = (iconName?: string, defaultIdx?: number) => {
+    const iconMap: Record<string, any> = {
+      Signal,
+      Clock,
+      Award,
+      Infinity: InfinityIcon,
+      GraduationCap,
+      BookOpen,
+      Video,
+      ShieldCheck,
+      Sparkles,
+      Zap,
+      Calendar,
+      Star,
+      Laptop,
+      FileText,
+      Layers,
+      Globe
+    };
+    if (iconName && iconMap[iconName]) {
+      const IconComponent = iconMap[iconName];
+      return <IconComponent className="text-[#0055d9] shrink-0" size={32} />;
+    }
+    if (defaultIdx === 0) return <Signal className="text-[#0055d9] shrink-0" size={32} />;
+    if (defaultIdx === 1) return <Clock className="text-[#0055d9] shrink-0" size={32} />;
+    if (defaultIdx === 2) return <Award className="text-[#0055d9] shrink-0" size={32} />;
+    return <InfinityIcon className="text-[#0055d9] shrink-0" size={32} />;
+  };
+
   return (
     <div className="bg-[#faf8ff] text-[#191b23] antialiased min-h-screen w-full max-w-full overflow-x-hidden relative pb-20 md:pb-0 font-sans" dir="rtl">
       {/* Mobile Top Header */}
       <MobileHeader courseTitle={courseData?.title} />
 
       {/* ─── 1. HERO SECTION (Full Height Immersive Dark Header) ─── */}
-      <section className="relative min-h-[90vh] md:h-screen w-full flex items-center justify-center overflow-hidden bg-slate-950 text-white group">
+      <section 
+        className="relative min-h-[90vh] md:h-screen w-full flex items-center justify-center overflow-hidden text-white group"
+        style={{
+          backgroundColor: content.hero?.backgroundColor || '#020617',
+          color: content.hero?.textColor || '#ffffff'
+        }}
+      >
         {/* Background Overlay */}
         <div 
           className="absolute inset-0 bg-cover bg-center opacity-30"
@@ -122,11 +158,23 @@ export default function Template2Renderer({
             </ol>
           </nav>
 
-          <h1 className="text-3xl md:text-6xl font-black text-white leading-tight max-w-4xl text-balance">
+          <h1 
+            className="text-3xl md:text-6xl font-black leading-tight max-w-4xl text-balance"
+            style={{
+              fontSize: content.hero?.typography?.titleSize ? `${content.hero.typography.titleSize}px` : undefined,
+              color: content.hero?.textColor || '#ffffff'
+            }}
+          >
             {content.hero?.title || courseData?.title}
           </h1>
 
-          <p className="text-sm md:text-xl text-white/90 max-w-3xl leading-relaxed font-light">
+          <p 
+            className="text-sm md:text-xl max-w-3xl leading-relaxed font-light"
+            style={{
+              fontSize: content.hero?.typography?.bodySize ? `${content.hero.typography.bodySize}px` : undefined,
+              color: content.hero?.textColor ? `${content.hero.textColor}e6` : 'rgba(255, 255, 255, 0.9)'
+            }}
+          >
             {content.hero?.description || courseData?.description || 'اكتشف أسرار تصميم واجهات مستخدم مذهلة وتجارب مستخدم سلسة في هذه الدورة الشاملة.'}
           </p>
 
@@ -136,9 +184,12 @@ export default function Template2Renderer({
               type="button"
               onClick={onSubscribe}
               disabled={isSubscribing}
-              className="w-full sm:w-auto px-12 py-4 rounded-full bg-[#0055d9] hover:bg-[#0040a7] text-white text-lg md:text-2xl font-black shadow-[0_20px_50px_rgba(0,85,217,0.4)] hover:shadow-[0_25px_60px_rgba(0,85,217,0.6)] hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+              className="w-full sm:w-auto px-12 py-4 rounded-full text-white text-lg md:text-2xl font-black shadow-[0_20px_50px_rgba(0,85,217,0.4)] hover:shadow-[0_25px_60px_rgba(0,85,217,0.6)] hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+              style={{
+                backgroundColor: content.hero?.buttonBackgroundColor || '#0055d9'
+              }}
             >
-              {isSubscribing ? 'جاري التسجيل...' : 'سجل الآن'}
+              {isSubscribing ? 'جاري التسجيل...' : (content.hero?.buttonText || 'سجل الآن')}
             </button>
 
             <div className="flex items-center gap-6 text-white/80 text-xs md:text-sm font-bold">
@@ -171,11 +222,17 @@ export default function Template2Renderer({
         <div className="max-w-4xl mx-auto px-6 py-16 md:py-24 space-y-20">
           
           {/* Section: About Course & Investment Card */}
-          <section className="space-y-8 relative group">
+          <section 
+            className="space-y-8 relative group p-6 md:p-8 rounded-3xl"
+            style={{
+              backgroundColor: content.about?.backgroundColor || '#faf8ff',
+              color: content.about?.textColor || '#191b23'
+            }}
+          >
             {isEditable && (
               <button
                 type="button"
-                onClick={(e) => triggerEdit('learning', e)}
+                onClick={(e) => triggerEdit('about', e)}
                 className="absolute top-0 left-0 bg-blue-600 text-white px-3 py-1 rounded-md text-[10px] font-bold shadow-md hover:bg-blue-700 cursor-pointer"
               >
                 تعديل العرض والدورة
@@ -183,16 +240,20 @@ export default function Template2Renderer({
             )}
 
             <div className="space-y-4">
-              <h2 className="text-3xl md:text-4xl font-black text-[#191b23]">عن هذه الرحلة التعليمية</h2>
-              <p className="text-[#434654] text-base md:text-xl leading-relaxed">
-                {courseData?.description || 'اكتشف أسرار تصميم واجهات مستخدم مذهلة وتجارب مستخدم سلسة في هذه الدورة الشاملة. من الأساسيات إلى التطبيقات المتقدمة، ستتعلم كيف تبني منتجات رقمية يحبها الناس.'}
+              <h2 className="text-3xl md:text-4xl font-black" style={{ color: content.about?.textColor || '#191b23' }}>
+                {content.about?.title || 'عن هذه الرحلة التعليمية'}
+              </h2>
+              <p className="text-base md:text-xl leading-relaxed" style={{ color: content.about?.textColor ? `${content.about.textColor}cc` : '#434654' }}>
+                {content.about?.description || courseData?.description || 'اكتشف أسرار تصميم واجهات مستخدم مذهلة وتجارب مستخدم سلسة في هذه الدورة الشاملة. من الأساسيات إلى التطبيقات المتقدمة، ستتعلم كيف تبني منتجات رقمية يحبها الناس.'}
               </p>
             </div>
 
             {/* Investment Card */}
             <div className="bg-[#f3f3fe] p-8 md:p-10 rounded-3xl border border-slate-200/60 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
               <div className="text-center md:text-right space-y-2">
-                <h3 className="text-xl md:text-2xl font-black text-[#191b23]">استثمارك في مستقبلك</h3>
+                <h3 className="text-xl md:text-2xl font-black text-[#191b23]">
+                  {content.about?.investmentTitle || 'استثمارك في مستقبلك'}
+                </h3>
                 <div className="flex items-baseline justify-center md:justify-start gap-2">
                   <span className="text-4xl md:text-5xl font-black text-[#0055d9]">{price}</span>
                   <span className="text-lg font-bold text-[#434654]">{currency}</span>
@@ -201,7 +262,7 @@ export default function Template2Renderer({
                   )}
                 </div>
                 <span className="inline-block px-4 py-1 rounded-full bg-red-100 text-red-600 font-bold text-xs">
-                  خصم 40% لفترة محدودة
+                  {content.about?.discountBadge || 'خصم 40% لفترة محدودة'}
                 </span>
               </div>
 
@@ -210,55 +271,100 @@ export default function Template2Renderer({
                   type="button"
                   onClick={onSubscribe}
                   disabled={isSubscribing}
-                  className="w-full md:w-auto px-10 py-4 rounded-xl bg-[#0055d9] hover:bg-[#0040a7] text-white text-lg font-black shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                  className="w-full md:w-auto px-10 py-4 rounded-xl text-white text-lg font-black shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                  style={{
+                    backgroundColor: content.about?.buttonBackgroundColor || '#0055d9'
+                  }}
                 >
-                  {isSubscribing ? 'جاري التحميل...' : 'سجل الآن'}
+                  {isSubscribing ? 'جاري التحميل...' : (content.about?.buttonText || 'سجل الآن')}
                 </button>
-                <p className="text-xs text-[#434654] font-bold mt-2">ضمان استرداد الأموال لمدة 14 يوماً</p>
+                <p className="text-xs text-[#434654] font-bold mt-2">
+                  {content.about?.guaranteeText || 'ضمان استرداد الأموال لمدة 14 يوماً'}
+                </p>
               </div>
             </div>
           </section>
 
           {/* Section: Course Features Grid */}
-          <section className="space-y-8">
-            <h2 className="text-2xl md:text-3xl font-black text-[#191b23] text-center">بنية الدورة المتميزة</h2>
+          <section 
+            className="space-y-8 relative group p-6 md:p-8 rounded-3xl"
+            style={{
+              backgroundColor: content.features?.backgroundColor || '#faf8ff',
+              color: content.features?.textColor || '#191b23'
+            }}
+          >
+            {isEditable && (
+              <button
+                type="button"
+                onClick={(e) => triggerEdit('features', e)}
+                className="absolute top-0 left-0 bg-blue-600 text-white px-3 py-1 rounded-md text-[10px] font-bold shadow-md hover:bg-blue-700 cursor-pointer"
+              >
+                تعديل بنية الدورة
+              </button>
+            )}
+
+            <h2 className="text-2xl md:text-3xl font-black text-center" style={{ color: content.features?.textColor || '#191b23' }}>
+              {content.features?.title || 'بنية الدورة المتميزة'}
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="flex items-center gap-4 p-6 rounded-2xl bg-[#f3f3fe] border border-slate-200/50 shadow-xs">
-                <Signal className="text-[#0055d9] shrink-0" size={32} />
+                {getFeatureIcon(content.features?.items?.[0]?.icon, 0)}
                 <div>
-                  <h3 className="font-black text-[#191b23] text-base">مستوى الدورة</h3>
-                  <p className="text-[#434654] text-xs font-bold">مبتدئ إلى متوسط</p>
+                  <h3 className="font-black text-[#191b23] text-base">
+                    {content.features?.items?.[0]?.title || 'مستوى الدورة'}
+                  </h3>
+                  <p className="text-[#434654] text-xs font-bold">
+                    {content.features?.items?.[0]?.subtitle || 'مبتدئ إلى متوسط'}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4 p-6 rounded-2xl bg-[#f3f3fe] border border-slate-200/50 shadow-xs">
-                <Clock className="text-[#0055d9] shrink-0" size={32} />
+                {getFeatureIcon(content.features?.items?.[1]?.icon, 1)}
                 <div>
-                  <h3 className="font-black text-[#191b23] text-base">المدة الزمنية</h3>
-                  <p className="text-[#434654] text-xs font-bold">{units.length} أسابيع ({lessonsCount * 2} ساعة)</p>
+                  <h3 className="font-black text-[#191b23] text-base">
+                    {content.features?.items?.[1]?.title || 'المدة الزمنية'}
+                  </h3>
+                  <p className="text-[#434654] text-xs font-bold">
+                    {content.features?.items?.[1]?.subtitle || `${units.length} أسابيع (${lessonsCount * 2} ساعة)`}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4 p-6 rounded-2xl bg-[#f3f3fe] border border-slate-200/50 shadow-xs">
-                <Award className="text-[#0055d9] shrink-0" size={32} />
+                {getFeatureIcon(content.features?.items?.[2]?.icon, 2)}
                 <div>
-                  <h3 className="font-black text-[#191b23] text-base">الشهادة</h3>
-                  <p className="text-[#434654] text-xs font-bold">شهادة إتمام معتمدة</p>
+                  <h3 className="font-black text-[#191b23] text-base">
+                    {content.features?.items?.[2]?.title || 'الشهادة'}
+                  </h3>
+                  <p className="text-[#434654] text-xs font-bold">
+                    {content.features?.items?.[2]?.subtitle || 'شهادة إتمام معتمدة'}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4 p-6 rounded-2xl bg-[#f3f3fe] border border-slate-200/50 shadow-xs">
-                <InfinityIcon className="text-[#0055d9] shrink-0" size={32} />
+                {getFeatureIcon(content.features?.items?.[3]?.icon, 3)}
                 <div>
-                  <h3 className="font-black text-[#191b23] text-base">الوصول الكامل</h3>
-                  <p className="text-[#434654] text-xs font-bold">وصول مدى الحياة</p>
+                  <h3 className="font-black text-[#191b23] text-base">
+                    {content.features?.items?.[3]?.title || 'الوصول الكامل'}
+                  </h3>
+                  <p className="text-[#434654] text-xs font-bold">
+                    {content.features?.items?.[3]?.subtitle || 'وصول مدى الحياة'}
+                  </p>
                 </div>
               </div>
             </div>
           </section>
 
           {/* Section: Curriculum / Course Content */}
-          <section className="space-y-8 relative group">
+          <section 
+            className="space-y-8 relative group p-6 md:p-8 rounded-3xl"
+            style={{
+              backgroundColor: content.chapters?.backgroundColor || '#faf8ff',
+              color: content.chapters?.textColor || '#191b23'
+            }}
+          >
             {isEditable && (
               <button
                 type="button"
@@ -269,7 +375,9 @@ export default function Template2Renderer({
               </button>
             )}
 
-            <h2 className="text-2xl md:text-3xl font-black text-[#191b23] text-center">محتوى الدورة</h2>
+            <h2 className="text-2xl md:text-3xl font-black text-center" style={{ color: content.chapters?.textColor || '#191b23' }}>
+              {content.chapters?.title || 'محتوى الدورة'}
+            </h2>
             <div className="space-y-4">
               {units.map((unit: any, idx: number) => {
                 const isOpen = activeUnitIndex === idx;
@@ -319,22 +427,30 @@ export default function Template2Renderer({
           </section>
 
           {/* Section: Instructor */}
-          <section className="space-y-8 relative group">
+          <section 
+            className="space-y-8 relative group p-6 md:p-8 rounded-3xl"
+            style={{
+              backgroundColor: content.instructor?.backgroundColor || '#faf8ff',
+              color: content.instructor?.textColor || '#191b23'
+            }}
+          >
             {isEditable && (
               <button
                 type="button"
-                onClick={(e) => triggerEdit('footer', e)}
+                onClick={(e) => triggerEdit('instructor', e)}
                 className="absolute top-0 left-0 bg-blue-600 text-white px-3 py-1 rounded-md text-[10px] font-bold shadow-md hover:bg-blue-700 cursor-pointer"
               >
                 تعديل بيانات المدرب
               </button>
             )}
 
-            <h2 className="text-2xl md:text-3xl font-black text-[#191b23] text-center">عن المدرب</h2>
+            <h2 className="text-2xl md:text-3xl font-black text-center" style={{ color: content.instructor?.textColor || '#191b23' }}>
+              {content.instructor?.title || 'عن المدرب'}
+            </h2>
             <div className="bg-[#f3f3fe] p-8 md:p-10 rounded-[2.5rem] border border-slate-200/60 shadow-xs flex flex-col md:flex-row items-center gap-8 text-center md:text-right">
               <div className="relative shrink-0">
                 <div className="w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden border-4 border-white shadow-xl">
-                  <img alt={instructorName} className="w-full h-full object-cover" src={instructorImage} />
+                  <img alt={content.instructor?.name || instructorName} className="w-full h-full object-cover" src={content.instructor?.image || instructorImage} />
                 </div>
                 <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-[#84f5c2] rounded-full flex items-center justify-center shadow-md">
                   <ShieldCheck className="text-[#00714e]" size={22} />
@@ -343,52 +459,109 @@ export default function Template2Renderer({
 
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-2xl md:text-3xl font-black text-[#191b23]">{instructorName}</h3>
-                  <p className="text-[#0055d9] font-bold text-sm md:text-base mt-1">{instructorTitle}</p>
+                  <h3 className="text-2xl md:text-3xl font-black text-[#191b23]">
+                    {content.instructor?.name || instructorName}
+                  </h3>
+                  <p className="text-[#0055d9] font-bold text-sm md:text-base mt-1">
+                    {content.instructor?.jobTitle || instructorTitle}
+                  </p>
                 </div>
-                <p className="text-[#434654] text-sm md:text-base leading-relaxed">{instructorBio}</p>
+                <p className="text-[#434654] text-sm md:text-base leading-relaxed">
+                  {content.instructor?.bio || instructorBio}
+                </p>
                 <div className="flex flex-wrap justify-center md:justify-start gap-2 pt-2">
-                  <span className="px-3 py-1 bg-white rounded-full text-xs font-bold text-[#434654] border border-slate-200">Google Certified</span>
-                  <span className="px-3 py-1 bg-white rounded-full text-xs font-bold text-[#434654] border border-slate-200">Interaction Design Expert</span>
-                  <span className="px-3 py-1 bg-white rounded-full text-xs font-bold text-[#434654] border border-slate-200">Mentor at ADPList</span>
+                  {(content.instructor?.badges !== undefined ? content.instructor.badges : ['Google Certified', 'Interaction Design Expert', 'Mentor at ADPList']).map((badge: string, bIdx: number) => (
+                    <span 
+                      key={bIdx} 
+                      className="px-3 py-1 rounded-full text-xs font-bold border border-slate-200"
+                      style={{
+                        backgroundColor: content.instructor?.badgeBackgroundColor || '#ffffff',
+                        color: content.instructor?.badgeTextColor || '#434654'
+                      }}
+                    >
+                      {badge}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>
           </section>
 
           {/* Section: What You Will Get */}
-          <section className="space-y-8">
-            <h2 className="text-2xl md:text-3xl font-black text-[#191b23] text-center">ماذا ستحصل عليه؟</h2>
+          <section 
+            className="space-y-8 relative group p-6 md:p-8 rounded-3xl"
+            style={{
+              backgroundColor: content.benefits?.backgroundColor || '#faf8ff',
+              color: content.benefits?.textColor || '#191b23'
+            }}
+          >
+            {isEditable && (
+              <button
+                type="button"
+                onClick={(e) => triggerEdit('benefits', e)}
+                className="absolute top-0 left-0 bg-blue-600 text-white px-3 py-1 rounded-md text-[10px] font-bold shadow-md hover:bg-blue-700 cursor-pointer"
+              >
+                تعديل مخرجات الدورة
+              </button>
+            )}
+
+            <h2 className="text-2xl md:text-3xl font-black text-center" style={{ color: content.benefits?.textColor || '#191b23' }}>
+              {content.benefits?.title || 'ماذا ستحصل عليه؟'}
+            </h2>
             <div className="space-y-4 max-w-2xl mx-auto">
-              {[
+              {((content.benefits?.items && content.benefits.items.length > 0) ? content.benefits.items : [
                 '30 ساعة من مقاطع الفيديو عالية الجودة مصممة بعناية لتناسب إيقاع تعلمك.',
                 '15 مشروع تطبيقي لبناء معرض أعمالك، لتنتقل من النظرية إلى التطبيق الحقيقي.',
                 'ملفات ومصادر قابلة للتحميل تشمل قوالب عمل ومصادر إلهام احترافية.',
                 'وصول إلى مجتمع الطلاب الخاص للحصول على دعم مستمر ومراجعة لأعمالك.'
-              ].map((item, i) => (
+              ]).map((item: string, i: number) => (
                 <div key={i} className="flex items-start gap-4 p-4 hover:bg-emerald-50/50 rounded-2xl transition-colors group">
                   <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                     <Check size={18} className="stroke-[3]" />
                   </div>
-                  <p className="text-[#434654] text-sm md:text-base font-bold leading-relaxed">{item}</p>
+                  <p className="text-sm md:text-base font-bold leading-relaxed" style={{ color: content.benefits?.textColor ? `${content.benefits.textColor}cc` : '#434654' }}>{item}</p>
                 </div>
               ))}
             </div>
           </section>
 
           {/* Section: Big Primary CTA Section */}
-          <section className="text-center py-12 md:py-16 bg-[#0040a7] text-white rounded-[2.5rem] shadow-2xl relative overflow-hidden px-6 space-y-6">
+          <section 
+            className="text-center py-12 md:py-16 rounded-[2.5rem] shadow-2xl relative overflow-hidden px-6 space-y-6 group"
+            style={{
+              backgroundColor: content.cta?.backgroundColor || '#0040a7',
+              color: content.cta?.textColor || '#ffffff'
+            }}
+          >
+            {isEditable && (
+              <button
+                type="button"
+                onClick={(e) => triggerEdit('cta', e)}
+                className="absolute top-4 left-4 z-20 bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-md text-[10px] font-bold shadow-md cursor-pointer"
+              >
+                تعديل البانر الختامي
+              </button>
+            )}
+
             <div className="relative z-10 space-y-4 max-w-lg mx-auto">
-              <h2 className="text-3xl md:text-4xl font-black">جاهز لتبدأ رحلتك الإبداعية؟</h2>
-              <p className="text-sm md:text-base text-white/80">انضم إلى آلاف الطلاب الذين غيروا مسارهم المهني من خلال إتقان فن الـ UI/UX.</p>
+              <h2 className="text-3xl md:text-4xl font-black" style={{ color: content.cta?.textColor || '#ffffff' }}>
+                {content.cta?.title || 'جاهز لتبدأ رحلتك الإبداعية؟'}
+              </h2>
+              <p className="text-sm md:text-base" style={{ color: content.cta?.textColor ? `${content.cta.textColor}cc` : 'rgba(255,255,255,0.8)' }}>
+                {content.cta?.description || 'انضم إلى آلاف الطلاب الذين غيروا مسارهم المهني من خلال إتقان فن الـ UI/UX.'}
+              </p>
               <div className="pt-4">
                 <button
                   type="button"
                   onClick={onSubscribe}
                   disabled={isSubscribing}
-                  className="px-12 py-5 rounded-2xl bg-white text-[#0040a7] text-xl font-black shadow-xl hover:bg-[#84f5c2] hover:text-slate-900 transition-all cursor-pointer"
+                  className="px-12 py-5 rounded-2xl text-xl font-black shadow-xl hover:opacity-90 transition-all cursor-pointer"
+                  style={{
+                    backgroundColor: content.cta?.buttonBackgroundColor || '#ffffff',
+                    color: content.cta?.backgroundColor || '#0040a7'
+                  }}
                 >
-                  {isSubscribing ? 'جاري الحفظ...' : `ابدأ الآن - ${price} ريال`}
+                  {isSubscribing ? 'جاري الحفظ...' : `${content.cta?.buttonText || 'ابدأ الآن'} - ${price} ${currency}`}
                 </button>
               </div>
             </div>
@@ -398,8 +571,26 @@ export default function Template2Renderer({
       </main>
 
       {/* Footer */}
-      <footer className="bg-[#f3f3fe] py-10 border-t border-slate-200/60 text-center">
-        <div className="max-w-4xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6 text-xs font-bold text-[#434654]">
+      <footer 
+        className="py-10 border-t border-slate-200/60 text-center relative group"
+        style={{
+          backgroundColor: content.footer?.backgroundColor || '#f3f3fe',
+          color: content.footer?.textColor || '#434654'
+        }}
+      >
+        {isEditable && (
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={(e) => triggerEdit('footer', e)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-[10px] font-bold shadow-md cursor-pointer inline-flex items-center gap-1"
+            >
+              <Pen size={12} />
+              <span>تعديل الفوتر</span>
+            </button>
+          </div>
+        )}
+        <div className="max-w-4xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6 text-xs font-bold" style={{ color: content.footer?.textColor || '#434654' }}>
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-lg bg-[#0055d9] text-white flex items-center justify-center font-black text-xs">
               د
@@ -408,12 +599,20 @@ export default function Template2Renderer({
           </div>
 
           <div className="flex gap-6">
-            <a href="#" className="hover:text-[#0055d9]">سياسة الخصوصية</a>
-            <a href="#" className="hover:text-[#0055d9]">الشروط والأحكام</a>
-            <a href="#" className="hover:text-[#0055d9]">مركز المساعدة</a>
+            {((content.footer?.links && content.footer.links.length > 0) ? content.footer.links : [
+              { label: 'سياسة الخصوصية', url: '#' },
+              { label: 'الشروط والأحكام', url: '#' },
+              { label: 'مركز المساعدة', url: '#' }
+            ]).map((link: any, lIdx: number) => (
+              <a key={lIdx} href={link.url || '#'} className="hover:opacity-80 transition-opacity" style={{ color: content.footer?.textColor || '#434654' }}>
+                {link.label}
+              </a>
+            ))}
           </div>
         </div>
-        <p className="text-[11px] text-slate-400 font-bold mt-6">© 2026 دَرّب التعليمية. جميع الحقوق محفوظة.</p>
+        <p className="text-[11px] font-bold mt-6 opacity-75" style={{ color: content.footer?.textColor || '#434654' }}>
+          {content.footer?.text || '© 2026 دَرّب التعليمية. جميع الحقوق محفوظة.'}
+        </p>
       </footer>
 
       {/* Video Modal Overlay */}
@@ -454,3 +653,4 @@ export default function Template2Renderer({
     </div>
   );
 }
+

@@ -16,7 +16,7 @@ const SafeLogo = ({ src, alt, isSelected }: { src: string; alt: string; isSelect
     <img
       src={getLogoUrl(src)}
       alt={alt}
-      className="w-full h-full object-cover"
+      className="w-full h-full object-contain p-0.5"
       onError={() => setError(true)}
     />
   );

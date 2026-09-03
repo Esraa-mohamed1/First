@@ -109,9 +109,9 @@ export default function PaymentSection({
                 style={{ backgroundColor: '#ffffff', borderColor: `rgba(${textRgb}, 0.12)` }}
                 className="border rounded-3xl p-6 shadow-sm flex items-start gap-4 text-right hover:shadow-md transition-shadow"
               >
-                <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
+                <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center overflow-hidden shrink-0 p-1">
                   {account.logo ? (
-                    <img src={account.logo} alt={account.name} className="w-full h-full object-contain p-2" />
+                    <img src={account.logo} alt={account.name} className="w-full h-full object-contain p-1" />
                   ) : (
                     <CreditCard size={28} style={{ color: `rgb(${primaryRgbTriplet})` }} />
                   )}
@@ -185,9 +185,9 @@ export default function PaymentSection({
               className="p-6 rounded-2xl border flex flex-col gap-4 text-right shadow-sm hover:border-[var(--theme-primary)] transition-all"
             >
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center overflow-hidden shrink-0 p-1">
                   {account.logo ? (
-                    <img src={account.logo} alt={account.name} className="w-full h-full object-contain p-2" />
+                    <img src={account.logo} alt={account.name} className="w-full h-full object-contain p-1" />
                   ) : (
                     <CreditCard size={22} style={{ color: `rgb(${primaryRgbTriplet})` }} />
                   )}

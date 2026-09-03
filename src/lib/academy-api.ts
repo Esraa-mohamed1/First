@@ -50,12 +50,16 @@ academyApi.interceptors.response.use(
 
     if (response.data && response.data.success === false && response.data.status === 401) {
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user_info');
-        localStorage.removeItem('academy_link_name');
-        document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
-        window.location.href = '/auth/login';
-        return Promise.reject(new Error('Token invalid or expired'));
+        const pathname = window.location.pathname;
+        const isPublicPage = pathname === '/' || pathname.startsWith('/landing') || pathname.startsWith('/courses') || pathname.startsWith('/bags');
+        if (!isPublicPage) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user_info');
+          localStorage.removeItem('academy_link_name');
+          document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
+          window.location.href = '/auth/login';
+          return Promise.reject(new Error('Token invalid or expired'));
+        }
       }
     }
     return response;
@@ -63,11 +67,15 @@ academyApi.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user_info');
-        localStorage.removeItem('academy_link_name');
-        document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
-        window.location.href = '/auth/login';
+        const pathname = window.location.pathname;
+        const isPublicPage = pathname === '/' || pathname.startsWith('/landing') || pathname.startsWith('/courses') || pathname.startsWith('/bags');
+        if (!isPublicPage) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user_info');
+          localStorage.removeItem('academy_link_name');
+          document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
+          window.location.href = '/auth/login';
+        }
       }
     }
     return Promise.reject(error);

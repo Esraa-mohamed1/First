@@ -9,6 +9,7 @@ export interface LandingState {
   isActive: boolean;
   userId: number | null;
   content: LandingPageContent | null;
+  templateContents: Record<string, LandingPageContent>;
   isEditable: boolean;
   activeSectionId: string | null;
   courseData: any | null;
@@ -30,6 +31,7 @@ export const useLandingStore = create<LandingState>((set, get) => ({
   isActive: true,
   userId: null,
   content: null,
+  templateContents: {},
   isEditable: false,
   activeSectionId: null,
   courseData: null,
@@ -37,10 +39,16 @@ export const useLandingStore = create<LandingState>((set, get) => ({
   setCourseData: (course) => {
     const currentContent = get().content;
     const templateName = get().templateName;
+    const existingCache = get().templateContents;
+    const defaultContent = currentContent || existingCache[templateName] || getTemplateDefaultContent(course, templateName);
     set({
       courseData: course,
       courseId: course?.id ? Number(course.id) : null,
-      content: currentContent || getTemplateDefaultContent(course, templateName)
+      content: defaultContent,
+      templateContents: {
+        ...existingCache,
+        [templateName]: defaultContent
+      }
     });
   },
 
@@ -62,8 +70,22 @@ export const useLandingStore = create<LandingState>((set, get) => ({
         reviews: { ...defaults.reviews, ...(c.reviews || {}) },
         whatsapp: { ...defaults.whatsapp, ...(c.whatsapp || {}) },
         footer: { ...defaults.footer, ...(c.footer || {}) },
+        // Modern (template_2) sections
+        about: { ...(defaults.about || {}), ...(c.about || {}) },
+        features: { ...(defaults.features || {}), ...(c.features || {}) },
+        instructor: { ...(defaults.instructor || {}), ...(c.instructor || {}) },
+        benefits: { ...(defaults.benefits || {}), ...(c.benefits || {}) },
+        cta: { ...(defaults.cta || {}), ...(c.cta || {}) },
+        // UI/UX (template_3) sections
+        template3_requirements: { ...(defaults.template3_requirements || {}), ...(c.template3_requirements || {}) },
+        template3_learning: { ...(defaults.template3_learning || {}), ...(c.template3_learning || {}) },
+        template3_curriculum: { ...(defaults.template3_curriculum || {}), ...(c.template3_curriculum || {}) },
+        template3_instructor: { ...(defaults.template3_instructor || {}), ...(c.template3_instructor || {}) },
+        template3_faq: { ...(defaults.template3_faq || {}), ...(c.template3_faq || {}) },
+        template3_pricing: { ...(defaults.template3_pricing || {}), ...(c.template3_pricing || {}) },
       } as any;
     }
+    const existingCache = get().templateContents;
     set({
       landingPageId: data.id !== undefined ? data.id : get().landingPageId,
       templateName,
@@ -71,19 +93,30 @@ export const useLandingStore = create<LandingState>((set, get) => ({
       courseId: data.course_id ? Number(data.course_id) : get().courseId,
       userId: data.user_id ? Number(data.user_id) : get().userId,
       content: mergedContent,
+      templateContents: {
+        ...existingCache,
+        [templateName]: mergedContent
+      }
     });
   },
 
   updateSectionContent: (section, data) => {
     const content = get().content;
+    const currentTemplate = get().templateName;
     if (!content) return;
+    const updatedContent = {
+      ...content,
+      [section]: {
+        ...(content[section] || {}),
+        ...data
+      }
+    };
+    const existingCache = get().templateContents;
     set({
-      content: {
-        ...content,
-        [section]: {
-          ...content[section],
-          ...data
-        }
+      content: updatedContent,
+      templateContents: {
+        ...existingCache,
+        [currentTemplate]: updatedContent
       }
     });
   },
@@ -94,82 +127,25 @@ export const useLandingStore = create<LandingState>((set, get) => ({
 
   setTemplateName: (name) => {
     const courseData = get().courseData;
-    const oldContent = get().content;
-    const defaultForNewTemplate = getTemplateDefaultContent(courseData, name);
+    const currentTemplate = get().templateName;
+    const currentContent = get().content;
+    const existingCache = { ...get().templateContents };
 
-    if (oldContent) {
-      const mergedContent = {
-        hero: {
-          ...defaultForNewTemplate.hero,
-          title: oldContent.hero?.title || defaultForNewTemplate.hero.title,
-          subtitle: oldContent.hero?.subtitle || defaultForNewTemplate.hero.subtitle,
-          description: oldContent.hero?.description || defaultForNewTemplate.hero.description,
-          image: oldContent.hero?.image || defaultForNewTemplate.hero.image,
-          buttonText: oldContent.hero?.buttonText || defaultForNewTemplate.hero.buttonText,
-          buttonLink: oldContent.hero?.buttonLink || defaultForNewTemplate.hero.buttonLink,
-          backgroundColor: oldContent.hero?.backgroundColor && oldContent.hero.backgroundColor !== '#082A24' && oldContent.hero.backgroundColor !== '#ffffff'
-            ? oldContent.hero.backgroundColor
-            : defaultForNewTemplate.hero.backgroundColor,
-          textColor: oldContent.hero?.textColor && oldContent.hero.textColor !== '#FBF7EE' && oldContent.hero.textColor !== '#1f2937'
-            ? oldContent.hero.textColor
-            : defaultForNewTemplate.hero.textColor,
-          typography: oldContent.hero?.typography || defaultForNewTemplate.hero.typography,
-        },
-        learning: {
-          ...defaultForNewTemplate.learning,
-          title: oldContent.learning?.title || defaultForNewTemplate.learning.title,
-          subtitle: oldContent.learning?.subtitle || defaultForNewTemplate.learning.subtitle,
-          cards: oldContent.learning?.cards && oldContent.learning.cards.length > 0 ? oldContent.learning.cards : defaultForNewTemplate.learning.cards,
-        },
-        chapters: {
-          ...defaultForNewTemplate.chapters,
-          title: oldContent.chapters?.title || defaultForNewTemplate.chapters.title,
-          showLessons: typeof oldContent.chapters?.showLessons === 'boolean' ? oldContent.chapters.showLessons : defaultForNewTemplate.chapters.showLessons,
-        },
-        payment: {
-          ...defaultForNewTemplate.payment,
-          title: oldContent.payment?.title || defaultForNewTemplate.payment.title,
-        },
-        faq: {
-          ...defaultForNewTemplate.faq,
-          title: oldContent.faq?.title || defaultForNewTemplate.faq.title,
-          items: oldContent.faq?.items && oldContent.faq.items.length > 0 ? oldContent.faq.items : defaultForNewTemplate.faq.items,
-        },
-        reviews: {
-          ...defaultForNewTemplate.reviews,
-          title: oldContent.reviews?.title || defaultForNewTemplate.reviews.title,
-          items: oldContent.reviews?.items && oldContent.reviews.items.length > 0 ? oldContent.reviews.items : defaultForNewTemplate.reviews.items,
-          showSection: typeof oldContent.reviews?.showSection === 'boolean' ? oldContent.reviews.showSection : defaultForNewTemplate.reviews.showSection,
-          reviewType: oldContent.reviews?.reviewType || defaultForNewTemplate.reviews?.reviewType || 'manual',
-          screenshots: oldContent.reviews?.screenshots || defaultForNewTemplate.reviews?.screenshots || [],
-        },
-        whatsapp: {
-          ...defaultForNewTemplate.whatsapp,
-          phoneNumber: oldContent.whatsapp?.phoneNumber || defaultForNewTemplate.whatsapp.phoneNumber,
-          message: oldContent.whatsapp?.message || defaultForNewTemplate.whatsapp.message,
-          showFloatingButton: typeof oldContent.whatsapp?.showFloatingButton === 'boolean' ? oldContent.whatsapp.showFloatingButton : defaultForNewTemplate.whatsapp.showFloatingButton,
-          showInlineSection: typeof oldContent.whatsapp?.showInlineSection === 'boolean' ? oldContent.whatsapp.showInlineSection : defaultForNewTemplate.whatsapp.showInlineSection,
-          title: oldContent.whatsapp?.title || defaultForNewTemplate.whatsapp.title,
-          subtitle: oldContent.whatsapp?.subtitle || defaultForNewTemplate.whatsapp.subtitle,
-          buttonText: oldContent.whatsapp?.buttonText || defaultForNewTemplate.whatsapp.buttonText,
-        },
-        footer: {
-          ...defaultForNewTemplate.footer,
-          text: oldContent.footer?.text || defaultForNewTemplate.footer.text,
-          links: oldContent.footer?.links && oldContent.footer.links.length > 0 ? oldContent.footer.links : defaultForNewTemplate.footer.links,
-        }
-      };
-
-      set({
-        templateName: name,
-        content: mergedContent as LandingPageContent
-      });
-    } else {
-      set({
-        templateName: name,
-        content: defaultForNewTemplate
-      });
+    // Cache current template content before switching
+    if (currentContent) {
+      existingCache[currentTemplate] = currentContent;
     }
+
+    // Retrieve cached content for target template or create fresh defaults
+    const targetContent = existingCache[name] || getTemplateDefaultContent(courseData, name);
+    existingCache[name] = targetContent;
+
+    set({
+      templateName: name,
+      content: targetContent,
+      templateContents: existingCache,
+      activeSectionId: 'hero'
+    });
   },
 
   setIsActive: (active) => {
@@ -183,8 +159,15 @@ export const useLandingStore = create<LandingState>((set, get) => ({
   resetToDefaults: () => {
     const courseData = get().courseData;
     const templateName = get().templateName;
+    const defaults = getTemplateDefaultContent(courseData, templateName);
+    const existingCache = get().templateContents;
     set({
-      content: getTemplateDefaultContent(courseData, templateName)
+      content: defaults,
+      templateContents: {
+        ...existingCache,
+        [templateName]: defaults
+      }
     });
   }
 }));
+

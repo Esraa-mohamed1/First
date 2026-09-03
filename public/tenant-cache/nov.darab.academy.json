@@ -1,0 +1,336 @@
+{
+  "templateId": "template_1",
+  "sections": [
+    {
+      "id": "navbar",
+      "type": "navbar",
+      "props": {
+        "title": "إديوكور",
+        "logo": "",
+        "bgColor": "#ffffff",
+        "textColor": "#3525cd",
+        "role": "academy",
+        "templateId": "template_1"
+      }
+    },
+    {
+      "id": "hero",
+      "type": "hero",
+      "props": {
+        "title": "بناء تجربة أكاديمية أكثر ذكاءً.",
+        "subtitle": "حل مؤسسي متقدم",
+        "description": "اربط الطلاب، والمعلمين، والإداريين على منصة مؤسسية موحدة مصممة لتحقيق التميز القابل للقياس وسير العمل المبسط بكفاءة عالية.",
+        "buttonText": "استكشف المنصة",
+        "buttonLink": "#",
+        "image": "https://tse4.mm.bing.net/th/id/OIP.CGEfBMBIYoz4Syk_3B8DawHaEK?r=0&rs=1&pid=ImgDetMain&o=7&rm=3",
+        "backgroundColor": "#fcf8ff",
+        "textColor": "#1b1b24"
+      }
+    },
+    {
+      "id": "about",
+      "type": "about",
+      "props": {
+        "title": "تحليلات ذكية لاتخاذ قرارات أفضل",
+        "subtitle": "راقب الأداء الأكاديمي، وحدد الاتجاهات، وقم بتحسين المخرجات التعليمية من خلال لوحات تحكم تحليلية متقدمة توفر رؤى في الوقت الفعلي.",
+        "image": "",
+        "backgroundColor": "#ffffff",
+        "textColor": "#1b1b24",
+        "videoTag": "شاهد وتعلّم",
+        "videoTitle": "تعرف على فلسفتنا التعليمية في ٣ دقائق",
+        "videoDesc": "نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.",
+        "videoLink": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop"
+      }
+    },
+    {
+      "id": "features",
+      "type": "features",
+      "props": {
+        "title": "نظام بيئي أكاديمي متكامل",
+        "subtitle": "مجموعة شاملة ومتطورة من الأدوات لإدارة كل جانب من جوانب رحلة التعلم المؤسسية.",
+        "items": [
+          {
+            "icon": "groups",
+            "title": "مركز الطلاب الشامل",
+            "description": "تمكين المتعلمين بلوحات تحكم مخصصة، وتتبع دقيق للتقدم، وأدوات تواصل تعاونية سلسة لبيئة تعليمية محفزة."
+          },
+          {
+            "icon": "assignment_ind",
+            "title": "بوابة المعلمين",
+            "description": "تبسيط تخطيط الدروس، وإدارة الدرجات، وتعزيز تفاعل الطلاب بأدوات متقدمة."
+          },
+          {
+            "icon": "quiz",
+            "title": "محرك التقييم",
+            "description": "اختبارات آمنة وقابلة للتطوير مع تصحيح آلي وتحليلات أداء مفصلة ودقيقة."
+          },
+          {
+            "icon": "insights",
+            "title": "المخرجات والنتائج",
+            "description": "تقارير مؤسسية شاملة لتتبع الفعالية الأكاديمية وإتقان الطلاب للمهارات المطلوبة."
+          }
+        ],
+        "backgroundColor": "#f5f2ff",
+        "textColor": "#1b1b24"
+      }
+    },
+    {
+      "id": "courses",
+      "type": "course-cards",
+      "props": {
+        "title": "أحدث الدورات والبرامج الأكاديمية",
+        "subtitle": "استكشف مساراتنا التدريبية المتخصصة لتطوير مهاراتك والارتقاء بمسيرتك المهنية.",
+        "limit": 6,
+        "showPrice": true,
+        "showStudentsCount": true,
+        "gridCols": "3",
+        "buttonBg": "#3525cd",
+        "cardBg": "#ffffff",
+        "titleColor": "#1b1b24",
+        "backgroundColor": "#ffffff",
+        "textColor": "#1b1b24",
+        "items": [
+          {
+            "id": 5,
+            "title": "Aut debitis distinct",
+            "user_id": 1,
+            "type": "recorded",
+            "category_id": 1,
+            "description": "Possimus repellendu",
+            "short_description": "Cum rerum enim id c",
+            "image": null,
+            "price_type": "paid",
+            "price": "41.00",
+            "final_price": "41.00",
+            "status": "draft",
+            "slug": "aut-debitis-distinct-CbCkTY",
+            "currency": "SAR",
+            "access_duration_type": "lifetime",
+            "access_days": null,
+            "access_until_date": null,
+            "category": {
+              "id": 1,
+              "name": "unit one"
+            },
+            "user": {
+              "id": 1,
+              "name": "At quisquam tempore"
+            },
+            "subscribers_count": 0,
+            "total_sales": 0,
+            "completion_percentage": 0,
+            "created_at": "2026-08-26T10:16:47.000000Z",
+            "updated_at": "2026-08-26T10:17:08.000000Z"
+          },
+          {
+            "id": 4,
+            "title": "Maiores dolor volupt",
+            "user_id": 1,
+            "type": "recorded",
+            "category_id": 1,
+            "description": "Sed quibusdam offici",
+            "short_description": "Aut ipsam exercitati",
+            "image": null,
+            "price_type": "paid",
+            "price": "1.00",
+            "final_price": "1.00",
+            "status": "draft",
+            "slug": "maiores-dolor-volupt-u7nNdV",
+            "currency": "EGP",
+            "access_duration_type": "lifetime",
+            "access_days": null,
+            "access_until_date": null,
+            "category": {
+              "id": 1,
+              "name": "unit one"
+            },
+            "user": {
+              "id": 1,
+              "name": "At quisquam tempore"
+            },
+            "subscribers_count": 0,
+            "total_sales": 0,
+            "completion_percentage": 0,
+            "created_at": "2026-08-25T12:45:20.000000Z",
+            "updated_at": "2026-08-25T12:45:59.000000Z"
+          },
+          {
+            "id": 3,
+            "title": "Qui aut ipsum numqua",
+            "user_id": 1,
+            "type": "recorded",
+            "category_id": 1,
+            "description": "Quibusdam et eaque e",
+            "short_description": "Quaerat voluptatibus",
+            "image": null,
+            "price_type": "paid",
+            "price": "5.00",
+            "final_price": "5.00",
+            "status": "published",
+            "slug": "qui-aut-ipsum-numqua-S8VKUy",
+            "currency": "EGP",
+            "access_duration_type": "lifetime",
+            "access_days": 5855,
+            "access_until_date": null,
+            "category": {
+              "id": 1,
+              "name": "unit one"
+            },
+            "user": {
+              "id": 1,
+              "name": "At quisquam tempore"
+            },
+            "subscribers_count": 0,
+            "total_sales": 0,
+            "completion_percentage": 0,
+            "created_at": "2026-08-25T12:24:59.000000Z",
+            "updated_at": "2026-08-25T12:27:40.000000Z"
+          },
+          {
+            "id": 2,
+            "title": "Vero ut enim soluta",
+            "user_id": 1,
+            "type": "recorded",
+            "category_id": 1,
+            "description": "Aute sed in enim vol",
+            "short_description": "Temporibus velit la",
+            "image": "https://api.darab.academy/storage/uploads/Course/1787660413_Desktop_-_201.png",
+            "price_type": "paid",
+            "price": "59.00",
+            "final_price": "59.00",
+            "status": "published",
+            "slug": "vero-ut-enim-soluta-Iwyvdi",
+            "currency": "SAR",
+            "access_duration_type": "days",
+            "access_days": 591,
+            "access_until_date": null,
+            "category": {
+              "id": 1,
+              "name": "unit one"
+            },
+            "user": {
+              "id": 1,
+              "name": "At quisquam tempore"
+            },
+            "subscribers_count": 0,
+            "total_sales": 0,
+            "completion_percentage": 0,
+            "created_at": "2026-08-25T12:18:19.000000Z",
+            "updated_at": "2026-08-25T12:20:13.000000Z"
+          },
+          {
+            "id": 1,
+            "title": "Sint sed ex delectus",
+            "user_id": 1,
+            "type": "recorded",
+            "category_id": 1,
+            "description": "Ullamco praesentium",
+            "short_description": "Atque aut voluptatib",
+            "image": "https://api.darab.academy/storage/uploads/Course/1787581557_Desktop_-_169_(1).png",
+            "price_type": "paid",
+            "price": "41.00",
+            "final_price": "41.00",
+            "status": "published",
+            "slug": "sint-sed-ex-delectus-d3mFL2",
+            "currency": "EGP",
+            "access_duration_type": "days",
+            "access_days": 344,
+            "access_until_date": null,
+            "category": {
+              "id": 1,
+              "name": "unit one"
+            },
+            "user": {
+              "id": 1,
+              "name": "At quisquam tempore"
+            },
+            "subscribers_count": 1,
+            "total_sales": 41,
+            "completion_percentage": 0,
+            "created_at": "2026-08-24T14:25:57.000000Z",
+            "updated_at": "2026-08-24T14:25:57.000000Z"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pricing",
+      "type": "pricing",
+      "props": {
+        "title": "المخرجات والنتائج الإحصائية",
+        "subtitle": "معدلات تقدم وتحليلات رقمية للفصول الدراسية",
+        "items": [
+          {
+            "title": "طلاب نشطون",
+            "price": "12.4k",
+            "features": [
+              "بوابات تفاعلية",
+              "تتبع التقدم"
+            ]
+          },
+          {
+            "title": "دورات مدارة",
+            "price": "320",
+            "features": [
+              "فصول مسجلة",
+              "محاضرات بث مباشر"
+            ]
+          },
+          {
+            "title": "معدل الإنجاز",
+            "price": "87%",
+            "features": [
+              "نسبة إتمام مرتفعة",
+              "التزام أكاديمي"
+            ]
+          }
+        ],
+        "backgroundColor": "#fcf8ff",
+        "textColor": "#1b1b24",
+        "testimonialsTitle": "ماذا يقول شركاؤنا وطلابنا؟",
+        "testimonialsSubtitle": "قصص نجاح ملهمة وتجارب واقعية يعبر عنها شركاؤنا الأكاديميون وطلابنا المتميزون.",
+        "testimonial1Text": "سهولة إدارة المحتوى التعليمي والتحليلات الدقيقة المتاحة مكنتنا كإدارة من تتبع الأداء وتحسين المخرجات التعليمية بشكل ملموس وسريع.",
+        "testimonial1Author": "أ.د. محمد الشمري",
+        "testimonial1Role": "عميد القبول والتسجيل",
+        "testimonial2Text": "سهولة التصفح، والوصول الفوري للمقررات والامتحانات التفاعلية، أتاح لي تنظيم وقتي والمذاكرة بذكاء وبدون تشتت تماماً.",
+        "testimonial2Author": "رنا عبدالله",
+        "testimonial2Role": "طالبة هندسة برمجيات",
+        "testimonial3Text": "كأستاذ، مكنتني بوابة المعلم من متابعة الواجبات وإعطاء تقييمات تفصيلية فورية لكل طالب وطالبة بسهولة مطلقة ووقت قياسي.",
+        "testimonial3Author": "م. عاصم العتيبي",
+        "testimonial3Role": "عضو هيئة التدريس"
+      }
+    },
+    {
+      "id": "faq",
+      "type": "faq",
+      "props": {
+        "title": "الأسئلة الشائعة حول إديوكور",
+        "items": [
+          {
+            "question": "هل الحصص البث المباشر مسجلة؟",
+            "answer": "نعم، يتم تسجيل جميع اللقاءات المباشرة ورفعها للمنصة لتعيد مشاهدتها في أي وقت."
+          },
+          {
+            "question": "كيف يساهم إديوكور في تحسين الأداء الأكاديمي؟",
+            "answer": "يوفر النظام تحليلات شاملة تمكن الإداريين والمعلمين من مراقبة التقدم واتخاذ قرارات فورية مدعومة بالبيانات."
+          }
+        ],
+        "backgroundColor": "#f5f2ff",
+        "textColor": "#1b1b24"
+      }
+    },
+    {
+      "id": "contact",
+      "type": "contact",
+      "props": {
+        "title": "ابْنِ مستقبل التعليم",
+        "description": "انضم إلى المؤسسات الرائدة عالميًا في تحويل التجربة الأكاديمية. ارتقِ بمستوى مؤسستك التعليمية وابدأ رحلتك نحو التميز اليوم.",
+        "phoneNumber": "201000000000",
+        "buttonText": "ابدأ الآن",
+        "backgroundColor": "#3525cd",
+        "textColor": "#ffffff"
+      }
+    }
+  ],
+  "updatedAt": "2026-08-30T07:04:41.507Z"
+}

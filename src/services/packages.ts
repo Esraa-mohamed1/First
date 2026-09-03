@@ -1,12 +1,15 @@
 import api from '@/lib/api';
 import academyApi from '@/lib/academy-api';
 import { ApiResponse, Package, CreatePackagePayload, Feature } from '@/types/api';
+import { getStoredAuthToken } from '@/lib/auth-storage';
 
 const SUPER_ADMIN_API_URL = 'https://api.darab.academy/api/superAdmin';
 
 export const getPackages = async (): Promise<Package[]> => {
   try {
-    const response = await api.get<ApiResponse<Package[]>>('/packages');
+    const response = await api.get<ApiResponse<Package[]>>('/packages', {
+      baseURL: SUPER_ADMIN_API_URL
+    });
     if (response.data.status) {
       return response.data.data;
     }
@@ -19,14 +22,14 @@ export const getPackages = async (): Promise<Package[]> => {
 
 export const subscribeToPackage = async (packageId: number, email?: string): Promise<string> => {
   try {
-    const response = await api.post<ApiResponse<any>>('create-link-payment', { 
+    const response = await api.post<ApiResponse<any>>('create-link-payment', {
       package_id: packageId,
-      email: email 
+      email: email
     });
     // Handle response formats for paymentLink
     const data = response.data as any;
     const paymentLink = data.paymentLink || data.data?.paymentLink || (typeof data.data === 'string' ? data.data : null);
-    
+
     if (paymentLink) {
       return paymentLink;
     }
@@ -93,8 +96,12 @@ export const getPackageById = async (id: number): Promise<Package | null> => {
 
 export const updatePackage = async (id: number, payload: CreatePackagePayload): Promise<ApiResponse<Package>> => {
   try {
+    const token = getStoredAuthToken();
     const response = await api.put<ApiResponse<Package>>(`/packages/${id}`, payload, {
-      baseURL: SUPER_ADMIN_API_URL
+      baseURL: SUPER_ADMIN_API_URL,
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
     });
     return response.data;
   } catch (error: any) {
@@ -140,7 +147,7 @@ export const deleteFeature = async (id: number): Promise<ApiResponse<any>> => {
 
 export const associateFeatures = async (payload: { package_id: number, feature_id: number, value: string, lable: string }): Promise<ApiResponse<any>> => {
   try {
-    const response = await api.post<ApiResponse<any>>('/feature_packages', payload, {
+    const response = await api.put<ApiResponse<any>>('/feature_packages', payload, {
       baseURL: SUPER_ADMIN_API_URL
     });
     return response.data;

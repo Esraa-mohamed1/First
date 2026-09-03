@@ -27,9 +27,21 @@ export default function ChapterEditor() {
           <label className="text-xs font-bold text-slate-700">عنوان القسم الرئيسي</label>
           <input
             type="text"
-            className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600"
+            className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-bold"
             value={data.title}
             onChange={(e) => handleChange('title', e.target.value)}
+          />
+        </div>
+
+        {/* Subtitle */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-bold text-slate-700">العنوان الفرعي للقسم</label>
+          <input
+            type="text"
+            className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600"
+            value={data.subtitle || ''}
+            onChange={(e) => handleChange('subtitle', e.target.value)}
+            placeholder="مثال: منهج شامل ومقسم إلى وحدات ودروس تفاعلية"
           />
         </div>
 
