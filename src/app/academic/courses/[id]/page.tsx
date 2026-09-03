@@ -454,8 +454,9 @@ export default function CourseDetailsPage() {
         const userData = profile?.data || profile;
         if (userData) {
           setCurrentUser(userData);
-          if (userData.role || userData.account_type) {
-            setUserRole(userData.role || userData.account_type);
+          const resolvedRole = userData.type || userData.account_type || userData.user_type || userData.role;
+          if (resolvedRole) {
+            setUserRole(resolvedRole);
           }
         }
       } catch (err) {
@@ -1900,7 +1901,7 @@ export default function CourseDetailsPage() {
             </section>
 
             {/* Section 2: Academic Classification */}
-            {isSchoolTeacherRole(userRole) && (
+            {isSchoolTeacherRole(userRole || currentUser) && (
               <section className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm">
                 <div className="flex items-center justify-between gap-3 mb-6">
                   <div className="flex items-center gap-2">
@@ -3775,7 +3776,7 @@ export default function CourseDetailsPage() {
         />
       )}
       {/* Add Classification Pop-up Modal */}
-      {isSchoolTeacherRole(userRole) && (
+      {isSchoolTeacherRole(userRole || currentUser) && (
         <AddClassificationModal
           isOpen={addClassificationModal.isOpen}
           initialType={addClassificationModal.type}

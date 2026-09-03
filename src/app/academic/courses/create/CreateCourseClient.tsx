@@ -587,10 +587,11 @@ export default function CreateCourseClient() {
         const userData = profile.data || profile;
         if (userData) {
           setCurrentUser(userData);
-          if (userData.role || userData.account_type) {
-            setUserRole(userData.role || userData.account_type);
+          const resolvedRole = userData.type || userData.account_type || userData.user_type || userData.role;
+          if (resolvedRole) {
+            setUserRole(resolvedRole);
           }
-          if (userData.role === 'instructor') {
+          if (userData.role === 'instructor' || userData.type === 'coach') {
             setCoachName(userData.name || userData.fullName || '');
             setSelectedInstructor(userData.id);
           } else {
@@ -1647,7 +1648,7 @@ export default function CreateCourseClient() {
                 </section>
 
                 {/* Section 2: Academic Classification */}
-                {isSchoolTeacherRole(userRole) && (
+                {isSchoolTeacherRole(userRole || currentUser) && (
                   <section className="bg-white border border-slate-300 rounded-2xl p-7 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.07)] transition-all duration-300">
                     <div className="flex items-center justify-between gap-3 mb-6">
                       <div className="flex items-center gap-3">
@@ -3466,7 +3467,7 @@ export default function CreateCourseClient() {
       )}
 
       {/* Add Classification Pop-up Modal */}
-      {isSchoolTeacherRole(userRole) && (
+      {isSchoolTeacherRole(userRole || currentUser) && (
         <AddClassificationModal
           isOpen={addClassificationModal.isOpen}
           initialType={addClassificationModal.type}

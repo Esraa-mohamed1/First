@@ -55,6 +55,15 @@ describe('Course Creation Filtering Logic', () => {
     expect(isSchoolTeacherRole('school')).toBe(true);
     expect(isSchoolTeacherRole('SCHOOLTEACHER')).toBe(true);
 
+    // When API returns role: "admin" and type: "schoolteacher"
+    expect(isSchoolTeacherRole({ role: 'admin', type: 'schoolteacher' })).toBe(true);
+    expect(isSchoolTeacherRole({ role: 'admin', type: 'school_teacher' })).toBe(true);
+    expect(isSchoolTeacherRole({ role: 'admin', account_type: 'schoolteacher' })).toBe(true);
+    expect(isSchoolTeacherRole({ role: 'admin', type: 'academy' })).toBe(false);
+    expect(isSchoolTeacherRole({ role: 'admin', type: 'coach' })).toBe(false);
+    expect(isSchoolTeacherRole({ role: 'admin', type: 'instructor' })).toBe(false);
+    expect(isSchoolTeacherRole({ role: 'admin' })).toBe(false);
+
     // Academy and Coach roles should NOT show Academic Classification
     expect(isSchoolTeacherRole('academy')).toBe(false);
     expect(isSchoolTeacherRole('coach')).toBe(false);
