@@ -5,13 +5,36 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
   const navbarBg = content?.navbar?.bgColor || (content?.navbar as any)?.bg_color || '#141218';
   const navbarText = content?.navbar?.textColor || (content?.navbar as any)?.text_color || '#cfbcff';
 
+  const defaultNavLinks = [
+    { label: 'الرئيسية', href: '/' },
+    { label: 'المرشدون', href: '#features' },
+    { label: 'الماستركلاس', href: '#pricing' },
+    { label: 'عن الأكاديمية', href: '#about' },
+  ];
+  const navLinks: Array<{ label: string; href: string }> =
+    Array.isArray((content?.navbar as any)?.links) && (content?.navbar as any).links.length > 0
+      ? (content?.navbar as any).links
+      : defaultNavLinks;
+  const loginText = (content?.navbar as any)?.loginText || (content?.navbar as any)?.login_text || 'تسجيل الدخول';
+  const loginLink = (content?.navbar as any)?.loginLink || (content?.navbar as any)?.login_link || '/auth/login';
+  const registerText = (content?.navbar as any)?.registerText || (content?.navbar as any)?.register_text || 'انضم للنخبة';
+  const registerLink = (content?.navbar as any)?.registerLink || (content?.navbar as any)?.register_link || '/auth/register';
+  const loginBg = (content?.navbar as any)?.loginBgColor || (content?.navbar as any)?.login_bg_color || (content?.navbar as any)?.loginBg || (content?.navbar as any)?.login_bg || '';
+  const loginTextColor = (content?.navbar as any)?.loginTextColor || (content?.navbar as any)?.login_text_color || (content?.navbar as any)?.loginColor || (content?.navbar as any)?.login_color || '';
+  const registerBg = (content?.navbar as any)?.registerBgColor || (content?.navbar as any)?.register_bg_color || (content?.navbar as any)?.registerBg || (content?.navbar as any)?.register_bg || '';
+  const registerTextColor = (content?.navbar as any)?.registerTextColor || (content?.navbar as any)?.register_text_color || (content?.navbar as any)?.registerColor || (content?.navbar as any)?.register_color || '';
+
   const heroSubtitle = content?.hero?.subtitle || 'أكاديمية النخبة';
   const heroTitle = content?.hero?.title || 'تعمق في المعرفة. <br/> تعلم من الصفوة.';
   const heroDesc = content?.hero?.description || 'مساحة حصرية مصممة للمفكرين والقادة. استكشف مناهج متقدمة وتواصل مع خبراء عالميين في بيئة دراسية مصممة للتركيز العميق والتميز الأكاديمي.';
   const heroBtnText = content?.hero?.buttonText || (content?.hero as any)?.button_text || 'ابدأ رحلتك';
   const heroBtnLink = content?.hero?.buttonLink || (content?.hero as any)?.button_link || '#';
+  const heroBtnBg = (content?.hero as any)?.buttonBg || (content?.hero as any)?.button_bg || (content?.hero as any)?.button_background_color || '';
+  const heroBtnTextColor = (content?.hero as any)?.buttonTextColor || (content?.hero as any)?.button_text_color || (content?.hero as any)?.button_color || '';
   const heroSecondaryBtnText = content?.hero?.secondaryButtonText || (content?.hero as any)?.secondary_button_text || (content?.hero as any)?.demoButtonText || 'استكشف المناهج';
   const heroSecondaryBtnLink = content?.hero?.secondaryButtonLink || (content?.hero as any)?.secondary_button_link || (content?.hero as any)?.demoButtonLink || '#faq';
+  const heroSecondaryBtnBg = (content?.hero as any)?.secondaryButtonBg || (content?.hero as any)?.secondary_button_bg || (content?.hero as any)?.secondary_button_background_color || '';
+  const heroSecondaryBtnTextColor = (content?.hero as any)?.secondaryButtonTextColor || (content?.hero as any)?.secondary_button_text_color || (content?.hero as any)?.secondary_button_color || '';
   const heroBg = content?.hero?.backgroundColor || (content?.hero as any)?.background_color || (content?.hero as any)?.bg_color || '#141218';
   const heroTextColor = content?.hero?.textColor || (content?.hero as any)?.text_color || '#e6e0e9';
 
@@ -292,10 +315,24 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
 <span class="material-symbols-outlined text-primary text-[32px]">menu_book</span>
 <span class="text-headline-md font-headline-md text-primary" style="color: ${navbarText};">${navbarTitle}</span>
 </div>
-<div class="flex items-center">
-<button class="hover:text-primary transition-colors duration-300 opacity-80 hover:opacity-100">
-<span class="material-symbols-outlined text-[32px]">account_circle</span>
-</button>
+<nav class="hidden md:flex items-center gap-6 text-sm font-medium">
+${navLinks.map((link: any) => {
+  const isBtn = link.isButton || link.is_button || link.variant === 'button' || link.type === 'button';
+  const linkBg = link.bgColor || link.bg_color || link.backgroundColor || link.background_color || '';
+  const linkColor = link.textColor || link.text_color || link.color || '';
+  const customStyle = link.style || `${linkBg ? `background-color: ${linkBg}; ` : ''}${linkColor ? `color: ${linkColor}; ` : ''}`;
+
+  if (isBtn || linkBg) {
+    return `<a class="px-4 py-2 rounded shadow-sm hover:shadow transition-all duration-200 inline-block text-center text-xs font-bold" style="${customStyle}" href="${link.href || '#'}" ${isEditing ? '' : 'target="_parent"'}>${link.label}</a>`;
+  }
+  return `<a class="hover:text-primary transition-colors duration-200" style="${linkColor ? `color: ${linkColor};` : ''}" href="${link.href || '#'}" ${isEditing ? '' : 'target="_parent"'}>${link.label}</a>`;
+}).join('\n')}
+</nav>
+<div class="flex items-center gap-3">
+<a class="text-xs font-bold px-3 py-2 rounded hover:opacity-80 transition-opacity" style="${loginBg ? `background-color: ${loginBg}; ` : ''}${loginTextColor ? `color: ${loginTextColor}; ` : ''}" href="${loginLink}" ${isEditing ? '' : 'target="_parent"'}>${loginText}</a>
+<a href="${registerLink}" ${isEditing ? '' : 'target="_parent"'} class="bg-tertiary text-on-tertiary text-xs font-bold px-5 py-2.5 rounded shadow-sm hover:opacity-90 transition-all duration-200" style="${registerBg ? `background-color: ${registerBg}; ` : ''}${registerTextColor ? `color: ${registerTextColor}; ` : ''}">
+    ${registerText}
+</a>
 </div>
 </div>
 </header>
@@ -321,7 +358,7 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
   const trimmed = heroBtnLink.trim();
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
   return `#${trimmed}`;
-})()}" ${heroBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="font-label-sm text-label-sm bg-tertiary text-on-tertiary px-8 py-4 rounded hover:bg-tertiary-container transition-colors duration-300 flex items-center gap-2">
+})()}" ${heroBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="font-label-sm text-label-sm px-8 py-4 rounded transition-colors duration-300 flex items-center gap-2" style="${heroBtnBg ? `background-color: ${heroBtnBg}; ` : 'background-color: var(--tertiary, #684000); '}${heroBtnTextColor ? `color: ${heroBtnTextColor}; ` : 'color: #ffffff; '}">
 <span>${heroBtnText}</span>
 <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
 </a>
@@ -330,7 +367,7 @@ export const getCoachHtml = (content: TemplateContent, isEditing: boolean = fals
   const trimmed = heroSecondaryBtnLink.trim();
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
   return `#${trimmed}`;
-})()}" ${heroSecondaryBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="font-label-sm text-label-sm border border-outline text-on-surface px-8 py-4 rounded hover:border-tertiary hover:text-tertiary transition-colors duration-300 inline-flex items-center justify-center">
+})()}" ${heroSecondaryBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="font-label-sm text-label-sm border border-outline px-8 py-4 rounded transition-colors duration-300 inline-flex items-center justify-center" style="${heroSecondaryBtnBg ? `background-color: ${heroSecondaryBtnBg}; ` : ''}${heroSecondaryBtnTextColor ? `color: ${heroSecondaryBtnTextColor}; ` : ''}">
     <span>${heroSecondaryBtnText}</span>
 </a>
 </div>

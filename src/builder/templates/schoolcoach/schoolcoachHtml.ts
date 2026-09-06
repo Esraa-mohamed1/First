@@ -5,13 +5,36 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
   const navbarBg = content?.navbar?.bgColor || (content?.navbar as any)?.bg_color || '#0a1628';
   const navbarText = content?.navbar?.textColor || (content?.navbar as any)?.text_color || '#ffffff';
 
+  const defaultNavLinks = [
+    { label: 'الرئيسية', href: '/' },
+    { label: 'المواد', href: '#features' },
+    { label: 'الدورات', href: '#courses' },
+    { label: 'عن الأستاذ', href: '#about' },
+  ];
+  const navLinks: Array<{ label: string; href: string }> =
+    Array.isArray((content?.navbar as any)?.links) && (content?.navbar as any).links.length > 0
+      ? (content?.navbar as any).links
+      : defaultNavLinks;
+  const loginText = (content?.navbar as any)?.loginText || (content?.navbar as any)?.login_text || 'تسجيل الدخول';
+  const loginLink = (content?.navbar as any)?.loginLink || (content?.navbar as any)?.login_link || '/auth/login';
+  const registerText = (content?.navbar as any)?.registerText || (content?.navbar as any)?.register_text || 'احجز مكانك';
+  const registerLink = (content?.navbar as any)?.registerLink || (content?.navbar as any)?.register_link || '/auth/register';
+  const loginBg = (content?.navbar as any)?.loginBgColor || (content?.navbar as any)?.login_bg_color || (content?.navbar as any)?.loginBg || (content?.navbar as any)?.login_bg || '';
+  const loginTextColor = (content?.navbar as any)?.loginTextColor || (content?.navbar as any)?.login_text_color || (content?.navbar as any)?.loginColor || (content?.navbar as any)?.login_color || '';
+  const registerBg = (content?.navbar as any)?.registerBgColor || (content?.navbar as any)?.register_bg_color || (content?.navbar as any)?.registerBg || (content?.navbar as any)?.register_bg || '';
+  const registerTextColor = (content?.navbar as any)?.registerTextColor || (content?.navbar as any)?.register_text_color || (content?.navbar as any)?.registerColor || (content?.navbar as any)?.register_color || '';
+
   const heroSubtitle = content?.hero?.subtitle || 'معلم الرياضيات القدير';
   const heroTitle = content?.hero?.title || 'تعلم بذكاء. <br/><span class="text-[var(--color-gold-500)]">اضمن تفوقك الدراسي.</span>';
   const heroDesc = content?.hero?.description || 'مناهج دراسية مبسطة وأساليب تعليمية حديثة تساعدك على فهم المادة بعمق وتحقيق الدرجة الكاملة في امتحاناتك.';
   const heroBtnText = content?.hero?.buttonText || (content?.hero as any)?.button_text || 'احجز مكانك الآن';
   const heroBtnLink = content?.hero?.buttonLink || (content?.hero as any)?.button_link || '#';
+  const heroBtnBg = (content?.hero as any)?.buttonBg || (content?.hero as any)?.button_bg || (content?.hero as any)?.button_background_color || '';
+  const heroBtnTextColor = (content?.hero as any)?.buttonTextColor || (content?.hero as any)?.button_text_color || (content?.hero as any)?.button_color || '';
   const heroSecondaryBtnText = content?.hero?.secondaryButtonText || (content?.hero as any)?.secondary_button_text || (content?.hero as any)?.demoButtonText || 'اعرف المزيد عنا';
   const heroSecondaryBtnLink = content?.hero?.secondaryButtonLink || (content?.hero as any)?.secondary_button_link || (content?.hero as any)?.demoButtonLink || '#about';
+  const heroSecondaryBtnBg = (content?.hero as any)?.secondaryButtonBg || (content?.hero as any)?.secondary_button_bg || (content?.hero as any)?.secondary_button_background_color || '';
+  const heroSecondaryBtnTextColor = (content?.hero as any)?.secondaryButtonTextColor || (content?.hero as any)?.secondary_button_text_color || (content?.hero as any)?.secondary_button_color || '';
   const heroImg = content?.hero?.image || (content?.hero as any)?.img || (content?.hero as any)?.video || 'https://lh3.googleusercontent.com/aida-public/AB6AXuDdn5I4iyCWiaDe9m4F8v8n_X00tPqBgqXH4hbDxxtEpcQGhs3Iv7ye36iLKGCPaYsSeLuQ6Q56ZRbKBk10dy_efgKLS3zHuPJjJmYL6JtPlCiByhhruLtE_z5QnQirZ362M0sgpMps7B8icOJUUVS6t_6GJ1K0xma8arDq0yEal-eRoeAXPmexe9Vlvhif39sPxgQQGgyuqPwrz1R2REpb3TQmQAfrbC-2IMbqMBAUhDDImR-r8q5cEQ';
   const heroBg = content?.hero?.backgroundColor || (content?.hero as any)?.background_color || (content?.hero as any)?.bg_color || '#0a1628';
   const heroTextColor = content?.hero?.textColor || (content?.hero as any)?.text_color || '#ffffff';
@@ -357,13 +380,21 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
         <span class="text-[22px] font-extrabold" style="color: ${navbarText};">${navbarTitle}</span>
       </div>
       <nav class="hidden md:flex items-center gap-8 text-sm font-bold text-gray-400">
-        <a class="hover:text-[var(--color-gold-500)] transition-colors" href="/" ${isEditing ? '' : 'target="_parent"'}>الرئيسية</a>
-        <a class="hover:text-[var(--color-gold-500)] transition-colors" href="/courses" ${isEditing ? '' : 'target="_parent"'}>الدورات</a>
-        <a class="hover:text-[var(--color-gold-500)] transition-colors" href="/bags" ${isEditing ? '' : 'target="_parent"'}>الحقائب</a>
-        <a class="hover:text-[var(--color-gold-500)] transition-colors" href="/#about" ${isEditing ? '' : 'target="_parent"'}>عن المدرس</a>
+        ${navLinks.map((link: any) => {
+          const isBtn = link.isButton || link.is_button || link.variant === 'button' || link.type === 'button';
+          const linkBg = link.bgColor || link.bg_color || link.backgroundColor || link.background_color || '';
+          const linkColor = link.textColor || link.text_color || link.color || '';
+          const customStyle = link.style || `${linkBg ? `background-color: ${linkBg}; ` : ''}${linkColor ? `color: ${linkColor}; ` : ''}`;
+
+          if (isBtn || linkBg) {
+            return `<a class="btn-primary text-xs py-2.5 px-5 block text-center" style="${customStyle}" href="${link.href || '#'}" ${isEditing ? '' : 'target="_parent"'}>${link.label}</a>`;
+          }
+          return `<a class="hover:text-[var(--color-gold-500)] transition-colors" style="${linkColor ? `color: ${linkColor};` : ''}" href="${link.href || '#'}" ${isEditing ? '' : 'target="_parent"'}>${link.label}</a>`;
+        }).join('\n')}
       </nav>
-      <div>
-        <a href="#contact" class="btn-primary text-xs py-3.5 px-6 block text-center">${heroBtnText}</a>
+      <div class="flex items-center gap-4">
+        <a href="${loginLink}" ${isEditing ? '' : 'target="_parent"'} class="text-xs font-bold px-4 py-2 rounded-lg hover:opacity-80 transition-opacity" style="${loginBg ? `background-color: ${loginBg}; ` : ''}${loginTextColor ? `color: ${loginTextColor}; ` : 'color: var(--color-gray-400);'}">${loginText}</a>
+        <a href="${registerLink}" ${isEditing ? '' : 'target="_parent"'} class="btn-primary text-xs py-3.5 px-6 block text-center" style="${registerBg ? `background-color: ${registerBg}; ` : ''}${registerTextColor ? `color: ${registerTextColor}; ` : ''}">${registerText}</a>
       </div>
     </div>
   </header>
@@ -388,13 +419,13 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
               const trimmed = heroBtnLink.trim();
               if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
               return `#${trimmed}`;
-            })()}" ${heroBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="btn-primary text-sm">${heroBtnText}</a>
+            })()}" ${heroBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="btn-primary text-sm" style="${heroBtnBg ? `background-color: ${heroBtnBg}; ` : ''}${heroBtnTextColor ? `color: ${heroBtnTextColor}; ` : ''}">${heroBtnText}</a>
             <a data-hero-btn="secondary" href="${(() => {
               if (!heroSecondaryBtnLink || heroSecondaryBtnLink === '#') return '#about';
               const trimmed = heroSecondaryBtnLink.trim();
               if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
               return `#${trimmed}`;
-            })()}" ${heroSecondaryBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="btn-secondary text-sm">${heroSecondaryBtnText}</a>
+            })()}" ${heroSecondaryBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="btn-secondary text-sm" style="${heroSecondaryBtnBg ? `background-color: ${heroSecondaryBtnBg}; ` : ''}${heroSecondaryBtnTextColor ? `color: ${heroSecondaryBtnTextColor}; ` : ''}">${heroSecondaryBtnText}</a>
           </div>
         </div>
         

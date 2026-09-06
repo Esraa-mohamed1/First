@@ -142,22 +142,58 @@ const DEFAULT_CONTENT = {
 
 function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, realCourses: any[] = [], isEditing: boolean = false) {
   const navbarNode = nodes.find(n => n.type === 'navbar');
-  const heroNode = nodes.find(n => n.type === 'hero');
+  const heroNode = nodes.find(n => n.type === 'hero' || n.type === 'hero-slider');
   const aboutNode = nodes.find(n => n.type === 'about');
   const featuresNode = nodes.find(n => n.type === 'features' || n.type === 'features_section');
   const courseNode = nodes.find(n => n.type === 'course-cards' || n.type === 'courses');
   const statsNode = nodes.find(n => n.type === 'stats' || n.type === 'kpi-cards');
-  const pricingNode = nodes.find(n => n.type === 'pricing');
-  const faqNode = nodes.find(n => n.type === 'faq');
+  const pricingNode = nodes.find(n => n.type === 'pricing' || n.type === 'pricing_section');
+  const faqNode = nodes.find(n => n.type === 'faq' || n.type === 'faq_section');
   const contactNode = nodes.find(n => n.type === 'contact');
   const footerNode = nodes.find(n => n.type === 'footer');
+
+  const hasCustomSections = Array.isArray(nodes) && nodes.length > 0;
+
+  // Track exact section presence and order from backend response
+  let renderedSections: string[] = [];
+  if (hasCustomSections) {
+    nodes.forEach(n => {
+      const type = n.type;
+      if (type === 'navbar' && !renderedSections.includes('navbar')) renderedSections.push('navbar');
+      else if ((type === 'hero' || type === 'hero-slider') && !renderedSections.includes('hero')) renderedSections.push('hero');
+      else if (type === 'about') {
+        if (n.props && (n.props.videoLink || n.props.video_link) && !renderedSections.includes('video')) {
+          renderedSections.push('video');
+        }
+        if (!renderedSections.includes('about')) renderedSections.push('about');
+      }
+      else if (type === 'video' && !renderedSections.includes('video')) renderedSections.push('video');
+      else if ((type === 'features' || type === 'features_section') && !renderedSections.includes('features')) renderedSections.push('features');
+      else if ((type === 'courses' || type === 'course-cards') && !renderedSections.includes('courses')) renderedSections.push('courses');
+      else if ((type === 'stats' || type === 'kpi-cards') && !renderedSections.includes('stats')) renderedSections.push('stats');
+      else if (type === 'pricing' || type === 'pricing_section') {
+        if (!renderedSections.includes('pricing')) renderedSections.push('pricing');
+        if (n.props && (n.props.testimonialsTitle || n.props.testimonials_title) && !renderedSections.includes('testimonials')) {
+          renderedSections.push('testimonials');
+        }
+      }
+      else if (type === 'testimonials' && !renderedSections.includes('testimonials')) renderedSections.push('testimonials');
+      else if ((type === 'faq' || type === 'faq_section') && !renderedSections.includes('faq')) renderedSections.push('faq');
+      else if (type === 'contact' && !renderedSections.includes('contact')) renderedSections.push('contact');
+      else if (type === 'footer' && !renderedSections.includes('footer')) renderedSections.push('footer');
+    });
+  } else {
+    renderedSections = ['navbar', 'hero', 'video', 'about', 'features', 'courses', 'stats', 'pricing', 'testimonials', 'faq', 'contact', 'footer'];
+  }
 
   // Priority: realCourses (live API) > section.items (saved DB items) > section.props.courses (legacy)
   const coursesList = realCourses.length > 0
     ? realCourses
     : (Array.isArray(courseNode?.props?.items) && courseNode.props.items.length > 0
         ? courseNode.props.items
-        : (courseNode?.props?.courses || []));
+        : (Array.isArray(courseNode?.items) && courseNode.items.length > 0
+            ? courseNode.items
+            : (courseNode?.props?.courses || [])));
 
   const safeFeatureItems = (items: any) => {
     if (typeof items === 'string') {
@@ -165,11 +201,11 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
     }
     if (!Array.isArray(items) || items.length === 0) return fallback.features.items;
     return items.map((it: any) => {
-      const p = it?.props || it || {};
+      const p = it?.props || {};
       return {
-        icon: p.icon || it?.icon || 'star',
-        title: p.title || it?.title || '',
-        description: p.description || it?.description || '',
+        icon: it?.icon ?? p.icon ?? 'star',
+        title: it?.title ?? p.title ?? '',
+        description: it?.description ?? p.description ?? '',
       };
     });
   };
@@ -180,10 +216,10 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
     }
     if (!Array.isArray(items) || items.length === 0) return fallback.stats.items;
     return items.map((it: any) => {
-      const p = it?.props || it || {};
+      const p = it?.props || {};
       return {
-        value: p.value || it?.value || '',
-        label: p.label || it?.label || p.title || it?.title || '',
+        value: it?.value ?? p.value ?? '',
+        label: it?.label ?? p.label ?? it?.title ?? p.title ?? '',
       };
     });
   };
@@ -193,7 +229,14 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
       try { items = JSON.parse(items); } catch (e) {}
     }
     if (!Array.isArray(items) || items.length === 0) return fallback.pricing.items;
-    return items;
+    return items.map((it: any) => {
+      const p = it?.props || {};
+      return {
+        title: it?.title ?? p.title ?? '',
+        price: it?.price ?? p.price ?? '',
+        features: Array.isArray(it?.features) ? it.features : (Array.isArray(p.features) ? p.features : []),
+      };
+    });
   };
 
   const safeFaqItems = (items: any) => {
@@ -201,64 +244,80 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
       try { items = JSON.parse(items); } catch (e) {}
     }
     if (!Array.isArray(items) || items.length === 0) return fallback.faq.items;
-    return items;
+    return items.map((it: any) => {
+      const p = it?.props || {};
+      return {
+        question: it?.question ?? p.question ?? '',
+        answer: it?.answer ?? p.answer ?? '',
+      };
+    });
+  };
+
+  const getProp = (val: any, fallbackVal: any) => {
+    if (val !== undefined && val !== null) return val;
+    return fallbackVal;
   };
 
   return {
+    renderedSections,
     navbar: navbarNode?.props ? {
       ...navbarNode.props,
-      title: navbarNode.props.title ?? fallback.navbar.title,
-      logo: navbarNode.props.logo ?? fallback.navbar.logo,
-      bgColor: navbarNode.props.bgColor ?? navbarNode.props.bg_color ?? fallback.navbar.bgColor,
-      textColor: navbarNode.props.textColor ?? navbarNode.props.text_color ?? fallback.navbar.textColor,
-      loginText: navbarNode.props.loginText ?? navbarNode.props.login_text ?? fallback.navbar.loginText,
-      loginLink: navbarNode.props.loginLink ?? navbarNode.props.login_link ?? fallback.navbar.loginLink,
-      registerText: navbarNode.props.registerText ?? navbarNode.props.register_text ?? fallback.navbar.registerText,
-      registerLink: navbarNode.props.registerLink ?? navbarNode.props.register_link ?? fallback.navbar.registerLink,
-      links: Array.isArray(navbarNode.props.links) && navbarNode.props.links.length > 0 ? navbarNode.props.links : fallback.navbar.links,
+      title: getProp(navbarNode.props.title ?? navbarNode.props.name, fallback.navbar.title),
+      logo: getProp(navbarNode.props.logo, fallback.navbar.logo),
+      bgColor: getProp(navbarNode.props.bgColor ?? navbarNode.props.bg_color, fallback.navbar.bgColor),
+      textColor: getProp(navbarNode.props.textColor ?? navbarNode.props.text_color, fallback.navbar.textColor),
+      loginText: getProp(navbarNode.props.loginText ?? navbarNode.props.login_text, fallback.navbar.loginText),
+      loginLink: getProp(navbarNode.props.loginLink ?? navbarNode.props.login_link, fallback.navbar.loginLink),
+      registerText: getProp(navbarNode.props.registerText ?? navbarNode.props.register_text, fallback.navbar.registerText),
+      registerLink: getProp(navbarNode.props.registerLink ?? navbarNode.props.register_link, fallback.navbar.registerLink),
+      links: Array.isArray(navbarNode.props.links) ? navbarNode.props.links : fallback.navbar.links,
     } : fallback.navbar,
+
     hero: heroNode?.props ? {
       ...heroNode.props,
-      title: heroNode.props.title ?? fallback.hero.title,
-      subtitle: heroNode.props.subtitle ?? fallback.hero.subtitle,
-      description: heroNode.props.description ?? fallback.hero.description,
-      buttonText: heroNode.props.buttonText ?? heroNode.props.button_text ?? fallback.hero.buttonText,
-      buttonLink: heroNode.props.buttonLink ?? heroNode.props.button_link ?? fallback.hero.buttonLink,
-      secondaryButtonText: heroNode.props.secondaryButtonText ?? heroNode.props.secondary_button_text ?? heroNode.props.demoButtonText ?? heroNode.props.demo_button_text ?? fallback.hero.secondaryButtonText,
-      secondaryButtonLink: heroNode.props.secondaryButtonLink ?? heroNode.props.secondary_button_link ?? heroNode.props.demoButtonLink ?? heroNode.props.demo_button_link ?? fallback.hero.secondaryButtonLink,
-      image: heroNode.props.image ?? heroNode.props.img ?? heroNode.props.video ?? fallback.hero.image,
-      backgroundColor: heroNode.props.backgroundColor ?? heroNode.props.background_color ?? heroNode.props.bg_color ?? fallback.hero.backgroundColor,
-      textColor: heroNode.props.textColor ?? heroNode.props.text_color ?? fallback.hero.textColor,
+      title: getProp(heroNode.props.title, fallback.hero.title),
+      subtitle: getProp(heroNode.props.subtitle, fallback.hero.subtitle),
+      description: getProp(heroNode.props.description, fallback.hero.description),
+      buttonText: getProp(heroNode.props.buttonText ?? heroNode.props.button_text, fallback.hero.buttonText),
+      buttonLink: getProp(heroNode.props.buttonLink ?? heroNode.props.button_link, fallback.hero.buttonLink),
+      secondaryButtonText: getProp(heroNode.props.secondaryButtonText ?? heroNode.props.secondary_button_text ?? heroNode.props.demoButtonText ?? heroNode.props.demo_button_text, fallback.hero.secondaryButtonText),
+      secondaryButtonLink: getProp(heroNode.props.secondaryButtonLink ?? heroNode.props.secondary_button_link ?? heroNode.props.demoButtonLink ?? heroNode.props.demo_button_link, fallback.hero.secondaryButtonLink),
+      image: getProp(heroNode.props.image ?? heroNode.props.img ?? heroNode.props.video, fallback.hero.image),
+      backgroundColor: getProp(heroNode.props.backgroundColor ?? heroNode.props.background_color ?? heroNode.props.bg_color, fallback.hero.backgroundColor),
+      textColor: getProp(heroNode.props.textColor ?? heroNode.props.text_color, fallback.hero.textColor),
     } : fallback.hero,
+
     about: aboutNode?.props ? {
       ...aboutNode.props,
-      title: aboutNode.props.title ?? fallback.about.title,
-      subtitle: aboutNode.props.subtitle ?? fallback.about.subtitle,
-      image: aboutNode.props.image ?? aboutNode.props.img ?? aboutNode.props.video ?? fallback.about.image,
-      backgroundColor: aboutNode.props.backgroundColor ?? aboutNode.props.background_color ?? aboutNode.props.bg_color ?? fallback.about.backgroundColor,
-      textColor: aboutNode.props.textColor ?? aboutNode.props.text_color ?? fallback.about.textColor,
-      videoTag: aboutNode.props.videoTag ?? aboutNode.props.video_tag ?? fallback.about.videoTag,
-      videoTitle: aboutNode.props.videoTitle ?? aboutNode.props.video_title ?? fallback.about.videoTitle,
-      videoDesc: aboutNode.props.videoDesc ?? aboutNode.props.video_desc ?? fallback.about.videoDesc,
-      videoLink: aboutNode.props.videoLink ?? aboutNode.props.video_link ?? aboutNode.props.videoImage ?? aboutNode.props.video_image ?? fallback.about.videoLink,
-      videoBg: aboutNode.props.videoBg ?? aboutNode.props.video_bg ?? aboutNode.props.videoBackgroundColor ?? aboutNode.props.video_background_color ?? fallback.about.videoBg,
-      videoTextColor: aboutNode.props.videoTextColor ?? aboutNode.props.video_text_color ?? fallback.about.videoTextColor,
-      analyticsTitle: aboutNode.props.analyticsTitle ?? aboutNode.props.analytics_title ?? aboutNode.props.visionTitle ?? aboutNode.props.vision_title ?? fallback.about.analyticsTitle,
-      analyticsBars: aboutNode.props.analyticsBars ?? aboutNode.props.analytics_bars ?? fallback.about.analyticsBars,
-      analyticsColor: aboutNode.props.analyticsColor ?? aboutNode.props.analytics_color ?? fallback.about.analyticsColor,
+      title: getProp(aboutNode.props.title, fallback.about.title),
+      subtitle: getProp(aboutNode.props.subtitle, fallback.about.subtitle),
+      image: getProp(aboutNode.props.image ?? aboutNode.props.img ?? aboutNode.props.video, ''),
+      backgroundColor: getProp(aboutNode.props.backgroundColor ?? aboutNode.props.background_color ?? aboutNode.props.bg_color, fallback.about.backgroundColor),
+      textColor: getProp(aboutNode.props.textColor ?? aboutNode.props.text_color, fallback.about.textColor),
+      videoTag: getProp(aboutNode.props.videoTag ?? aboutNode.props.video_tag, fallback.about.videoTag),
+      videoTitle: getProp(aboutNode.props.videoTitle ?? aboutNode.props.video_title, fallback.about.videoTitle),
+      videoDesc: getProp(aboutNode.props.videoDesc ?? aboutNode.props.video_desc, fallback.about.videoDesc),
+      videoLink: getProp(aboutNode.props.videoLink ?? aboutNode.props.video_link ?? aboutNode.props.videoImage ?? aboutNode.props.video_image, ''),
+      videoBg: getProp(aboutNode.props.videoBg ?? aboutNode.props.video_bg ?? aboutNode.props.videoBackgroundColor ?? aboutNode.props.video_background_color, ''),
+      videoTextColor: getProp(aboutNode.props.videoTextColor ?? aboutNode.props.video_text_color, ''),
+      analyticsTitle: getProp(aboutNode.props.analyticsTitle ?? aboutNode.props.analytics_title ?? aboutNode.props.visionTitle ?? aboutNode.props.vision_title, fallback.about.analyticsTitle),
+      analyticsBars: getProp(aboutNode.props.analyticsBars ?? aboutNode.props.analytics_bars, fallback.about.analyticsBars),
+      analyticsColor: getProp(aboutNode.props.analyticsColor ?? aboutNode.props.analytics_color, fallback.about.analyticsColor),
     } : fallback.about,
+
     features: featuresNode?.props ? {
       ...featuresNode.props,
-      title: featuresNode.props.title ?? fallback.features.title,
-      subtitle: featuresNode.props.subtitle ?? fallback.features.subtitle,
-      items: safeFeatureItems(featuresNode.props.items),
-      backgroundColor: featuresNode.props.backgroundColor ?? featuresNode.props.background_color ?? featuresNode.props.bg_color ?? fallback.features.backgroundColor,
-      textColor: featuresNode.props.textColor ?? featuresNode.props.text_color ?? fallback.features.textColor,
+      title: getProp(featuresNode.props.title, fallback.features.title),
+      subtitle: getProp(featuresNode.props.subtitle, fallback.features.subtitle),
+      items: safeFeatureItems(featuresNode.props.items ?? featuresNode.items),
+      backgroundColor: getProp(featuresNode.props.backgroundColor ?? featuresNode.props.background_color ?? featuresNode.props.bg_color, fallback.features.backgroundColor),
+      textColor: getProp(featuresNode.props.textColor ?? featuresNode.props.text_color, fallback.features.textColor),
     } : fallback.features,
+
     courses: {
       ...(courseNode?.props || {}),
-      title: courseNode?.props?.title || fallback.courses.title,
-      subtitle: courseNode?.props?.subtitle || fallback.courses.subtitle,
+      title: getProp(courseNode?.props?.title, fallback.courses.title),
+      subtitle: getProp(courseNode?.props?.subtitle, fallback.courses.subtitle),
       items: coursesList,
       limit: courseNode?.props?.limit || 6,
       showPrice: courseNode?.props?.showPrice ?? courseNode?.props?.show_price ?? true,
@@ -270,57 +329,62 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
       backgroundColor: courseNode?.props?.backgroundColor ?? courseNode?.props?.background_color ?? '#ffffff',
       textColor: courseNode?.props?.textColor ?? courseNode?.props?.text_color ?? '#1b1b24',
     },
+
     stats: statsNode?.props ? {
       ...statsNode.props,
-      items: safeStatItems(statsNode.props.items || statsNode.props.cards),
-      backgroundColor: statsNode.props.backgroundColor ?? statsNode.props.background_color ?? statsNode.props.bg_color ?? fallback.stats.backgroundColor,
-      textColor: statsNode.props.textColor ?? statsNode.props.text_color ?? fallback.stats.textColor,
+      items: safeStatItems(statsNode.props.items ?? statsNode.props.cards ?? statsNode.items),
+      backgroundColor: getProp(statsNode.props.backgroundColor ?? statsNode.props.background_color ?? statsNode.props.bg_color, ''),
+      textColor: getProp(statsNode.props.textColor ?? statsNode.props.text_color, ''),
     } : fallback.stats,
+
     pricing: pricingNode?.props ? {
       ...pricingNode.props,
-      title: pricingNode.props.title ?? fallback.pricing.title,
-      subtitle: pricingNode.props.subtitle ?? fallback.pricing.subtitle,
-      items: safePricingItems(pricingNode.props.items),
-      backgroundColor: pricingNode.props.backgroundColor ?? pricingNode.props.background_color ?? pricingNode.props.bg_color ?? fallback.pricing.backgroundColor,
-      textColor: pricingNode.props.textColor ?? pricingNode.props.text_color ?? fallback.pricing.textColor,
-      testimonialsTitle: pricingNode.props.testimonialsTitle ?? pricingNode.props.testimonials_title ?? fallback.pricing.testimonialsTitle,
-      testimonialsSubtitle: pricingNode.props.testimonialsSubtitle ?? pricingNode.props.testimonials_subtitle ?? fallback.pricing.testimonialsSubtitle,
-      testimonial1Text: pricingNode.props.testimonial1Text ?? pricingNode.props.testimonial1_text ?? fallback.pricing.testimonial1Text,
-      testimonial1Author: pricingNode.props.testimonial1Author ?? pricingNode.props.testimonial1_author ?? fallback.pricing.testimonial1Author,
-      testimonial1Role: pricingNode.props.testimonial1Role ?? pricingNode.props.testimonial1_role ?? fallback.pricing.testimonial1Role,
-      testimonial2Text: pricingNode.props.testimonial2Text ?? pricingNode.props.testimonial2_text ?? fallback.pricing.testimonial2Text,
-      testimonial2Author: pricingNode.props.testimonial2Author ?? pricingNode.props.testimonial2_author ?? fallback.pricing.testimonial2Author,
-      testimonial2Role: pricingNode.props.testimonial2Role ?? pricingNode.props.testimonial2_role ?? fallback.pricing.testimonial2Role,
-      testimonial3Text: pricingNode.props.testimonial3Text ?? pricingNode.props.testimonial3_text ?? fallback.pricing.testimonial3Text,
-      testimonial3Author: pricingNode.props.testimonial3Author ?? pricingNode.props.testimonial3_author ?? fallback.pricing.testimonial3Author,
-      testimonial3Role: pricingNode.props.testimonial3Role ?? pricingNode.props.testimonial3_role ?? fallback.pricing.testimonial3Role,
+      title: getProp(pricingNode.props.title, fallback.pricing.title),
+      subtitle: getProp(pricingNode.props.subtitle, fallback.pricing.subtitle),
+      items: safePricingItems(pricingNode.props.items ?? pricingNode.items),
+      backgroundColor: getProp(pricingNode.props.backgroundColor ?? pricingNode.props.background_color ?? pricingNode.props.bg_color, fallback.pricing.backgroundColor),
+      textColor: getProp(pricingNode.props.textColor ?? pricingNode.props.text_color, fallback.pricing.textColor),
+      testimonialsTitle: getProp(pricingNode.props.testimonialsTitle ?? pricingNode.props.testimonials_title, fallback.pricing.testimonialsTitle),
+      testimonialsSubtitle: getProp(pricingNode.props.testimonialsSubtitle ?? pricingNode.props.testimonials_subtitle, fallback.pricing.testimonialsSubtitle),
+      testimonial1Text: getProp(pricingNode.props.testimonial1Text ?? pricingNode.props.testimonial1_text, fallback.pricing.testimonial1Text),
+      testimonial1Author: getProp(pricingNode.props.testimonial1Author ?? pricingNode.props.testimonial1_author, fallback.pricing.testimonial1Author),
+      testimonial1Role: getProp(pricingNode.props.testimonial1Role ?? pricingNode.props.testimonial1_role, fallback.pricing.testimonial1Role),
+      testimonial2Text: getProp(pricingNode.props.testimonial2Text ?? pricingNode.props.testimonial2_text, fallback.pricing.testimonial2Text),
+      testimonial2Author: getProp(pricingNode.props.testimonial2Author ?? pricingNode.props.testimonial2_author, fallback.pricing.testimonial2Author),
+      testimonial2Role: getProp(pricingNode.props.testimonial2Role ?? pricingNode.props.testimonial2_role, fallback.pricing.testimonial2Role),
+      testimonial3Text: getProp(pricingNode.props.testimonial3Text ?? pricingNode.props.testimonial3_text, fallback.pricing.testimonial3Text),
+      testimonial3Author: getProp(pricingNode.props.testimonial3Author ?? pricingNode.props.testimonial3_author, fallback.pricing.testimonial3Author),
+      testimonial3Role: getProp(pricingNode.props.testimonial3Role ?? pricingNode.props.testimonial3_role, fallback.pricing.testimonial3Role),
     } : fallback.pricing,
+
     faq: faqNode?.props ? {
       ...faqNode.props,
-      title: faqNode.props.title ?? fallback.faq.title,
-      items: safeFaqItems(faqNode.props.items),
-      backgroundColor: faqNode.props.backgroundColor ?? faqNode.props.background_color ?? fallback.faq.backgroundColor,
-      textColor: faqNode.props.textColor ?? faqNode.props.text_color ?? fallback.faq.textColor,
+      title: getProp(faqNode.props.title, fallback.faq.title),
+      items: safeFaqItems(faqNode.props.items ?? faqNode.items),
+      backgroundColor: getProp(faqNode.props.backgroundColor ?? faqNode.props.background_color, fallback.faq.backgroundColor),
+      textColor: getProp(faqNode.props.textColor ?? faqNode.props.text_color, fallback.faq.textColor),
     } : fallback.faq,
+
     contact: contactNode?.props ? {
       ...contactNode.props,
-      title: contactNode.props.title ?? fallback.contact.title,
-      description: contactNode.props.description ?? fallback.contact.description,
-      phoneNumber: contactNode.props.phoneNumber ?? contactNode.props.phone_number ?? fallback.contact.phoneNumber,
-      buttonText: contactNode.props.buttonText ?? contactNode.props.button_text ?? fallback.contact.buttonText,
-      secondaryButtonText: contactNode.props.secondaryButtonText ?? contactNode.props.secondary_button_text ?? contactNode.props.demoButtonText ?? contactNode.props.demo_button_text ?? fallback.contact.secondaryButtonText,
-      secondaryButtonLink: contactNode.props.secondaryButtonLink ?? contactNode.props.secondary_button_link ?? contactNode.props.demoButtonLink ?? contactNode.props.demo_button_link ?? fallback.contact.secondaryButtonLink,
-      backgroundColor: contactNode.props.backgroundColor ?? contactNode.props.background_color ?? contactNode.props.bg_color ?? fallback.contact.backgroundColor,
-      textColor: contactNode.props.textColor ?? contactNode.props.text_color ?? fallback.contact.textColor,
+      title: getProp(contactNode.props.title, ''),
+      description: getProp(contactNode.props.description, ''),
+      phoneNumber: getProp(contactNode.props.phoneNumber ?? contactNode.props.phone_number, ''),
+      buttonText: getProp(contactNode.props.buttonText ?? contactNode.props.button_text, fallback.contact.buttonText),
+      secondaryButtonText: getProp(contactNode.props.secondaryButtonText ?? contactNode.props.secondary_button_text ?? contactNode.props.demoButtonText ?? contactNode.props.demo_button_text, fallback.contact.secondaryButtonText),
+      secondaryButtonLink: getProp(contactNode.props.secondaryButtonLink ?? contactNode.props.secondary_button_link ?? contactNode.props.demoButtonLink ?? contactNode.props.demo_button_link, fallback.contact.secondaryButtonLink),
+      backgroundColor: getProp(contactNode.props.backgroundColor ?? contactNode.props.background_color ?? contactNode.props.bg_color, ''),
+      textColor: getProp(contactNode.props.textColor ?? contactNode.props.text_color, ''),
     } : fallback.contact,
+
     footer: footerNode?.props ? {
       ...footerNode.props,
-      text: footerNode.props.text ?? fallback.footer.text,
-      backgroundColor: footerNode.props.backgroundColor ?? footerNode.props.background_color ?? fallback.footer.backgroundColor,
-      textColor: footerNode.props.textColor ?? footerNode.props.text_color ?? fallback.footer.textColor,
-      newsletterTitle: footerNode.props.newsletterTitle ?? footerNode.props.newsletter_title ?? fallback.footer.newsletterTitle,
-      newsletterDesc: footerNode.props.newsletterDesc ?? footerNode.props.newsletter_desc ?? fallback.footer.newsletterDesc,
-      newsletterBtnText: footerNode.props.newsletterBtnText ?? footerNode.props.newsletter_btn_text ?? fallback.footer.newsletterBtnText,
+      text: getProp(footerNode.props.text, fallback.footer.text),
+      backgroundColor: getProp(footerNode.props.backgroundColor ?? footerNode.props.background_color, fallback.footer.backgroundColor),
+      textColor: getProp(footerNode.props.textColor ?? footerNode.props.text_color, fallback.footer.textColor),
+      newsletterTitle: getProp(footerNode.props.newsletterTitle ?? footerNode.props.newsletter_title, fallback.footer.newsletterTitle),
+      newsletterDesc: getProp(footerNode.props.newsletterDesc ?? footerNode.props.newsletter_desc, fallback.footer.newsletterDesc),
+      newsletterBtnText: getProp(footerNode.props.newsletterBtnText ?? footerNode.props.newsletter_btn_text, fallback.footer.newsletterBtnText),
     } : fallback.footer,
   };
 }

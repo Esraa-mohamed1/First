@@ -14,13 +14,30 @@ interface SchoolCoachTemplateProps {
 }
 
 const DEFAULT_CONTENT = {
-  navbar: { title: 'الأستاذ أحمد محمد', logo: '', bgColor: '#0a1628', textColor: '#ffffff' },
+  navbar: {
+    title: 'الأستاذ أحمد محمد',
+    logo: '',
+    bgColor: '#0a1628',
+    textColor: '#ffffff',
+    links: [
+      { label: 'الرئيسية', href: '/' },
+      { label: 'المواد', href: '#features' },
+      { label: 'الدورات', href: '#courses' },
+      { label: 'عن الأستاذ', href: '#about' },
+    ],
+    loginText: 'تسجيل الدخول',
+    loginLink: '/auth/login',
+    registerText: 'احجز مكانك',
+    registerLink: '/auth/register',
+  },
   hero: {
     title: 'تعلم بذكاء. <br/><span class="text-[var(--color-gold-500)]">اضمن تفوقك الدراسي.</span>',
     subtitle: 'معلم الرياضيات القدير',
     description: 'مناهج دراسية مبسطة وأساليب تعليمية حديثة تساعدك على فهم المادة بعمق وتحقيق الدرجة الكاملة في امتحاناتك.',
     buttonText: 'احجز مكانك الآن',
     buttonLink: '#',
+    secondaryButtonText: 'اعرف المزيد عنا',
+    secondaryButtonLink: '#about',
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDdn5I4iyCWiaDe9m4F8v8n_X00tPqBgqXH4hbDxxtEpcQGhs3Iv7ye36iLKGCPaYsSeLuQ6Q56ZRbKBk10dy_efgKLS3zHuPJjJmYL6JtPlCiByhhruLtE_z5QnQirZ362M0sgpMps7B8icOJUUVS6t_6GJ1K0xma8arDq0yEal-eRoeAXPmexe9Vlvhif39sPxgQQGgyuqPwrz1R2REpb3TQmQAfrbC-2IMbqMBAUhDDImR-r8q5cEQ',
     backgroundColor: '#0a1628',
     textColor: '#ffffff',
@@ -104,6 +121,8 @@ const DEFAULT_CONTENT = {
     description: 'انضم لأكثر من ١٠,٠٠٠ طالب وطالبة حققوا أحلامهم الدراسية معنا.',
     phoneNumber: '201000000000',
     buttonText: 'احجز مكانك الآن',
+    secondaryButtonText: 'طلب عرض توضيحي',
+    secondaryButtonLink: '#about',
     backgroundColor: '#0a1628',
     textColor: '#ffffff',
   },
@@ -121,39 +140,52 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
   const navbarNode = nodes.find(n => n.type === 'navbar');
   const heroNode = nodes.find(n => n.type === 'hero');
   const aboutNode = nodes.find(n => n.type === 'about');
-  const featuresNode = nodes.find(n => n.type === 'features');
+  const featuresNode = nodes.find(n => n.type === 'features' || n.type === 'features_section');
   const courseNode = nodes.find(n => n.type === 'course-cards' || n.type === 'courses');
   const pricingNode = nodes.find(n => n.type === 'pricing');
   const faqNode = nodes.find(n => n.type === 'faq');
   const contactNode = nodes.find(n => n.type === 'contact');
   const footerNode = nodes.find(n => n.type === 'footer');
 
+  // Priority: realCourses (live API) > section.items (saved DB items) > section.props.courses (legacy)
   const coursesList = realCourses.length > 0
     ? realCourses
-    : (isEditing && courseNode?.props?.courses ? courseNode.props.courses : []);
+    : (Array.isArray(courseNode?.props?.items) && courseNode.props.items.length > 0
+        ? courseNode.props.items
+        : (courseNode?.props?.courses || []));
 
   return {
     navbar: navbarNode?.props ? {
+      ...navbarNode.props,
       title: navbarNode.props.title ?? fallback.navbar.title,
       logo: navbarNode.props.logo ?? fallback.navbar.logo,
       bgColor: navbarNode.props.bgColor ?? navbarNode.props.bg_color ?? fallback.navbar.bgColor,
       textColor: navbarNode.props.textColor ?? navbarNode.props.text_color ?? fallback.navbar.textColor,
+      loginText: navbarNode.props.loginText ?? navbarNode.props.login_text ?? fallback.navbar.loginText,
+      loginLink: navbarNode.props.loginLink ?? navbarNode.props.login_link ?? fallback.navbar.loginLink,
+      registerText: navbarNode.props.registerText ?? navbarNode.props.register_text ?? fallback.navbar.registerText,
+      registerLink: navbarNode.props.registerLink ?? navbarNode.props.register_link ?? fallback.navbar.registerLink,
+      links: Array.isArray(navbarNode.props.links) && navbarNode.props.links.length > 0 ? navbarNode.props.links : fallback.navbar.links,
     } : fallback.navbar,
     hero: heroNode?.props ? {
+      ...heroNode.props,
       title: heroNode.props.title ?? fallback.hero.title,
       subtitle: heroNode.props.subtitle ?? fallback.hero.subtitle,
       description: heroNode.props.description ?? fallback.hero.description,
       buttonText: heroNode.props.buttonText ?? heroNode.props.button_text ?? fallback.hero.buttonText,
       buttonLink: heroNode.props.buttonLink ?? heroNode.props.button_link ?? fallback.hero.buttonLink,
-      image: heroNode.props.image ?? fallback.hero.image,
-      backgroundColor: heroNode.props.backgroundColor ?? heroNode.props.background_color ?? fallback.hero.backgroundColor,
+      secondaryButtonText: heroNode.props.secondaryButtonText ?? heroNode.props.secondary_button_text ?? heroNode.props.demoButtonText ?? heroNode.props.demo_button_text ?? fallback.hero.secondaryButtonText,
+      secondaryButtonLink: heroNode.props.secondaryButtonLink ?? heroNode.props.secondary_button_link ?? heroNode.props.demoButtonLink ?? heroNode.props.demo_button_link ?? fallback.hero.secondaryButtonLink,
+      image: heroNode.props.image ?? heroNode.props.img ?? heroNode.props.video ?? fallback.hero.image,
+      backgroundColor: heroNode.props.backgroundColor ?? heroNode.props.background_color ?? heroNode.props.bg_color ?? fallback.hero.backgroundColor,
       textColor: heroNode.props.textColor ?? heroNode.props.text_color ?? fallback.hero.textColor,
     } : fallback.hero,
     about: aboutNode?.props ? {
+      ...aboutNode.props,
       title: aboutNode.props.title ?? fallback.about.title,
       subtitle: aboutNode.props.subtitle ?? fallback.about.subtitle,
-      image: aboutNode.props.image ?? fallback.about.image,
-      backgroundColor: aboutNode.props.backgroundColor ?? aboutNode.props.background_color ?? fallback.about.backgroundColor,
+      image: aboutNode.props.image ?? aboutNode.props.img ?? aboutNode.props.video ?? fallback.about.image,
+      backgroundColor: aboutNode.props.backgroundColor ?? aboutNode.props.background_color ?? aboutNode.props.bg_color ?? fallback.about.backgroundColor,
       textColor: aboutNode.props.textColor ?? aboutNode.props.text_color ?? fallback.about.textColor,
       videoTag: aboutNode.props.videoTag ?? aboutNode.props.video_tag ?? fallback.about.videoTag,
       videoTitle: aboutNode.props.videoTitle ?? aboutNode.props.video_title ?? fallback.about.videoTitle,
@@ -161,51 +193,59 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
       videoLink: aboutNode.props.videoLink ?? aboutNode.props.video_link ?? fallback.about.videoLink,
     } : fallback.about,
     features: featuresNode?.props ? {
+      ...featuresNode.props,
       title: featuresNode.props.title ?? fallback.features.title,
       subtitle: featuresNode.props.subtitle ?? fallback.features.subtitle,
-      items: featuresNode.props.items ?? fallback.features.items,
-      backgroundColor: featuresNode.props.backgroundColor ?? featuresNode.props.background_color ?? fallback.features.backgroundColor,
+      items: Array.isArray(featuresNode.props.items) && featuresNode.props.items.length > 0 ? featuresNode.props.items : fallback.features.items,
+      backgroundColor: featuresNode.props.backgroundColor ?? featuresNode.props.background_color ?? featuresNode.props.bg_color ?? fallback.features.backgroundColor,
       textColor: featuresNode.props.textColor ?? featuresNode.props.text_color ?? fallback.features.textColor,
     } : fallback.features,
     courses: {
+      ...(courseNode?.props || {}),
       title: courseNode?.props?.title || 'أحدث الدورات والمراجعات الدراسية',
       subtitle: courseNode?.props?.subtitle || 'دروس تفاعلية ومراجعات مكثفة للدرجات النهائية',
       items: coursesList,
       limit: courseNode?.props?.limit || 6,
-      showPrice: courseNode?.props?.showPrice ?? true,
-      showStudentsCount: courseNode?.props?.showStudentsCount ?? false,
-      buttonBg: courseNode?.props?.buttonBg || '#f0b429',
+      showPrice: courseNode?.props?.showPrice ?? courseNode?.props?.show_price ?? true,
+      showStudentsCount: courseNode?.props?.showStudentsCount ?? courseNode?.props?.show_students_count ?? false,
+      buttonBg: courseNode?.props?.buttonBg ?? courseNode?.props?.button_bg ?? '#f0b429',
     },
     pricing: pricingNode?.props ? {
+      ...pricingNode.props,
       title: pricingNode.props.title ?? fallback.pricing.title,
       subtitle: pricingNode.props.subtitle ?? fallback.pricing.subtitle,
-      items: pricingNode.props.items ?? fallback.pricing.items,
+      items: Array.isArray(pricingNode.props.items) && pricingNode.props.items.length > 0 ? pricingNode.props.items : fallback.pricing.items,
       backgroundColor: pricingNode.props.backgroundColor ?? pricingNode.props.background_color ?? fallback.pricing.backgroundColor,
       textColor: pricingNode.props.textColor ?? pricingNode.props.text_color ?? fallback.pricing.textColor,
     } : fallback.pricing,
     faq: faqNode?.props ? {
+      ...faqNode.props,
       title: faqNode.props.title ?? fallback.faq.title,
-      items: faqNode.props.items ?? fallback.faq.items,
-      backgroundColor: faqNode.props.backgroundColor ?? fallback.faq.backgroundColor,
-      textColor: faqNode.props.textColor ?? fallback.faq.textColor,
-      testimonialsTitle: faqNode.props.testimonialsTitle ?? fallback.faq.testimonialsTitle,
-      testimonialsSubtitle: faqNode.props.testimonialsSubtitle ?? fallback.faq.testimonialsSubtitle,
+      items: Array.isArray(faqNode.props.items) && faqNode.props.items.length > 0 ? faqNode.props.items : fallback.faq.items,
+      backgroundColor: faqNode.props.backgroundColor ?? faqNode.props.background_color ?? fallback.faq.backgroundColor,
+      textColor: faqNode.props.textColor ?? faqNode.props.text_color ?? fallback.faq.textColor,
+      testimonialsTitle: faqNode.props.testimonialsTitle ?? faqNode.props.testimonials_title ?? fallback.faq.testimonialsTitle,
+      testimonialsSubtitle: faqNode.props.testimonialsSubtitle ?? faqNode.props.testimonials_subtitle ?? fallback.faq.testimonialsSubtitle,
     } : fallback.faq,
     contact: contactNode?.props ? {
+      ...contactNode.props,
       title: contactNode.props.title ?? fallback.contact.title,
       description: contactNode.props.description ?? fallback.contact.description,
       phoneNumber: contactNode.props.phoneNumber ?? contactNode.props.phone_number ?? fallback.contact.phoneNumber,
       buttonText: contactNode.props.buttonText ?? contactNode.props.button_text ?? fallback.contact.buttonText,
+      secondaryButtonText: contactNode.props.secondaryButtonText ?? contactNode.props.secondary_button_text ?? contactNode.props.demoButtonText ?? fallback.contact.secondaryButtonText,
+      secondaryButtonLink: contactNode.props.secondaryButtonLink ?? contactNode.props.secondary_button_link ?? contactNode.props.demoButtonLink ?? fallback.contact.secondaryButtonLink,
       backgroundColor: contactNode.props.backgroundColor ?? contactNode.props.background_color ?? fallback.contact.backgroundColor,
       textColor: contactNode.props.textColor ?? contactNode.props.text_color ?? fallback.contact.textColor,
     } : fallback.contact,
     footer: footerNode?.props ? {
+      ...footerNode.props,
       text: footerNode.props.text ?? fallback.footer.text,
       backgroundColor: footerNode.props.backgroundColor ?? footerNode.props.background_color ?? fallback.footer.backgroundColor,
       textColor: footerNode.props.textColor ?? footerNode.props.text_color ?? fallback.footer.textColor,
-      newsletterTitle: footerNode.props.newsletterTitle ?? fallback.footer.newsletterTitle,
-      newsletterDesc: footerNode.props.newsletterDesc ?? fallback.footer.newsletterDesc,
-      newsletterBtnText: footerNode.props.newsletterBtnText ?? fallback.footer.newsletterBtnText,
+      newsletterTitle: footerNode.props.newsletterTitle ?? footerNode.props.newsletter_title ?? fallback.footer.newsletterTitle,
+      newsletterDesc: footerNode.props.newsletterDesc ?? footerNode.props.newsletter_desc ?? fallback.footer.newsletterDesc,
+      newsletterBtnText: footerNode.props.newsletterBtnText ?? footerNode.props.newsletter_btn_text ?? fallback.footer.newsletterBtnText,
     } : fallback.footer,
   };
 }
