@@ -97,31 +97,23 @@ export default function TemplateRenderer({ templateId, sections }: TemplateRende
   // Use the sections array in its natural order as managed by the builder/API
   const sortedSections = sections;
 
-  // Render role-specific default HTML template wrappers for root of academy site
-  const isDefaultRootTemplate =
-    !templateId ||
-    templateId === 'template_1' ||
-    templateId === 'academy-dashboard' ||
-    templateId === 'default' ||
-    templateId === 'home' ||
-    templateId === 'template_courses_1';
+  // Detect role across ALL section nodes passed from the API section payload
+  const sectionWithRole = sections.find((s: any) => s.props?.role || s.props?.currentRole);
+  const detectedRole = resolveNormalizedRole(
+    sectionWithRole?.props?.role ||
+    sectionWithRole?.props?.currentRole
+  );
 
-  if (isDefaultRootTemplate) {
-    const navbarSection = sections.find((s: any) => s.type === 'navbar');
-    const detectedRole = resolveNormalizedRole(navbarSection?.props?.role || navbarSection?.props?.currentRole);
-    const activeRole = detectedRole || publishedRole || 'academy';
+  const activeRole = detectedRole || publishedRole || 'academy';
 
-    if (activeRole === 'academy') {
-      return <AcademicTemplate sections={sections} />;
-    }
-    if (activeRole === 'coach') {
-      return <CoachTemplate sections={sections} />;
-    }
-    if (activeRole === 'schoolcoach') {
-      return <SchoolCoachTemplate sections={sections} />;
-    }
-
-    // Default fallback for any unmapped role
+  // Always route role-specific HTML templates for academy, coach, and schoolcoach
+  if (activeRole === 'schoolcoach') {
+    return <SchoolCoachTemplate sections={sections} />;
+  }
+  if (activeRole === 'coach') {
+    return <CoachTemplate sections={sections} />;
+  }
+  if (activeRole === 'academy') {
     return <AcademicTemplate sections={sections} />;
   }
 
@@ -136,6 +128,6 @@ export default function TemplateRenderer({ templateId, sections }: TemplateRende
     case 'academy-dashboard':
     case 'template_1':
     default:
-      return <ClassicTemplate sections={sortedSections} />;
+      return <AcademicTemplate sections={sortedSections} />;
   }
 }

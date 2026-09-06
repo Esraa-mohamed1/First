@@ -1747,16 +1747,16 @@ export default function PageBuilderPage() {
 
       // 2. Prepare database sections payload
       const nodes = [
-        { id: 'navbar', type: 'navbar', props: { ...content.navbar, role: currentRole, templateId: activeTemplateId } },
-        { id: 'hero', type: 'hero', props: content.hero },
-        { id: 'about', type: 'about', props: content.about },
-        { id: 'features', type: 'features', props: content.features },
-        ...(content.courses ? [{ id: 'courses', type: 'course-cards', props: content.courses }] : []),
-        ...(content.stats ? [{ id: 'stats', type: 'stats', props: content.stats }] : []),
-        { id: 'pricing', type: 'pricing', props: content.pricing },
-        { id: 'faq', type: 'faq', props: content.faq },
-        { id: 'contact', type: 'contact', props: content.contact },
-        ...(currentRole !== 'academy' ? [{ id: 'footer', type: 'footer', props: content.footer }] : []),
+        { id: 'navbar', type: 'navbar', props: { ...content.navbar, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        { id: 'hero', type: 'hero', props: { ...content.hero, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        { id: 'about', type: 'about', props: { ...content.about, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        { id: 'features', type: 'features', props: { ...content.features, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        ...(content.courses ? [{ id: 'courses', type: 'course-cards', props: { ...content.courses, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
+        ...(content.stats ? [{ id: 'stats', type: 'stats', props: { ...content.stats, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
+        { id: 'pricing', type: 'pricing', props: { ...content.pricing, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        { id: 'faq', type: 'faq', props: { ...content.faq, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        { id: 'contact', type: 'contact', props: { ...content.contact, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        ...(currentRole !== 'academy' ? [{ id: 'footer', type: 'footer', props: { ...content.footer, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
       ];
 
       const apiSections = editorToApi(nodes, activePageId);
@@ -1820,16 +1820,16 @@ export default function PageBuilderPage() {
 
       // 2. Prepare and save database sections
       const nodes = [
-        { id: 'navbar', type: 'navbar', props: { ...content.navbar, role: currentRole, templateId: activeTemplateId } },
-        { id: 'hero', type: 'hero', props: content.hero },
-        { id: 'about', type: 'about', props: content.about },
-        { id: 'features', type: 'features', props: content.features },
-        ...(content.courses ? [{ id: 'courses', type: 'course-cards', props: content.courses }] : []),
-        ...(content.stats ? [{ id: 'stats', type: 'stats', props: content.stats }] : []),
-        { id: 'pricing', type: 'pricing', props: content.pricing },
-        { id: 'faq', type: 'faq', props: content.faq },
-        { id: 'contact', type: 'contact', props: content.contact },
-        ...(currentRole !== 'academy' ? [{ id: 'footer', type: 'footer', props: content.footer }] : []),
+        { id: 'navbar', type: 'navbar', props: { ...content.navbar, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        { id: 'hero', type: 'hero', props: { ...content.hero, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        { id: 'about', type: 'about', props: { ...content.about, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        { id: 'features', type: 'features', props: { ...content.features, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        ...(content.courses ? [{ id: 'courses', type: 'course-cards', props: { ...content.courses, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
+        ...(content.stats ? [{ id: 'stats', type: 'stats', props: { ...content.stats, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
+        { id: 'pricing', type: 'pricing', props: { ...content.pricing, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        { id: 'faq', type: 'faq', props: { ...content.faq, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        { id: 'contact', type: 'contact', props: { ...content.contact, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        ...(currentRole !== 'academy' ? [{ id: 'footer', type: 'footer', props: { ...content.footer, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
       ];
 
       const apiSections = editorToApi(nodes, activePageId);

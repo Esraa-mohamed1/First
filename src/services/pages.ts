@@ -477,61 +477,92 @@ export function normalizeSectionProps(type: string, rawProps: any): Record<strin
     merged.newsletterBtnText = val;
     merged.newsletter_btn_text = val;
   }
-  // Testimonials
-  if (merged.testimonials_title || merged.testimonialsTitle) {
-    const val = merged.testimonialsTitle || merged.testimonials_title;
-    merged.testimonialsTitle = val;
-    merged.testimonials_title = val;
+  // Login / Register styles & links
+  if (merged.login_text || merged.loginText) {
+    const val = merged.loginText || merged.login_text;
+    merged.loginText = val;
+    merged.login_text = val;
   }
-  if (merged.testimonials_subtitle || merged.testimonialsSubtitle) {
-    const val = merged.testimonialsSubtitle || merged.testimonials_subtitle;
-    merged.testimonialsSubtitle = val;
-    merged.testimonials_subtitle = val;
+  if (merged.login_link || merged.loginLink) {
+    const val = merged.loginLink || merged.login_link;
+    merged.loginLink = val;
+    merged.login_link = val;
   }
-  if (merged.testimonial1_text || merged.testimonial1Text) {
-    const val = merged.testimonial1Text || merged.testimonial1_text;
-    merged.testimonial1Text = val;
-    merged.testimonial1_text = val;
+  if (merged.login_bg_color || merged.loginBgColor || merged.login_bg || merged.loginBg) {
+    const val = merged.loginBgColor || merged.login_bg_color || merged.loginBg || merged.login_bg;
+    merged.loginBgColor = val;
+    merged.login_bg_color = val;
   }
-  if (merged.testimonial1_author || merged.testimonial1Author) {
-    const val = merged.testimonial1Author || merged.testimonial1_author;
-    merged.testimonial1Author = val;
-    merged.testimonial1_author = val;
+  if (merged.login_text_color || merged.loginTextColor || merged.login_color || merged.loginColor) {
+    const val = merged.loginTextColor || merged.login_text_color || merged.loginColor || merged.login_color;
+    merged.loginTextColor = val;
+    merged.login_text_color = val;
   }
-  if (merged.testimonial1_role || merged.testimonial1Role) {
-    const val = merged.testimonial1Role || merged.testimonial1_role;
-    merged.testimonial1Role = val;
-    merged.testimonial1_role = val;
+  if (merged.register_text || merged.registerText) {
+    const val = merged.registerText || merged.register_text;
+    merged.registerText = val;
+    merged.register_text = val;
   }
-  if (merged.testimonial2_text || merged.testimonial2Text) {
-    const val = merged.testimonial2Text || merged.testimonial2_text;
-    merged.testimonial2Text = val;
-    merged.testimonial2_text = val;
+  if (merged.register_link || merged.registerLink) {
+    const val = merged.registerLink || merged.register_link;
+    merged.registerLink = val;
+    merged.register_link = val;
   }
-  if (merged.testimonial2_author || merged.testimonial2Author) {
-    const val = merged.testimonial2Author || merged.testimonial2_author;
-    merged.testimonial2Author = val;
-    merged.testimonial2_author = val;
+  if (merged.register_bg_color || merged.registerBgColor || merged.register_bg || merged.registerBg) {
+    const val = merged.registerBgColor || merged.register_bg_color || merged.registerBg || merged.register_bg;
+    merged.registerBgColor = val;
+    merged.register_bg_color = val;
   }
-  if (merged.testimonial2_role || merged.testimonial2Role) {
-    const val = merged.testimonial2Role || merged.testimonial2_role;
-    merged.testimonial2Role = val;
-    merged.testimonial2_role = val;
+  if (merged.register_text_color || merged.registerTextColor || merged.register_color || merged.registerColor) {
+    const val = merged.registerTextColor || merged.register_text_color || merged.registerColor || merged.register_color;
+    merged.registerTextColor = val;
+    merged.register_text_color = val;
   }
-  if (merged.testimonial3_text || merged.testimonial3Text) {
-    const val = merged.testimonial3Text || merged.testimonial3_text;
-    merged.testimonial3Text = val;
-    merged.testimonial3_text = val;
+  // Course / Card / Button styles
+  if (merged.button_bg || merged.buttonBg) {
+    const val = merged.buttonBg || merged.button_bg;
+    merged.buttonBg = val;
+    merged.button_bg = val;
   }
-  if (merged.testimonial3_author || merged.testimonial3Author) {
-    const val = merged.testimonial3Author || merged.testimonial3_author;
-    merged.testimonial3Author = val;
-    merged.testimonial3_author = val;
+  if (merged.card_bg || merged.cardBg) {
+    const val = merged.cardBg || merged.card_bg;
+    merged.cardBg = val;
+    merged.card_bg = val;
   }
-  if (merged.testimonial3_role || merged.testimonial3Role) {
-    const val = merged.testimonial3Role || merged.testimonial3_role;
-    merged.testimonial3Role = val;
-    merged.testimonial3_role = val;
+  if (merged.title_color || merged.titleColor) {
+    const val = merged.titleColor || merged.title_color;
+    merged.titleColor = val;
+    merged.title_color = val;
+  }
+  if (merged.grid_cols || merged.gridCols) {
+    const val = merged.gridCols || merged.grid_cols;
+    merged.gridCols = val;
+    merged.grid_cols = val;
+  }
+  if (merged.analytics_bars || merged.analyticsBars) {
+    const val = merged.analyticsBars || merged.analytics_bars;
+    merged.analyticsBars = val;
+    merged.analytics_bars = val;
+  }
+  if (merged.analytics_color || merged.analyticsColor) {
+    const val = merged.analyticsColor || merged.analytics_color;
+    merged.analyticsColor = val;
+    merged.analytics_color = val;
+  }
+  if (merged.testimonials_bg || merged.testimonialsBg) {
+    const val = merged.testimonialsBg || merged.testimonials_bg;
+    merged.testimonialsBg = val;
+    merged.testimonials_bg = val;
+  }
+  if (merged.testimonials_text_color || merged.testimonialsTextColor) {
+    const val = merged.testimonialsTextColor || merged.testimonials_text_color;
+    merged.testimonialsTextColor = val;
+    merged.testimonials_text_color = val;
+  }
+  if (merged.template_id || merged.templateId) {
+    const val = merged.templateId || merged.template_id;
+    merged.templateId = val;
+    merged.template_id = val;
   }
   return merged;
 }
@@ -608,18 +639,13 @@ export function editorToApi(nodes: BuilderNode[], pageId: string | number): ApiS
     const rawNodeProps = safeParseProps(node.props);
     const { items, ...propsWithoutItems } = rawNodeProps;
 
-    // ✅ لو props فاضية أو مفيش غير items، نجيب الـ defaults
-    const hasRealProps = Object.keys(propsWithoutItems).length > 0;
-    const defaults = SECTION_DEFAULT_PROPS[node.type] ?? {};
-    const mergedProps = hasRealProps
-      ? { ...defaults, ...propsWithoutItems }
-      : defaults;
-
-    const apiProps = keysToSnake(mergedProps);
+    const normalizedProps = normalizeSectionProps(node.type, propsWithoutItems);
+    const apiProps = { ...propsWithoutItems, ...normalizedProps };
 
     const rawHide = propsWithoutItems.hide_on_mobile !== undefined ? propsWithoutItems.hide_on_mobile : propsWithoutItems.hideOnMobile;
     if (rawHide !== undefined) {
       apiProps.hide_on_mobile = !!rawHide;
+      apiProps.hideOnMobile = !!rawHide;
     }
 
     const finalProps =
