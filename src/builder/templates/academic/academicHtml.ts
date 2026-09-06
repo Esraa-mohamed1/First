@@ -1,5 +1,16 @@
 export interface TemplateContent {
-  navbar: { title: string; logo: string; bgColor: string; textColor: string };
+  navbar: {
+    title: string;
+    logo: string;
+    bgColor: string;
+    textColor: string;
+    links?: Array<{ label: string; href: string }>;
+    loginText?: string;
+    loginLink?: string;
+    registerText?: string;
+    registerLink?: string;
+    [key: string]: any;
+  };
   hero: {
     title: string;
     subtitle: string;
@@ -161,6 +172,21 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
   const navbarText = content?.navbar?.textColor || (content?.navbar as any)?.text_color || '#3525cd';
   const navbarLogo = content?.navbar?.logo || '';
 
+  // Dynamic nav links — use saved props or fall back to defaults
+  const defaultNavLinks = [
+    { label: 'الرئيسية', href: '/' },
+    { label: 'الدورات', href: '/courses' },
+    { label: 'الحقائب', href: '/bags' },
+    { label: 'حول', href: '/#about' },
+  ];
+  const navLinks: Array<{ label: string; href: string }> =
+    Array.isArray((content?.navbar as any)?.links) && (content?.navbar as any).links.length > 0
+      ? (content?.navbar as any).links
+      : defaultNavLinks;
+  const loginText = (content?.navbar as any)?.loginText || (content?.navbar as any)?.login_text || 'تسجيل الدخول';
+  const loginLink = (content?.navbar as any)?.loginLink || (content?.navbar as any)?.login_link || '/auth/login';
+  const registerText = (content?.navbar as any)?.registerText || (content?.navbar as any)?.register_text || 'ابدأ الآن';
+  const registerLink = (content?.navbar as any)?.registerLink || (content?.navbar as any)?.register_link || '/auth/register';
   const heroSubtitle = content?.hero?.subtitle || 'حل مؤسسي متقدم';
   const heroTitle = content?.hero?.title || 'بناء تجربة أكاديمية أكثر ذكاءً.';
   const heroDesc = content?.hero?.description || 'اربط الطلاب، والمعلمين، والإداريين على منصة مؤسسية موحدة مصممة لتحقيق التميز القابل للقياس وسير العمل المبسط بكفاءة عالية.';
@@ -420,15 +446,12 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 </div>
 <!-- Desktop Nav -->
 <nav class="hidden md:flex items-center gap-stack-lg">
-<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="/" ${isEditing ? '' : 'target="_parent"'}>الرئيسية</a>
-<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="/courses" ${isEditing ? '' : 'target="_parent"'}>الدورات</a>
-<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="/bags" ${isEditing ? '' : 'target="_parent"'}>الحقائب</a>
-<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="/#about" ${isEditing ? '' : 'target="_parent"'}>حول</a>
+${navLinks.map(link => `<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="${link.href}" ${isEditing ? '' : 'target="_parent"'}>${link.label}</a>`).join('\n')}
 </nav>
 <div class="flex items-center gap-stack-md">
-<a class="text-label-md font-label-md text-primary hover:opacity-80 transition-opacity hidden sm:block" href="/auth/login" ${isEditing ? '' : 'target="_parent"'}>تسجيل الدخول</a>
-<a href="/auth/register" ${isEditing ? '' : 'target="_parent"'} class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all duration-200 hidden sm:block inline-block text-center">
-    ابدأ الآن
+<a class="text-label-md font-label-md text-primary hover:opacity-80 transition-opacity hidden sm:block" href="${loginLink}" ${isEditing ? '' : 'target="_parent"'}>${loginText}</a>
+<a href="${registerLink}" ${isEditing ? '' : 'target="_parent"'} class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all duration-200 hidden sm:block inline-block text-center">
+    ${registerText}
 </a>
 <button class="md:hidden flex items-center justify-center p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors">
 <span class="material-symbols-outlined">menu</span>
@@ -443,24 +466,13 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 <span class="text-headline-md font-headline-md text-primary">مركز التعلم</span>
 </div>
 <nav class="flex flex-col gap-stack-sm px-4">
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/" ${isEditing ? '' : 'target="_parent"'}>
-<span class="material-symbols-outlined">home</span> الرئيسية
-                </a>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/courses" ${isEditing ? '' : 'target="_parent"'}>
-<span class="material-symbols-outlined">menu_book</span> الدورات
-                </a>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/bags" ${isEditing ? '' : 'target="_parent"'}>
-<span class="material-symbols-outlined">shopping_bag</span> الحقائب
-                </a>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/#about" ${isEditing ? '' : 'target="_parent"'}>
-<span class="material-symbols-outlined">info</span> حول
-                </a>
+${navLinks.map(link => `<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="${link.href}" ${isEditing ? '' : 'target="_parent"'}><span class="material-symbols-outlined">home</span> ${link.label}</a>`).join('\n')}
 <div class="h-px bg-outline-variant/30 my-4"></div>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/auth/login" ${isEditing ? '' : 'target="_parent"'}>
-<span class="material-symbols-outlined">login</span> تسجيل الدخول
+<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="${loginLink}" ${isEditing ? '' : 'target="_parent"'}>
+<span class="material-symbols-outlined">login</span> ${loginText}
                 </a>
-<a class="bg-primary text-on-primary flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/auth/register" ${isEditing ? '' : 'target="_parent"'}>
-<span class="material-symbols-outlined">person_add</span> ابدأ الآن
+<a class="bg-primary text-on-primary flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="${registerLink}" ${isEditing ? '' : 'target="_parent"'}>
+<span class="material-symbols-outlined">person_add</span> ${registerText}
                 </a>
 </nav>
 </aside>

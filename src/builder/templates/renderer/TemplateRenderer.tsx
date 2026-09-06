@@ -103,7 +103,8 @@ export default function TemplateRenderer({ templateId, sections }: TemplateRende
     templateId === 'template_1' ||
     templateId === 'academy-dashboard' ||
     templateId === 'default' ||
-    templateId === 'home';
+    templateId === 'home' ||
+    templateId === 'template_courses_1';
 
   if (isDefaultRootTemplate) {
     const navbarSection = sections.find((s: any) => s.type === 'navbar');

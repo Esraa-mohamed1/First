@@ -556,7 +556,7 @@ export function apiToEditor(sections: ApiSection[]): BuilderNode[] {
       try { rawItems = JSON.parse(rawItems); } catch (e) {}
     }
 
-    if (Array.isArray(rawItems)) {
+    if (Array.isArray(rawItems) && rawItems.length > 0) {
       const sortedItems = [...rawItems].filter(it => it && typeof it === 'object').sort((a, b) => (a.order || 0) - (b.order || 0));
       editorItems = sortedItems.map((item) => {
         let itemProps: Record<string, any> = {};
@@ -572,21 +572,24 @@ export function apiToEditor(sections: ApiSection[]): BuilderNode[] {
         return {
           id: item.id?.toString() || `${sec.type}-item-${Math.random().toString(36).substr(2, 9)}`,
           order: item.order,
+          ...itemProps,
           ...normalizedItemProps,
-          props: normalizedItemProps,
+          props: { ...itemProps, ...normalizedItemProps },
         };
       });
     }
 
     const rawHide = rawProps.hide_on_mobile !== undefined ? rawProps.hide_on_mobile : rawProps.hideOnMobile;
+    const finalItems = (editorItems && editorItems.length > 0) ? editorItems : (rawProps.items || props.items);
 
     return {
       id: sec.id?.toString() || `${sec.type}-${Math.random().toString(36).substr(2, 9)}`,
       type: sec.type,
       props: {
+        ...rawProps,
         ...props,
         ...(rawHide !== undefined ? { hide_on_mobile: !!rawHide, hideOnMobile: !!rawHide } : {}),
-        items: editorItems || props.items,
+        ...(finalItems !== undefined ? { items: finalItems } : {}),
       },
     };
   });
@@ -619,9 +622,12 @@ export function editorToApi(nodes: BuilderNode[], pageId: string | number): ApiS
       apiProps.hide_on_mobile = !!rawHide;
     }
 
-    // ✅ لو apiProps لسه فاضي نحط placeholder عشان الـ API ميرفضش
     const finalProps =
       Object.keys(apiProps).length > 0 ? apiProps : { initialized: true };
+
+    if (Array.isArray(items) && items.length > 0) {
+      finalProps.items = items;
+    }
 
     let apiItems: ApiSectionItem[] | undefined = undefined;
     if (Array.isArray(items) && items.length > 0) {

@@ -6,12 +6,43 @@ import { getTemplateById } from '@/builder/utils/templates';
 import TemplateRenderer from '@/builder/templates/renderer/TemplateRenderer';
 import { getClientTenantKey } from '@/lib/homepage-cache';
 
+// Main platform landing page components
+import Nav from '@/components/Nav/Nav';
+import Footer from '@/components/Footer/Footer';
+import ScrollReveal from '@/components/ScrollReveal';
+import Hero from '@/components/Sections/Hero';
+import Stats from '@/components/Sections/Stats';
+import Problem from '@/components/Sections/Problem';
+import Benefits from '@/components/Sections/Benefits';
+import Pricing from '@/components/Sections/Pricing';
+import Testimonials from '@/components/Sections/Testimonials';
+import CTA from '@/components/Sections/CTA';
+
+function MainPlatformLanding() {
+  return (
+    <>
+      <ScrollReveal />
+      <Nav />
+      <main dir="rtl">
+        <div className="animate-on-scroll"><Hero /></div>
+        <div className="animate-on-scroll"><Stats /></div>
+        <div className="animate-on-scroll"><Problem /></div>
+        <div className="animate-on-scroll"><Benefits /></div>
+        <div className="animate-on-scroll"><Pricing /></div>
+        <div className="animate-on-scroll"><Testimonials /></div>
+        <div className="animate-on-scroll"><CTA /></div>
+      </main>
+      <Footer />
+    </>
+  );
+}
+
+const TEMPLATE_SLUGS = ['academic-dashboard', 'template_1', 'template_2', 'template_3', 'template_4', 'template_courses_1'];
+
 interface TenantHomeClientProps {
   initialTemplateId?: string;
   initialSections?: any[];
 }
-
-const TEMPLATE_SLUGS = ['academy-dashboard', 'template_1', 'template_2', 'template_3', 'template_4', 'template_courses_1'];
 
 export default function TenantHomeClient({
   initialTemplateId = 'template_1',
@@ -19,16 +50,28 @@ export default function TenantHomeClient({
 }: TenantHomeClientProps) {
   const [templateId, setTemplateId] = useState<string>(initialTemplateId);
   const [sections, setSections] = useState<any[]>(initialSections);
-  const [loading, setLoading] = useState<boolean>(initialSections.length === 0);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [tenantKey, setTenantKey] = useState<string | null>(null);
+
+  // Resolve tenant key on client side
+  useEffect(() => {
+    const key = getClientTenantKey();
+    setTenantKey(key);
+  }, []);
 
   useEffect(() => {
+    // Don't fetch anything until we know whether there's a tenant
+    if (tenantKey === null) return;
+    // Root Darab domain — no tenant, stop loading and render main landing page
+    if (tenantKey === '') {
+      setLoading(false);
+      return;
+    }
+
     async function loadActivePageAndSections() {
       try {
         setLoading(true);
 
-        // Fetch fresh pages list directly from public /pages endpoint (API priority)
-
-        // Fallback: Fetch fresh pages list from public /pages endpoint
         const pagesList = await getPublicPages('academic');
 
         let activePage = pagesList.find(
@@ -47,10 +90,9 @@ export default function TenantHomeClient({
         }
 
         if (activePage && activePage.id) {
-          const resolvedTemplateId = activePage.template_name || activePage.template || activePage.title || 'template_1';
+          const resolvedTemplateId = activePage.template_name || activePage.template || activePage.title || initialTemplateId;
           setTemplateId(resolvedTemplateId);
 
-          // 2. Fetch sections for active page ID from public /sections endpoint
           const apiSections = await getPublicSections(activePage.id);
           if (apiSections && apiSections.length > 0) {
             const editorNodes = apiToEditor(apiSections);
@@ -73,7 +115,24 @@ export default function TenantHomeClient({
     }
 
     loadActivePageAndSections();
-  }, [initialTemplateId]);
+  }, [tenantKey, initialTemplateId]);
+
+  // Still resolving tenant key — render loading spinner
+  if (tenantKey === null) {
+    return (
+      <div className="w-full min-h-screen bg-white flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm font-bold text-slate-600">جاري تحميل الموقع...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Root Darab domain — no tenant, render the main platform landing page
+  if (tenantKey === '') {
+    return <MainPlatformLanding />;
+  }
 
   if (loading && sections.length === 0) {
     return (

@@ -1,20 +1,24 @@
 export const getClientTenantKey = (): string => {
   if (typeof window === 'undefined') return '';
   const hostname = window.location.hostname.toLowerCase();
-  
+
+  // Root Darab platform domains — no tenant context
   if (
-    hostname === 'localhost' ||
     hostname === 'darab.academy' ||
     hostname === 'www.darab.academy' ||
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
     hostname.startsWith('127.0.0.')
   ) {
-    return 'esraa.darab.academy';
+    return '';
   }
-  
+
+  // Subdomain of .localhost → extract as tenant key
   if (hostname.endsWith('.localhost')) {
     return hostname.replace('.localhost', '');
   }
-  
+
+  // Any other hostname (e.g. esraa.darab.academy) is a tenant
   return hostname;
 };
 

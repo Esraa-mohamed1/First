@@ -6,10 +6,39 @@
       "type": "navbar",
       "props": {
         "title": "إديوكور",
-        "logo": "",
+        "logo": null,
         "bgColor": "#ffffff",
         "textColor": "#3525cd",
+        "links": [
+          {
+            "label": "الرئيسية",
+            "href": "/"
+          },
+          {
+            "label": "الدورات",
+            "href": "/courses"
+          },
+          {
+            "label": "الحقائب",
+            "href": "/bags"
+          },
+          {
+            "label": "حول",
+            "href": "/#about"
+          }
+        ],
+        "loginText": "تسجيل الدخول",
+        "loginLink": "/auth/login",
+        "registerText": "ابدأ الآن",
+        "registerLink": "/auth/register",
+        "bg_color": "#ffffff",
+        "text_color": "#3525cd",
+        "login_text": "تسجيل الدخول",
+        "login_link": "/auth/login",
+        "register_text": "ابدأ الآن",
+        "register_link": "/auth/register",
         "role": "academy",
+        "template_id": "template_1",
         "templateId": "template_1"
       }
     },
@@ -17,7 +46,7 @@
       "id": "hero",
       "type": "hero",
       "props": {
-        "title": "بناء تجربة أكاديمية أكثر ذكاءً.",
+        "title": "بناء تجربة أكاديمية أكثر ذكاءً. esraaaaa",
         "subtitle": "حل مؤسسي متقدم",
         "description": "اربط الطلاب، والمعلمين، والإداريين على منصة مؤسسية موحدة مصممة لتحقيق التميز القابل للقياس وسير العمل المبسط بكفاءة عالية.",
         "buttonText": "استكشف المنصة",
@@ -26,7 +55,17 @@
         "secondaryButtonLink": "#contact",
         "image": "https://tse4.mm.bing.net/th/id/OIP.CGEfBMBIYoz4Syk_3B8DawHaEK?r=0&rs=1&pid=ImgDetMain&o=7&rm=3",
         "backgroundColor": "#fcf8ff",
-        "textColor": "#1b1b24"
+        "textColor": "#1b1b24",
+        "button_text": "استكشف المنصة",
+        "button_link": "#courses",
+        "background_color": "#fcf8ff",
+        "text_color": "#1b1b24",
+        "padding_top": 80,
+        "padding_bottom": 80,
+        "secondary_button_text": "طلب عرض توضيحي",
+        "secondary_button_link": "#contact",
+        "paddingTop": 80,
+        "paddingBottom": 80
       }
     },
     {
@@ -35,7 +74,7 @@
       "props": {
         "title": "تحليلات ذكية لاتخاذ قرارات أفضل",
         "subtitle": "راقب الأداء الأكاديمي، وحدد الاتجاهات، وقم بتحسين المخرجات التعليمية من خلال لوحات تحكم تحليلية متقدمة توفر رؤى في الوقت الفعلي.",
-        "image": "",
+        "image": null,
         "backgroundColor": "#ffffff",
         "textColor": "#1b1b24",
         "analyticsTitle": "رؤية الأداء المؤسسي",
@@ -52,7 +91,24 @@
         "videoDesc": "نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.",
         "videoLink": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop",
         "videoBg": "",
-        "videoTextColor": ""
+        "videoTextColor": "",
+        "background_color": "#ffffff",
+        "text_color": "#1b1b24",
+        "analytics_title": "رؤية الأداء المؤسسي",
+        "analytics_color": "#3525cd",
+        "analytics_bars": [
+          40,
+          65,
+          85,
+          50,
+          95
+        ],
+        "video_tag": "شاهد وتعلّم",
+        "video_title": "تعرف على فلسفتنا التعليمية في ٣ دقائق",
+        "video_desc": "نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.",
+        "video_link": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop",
+        "video_bg": null,
+        "video_text_color": null
       }
     },
     {
@@ -63,28 +119,58 @@
         "subtitle": "مجموعة شاملة ومتطورة من الأدوات لإدارة كل جانب من جوانب رحلة التعلم المؤسسية.",
         "items": [
           {
+            "id": "99",
+            "order": 1,
             "icon": "groups",
             "title": "مركز الطلاب الشامل",
-            "description": "تمكين المتعلمين بلوحات تحكم مخصصة، وتتبع دقيق للتقدم، وأدوات تواصل تعاونية سلسة لبيئة تعليمية محفزة."
+            "description": "تمكين المتعلمين بلوحات تحكم مخصصة، وتتبع دقيق للتقدم، وأدوات تواصل تعاونية سلسة لبيئة تعليمية محفزة.",
+            "props": {
+              "icon": "groups",
+              "title": "مركز الطلاب الشامل",
+              "description": "تمكين المتعلمين بلوحات تحكم مخصصة، وتتبع دقيق للتقدم، وأدوات تواصل تعاونية سلسة لبيئة تعليمية محفزة."
+            }
           },
           {
+            "id": "100",
+            "order": 2,
             "icon": "assignment_ind",
             "title": "بوابة المعلمين",
-            "description": "تبسيط تخطيط الدروس، وإدارة الدرجات، وتعزيز تفاعل الطلاب بأدوات متقدمة."
+            "description": "تبسيط تخطيط الدروس، وإدارة الدرجات، وتعزيز تفاعل الطلاب بأدوات متقدمة.",
+            "props": {
+              "icon": "assignment_ind",
+              "title": "بوابة المعلمين",
+              "description": "تبسيط تخطيط الدروس، وإدارة الدرجات، وتعزيز تفاعل الطلاب بأدوات متقدمة."
+            }
           },
           {
+            "id": "101",
+            "order": 3,
             "icon": "quiz",
             "title": "محرك التقييم",
-            "description": "اختبارات آمنة وقابلة للتطوير مع تصحيح آلي وتحليلات أداء مفصلة ودقيقة."
+            "description": "اختبارات آمنة وقابلة للتطوير مع تصحيح آلي وتحليلات أداء مفصلة ودقيقة.",
+            "props": {
+              "icon": "quiz",
+              "title": "محرك التقييم",
+              "description": "اختبارات آمنة وقابلة للتطوير مع تصحيح آلي وتحليلات أداء مفصلة ودقيقة."
+            }
           },
           {
+            "id": "102",
+            "order": 4,
             "icon": "insights",
             "title": "المخرجات والنتائج",
-            "description": "تقارير مؤسسية شاملة لتتبع الفعالية الأكاديمية وإتقان الطلاب للمهارات المطلوبة."
+            "description": "تقارير مؤسسية شاملة لتتبع الفعالية الأكاديمية وإتقان الطلاب للمهارات المطلوبة.",
+            "props": {
+              "icon": "insights",
+              "title": "المخرجات والنتائج",
+              "description": "تقارير مؤسسية شاملة لتتبع الفعالية الأكاديمية وإتقان الطلاب للمهارات المطلوبة."
+            }
           }
         ],
         "backgroundColor": "#f5f2ff",
-        "textColor": "#1b1b24"
+        "textColor": "#1b1b24",
+        "background_color": "#f5f2ff",
+        "text_color": "#1b1b24"
       }
     },
     {
@@ -137,7 +223,20 @@
             "created_at": "2026-08-23T12:53:18.000000Z",
             "updated_at": "2026-08-23T12:53:18.000000Z"
           }
-        ]
+        ],
+        "background_color": "#ffffff",
+        "text_color": "#1b1b24",
+        "padding_top": 60,
+        "padding_bottom": 60,
+        "show_price": true,
+        "show_students_count": true,
+        "grid_cols": "3",
+        "button_bg": "#3525cd",
+        "card_bg": "#ffffff",
+        "title_color": "#1b1b24",
+        "courses": [],
+        "paddingTop": 60,
+        "paddingBottom": 60
       }
     },
     {
@@ -146,24 +245,50 @@
       "props": {
         "items": [
           {
+            "id": "104",
+            "order": 1,
             "value": "98%",
-            "label": "نسبة رضا الطلاب"
+            "label": "نسبة رضا الطلاب",
+            "props": {
+              "value": "98%",
+              "label": "نسبة رضا الطلاب"
+            }
           },
           {
+            "id": "105",
+            "order": 2,
             "value": "150+",
-            "label": "مناهج شاملة"
+            "label": "مناهج شاملة",
+            "props": {
+              "value": "150+",
+              "label": "مناهج شاملة"
+            }
           },
           {
+            "id": "106",
+            "order": 3,
             "value": "12k+",
-            "label": "خريج متميز"
+            "label": "خريج متميز",
+            "props": {
+              "value": "12k+",
+              "label": "خريج متميز"
+            }
           },
           {
+            "id": "107",
+            "order": 4,
             "value": "24/7",
-            "label": "دعم أكاديمي مباشر"
+            "label": "دعم أكاديمي مباشر",
+            "props": {
+              "value": "24/7",
+              "label": "دعم أكاديمي مباشر"
+            }
           }
         ],
         "backgroundColor": "",
-        "textColor": ""
+        "textColor": "",
+        "background_color": null,
+        "text_color": null
       }
     },
     {
@@ -174,28 +299,58 @@
         "subtitle": "معدلات تقدم وتحليلات رقمية للفصول الدراسية",
         "items": [
           {
+            "id": "108",
+            "order": 1,
             "title": "طلاب نشطون",
             "price": "12.4k",
             "features": [
               "بوابات تفاعلية",
               "تتبع التقدم"
-            ]
+            ],
+            "props": {
+              "title": "طلاب نشطون",
+              "price": "12.4k",
+              "features": [
+                "بوابات تفاعلية",
+                "تتبع التقدم"
+              ]
+            }
           },
           {
+            "id": "109",
+            "order": 2,
             "title": "دورات مدارة",
             "price": "320",
             "features": [
               "فصول مسجلة",
               "محاضرات بث مباشر"
-            ]
+            ],
+            "props": {
+              "title": "دورات مدارة",
+              "price": "320",
+              "features": [
+                "فصول مسجلة",
+                "محاضرات بث مباشر"
+              ]
+            }
           },
           {
+            "id": "110",
+            "order": 3,
             "title": "معدل الإنجاز",
             "price": "87%",
             "features": [
               "نسبة إتمام مرتفعة",
               "التزام أكاديمي"
-            ]
+            ],
+            "props": {
+              "title": "معدل الإنجاز",
+              "price": "87%",
+              "features": [
+                "نسبة إتمام مرتفعة",
+                "التزام أكاديمي"
+              ]
+            }
           }
         ],
         "backgroundColor": "#fcf8ff",
@@ -212,7 +367,22 @@
         "testimonial2Role": "طالبة هندسة برمجيات",
         "testimonial3Text": "كأستاذ، مكنتني بوابة المعلم من متابعة الواجبات وإعطاء تقييمات تفصيلية فورية لكل طالب وطالبة بسهولة مطلقة ووقت قياسي.",
         "testimonial3Author": "م. عاصم العتيبي",
-        "testimonial3Role": "عضو هيئة التدريس"
+        "testimonial3Role": "عضو هيئة التدريس",
+        "background_color": "#fcf8ff",
+        "text_color": "#1b1b24",
+        "testimonials_bg": "#f5f2ff",
+        "testimonials_text_color": "#1b1b24",
+        "testimonials_title": "ماذا يقول شركاؤنا وطلابنا؟",
+        "testimonials_subtitle": "قصص نجاح ملهمة وتجارب واقعية يعبر عنها شركاؤنا الأكاديميون وطلابنا المتميزون.",
+        "testimonial1_text": "سهولة إدارة المحتوى التعليمي والتحليلات الدقيقة المتاحة مكنتنا كإدارة من تتبع الأداء وتحسين المخرجات التعليمية بشكل ملموس وسريع.",
+        "testimonial1_author": "أ.د. محمد الشمري",
+        "testimonial1_role": "عميد القبول والتسجيل",
+        "testimonial2_text": "سهولة التصفح، والوصول الفوري للمقررات والامتحانات التفاعلية، أتاح لي تنظيم وقتي والمذاكرة بذكاء وبدون تشتت تماماً.",
+        "testimonial2_author": "رنا عبدالله",
+        "testimonial2_role": "طالبة هندسة برمجيات",
+        "testimonial3_text": "كأستاذ، مكنتني بوابة المعلم من متابعة الواجبات وإعطاء تقييمات تفصيلية فورية لكل طالب وطالبة بسهولة مطلقة ووقت قياسي.",
+        "testimonial3_author": "م. عاصم العتيبي",
+        "testimonial3_role": "عضو هيئة التدريس"
       }
     },
     {
@@ -222,32 +392,52 @@
         "title": "الأسئلة الشائعة حول إديوكور",
         "items": [
           {
+            "id": "111",
+            "order": 1,
             "question": "هل الحصص البث المباشر مسجلة؟",
-            "answer": "نعم، يتم تسجيل جميع اللقاءات المباشرة ورفعها للمنصة لتعيد مشاهدتها في أي وقت."
+            "answer": "نعم، يتم تسجيل جميع اللقاءات المباشرة ورفعها للمنصة لتعيد مشاهدتها في أي وقت.",
+            "props": {
+              "question": "هل الحصص البث المباشر مسجلة؟",
+              "answer": "نعم، يتم تسجيل جميع اللقاءات المباشرة ورفعها للمنصة لتعيد مشاهدتها في أي وقت."
+            }
           },
           {
+            "id": "112",
+            "order": 2,
             "question": "كيف يساهم إديوكور في تحسين الأداء الأكاديمي؟",
-            "answer": "يوفر النظام تحليلات شاملة تمكن الإداريين والمعلمين من مراقبة التقدم واتخاذ قرارات فورية مدعومة بالبيانات."
+            "answer": "يوفر النظام تحليلات شاملة تمكن الإداريين والمعلمين من مراقبة التقدم واتخاذ قرارات فورية مدعومة بالبيانات.",
+            "props": {
+              "question": "كيف يساهم إديوكور في تحسين الأداء الأكاديمي؟",
+              "answer": "يوفر النظام تحليلات شاملة تمكن الإداريين والمعلمين من مراقبة التقدم واتخاذ قرارات فورية مدعومة بالبيانات."
+            }
           }
         ],
         "backgroundColor": "#f5f2ff",
-        "textColor": "#1b1b24"
+        "textColor": "#1b1b24",
+        "background_color": "#f5f2ff",
+        "text_color": "#1b1b24"
       }
     },
     {
       "id": "contact",
       "type": "contact",
       "props": {
-        "title": "",
-        "description": "",
+        "title": null,
+        "description": null,
         "phoneNumber": "",
         "buttonText": "ابدأ الآن",
-        "secondaryButtonText": "",
-        "secondaryButtonLink": "",
+        "secondaryButtonText": "طلب عرض توضيحي",
+        "secondaryButtonLink": "https://example.com/demo",
         "backgroundColor": "",
-        "textColor": ""
+        "textColor": "",
+        "phone_number": null,
+        "button_text": "ابدأ الآن",
+        "secondary_button_text": "طلب عرض توضيحي",
+        "secondary_button_link": "https://example.com/demo",
+        "background_color": null,
+        "text_color": null
       }
     }
   ],
-  "updatedAt": "2026-09-06T06:59:30.984Z"
+  "updatedAt": "2026-09-06T08:53:56.689Z"
 }

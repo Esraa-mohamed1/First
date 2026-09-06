@@ -47,6 +47,7 @@ interface NavbarConfig {
   logo: string;
   bgColor: string;
   textColor: string;
+  [key: string]: any;
 }
 
 interface HeroConfig {
@@ -201,7 +202,22 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
   if (role === 'schoolcoach') {
     if (templateId === 'template_1') {
       return {
-        navbar: { title: 'الأستاذ أحمد محمد', logo: '', bgColor: '#0a1628', textColor: '#ffffff' },
+        navbar: {
+          title: 'الأستاذ أحمد محمد',
+          logo: '',
+          bgColor: '#0a1628',
+          textColor: '#ffffff',
+          links: [
+            { label: 'الرئيسية', href: '/' },
+            { label: 'الدورات', href: '/courses' },
+            { label: 'الحقائب', href: '/bags' },
+            { label: 'حول', href: '/#about' }
+          ],
+          loginText: 'تسجيل الدخول',
+          loginLink: '/auth/login',
+          registerText: 'ابدأ الآن',
+          registerLink: '/auth/register',
+        },
         hero: {
           title: 'تعلم بذكاء. <br/><span class="text-[var(--color-gold-500)]">اضمن تفوقك الدراسي.</span>',
           subtitle: 'معلم الرياضيات القدير',
@@ -338,7 +354,22 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
     } else {
       // School Coach Template 2
       return {
-        navbar: { title: 'بوابة المتفوق الأكاديمية', logo: '', bgColor: '#0f172a', textColor: '#ffffff' },
+        navbar: {
+          title: 'بوابة المتفوق الأكاديمية',
+          logo: '',
+          bgColor: '#0f172a',
+          textColor: '#ffffff',
+          links: [
+            { label: 'الرئيسية', href: '/' },
+            { label: 'الدورات', href: '/courses' },
+            { label: 'الحقائب', href: '/bags' },
+            { label: 'حول', href: '/#about' }
+          ],
+          loginText: 'تسجيل الدخول',
+          loginLink: '/auth/login',
+          registerText: 'ابدأ الآن',
+          registerLink: '/auth/register',
+        },
         hero: {
           title: 'تعلّم المناهج الدراسية بأسلوب تفاعلي متطور يناسب جيلك',
           subtitle: 'تعليم إلكتروني بمعايير حديثة ⚡',
@@ -426,7 +457,22 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
     }
   } else if (role === 'coach') {
     return {
-      navbar: { title: 'Deep Knowledge', logo: '', bgColor: '#fbfafc', textColor: '#6750a4' },
+      navbar: {
+        title: 'Deep Knowledge',
+        logo: '',
+        bgColor: '#fbfafc',
+        textColor: '#6750a4',
+        links: [
+          { label: 'الرئيسية', href: '/' },
+          { label: 'الدورات', href: '/courses' },
+          { label: 'الحقائب', href: '/bags' },
+          { label: 'حول', href: '/#about' }
+        ],
+        loginText: 'تسجيل الدخول',
+        loginLink: '/auth/login',
+        registerText: 'ابدأ الآن',
+        registerLink: '/auth/register',
+      },
       hero: {
         title: 'تعمق في المعرفة. <br/> تعلم من الصفوة.',
         subtitle: 'أكاديمية النخبة',
@@ -562,7 +608,22 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
   } else {
     // Academy Role ('academy')
     return {
-      navbar: { title: 'إديوكور', logo: '', bgColor: '#ffffff', textColor: '#3525cd' },
+      navbar: {
+        title: 'إديوكور',
+        logo: '',
+        bgColor: '#ffffff',
+        textColor: '#3525cd',
+        links: [
+          { label: 'الرئيسية', href: '/' },
+          { label: 'الدورات', href: '/courses' },
+          { label: 'الحقائب', href: '/bags' },
+          { label: 'حول', href: '/#about' }
+        ],
+        loginText: 'تسجيل الدخول',
+        loginLink: '/auth/login',
+        registerText: 'ابدأ الآن',
+        registerLink: '/auth/register',
+      },
       hero: {
         title: 'بناء تجربة أكاديمية أكثر ذكاءً.',
         subtitle: 'حل مؤسسي متقدم',
@@ -1509,31 +1570,34 @@ export default function PageBuilderPage() {
             const sv = (val: any, fallbackVal: any) =>
               (val !== null && val !== undefined && val !== '') ? val : fallbackVal;
 
+            // Build parsedContent by spreading ALL api props first (preserving every field
+            // that exists in the DB section), then filling with sv() for known
+            // camelCase/snake_case aliases that may vary by API version.
+            const mergeSection = (nodeProps: Record<string, any>, fallbackSection: Record<string, any>) => ({
+              ...fallbackSection,       // defaults as base
+              ...nodeProps,             // ALL api props override defaults
+            });
+
             const parsedContent: TemplateContent = {
-              navbar: navbarNode?.props ? {
-                title: sv(navbarNode.props.title, fallback.navbar.title),
-                logo: sv(navbarNode.props.logo, fallback.navbar.logo),
+              navbar: navbarNode?.props ? ({
+                ...mergeSection(navbarNode.props, fallback.navbar),
+                // Normalize critical aliases
                 bgColor: sv(navbarNode.props.bgColor ?? navbarNode.props.bg_color, fallback.navbar.bgColor),
                 textColor: sv(navbarNode.props.textColor ?? navbarNode.props.text_color, fallback.navbar.textColor),
-              } : fallback.navbar,
+              }) : fallback.navbar,
 
-              hero: heroNode?.props ? {
-                title: sv(heroNode.props.title, fallback.hero.title),
-                subtitle: sv(heroNode.props.subtitle, fallback.hero.subtitle),
-                description: sv(heroNode.props.description, fallback.hero.description),
+              hero: heroNode?.props ? ({
+                ...mergeSection(heroNode.props, fallback.hero),
                 buttonText: sv(heroNode.props.buttonText ?? heroNode.props.button_text, fallback.hero.buttonText),
                 buttonLink: sv(heroNode.props.buttonLink ?? heroNode.props.button_link, fallback.hero.buttonLink),
                 secondaryButtonText: sv(heroNode.props.secondaryButtonText ?? heroNode.props.secondary_button_text ?? heroNode.props.demoButtonText ?? heroNode.props.demo_button_text, fallback.hero.secondaryButtonText || 'طلب عرض توضيحي'),
                 secondaryButtonLink: sv(heroNode.props.secondaryButtonLink ?? heroNode.props.secondary_button_link ?? heroNode.props.demoButtonLink ?? heroNode.props.demo_button_link, fallback.hero.secondaryButtonLink || '#contact'),
-                image: sv(heroNode.props.image, fallback.hero.image),
                 backgroundColor: sv(heroNode.props.backgroundColor ?? heroNode.props.background_color ?? heroNode.props.bg_color, fallback.hero.backgroundColor),
                 textColor: sv(heroNode.props.textColor ?? heroNode.props.text_color, fallback.hero.textColor),
-              } : fallback.hero,
+              }) : fallback.hero,
 
-              about: aboutNode?.props ? {
-                title: sv(aboutNode.props.title, fallback.about.title),
-                subtitle: sv(aboutNode.props.subtitle, fallback.about.subtitle),
-                image: sv(aboutNode.props.image, fallback.about.image),
+              about: aboutNode?.props ? ({
+                ...mergeSection(aboutNode.props, fallback.about),
                 backgroundColor: sv(aboutNode.props.backgroundColor ?? aboutNode.props.background_color ?? aboutNode.props.bg_color, fallback.about.backgroundColor),
                 textColor: sv(aboutNode.props.textColor ?? aboutNode.props.text_color, fallback.about.textColor),
                 videoTag: sv(aboutNode.props.videoTag ?? aboutNode.props.video_tag, fallback.about.videoTag),
@@ -1545,41 +1609,37 @@ export default function PageBuilderPage() {
                 analyticsTitle: sv(aboutNode.props.analyticsTitle ?? aboutNode.props.analytics_title ?? aboutNode.props.visionTitle ?? aboutNode.props.vision_title, fallback.about.analyticsTitle || 'رؤية الأداء المؤسسي'),
                 analyticsBars: Array.isArray(aboutNode.props.analyticsBars ?? aboutNode.props.analytics_bars) ? (aboutNode.props.analyticsBars ?? aboutNode.props.analytics_bars) : (fallback.about.analyticsBars || [40, 65, 85, 50, 95]),
                 analyticsColor: sv(aboutNode.props.analyticsColor ?? aboutNode.props.analytics_color, fallback.about.analyticsColor || '#3525cd'),
-              } : fallback.about,
+              }) : fallback.about,
 
-              features: featuresNode?.props ? {
-                title: sv(featuresNode.props.title, fallback.features.title),
-                subtitle: sv(featuresNode.props.subtitle, fallback.features.subtitle),
+              features: featuresNode?.props ? ({
+                ...mergeSection(featuresNode.props, fallback.features),
                 items: safeItems(featuresNode.props.items, fallback.features.items),
                 backgroundColor: sv(featuresNode.props.backgroundColor ?? featuresNode.props.background_color ?? featuresNode.props.bg_color, fallback.features.backgroundColor),
                 textColor: sv(featuresNode.props.textColor ?? featuresNode.props.text_color, fallback.features.textColor),
-              } : fallback.features,
+              }) : fallback.features,
 
-              courses: courseNode?.props ? {
-                title: sv(courseNode.props.title, fallback.courses?.title || 'أحدث الدورات والبرامج الأكاديمية'),
-                subtitle: sv(courseNode.props.subtitle, fallback.courses?.subtitle || 'استكشف مساراتنا التدريبية المتخصصة لتطوير مهاراتك والارتقاء بمسيرتك المهنية.'),
+              courses: courseNode?.props ? ({
+                ...mergeSection(courseNode.props, fallback.courses || {}),
                 limit: courseNode.props.limit ? Number(courseNode.props.limit) : (fallback.courses?.limit ?? 6),
                 showPrice: courseNode.props.showPrice !== undefined ? Boolean(courseNode.props.showPrice) : (fallback.courses?.showPrice ?? true),
                 showStudentsCount: courseNode.props.showStudentsCount !== undefined ? Boolean(courseNode.props.showStudentsCount) : (fallback.courses?.showStudentsCount ?? true),
                 gridCols: sv(courseNode.props.gridCols, fallback.courses?.gridCols || '3'),
                 buttonBg: sv(courseNode.props.buttonBg, fallback.courses?.buttonBg || '#3525cd'),
                 cardBg: sv(courseNode.props.cardBg, fallback.courses?.cardBg || '#ffffff'),
-                titleColor: sv(courseNode.props.titleColor, fallback.courses?.titleColor || '#111827'),
                 backgroundColor: sv(courseNode.props.backgroundColor ?? courseNode.props.background_color ?? courseNode.props.bg_color, fallback.courses?.backgroundColor || '#ffffff'),
                 textColor: sv(courseNode.props.textColor ?? courseNode.props.text_color, fallback.courses?.textColor || '#1b1b24'),
                 items: fallback.courses?.items || [],
-                courses: courseNode.props.courses || fallback.courses?.courses || [],
-              } : fallback.courses,
+              }) : fallback.courses,
 
-              stats: statsNode?.props ? {
+              stats: statsNode?.props ? ({
+                ...mergeSection(statsNode.props, fallback.stats || {}),
                 items: safeItems(statsNode.props.items || statsNode.props.cards, fallback.stats?.items || []),
                 backgroundColor: sv(statsNode.props.backgroundColor ?? statsNode.props.background_color ?? statsNode.props.bg_color, fallback.stats?.backgroundColor || ''),
                 textColor: sv(statsNode.props.textColor ?? statsNode.props.text_color, fallback.stats?.textColor || ''),
-              } : fallback.stats,
+              }) : fallback.stats,
 
-              pricing: pricingNode?.props ? {
-                title: sv(pricingNode.props.title, fallback.pricing.title),
-                subtitle: sv(pricingNode.props.subtitle, fallback.pricing.subtitle),
+              pricing: pricingNode?.props ? ({
+                ...mergeSection(pricingNode.props, fallback.pricing),
                 items: safeItems(pricingNode.props.items, fallback.pricing.items),
                 backgroundColor: sv(pricingNode.props.backgroundColor ?? pricingNode.props.background_color ?? pricingNode.props.bg_color, fallback.pricing.backgroundColor),
                 textColor: sv(pricingNode.props.textColor ?? pricingNode.props.text_color, fallback.pricing.textColor),
@@ -1596,36 +1656,35 @@ export default function PageBuilderPage() {
                 testimonial3Text: sv(pricingNode.props.testimonial3Text ?? pricingNode.props.testimonial3_text, fallback.pricing.testimonial3Text),
                 testimonial3Author: sv(pricingNode.props.testimonial3Author ?? pricingNode.props.testimonial3_author, fallback.pricing.testimonial3Author),
                 testimonial3Role: sv(pricingNode.props.testimonial3Role ?? pricingNode.props.testimonial3_role, fallback.pricing.testimonial3Role),
-              } : fallback.pricing,
+              }) : fallback.pricing,
 
-              faq: faqNode?.props ? {
-                title: sv(faqNode.props.title, fallback.faq.title),
+              faq: faqNode?.props ? ({
+                ...mergeSection(faqNode.props, fallback.faq),
                 items: safeItems(faqNode.props.items, fallback.faq.items),
                 backgroundColor: sv(faqNode.props.backgroundColor ?? faqNode.props.background_color ?? faqNode.props.bg_color, fallback.faq.backgroundColor),
                 textColor: sv(faqNode.props.textColor ?? faqNode.props.text_color, fallback.faq.textColor),
                 testimonialsTitle: sv(faqNode.props.testimonialsTitle ?? faqNode.props.testimonials_title, fallback.faq.testimonialsTitle),
                 testimonialsSubtitle: sv(faqNode.props.testimonialsSubtitle ?? faqNode.props.testimonials_subtitle, fallback.faq.testimonialsSubtitle),
-              } : fallback.faq,
+              }) : fallback.faq,
 
-              contact: contactNode?.props ? {
-                title: sv(contactNode.props.title, fallback.contact.title),
-                description: sv(contactNode.props.description, fallback.contact.description),
+              contact: contactNode?.props ? ({
+                ...mergeSection(contactNode.props, fallback.contact),
                 phoneNumber: sv(contactNode.props.phoneNumber ?? contactNode.props.phone_number, fallback.contact.phoneNumber),
                 buttonText: sv(contactNode.props.buttonText ?? contactNode.props.button_text, fallback.contact.buttonText),
                 secondaryButtonText: sv(contactNode.props.secondaryButtonText ?? contactNode.props.secondary_button_text ?? contactNode.props.demoButtonText ?? contactNode.props.demo_button_text, fallback.contact.secondaryButtonText || 'طلب عرض توضيحي'),
                 secondaryButtonLink: sv(contactNode.props.secondaryButtonLink ?? contactNode.props.secondary_button_link ?? contactNode.props.demoButtonLink ?? contactNode.props.demo_button_link, fallback.contact.secondaryButtonLink || 'https://example.com/demo'),
                 backgroundColor: sv(contactNode.props.backgroundColor ?? contactNode.props.background_color ?? contactNode.props.bg_color, fallback.contact.backgroundColor),
                 textColor: sv(contactNode.props.textColor ?? contactNode.props.text_color, fallback.contact.textColor),
-              } : fallback.contact,
+              }) : fallback.contact,
 
-              footer: footerNode?.props ? {
-                text: sv(footerNode.props.text, fallback.footer.text),
+              footer: footerNode?.props ? ({
+                ...mergeSection(footerNode.props, fallback.footer),
                 backgroundColor: sv(footerNode.props.backgroundColor ?? footerNode.props.background_color ?? footerNode.props.bg_color, fallback.footer.backgroundColor),
                 textColor: sv(footerNode.props.textColor ?? footerNode.props.text_color, fallback.footer.textColor),
                 newsletterTitle: sv(footerNode.props.newsletterTitle ?? footerNode.props.newsletter_title, fallback.footer.newsletterTitle),
                 newsletterDesc: sv(footerNode.props.newsletterDesc ?? footerNode.props.newsletter_desc, fallback.footer.newsletterDesc),
                 newsletterBtnText: sv(footerNode.props.newsletterBtnText ?? footerNode.props.newsletter_btn_text, fallback.footer.newsletterBtnText),
-              } : fallback.footer,
+              }) : fallback.footer,
             };
             setContent(parsedContent);
             setPreviewContent(parsedContent);
@@ -2103,6 +2162,86 @@ export default function PageBuilderPage() {
                             className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                           />
                           <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.navbar.textColor}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Navbar Links Editor */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-extrabold text-slate-700">روابط التنقل (Nav Links)</span>
+                        <button
+                          onClick={() => {
+                            const currentLinks: any[] = (content.navbar as any).links || [];
+                            handleUpdateField('navbar', 'links', [...currentLinks, { label: 'رابط جديد', href: '/' }]);
+                          }}
+                          className="text-[10px] font-bold text-blue-600 border border-blue-200 rounded-lg px-2 py-1 hover:bg-blue-50 transition-colors flex items-center gap-1"
+                        >
+                          <Plus className="w-3 h-3" /> إضافة
+                        </button>
+                      </div>
+                      {((content.navbar as any).links || [
+                        { label: 'الرئيسية', href: '/' },
+                        { label: 'الدورات', href: '/courses' },
+                        { label: 'الحقائب', href: '/bags' },
+                        { label: 'حول', href: '/#about' },
+                      ]).map((link: any, idx: number) => (
+                        <div key={idx} className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl p-2">
+                          <input
+                            type="text"
+                            value={link.label}
+                            onChange={(e) => {
+                              const links = [...((content.navbar as any).links || [])];
+                              links[idx] = { ...links[idx], label: e.target.value };
+                              handleUpdateField('navbar', 'links', links);
+                            }}
+                            className="flex-1 border border-slate-200 rounded-lg p-1.5 text-[10px] bg-white focus:outline-none focus:border-blue-600"
+                            placeholder="الاسم"
+                          />
+                          <input
+                            type="text"
+                            value={link.href}
+                            dir="ltr"
+                            onChange={(e) => {
+                              const links = [...((content.navbar as any).links || [])];
+                              links[idx] = { ...links[idx], href: e.target.value };
+                              handleUpdateField('navbar', 'links', links);
+                            }}
+                            className="flex-1 border border-slate-200 rounded-lg p-1.5 text-[10px] bg-white focus:outline-none focus:border-blue-600 font-mono"
+                            placeholder="/courses"
+                          />
+                          <button
+                            onClick={() => {
+                              const links = ((content.navbar as any).links || []).filter((_: any, i: number) => i !== idx);
+                              handleUpdateField('navbar', 'links', links);
+                            }}
+                            className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Login / Register Buttons */}
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+                      <span className="text-[10px] font-extrabold text-slate-700 block border-b border-slate-200 pb-1">أزرار تسجيل الدخول والتسجيل</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">نص تسجيل الدخول</label>
+                          <input type="text" value={(content.navbar as any).loginText || 'تسجيل الدخول'} onChange={(e) => handleUpdateField('navbar', 'loginText', e.target.value)} className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">رابط تسجيل الدخول</label>
+                          <input type="text" dir="ltr" value={(content.navbar as any).loginLink || '/auth/login'} onChange={(e) => handleUpdateField('navbar', 'loginLink', e.target.value)} className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">نص زر التسجيل</label>
+                          <input type="text" value={(content.navbar as any).registerText || 'ابدأ الآن'} onChange={(e) => handleUpdateField('navbar', 'registerText', e.target.value)} className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">رابط زر التسجيل</label>
+                          <input type="text" dir="ltr" value={(content.navbar as any).registerLink || '/auth/register'} onChange={(e) => handleUpdateField('navbar', 'registerLink', e.target.value)} className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono" />
                         </div>
                       </div>
                     </div>
