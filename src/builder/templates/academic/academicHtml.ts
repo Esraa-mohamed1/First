@@ -6,6 +6,8 @@ export interface TemplateContent {
     description: string;
     buttonText: string;
     buttonLink: string;
+    secondaryButtonText?: string;
+    secondaryButtonLink?: string;
     image: string;
     backgroundColor: string;
     textColor: string;
@@ -32,6 +34,13 @@ export interface TemplateContent {
     showPrice?: boolean;
     showStudentsCount?: boolean;
     buttonBg?: string;
+    cardBg?: string;
+    titleColor?: string;
+    backgroundColor?: string;
+    textColor?: string;
+  };
+  stats?: {
+    items: Array<{ value: string; label: string }>;
     backgroundColor?: string;
     textColor?: string;
   };
@@ -63,24 +72,85 @@ export interface TemplateContent {
   };
 }
 
+export const renderVideoPlayer = (url: string | undefined | null, className: string = 'w-full h-full object-cover') => {
+  if (!url) {
+    return `<div class="${className} flex items-center justify-center bg-slate-900 text-slate-400 text-xs">لا يوجد فيديو محدد</div>`;
+  }
+  const cleanUrl = url.trim();
+  const isYouTube = cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be');
+  const isVimeo = cleanUrl.includes('vimeo.com');
+  const isDirectVideo = cleanUrl.endsWith('.mp4') || cleanUrl.endsWith('.webm') || cleanUrl.endsWith('.ogg') || cleanUrl.includes('.mp4?') || cleanUrl.includes('video/');
+
+  if (isYouTube) {
+    let embedUrl = cleanUrl;
+    if (cleanUrl.includes('watch?v=')) {
+      const videoId = cleanUrl.split('watch?v=')[1]?.split('&')[0];
+      embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    } else if (cleanUrl.includes('youtu.be/')) {
+      const videoId = cleanUrl.split('youtu.be/')[1]?.split('?')[0];
+      embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    } else if (cleanUrl.includes('/shorts/')) {
+      const videoId = cleanUrl.split('/shorts/')[1]?.split('?')[0];
+      embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    } else if (cleanUrl.includes('/embed/')) {
+      embedUrl = cleanUrl;
+    }
+    return `<iframe src="${embedUrl}" class="${className}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+  }
+
+  if (isVimeo) {
+    const vimeoId = cleanUrl.split('/').pop()?.split('?')[0];
+    return `<iframe src="https://player.vimeo.com/video/${vimeoId}" class="${className}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+  }
+
+  if (isDirectVideo || !cleanUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i)) {
+    return `<video src="${cleanUrl}" controls playsinline class="${className}"></video>`;
+  }
+
+  return `
+    <div class="relative w-full h-full flex items-center justify-center group cursor-pointer">
+      <div class="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-700 group-hover:scale-105" style="background-image: url('${cleanUrl}');"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
+      <div class="relative z-10 w-20 h-20 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300">
+        <span class="material-symbols-outlined text-[40px] fill">play_arrow</span>
+      </div>
+    </div>
+  `;
+};
+
+export const formatMaterialIcon = (iconName: string | undefined | null): string => {
+  if (!iconName) return 'star';
+  const clean = iconName.trim();
+  const lower = clean.toLowerCase();
+
+  const iconMap: Record<string, string> = {
+    'users': 'groups',
+    'user': 'person',
+    'playo': 'play_circle',
+    'play': 'play_circle',
+    'play_circle': 'play_circle',
+    'ab': 'workspace_premium',
+    'award': 'workspace_premium',
+    'certificate': 'workspace_premium',
+    'sparkles': 'auto_awesome',
+    'plus': 'add',
+    'helpcircle': 'help',
+    'phone': 'call',
+    'laptop': 'laptop_mac',
+    'checkcircle2': 'check_circle',
+    'eye': 'visibility',
+    'settings': 'settings',
+  };
+
+  if (iconMap[lower]) return iconMap[lower];
+  return lower.replace(/[-\s]+/g, '_');
+};
+
 export const renderMedia = (url: string | undefined | null, className: string = '', alt: string = 'media') => {
   if (!url) return '';
   const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('youtube') || url.includes('vimeo') || url.includes('youtu.be');
   if (isVideo) {
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      let embedUrl = url;
-      if (url.includes('watch?v=')) {
-        embedUrl = url.replace('watch?v=', 'embed/').split('&')[0];
-      } else if (url.includes('youtu.be/')) {
-        embedUrl = url.replace('youtu.be/', 'www.youtube.com/embed/').split('?')[0];
-      }
-      return `<iframe src="${embedUrl}" class="${className}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-    }
-    if (url.includes('vimeo.com')) {
-      const vimeoId = url.split('/').pop();
-      return `<iframe src="https://player.vimeo.com/video/${vimeoId}" class="${className}" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
-    }
-    return `<video src="${url}" controls autoplay loop muted class="${className} object-cover"></video>`;
+    return renderVideoPlayer(url, className);
   }
   return `<img src="${url}" alt="${alt}" class="${className} object-cover" />`;
 };
@@ -96,6 +166,8 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
   const heroDesc = content?.hero?.description || 'اربط الطلاب، والمعلمين، والإداريين على منصة مؤسسية موحدة مصممة لتحقيق التميز القابل للقياس وسير العمل المبسط بكفاءة عالية.';
   const heroBtnText = content?.hero?.buttonText || (content?.hero as any)?.button_text || 'استكشف المنصة';
   const heroBtnLink = content?.hero?.buttonLink || (content?.hero as any)?.button_link || '#';
+  const heroSecondaryBtnText = content?.hero?.secondaryButtonText || (content?.hero as any)?.secondary_button_text || (content?.hero as any)?.demoButtonText || 'طلب عرض توضيحي';
+  const heroSecondaryBtnLink = content?.hero?.secondaryButtonLink || (content?.hero as any)?.secondary_button_link || (content?.hero as any)?.demoButtonLink || '#contact';
   const heroImg = content?.hero?.image || (content?.hero as any)?.img || (content?.hero as any)?.video || 'https://tse4.mm.bing.net/th/id/OIP.CGEfBMBIYoz4Syk_3B8DawHaEK?r=0&rs=1&pid=ImgDetMain&o=7&rm=3';
   const heroBg = content?.hero?.backgroundColor || (content?.hero as any)?.background_color || (content?.hero as any)?.bg_color || '#fcf8ff';
   const heroTextColor = content?.hero?.textColor || (content?.hero as any)?.text_color || '#1b1b24';
@@ -105,7 +177,7 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
   const aboutImg = content?.about?.image || (content?.about as any)?.img || (content?.about as any)?.video || '';
   const aboutBg = content?.about?.backgroundColor || (content?.about as any)?.background_color || (content?.about as any)?.bg_color || '#ffffff';
   const aboutTextColor = content?.about?.textColor || (content?.about as any)?.text_color || '#1b1b24';
-  const analyticsTitle = (content?.about as any)?.analyticsTitle || 'رؤى الأداء المؤسسي';
+  const analyticsTitle = (content?.about as any)?.analyticsTitle !== undefined ? (content?.about as any)?.analyticsTitle : ((content?.about as any)?.visionTitle || 'رؤية الأداء المؤسسي');
   const analyticsBars = (content?.about as any)?.analyticsBars || [40, 65, 85, 50, 95];
   const analyticsColor = (content?.about as any)?.analyticsColor || '#3525cd';
   const bar1 = analyticsBars[0] ?? 40;
@@ -125,8 +197,30 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
   const coursesLimit = content?.courses?.limit || 6;
   const showPrice = content?.courses?.showPrice ?? true;
   const showStudentsCount = content?.courses?.showStudentsCount ?? true;
+  const coursesBtnBg = content?.courses?.buttonBg || (content?.courses as any)?.button_bg || '#3525cd';
+  const coursesCardBg = (content?.courses as any)?.cardBg || (content?.courses as any)?.card_bg || '';
+  const coursesTitleColor = (content?.courses as any)?.titleColor || (content?.courses as any)?.title_color || '';
+  const coursesBg = content?.courses?.backgroundColor || (content?.courses as any)?.background_color || (content?.courses as any)?.bg_color || '';
+  const coursesTextColor = content?.courses?.textColor || (content?.courses as any)?.text_color || '';
   const rawCourses = content?.courses?.items || [];
   const coursesList = rawCourses.slice(0, coursesLimit);
+
+  const statsItems = content?.stats?.items || [
+    { value: '98%', label: 'نسبة رضا الطلاب' },
+    { value: '150+', label: 'مناهج شاملة' },
+    { value: '12k+', label: 'خريج متميز' },
+    { value: '24/7', label: 'دعم أكاديمي مباشر' }
+  ];
+  const stat1Value = statsItems[0]?.value || '98%';
+  const stat1Label = statsItems[0]?.label || 'نسبة رضا الطلاب';
+  const stat2Value = statsItems[1]?.value || '150+';
+  const stat2Label = statsItems[1]?.label || 'مناهج شاملة';
+  const stat3Value = statsItems[2]?.value || '12k+';
+  const stat3Label = statsItems[2]?.label || 'خريج متميز';
+  const stat4Value = statsItems[3]?.value || '24/7';
+  const stat4Label = statsItems[3]?.label || 'دعم أكاديمي مباشر';
+  const statsBg = content?.stats?.backgroundColor || (content?.stats as any)?.background_color || '';
+  const statsTextColor = content?.stats?.textColor || (content?.stats as any)?.text_color || '';
 
   const pricingTitle = content?.pricing?.title || 'المخرجات والنتائج الإحصائية';
   const pricingSubtitle = content?.pricing?.subtitle || 'معدلات تقدم وتحليلات رقمية للفصول الدراسية';
@@ -136,10 +230,12 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 
   const contactTitle = content?.contact?.title || 'ابْنِ مستقبل التعليم';
   const contactDesc = content?.contact?.description || 'انضم إلى المؤسسات الرائدة عالميًا في تحويل التجربة الأكاديمية. ارتقِ بمستوى مؤسستك التعليمية وابدأ رحلتك نحو التميز اليوم.';
-  const contactPhone = content?.contact?.phoneNumber || (content?.contact as any)?.phone_number || '201000000000';
+  const contactPhone = content?.contact?.phoneNumber || (content?.contact as any)?.phone_number || '';
   const contactBtnText = content?.contact?.buttonText || (content?.contact as any)?.button_text || 'ابدأ الآن';
-  const contactBg = content?.contact?.backgroundColor || (content?.contact as any)?.background_color || (content?.contact as any)?.bg_color || '#3525cd';
-  const contactTextColor = content?.contact?.textColor || (content?.contact as any)?.text_color || '#ffffff';
+  const contactSecondaryBtnText = (content?.contact as any)?.secondaryButtonText || (content?.contact as any)?.secondary_button_text || (content?.contact as any)?.demoButtonText || 'طلب عرض توضيحي';
+  const contactSecondaryBtnLink = (content?.contact as any)?.secondaryButtonLink || (content?.contact as any)?.secondary_button_link || (content?.contact as any)?.demoButtonLink || '';
+  const contactBg = content?.contact?.backgroundColor || (content?.contact as any)?.background_color || (content?.contact as any)?.bg_color || '';
+  const contactTextColor = content?.contact?.textColor || (content?.contact as any)?.text_color || '';
 
   const footerText = content?.footer?.text || '© 2024 إديوكور الأكاديمية. جميع الحقوق محفوظة.';
   const footerBg = content?.footer?.backgroundColor || (content?.footer as any)?.background_color || (content?.footer as any)?.bg_color || '#ffffff';
@@ -149,9 +245,21 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
   const videoTitle = (content?.about as any)?.videoTitle || 'تعرف على فلسفتنا التعليمية في ٣ دقائق';
   const videoDesc = (content?.about as any)?.videoDesc || 'نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.';
   const videoLink = (content?.about as any)?.videoLink || (content?.about as any)?.videoImage || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop';
+  const videoBg = (content?.about as any)?.videoBg || (content?.about as any)?.video_bg || (content?.about as any)?.videoBackgroundColor || (content?.about as any)?.video_background_color || '';
+  const videoTextColor = (content?.about as any)?.videoTextColor || (content?.about as any)?.video_text_color || '';
+
+  const faqTitle = content?.faq?.title || 'الأسئلة الشائعة حول إديوكور';
+  const faqItems = content?.faq?.items || [
+    { question: 'هل الحصص البث المباشر مسجلة؟', answer: 'نعم، يتم تسجيل جميع اللقاءات المباشرة ورفعها للمنصة لتعيد مشاهدتها في أي وقت.' },
+    { question: 'كيف يساهم إديوكور في تحسين الأداء الأكاديمي؟', answer: 'يوفر النظام تحليلات شاملة تمكن الإداريين والمعلمين من مراقبة التقدم واتخاذ قرارات فورية مدعومة بالبيانات.' }
+  ];
+  const faqBg = content?.faq?.backgroundColor || (content?.faq as any)?.background_color || (content?.faq as any)?.bg_color || '';
+  const faqTextColor = content?.faq?.textColor || (content?.faq as any)?.text_color || '';
 
   const testimonialsTitle = (content?.pricing as any)?.testimonialsTitle || 'ماذا يقول شركاؤنا وطلابنا؟';
   const testimonialsSubtitle = (content?.pricing as any)?.testimonialsSubtitle || 'قصص نجاح ملهمة وتجارب واقعية يعبر عنها شركاؤنا الأكاديميون وطلابنا المتميزون.';
+  const testimonialsBg = (content?.pricing as any)?.testimonialsBg || (content?.pricing as any)?.testimonials_bg || (content?.pricing as any)?.testimonialsBackgroundColor || '#f5f2ff';
+  const testimonialsTextColor = (content?.pricing as any)?.testimonialsTextColor || (content?.pricing as any)?.testimonials_text_color || '#1b1b24';
   const testimonial1Text = (content?.pricing as any)?.testimonial1Text || 'سهولة إدارة المحتوى التعليمي والتحليلات الدقيقة المتاحة مكنتنا كإدارة من تتبع الأداء وتحسين المخرجات التعليمية بشكل ملموس وسريع.';
   const testimonial1Author = (content?.pricing as any)?.testimonial1Author || 'أ.د. محمد الشمري';
   const testimonial1Role = (content?.pricing as any)?.testimonial1Role || 'عميد القبول والتسجيل';
@@ -312,18 +420,16 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 </div>
 <!-- Desktop Nav -->
 <nav class="hidden md:flex items-center gap-stack-lg">
-<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="#">الرئيسية</a>
-<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="#courses">الدورات</a>
-<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="#">المدربون</a>
-<a class="text-primary text-label-md font-label-md border-b-2 border-primary pb-1 hover:text-primary transition-colors duration-200" href="#">أكاديمي</a>
-<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="#">الموارد</a>
-<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="#">حول</a>
+<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="/" ${isEditing ? '' : 'target="_parent"'}>الرئيسية</a>
+<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="/courses" ${isEditing ? '' : 'target="_parent"'}>الدورات</a>
+<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="/bags" ${isEditing ? '' : 'target="_parent"'}>الحقائب</a>
+<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="/#about" ${isEditing ? '' : 'target="_parent"'}>حول</a>
 </nav>
 <div class="flex items-center gap-stack-md">
-<a class="text-label-md font-label-md text-primary hover:opacity-80 transition-opacity hidden sm:block" href="#">تسجيل الدخول</a>
-<button class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all duration-200 hidden sm:block">
+<a class="text-label-md font-label-md text-primary hover:opacity-80 transition-opacity hidden sm:block" href="/auth/login" ${isEditing ? '' : 'target="_parent"'}>تسجيل الدخول</a>
+<a href="/auth/register" ${isEditing ? '' : 'target="_parent"'} class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all duration-200 hidden sm:block inline-block text-center">
     ابدأ الآن
-</button>
+</a>
 <button class="md:hidden flex items-center justify-center p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors">
 <span class="material-symbols-outlined">menu</span>
 </button>
@@ -337,29 +443,23 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 <span class="text-headline-md font-headline-md text-primary">مركز التعلم</span>
 </div>
 <nav class="flex flex-col gap-stack-sm px-4">
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="#">
+<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/" ${isEditing ? '' : 'target="_parent"'}>
 <span class="material-symbols-outlined">home</span> الرئيسية
                 </a>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="#courses">
+<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/courses" ${isEditing ? '' : 'target="_parent"'}>
 <span class="material-symbols-outlined">menu_book</span> الدورات
                 </a>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="#">
-<span class="material-symbols-outlined">groups</span> المدربون
+<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/bags" ${isEditing ? '' : 'target="_parent"'}>
+<span class="material-symbols-outlined">shopping_bag</span> الحقائب
                 </a>
-<a class="bg-primary/10 text-primary flex items-center gap-4 px-4 py-3 rounded-xl transition-all text-label-md font-label-md" href="#">
-<span class="material-symbols-outlined fill">school</span> أكاديمي
-                </a>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="#">
-<span class="material-symbols-outlined">folder_shared</span> الموارد
-                </a>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="#">
+<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/#about" ${isEditing ? '' : 'target="_parent"'}>
 <span class="material-symbols-outlined">info</span> حول
                 </a>
 <div class="h-px bg-outline-variant/30 my-4"></div>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="#">
+<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/auth/login" ${isEditing ? '' : 'target="_parent"'}>
 <span class="material-symbols-outlined">login</span> تسجيل الدخول
                 </a>
-<a class="bg-primary text-on-primary flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-primary-container transition-all text-label-md font-label-md" href="#">
+<a class="bg-primary text-on-primary flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/auth/register" ${isEditing ? '' : 'target="_parent"'}>
 <span class="material-symbols-outlined">person_add</span> ابدأ الآن
                 </a>
 </nav>
@@ -368,26 +468,36 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 <!-- Main Content Canvas -->
 <main class="w-full">
 <!-- Hero Section -->
-<section data-section="hero" class="w-full transition-all duration-300 section-hover cursor-pointer" style="background-color: ${heroBg}; color: ${heroTextColor};">
+<section data-section="hero" id="hero" class="w-full transition-all duration-300 section-hover cursor-pointer" style="background-color: ${heroBg}; color: ${heroTextColor};">
 <div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-36 pb-32 flex flex-col lg:flex-row items-center gap-stack-xl">
 <div class="w-full lg:w-1/2 flex flex-col items-start gap-stack-md z-10 p-4">
 <div class="inline-flex items-center gap-3 px-4 py-1.5 bg-primary/10 border border-primary/20 rounded-full">
 <span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
 <span class="text-label-md font-label-md text-primary">${heroSubtitle}</span>
 </div>
-<h1 class="text-display-lg font-display-lg leading-tight">
+<h1 class="text-display-lg font-display-lg leading-tight" style="${heroTextColor ? `color: ${heroTextColor};` : ''}">
                     ${heroTitle}
 </h1>
-<p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl leading-relaxed">
+<p class="text-body-lg font-body-lg max-w-xl leading-relaxed" style="${heroTextColor ? `color: ${heroTextColor}; opacity: 0.85;` : 'color: #464555;'}">
                     ${heroDesc}
                 </p>
 <div class="flex flex-wrap items-center gap-stack-md pt-4">
-<button class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-8 py-4 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
-                        ${heroBtnText}
-                    </button>
-<button class="bg-surface hover:bg-surface-container text-on-surface border border-outline-variant text-label-md font-label-md px-8 py-4 rounded-full transition-all duration-300 flex items-center gap-3 group">
-                        طلب عرض توضيحي <span class="material-symbols-outlined text-[20px] rtl-icon group-hover:-translate-x-1 transition-transform">arrow_forward</span>
-</button>
+<a data-hero-btn="primary" href="${(() => {
+  if (!heroBtnLink || heroBtnLink === '#') return '#';
+  const trimmed = heroBtnLink.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
+  return `#${trimmed}`;
+})()}" ${heroBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-8 py-4 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 inline-block text-center">
+    ${heroBtnText}
+</a>
+<a data-hero-btn="secondary" href="${(() => {
+  if (!heroSecondaryBtnLink || heroSecondaryBtnLink === '#') return '#contact';
+  const trimmed = heroSecondaryBtnLink.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
+  return `#${trimmed}`;
+})()}" ${heroSecondaryBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="bg-surface hover:bg-surface-container text-on-surface border border-outline-variant text-label-md font-label-md px-8 py-4 rounded-full transition-all duration-300 inline-flex items-center gap-3 group">
+    <span>${heroSecondaryBtnText}</span> <span class="material-symbols-outlined text-[20px] rtl-icon group-hover:-translate-x-1 transition-transform">arrow_forward</span>
+</a>
 </div>
 </div>
 <div class="w-full lg:w-1/2 flex items-center justify-center p-4">
@@ -399,38 +509,21 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 </div>
 </section>
 
-<!-- Partners Section -->
-<section class="w-full border-y border-outline-variant/20 bg-surface">
-  <div class="max-w-container-max mx-auto py-12 px-margin-mobile md:px-margin-desktop flex flex-col md:flex-row items-center justify-between gap-8 opacity-70">
-    <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider text-center md:text-right shrink-0">معتمدون لدى جهات رائدة عالمياً:</span>
-    <div class="flex flex-wrap items-center justify-center gap-12 text-outline-variant font-bold text-headline-sm">
-      <div class="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-[28px]">school</span> ACADEMY</div>
-      <div class="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-[28px]">globe</span> GLOBAL</div>
-      <div class="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-[28px]">verified</span> ISO CERTIFIED</div>
-      <div class="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"><span class="material-symbols-outlined text-[28px]">terminal</span> TECH LAB</div>
-    </div>
-  </div>
-</section>
-
 <!-- Video Intro Section -->
-<section data-section="video" id="about-video" class="w-full bg-surface section-hover cursor-pointer">
+<section data-section="video" id="about-video" class="w-full transition-all duration-300 section-hover cursor-pointer rounded-3xl" style="${videoBg ? `background-color: ${videoBg};` : ''} ${videoTextColor ? `color: ${videoTextColor};` : ''}">
   <div class="max-w-container-max mx-auto py-20 px-margin-mobile md:px-margin-desktop">
     <div class="bg-primary-container/10 border border-primary/20 rounded-[2.5rem] p-8 md:p-16 grid grid-cols-1 lg:grid-cols-2 gap-stack-lg items-center">
       <div class="space-y-6">
         <span class="text-label-md font-label-md text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">${videoTag}</span>
-        <h2 class="text-headline-lg font-headline-lg text-on-surface leading-tight">${videoTitle}</h2>
-        <p class="text-body-lg font-body-lg text-on-surface-variant leading-relaxed">${videoDesc}</p>
+        <h2 class="text-headline-lg font-headline-lg ${videoTextColor ? '' : 'text-on-surface'} leading-tight" style="${videoTextColor ? `color: ${videoTextColor};` : ''}">${videoTitle}</h2>
+        <p class="text-body-lg font-body-lg ${videoTextColor ? '' : 'text-on-surface-variant'} leading-relaxed" style="${videoTextColor ? `color: ${videoTextColor};` : ''}">${videoDesc}</p>
         <div class="flex items-center gap-4 text-primary font-bold">
           <span class="material-symbols-outlined text-[32px] animate-bounce">play_arrow</span>
           <span>اضغط على المشغل لمشاهدة العرض التعريفي</span>
         </div>
       </div>
-      <div class="relative h-[300px] md:h-[400px] rounded-3xl overflow-hidden bg-slate-900 shadow-2xl border border-outline-variant/30 flex items-center justify-center group cursor-pointer">
-        <div class="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-700 group-hover:scale-105" style="background-image: url('${videoLink}');"></div>
-        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
-        <div class="relative z-10 w-20 h-20 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300">
-          <span class="material-symbols-outlined text-[40px] fill">play_arrow</span>
-        </div>
+      <div data-video-container class="relative h-[300px] md:h-[400px] rounded-3xl overflow-hidden bg-slate-900 shadow-2xl border border-outline-variant/30 flex items-center justify-center group">
+        ${renderVideoPlayer(videoLink, 'w-full h-full rounded-3xl')}
       </div>
     </div>
   </div>
@@ -441,45 +534,41 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 <div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-stack-xl items-center">
 <div class="relative h-[450px] bg-surface-container-lowest rounded-3xl border border-outline-variant/50 shadow-xl overflow-hidden p-8 flex flex-col justify-between">
-  ${aboutImg
-    ? renderMedia(aboutImg, 'w-full h-full object-cover', 'about')
-    : `<div class="w-full h-full flex flex-col justify-between">
-        <div class="flex items-center justify-between border-b border-outline-variant/20 pb-4 mb-4">
-          <div class="flex items-center gap-3">
-            <div class="w-3.5 h-3.5 rounded-full shadow-sm" style="background-color: ${analyticsColor};"></div>
-            <h3 class="text-headline-md font-headline-md text-on-surface font-extrabold">${analyticsTitle}</h3>
-          </div>
-          <span class="text-xs font-bold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">تحديث مباشر ⚡</span>
-        </div>
-        
-        <div class="relative flex-1 w-full flex items-end justify-between gap-3 pt-6 pb-2 px-2">
-          <!-- Smooth SVG Background Curve -->
-          <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-25" preserveAspectRatio="none" viewBox="0 0 100 100">
-            <path d="M 0 ${100 - bar1} Q 25 ${100 - bar2}, 50 ${100 - bar3} T 100 ${100 - bar5} L 100 100 L 0 100 Z" fill="${analyticsColor}" />
-            <path d="M 0 ${100 - bar1} Q 25 ${100 - bar2}, 50 ${100 - bar3} T 100 ${100 - bar5}" fill="none" stroke="${analyticsColor}" stroke-width="3" />
-          </svg>
+  <div class="w-full h-full flex flex-col justify-between">
+    <div class="flex items-center justify-between border-b border-outline-variant/20 pb-4 mb-4">
+      <div class="flex items-center gap-3">
+        <div class="w-3.5 h-3.5 rounded-full shadow-sm" style="background-color: ${analyticsColor};"></div>
+        <h3 class="text-headline-md font-headline-md text-on-surface font-extrabold">${analyticsTitle}</h3>
+      </div>
+    </div>
+    
+    <div class="relative flex-1 w-full flex items-end justify-between gap-3 pt-6 pb-2 px-2">
+      <!-- Smooth SVG Background Curve -->
+      <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-25" preserveAspectRatio="none" viewBox="0 0 100 100">
+        <path d="M 0 ${100 - bar1} Q 25 ${100 - bar2}, 50 ${100 - bar3} T 100 ${100 - bar5} L 100 100 L 0 100 Z" fill="${analyticsColor}" />
+        <path d="M 0 ${100 - bar1} Q 25 ${100 - bar2}, 50 ${100 - bar3} T 100 ${100 - bar5}" fill="none" stroke="${analyticsColor}" stroke-width="3" />
+      </svg>
 
-          <!-- 5 Dynamic Curved Glass Bars -->
-          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar1}%; background: linear-gradient(to top, ${analyticsColor}22, ${analyticsColor});"></div>
-          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar2}%; background: linear-gradient(to top, ${analyticsColor}33, ${analyticsColor});"></div>
-          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar3}%; background: linear-gradient(to top, ${analyticsColor}44, ${analyticsColor});"></div>
-          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar4}%; background: linear-gradient(to top, ${analyticsColor}66, ${analyticsColor});"></div>
-          <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar5}%; background: linear-gradient(to top, ${analyticsColor}aa, ${analyticsColor});"></div>
-        </div>
+      <!-- 5 Dynamic Curved Glass Bars -->
+      <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar1}%; background: linear-gradient(to top, ${analyticsColor}22, ${analyticsColor});"></div>
+      <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar2}%; background: linear-gradient(to top, ${analyticsColor}33, ${analyticsColor});"></div>
+      <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar3}%; background: linear-gradient(to top, ${analyticsColor}44, ${analyticsColor});"></div>
+      <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar4}%; background: linear-gradient(to top, ${analyticsColor}66, ${analyticsColor});"></div>
+      <div class="relative z-10 flex-1 rounded-2xl transition-all duration-700 shadow-md group hover:scale-105" style="height: ${bar5}%; background: linear-gradient(to top, ${analyticsColor}aa, ${analyticsColor});"></div>
+    </div>
 
-        <div class="flex items-center justify-between text-[11px] text-on-surface-variant font-bold border-t border-outline-variant/20 pt-3">
-          <span>الربع الأول</span>
-          <span>الربع الثاني</span>
-          <span>الربع الثالث</span>
-          <span>الربع الرابع</span>
-          <span>المجموع السنوي</span>
-        </div>
-      </div>`
-  }
+    <div class="flex items-center justify-between text-[11px] text-on-surface-variant font-bold border-t border-outline-variant/20 pt-3">
+      <span>الربع الأول</span>
+      <span>الربع الثاني</span>
+      <span>الربع الثالث</span>
+      <span>الربع الرابع</span>
+      <span>المجموع السنوي</span>
+    </div>
+  </div>
 </div>
 <div class="flex flex-col gap-stack-md">
-<h2 class="text-headline-lg font-headline-lg text-on-surface">${aboutTitle}</h2>
-<p class="text-body-lg font-body-lg text-on-surface-variant mb-4">${aboutSubtitle}</p>
+<h2 class="text-headline-lg font-headline-lg text-on-surface" style="${aboutTextColor ? `color: ${aboutTextColor};` : ''}">${aboutTitle}</h2>
+<p class="text-body-lg font-body-lg text-on-surface-variant mb-4" style="${aboutTextColor ? `color: ${aboutTextColor}; opacity: 0.9;` : ''}">${aboutSubtitle}</p>
 </div>
 </div>
 </div>
@@ -495,12 +584,13 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter auto-rows-[280px]">
   ${featuresItems.map((item, idx) => {
     const isImg = item.icon && (item.icon.startsWith('http') || item.icon.includes('/') || item.icon.startsWith('data:'));
+    const symbolIcon = formatMaterialIcon(item.icon);
     const colSpan = idx === 0 || idx === featuresItems.length - 1 ? 'col-span-1 lg:col-span-2' : 'col-span-1';
     const colors = ['primary', 'secondary', 'tertiary', 'primary'];
     const color = colors[idx % colors.length];
     const iconEl = isImg
       ? `<img src="${item.icon}" alt="${item.title}" class="w-14 h-14 rounded-2xl object-cover border border-outline-variant/30" />`
-      : `<div class="w-14 h-14 rounded-2xl bg-${color}/10 flex items-center justify-center mb-stack-md group-hover:scale-110 group-hover:bg-${color} transition-all duration-300"><span class="material-symbols-outlined text-${color} group-hover:text-on-${color} text-[32px] transition-colors">${item.icon || 'star'}</span></div>`;
+      : `<div class="w-14 h-14 rounded-2xl bg-${color}/10 flex items-center justify-center mb-stack-md group-hover:scale-110 group-hover:bg-${color} transition-all duration-300"><span class="material-symbols-outlined text-${color} group-hover:text-on-${color} text-[32px] transition-colors">${symbolIcon}</span></div>`;
     return `
     <div data-section="features" data-index="${idx}" class="${colSpan} row-span-1 bg-surface-container-lowest border border-outline-variant/60 rounded-3xl p-stack-lg shadow-sm hover:shadow-xl hover:border-${color}/50 hover:-translate-y-2 transition-all duration-300 group flex flex-col justify-between overflow-hidden relative">
       <div class="relative z-10">
@@ -515,21 +605,21 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 </section>
 
 <!-- Courses Section -->
-<section data-section="courses" id="courses" class="w-full bg-surface transition-all duration-300 section-hover cursor-pointer">
+<section data-section="courses" id="courses" class="w-full transition-all duration-300 section-hover cursor-pointer" style="${coursesBg ? `background-color: ${coursesBg};` : 'background-color: #ffffff;'} ${coursesTextColor ? `color: ${coursesTextColor};` : ''}">
   <div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
     <div class="text-center mb-16">
-      <span class="text-label-md font-label-md text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">البرامج التدريبية</span>
-      <h2 class="text-headline-lg font-headline-lg text-on-surface mt-4 mb-2">${coursesTitle}</h2>
-      <p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mx-auto">${coursesSubtitle}</p>
+      <span class="text-label-md font-label-md bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20" style="${coursesBtnBg ? `color: ${coursesBtnBg}; border-color: ${coursesBtnBg}33; background-color: ${coursesBtnBg}15;` : 'color: #3525cd;'}">البرامج التدريبية</span>
+      <h2 class="text-headline-lg font-headline-lg mt-4 mb-2" style="${(coursesTextColor || coursesTitleColor) ? `color: ${coursesTextColor || coursesTitleColor};` : 'color: #1b1b24;'}">${coursesTitle}</h2>
+      <p class="text-body-lg font-body-lg max-w-2xl mx-auto" style="${(coursesTextColor || coursesTitleColor) ? `color: ${coursesTextColor || coursesTitleColor}; opacity: 0.85;` : 'color: #464555;'}">${coursesSubtitle}</p>
     </div>
 
     ${coursesList.length === 0 ? `
-      <div class="bg-surface-container-lowest border border-dashed border-outline-variant/60 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-3 my-4">
+      <div class="border border-dashed border-outline-variant/60 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-3 my-4" style="${coursesCardBg ? `background-color: ${coursesCardBg};` : 'background-color: #ffffff;'}">
         <span class="material-symbols-outlined text-outline text-[48px]">menu_book</span>
-        <h3 class="text-headline-md font-headline-md text-on-surface">لا توجد دورات متاحة حالياً</h3>
-        <p class="text-body-md font-body-md text-on-surface-variant max-w-md">تابعنا قريباً للمزيد من الدورات وورش العمل الجديدة.</p>
+        <h3 class="text-headline-md font-headline-md" style="${(coursesTextColor || coursesTitleColor) ? `color: ${coursesTextColor || coursesTitleColor};` : 'color: #1b1b24;'}">لا توجد دورات متاحة حالياً</h3>
+        <p class="text-body-md font-body-md max-w-md" style="${(coursesTextColor || coursesTitleColor) ? `color: ${coursesTextColor || coursesTitleColor}; opacity: 0.8;` : 'color: #464555;'}">تابعنا قريباً للمزيد من الدورات وورش العمل الجديدة.</p>
         ${isEditing ? `
-          <a href="/academic/courses/create" class="mt-4 inline-flex items-center gap-2 bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-6 py-3 rounded-full transition-all shadow-sm">
+          <a href="/academic/courses/create" class="mt-4 inline-flex items-center gap-2 text-on-primary text-label-md font-label-md px-6 py-3 rounded-full transition-all shadow-sm" style="${coursesBtnBg ? `background-color: ${coursesBtnBg}; color: #ffffff;` : 'background-color: #3525cd; color: #ffffff;'}">
             <span class="material-symbols-outlined text-[18px]">add</span>
             <span>إضافة دورة جديدة</span>
           </a>
@@ -538,7 +628,7 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
     ` : `
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
         ${coursesList.map((course: any, idx: number) => {
-          const courseHref = `/${course.slug || course.id}`;
+          const courseHref = `/courses/${course.slug || course.id}`;
           const courseTitle = course.title || 'دورة تدريبية';
           const courseImg = course.image || course.cover_image || 'https://images.unsplash.com/photo-1586717791821-3f44a563de4c?auto=format&fit=crop&q=80&w=600';
           const instructorName = typeof course.instructor === 'object' && course.instructor?.name
@@ -552,42 +642,42 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
             : (course.final_price ? `${course.final_price} ${course.currency || 'ر.س'}` : (course.price ? `${course.price} ${course.currency || 'ر.س'}` : 'مجانًا'));
 
           return `
-            <a href="${courseHref}" target="_top" data-course-index="${idx}" class="group block bg-surface-container-lowest border border-outline-variant/60 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:border-primary/40 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between">
+            <a href="${courseHref}" target="_top" data-course-index="${idx}" class="group block border border-outline-variant/60 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:border-primary/40 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between" style="${coursesCardBg ? `background-color: ${coursesCardBg};` : 'background-color: #ffffff;'}">
               <div>
                 <div class="relative w-full aspect-video overflow-hidden bg-surface-container">
                   <img src="${courseImg}" alt="${courseTitle}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   ${showPrice ? `
-                    <span class="absolute top-3 left-3 bg-surface/90 backdrop-blur-md text-primary font-extrabold text-xs px-3 py-1 rounded-full shadow-sm">
+                    <span class="absolute top-3 left-3 bg-surface/90 backdrop-blur-md font-extrabold text-xs px-3 py-1 rounded-full shadow-sm" style="${coursesBtnBg ? `color: ${coursesBtnBg};` : 'color: #3525cd;'}">
                       ${priceDisplay}
                     </span>
                   ` : ''}
                 </div>
                 <div class="p-6">
                   ${instructorName ? `
-                    <div class="flex items-center gap-2 mb-3 text-outline text-xs font-bold">
-                      <span class="material-symbols-outlined text-[16px] text-primary">person</span>
+                    <div class="flex items-center gap-2 mb-3 text-xs font-bold" style="${(coursesTextColor || coursesTitleColor) ? `color: ${coursesTextColor || coursesTitleColor}; opacity: 0.7;` : 'color: #777587;'}">
+                      <span class="material-symbols-outlined text-[16px]" style="${coursesBtnBg ? `color: ${coursesBtnBg};` : 'color: #3525cd;'}">person</span>
                       <span>${instructorName}</span>
                     </div>
                   ` : ''}
-                  <h3 class="text-headline-md font-headline-md text-on-surface text-lg font-bold mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                  <h3 class="text-headline-md font-headline-md text-lg font-bold mb-2 group-hover:text-primary transition-colors line-clamp-2" style="${(coursesTextColor || coursesTitleColor) ? `color: ${coursesTextColor || coursesTitleColor};` : 'color: #1b1b24;'}">
                     ${courseTitle}
                   </h3>
                   ${course.description ? `
-                    <p class="text-body-md text-on-surface-variant text-xs line-clamp-2 mb-4 leading-relaxed opacity-80">
+                    <p class="text-body-md text-xs line-clamp-2 mb-4 leading-relaxed opacity-80" style="${(coursesTextColor || coursesTitleColor) ? `color: ${coursesTextColor || coursesTitleColor};` : 'color: #464555;'}">
                       ${course.description}
                     </p>
                   ` : ''}
                 </div>
               </div>
-              <div class="px-6 pb-6 pt-2 border-t border-outline-variant/20 flex items-center justify-between text-xs text-on-surface-variant font-bold">
+              <div class="px-6 pb-6 pt-2 border-t border-outline-variant/20 flex items-center justify-between text-xs font-bold" style="${(coursesTextColor || coursesTitleColor) ? `color: ${coursesTextColor || coursesTitleColor}; opacity: 0.85;` : 'color: #464555;'}">
                 ${showStudentsCount && students !== undefined ? `
                   <span class="flex items-center gap-1">
-                    <span class="material-symbols-outlined text-[16px] text-primary">groups</span>
+                    <span class="material-symbols-outlined text-[16px]" style="${coursesBtnBg ? `color: ${coursesBtnBg};` : 'color: #3525cd;'}">groups</span>
                     <span>${students} طالب</span>
                   </span>
                 ` : '<span></span>'}
                 ${duration ? `
-                  <span class="flex items-center gap-1 text-slate-500">
+                  <span class="flex items-center gap-1 opacity-70">
                     <span class="material-symbols-outlined text-[16px]">schedule</span>
                     <span>${duration}</span>
                   </span>
@@ -602,35 +692,35 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 </section>
 
 <!-- Stats Section -->
-<section class="w-full bg-primary/5">
+<section data-section="stats" id="stats-benefits" class="w-full section-hover cursor-pointer transition-all duration-300" style="${statsBg ? `background-color: ${statsBg};` : 'background-color: rgba(53, 37, 205, 0.05);'} ${statsTextColor ? `color: ${statsTextColor};` : ''}">
   <div class="max-w-container-max mx-auto py-20 px-margin-mobile md:px-margin-desktop">
     <div class="grid grid-cols-2 md:grid-cols-4 gap-gutter">
-      <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-        <span class="block text-display-lg font-display-lg text-primary font-black mb-2">98%</span>
-        <span class="text-body-md font-body-md text-on-surface-variant font-bold">نسبة رضا الطلاب</span>
+      <div data-stat-index="0" class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
+        <span class="block text-display-lg font-display-lg font-black mb-2" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #3525cd;'}">${stat1Value}</span>
+        <span class="text-body-md font-body-md font-bold" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #464555;'}">${stat1Label}</span>
       </div>
-      <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-        <span class="block text-display-lg font-display-lg text-primary font-black mb-2">150+</span>
-        <span class="text-body-md font-body-md text-on-surface-variant font-bold">منهج دراسي متكامل</span>
+      <div data-stat-index="1" class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
+        <span class="block text-display-lg font-display-lg font-black mb-2" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #3525cd;'}">${stat2Value}</span>
+        <span class="text-body-md font-body-md font-bold" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #464555;'}">${stat2Label}</span>
       </div>
-      <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-        <span class="block text-display-lg font-display-lg text-primary font-black mb-2">12k+</span>
-        <span class="text-body-md font-body-md text-on-surface-variant font-bold">خريج متميز</span>
+      <div data-stat-index="2" class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
+        <span class="block text-display-lg font-display-lg font-black mb-2" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #3525cd;'}">${stat3Value}</span>
+        <span class="text-body-md font-body-md font-bold" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #464555;'}">${stat3Label}</span>
       </div>
-      <div class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-        <span class="block text-display-lg font-display-lg text-primary font-black mb-2">24/7</span>
-        <span class="text-body-md font-body-md text-on-surface-variant font-bold">دعم أكاديمي مباشر</span>
+      <div data-stat-index="3" class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
+        <span class="block text-display-lg font-display-lg font-black mb-2" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #3525cd;'}">${stat4Value}</span>
+        <span class="text-body-md font-body-md font-bold" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #464555;'}">${stat4Label}</span>
       </div>
     </div>
   </div>
 </section>
 
 <!-- 2. Academic Management (Stats / Pricing items) -->
-<section data-section="pricing" id="pricing-plans" class="w-full border-y border-outline-variant/30 bg-surface transition-all duration-300 section-hover cursor-pointer" style="background-color: ${pricingBg}; color: ${pricingTextColor};">
+<section data-section="pricing" id="pricing-plans" class="w-full border-y border-outline-variant/30 transition-all duration-300 section-hover cursor-pointer" style="${pricingBg ? `background-color: ${pricingBg};` : 'background-color: #fcf8ff;'} ${pricingTextColor ? `color: ${pricingTextColor};` : ''}">
 <div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
 <div class="text-center mb-10">
-  <h3 class="text-headline-md font-headline-md text-on-surface mb-2">${pricingTitle}</h3>
-  <p class="text-xs text-slate-500 font-bold">${pricingSubtitle}</p>
+  <h3 class="text-headline-md font-headline-md mb-2" style="${pricingTextColor ? `color: ${pricingTextColor};` : 'color: #1b1b24;'}">${pricingTitle}</h3>
+  <p class="text-xs font-bold" style="${pricingTextColor ? `color: ${pricingTextColor}; opacity: 0.8;` : 'color: #777587;'}">${pricingSubtitle}</p>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter divide-y md:divide-y-0 md:divide-x md:divide-x-reverse divide-outline-variant/50 text-center">
   ${pricingItems.map((item, idx) => `
@@ -638,8 +728,8 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
       <span class="material-symbols-outlined text-primary text-[48px] mb-4 opacity-80 group-hover:opacity-100 group-hover:-translate-y-2 transition-all duration-300">
         ${idx === 0 ? 'school' : idx === 1 ? 'library_books' : 'check_circle'}
       </span>
-      <h4 class="text-display-lg font-display-lg text-on-surface">${item.price}</h4>
-      <p class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mt-2">${item.title}</p>
+      <h4 class="text-display-lg font-display-lg" style="${pricingTextColor ? `color: ${pricingTextColor};` : 'color: #1b1b24;'}">${item.price}</h4>
+      <p class="text-label-md font-label-md uppercase tracking-wider mt-2" style="${pricingTextColor ? `color: ${pricingTextColor}; opacity: 0.85;` : 'color: #464555;'}">${item.title}</p>
     </div>
   `).join('')}
 </div>
@@ -647,59 +737,80 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 </section>
 
 <!-- Testimonials Section -->
-<section data-section="testimonials" id="testimonials" class="w-full bg-surface-container/50 border-y border-outline-variant/30 section-hover cursor-pointer" style="background-color: ${pricingBg}; color: ${pricingTextColor};">
+<section data-section="testimonials" id="testimonials" class="w-full border-y border-outline-variant/30 section-hover cursor-pointer transition-all duration-300" style="${testimonialsBg ? `background-color: ${testimonialsBg};` : 'background-color: #f5f2ff;'} ${testimonialsTextColor ? `color: ${testimonialsTextColor};` : ''}">
 <div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
 <div class="text-center mb-16">
   <span class="text-label-md font-label-md text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">آراء وقصص النجاح</span>
-  <h2 class="text-headline-lg font-headline-lg text-on-surface mt-4 mb-2">${testimonialsTitle}</h2>
-  <p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mx-auto">${testimonialsSubtitle}</p>
+  <h2 class="text-headline-lg font-headline-lg mt-4 mb-2" style="${testimonialsTextColor ? `color: ${testimonialsTextColor};` : 'color: #1b1b24;'}">${testimonialsTitle}</h2>
+  <p class="text-body-lg font-body-lg max-w-2xl mx-auto" style="${testimonialsTextColor ? `color: ${testimonialsTextColor}; opacity: 0.85;` : 'color: #464555;'}">${testimonialsSubtitle}</p>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
   <!-- Card 1 -->
   <div data-testimonial="0" class="bg-surface border border-outline-variant/50 p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
-    <p class="text-body-md font-body-md text-on-surface-variant italic mb-8">"${testimonial1Text}"</p>
+    <p class="text-body-md font-body-md italic mb-8" style="${testimonialsTextColor ? `color: ${testimonialsTextColor}; opacity: 0.9;` : 'color: #464555;'}">"${testimonial1Text}"</p>
     <div class="flex items-center gap-4">
       <div class="w-12 h-12 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center font-bold text-primary text-sm">
         ${testimonial1Author.slice(0, 2)}
       </div>
       <div>
-        <h4 class="font-extrabold text-sm text-on-surface">${testimonial1Author}</h4>
-        <p class="text-xs text-slate-500 font-bold">${testimonial1Role}</p>
+        <h4 class="font-extrabold text-sm" style="${testimonialsTextColor ? `color: ${testimonialsTextColor};` : 'color: #1b1b24;'}">${testimonial1Author}</h4>
+        <p class="text-xs font-bold" style="${testimonialsTextColor ? `color: ${testimonialsTextColor}; opacity: 0.75;` : 'color: #777587;'}">${testimonial1Role}</p>
       </div>
     </div>
   </div>
   <!-- Card 2 -->
   <div data-testimonial="1" class="bg-surface border border-outline-variant/50 p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
-    <p class="text-body-md font-body-md text-on-surface-variant italic mb-8">"${testimonial2Text}"</p>
+    <p class="text-body-md font-body-md italic mb-8" style="${testimonialsTextColor ? `color: ${testimonialsTextColor}; opacity: 0.9;` : 'color: #464555;'}">"${testimonial2Text}"</p>
     <div class="flex items-center gap-4">
       <div class="w-12 h-12 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center font-bold text-primary text-sm">
         ${testimonial2Author.slice(0, 2)}
       </div>
       <div>
-        <h4 class="font-extrabold text-sm text-on-surface">${testimonial2Author}</h4>
-        <p class="text-xs text-slate-500 font-bold">${testimonial2Role}</p>
+        <h4 class="font-extrabold text-sm" style="${testimonialsTextColor ? `color: ${testimonialsTextColor};` : 'color: #1b1b24;'}">${testimonial2Author}</h4>
+        <p class="text-xs font-bold" style="${testimonialsTextColor ? `color: ${testimonialsTextColor}; opacity: 0.75;` : 'color: #777587;'}">${testimonial2Role}</p>
       </div>
     </div>
   </div>
   <!-- Card 3 -->
   <div data-testimonial="2" class="bg-surface border border-outline-variant/50 p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
-    <p class="text-body-md font-body-md text-on-surface-variant italic mb-8">"${testimonial3Text}"</p>
+    <p class="text-body-md font-body-md italic mb-8" style="${testimonialsTextColor ? `color: ${testimonialsTextColor}; opacity: 0.9;` : 'color: #464555;'}">"${testimonial3Text}"</p>
     <div class="flex items-center gap-4">
       <div class="w-12 h-12 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center font-bold text-primary text-sm">
         ${testimonial3Author.slice(0, 2)}
       </div>
       <div>
-        <h4 class="font-extrabold text-sm text-on-surface">${testimonial3Author}</h4>
-        <p class="text-xs text-slate-500 font-bold">${testimonial3Role}</p>
+        <h4 class="font-extrabold text-sm" style="${testimonialsTextColor ? `color: ${testimonialsTextColor};` : 'color: #1b1b24;'}">${testimonial3Author}</h4>
+        <p class="text-xs font-bold" style="${testimonialsTextColor ? `color: ${testimonialsTextColor}; opacity: 0.75;` : 'color: #777587;'}">${testimonial3Role}</p>
       </div>
     </div>
   </div>
 </div>
 </div>
+<!-- FAQ Section -->
+<section data-section="faq" id="faq" class="py-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto transition-all duration-300 section-hover cursor-pointer rounded-3xl mb-16" style="${faqBg ? `background-color: ${faqBg};` : ''} ${faqTextColor ? `color: ${faqTextColor};` : ''}">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-16 space-y-4">
+      <span class="text-label-md font-label-md text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">الأسئلة الشائعة</span>
+      <h2 class="text-display-sm font-display-sm ${faqTextColor ? '' : 'text-on-surface'}" style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${faqTitle}</h2>
+    </div>
+    <div class="space-y-4">
+      ${faqItems.map((item, idx) => `
+        <div data-section="faq" data-index="${idx}" class="p-6 md:p-8 bg-surface-container-lowest border border-outline-variant/30 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
+          <div class="flex items-start gap-4">
+            <span class="material-symbols-outlined text-primary text-[28px] shrink-0 mt-0.5">help_outline</span>
+            <div class="space-y-2 flex-1">
+              <h4 class="text-headline-sm font-headline-sm font-bold ${faqTextColor ? '' : 'text-on-surface'}" style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${item.question}</h4>
+              <p class="text-body-md font-body-md ${faqTextColor ? '' : 'text-on-surface-variant'} leading-relaxed" style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.85;` : ''}">${item.answer}</p>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
 </section>
 
 <!-- Final CTA -->
-<section data-section="contact" class="py-32 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto text-center mb-16 transition-all duration-300 section-hover cursor-pointer rounded-3xl">
+<section data-section="contact" class="py-32 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto text-center mb-16 transition-all duration-300 section-hover cursor-pointer rounded-3xl" style="${contactBg ? `background-color: ${contactBg};` : ''} ${contactTextColor ? `color: ${contactTextColor};` : ''}">
 <div class="max-w-4xl mx-auto bg-primary/5 border border-primary/20 rounded-[3rem] p-stack-lg md:p-24 relative overflow-hidden shadow-2xl">
 <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/10 via-surface/0 to-surface/0"></div>
 <div class="relative z-10">
@@ -709,12 +820,22 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
                         ${contactDesc}
                     </p>
 <div class="flex flex-col sm:flex-row items-center justify-center gap-stack-md">
-<button class="w-full sm:w-auto bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-10 py-5 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                            ${contactBtnText}
-                        </button>
-<button class="w-full sm:w-auto bg-surface hover:bg-surface-container text-on-surface border border-outline-variant text-label-md font-label-md px-10 py-5 rounded-full hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-md">
-                            طلب عرض توضيحي
-                        </button>
+  ${contactPhone
+    ? `<a data-contact-btn="primary" href="tel:${contactPhone.replace(/\s+/g, '')}" class="w-full sm:w-auto inline-flex items-center justify-center bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-10 py-5 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer text-decoration-none">
+        ${contactBtnText}
+       </a>`
+    : `<button data-contact-btn="primary" class="w-full sm:w-auto bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-10 py-5 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+        ${contactBtnText}
+       </button>`
+  }
+  ${contactSecondaryBtnLink
+    ? `<a data-contact-btn="secondary" href="${contactSecondaryBtnLink}" ${contactSecondaryBtnLink.startsWith('http') || contactSecondaryBtnLink.startsWith('https') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="w-full sm:w-auto inline-flex items-center justify-center bg-surface hover:bg-surface-container text-on-surface border border-outline-variant text-label-md font-label-md px-10 py-5 rounded-full hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer text-decoration-none">
+        ${contactSecondaryBtnText}
+       </a>`
+    : `<button data-contact-btn="secondary" class="w-full sm:w-auto bg-surface hover:bg-surface-container text-on-surface border border-outline-variant text-label-md font-label-md px-10 py-5 rounded-full hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-md">
+        ${contactSecondaryBtnText}
+       </button>`
+  }
 </div>
 </div>
 </div>

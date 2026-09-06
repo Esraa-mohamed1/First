@@ -142,9 +142,8 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     {
       label: 'المالية',
       icon: Landmark,
-      href: '/academic/finance/overview',
+      href: '/academic/finance/requests',
       subItems: [
-        { label: 'نظرة عامة', href: '/academic/finance/overview' },
         { label: 'طلبات الاشتراك والشراء', href: '/academic/finance/requests' },
         { label: 'إعدادات الدفع (للطلاب)', href: '/academic/finance/payment-settings' },
       ]

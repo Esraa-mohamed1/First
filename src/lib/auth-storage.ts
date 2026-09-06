@@ -59,3 +59,83 @@ export const clearUserSessionAndCache = () => {
     console.error('Error clearing user session and cache:', e);
   }
 };
+
+export const purgeAllCourseDraftCache = () => {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const keysToRemove: string[] = [
+      'createCourseId',
+      'createCourseSlug',
+      'darab_last_created_course_id',
+      'darab_last_created_course_slug',
+    ];
+
+    const types = ['recorded', 'online', 'physical', 'live-online', 'in-person'];
+    types.forEach(t => {
+      keysToRemove.push(`darb_create_course_draft_cache_${t}`);
+      keysToRemove.push(`darb_create_course_image_${t}`);
+    });
+
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && (
+        key.startsWith('darb_create_course_') || 
+        key.startsWith('darab_course_cache_') ||
+        key.startsWith('darab_course_edit_')
+      )) {
+        keysToRemove.push(key);
+      }
+    }
+
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+  } catch (e) {
+    console.error('Error purging course draft cache:', e);
+  }
+};
+
+export const getStoredUserRole = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const userInfoStr = localStorage.getItem('user_info');
+    if (userInfoStr) {
+      const parsed = JSON.parse(userInfoStr);
+      const userType = parsed?.type || parsed?.account_type || parsed?.user_type || (parsed?.role !== 'admin' && parsed?.role !== 'الادمن' ? parsed?.role : null);
+      if (userType) return userType;
+    }
+
+    const directRole =
+      localStorage.getItem('user_role') ||
+      localStorage.getItem('user_account_type') ||
+      localStorage.getItem('registration_role');
+    if (directRole && directRole !== 'admin' && directRole !== 'الادمن') return directRole;
+
+    if (userInfoStr) {
+      const parsed = JSON.parse(userInfoStr);
+      return parsed?.role || parsed?.type || null;
+    }
+    if (directRole) return directRole;
+  } catch (e) {
+    return null;
+  }
+  return null;
+};
+
+export const isSchoolTeacherRole = (userOrRole?: any): boolean => {
+  if (!userOrRole) return false;
+  let roleStr: string | null = null;
+  if (typeof userOrRole === 'object') {
+    roleStr = userOrRole.type || userOrRole.account_type || userOrRole.user_type || (userOrRole.role !== 'admin' && userOrRole.role !== 'الادمن' ? userOrRole.role : null);
+  } else if (typeof userOrRole === 'string') {
+    roleStr = userOrRole;
+  }
+  if (!roleStr) return false;
+  const normalized = roleStr.toLowerCase().trim();
+  return (
+    normalized === 'schoolteacher' ||
+    normalized === 'school_teacher' ||
+    normalized === 'schoolcoach' ||
+    normalized === 'school'
+  );
+};
+

@@ -10,9 +10,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    const storageZoneName = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_NAME || 'esraa2';
-    // Use Server API Key first, fallback to Stream API Key
-    const apiKey = process.env.BUNNY_API_KEY || process.env.NEXT_PUBLIC_BUNNY_STREAM_API_KEY || '';
+    const storageZoneName = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_NAME || process.env.BUNNY_STORAGE_ZONE_NAME || 'esraa2';
+    // Use Storage Password first, fallback to Server API Key or Stream API Key
+    const apiKey = process.env.BUNNY_STORAGE_PASSWORD || process.env.BUNNY_API_KEY || process.env.NEXT_PUBLIC_BUNNY_STREAM_API_KEY || '';
 
     if (!apiKey) {
       return NextResponse.json({ error: 'Bunny API credentials are not configured on the server.' }, { status: 500 });

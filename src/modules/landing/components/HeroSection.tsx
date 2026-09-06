@@ -125,34 +125,10 @@ export default function HeroSection({
 
           {/* Description */}
           <div
-            style={{ ...bodySizeStyle, color: `rgba(${textRgb}, 0.75)` }}
+            style={{ ...bodySizeStyle, color: `rgba(${textRgb}, 0.85)` }}
             className="text-xs leading-relaxed ql-editor !p-0"
             dangerouslySetInnerHTML={{ __html: data.description || course?.description || '' }}
           />
-
-          {/* Stats strip */}
-          <div style={{ borderColor: `rgba(${primaryRgbTriplet}, 0.3)` }} className="border-t border-b py-3 flex items-center justify-around text-center gap-2">
-            {[
-              { icon: '🎥', val: `${(totalLessons * 1.5).toFixed(0)} ساعة`, label: 'محتوى فيديو' },
-              { icon: '👥', val: `+${course?.students_count || '2,450'}`, label: 'طالب مسجل' },
-              { icon: '⭐', val: '4.8', label: 'متوسط التقييم' },
-            ].map((s, i) => (
-              <div key={i} className="flex flex-col items-center gap-0.5">
-                <span className="text-base">{s.icon}</span>
-                <span style={{ color: `rgb(${primaryRgbTriplet})` }} className="text-xs font-black">{s.val}</span>
-                <span style={{ color: `rgba(${textRgb}, 0.55)` }} className="text-[9px] font-bold">{s.label}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Instructor row */}
-          <div className="flex items-center gap-3">
-            <img src={instructorImage} alt={instructorName} className="w-10 h-10 rounded-full object-cover border-2 shrink-0" style={{ borderColor: `rgba(${primaryRgbTriplet},0.5)` }} />
-            <div className="text-right">
-              <p style={{ color: `rgba(${textRgb}, 0.5)` }} className="text-[9px] font-bold uppercase">المدرب المعتمد</p>
-              <p style={{ color: localText }} className="text-xs font-black">{instructorName}</p>
-            </div>
-          </div>
 
           {/* Price + CTA */}
           <div style={{ backgroundColor: '#FBF7EE', borderColor: '#F1E8D6' }} className="border rounded-2xl p-4 flex flex-col gap-3">
@@ -167,13 +143,18 @@ export default function HeroSection({
                 </div>
               )}
             </div>
+            {data.discountMessage !== '' && (
+              <span className="text-[10px] text-[#C9A24B] font-bold block text-right">
+                {data.discountMessage !== undefined ? data.discountMessage : '⏳ الخصم ساري لفترة محدودة'}
+              </span>
+            )}
             <button
               onClick={onSubscribe}
               disabled={isSubscribing}
               className="w-full py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-all cursor-pointer"
               style={{ background: `linear-gradient(90deg, #E7CE8F, #C9A24B)`, color: '#082A24' }}
             >
-              {isSubscribing ? 'جاري التحميل...' : course?.is_subscribed ? 'ابدأ التعلم الآن ←' : 'اشترك في الدورة الآن ←'}
+              {isSubscribing ? 'جاري التحميل...' : course?.is_subscribed ? 'ابدأ التعلم الآن ←' : (data.buttonText || 'اشترك في الدورة الآن ←')}
             </button>
           </div>
         </div>
@@ -219,28 +200,19 @@ export default function HeroSection({
 
           {/* Details block overlay */}
           <div 
-            style={{ backgroundColor: '#ffffff', color: '#22302B', borderColor: `rgba(${textRgb}, 0.15)` }}
+            style={{ backgroundColor: '#ffffff', color: localText, borderColor: `rgba(${textRgb}, 0.15)` }}
             className="rounded-3xl border shadow-2xl p-8 max-w-[940px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-center text-right"
           >
             <div className="md:col-span-2 space-y-4">
-              <h1 style={{ ...titleSizeStyle, color: '#0D3B33' }} className="text-2xl md:text-3xl font-extrabold leading-snug">
+              <h1 style={{ ...titleSizeStyle, color: localText || '#0D3B33' }} className="text-2xl md:text-3xl font-extrabold leading-snug">
                 {data.title || course?.title}
               </h1>
               
               <div
-                style={{ ...bodySizeStyle, color: 'rgba(34, 48, 43, 0.75)' }}
+                style={{ ...bodySizeStyle, color: `rgba(${textRgb}, 0.85)` }}
                 className="font-medium text-sm leading-relaxed ql-editor !p-0"
                 dangerouslySetInnerHTML={{ __html: data.description || course?.description || 'برنامج عملي مكثّف، تتعلم فيه بناء المهارات خطوة بخطوة، وتطبّق على مشاريع حقيقية.' }}
               />
-
-              <div 
-                style={{ borderColor: 'rgba(0, 0, 0, 0.08)' }}
-                className="flex flex-wrap gap-4 text-xs font-semibold text-slate-600 pt-2 border-t"
-              >
-                <div className="flex items-center gap-1">🎥 <b>{totalLessons * 1.5} ساعة</b></div>
-                <div className="flex items-center gap-1">👥 <b>+{course?.students_count || '2,450'} طالب</b></div>
-                <div className="flex items-center gap-1">👨‍🏫 <b>{instructorName}</b></div>
-              </div>
             </div>
 
             <div 
@@ -260,7 +232,11 @@ export default function HeroSection({
                     )}
                   </div>
                 )}
-                <span className="text-[10px] text-[#C9A24B] font-bold block mt-1">⏳ الخصم ساري لفترة محدودة</span>
+                {data.discountMessage !== '' && (
+                  <span className="text-[10px] text-[#C9A24B] font-bold block mt-1">
+                    {data.discountMessage !== undefined ? data.discountMessage : '⏳ الخصم ساري لفترة محدودة'}
+                  </span>
+                )}
               </div>
 
               {!isFree && !course?.is_subscribed && setSelectedPaymentMethod && (
@@ -300,7 +276,7 @@ export default function HeroSection({
                     disabled={isSubscribing}
                     className="w-full py-3 bg-gradient-to-r from-[#E7CE8F] to-[#C9A24B] text-[#082A24] rounded-xl font-bold text-sm shadow-md hover:translate-y-[-1px] active:scale-95 transition-all cursor-pointer"
                   >
-                    {isSubscribing ? 'جاري التحميل...' : 'اشترك في الدورة الآن ←'}
+                    {isSubscribing ? 'جاري التحميل...' : (data.buttonText || 'اشترك في الدورة الآن ←')}
                   </button>
                 )}
               </div>

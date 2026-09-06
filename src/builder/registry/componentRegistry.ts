@@ -603,7 +603,7 @@ export const FeaturesSection = React.memo((props: any) => {
           'div',
           { className: `grid gap-6 ${gridClass}` },
           items.map((item: any, idx: number) => {
-            const itemProps = item.props || {};
+            const itemProps = item.props || item || {};
             const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
             const isHovered = isEditing && hoveredItemIndex === idx;
 
@@ -664,7 +664,7 @@ export const FeaturesSection = React.memo((props: any) => {
       'div',
       { className: `grid gap-4 ${gridClass}` },
       items.map((item: any, idx: number) => {
-        const itemProps = item.props || {};
+        const itemProps = item.props || item || {};
         const isSelected = isEditing && selectedNodeId === props.id && selectedItemIndex === idx;
         const isHovered = isEditing && hoveredItemIndex === idx;
 

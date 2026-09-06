@@ -4,6 +4,8 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Video, Monitor, Users, ArrowRight } from 'lucide-react';
 
+import { purgeAllCourseDraftCache } from '@/lib/auth-storage';
+
 export default function SelectCourseTypePage() {
   const router = useRouter();
 
@@ -32,7 +34,8 @@ export default function SelectCourseTypePage() {
   ];
 
   const handleSelectType = (type: string) => {
-    router.push(`/academic/courses/create?type=${type}`);
+    purgeAllCourseDraftCache();
+    router.push(`/academic/courses/create?type=${type}&new=true`);
   };
 
   return (

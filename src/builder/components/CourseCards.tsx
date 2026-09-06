@@ -5,6 +5,7 @@ import { useBuilderStore } from '../store/builderStore';
 import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
 import { getCourses } from '@/services/courses';
 import { getStudentCourses } from '@/services/student-courses';
+import { formatCourseAccessDuration } from '@/lib/utils';
 
 interface CourseCardsProps {
   id?: string;
@@ -91,7 +92,7 @@ export default function CourseCards(props: CourseCardsProps) {
       instructor: course.instructor || course.instructor_name || course.coach || 'المحاضر المعتمد',
       price: Number(course.price) === 0 ? 'مجانًا' : `${course.price} ر.س`,
       students: `${course.students_count ?? course.students ?? 0} طالب`,
-      duration: course.duration || (course.units?.reduce((acc: number, unit: any) => acc + (unit.lessons?.length || 0), 0) ? `${course.units.reduce((acc: number, unit: any) => acc + (unit.lessons?.length || 0), 0)} درس` : 'غير محدد'),
+      duration: formatCourseAccessDuration(course),
       image: course.image || course.cover_image || 'https://images.unsplash.com/photo-1586717791821-3f44a563de4c',
       description: course.description
     }));
@@ -230,7 +231,7 @@ export default function CourseCards(props: CourseCardsProps) {
 
             const isPurpleTheme = buttonBg === '#7c3aed';
 
-            const courseHref = `/${course.slug || course.id}`;
+            const courseHref = `/courses/${course.slug || course.id}`;
             const CardWrapper = ({ children }: { children: React.ReactNode }) =>
               isEditing ? <div>{children}</div> : <Link href={courseHref} className="block">{children}</Link>;
 

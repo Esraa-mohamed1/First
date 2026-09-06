@@ -10,11 +10,15 @@ interface CountrySelectProps {
   className?: string;
   // If true, trigger only shows flag and dial code, hiding the country name
   compact?: boolean; 
+  allowedCountryCodes?: string[];
 }
+
+const DEFAULT_ALLOWED_CODES = ["EG", "SA", "KW"];
 
 export const CountrySelect: React.FC<CountrySelectProps> = ({ 
   className = "", 
-  compact = false 
+  compact = false,
+  allowedCountryCodes = DEFAULT_ALLOWED_CODES
 }) => {
   const { countries, selectedCountry, setSelectedCountry, isLoading } = useCountry();
   const [isOpen, setIsOpen] = useState(false);
@@ -32,13 +36,31 @@ export const CountrySelect: React.FC<CountrySelectProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Filter countries strictly to the 3 allowed countries: 1. Egypt (+20), 2. Saudi Arabia (+966), 3. Kuwait (+965)
+  const availableCountries = useMemo(() => {
+    const codes = allowedCountryCodes || DEFAULT_ALLOWED_CODES;
+    return codes
+      .map((code) => countries.find((c) => c.isoCode.toUpperCase() === code.toUpperCase()))
+      .filter((c): c is Country => Boolean(c));
+  }, [countries, allowedCountryCodes]);
+
+  // Ensure selected country is one of the supported countries
+  useEffect(() => {
+    if (selectedCountry && availableCountries.length > 0) {
+      const isAllowed = availableCountries.some((c) => c.isoCode === selectedCountry.isoCode);
+      if (!isAllowed) {
+        setSelectedCountry(availableCountries[0]);
+      }
+    }
+  }, [selectedCountry, availableCountries, setSelectedCountry]);
+
   const filteredCountries = useMemo(() => {
-    if (!searchQuery) return countries;
-    return countries.filter((c) =>
+    if (!searchQuery) return availableCountries;
+    return availableCountries.filter((c) =>
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.dialCode.includes(searchQuery)
     );
-  }, [countries, searchQuery]);
+  }, [availableCountries, searchQuery]);
 
   if (isLoading || !selectedCountry) {
     return (

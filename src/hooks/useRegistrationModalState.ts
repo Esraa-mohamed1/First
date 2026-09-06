@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useModal } from '@/context/ModalContext';
-import { createAccount } from '@/services/auth';
+import { createAccount, sendOtp } from '@/services/auth';
 import { registerStudent } from '@/services/student-auth';
 import toast from 'react-hot-toast';
 import { useCountry } from '@/hooks/useCountry';
@@ -69,18 +69,86 @@ export function useRegistrationModalState() {
         }
     }, [isOpen, view]);
 
+    const [resendTimer, setResendTimer] = useState<number>(0);
+
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+        if (resendTimer > 0) {
+            timer = setInterval(() => {
+                setResendTimer((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(timer);
+    }, [resendTimer]);
+
+    useEffect(() => {
+        if (step === 3) {
+            setResendTimer(60);
+        }
+    }, [step]);
+
     const handleOtpChange = (index: number, value: string) => {
-        if (value.length > 1) value = value[0];
-        if (!/^\d*$/.test(value)) return;
+        const digitsOnly = value.replace(/\D/g, '');
+        if (!digitsOnly) {
+            const newOtp = [...otp];
+            newOtp[index] = '';
+            setOtp(newOtp);
+            return;
+        }
+
+        if (digitsOnly.length > 1) {
+            const newOtp = [...otp];
+            digitsOnly.slice(0, 4).split('').forEach((char, i) => {
+                if (i < 4) newOtp[i] = char;
+            });
+            setOtp(newOtp);
+            const lastIndex = Math.min(digitsOnly.length - 1, 3);
+            otpRefs.current[lastIndex]?.focus();
+            if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }));
+            return;
+        }
 
         const newOtp = [...otp];
-        newOtp[index] = value;
+        newOtp[index] = digitsOnly;
         setOtp(newOtp);
 
-        if (value && index < 3) {
+        if (digitsOnly && index < 3) {
             otpRefs.current[index + 1]?.focus();
         }
         if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }));
+    };
+
+    const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        e.preventDefault();
+        const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
+        if (!pastedData) return;
+
+        const newOtp = [...otp];
+        pastedData.split('').forEach((char, index) => {
+            if (index < 4) newOtp[index] = char;
+        });
+        setOtp(newOtp);
+
+        const lastIndex = Math.min(pastedData.length - 1, 3);
+        otpRefs.current[lastIndex]?.focus();
+        if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }));
+    };
+
+    const handleResendCode = async () => {
+        if (resendTimer > 0) return;
+        setIsLoading(true);
+        try {
+            const targetContact = contactMethod === 'email' ? formData.email : formData.phone;
+            if (targetContact) {
+                await sendOtp(targetContact, selectedCountry?.isoCode);
+            }
+            toast.success('تم إعادة إرسال رمز التحقق بنجاح');
+            setResendTimer(60);
+        } catch (error: any) {
+            toast.error(error?.message || 'حدث خطأ أثناء إعادة إرسال الرمز');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -289,12 +357,33 @@ export function useRegistrationModalState() {
     const handleComplete = () => {
         closeModal();
         
+        let isStudent = false;
+        if (typeof window !== 'undefined') {
+            const hostname = window.location.hostname;
+            const isTenantSubdomain = hostname &&
+                             hostname !== 'darab.academy' &&
+                             hostname !== 'www.darab.academy' &&
+                             hostname !== 'localhost' &&
+                             !hostname.startsWith('127.0.0.');
+
+            if (isTenantSubdomain || 
+                window.location.pathname.startsWith('/student') ||
+                window.location.pathname.includes('/courses') ||
+                window.location.pathname.includes('/bags') ||
+                window.location.pathname.includes('/course')
+            ) {
+                isStudent = true;
+            }
+        }
+
         if (typeof window !== 'undefined') {
             const event = new CustomEvent('student-registered');
             window.dispatchEvent(event);
 
-            window.location.href = '/auth/setup';
-        } else {
+            if (!isStudent) {
+                window.location.href = '/auth/setup';
+            }
+        } else if (!isStudent) {
             router.push('/auth/setup');
         }
     };
@@ -322,8 +411,11 @@ export function useRegistrationModalState() {
         passwordCriteria,
         otp,
         otpRefs,
+        resendTimer,
         handleOtpChange,
         handleOtpKeyDown,
+        handleOtpPaste,
+        handleResendCode,
         handleVerifyRegistration,
         handleChange,
         handleNextStep,

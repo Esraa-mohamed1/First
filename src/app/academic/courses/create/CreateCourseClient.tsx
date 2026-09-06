@@ -7,6 +7,8 @@ import {
   Upload,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
+  ChevronLeft,
   Eye,
   Plus,
   Video,
@@ -40,7 +42,11 @@ import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { createCourse, createUnit, deleteUnit, getCategories, getCourse, getCourses, updateCourse, createCategory } from '@/services/courses';
 import { getErrorMessage } from '@/lib/utils';
+import { purgeAllCourseDraftCache, getStoredUserRole, isSchoolTeacherRole } from '@/lib/auth-storage';
 import { getGrades, getTerms, getSubjects, getAcademicYears, ClassificationItem } from '@/services/academic-classification';
+import AddClassificationModal from '@/components/Academic/Modals/AddClassificationModal';
+import AddCategoryModal from '@/components/Academic/Modals/AddCategoryModal';
+import AddCoachModal from '@/components/Academic/Modals/AddCoachModal';
 import { getProfileStatus } from '@/services/auth';
 import { getUsers } from '@/services/users';
 import ManageSubscribersView from '@/components/Academic/Subscribers/ManageSubscribersView';
@@ -61,6 +67,7 @@ import LandingRenderer from '@/modules/landing/renderer/LandingRenderer';
 import TemplatePreviewModal from '@/modules/landing/components/TemplatePreviewModal';
 import { useLandingStore } from '@/modules/landing/store/landingStore';
 import { useLandingSave } from '@/modules/landing/hooks/useLandingSave';
+// Section Editors - Template 1
 import HeroEditor from '@/modules/landing/editor/HeroEditor';
 import LearningEditor from '@/modules/landing/editor/LearningEditor';
 import ChapterEditor from '@/modules/landing/editor/ChapterEditor';
@@ -69,6 +76,29 @@ import FAQEditor from '@/modules/landing/editor/FAQEditor';
 import ReviewsEditor from '@/modules/landing/editor/ReviewsEditor';
 import WhatsAppEditor from '@/modules/landing/editor/WhatsAppEditor';
 import FooterEditor from '@/modules/landing/editor/FooterEditor';
+
+// Section Editors - Template 2 (Modern)
+import Template2HeroEditor from '@/modules/landing/editor/template2/Template2HeroEditor';
+import Template2AboutEditor from '@/modules/landing/editor/template2/Template2AboutEditor';
+import Template2FeaturesEditor from '@/modules/landing/editor/template2/Template2FeaturesEditor';
+import Template2CurriculumEditor from '@/modules/landing/editor/template2/Template2CurriculumEditor';
+import Template2InstructorEditor from '@/modules/landing/editor/template2/Template2InstructorEditor';
+import Template2BenefitsEditor from '@/modules/landing/editor/template2/Template2BenefitsEditor';
+import Template2CtaEditor from '@/modules/landing/editor/template2/Template2CtaEditor';
+import Template2FooterEditor from '@/modules/landing/editor/template2/Template2FooterEditor';
+
+
+// Section Editors - Template 3 (UI/UX / Academy)
+import Template3HeroEditor from '@/modules/landing/editor/template3/Template3HeroEditor';
+import Template3LearningEditor from '@/modules/landing/editor/template3/Template3LearningEditor';
+import Template3CurriculumEditor from '@/modules/landing/editor/template3/Template3CurriculumEditor';
+import Template3InstructorEditor from '@/modules/landing/editor/template3/Template3InstructorEditor';
+import Template3FAQEditor from '@/modules/landing/editor/template3/Template3FAQEditor';
+import Template3RequirementsEditor from '@/modules/landing/editor/template3/Template3RequirementsEditor';
+import Template3PricingEditor from '@/modules/landing/editor/template3/Template3PricingEditor';
+
+
+
 
 const MySwal = withReactContent(Swal);
 
@@ -175,6 +205,7 @@ export default function CreateCourseClient() {
 
   const [courseId, setCourseId] = useState<number | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(getStoredUserRole);
   const [academyPaymentMethods, setAcademyPaymentMethods] = useState<UserPaymentInfo[]>([]);
 
   // Course Basic Information
@@ -184,6 +215,8 @@ export default function CreateCourseClient() {
   const [category, setCategory] = useState('');
   const [categories, setCategories] = useState<any[]>([]);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
+  const [isAddCoachModalOpen, setIsAddCoachModalOpen] = useState(false);
   const [shortDescription, setShortDescription] = useState('');
   const [description, setDescription] = useState('');
   const [coachName, setCoachName] = useState('');
@@ -201,6 +234,51 @@ export default function CreateCourseClient() {
   const [semestersList, setSemestersList] = useState<ClassificationItem[]>([]);
   const [subjectsList, setSubjectsList] = useState<ClassificationItem[]>([]);
   const [academicYearsList, setAcademicYearsList] = useState<ClassificationItem[]>([]);
+
+  // Modal State for adding Grade/Subject/Term/Year pop-up
+  const [addClassificationModal, setAddClassificationModal] = useState<{
+    isOpen: boolean;
+    type: 'grade' | 'semester' | 'subject' | 'year';
+  }>({
+    isOpen: false,
+    type: 'grade',
+  });
+
+  const handleClassificationSuccess = async (type: 'grade' | 'semester' | 'subject' | 'year', newItem: any) => {
+    try {
+      const formatCls = (items: any[], isGrade = false) => {
+        return (items || []).map((item: any, i: number) => ({
+          id: item.id || String(i + 1).padStart(2, '0'),
+          name: item.name || item.title || 'عنصر جديد',
+          desc: item.desc || item.description || 'لا يوجد وصف',
+          stage: item.stage || item.educational_stage || (isGrade ? 'المرحلة الثانوية' : 'عام'),
+          academic_year: item.academic_year || item.academic_year_name || '2025/2026',
+          active: item.active !== undefined ? item.active : true,
+          grade_id: item.grade_id || item.grade?.id || '',
+        }));
+      };
+
+      if (type === 'grade') {
+        const updated = await getGrades();
+        setGradesList(formatCls(updated, true));
+        if (newItem?.id) setGradeLevel(String(newItem.id));
+      } else if (type === 'subject') {
+        const updated = await getSubjects();
+        setSubjectsList(formatCls(updated));
+        if (newItem?.id) setSubject(String(newItem.id));
+      } else if (type === 'semester') {
+        const updated = await getTerms();
+        setSemestersList(formatCls(updated));
+        if (newItem?.id) setSemester(String(newItem.id));
+      } else if (type === 'year') {
+        const updated = await getAcademicYears();
+        setAcademicYearsList(formatCls(updated));
+        if (newItem?.id) setAcademicYear(String(newItem.id));
+      }
+    } catch (e) {
+      console.warn('Failed to refresh classification list:', e);
+    }
+  };
 
   // Learning Outcomes & Target Audience
   const [learningOutcomes, setLearningOutcomes] = useState<string[]>(['فهم مبادئ الألوان وتناسقها', '']);
@@ -276,8 +354,34 @@ export default function CreateCourseClient() {
     }
   };
 
-  // 1. Load draft from localStorage on mount if within 7 minutes
+  // 1. Load draft from localStorage on mount if within 30 minutes
   useEffect(() => {
+    const isNewRequest = searchParams.get('new') === 'true' || searchParams.get('fresh') === 'true';
+    if (isNewRequest) {
+      purgeAllCourseDraftCache();
+      setTitle('');
+      setSlug('');
+      setCategory('');
+      setShortDescription('');
+      setDescription('');
+      setGradeLevel('');
+      setSemester('');
+      setSubject('');
+      setAcademicYear('');
+      setLearningOutcomes(['']);
+      setTargetAudience(['']);
+      setPricingType('paid');
+      setPrice('');
+      setAccessDurationType('days');
+      setAccessDays('30');
+      setAccessUntilDate('');
+      setCourseId(null);
+      setUnits([]);
+      setPreviewUrl(null);
+      setSelectedFile(null);
+      return;
+    }
+
     try {
       const cachedStr = localStorage.getItem(DRAFT_CACHE_KEY);
       if (cachedStr) {
@@ -333,18 +437,26 @@ export default function CreateCourseClient() {
 
           toast.success('تم استعادة بيانات المسودة المحفوظة مؤقتاً');
         } else {
-          localStorage.removeItem(DRAFT_CACHE_KEY);
-          localStorage.removeItem(`darb_create_course_image_${courseTypeParam || 'recorded'}`);
+          purgeAllCourseDraftCache();
         }
       }
     } catch (err) {
       console.error('Error restoring draft:', err);
     }
-  }, [DRAFT_CACHE_KEY]);
+  }, [DRAFT_CACHE_KEY, searchParams]);
 
   // 2. Save draft to localStorage whenever form state changes
   useEffect(() => {
-    if (!title && !category && !description && !price && !courseId) return;
+    if (courseId) {
+      // Clear draft cache if it was created, so that it doesn't linger after successful creation
+      try {
+        localStorage.removeItem(DRAFT_CACHE_KEY);
+        localStorage.removeItem(`darb_create_course_image_${courseTypeParam || 'recorded'}`);
+      } catch (e) {}
+      return;
+    }
+
+    if (!title && !category && !description && !price) return;
 
     const draft = {
       timestamp: Date.now(),
@@ -366,7 +478,7 @@ export default function CreateCourseClient() {
       accessDurationType,
       accessDays,
       accessUntilDate,
-      courseId,
+      courseId: null, // Always null for new creation draft
       units,
     };
 
@@ -475,17 +587,19 @@ export default function CreateCourseClient() {
         const userData = profile.data || profile;
         if (userData) {
           setCurrentUser(userData);
-          if (userData.role === 'instructor') {
+          const resolvedRole = userData.type || userData.account_type || userData.user_type || userData.role;
+          if (resolvedRole) {
+            setUserRole(resolvedRole);
+          }
+          if (userData.role === 'instructor' || userData.type === 'coach') {
             setCoachName(userData.name || userData.fullName || '');
             setSelectedInstructor(userData.id);
           } else {
             setCoachName('');
             setSelectedInstructor(null);
           }
-          if (userData.role === 'admin' || userData.role === 'academy') {
-            const coaches = await getUsers('academy');
-            setInstructors(coaches);
-          }
+          const coaches = await getUsers('academy');
+          setInstructors(coaches || []);
         }
       } catch (error) {
         console.error('Failed to fetch initial data:', error);
@@ -493,6 +607,60 @@ export default function CreateCourseClient() {
     };
     fetchInitialData();
   }, []);
+
+  // Fetch course details if editing an existing course
+  useEffect(() => {
+    const editIdParam = searchParams.get('id') || searchParams.get('courseId') || searchParams.get('course_id');
+    if (editIdParam) {
+      const loadExistingCourse = async () => {
+        try {
+          const c: any = await getCourse(editIdParam);
+          if (c) {
+            setCourseId(c.id);
+            if (c.title) setTitle(c.title);
+            if (c.slug) setSlug(c.slug);
+            if (c.category_id) setCategory(String(c.category_id));
+            if (c.short_description) setShortDescription(c.short_description);
+            if (c.description) setDescription(c.description);
+            if (c.pricing_type || c.price_type) setPricingType(c.pricing_type || c.price_type);
+            if (c.price) setPrice(String(c.price));
+            if (c.currency) setCurrency(c.currency);
+            if (c.status) setStatus(c.status);
+            if (c.chapters || c.units) setUnits(c.chapters || c.units);
+            if (c.image) setPreviewUrl(c.image);
+
+            // Load infos for learning outcomes and target audience
+            if (Array.isArray(c.infos) && c.infos.length > 0) {
+              const learnPoints = c.infos
+                .filter((i: any) => i.info_key === 'what_you_will_learn' || i.key === 'what_you_will_learn')
+                .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+                .map((i: any) => i.info_value || i.value);
+              if (learnPoints.length > 0) setLearningOutcomes(learnPoints);
+
+              const audPoints = c.infos
+                .filter((i: any) => i.info_key === 'targeted_audience' || i.key === 'targeted_audience' || i.info_key === 'target_audience' || i.key === 'target_audience' || i.info_key === 'who_is_this_for' || i.key === 'who_is_this_for')
+                .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+                .map((i: any) => i.info_value || i.value);
+              if (audPoints.length > 0) setTargetAudience(audPoints);
+            } else {
+              if (c.what_you_will_learn) {
+                const pts = c.what_you_will_learn.split(/\n|,|،/).map((s: string) => s.trim()).filter(Boolean);
+                if (pts.length > 0) setLearningOutcomes(pts);
+              }
+              const audStr = c.target_audience || c.who_is_this_for || '';
+              if (audStr) {
+                const pts = audStr.split(/\n|,|،/).map((s: string) => s.trim()).filter(Boolean);
+                if (pts.length > 0) setTargetAudience(pts);
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Failed to load course for editing:', err);
+        }
+      };
+      loadExistingCourse();
+    }
+  }, [searchParams]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -562,7 +730,7 @@ export default function CreateCourseClient() {
   ];
 
   const activeSemesters = semestersList.length > 0 
-    ? semestersList.filter(item => !gradeLevel || String(item.grade_id) === String(gradeLevel))
+    ? semestersList.filter(item => !gradeLevel || !item.grade_id || String(item.grade_id) === String(gradeLevel))
     : [
         { id: 'term_1', name: 'الترم الأول' },
         { id: 'term_2', name: 'الترم الثاني' },
@@ -572,7 +740,7 @@ export default function CreateCourseClient() {
       ];
 
   const activeSubjects = subjectsList.length > 0
-    ? subjectsList.filter(item => !gradeLevel || String(item.grade_id) === String(gradeLevel))
+    ? subjectsList.filter(item => !gradeLevel || !item.grade_id || String(item.grade_id) === String(gradeLevel))
     : [
         { id: 'physics', name: 'فيزياء' },
         { id: 'chemistry', name: 'كيمياء' },
@@ -596,27 +764,24 @@ export default function CreateCourseClient() {
 
   const clearDraftCache = () => {
     try {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(DRAFT_CACHE_KEY);
-        localStorage.removeItem(`darb_create_course_image_${courseTypeParam || 'recorded'}`);
-        localStorage.removeItem('createCourseId');
-        localStorage.removeItem('createCourseSlug');
-        localStorage.removeItem('darab_last_created_course_id');
-        localStorage.removeItem('darab_last_created_course_slug');
-        if (courseId) {
-          localStorage.removeItem(`darab_course_cache_${courseId}`);
-        }
-        if (courseSlug) {
-          localStorage.removeItem(`darab_course_cache_${courseSlug}`);
-        }
-      }
+      purgeAllCourseDraftCache();
     } catch (e) {
       console.error('Failed to clear draft cache:', e);
     }
   };
 
   const ensureCourseCreated = async (overriddenStatus?: string) => {
-    if (courseId && !overriddenStatus) return courseId;
+    if (courseId) {
+      if (overriddenStatus && overriddenStatus !== status) {
+        try {
+          await updateCourse(courseId, { status: overriddenStatus });
+          setStatus(overriddenStatus as any);
+        } catch (e) {
+          console.error('Failed to update status on existing course:', e);
+        }
+      }
+      return courseId;
+    }
 
     const targetStatus = overriddenStatus || status;
 
@@ -686,13 +851,44 @@ export default function CreateCourseClient() {
       academic_year: academicYear || undefined,
     };
 
+    const infosList: any[] = [];
     let infoIndex = 0;
+
     learningOutcomes.filter((p) => p.trim() !== '').forEach((point, pointIndex) => {
+      const item = {
+        key: 'what_you_will_learn',
+        info_key: 'what_you_will_learn',
+        value: point,
+        info_value: point,
+        order: pointIndex + 1,
+      };
+      infosList.push(item);
       payload[`infos[${infoIndex}][key]`] = 'what_you_will_learn';
+      payload[`infos[${infoIndex}][info_key]`] = 'what_you_will_learn';
       payload[`infos[${infoIndex}][value]`] = point;
+      payload[`infos[${infoIndex}][info_value]`] = point;
       payload[`infos[${infoIndex}][order]`] = pointIndex + 1;
       infoIndex++;
     });
+
+    targetAudience.filter((p) => p.trim() !== '').forEach((audPoint, audIndex) => {
+      const item = {
+        key: 'targeted_audience',
+        info_key: 'targeted_audience',
+        value: audPoint,
+        info_value: audPoint,
+        order: audIndex + 1,
+      };
+      infosList.push(item);
+      payload[`infos[${infoIndex}][key]`] = 'targeted_audience';
+      payload[`infos[${infoIndex}][info_key]`] = 'targeted_audience';
+      payload[`infos[${infoIndex}][value]`] = audPoint;
+      payload[`infos[${infoIndex}][info_value]`] = audPoint;
+      payload[`infos[${infoIndex}][order]`] = audIndex + 1;
+      infoIndex++;
+    });
+
+    payload.infos = infosList;
 
     try {
       // Check existing user courses for duplicates before creating/updating
@@ -834,11 +1030,33 @@ export default function CreateCourseClient() {
     }
   };
 
+  const handleNextTab = () => {
+    if (activeTab === 'info') setActiveTab('content');
+    else if (activeTab === 'content') setActiveTab('landing_pages');
+    else if (activeTab === 'landing_pages') setActiveTab('subscribers');
+  };
+
+  const handleBackTab = () => {
+    if (activeTab === 'content') setActiveTab('info');
+    else if (activeTab === 'landing_pages') setActiveTab('content');
+    else if (activeTab === 'subscribers') setActiveTab('landing_pages');
+  };
+
   const handleSave = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await ensureCourseCreated('draft');
+      const createdId = await ensureCourseCreated('draft');
+      setStatus('draft');
+      const totalLessons = units.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0);
+      if (totalLessons === 0) {
+        toast.success('تم حفظ الدورة كمسودة بنجاح. يرجى إضافة دروس لتتمكن من النشر لاحقاً.');
+      } else {
+        toast.success('تم حفظ بيانات الدورة بنجاح.');
+      }
+      if (createdId && !courseId) {
+        router.push(`/academic/courses/${createdId}`);
+      }
     } catch (err) {
       // Handled inside
     } finally {
@@ -850,10 +1068,24 @@ export default function CreateCourseClient() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await ensureCourseCreated('published');
+      const totalLessons = units.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0);
+      if (totalLessons === 0) {
+        toast.error('لا يمكن نشر الدورة بدون وجود دروس تعليمية. تم حفظ الدورة كمسودة.');
+        const createdId = await ensureCourseCreated('draft');
+        setStatus('draft');
+        if (createdId && !courseId) {
+          router.push(`/academic/courses/${createdId}`);
+        }
+        return;
+      }
+
+      const createdId = await ensureCourseCreated('published');
       setStatus('published');
       toast.success('تم نشر الدورة بنجاح!');
       clearDraftCache();
+      if (createdId && !courseId) {
+        router.push(`/academic/courses/${createdId}`);
+      }
     } catch (err) {
       // Handled inside
     } finally {
@@ -1101,6 +1333,10 @@ export default function CreateCourseClient() {
   };
 
   const handleCopyCustomLink = (page: any) => {
+    if (status !== 'published') {
+      toast.error('لا يمكن مشاركة الدورة لأنها مسودة، يجب نشر الدورة أولاً');
+      return;
+    }
     if (typeof window !== 'undefined') {
       const targetSlug = page.slug || courseSlug || slug || (courseId ? String(courseId) : 'draft');
       const link = `${window.location.origin}/landing/${targetSlug}?lp_id=${page.id}`;
@@ -1110,6 +1346,10 @@ export default function CreateCourseClient() {
   };
 
   const handleCopyDefaultLink = () => {
+    if (status !== 'published') {
+      toast.error('لا يمكن مشاركة الدورة لأنها مسودة، يجب نشر الدورة أولاً');
+      return;
+    }
     if (typeof window !== 'undefined') {
       const targetSlug = courseSlug || slug || (courseId ? String(courseId) : 'draft');
       const link = `${window.location.origin}/landing/${targetSlug}`;
@@ -1185,37 +1425,6 @@ export default function CreateCourseClient() {
             </div>
 
             <div className="flex items-center gap-2.5 flex-wrap">
-              <button
-                onClick={() => {
-                  const cachedId = localStorage.getItem('createCourseId');
-                  const cachedSlug = localStorage.getItem('createCourseSlug');
-                  const targetPath = slug || cachedSlug || courseSlug || cachedId || (courseId ? String(courseId) : null);
-                  if (targetPath) {
-                    window.open(`/${targetPath}`, '_blank');
-                  } else {
-                    toast.error('يرجى حفظ الدورة أولاً للمعاينة');
-                  }
-                }}
-                className="px-4 py-2.5 text-sm border border-slate-300 rounded-xl flex items-center gap-2 bg-white hover:bg-slate-50 hover:border-slate-400 transition-all font-bold text-slate-700 shadow-xs active:scale-[0.98]"
-              >
-                <Eye className="w-4 h-4" />
-                معاينة
-              </button>
-              <button
-                onClick={() => {
-                  if (navigator.clipboard && courseId) {
-                    navigator.clipboard.writeText(`${window.location.origin}/courses/${courseId}`);
-                    toast.success('تم نسخ رابط الدورة بنجاح');
-                  } else {
-                    toast.error('احفظ الدورة أولاً للمشاركة');
-                  }
-                }}
-                className="px-4 py-2.5 text-sm border border-slate-300 rounded-xl flex items-center gap-2 bg-white hover:bg-slate-50 hover:border-slate-400 transition-all font-bold text-slate-700 shadow-xs active:scale-[0.98]"
-              >
-                <Share2 className="w-4 h-4" />
-                مشاركة
-                <ChevronDown className="w-4 h-4" />
-              </button>
               <button
                 onClick={handleSave}
                 disabled={isSubmitting}
@@ -1370,129 +1579,206 @@ export default function CreateCourseClient() {
                       </div>
                     </div>
 
-                    {/* 4. Course Category */}
-                    <div>
-                      <label className="block text-sm font-bold mb-2 text-slate-800">
-                        تصنيف الدورة <span className="text-red-500">*</span>
-                      </label>
-                      <div className="flex gap-2.5">
-                        <select
-                          value={category}
-                          onChange={(e) => setCategory(e.target.value)}
-                          className="flex-1 border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-slate-900 text-sm font-medium bg-white"
-                        >
-                          <option value="">اختر التصنيف...</option>
-                          {categories.map((cat: any) => (
-                            <option key={cat.id} value={cat.id}>
-                              {cat.name}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          type="button"
-                          onClick={() => setIsAddingCategory(true)}
-                          className="p-3 bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center text-slate-700"
-                        >
-                          <span className="material-symbols-outlined text-xl">add</span>
-                        </button>
+                    {/* 4. Course Category & Coach / Instructor */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-bold mb-2 text-slate-800">
+                          تصنيف الدورة <span className="text-red-500">*</span>
+                        </label>
+                        <div className="flex gap-2.5">
+                          <select
+                            value={category}
+                            onChange={(e) => setCategory(e.target.value)}
+                            className="flex-1 border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-slate-900 text-sm font-medium bg-white cursor-pointer"
+                          >
+                            <option value="">اختر التصنيف...</option>
+                            {categories.map((cat: any) => (
+                              <option key={cat.id} value={cat.id}>
+                                {cat.name}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => setIsAddCategoryModalOpen(true)}
+                            className="p-3 bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center text-slate-700 cursor-pointer"
+                            title="إضافة تصنيف جديد"
+                          >
+                            <span className="material-symbols-outlined text-xl">add</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold mb-2 text-slate-800">
+                          المدرب / المحاضر
+                        </label>
+                        <div className="flex gap-2.5">
+                          <select
+                            value={selectedInstructor || ''}
+                            onChange={(e) => {
+                              const val = e.target.value ? Number(e.target.value) : null;
+                              setSelectedInstructor(val);
+                              if (val) {
+                                const inst = instructors.find(i => Number(i.id) === val);
+                                if (inst) setCoachName(inst.name || (inst as any).fullName || '');
+                              }
+                            }}
+                            className="flex-1 border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-slate-900 text-sm font-medium bg-white cursor-pointer"
+                          >
+                            <option value="">اختر المدرب (افتراضي: الحساب الحالي)...</option>
+                            {instructors.map((inst: any) => (
+                              <option key={inst.id} value={inst.id}>
+                                {inst.name || inst.fullName || `مدرب ${inst.id}`}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => setIsAddCoachModalOpen(true)}
+                            className="p-3 bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center text-slate-700 cursor-pointer"
+                            title="إضافة مدرب جديد"
+                          >
+                            <span className="material-symbols-outlined text-xl">add</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
-
-                    {isAddingCategory && (
-                      <div className="p-5 bg-slate-50 rounded-2xl border border-slate-300">
-                        <CategoryFormInline
-                          onSubmit={handleCreateInlineCategory}
-                          errors={{}}
-                          isSubmitting={isSubmitting}
-                          onClose={() => setIsAddingCategory(false)}
-                        />
-                      </div>
-                    )}
                   </div>
                 </section>
 
                 {/* Section 2: Academic Classification */}
-                {(currentUser?.role === 'schoolteacher' || currentUser?.role === 'school_teacher') && (
+                {isSchoolTeacherRole(userRole || currentUser) && (
                   <section className="bg-white border border-slate-300 rounded-2xl p-7 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.07)] transition-all duration-300">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200">
-                        <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-                          school
-                        </span>
+                    <div className="flex items-center justify-between gap-3 mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200">
+                          <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                            school
+                          </span>
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold text-slate-900">التصنيف الدراسي</h3>
+                          <p className="text-xs text-slate-500 font-medium mt-0.5">حدد الصف والفصل والمادة الدراسية للمجموعة</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-slate-900">التصنيف الدراسي</h3>
-                        <p className="text-xs text-slate-500 font-medium mt-0.5">حدد الصف والفصل والمادة الدراسية للمجموعة</p>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setAddClassificationModal({ isOpen: true, type: 'subject' })}
+                        className="px-4 py-2 bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-100 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>إضافة مادة / صف</span>
+                      </button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                       <div>
                         <label className="block text-sm font-bold mb-2 text-slate-800">الصف الدراسي</label>
-                        <select
-                          value={gradeLevel}
-                          onChange={(e) => {
-                            setGradeLevel(e.target.value);
-                            setSemester('');
-                            setSubject('');
-                          }}
-                          className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white"
-                        >
-                          <option value="">اختر الصف...</option>
-                          {activeGrades.map((g) => (
-                            <option key={g.id} value={g.id}>
-                              {g.name}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="flex gap-2">
+                          <select
+                            value={gradeLevel}
+                            onChange={(e) => {
+                              setGradeLevel(e.target.value);
+                              setSemester('');
+                              setSubject('');
+                            }}
+                            className="flex-1 border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white cursor-pointer"
+                          >
+                            <option value="">اختر الصف...</option>
+                            {activeGrades.map((g) => (
+                              <option key={g.id} value={g.id}>
+                                {g.name}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => setAddClassificationModal({ isOpen: true, type: 'grade' })}
+                            className="p-3 bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center text-slate-700 cursor-pointer"
+                            title="إضافة صف دراسي جديد"
+                          >
+                            <span className="material-symbols-outlined text-xl">add</span>
+                          </button>
+                        </div>
                       </div>
 
                       <div>
                         <label className="block text-sm font-bold mb-2 text-slate-800">الفصل الدراسي</label>
-                        <select
-                          value={semester}
-                          onChange={(e) => setSemester(e.target.value)}
-                          className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white"
-                        >
-                          <option value="">اختر الترم...</option>
-                          {activeSemesters.map((s) => (
-                            <option key={s.id} value={s.id}>
-                              {s.name}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="flex gap-2">
+                          <select
+                            value={semester}
+                            onChange={(e) => setSemester(e.target.value)}
+                            className="flex-1 border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white cursor-pointer"
+                          >
+                            <option value="">اختر الترم...</option>
+                            {activeSemesters.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.name}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => setAddClassificationModal({ isOpen: true, type: 'semester' })}
+                            className="p-3 bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center text-slate-700 cursor-pointer"
+                            title="إضافة فصل دراسي جديد"
+                          >
+                            <span className="material-symbols-outlined text-xl">add</span>
+                          </button>
+                        </div>
                       </div>
 
                       <div>
                         <label className="block text-sm font-bold mb-2 text-slate-800">المادة</label>
-                        <select
-                          value={subject}
-                          onChange={(e) => setSubject(e.target.value)}
-                          className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white"
-                        >
-                          <option value="">اختر المادة...</option>
-                          {activeSubjects.map((sub) => (
-                            <option key={sub.id} value={sub.id}>
-                              {sub.name}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="flex gap-2">
+                          <select
+                            value={subject}
+                            onChange={(e) => setSubject(e.target.value)}
+                            className="flex-1 border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white cursor-pointer"
+                          >
+                            <option value="">اختر المادة...</option>
+                            {activeSubjects.map((sub) => (
+                              <option key={sub.id} value={sub.id}>
+                                {sub.name}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => setAddClassificationModal({ isOpen: true, type: 'subject' })}
+                            className="p-3 bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center text-slate-700 cursor-pointer"
+                            title="إضافة مادة دراسية جديدة"
+                          >
+                            <span className="material-symbols-outlined text-xl">add</span>
+                          </button>
+                        </div>
                       </div>
 
                       <div>
                         <label className="block text-sm font-bold mb-2 text-slate-800">العام الدراسي</label>
-                        <select
-                          value={academicYear}
-                          onChange={(e) => setAcademicYear(e.target.value)}
-                          className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white"
-                        >
-                          <option value="">اختر العام الدراسي...</option>
-                          {activeYears.map((y) => (
-                            <option key={y.id} value={y.id}>
-                              {y.name}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="flex gap-2">
+                          <select
+                            value={academicYear}
+                            onChange={(e) => setAcademicYear(e.target.value)}
+                            className="flex-1 border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white cursor-pointer"
+                          >
+                            <option value="">اختر العام الدراسي...</option>
+                            {activeYears.map((y) => (
+                              <option key={y.id} value={y.id}>
+                                {y.name}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => setAddClassificationModal({ isOpen: true, type: 'year' })}
+                            className="p-3 bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center text-slate-700 cursor-pointer"
+                            title="إضافة عام دراسي جديد"
+                          >
+                            <span className="material-symbols-outlined text-xl">add</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </section>
@@ -1549,7 +1835,7 @@ export default function CreateCourseClient() {
                     </div>
 
                     {/* Target Audience */}
-                    <div>
+                    <div className="hidden">
                       <div className="flex items-center justify-between mb-3">
                         <label className="text-sm font-bold text-slate-800">الفئة المستهدفة</label>
                         <button
@@ -2626,7 +2912,30 @@ export default function CreateCourseClient() {
             </div>
           )}
 
+        </div>
 
+        {/* Sticky Bottom Navigation Bar for Next/Back */}
+        <div className="sticky bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 py-4 px-6 flex items-center justify-between z-40 shadow-md mt-6 animate-in slide-in-from-bottom duration-300">
+          <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
+            <button
+              type="button"
+              onClick={handleBackTab}
+              disabled={activeTab === 'info'}
+              className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 font-bold rounded-xl flex items-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+            >
+              <ChevronRight size={18} />
+              <span>السابق</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleNextTab}
+              disabled={activeTab === 'subscribers'}
+              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl flex items-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+            >
+              <span>التالي</span>
+              <ChevronLeft size={18} />
+            </button>
+          </div>
         </div>
       </main>
 
@@ -2711,20 +3020,146 @@ export default function CreateCourseClient() {
                     onChange={(e) => setActiveSectionId(e.target.value || null)}
                   >
                     <option value="">-- اختر قسماً من القائمة --</option>
-                    <option value="hero">البانر الرئيسي (الهيرو)</option>
-                    <option value="learning">ماذا ستتعلم؟</option>
-                    <option value="chapters">المنهج والدروس</option>
-                    <option value="payment">وسائل الدفع</option>
-                    <option value="faq">الأسئلة الشائعة</option>
-                    <option value="reviews">آراء الطلاب والتقييمات</option>
-                    <option value="whatsapp">زر تواصل واتساب</option>
-                    <option value="footer">تذييل الصفحة (الفوتر)</option>
+                    {(previewTemplateId === 'template_2' || newSelectedTemplate === 'template_2') ? (
+                      <>
+                        <option value="hero">البانر الرئيسي (الهيرو)</option>
+                        <option value="about">عن الدورة وبطاقة الاستثمار</option>
+                        <option value="features">بنية الدورة ومميزاتها</option>
+                        <option value="chapters">المنهج ومحتوى الدورة</option>
+                        <option value="instructor">بيانات واعتمادات المدرب</option>
+                        <option value="benefits">ماذا ستحصل عليه (المخرجات)</option>
+                        <option value="cta">البانر الختامي (CTA)</option>
+                        <option value="footer">تذييل الصفحة (الفوتر)</option>
+                        <option value="whatsapp">زر تواصل واتساب</option>
+                      </>
+                    ) : (previewTemplateId === 'template_3' || newSelectedTemplate === 'template_3') ? (
+                      <>
+                        <option value="hero">البانر الرئيسي (الهيرو)</option>
+                        <option value="learning">ماذا ستتعلم في الدورة</option>
+                        <option value="chapters">محتوى الدورة والمنهج</option>
+                        <option value="instructor">عن المحاضر والمدرب</option>
+                        <option value="faq">الأسئلة الشائعة حول البرنامج</option>
+                        <option value="requirements">المتطلبات الأساسية للبدء</option>
+                        <option value="payment">بطاقة ورسوم الاشتراك</option>
+                        <option value="whatsapp">زر تواصل واتساب</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="hero">البانر الرئيسي (الهيرو)</option>
+                        <option value="learning">ماذا ستتعلم؟</option>
+                        <option value="chapters">المنهج والدروس</option>
+                        <option value="payment">وسائل الدفع</option>
+                        <option value="faq">الأسئلة الشائعة</option>
+                        <option value="reviews">آراء الطلاب والتقييمات</option>
+                        <option value="whatsapp">زر تواصل واتساب</option>
+                        <option value="footer">تذييل الصفحة (الفوتر)</option>
+                      </>
+                    )}
                   </select>
                 </div>
 
                 <div className="flex-grow overflow-y-auto">
                   {(() => {
                     const sec = (activeSectionId || '').toLowerCase().trim();
+                    if (!sec) {
+                      return (
+                        <div className="text-center py-16 text-slate-400 font-bold text-xs">
+                          👈 اختر قسماً من القائمة أعلاه أو انقر فوق زر "تعديل القسم" مباشرة لتعديل إعداداته هنا.
+                        </div>
+                      );
+                    }
+
+                    if (previewTemplateId === 'template_2' || newSelectedTemplate === 'template_2') {
+                      switch (sec) {
+                        case 'hero':
+                        case 'overview':
+                        case 'intro':
+                        case 'banner':
+                        case 'header':
+                        case 'main':
+                          return <Template2HeroEditor />;
+                        case 'about':
+                        case 'learning':
+                          return <Template2AboutEditor />;
+                        case 'features':
+                          return <Template2FeaturesEditor />;
+                        case 'chapters':
+                        case 'curriculum':
+                        case 'syllabus':
+                        case 'content':
+                        case 'modules':
+                        case 'units':
+                          return <Template2CurriculumEditor />;
+                        case 'instructor':
+                          return <Template2InstructorEditor />;
+                        case 'benefits':
+                          return <Template2BenefitsEditor />;
+                        case 'cta':
+                        case 'payment':
+                        case 'pricing':
+                          return <Template2CtaEditor />;
+                        case 'footer':
+                        case 'bottom':
+                          return <Template2FooterEditor />;
+                        case 'whatsapp':
+                        case 'contact':
+                        case 'support':
+                        case 'chat':
+                          return <WhatsAppEditor />;
+                        default:
+                          return <Template2HeroEditor />;
+                      }
+                    }
+
+                    if (previewTemplateId === 'template_3' || newSelectedTemplate === 'template_3') {
+                      switch (sec) {
+                        case 'hero':
+                        case 'overview':
+                        case 'intro':
+                        case 'banner':
+                        case 'header':
+                        case 'main':
+                          return <Template3HeroEditor />;
+                        case 'learning':
+                        case 'features':
+                        case 'benefits':
+                        case 'outcomes':
+                        case 'about':
+                          return <Template3LearningEditor />;
+                        case 'chapters':
+                        case 'curriculum':
+                        case 'syllabus':
+                        case 'content':
+                        case 'modules':
+                        case 'units':
+                          return <Template3CurriculumEditor />;
+                        case 'instructor':
+                        case 'trainer':
+                        case 'teacher':
+                          return <Template3InstructorEditor />;
+                        case 'faq':
+                        case 'questions':
+                        case 'help':
+                          return <Template3FAQEditor />;
+                        case 'requirements':
+                        case 'prerequisites':
+                        case 'needs':
+                          return <Template3RequirementsEditor />;
+                        case 'payment':
+                        case 'pricing':
+                        case 'packages':
+                        case 'checkout':
+                          return <Template3PricingEditor />;
+                        case 'whatsapp':
+                        case 'contact':
+                        case 'support':
+                        case 'chat':
+                          return <WhatsAppEditor />;
+                        default:
+                          return <Template3HeroEditor />;
+                      }
+                    }
+
                     const key = 
                       ['hero', 'overview', 'intro', 'banner', 'header', 'main'].includes(sec) ? 'hero' :
                       ['learning', 'features', 'benefits', 'outcomes', 'about'].includes(sec) ? 'learning' :
@@ -3030,6 +3465,51 @@ export default function CreateCourseClient() {
           </div>
         </div>
       )}
+
+      {/* Add Classification Pop-up Modal */}
+      {isSchoolTeacherRole(userRole || currentUser) && (
+        <AddClassificationModal
+          isOpen={addClassificationModal.isOpen}
+          initialType={addClassificationModal.type}
+          availableGrades={gradesList}
+          currentGradeId={gradeLevel}
+          onClose={() => setAddClassificationModal((prev) => ({ ...prev, isOpen: false }))}
+          onSuccess={handleClassificationSuccess}
+        />
+      )}
+
+      {/* Add Category Pop-up Modal */}
+      <AddCategoryModal
+        isOpen={isAddCategoryModalOpen}
+        onClose={() => setIsAddCategoryModalOpen(false)}
+        onSuccess={async (newCat) => {
+          try {
+            const updated = await getCategories();
+            setCategories(updated || []);
+            if (newCat?.id) setCategory(String(newCat.id));
+          } catch (e) {
+            console.warn('Failed to refresh categories:', e);
+          }
+        }}
+      />
+
+      {/* Add Coach Pop-up Modal */}
+      <AddCoachModal
+        isOpen={isAddCoachModalOpen}
+        onClose={() => setIsAddCoachModalOpen(false)}
+        onSuccess={async (newCoach) => {
+          try {
+            const coaches = await getUsers('instructor');
+            setInstructors(coaches || []);
+            if (newCoach?.id) {
+              setSelectedInstructor(Number(newCoach.id));
+              setCoachName(newCoach.name || '');
+            }
+          } catch (e) {
+            console.warn('Failed to refresh instructors:', e);
+          }
+        }}
+      />
     </div>
   );
 }

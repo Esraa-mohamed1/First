@@ -62,14 +62,17 @@ export default function StudentRequestsPage() {
   const currentCoursePaymentMethods = useMemo(() => {
     if (!selectedCourse) return [];
     const raw = (selectedCourse as any).payment_methods || (selectedCourse as any).receiverAccounts || (selectedCourse as any).receiver_accounts || [];
-    return raw.map((item: any) => ({
-      methodId: (item.methodId || item.method_id || item.id)?.toString() || '',
-      methodName: item.name || item.methodName || '',
-      type: 'account_number' as const,
-      value: item.value || item.accountValue || item.account_value || '',
-      currency: item.currency || 'SAR',
-      logo: item.logo || undefined
-    }));
+    return raw.map((item: any) => {
+      const receiverAccount = item.receiver_account || item.receiverAccount;
+      return {
+        methodId: (receiverAccount?.id || item.methodId || item.method_id || item.id)?.toString() || '',
+        methodName: receiverAccount?.name || item.name || item.methodName || '',
+        type: 'account_number' as const,
+        value: item.value || item.accountValue || item.account_value || '',
+        currency: item.currency || receiverAccount?.currency || 'SAR',
+        logo: receiverAccount?.logo || item.logo || undefined
+      };
+    });
   }, [selectedCourse]);
 
   // Sync amount and auto-select first payment method when selected course changes
@@ -224,6 +227,19 @@ export default function StudentRequestsPage() {
     };
     fetchCourses();
     loadRequests();
+
+    const handleSubscriptionUpdated = () => {
+      loadRequests();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('course-subscription-updated', handleSubscriptionUpdated);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('course-subscription-updated', handleSubscriptionUpdated);
+      }
+    };
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -254,6 +270,10 @@ export default function StudentRequestsPage() {
       
       setSubmitting(false);
       setShowAddForm(false);
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('course-subscription-updated', { detail: { courseId: selectedCourseId } }));
+      }
 
       // Reset form
       setSelectedCourseId('');

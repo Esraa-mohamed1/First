@@ -27,9 +27,23 @@ export default function PaymentEditor() {
           <label className="text-xs font-bold text-slate-700">عنوان القسم الرئيسي</label>
           <input
             type="text"
-            className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600"
+            className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-bold"
             value={data.title}
             onChange={(e) => handleChange('title', e.target.value)}
+          />
+        </div>
+
+        {/* Description / Subtitle */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-bold text-slate-700">الوصف الشارح لقسم الدفع</label>
+          <textarea
+            className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 min-h-[70px]"
+            value={data.description || data.subtitle || ''}
+            onChange={(e) => {
+              handleChange('description', e.target.value);
+              handleChange('subtitle', e.target.value);
+            }}
+            placeholder="مثال: يمكنك إرسال رسوم الاشتراك مباشرة عن طريق التحويل البنكي إلى أحد حساباتنا..."
           />
         </div>
 

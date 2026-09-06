@@ -25,15 +25,39 @@ import { getCourse } from '@/services/courses';
 import { getProfileStatus } from '@/services/auth';
 import { getLandingPagesList } from '@/modules/landing/services/landing.api';
 
-// Section Editors
-import HeroEditor from '@/modules/landing/editor/HeroEditor';
-import LearningEditor from '@/modules/landing/editor/LearningEditor';
-import ChapterEditor from '@/modules/landing/editor/ChapterEditor';
-import PaymentEditor from '@/modules/landing/editor/PaymentEditor';
-import FAQEditor from '@/modules/landing/editor/FAQEditor';
-import ReviewsEditor from '@/modules/landing/editor/ReviewsEditor';
-import WhatsAppEditor from '@/modules/landing/editor/WhatsAppEditor';
-import FooterEditor from '@/modules/landing/editor/FooterEditor';
+// Section Editors - Template 1 (Classic/Royal)
+import Template1HeroEditor from '@/modules/landing/editor/template1/Template1HeroEditor';
+import Template1LearningEditor from '@/modules/landing/editor/template1/Template1LearningEditor';
+import Template1ChapterEditor from '@/modules/landing/editor/template1/Template1ChapterEditor';
+import Template1PaymentEditor from '@/modules/landing/editor/template1/Template1PaymentEditor';
+import Template1FAQEditor from '@/modules/landing/editor/template1/Template1FAQEditor';
+import Template1ReviewsEditor from '@/modules/landing/editor/template1/Template1ReviewsEditor';
+import Template1WhatsAppEditor from '@/modules/landing/editor/template1/Template1WhatsAppEditor';
+import Template1FooterEditor from '@/modules/landing/editor/template1/Template1FooterEditor';
+
+
+// Section Editors - Template 2 (Modern / Interactive)
+import Template2HeroEditor from '@/modules/landing/editor/template2/Template2HeroEditor';
+import Template2AboutEditor from '@/modules/landing/editor/template2/Template2AboutEditor';
+import Template2FeaturesEditor from '@/modules/landing/editor/template2/Template2FeaturesEditor';
+import Template2CurriculumEditor from '@/modules/landing/editor/template2/Template2CurriculumEditor';
+import Template2InstructorEditor from '@/modules/landing/editor/template2/Template2InstructorEditor';
+import Template2BenefitsEditor from '@/modules/landing/editor/template2/Template2BenefitsEditor';
+import Template2CtaEditor from '@/modules/landing/editor/template2/Template2CtaEditor';
+import Template2FooterEditor from '@/modules/landing/editor/template2/Template2FooterEditor';
+
+
+// Section Editors - Template 3 (UI/UX / Academy)
+import Template3HeroEditor from '@/modules/landing/editor/template3/Template3HeroEditor';
+import Template3LearningEditor from '@/modules/landing/editor/template3/Template3LearningEditor';
+import Template3CurriculumEditor from '@/modules/landing/editor/template3/Template3CurriculumEditor';
+import Template3InstructorEditor from '@/modules/landing/editor/template3/Template3InstructorEditor';
+import Template3FAQEditor from '@/modules/landing/editor/template3/Template3FAQEditor';
+import Template3RequirementsEditor from '@/modules/landing/editor/template3/Template3RequirementsEditor';
+import Template3PricingEditor from '@/modules/landing/editor/template3/Template3PricingEditor';
+
+
+
 
 export default function LandingPageBuilderPage() {
   const router = useRouter();
@@ -274,57 +298,147 @@ export default function LandingPageBuilderPage() {
         {/* Right Sidebar Inspector (Editor Controls Panel) */}
         <aside className="w-full md:w-[380px] bg-slate-800 border-l border-slate-700/70 flex flex-col shrink-0 overflow-hidden shadow-2xl z-20">
           <div className="p-4 border-b border-slate-700/60 bg-slate-800/80 space-y-2">
-            <label className="text-xs font-black text-slate-300 block">اختر القسم للتعديل والتخصيص:</label>
+            <label className="text-xs font-black text-slate-300 block">
+              {selectedTemplate === 'template_3'
+                ? 'أقسام قالب UI/UX للتعديل والتخصيص:'
+                : selectedTemplate === 'template_2'
+                ? 'أقسام القالب التفاعلي للتعديل والتخصيص:'
+                : selectedTemplate === 'template_1'
+                ? 'أقسام القالب الملكي للتعديل والتخصيص:'
+                : 'أقسام القالب للتعديل والتخصيص:'}
+            </label>
             <select
               className="w-full border border-slate-600 rounded-xl p-2.5 text-xs bg-slate-900 text-white font-bold focus:outline-none focus:border-blue-500 cursor-pointer"
-              value={activeSectionId || ''}
-              onChange={(e) => setActiveSectionId(e.target.value || null)}
+              value={activeSectionId || 'hero'}
+              onChange={(e) => setActiveSectionId(e.target.value || 'hero')}
             >
-              <option value="">-- اختر قسماً من القائمة --</option>
-              <option value="hero">البانر الرئيسي (الهيرو)</option>
-              <option value="learning">ماذا ستتعلم؟</option>
-              <option value="chapters">المنهج والدروس</option>
-              <option value="payment">وسائل الدفع</option>
-              <option value="faq">الأسئلة الشائعة</option>
-              <option value="reviews">آراء الطلاب والتقييمات</option>
-              <option value="whatsapp">زر تواصل واتساب</option>
-              <option value="footer">تذييل الصفحة (الفوتر)</option>
+              {selectedTemplate === 'template_1' ? (
+                <>
+                  <option value="hero">البانر الرئيسي (الهيرو)</option>
+                  <option value="learning">ماذا ستتعلم؟</option>
+                  <option value="chapters">المنهج والدروس</option>
+                  <option value="payment">وسائل الدفع</option>
+                  <option value="faq">الأسئلة الشائعة</option>
+                  <option value="reviews">آراء الطلاب والتقييمات</option>
+                  <option value="whatsapp">زر تواصل واتساب</option>
+                  <option value="footer">تذييل الصفحة (الفوتر)</option>
+                </>
+              ) : selectedTemplate === 'template_2' ? (
+                <>
+                  <option value="hero">البانر الرئيسي (الهيرو)</option>
+                  <option value="about">عن الدورة وبطاقة الاستثمار</option>
+                  <option value="features">بنية الدورة ومميزاتها</option>
+                  <option value="chapters">المنهج ومحتوى الدورة</option>
+                  <option value="instructor">بيانات واعتمادات المدرب</option>
+                  <option value="benefits">ماذا ستحصل عليه (المخرجات)</option>
+                  <option value="cta">البانر الختامي (CTA)</option>
+                  <option value="footer">تذييل الصفحة (الفوتر)</option>
+                  <option value="whatsapp">زر تواصل واتساب</option>
+                </>
+              ) : selectedTemplate === 'template_3' ? (
+                <>
+                  <option value="hero">البانر الرئيسي (الهيرو)</option>
+                  <option value="learning">ماذا ستتعلم في الدورة</option>
+                  <option value="chapters">محتوى الدورة والمنهج</option>
+                  <option value="instructor">عن المحاضر والمدرب</option>
+                  <option value="faq">الأسئلة الشائعة حول البرنامج</option>
+                  <option value="requirements">المتطلبات الأساسية للبدء</option>
+                  <option value="payment">بطاقة ورسوم الاشتراك</option>
+                  <option value="whatsapp">زر تواصل واتساب</option>
+                </>
+              ) : (
+                <option value="hero">البانر الرئيسي (الهيرو)</option>
+              )}
             </select>
           </div>
 
           <div className="flex-1 overflow-y-auto p-5 space-y-6 text-slate-900 bg-white">
-            {(() => {
-              const sec = (activeSectionId || '').toLowerCase().trim();
-              const key =
-                ['hero', 'overview', 'intro', 'banner', 'header', 'main'].includes(sec) ? 'hero' :
-                ['learning', 'features', 'benefits', 'outcomes', 'about'].includes(sec) ? 'learning' :
-                ['chapters', 'curriculum', 'syllabus', 'content', 'modules', 'units'].includes(sec) ? 'chapters' :
-                ['payment', 'pricing', 'packages', 'checkout'].includes(sec) ? 'payment' :
-                ['faq', 'questions', 'help'].includes(sec) ? 'faq' :
-                ['reviews', 'testimonials', 'ratings', 'students'].includes(sec) ? 'reviews' :
-                ['whatsapp', 'contact', 'support', 'chat'].includes(sec) ? 'whatsapp' :
-                ['footer', 'bottom'].includes(sec) ? 'footer' : (sec ? 'hero' : '');
-
-              if (key === 'hero') return <HeroEditor />;
-              if (key === 'learning') return <LearningEditor />;
-              if (key === 'chapters') return <ChapterEditor />;
-              if (key === 'payment') return <PaymentEditor />;
-              if (key === 'faq') return <FAQEditor />;
-              if (key === 'reviews') return <ReviewsEditor />;
-              if (key === 'whatsapp') return <WhatsAppEditor />;
-              if (key === 'footer') return <FooterEditor />;
-
-              return (
-                <div className="text-center py-20 text-slate-400 font-bold text-xs space-y-3">
-                  <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
-                    <Layout size={24} />
-                  </div>
-                  <p className="max-w-xs mx-auto leading-relaxed">
-                    👈 اختر قسماً من القائمة أعلاه أو انقر فوق أي عنصر في المعاينة المباشرة لتعديل إعداداته هنا.
-                  </p>
+            {selectedTemplate === 'template_1' ? (
+              (() => {
+                const sec = (activeSectionId || 'hero').toLowerCase().trim();
+                switch (sec) {
+                  case 'hero':
+                    return <Template1HeroEditor />;
+                  case 'learning':
+                    return <Template1LearningEditor />;
+                  case 'chapters':
+                    return <Template1ChapterEditor />;
+                  case 'payment':
+                    return <Template1PaymentEditor />;
+                  case 'faq':
+                    return <Template1FAQEditor />;
+                  case 'reviews':
+                    return <Template1ReviewsEditor />;
+                  case 'whatsapp':
+                    return <Template1WhatsAppEditor />;
+                  case 'footer':
+                    return <Template1FooterEditor />;
+                  default:
+                    return <Template1HeroEditor />;
+                }
+              })()
+            ) : selectedTemplate === 'template_2' ? (
+              (() => {
+                const sec = (activeSectionId || 'hero').toLowerCase().trim();
+                switch (sec) {
+                  case 'hero':
+                    return <Template2HeroEditor />;
+                  case 'about':
+                  case 'learning':
+                    return <Template2AboutEditor />;
+                  case 'features':
+                    return <Template2FeaturesEditor />;
+                  case 'chapters':
+                    return <Template2CurriculumEditor />;
+                  case 'instructor':
+                    return <Template2InstructorEditor />;
+                  case 'benefits':
+                    return <Template2BenefitsEditor />;
+                  case 'cta':
+                  case 'payment':
+                    return <Template2CtaEditor />;
+                  case 'footer':
+                    return <Template2FooterEditor />;
+                  case 'whatsapp':
+                    return <Template1WhatsAppEditor />;
+                  default:
+                    return <Template2HeroEditor />;
+                }
+              })()
+            ) : selectedTemplate === 'template_3' ? (
+              (() => {
+                const sec = (activeSectionId || 'hero').toLowerCase().trim();
+                switch (sec) {
+                  case 'hero':
+                    return <Template3HeroEditor />;
+                  case 'learning':
+                    return <Template3LearningEditor />;
+                  case 'chapters':
+                    return <Template3CurriculumEditor />;
+                  case 'instructor':
+                    return <Template3InstructorEditor />;
+                  case 'faq':
+                    return <Template3FAQEditor />;
+                  case 'requirements':
+                    return <Template3RequirementsEditor />;
+                  case 'payment':
+                    return <Template3PricingEditor />;
+                  case 'whatsapp':
+                    return <Template1WhatsAppEditor />;
+                  default:
+                    return <Template3HeroEditor />;
+                }
+              })()
+            ) : (
+              <div className="text-center py-20 text-slate-400 font-bold text-xs space-y-3">
+                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
+                  <Layout size={24} />
                 </div>
-              );
-            })()}
+                <p className="max-w-xs mx-auto leading-relaxed">
+                  يرجى اختيار أحد القوالب لتعديل وتخصيص الأقسام.
+                </p>
+              </div>
+            )}
           </div>
         </aside>
 

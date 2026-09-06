@@ -19,7 +19,18 @@ const VerificationModal = ({ isOpen, onClose, onSuccess }: VerificationModalProp
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [contact, setContact] = useState<string | null>(null);
   const [errors, setErrors] = useState<string>('');
+  const [resendTimer, setResendTimer] = useState<number>(0);
   const { selectedCountry } = useCountry();
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resendTimer > 0) {
+      timer = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [resendTimer]);
 
   useEffect(() => {
     if (isOpen) {
@@ -48,6 +59,7 @@ const VerificationModal = ({ isOpen, onClose, onSuccess }: VerificationModalProp
       await sendOtp(contact, selectedCountry?.isoCode);
       toast.success('تم إرسال رمز التحقق بنجاح');
       setStep('otp');
+      setResendTimer(60);
     } catch (error: any) {
       toast.error(error.message || 'فشل إرسال رمز التحقق');
     } finally {
@@ -56,14 +68,30 @@ const VerificationModal = ({ isOpen, onClose, onSuccess }: VerificationModalProp
   };
 
   const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) value = value[0];
-    if (!/^\d*$/.test(value)) return;
+    const digitsOnly = value.replace(/\D/g, '');
+    if (!digitsOnly) {
+      const newOtp = [...otp];
+      newOtp[index] = '';
+      setOtp(newOtp);
+      return;
+    }
+
+    if (digitsOnly.length > 1) {
+      const newOtp = [...otp];
+      digitsOnly.slice(0, 6).split('').forEach((char, i) => {
+        if (i < 6) newOtp[i] = char;
+      });
+      setOtp(newOtp);
+      const lastIndex = Math.min(digitsOnly.length - 1, 5);
+      inputRefs.current[lastIndex]?.focus();
+      return;
+    }
 
     const newOtp = [...otp];
-    newOtp[index] = value;
+    newOtp[index] = digitsOnly;
     setOtp(newOtp);
 
-    if (value && index < 5) {
+    if (digitsOnly && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
   };
@@ -76,8 +104,8 @@ const VerificationModal = ({ isOpen, onClose, onSuccess }: VerificationModalProp
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').slice(0, 6);
-    if (!/^\d+$/.test(pastedData)) return;
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (!pastedData) return;
 
     const newOtp = [...otp];
     pastedData.split('').forEach((char, index) => {
@@ -85,7 +113,6 @@ const VerificationModal = ({ isOpen, onClose, onSuccess }: VerificationModalProp
     });
     setOtp(newOtp);
 
-    // Focus last filled input or the verify button
     const lastIndex = Math.min(pastedData.length - 1, 5);
     inputRefs.current[lastIndex]?.focus();
   };
@@ -190,7 +217,7 @@ const VerificationModal = ({ isOpen, onClose, onSuccess }: VerificationModalProp
                     ref={(el) => { inputRefs.current[index] = el; }}
                     type="text"
                     inputMode="numeric"
-                    maxLength={1}
+                    maxLength={6}
                     value={digit}
                     onChange={(e) => {
                       handleOtpChange(index, e.target.value);
@@ -216,10 +243,14 @@ const VerificationModal = ({ isOpen, onClose, onSuccess }: VerificationModalProp
 
             <button
               onClick={handleSendOtp}
-              disabled={loading}
-              className="text-gray-400 font-black text-base hover:text-blue-600 transition-colors py-2 border-b-2 border-transparent hover:border-blue-100"
+              disabled={loading || resendTimer > 0}
+              className="text-gray-400 font-black text-base hover:text-blue-600 transition-colors py-2 border-b-2 border-transparent hover:border-blue-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto"
             >
-              لم يصلك الرمز؟ إعادة الإرسال
+              {resendTimer > 0 ? (
+                <span>إعادة الإرسال بعد {resendTimer} ثانية</span>
+              ) : (
+                <span>لم يصلك الرمز؟ إعادة الإرسال</span>
+              )}
             </button>
           </div>
         )}

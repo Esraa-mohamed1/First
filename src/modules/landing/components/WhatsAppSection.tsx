@@ -109,12 +109,12 @@ export default function WhatsAppSection({
                   ✦ &nbsp;{data.title || 'لسه محتار؟'}
                 </span>
 
-                <h2 style={{ color: isTemplate1 ? '#0D3B33' : 'inherit' }} className="text-2xl md:text-3xl font-black leading-tight">
+                <h2 style={{ color: localText }} className="text-2xl md:text-3xl font-black leading-tight">
                   {data.subtitle || 'سجّل اهتمامك وهنكلمك بنفسنا'}
                 </h2>
 
-                <p className="text-xs md:text-sm font-medium leading-relaxed max-w-xl text-slate-500">
-                  سيب اسمك ورقم موبايلك، وفريق الدورة هيتواصل معاك خلال 24 ساعة يجاوب على كل أسئلتك ويساعدك تقرر إذا كانت الدورة مناسبة لك — بدون أي التزام.
+                <p style={{ color: `rgba(${textRgb}, 0.8)` }} className="text-xs md:text-sm font-medium leading-relaxed max-w-xl">
+                  {data.contactMessage !== undefined ? data.contactMessage : 'سيب اسمك ورقم موبايلك، وفريق الدورة هيتواصل معاك خلال 24 ساعة يجاوب على كل أسئلتك ويساعدك تقرر إذا كانت الدورة مناسبة لك — بدون أي التزام.'}
                 </p>
 
                 <div className="pt-2 flex justify-start w-full">

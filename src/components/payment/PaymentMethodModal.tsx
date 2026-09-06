@@ -18,6 +18,7 @@ interface PaymentMethodModalProps {
   courseId: string | number;
   coursePrice: number | string;
   courseCurrency: string;
+  onSuccess?: () => void | Promise<void>;
 }
 
 export const PaymentMethodModal = ({
@@ -27,6 +28,7 @@ export const PaymentMethodModal = ({
   courseId,
   coursePrice,
   courseCurrency,
+  onSuccess,
 }: PaymentMethodModalProps) => {
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedMethod, setSelectedMethod] = useState<AcademyPaymentMethod | null>(null);
@@ -121,8 +123,18 @@ export const PaymentMethodModal = ({
     if (!selectedMethod) return;
     setLoading(true);
     try {
-      const receiverAccountId = (selectedMethod as any)?.receiver_account_id || (selectedMethod as any)?.receiverAccountId || selectedMethod.methodId;
+      const receiverAccountId = selectedMethod.methodId || (selectedMethod as any)?.id || (selectedMethod as any)?.receiver_account_id || (selectedMethod as any)?.receiverAccountId;
       await enrollInCourse(courseId, selectedMethod.methodId, screenshot, receiverAccountId);
+      if (onSuccess) {
+        try {
+          await onSuccess();
+        } catch (callbackErr) {
+          console.error('onSuccess callback failed:', callbackErr);
+        }
+      }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('course-subscription-updated', { detail: { courseId: String(courseId) } }));
+      }
       await showAlert.success('تم إرسال طلب التسجيل ✅', 'سيتم مراجعة الإيصال وتفعيل الدورة قريباً.');
       handleClose();
     } catch (error: any) {
@@ -213,12 +225,15 @@ export const PaymentMethodModal = ({
                           isSel ? 'border-blue-600 bg-blue-50/60 shadow-sm' : 'border-gray-100 bg-gray-50 hover:border-blue-200 hover:bg-blue-50/20'
                         )}
                       >
-                        <div className={clsx('w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors overflow-hidden p-1 bg-white', isSel ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border border-gray-200 text-gray-500')}>
+                        <div className={clsx(
+                          'w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 transition-all overflow-hidden p-1.5 bg-white border shadow-sm',
+                          isSel ? 'border-blue-600 ring-4 ring-blue-500/15 text-blue-600 shadow-md' : 'border-gray-200 text-gray-500'
+                        )}>
                           {m.logo && !imageErrors[m.methodId] ? (
                             <img 
                               src={m.logo} 
                               alt={m.methodName} 
-                              className="w-full h-full object-contain" 
+                              className="w-full h-full object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.08)]" 
                               onError={() => setImageErrors(prev => ({ ...prev, [m.methodId]: true }))}
                             />
                           ) : (
@@ -262,10 +277,21 @@ export const PaymentMethodModal = ({
                   <p className="text-[11px] text-blue-500 font-black uppercase tracking-wide mb-1">المبلغ المطلوب تحويله</p>
                   <p className="text-2xl font-black text-blue-900">{coursePrice} <span className="text-sm font-bold">{courseCurrency}</span></p>
                 </div>
-                <div className="bg-white rounded-xl p-5 border border-blue-200/50 flex items-center justify-between gap-4 shadow-sm">
-                  <div className="min-w-0 text-right">
-                    <span className="text-[10px] text-gray-400 font-bold block mb-1">{selectedMethod.methodName}</span>
-                    <span className="font-mono text-sm font-black text-gray-900 select-all break-all">{selectedMethod.value}</span>
+                <div className="bg-white rounded-2xl p-5 border border-blue-200/70 flex items-center justify-between gap-4 shadow-md">
+                  <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                    {selectedMethod.logo && !imageErrors[selectedMethod.methodId] ? (
+                      <div className="w-16 h-16 rounded-2xl bg-white border border-gray-200 p-1.5 flex items-center justify-center shrink-0 overflow-hidden shadow-md">
+                        <img src={selectedMethod.logo} alt={selectedMethod.methodName} className="w-full h-full object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.08)]" />
+                      </div>
+                    ) : (
+                      <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100 shadow-sm">
+                        {getIcon(selectedMethod.type)}
+                      </div>
+                    )}
+                    <div className="min-w-0 text-right">
+                      <span className="text-[11px] text-gray-400 font-bold block mb-1">{selectedMethod.methodName}</span>
+                      <span className="font-mono text-base font-black text-gray-900 select-all break-all">{selectedMethod.value}</span>
+                    </div>
                   </div>
                   <button type="button" onClick={handleCopy} className="flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 text-white text-xs font-black rounded-xl hover:bg-blue-700 transition shrink-0 shadow-md shadow-blue-500/10">
                     {copied ? <Check size={13} /> : <Copy size={13} />}

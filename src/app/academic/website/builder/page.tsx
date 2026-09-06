@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Monitor,
@@ -34,7 +34,7 @@ import withReactContent from 'sweetalert2-react-content';
 import { getProfileStatus } from '@/services/auth';
 import { getPages, getSections, saveSections, createPage, updatePage, apiToEditor, editorToApi } from '@/services/pages';
 import { syncHomepageCache } from '@/lib/homepage-cache';
-import { getAcademicHtml } from '@/builder/templates/academic/academicHtml';
+import { getAcademicHtml, renderVideoPlayer } from '@/builder/templates/academic/academicHtml';
 import { getCoachHtml } from '@/builder/templates/coach/coachHtml';
 import { getSchoolCoachHtml } from '@/builder/templates/schoolcoach/schoolcoachHtml';
 import { getCourses } from '@/services/courses';
@@ -55,6 +55,8 @@ interface HeroConfig {
   description: string;
   buttonText: string;
   buttonLink: string;
+  secondaryButtonText?: string;
+  secondaryButtonLink?: string;
   image: string;
   backgroundColor: string;
   textColor: string;
@@ -70,6 +72,8 @@ interface AboutConfig {
   videoTitle?: string;
   videoDesc?: string;
   videoLink?: string;
+  videoBg?: string;
+  videoTextColor?: string;
   analyticsTitle?: string;
   analyticsBars?: number[];
   analyticsColor?: string;
@@ -103,6 +107,8 @@ interface PricingConfig {
   textColor: string;
   testimonialsTitle?: string;
   testimonialsSubtitle?: string;
+  testimonialsBg?: string;
+  testimonialsTextColor?: string;
   testimonial1Text?: string;
   testimonial1Author?: string;
   testimonial1Role?: string;
@@ -133,6 +139,8 @@ interface ContactConfig {
   description: string;
   phoneNumber: string;
   buttonText: string;
+  secondaryButtonText?: string;
+  secondaryButtonLink?: string;
   backgroundColor: string;
   textColor: string;
 }
@@ -162,6 +170,17 @@ interface CoursesConfig {
   items?: any[];
 }
 
+interface StatsItemConfig {
+  value: string;
+  label: string;
+}
+
+interface StatsConfig {
+  items: StatsItemConfig[];
+  backgroundColor?: string;
+  textColor?: string;
+}
+
 interface TemplateContent {
   navbar: NavbarConfig;
   hero: HeroConfig;
@@ -169,6 +188,7 @@ interface TemplateContent {
   video?: any;
   features: FeaturesConfig;
   courses?: CoursesConfig;
+  stats?: StatsConfig;
   pricing: PricingConfig;
   testimonials?: any;
   faq: FAQConfig;
@@ -188,6 +208,8 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
           description: 'مناهج دراسية مبسطة وأساليب تعليمية حديثة تساعدك على فهم المادة بعمق وتحقيق الدرجة الكاملة في امتحاناتك.',
           buttonText: 'احجز مكانك الآن',
           buttonLink: '#contact',
+          secondaryButtonText: 'اعرف المزيد عنا',
+          secondaryButtonLink: '#about',
           image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDdn5I4iyCWiaDe9m4F8v8n_X00tPqBgqXH4hbDxxtEpcQGhs3Iv7ye36iLKGCPaYsSeLuQ6Q56ZRbKBk10dy_efgKLS3zHuPJjJmYL6JtPlCiByhhruLtE_z5QnQirZ362M0sgpMps7B8icOJUUVS6t_6GJ1K0xma8arDq0yEal-eRoeAXPmexe9Vlvhif39sPxgQQGgyuqPwrz1R2REpb3TQmQAfrbC-2IMbqMBAUhDDImR-r8q5cEQ',
           backgroundColor: '#0a1628',
           textColor: '#ffffff'
@@ -201,7 +223,9 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
           videoTag: 'شاهد وتعلّم',
           videoTitle: 'تعرف على فلسفتنا التعليمية في ٣ دقائق',
           videoDesc: 'نقدم لك جولة سريعة داخل مجموعاتنا التفاعلية المباشرة، ونوضح طريقة المتابعة والتقييمات الدورية للطلاب.',
-          videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop'
+          videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
+          videoBg: '',
+          videoTextColor: ''
         },
         features: {
           title: 'المواد الدراسية',
@@ -266,7 +290,19 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
             }
           ],
           backgroundColor: '#ffffff',
-          textColor: '#1a1f29'
+          textColor: '#1a1f29',
+          testimonialsBg: '#f5f2ff',
+          testimonialsTextColor: '#1b1b24',
+        },
+        stats: {
+          items: [
+            { value: '98%', label: 'نسبة رضا الطلاب' },
+            { value: '150+', label: 'منهج دراسي متكامل' },
+            { value: '12k+', label: 'خريج متميز' },
+            { value: '24/7', label: 'دعم أكاديمي مباشر' }
+          ],
+          backgroundColor: '',
+          textColor: ''
         },
         faq: {
           title: 'الأسئلة الشائعة حول المنهج',
@@ -283,8 +319,10 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         contact: {
           title: 'ابدأ رحلة تفوقك اليوم',
           description: 'انضم لأكثر من ١٠,٠٠٠ طالب وطالبة حققوا أحلامهم الدراسية معنا.',
-          phoneNumber: '201000000000',
+          phoneNumber: '01012345678',
           buttonText: 'احجز مكانك الآن',
+          secondaryButtonText: 'طلب عرض توضيحي',
+          secondaryButtonLink: 'https://example.com/demo',
           backgroundColor: '#0a1628',
           textColor: '#ffffff'
         },
@@ -307,6 +345,8 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
           description: 'تغلب على تحديات الدراسة والامتحانات من خلال الفيديوهات القصيرة المركزة وخرائط الذهن والامتحانات التفاعلية الذكية.',
           buttonText: 'ابدأ دراستك فوراً',
           buttonLink: '#courses',
+          secondaryButtonText: 'اعرف المزيد عنا',
+          secondaryButtonLink: '#about',
           image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
           backgroundColor: '#0f172a',
           textColor: '#ffffff'
@@ -341,7 +381,19 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
             { title: 'الاشتراك الدراسي السنوي المفتوح', price: '٩٠0 جنيه / للعام', features: ['توفير هائل لكامل العام الدراسي', 'وصول حصري لمعسكر المراجعة الختامي', 'ملفات إجابات تفصيلية ونماذج سابقة'] }
           ],
           backgroundColor: '#1e293b',
-          textColor: '#ffffff'
+          textColor: '#ffffff',
+          testimonialsBg: '#1e293b',
+          testimonialsTextColor: '#ffffff',
+        },
+        stats: {
+          items: [
+            { value: '98%', label: 'نسبة رضا الطلاب' },
+            { value: '150+', label: 'منهج دراسي متكامل' },
+            { value: '12k+', label: 'خريج متميز' },
+            { value: '24/7', label: 'دعم أكاديمي مباشر' }
+          ],
+          backgroundColor: '',
+          textColor: ''
         },
         faq: {
           title: 'أسئلة يتكرر طرحها',
@@ -380,7 +432,9 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         subtitle: 'أكاديمية النخبة',
         description: 'مساحة حصرية مصممة للمفكرين والقادة. استكشف مناهج متقدمة وتواصل مع خبراء عالميين في بيئة دراسية مصممة للتركيز العميق والتميز الأكاديمي.',
         buttonText: 'ابدأ رحلتك',
-        buttonLink: '#',
+        buttonLink: '#courses',
+        secondaryButtonText: 'استكشف المناهج',
+        secondaryButtonLink: '#faq',
         image: '',
         backgroundColor: '#fbfafc',
         textColor: '#1c1a22'
@@ -394,7 +448,9 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         videoTag: 'شاهد وتعلّم',
         videoTitle: 'تعرف على فلسفتنا التعليمية في ٣ دقائق',
         videoDesc: 'نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.',
-        videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop'
+        videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
+        videoBg: '',
+        videoTextColor: ''
       },
       features: {
         title: 'المرشدون الخبراء',
@@ -433,6 +489,16 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         textColor: '#1c1a22',
         items: [],
       },
+      stats: {
+        items: [
+          { value: '98%', label: 'نسبة رضا الطلاب' },
+          { value: '150+', label: 'منهج دراسي متكامل' },
+          { value: '12k+', label: 'خريج متميز' },
+          { value: '24/7', label: 'دعم أكاديمي مباشر' }
+        ],
+        backgroundColor: '',
+        textColor: ''
+      },
       pricing: {
         title: 'سلسلة الماستركلاس',
         subtitle: 'محاضرات مكثفة مسجلة بأعلى جودة سينمائية.',
@@ -450,6 +516,8 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         ],
         backgroundColor: '#ffffff',
         textColor: '#1c1a22',
+        testimonialsBg: '#fbfafc',
+        testimonialsTextColor: '#1c1a22',
         testimonialsTitle: 'ماذا يقول النخبة؟',
         testimonialsSubtitle: 'تجارب حقيقية ورؤى ملهمة من طلابنا وقادتنا الذين غيروا مسارهم الأكاديمي والمهني.',
         testimonial1Text: 'الماستركلاسز والدروس الفلسفية المعمقة أعادت صياغة طريقتي في التفكير واتخاذ القرارات الاستراتيجية. تجربة دراسية استثنائية ونخبوية حقاً.',
@@ -475,8 +543,10 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
       contact: {
         title: 'Deep Knowledge',
         description: 'أكاديمية النخبة للتعليم العالي المستقل. نبني قادة الفكر للمستقبل من خلال مناهج صارمة وعميقة.',
-        phoneNumber: '',
-        buttonText: '',
+        phoneNumber: '01012345678',
+        buttonText: 'ابدأ الآن',
+        secondaryButtonText: 'طلب عرض توضيحي',
+        secondaryButtonLink: 'https://example.com/demo',
         backgroundColor: '#6750a4',
         textColor: '#ffffff'
       },
@@ -498,7 +568,9 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         subtitle: 'حل مؤسسي متقدم',
         description: 'اربط الطلاب، والمعلمين، والإداريين على منصة مؤسسية موحدة مصممة لتحقيق التميز القابل للقياس وسير العمل المبسط بكفاءة عالية.',
         buttonText: 'استكشف المنصة',
-        buttonLink: '#',
+        buttonLink: '#courses',
+        secondaryButtonText: 'طلب عرض توضيحي',
+        secondaryButtonLink: '#contact',
         image: 'https://tse4.mm.bing.net/th/id/OIP.CGEfBMBIYoz4Syk_3B8DawHaEK?r=0&rs=1&pid=ImgDetMain&o=7&rm=3',
         backgroundColor: '#fcf8ff',
         textColor: '#1b1b24'
@@ -509,10 +581,15 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         image: '',
         backgroundColor: '#ffffff',
         textColor: '#1b1b24',
+        analyticsTitle: 'رؤية الأداء المؤسسي',
+        analyticsColor: '#3525cd',
+        analyticsBars: [40, 65, 85, 50, 95],
         videoTag: 'شاهد وتعلّم',
         videoTitle: 'تعرف على فلسفتنا التعليمية في ٣ دقائق',
         videoDesc: 'نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.',
-        videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop'
+        videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
+        videoBg: '',
+        videoTextColor: ''
       },
       features: {
         title: 'نظام بيئي أكاديمي متكامل',
@@ -540,6 +617,16 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         textColor: '#1b1b24',
         items: [],
       },
+      stats: {
+        items: [
+          { value: '98%', label: 'نسبة رضا الطلاب' },
+          { value: '150+', label: 'مناهج شاملة' },
+          { value: '12k+', label: 'خريج متميز' },
+          { value: '24/7', label: 'دعم أكاديمي مباشر' }
+        ],
+        backgroundColor: '',
+        textColor: ''
+      },
       pricing: {
         title: 'المخرجات والنتائج الإحصائية',
         subtitle: 'معدلات تقدم وتحليلات رقمية للفصول الدراسية',
@@ -550,6 +637,8 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         ],
         backgroundColor: '#fcf8ff',
         textColor: '#1b1b24',
+        testimonialsBg: '#f5f2ff',
+        testimonialsTextColor: '#1b1b24',
         testimonialsTitle: 'ماذا يقول شركاؤنا وطلابنا؟',
         testimonialsSubtitle: 'قصص نجاح ملهمة وتجارب واقعية يعبر عنها شركاؤنا الأكاديميون وطلابنا المتميزون.',
         testimonial1Text: 'سهولة إدارة المحتوى التعليمي والتحليلات الدقيقة المتاحة مكنتنا كإدارة من تتبع الأداء وتحسين المخرجات التعليمية بشكل ملموس وسريع.',
@@ -574,10 +663,12 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
       contact: {
         title: 'ابْنِ مستقبل التعليم',
         description: 'انضم إلى المؤسسات الرائدة عالميًا في تحويل التجربة الأكاديمية. ارتقِ بمستوى مؤسستك التعليمية وابدأ رحلتك نحو التميز اليوم.',
-        phoneNumber: '201000000000',
+        phoneNumber: '01012345678',
         buttonText: 'ابدأ الآن',
-        backgroundColor: '#3525cd',
-        textColor: '#ffffff'
+        secondaryButtonText: 'طلب عرض توضيحي',
+        secondaryButtonLink: 'https://example.com/demo',
+        backgroundColor: '',
+        textColor: ''
       },
       footer: {
         text: '© 2024 إديوكور الأكاديمية. جميع الحقوق محفوظة.',
@@ -613,8 +704,9 @@ export default function PageBuilderPage() {
   const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
   const [openIconPickerIdx, setOpenIconPickerIdx] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [sectionsList, setSectionsList] = useState<string[]>(['navbar','hero','about','video','features','courses','testimonials','faq','contact']);
+  const [sectionsList, setSectionsList] = useState<string[]>(['navbar','hero','about','video','features','courses','stats','pricing','testimonials','faq','contact']);
   const [saving, setSaving] = useState<boolean>(false);
+  const lastScrollYRef = useRef<number>(0);
 
   // Dynamic template content configurations
   const [content, setContent] = useState<TemplateContent | null>(null);
@@ -655,33 +747,79 @@ export default function PageBuilderPage() {
         if (el) {
           el.style.setProperty(styleProp, value);
         }
+      } catch (e) { }
+    };
+
+    const updateStyleAll = (selector: string, styleProp: string, value: string | undefined) => {
+      if (!value) return;
+      try {
+        const els = doc.querySelectorAll(selector);
+        els.forEach((el) => {
+          (el as HTMLElement).style.setProperty(styleProp, value);
+        });
       } catch (e) {}
     };
 
     // Live Background & Text Color Updates across all section banners
-    updateStyle('[data-section="navbar"]', 'background-color', content.navbar.bgColor);
-    updateStyle('[data-section="navbar"]', 'color', content.navbar.textColor);
+    updateStyleAll('[data-section="navbar"]', 'background-color', content.navbar.bgColor);
+    updateStyleAll('[data-section="navbar"], [data-section="navbar"] span.text-headline-md, [data-section="navbar"] .text-headline-md, [data-section="navbar"] span.text-primary, [data-section="navbar"] .font-extrabold', 'color', content.navbar.textColor);
 
-    updateStyle('[data-section="hero"]', 'background-color', content.hero.backgroundColor);
-    updateStyle('[data-section="hero"]', 'color', content.hero.textColor);
+    updateStyleAll('[data-section="hero"]', 'background-color', content.hero.backgroundColor);
+    updateStyleAll('[data-section="hero"], [data-section="hero"] h1, [data-section="hero"] p', 'color', content.hero.textColor);
 
-    updateStyle('#about-analytics', 'background-color', content.about.backgroundColor);
-    updateStyle('#about-analytics', 'color', content.about.textColor);
+    updateStyleAll('#about-analytics, [data-section="about"]', 'background-color', content.about.backgroundColor);
+    updateStyleAll('#about-analytics, #about-analytics h2, #about-analytics p, [data-section="about"], [data-section="about"] h2, [data-section="about"] p', 'color', content.about.textColor);
 
     updateStyle('[data-section="features"]', 'background-color', content.features.backgroundColor);
     updateStyle('[data-section="features"]', 'color', content.features.textColor);
 
-    updateStyle('#pricing-plans', 'background-color', content.pricing.backgroundColor);
-    updateStyle('#pricing-plans', 'color', content.pricing.textColor);
+    if (content.courses) {
+      const cTextColor = content.courses.textColor || content.courses.titleColor;
+      if (content.courses.backgroundColor) {
+        updateStyleAll('#courses, [data-section="courses"]', 'background-color', content.courses.backgroundColor);
+      }
+      if (content.courses.cardBg) {
+        updateStyleAll('#courses a[data-course-index], #courses .bg-surface-container-lowest, [data-section="courses"] a, [data-section="courses"] .bg-surface-container-lowest, #courses .border-dashed', 'background-color', content.courses.cardBg);
+      }
+      if (cTextColor) {
+        updateStyleAll('#courses, [data-section="courses"]', 'color', cTextColor);
+        updateStyleAll('#courses h2, #courses h3, #courses p, [data-section="courses"] h2, [data-section="courses"] h3, [data-section="courses"] p', 'color', cTextColor);
+      }
+      if (content.courses.buttonBg) {
+        updateStyleAll('#courses a.bg-primary, #courses button.bg-primary, [data-section="courses"] a.bg-primary, [data-section="courses"] button.bg-primary', 'background-color', content.courses.buttonBg);
+        updateStyleAll('#courses span.bg-primary\\/10, [data-section="courses"] span.bg-primary\\/10', 'color', content.courses.buttonBg);
+      }
+    }
 
-    updateStyle('#testimonials', 'background-color', content.pricing.backgroundColor);
-    updateStyle('#testimonials', 'color', content.pricing.textColor);
+    if (content.stats) {
+      if (content.stats.backgroundColor) {
+        updateStyleAll('#stats-benefits, [data-section="stats"]', 'background-color', content.stats.backgroundColor);
+      }
+      if (content.stats.textColor) {
+        updateStyleAll('#stats-benefits, [data-section="stats"]', 'color', content.stats.textColor);
+        updateStyleAll('#stats-benefits span, [data-section="stats"] span, #stats-benefits [data-stat-index] span, [data-section="stats"] [data-stat-index] span', 'color', content.stats.textColor);
+      }
+    }
+
+    const pBg = content.pricing.backgroundColor || '#fcf8ff';
+    const pText = content.pricing.textColor || '#1b1b24';
+    updateStyleAll('#pricing-plans, [data-section="pricing"]', 'background-color', pBg);
+    updateStyleAll('#pricing-plans, #pricing-plans h3, #pricing-plans p, #pricing-plans h4, [data-section="pricing"], [data-section="pricing"] h3, [data-section="pricing"] p, [data-section="pricing"] h4', 'color', pText);
+
+    const tBg = (content.pricing as any).testimonialsBg || '#f5f2ff';
+    const tText = (content.pricing as any).testimonialsTextColor || '#1b1b24';
+    updateStyleAll('#testimonials, [data-section="testimonials"]', 'background-color', tBg);
+    updateStyleAll('#testimonials, #testimonials h2, #testimonials p, #testimonials h4, [data-section="testimonials"], [data-section="testimonials"] h2, [data-section="testimonials"] p, [data-section="testimonials"] h4, #testimonials p.italic', 'color', tText);
 
     updateStyle('[data-section="faq"]', 'background-color', content.faq.backgroundColor);
     updateStyle('[data-section="faq"]', 'color', content.faq.textColor);
 
-    updateStyle('[data-section="contact"]', 'background-color', content.contact.backgroundColor);
-    updateStyle('[data-section="contact"]', 'color', content.contact.textColor);
+    if (content.contact.backgroundColor) {
+      updateStyle('[data-section="contact"]', 'background-color', content.contact.backgroundColor);
+    }
+    if (content.contact.textColor) {
+      updateStyle('[data-section="contact"]', 'color', content.contact.textColor);
+    }
 
     updateStyle('#footer-bar', 'background-color', content.footer.backgroundColor);
     updateStyle('#footer-bar', 'color', content.footer.textColor);
@@ -693,7 +831,51 @@ export default function PageBuilderPage() {
     updateText('[data-section="hero"] h1', content.hero.title);
     updateText('[data-section="hero"] p', content.hero.description);
     updateText('[data-section="hero"] .text-label-md.text-primary, [data-section="hero"] .bg-gold-500\\/10 span, [data-section="hero"] .eyebrow-line', content.hero.subtitle);
-    updateText('[data-section="hero"] button, [data-section="hero"] a.btn-primary', content.hero.buttonText);
+    
+    // Primary Button
+    const heroPrimaryBtn = doc.querySelector('[data-section="hero"] [data-hero-btn="primary"], [data-section="hero"] a.bg-primary, [data-section="hero"] a.btn-primary') as HTMLAnchorElement;
+    if (heroPrimaryBtn) {
+      if (content.hero.buttonText) {
+        heroPrimaryBtn.innerHTML = content.hero.buttonText;
+      }
+      const pLink = (content.hero.buttonLink || '').trim();
+      if (pLink) {
+        const isUrl = pLink.startsWith('http://') || pLink.startsWith('https://') || pLink.startsWith('/') || pLink.startsWith('#');
+        heroPrimaryBtn.href = isUrl ? pLink : `#${pLink}`;
+        if (pLink.startsWith('http')) {
+          heroPrimaryBtn.target = '_blank';
+          heroPrimaryBtn.rel = 'noopener noreferrer';
+        } else {
+          heroPrimaryBtn.removeAttribute('target');
+          heroPrimaryBtn.removeAttribute('rel');
+        }
+      }
+    }
+
+    // Secondary / Demo Button
+    const heroSecondaryBtn = doc.querySelector('[data-section="hero"] [data-hero-btn="secondary"], [data-section="hero"] a.btn-secondary, [data-section="hero"] a.bg-surface, [data-section="hero"] button.bg-surface') as HTMLAnchorElement;
+    if (heroSecondaryBtn) {
+      if (content.hero.secondaryButtonText) {
+        const spanIcon = heroSecondaryBtn.querySelector('span.material-symbols-outlined');
+        if (spanIcon) {
+          heroSecondaryBtn.innerHTML = `${content.hero.secondaryButtonText} <span class="material-symbols-outlined text-[20px] rtl-icon group-hover:-translate-x-1 transition-transform">arrow_forward</span>`;
+        } else {
+          heroSecondaryBtn.innerHTML = content.hero.secondaryButtonText;
+        }
+      }
+      const sLink = (content.hero.secondaryButtonLink || '').trim();
+      if (sLink) {
+        const isUrl = sLink.startsWith('http://') || sLink.startsWith('https://') || sLink.startsWith('/') || sLink.startsWith('#');
+        heroSecondaryBtn.href = isUrl ? sLink : `#${sLink}`;
+        if (sLink.startsWith('http')) {
+          heroSecondaryBtn.target = '_blank';
+          heroSecondaryBtn.rel = 'noopener noreferrer';
+        } else {
+          heroSecondaryBtn.removeAttribute('target');
+          heroSecondaryBtn.removeAttribute('rel');
+        }
+      }
+    }
 
     // 3. About
     if (currentRole === 'coach') {
@@ -708,61 +890,83 @@ export default function PageBuilderPage() {
       if (analyticsSubtitleEl && content.about.subtitle !== undefined && analyticsSubtitleEl.innerHTML !== content.about.subtitle) {
         analyticsSubtitleEl.innerHTML = content.about.subtitle;
       }
-      if (content.about.image) {
-        const aboutImgEl = doc.querySelector('#about-analytics img') as HTMLImageElement;
-        if (aboutImgEl && aboutImgEl.src !== content.about.image) {
-          aboutImgEl.src = content.about.image;
+      if (content.about.backgroundColor) {
+        const aboutEl = doc.querySelector('#about-analytics, [data-section="about"]') as HTMLElement;
+        if (aboutEl) aboutEl.style.backgroundColor = content.about.backgroundColor;
+      }
+      if (content.about.textColor) {
+        const aboutEl = doc.querySelector('#about-analytics, [data-section="about"]') as HTMLElement;
+        if (aboutEl) {
+          aboutEl.style.color = content.about.textColor;
+          const h2El = aboutEl.querySelector('h2') as HTMLElement;
+          if (h2El) h2El.style.color = content.about.textColor;
+          const pEl = aboutEl.querySelector('p') as HTMLElement;
+          if (pEl) pEl.style.color = content.about.textColor;
         }
       }
-
       // Smart Analytics Chart Title, Bar Heights/Curves, & Bar Colors:
-      if (!content.about.image) {
-        updateText('#about-analytics h3', content.about.analyticsTitle || 'رؤى الأداء المؤسسي');
-        const chartColor = content.about.analyticsColor || '#3525cd';
-        const bars = content.about.analyticsBars || [40, 65, 85, 50, 95];
-        
-        // Dynamic Glass Bars Update
-        const barEls = doc.querySelectorAll('#about-analytics div.relative.z-10.flex-1');
-        barEls.forEach((barEl, i) => {
-          const el = barEl as HTMLElement;
-          if (el) {
-            if (bars[i] !== undefined) {
-              el.style.height = `${bars[i]}%`;
-            }
-            if (chartColor) {
-              const opacities = ['22', '33', '44', '66', 'aa'];
-              const op = opacities[i] || '88';
-              el.style.background = `linear-gradient(to top, ${chartColor}${op}, ${chartColor})`;
-            }
-          }
-        });
+      updateText('#about-analytics h3', content.about.analyticsTitle !== undefined ? content.about.analyticsTitle : 'رؤية الأداء المؤسسي');
+      const chartColor = content.about.analyticsColor || '#3525cd';
+      const bars = content.about.analyticsBars || [40, 65, 85, 50, 95];
 
-        // Dynamic SVG Curve Path Update
-        const svgPaths = doc.querySelectorAll('#about-analytics svg path');
-        if (svgPaths.length >= 2) {
-          const b1 = bars[0] ?? 40;
-          const b2 = bars[1] ?? 65;
-          const b3 = bars[2] ?? 85;
-          const b5 = bars[4] ?? 95;
-          const dArea = `M 0 ${100 - b1} Q 25 ${100 - b2}, 50 ${100 - b3} T 100 ${100 - b5} L 100 100 L 0 100 Z`;
-          const dLine = `M 0 ${100 - b1} Q 25 ${100 - b2}, 50 ${100 - b3} T 100 ${100 - b5}`;
-          
-          (svgPaths[0] as SVGPathElement).setAttribute('d', dArea);
-          (svgPaths[0] as SVGPathElement).setAttribute('fill', chartColor);
-          
-          (svgPaths[1] as SVGPathElement).setAttribute('d', dLine);
-          (svgPaths[1] as SVGPathElement).setAttribute('stroke', chartColor);
+      // Dynamic Glass Bars Update
+      const barEls = doc.querySelectorAll('#about-analytics div.relative.z-10.flex-1');
+      barEls.forEach((barEl, i) => {
+        const el = barEl as HTMLElement;
+        if (el) {
+          if (bars[i] !== undefined) {
+            el.style.height = `${bars[i]}%`;
+          }
+          if (chartColor) {
+            const opacities = ['22', '33', '44', '66', 'aa'];
+            const op = opacities[i] || '88';
+            el.style.background = `linear-gradient(to top, ${chartColor}${op}, ${chartColor})`;
+          }
         }
+      });
+
+      // Dynamic SVG Curve Path Update
+      const svgPaths = doc.querySelectorAll('#about-analytics svg path');
+      if (svgPaths.length >= 2) {
+        const b1 = bars[0] ?? 40;
+        const b2 = bars[1] ?? 65;
+        const b3 = bars[2] ?? 85;
+        const b5 = bars[4] ?? 95;
+        const dArea = `M 0 ${100 - b1} Q 25 ${100 - b2}, 50 ${100 - b3} T 100 ${100 - b5} L 100 100 L 0 100 Z`;
+        const dLine = `M 0 ${100 - b1} Q 25 ${100 - b2}, 50 ${100 - b3} T 100 ${100 - b5}`;
+
+        (svgPaths[0] as SVGPathElement).setAttribute('d', dArea);
+        (svgPaths[0] as SVGPathElement).setAttribute('fill', chartColor);
+
+        (svgPaths[1] as SVGPathElement).setAttribute('d', dLine);
+        (svgPaths[1] as SVGPathElement).setAttribute('stroke', chartColor);
       }
 
       // Video Intro:
       updateText('#about-video .text-label-md, #about-video .text-xs.font-bold', content.about.videoTag || '');
       updateText('#about-video h2.text-headline-lg, #about-video .text-headline-lg, #about-video .text-3xl.font-extrabold', content.about.videoTitle || '');
       updateText('#about-video p.text-body-lg.font-body-lg, #about-video p.leading-relaxed', content.about.videoDesc || '');
+      if (content.about.videoBg) {
+        const videoEl = doc.querySelector('#about-video, [data-section="video"]') as HTMLElement;
+        if (videoEl) videoEl.style.backgroundColor = content.about.videoBg;
+      }
+      if (content.about.videoTextColor) {
+        const videoEl = doc.querySelector('#about-video, [data-section="video"]') as HTMLElement;
+        if (videoEl) {
+          videoEl.style.color = content.about.videoTextColor;
+          const h2El = videoEl.querySelector('h2') as HTMLElement;
+          if (h2El) h2El.style.color = content.about.videoTextColor;
+          const pEl = videoEl.querySelector('p') as HTMLElement;
+          if (pEl) pEl.style.color = content.about.videoTextColor;
+        }
+      }
       if (content.about.videoLink) {
-        const videoBgEl = doc.querySelector('#about-video .bg-cover') as HTMLElement;
-        if (videoBgEl) {
-          videoBgEl.style.backgroundImage = `url('${content.about.videoLink}')`;
+        const videoContainer = doc.querySelector('#about-video [data-video-container]');
+        if (videoContainer) {
+          const currentSrc = videoContainer.querySelector('iframe')?.src || videoContainer.querySelector('video')?.src;
+          if (!currentSrc || (!currentSrc.includes(content.about.videoLink) && !content.about.videoLink.includes(currentSrc))) {
+            videoContainer.innerHTML = renderVideoPlayer(content.about.videoLink, 'w-full h-full rounded-3xl');
+          }
         }
       }
     }
@@ -812,6 +1016,14 @@ export default function PageBuilderPage() {
       }
     }
 
+    // Stats / Benefits
+    if (content.stats?.items) {
+      content.stats.items.forEach((st, idx) => {
+        updateText(`[data-stat-index="${idx}"] span.text-display-lg, [data-stat-index="${idx}"] span:first-child`, st.value || '');
+        updateText(`[data-stat-index="${idx}"] span.text-body-md, [data-stat-index="${idx}"] span:last-child`, st.label || '');
+      });
+    }
+
     // 5. Pricing
     updateText('#pricing-plans h2, #pricing-plans h3, #groups h2', content.pricing.title);
     const pricingHeaderDesc = doc.querySelector('#pricing-plans .text-center p, #groups .text-center p');
@@ -836,42 +1048,59 @@ export default function PageBuilderPage() {
     // 6. Testimonials
     updateText('#testimonials h2.text-headline-lg, #testimonials h2.section-title, #testimonials h2', content.pricing.testimonialsTitle || content.faq.testimonialsTitle || '');
     updateText('#testimonials p.text-body-lg.max-w-2xl, #testimonials p.text-body-lg.max-w-xl, #testimonials p.text-body-md', content.pricing.testimonialsSubtitle || content.faq.testimonialsSubtitle || '');
-    
+
     for (let i = 1; i <= 3; i++) {
       const textVal = (content.pricing as any)[`testimonial${i}Text`];
       const authorVal = (content.pricing as any)[`testimonial${i}Author`];
       const roleVal = (content.pricing as any)[`testimonial${i}Role`];
-      
+
       if (textVal !== undefined) {
-        updateText(`[data-testimonial="${i-1}"] p.italic, [data-testimonial="${i-1}"] p.text-on-surface-variant`, textVal ? `"${textVal}"` : '');
+        updateText(`[data-testimonial="${i - 1}"] p.italic, [data-testimonial="${i - 1}"] p.text-on-surface-variant`, textVal ? `"${textVal}"` : '');
       }
       if (authorVal !== undefined) {
-        updateText(`[data-testimonial="${i-1}"] h4`, authorVal || '');
+        updateText(`[data-testimonial="${i - 1}"] h4`, authorVal || '');
       }
       if (roleVal !== undefined) {
-        updateText(`[data-testimonial="${i-1}"] p.text-slate-500, [data-testimonial="${i-1}"] p.text-gray-400, [data-testimonial="${i-1}"] p.text-tertiary`, roleVal || '');
+        updateText(`[data-testimonial="${i - 1}"] div:last-child p, [data-testimonial="${i - 1}"] p.text-xs, [data-testimonial="${i - 1}"] p.text-slate-500, [data-testimonial="${i - 1}"] p.text-gray-400, [data-testimonial="${i - 1}"] p.text-tertiary, [data-testimonial="${i - 1}"] p.font-label-sm, [data-section="faq"][data-index="${i - 1}"] p.text-\\[10px\\]`, roleVal || '');
       }
     }
 
     // 7. FAQ
+    if (content.faq.backgroundColor) {
+      const faqSectionEl = doc.querySelector('#faq, [data-section="faq"]') as HTMLElement;
+      if (faqSectionEl) faqSectionEl.style.backgroundColor = content.faq.backgroundColor;
+    }
+    if (content.faq.textColor) {
+      const faqSectionEl = doc.querySelector('#faq, [data-section="faq"]') as HTMLElement;
+      if (faqSectionEl) faqSectionEl.style.color = content.faq.textColor;
+      const faqHeadings = doc.querySelectorAll('#faq h2, [data-section="faq"] h2, #faq h4, [data-section="faq"] h4, [data-section="faq"] span.font-headline-md, [data-section="faq"] span.font-body-lg');
+      faqHeadings.forEach((el) => {
+        (el as HTMLElement).style.color = content.faq.textColor;
+      });
+      const faqAnswers = doc.querySelectorAll('#faq p, [data-section="faq"] p, [data-section="faq"] div.bg-surface');
+      faqAnswers.forEach((el) => {
+        (el as HTMLElement).style.color = content.faq.textColor;
+      });
+    }
+
     if (currentRole === 'schoolcoach') {
       updateText('#testimonials h2.section-title, #testimonials h2', content.faq.testimonialsTitle || '');
       updateText('#testimonials p.text-body-lg.max-w-2xl', content.faq.testimonialsSubtitle || '');
       content.faq.items.forEach((item, idx) => {
         updateText(`[data-section="faq"][data-index="${idx}"] h4`, item.question);
-        updateText(`[data-section="faq"][data-index="${idx}"] p.italic`, item.answer);
+        updateText(`[data-section="faq"][data-index="${idx}"] p`, `"${item.answer}"`);
       });
     } else if (currentRole === 'coach') {
       updateText('[data-section="faq"] > div > div > h2, [data-section="faq"] h2', content.faq.title);
       content.faq.items.forEach((item, idx) => {
         updateText(`[data-section="faq"][data-index="${idx}"] span.font-headline-md, [data-section="faq"][data-index="${idx}"] span.font-body-lg`, item.question);
-        updateText(`[data-section="faq"][data-index="${idx}"] div.bg-surface`, item.answer);
+        updateText(`[data-section="faq"][data-index="${idx}"] span.font-label-sm, [data-section="faq"][data-index="${idx}"] div.bg-surface`, item.answer);
       });
     } else {
       updateText('[data-section="faq"] h2', content.faq.title);
       content.faq.items.forEach((item, idx) => {
         updateText(`[data-section="faq"][data-index="${idx}"] h4, [data-section="faq"][data-index="${idx}"] .font-body-lg`, item.question);
-        updateText(`[data-section="faq"][data-index="${idx}"] p:nth-of-type(2), [data-section="faq"][data-index="${idx}"] p.italic, [data-section="faq"][data-index="${idx}"] p.text-gray-600`, item.answer);
+        updateText(`[data-section="faq"][data-index="${idx}"] p, [data-section="faq"][data-index="${idx}"] .text-body-md`, item.answer);
       });
     }
 
@@ -881,9 +1110,28 @@ export default function PageBuilderPage() {
     if (contactDescEl && content.contact.description !== undefined && contactDescEl.innerHTML !== content.contact.description) {
       contactDescEl.innerHTML = content.contact.description;
     }
-    const contactBtnEl = doc.querySelector('[data-section="contact"] button, [data-section="contact"] a.btn-primary');
-    if (contactBtnEl && content.contact.buttonText !== undefined && contactBtnEl.innerHTML !== content.contact.buttonText) {
-      contactBtnEl.innerHTML = content.contact.buttonText;
+    const contactBtnEl = doc.querySelector('[data-section="contact"] a[data-contact-btn="primary"], [data-section="contact"] button[data-contact-btn="primary"], [data-section="contact"] a.btn-primary, [data-section="contact"] button:first-of-type');
+    if (contactBtnEl) {
+      if (content.contact.buttonText !== undefined && contactBtnEl.textContent?.trim() !== content.contact.buttonText) {
+        contactBtnEl.textContent = content.contact.buttonText;
+      }
+      if (content.contact.phoneNumber) {
+        const telVal = `tel:${content.contact.phoneNumber.replace(/\s+/g, '')}`;
+        if (contactBtnEl.getAttribute('href') !== telVal) {
+          contactBtnEl.setAttribute('href', telVal);
+        }
+      }
+    }
+    const contactSecondaryBtnEl = doc.querySelector('[data-section="contact"] a[data-contact-btn="secondary"], [data-section="contact"] button[data-contact-btn="secondary"], [data-section="contact"] a.btn-secondary, [data-section="contact"] button:nth-of-type(2)');
+    if (contactSecondaryBtnEl) {
+      const secText = (content.contact as any).secondaryButtonText || 'طلب عرض توضيحي';
+      if (contactSecondaryBtnEl.textContent?.trim() !== secText) {
+        contactSecondaryBtnEl.textContent = secText;
+      }
+      const secLink = (content.contact as any).secondaryButtonLink || '';
+      if (secLink && contactSecondaryBtnEl.getAttribute('href') !== secLink) {
+        contactSecondaryBtnEl.setAttribute('href', secLink);
+      }
     }
 
     // 9. Footer
@@ -898,6 +1146,24 @@ export default function PageBuilderPage() {
     const iframe = document.getElementById('website-builder-iframe') as HTMLIFrameElement;
     if (!iframe || !iframe.contentDocument) return;
     const doc = iframe.contentDocument;
+
+    // Track and restore scroll position inside iframe
+    const win = iframe.contentWindow;
+    if (win) {
+      win.addEventListener('scroll', () => {
+        try {
+          lastScrollYRef.current = win.scrollY || doc.documentElement.scrollTop || 0;
+        } catch (e) {}
+      }, { passive: true });
+
+      if (lastScrollYRef.current > 0) {
+        setTimeout(() => {
+          try {
+            win.scrollTo({ top: lastScrollYRef.current, behavior: 'instant' });
+          } catch (e) {}
+        }, 50);
+      }
+    }
 
     // 1. Inject visual editor styles into the iframe
     const styleId = 'darab-editor-styles';
@@ -940,15 +1206,42 @@ export default function PageBuilderPage() {
     // 2. Add intercepting click listener
     doc.addEventListener('click', (event) => {
       const target = event.target as HTMLElement;
+      const anchorEl = target.closest('a') as HTMLAnchorElement | null;
       const itemEl = target.closest('[data-index]') as HTMLElement | null;
       const sectionEl = target.closest('[data-section]') as HTMLElement | null;
+
+      // Handle normal URL navigation or anchor scroll on link clicks
+      if (anchorEl) {
+        const href = anchorEl.getAttribute('href');
+        if (href && href !== '#' && !href.startsWith('javascript:')) {
+          if (href.startsWith('http://') || href.startsWith('https://')) {
+            event.preventDefault();
+            event.stopPropagation();
+            window.open(href, '_blank', 'noopener,noreferrer');
+            return;
+          } else if (href.startsWith('tel:')) {
+            event.preventDefault();
+            event.stopPropagation();
+            window.open(href, '_self');
+            return;
+          } else if (href.startsWith('#')) {
+            const targetEl = doc.querySelector(href);
+            if (targetEl) {
+              event.preventDefault();
+              event.stopPropagation();
+              targetEl.scrollIntoView({ behavior: 'smooth' });
+              return;
+            }
+          }
+        }
+      }
 
       if (sectionEl) {
         event.preventDefault();
         event.stopPropagation();
 
         const sectionName = sectionEl.getAttribute('data-section') as keyof TemplateContent;
-        
+
         // Update iframe visual classes
         doc.querySelectorAll('[data-section]').forEach(el => el.classList.remove('active-section'));
         sectionEl.classList.add('active-section');
@@ -978,12 +1271,12 @@ export default function PageBuilderPage() {
           const indexStr = itemEl.getAttribute('data-index');
           if (indexStr !== null) {
             const idx = parseInt(indexStr, 10);
-            
+
             doc.querySelectorAll('[data-index]').forEach(el => el.classList.remove('active-item'));
             itemEl.classList.add('active-item');
-            
+
             setActiveItemIndex(idx);
-            
+
             // Scroll sidebar list to target item
             setTimeout(() => {
               const el = document.getElementById(`editor-item-${sectionName}-${idx}`);
@@ -1000,7 +1293,7 @@ export default function PageBuilderPage() {
     }, true);
   };
 
-  // Keep active section and item outline sync inside the iframe document
+  // Keep active section and item outline sync inside the iframe document & auto-scroll preview
   useEffect(() => {
     const iframe = document.getElementById('website-builder-iframe') as HTMLIFrameElement;
     if (!iframe || !iframe.contentDocument) return;
@@ -1025,7 +1318,38 @@ export default function PageBuilderPage() {
         el.classList.remove('active-item');
       }
     });
-  }, [activeSection, activeItemIndex, content]);
+
+    // Auto-scroll the preview iframe to the selected section or item
+    if (activeSection) {
+      const targetSelector =
+        activeSection === 'video'
+          ? '[data-section="video"], #about-video'
+          : activeSection === 'testimonials'
+          ? '[data-section="testimonials"], #testimonials, [data-testimonial]'
+          : activeSection === 'stats'
+          ? '[data-section="stats"], #stats'
+          : activeSection === 'courses'
+          ? '[data-section="courses"], [data-section="course-cards"], #courses'
+          : activeSection === 'pricing'
+          ? '[data-section="pricing"], #pricing, #outcomes'
+          : activeSection === 'features'
+          ? '[data-section="features"], #features, #subjects'
+          : activeSection === 'about'
+          ? '[data-section="about"], #about-analytics, #about'
+          : activeSection === 'contact'
+          ? '[data-section="contact"], #contact'
+          : activeSection === 'footer'
+          ? '[data-section="footer"], #footer-bar, #newsletter, footer'
+          : activeSection === 'navbar'
+          ? '[data-section="navbar"], header, nav'
+          : `[data-section="${activeSection}"], #${activeSection}`;
+
+      const targetSectionEl = doc.querySelector(targetSelector);
+      if (targetSectionEl) {
+        targetSectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }, [activeSection, activeItemIndex]);
 
   const handleSelectSectionItem = (section: keyof TemplateContent, index: number) => {
     setActiveSection(section);
@@ -1090,18 +1414,18 @@ export default function PageBuilderPage() {
     async function loadPageData() {
       if (!currentRole) return;
       setLoading(true);
-      
+
       let resolvedPageId: string | null = null;
       try {
         const apiPages = await getPages(true);
         // Find a page matching templateIdParam
         let page = apiPages.find((p: any) => p.title === templateIdParam || p.template === templateIdParam || p.template_id === templateIdParam);
-        
+
         // If not found, look for any active page or first page
         if (!page) {
           page = apiPages.find((p: any) => p.is_active === 1 || p.is_active === true);
         }
-        
+
         if (page) {
           resolvedPageId = String(page.id);
           setActivePageId(resolvedPageId);
@@ -1118,7 +1442,7 @@ export default function PageBuilderPage() {
           resolvedPageId = String(created.id);
           setActivePageId(resolvedPageId);
         }
-        
+
         // Now fetch sections for resolvedPageId
         if (resolvedPageId) {
           const apiSections = await getSections(resolvedPageId);
@@ -1127,8 +1451,8 @@ export default function PageBuilderPage() {
 
             // Drive sidebar dropdown from the actual API section order
             const KNOWN_SECTION_TYPES = currentRole === 'academy'
-              ? ['navbar','hero','about','video','features','courses','testimonials','faq','contact']
-              : ['navbar','hero','about','video','features','courses','testimonials','faq','contact','footer'];
+              ? ['navbar','hero','about','video','features','courses','stats','pricing','testimonials','faq','contact']
+              : ['navbar','hero','about','video','features','courses','stats','pricing','testimonials','faq','contact','footer'];
             const apiSectionTypes = editorNodes
               .map(n => (n.type === 'course-cards' || n.type === 'courses') ? 'courses' : n.type)
               .filter(t => KNOWN_SECTION_TYPES.includes(t));
@@ -1138,7 +1462,7 @@ export default function PageBuilderPage() {
               ...KNOWN_SECTION_TYPES.filter(t => !apiSectionTypes.includes(t))
             ];
             setSectionsList(merged);
-            
+
             let realCoursesData: any[] = [];
             try {
               const res = await getCourses();
@@ -1154,12 +1478,13 @@ export default function PageBuilderPage() {
             if (fallback.courses && realCoursesData.length > 0) {
               fallback.courses.items = realCoursesData;
             }
-            
+
             const navbarNode = editorNodes.find(n => n.type === 'navbar');
             const heroNode = editorNodes.find(n => n.type === 'hero');
             const aboutNode = editorNodes.find(n => n.type === 'about');
             const featuresNode = editorNodes.find(n => n.type === 'features');
             const courseNode = editorNodes.find(n => n.type === 'course-cards' || n.type === 'courses');
+            const statsNode = editorNodes.find(n => n.type === 'stats' || n.type === 'kpi-cards');
             const pricingNode = editorNodes.find(n => n.type === 'pricing');
             const faqNode = editorNodes.find(n => n.type === 'faq');
             const contactNode = editorNodes.find(n => n.type === 'contact');
@@ -1198,6 +1523,8 @@ export default function PageBuilderPage() {
                 description: sv(heroNode.props.description, fallback.hero.description),
                 buttonText: sv(heroNode.props.buttonText ?? heroNode.props.button_text, fallback.hero.buttonText),
                 buttonLink: sv(heroNode.props.buttonLink ?? heroNode.props.button_link, fallback.hero.buttonLink),
+                secondaryButtonText: sv(heroNode.props.secondaryButtonText ?? heroNode.props.secondary_button_text ?? heroNode.props.demoButtonText ?? heroNode.props.demo_button_text, fallback.hero.secondaryButtonText || 'طلب عرض توضيحي'),
+                secondaryButtonLink: sv(heroNode.props.secondaryButtonLink ?? heroNode.props.secondary_button_link ?? heroNode.props.demoButtonLink ?? heroNode.props.demo_button_link, fallback.hero.secondaryButtonLink || '#contact'),
                 image: sv(heroNode.props.image, fallback.hero.image),
                 backgroundColor: sv(heroNode.props.backgroundColor ?? heroNode.props.background_color ?? heroNode.props.bg_color, fallback.hero.backgroundColor),
                 textColor: sv(heroNode.props.textColor ?? heroNode.props.text_color, fallback.hero.textColor),
@@ -1213,9 +1540,11 @@ export default function PageBuilderPage() {
                 videoTitle: sv(aboutNode.props.videoTitle ?? aboutNode.props.video_title, fallback.about.videoTitle),
                 videoDesc: sv(aboutNode.props.videoDesc ?? aboutNode.props.video_desc, fallback.about.videoDesc),
                 videoLink: sv(aboutNode.props.videoLink ?? aboutNode.props.video_link, fallback.about.videoLink),
-                analyticsTitle: sv(aboutNode.props.analyticsTitle ?? aboutNode.props.analytics_title, fallback.about.analyticsTitle),
-                analyticsBars: Array.isArray(aboutNode.props.analyticsBars ?? aboutNode.props.analytics_bars) ? (aboutNode.props.analyticsBars ?? aboutNode.props.analytics_bars) : fallback.about.analyticsBars,
-                analyticsColor: sv(aboutNode.props.analyticsColor ?? aboutNode.props.analytics_color, fallback.about.analyticsColor),
+                videoBg: sv(aboutNode.props.videoBg ?? aboutNode.props.video_bg ?? aboutNode.props.videoBackgroundColor ?? aboutNode.props.video_background_color, fallback.about.videoBg || ''),
+                videoTextColor: sv(aboutNode.props.videoTextColor ?? aboutNode.props.video_text_color, fallback.about.videoTextColor || ''),
+                analyticsTitle: sv(aboutNode.props.analyticsTitle ?? aboutNode.props.analytics_title ?? aboutNode.props.visionTitle ?? aboutNode.props.vision_title, fallback.about.analyticsTitle || 'رؤية الأداء المؤسسي'),
+                analyticsBars: Array.isArray(aboutNode.props.analyticsBars ?? aboutNode.props.analytics_bars) ? (aboutNode.props.analyticsBars ?? aboutNode.props.analytics_bars) : (fallback.about.analyticsBars || [40, 65, 85, 50, 95]),
+                analyticsColor: sv(aboutNode.props.analyticsColor ?? aboutNode.props.analytics_color, fallback.about.analyticsColor || '#3525cd'),
               } : fallback.about,
 
               features: featuresNode?.props ? {
@@ -1242,6 +1571,12 @@ export default function PageBuilderPage() {
                 courses: courseNode.props.courses || fallback.courses?.courses || [],
               } : fallback.courses,
 
+              stats: statsNode?.props ? {
+                items: safeItems(statsNode.props.items || statsNode.props.cards, fallback.stats?.items || []),
+                backgroundColor: sv(statsNode.props.backgroundColor ?? statsNode.props.background_color ?? statsNode.props.bg_color, fallback.stats?.backgroundColor || ''),
+                textColor: sv(statsNode.props.textColor ?? statsNode.props.text_color, fallback.stats?.textColor || ''),
+              } : fallback.stats,
+
               pricing: pricingNode?.props ? {
                 title: sv(pricingNode.props.title, fallback.pricing.title),
                 subtitle: sv(pricingNode.props.subtitle, fallback.pricing.subtitle),
@@ -1250,6 +1585,8 @@ export default function PageBuilderPage() {
                 textColor: sv(pricingNode.props.textColor ?? pricingNode.props.text_color, fallback.pricing.textColor),
                 testimonialsTitle: sv(pricingNode.props.testimonialsTitle ?? pricingNode.props.testimonials_title, fallback.pricing.testimonialsTitle),
                 testimonialsSubtitle: sv(pricingNode.props.testimonialsSubtitle ?? pricingNode.props.testimonials_subtitle, fallback.pricing.testimonialsSubtitle),
+                testimonialsBg: sv(pricingNode.props.testimonialsBg ?? pricingNode.props.testimonials_bg ?? pricingNode.props.testimonialsBackgroundColor ?? pricingNode.props.testimonials_background_color, (fallback.pricing as any).testimonialsBg || '#f5f2ff'),
+                testimonialsTextColor: sv(pricingNode.props.testimonialsTextColor ?? pricingNode.props.testimonials_text_color, (fallback.pricing as any).testimonialsTextColor || '#1b1b24'),
                 testimonial1Text: sv(pricingNode.props.testimonial1Text ?? pricingNode.props.testimonial1_text, fallback.pricing.testimonial1Text),
                 testimonial1Author: sv(pricingNode.props.testimonial1Author ?? pricingNode.props.testimonial1_author, fallback.pricing.testimonial1Author),
                 testimonial1Role: sv(pricingNode.props.testimonial1Role ?? pricingNode.props.testimonial1_role, fallback.pricing.testimonial1Role),
@@ -1275,6 +1612,8 @@ export default function PageBuilderPage() {
                 description: sv(contactNode.props.description, fallback.contact.description),
                 phoneNumber: sv(contactNode.props.phoneNumber ?? contactNode.props.phone_number, fallback.contact.phoneNumber),
                 buttonText: sv(contactNode.props.buttonText ?? contactNode.props.button_text, fallback.contact.buttonText),
+                secondaryButtonText: sv(contactNode.props.secondaryButtonText ?? contactNode.props.secondary_button_text ?? contactNode.props.demoButtonText ?? contactNode.props.demo_button_text, fallback.contact.secondaryButtonText || 'طلب عرض توضيحي'),
+                secondaryButtonLink: sv(contactNode.props.secondaryButtonLink ?? contactNode.props.secondary_button_link ?? contactNode.props.demoButtonLink ?? contactNode.props.demo_button_link, fallback.contact.secondaryButtonLink || 'https://example.com/demo'),
                 backgroundColor: sv(contactNode.props.backgroundColor ?? contactNode.props.background_color ?? contactNode.props.bg_color, fallback.contact.backgroundColor),
                 textColor: sv(contactNode.props.textColor ?? contactNode.props.text_color, fallback.contact.textColor),
               } : fallback.contact,
@@ -1298,7 +1637,7 @@ export default function PageBuilderPage() {
       } catch (err) {
         console.error('Failed to load page data from backend:', err);
       }
-      
+
       // Fallback: check localStorage or load default content
       const cacheKey = `darab_active_template_config_${currentRole}_${activeTemplateId}`;
       const cached = localStorage.getItem(cacheKey);
@@ -1320,19 +1659,19 @@ export default function PageBuilderPage() {
         if (res && Array.isArray(res) && defaults.courses) {
           defaults.courses.items = res;
         }
-      } catch (e) {}
+      } catch (e) { }
       setContent(defaults);
       setPreviewContent(defaults);
       setInitialHtml(getHtmlForRole(currentRole, defaults));
       setLoading(false);
     }
-    
+
     loadPageData();
   }, [currentRole, activeTemplateId, templateIdParam]);
 
   // --- Navigation & Action Handlers ---
   const handleGoBack = () => {
-    router.push('/academic/templates');
+    router.push('/academic');
   };
 
   const handleSaveDraft = async () => {
@@ -1350,6 +1689,7 @@ export default function PageBuilderPage() {
         { id: 'about', type: 'about', props: content.about },
         { id: 'features', type: 'features', props: content.features },
         ...(content.courses ? [{ id: 'courses', type: 'course-cards', props: content.courses }] : []),
+        ...(content.stats ? [{ id: 'stats', type: 'stats', props: content.stats }] : []),
         { id: 'pricing', type: 'pricing', props: content.pricing },
         { id: 'faq', type: 'faq', props: content.faq },
         { id: 'contact', type: 'contact', props: content.contact },
@@ -1383,7 +1723,7 @@ export default function PageBuilderPage() {
 
   const handlePublish = async () => {
     if (!content || !activePageId) return;
-    
+
     const confirmResult = await MySwal.fire({
       title: 'هل تريد نشر هذا المظهر للموقع الآن؟',
       text: 'سيتم تطبيق التعديلات والألوان ونشرها لجميع الزوار فوراً.',
@@ -1408,7 +1748,7 @@ export default function PageBuilderPage() {
       localStorage.setItem('darab_active_page_id', activePageId);
       const cacheKey = `darab_active_template_config_${currentRole}_${activeTemplateId}`;
       localStorage.setItem(cacheKey, JSON.stringify(content));
-      
+
       localStorage.setItem(`darab_published_template_config`, JSON.stringify({
         role: currentRole,
         templateId: activeTemplateId,
@@ -1422,6 +1762,7 @@ export default function PageBuilderPage() {
         { id: 'about', type: 'about', props: content.about },
         { id: 'features', type: 'features', props: content.features },
         ...(content.courses ? [{ id: 'courses', type: 'course-cards', props: content.courses }] : []),
+        ...(content.stats ? [{ id: 'stats', type: 'stats', props: content.stats }] : []),
         { id: 'pricing', type: 'pricing', props: content.pricing },
         { id: 'faq', type: 'faq', props: content.faq },
         { id: 'contact', type: 'contact', props: content.contact },
@@ -1513,8 +1854,15 @@ export default function PageBuilderPage() {
         [nestedKey]: arrayCopy
       }
     };
+    const iframe = document.getElementById('website-builder-iframe') as HTMLIFrameElement;
+    if (iframe?.contentWindow) {
+      try {
+        lastScrollYRef.current = iframe.contentWindow.scrollY || iframe.contentDocument?.documentElement.scrollTop || 0;
+      } catch (e) {}
+    }
     setContent(updated);
     setPreviewContent(updated);
+    setInitialHtml(getHtmlForRole(currentRole, updated));
   };
 
   const handleRemoveListItem = (section: keyof TemplateContent, nestedKey: string, index: number) => {
@@ -1533,8 +1881,15 @@ export default function PageBuilderPage() {
         [nestedKey]: filtered
       }
     };
+    const iframe = document.getElementById('website-builder-iframe') as HTMLIFrameElement;
+    if (iframe?.contentWindow) {
+      try {
+        lastScrollYRef.current = iframe.contentWindow.scrollY || iframe.contentDocument?.documentElement.scrollTop || 0;
+      } catch (e) {}
+    }
     setContent(updated);
     setPreviewContent(updated);
+    setInitialHtml(getHtmlForRole(currentRole, updated));
   };
 
   // Renders loading spinner on start
@@ -1560,20 +1915,21 @@ export default function PageBuilderPage() {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#F8FAFC] font-sans antialiased" dir="rtl">
-      
+
       {/* 1. Top Bar Navigation & Controls */}
       <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between z-50 shadow-sm shrink-0">
-        
+
         {/* Right Info & Role Status */}
         <div className="flex items-center gap-4">
           <button
             onClick={handleGoBack}
-            className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 hover:text-slate-900 transition-colors border border-slate-200"
-            title="رجوع للقوالب"
+            className="px-3 py-2 hover:bg-slate-100 rounded-xl text-slate-600 hover:text-slate-900 transition-colors border border-slate-200 flex items-center gap-2 font-bold text-xs"
+            title="الرجوع للرئيسية"
           >
             <ArrowRight className="w-4 h-4" />
+            <span>العودة للوحة التحكم</span>
           </button>
-          
+
           <div className="leading-tight text-right">
             <h1 className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5">
               <span>مخصّص صفحات الموقع</span>
@@ -1589,27 +1945,24 @@ export default function PageBuilderPage() {
         <div className="flex bg-slate-100 rounded-xl p-1 items-center border border-slate-200 select-none">
           <button
             onClick={() => setDeviceMode('desktop')}
-            className={`p-2 rounded-lg text-xs font-bold transition-all ${
-              deviceMode === 'desktop' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-950'
-            }`}
+            className={`p-2 rounded-lg text-xs font-bold transition-all ${deviceMode === 'desktop' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-950'
+              }`}
             title="شاشة كمبيوتر"
           >
             <Monitor className="w-4 h-4" />
           </button>
           <button
             onClick={() => setDeviceMode('tablet')}
-            className={`p-2 rounded-lg text-xs font-bold transition-all ${
-              deviceMode === 'tablet' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-950'
-            }`}
+            className={`p-2 rounded-lg text-xs font-bold transition-all ${deviceMode === 'tablet' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-950'
+              }`}
             title="شاشة تابلت"
           >
             <Tablet className="w-4 h-4" />
           </button>
           <button
             onClick={() => setDeviceMode('mobile')}
-            className={`p-2 rounded-lg text-xs font-bold transition-all ${
-              deviceMode === 'mobile' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-950'
-            }`}
+            className={`p-2 rounded-lg text-xs font-bold transition-all ${deviceMode === 'mobile' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-950'
+              }`}
             title="شاشة جوال"
           >
             <Smartphone className="w-4 h-4" />
@@ -1623,17 +1976,15 @@ export default function PageBuilderPage() {
           <div className="flex bg-slate-100 border border-slate-200 p-1 rounded-xl">
             <button
               onClick={() => setActiveTemplateId('template_1')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${
-                activeTemplateId === 'template_1' ? 'bg-white shadow-xs text-blue-600' : 'text-slate-500 hover:text-slate-900'
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${activeTemplateId === 'template_1' ? 'bg-white shadow-xs text-blue-600' : 'text-slate-500 hover:text-slate-900'
+                }`}
             >
               القالب الأول
             </button>
             <button
               onClick={() => setActiveTemplateId('template_2')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${
-                activeTemplateId === 'template_2' ? 'bg-white shadow-xs text-blue-600' : 'text-slate-500 hover:text-slate-900'
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${activeTemplateId === 'template_2' ? 'bg-white shadow-xs text-blue-600' : 'text-slate-500 hover:text-slate-900'
+                }`}
             >
               القالب الثاني
             </button>
@@ -1647,7 +1998,7 @@ export default function PageBuilderPage() {
             <Save className="w-3.5 h-3.5" />
             <span>حفظ كمسودة</span>
           </button>
-          
+
           <button
             onClick={handlePublish}
             disabled={saving}
@@ -1661,10 +2012,10 @@ export default function PageBuilderPage() {
 
       {/* 2. Main Split View Grid (Left: Inspector Panel, Right: Live Interactive Simulation Preview) */}
       <div className="flex-grow flex overflow-hidden min-h-0">
-        
+
         {/* Left Column: Editor inspector Panel (350px width) */}
         <div className="w-[360px] bg-white border-l border-slate-200 shadow-xs flex flex-col min-h-0 overflow-hidden shrink-0">
-          
+
           {/* Quick Section Switcher — driven by API sections order */}
           <div className="p-5 border-b border-slate-200/80 bg-slate-50/50 shrink-0 space-y-2">
             <span className="text-[10px] font-black text-slate-500 block">اختر القسم لتخصيص محتوياته:</span>
@@ -1685,10 +2036,12 @@ export default function PageBuilderPage() {
                     video:        'فيديو العرض التعريفي (Video Intro)',
                     features:     'مميزات الأكاديمية (Features)',
                     courses:      'الدورات والبرامج التدريبية (Courses)',
+                    stats:        'إحصائيات ورضا الطلاب (Stats & Benefits)',
+                    pricing:      'المخرجات والنتائج الإحصائية (Outcomes & Statistics)',
                     testimonials: 'آراء العملاء والتقييمات (Testimonials)',
-                    faq:          'الأسئلة الشائعة (FAQ Accordions)',
-                    contact:      'أزرار التواصل (Contact/WhatsApp)',
-                    footer:       'تذييل الصفحة (Footer Bar)',
+                    faq: 'الأسئلة الشائعة (FAQ Accordions)',
+                    contact: 'أزرار التواصل (Contact/WhatsApp)',
+                    footer: 'تذييل الصفحة (Footer Bar)',
                   };
                   return (
                     <option key={sectionType} value={sectionType}>
@@ -1706,247 +2059,264 @@ export default function PageBuilderPage() {
           {/* Section Dynamic Editors (Scrollable) */}
           <div className="flex-1 overflow-y-auto p-5">
             <div key={activeSection} className="border border-blue-200 bg-blue-50/10 rounded-2xl p-5 space-y-6 shadow-inner ring-2 ring-blue-600/5 animate-in fade-in duration-300">
-              
+
               {/* Navbar Editor */}
-            {activeSection === 'navbar' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص شريط التنقل</h3>
-                </div>
-                
+              {activeSection === 'navbar' && (
                 <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">اسم شعار الأكاديمية / المعلم</label>
-                    <input
-                      type="text"
-                      value={content.navbar.title}
-                      onChange={(e) => handleUpdateField('navbar', 'title', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص شريط التنقل</h3>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-4">
                     <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية الشريط</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.navbar.bgColor}
-                          onChange={(e) => handleUpdateField('navbar', 'bgColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.navbar.bgColor}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون نصوص الشعار</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.navbar.textColor}
-                          onChange={(e) => handleUpdateField('navbar', 'textColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.navbar.textColor}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Hero Editor */}
-            {activeSection === 'hero' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص البانر الرئيسي (الهيرو)</h3>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">العنوان الترحيبي العريض</label>
-                    <textarea
-                      value={content.hero.title}
-                      onChange={(e) => handleUpdateField('hero', 'title', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px] resize-none"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">العبارة التعريفية الصغيرة (شارة المقدمة)</label>
-                    <input
-                      type="text"
-                      value={content.hero.subtitle}
-                      onChange={(e) => handleUpdateField('hero', 'subtitle', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">شرح وتفاصيل البانر</label>
-                    <textarea
-                      value={content.hero.description}
-                      onChange={(e) => handleUpdateField('hero', 'description', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[110px]"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">نص الزر الإرشادي (CTA Button)</label>
+                      <label className="text-[11px] font-bold text-slate-600">اسم شعار الأكاديمية / المعلم</label>
                       <input
                         type="text"
-                        value={content.hero.buttonText}
-                        onChange={(e) => handleUpdateField('hero', 'buttonText', e.target.value)}
+                        value={content.navbar.title}
+                        onChange={(e) => handleUpdateField('navbar', 'title', e.target.value)}
                         className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
                       />
                     </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">رابط الزر (Link / ID)</label>
-                      <input
-                        type="text"
-                        value={content.hero.buttonLink || '#'}
-                        onChange={(e) => handleUpdateField('hero', 'buttonLink', e.target.value)}
-                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
-                        dir="ltr"
-                        placeholder="#contact"
-                      />
-                    </div>
-                  </div>
 
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">رابط صورة الهيرو المعبرة</label>
-                    <div className="flex gap-2 items-center">
-                      {content.hero.image && (
-                        <img src={content.hero.image} className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0" alt="hero preview" />
-                      )}
-                      <input
-                        type="text"
-                        value={content.hero.image}
-                        onChange={(e) => handleUpdateField('hero', 'image', e.target.value)}
-                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left flex-grow"
-                        dir="ltr"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية البانر</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.hero.backgroundColor}
-                          onChange={(e) => handleUpdateField('hero', 'backgroundColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.hero.backgroundColor}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون نصوص البانر</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.hero.textColor}
-                          onChange={(e) => handleUpdateField('hero', 'textColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.hero.textColor}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* About Editor */}
-            {activeSection === 'about' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص النبذة والتعريف</h3>
-                </div>
-
-                <div className="space-y-4">
-                  <div id="about-analytics-editor-header" className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم النبذة</label>
-                    <input
-                      type="text"
-                      value={content.about.title}
-                      onChange={(e) => handleUpdateField('about', 'title', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">تفاصيل وسيرة ذاتية (محتوى النبذة)</label>
-                    <textarea
-                      value={content.about.subtitle}
-                      onChange={(e) => handleUpdateField('about', 'subtitle', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[140px]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">صورة التعريف / البورتفوليو</label>
-                    <div className="flex gap-2 items-center">
-                      {content.about.image && (
-                        <img src={content.about.image} className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0" alt="about preview" />
-                      )}
-                      <input
-                        type="text"
-                        value={content.about.image}
-                        onChange={(e) => handleUpdateField('about', 'image', e.target.value)}
-                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left flex-grow"
-                        dir="ltr"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.about.backgroundColor}
-                          onChange={(e) => handleUpdateField('about', 'backgroundColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.backgroundColor}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون نصوص النبذة</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.about.textColor}
-                          onChange={(e) => handleUpdateField('about', 'textColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.textColor}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Analytics Chart Controls */}
-                  {!content.about.image && (
-                    <div className="border-t border-slate-100 pt-3 mt-3 space-y-3">
-                      <h4 id="about-analytics-editor-header" className="text-[11px] font-extrabold text-slate-700">تخصيص مخطط ورؤى الأداء (Analytics Chart)</h4>
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="flex flex-col gap-1">
-                        <label className="text-[11px] font-bold text-slate-600">عنوان المخطط الإحصائي</label>
+                        <label className="text-[11px] font-bold text-slate-600">خلفية الشريط</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.navbar.bgColor}
+                            onChange={(e) => handleUpdateField('navbar', 'bgColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.navbar.bgColor}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون نصوص الشعار</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.navbar.textColor}
+                            onChange={(e) => handleUpdateField('navbar', 'textColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.navbar.textColor}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Hero Editor */}
+              {activeSection === 'hero' && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص البانر الرئيسي (الهيرو)</h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">العنوان الترحيبي العريض</label>
+                      <textarea
+                        value={content.hero.title}
+                        onChange={(e) => handleUpdateField('hero', 'title', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px] resize-none"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">العبارة التعريفية الصغيرة (شارة المقدمة)</label>
+                      <input
+                        type="text"
+                        value={content.hero.subtitle}
+                        onChange={(e) => handleUpdateField('hero', 'subtitle', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">شرح وتفاصيل البانر</label>
+                      <textarea
+                        value={content.hero.description}
+                        onChange={(e) => handleUpdateField('hero', 'description', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[110px]"
+                      />
+                    </div>
+
+                    {/* Primary CTA Button */}
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+                      <span className="text-[10px] font-extrabold text-slate-700 block border-b border-slate-200 pb-1">الزر الإرشادي الرئيسي (Primary Button):</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">نص الزر</label>
+                          <input
+                            type="text"
+                            value={content.hero.buttonText}
+                            onChange={(e) => handleUpdateField('hero', 'buttonText', e.target.value)}
+                            className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
+                            placeholder="استكشف المنصة"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">رابط الزر (URL أو #ID)</label>
+                          <input
+                            type="text"
+                            value={content.hero.buttonLink || ''}
+                            onChange={(e) => handleUpdateField('hero', 'buttonLink', e.target.value)}
+                            className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                            dir="ltr"
+                            placeholder="https://example.com أو #courses"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Secondary / Demo CTA Button */}
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+                      <span className="text-[10px] font-extrabold text-slate-700 block border-b border-slate-200 pb-1">الزر الثانوي / طلب عرض توضيحي (Demo Button):</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">نص الزر</label>
+                          <input
+                            type="text"
+                            value={content.hero.secondaryButtonText || ''}
+                            onChange={(e) => handleUpdateField('hero', 'secondaryButtonText', e.target.value)}
+                            className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
+                            placeholder="طلب عرض توضيحي"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">رابط الزر (URL أو #ID)</label>
+                          <input
+                            type="text"
+                            value={content.hero.secondaryButtonLink || ''}
+                            onChange={(e) => handleUpdateField('hero', 'secondaryButtonLink', e.target.value)}
+                            className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                            dir="ltr"
+                            placeholder="https://example.com/demo أو #contact"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">رابط صورة الهيرو المعبرة</label>
+                      <div className="flex gap-2 items-center">
+                        {content.hero.image && (
+                          <img src={content.hero.image} className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0" alt="hero preview" />
+                        )}
                         <input
                           type="text"
-                          value={content.about.analyticsTitle || 'رؤى الأداء المؤسسي'}
+                          value={content.hero.image}
+                          onChange={(e) => handleUpdateField('hero', 'image', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left flex-grow"
+                          dir="ltr"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">خلفية البانر</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.hero.backgroundColor}
+                            onChange={(e) => handleUpdateField('hero', 'backgroundColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.hero.backgroundColor}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون نصوص البانر</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.hero.textColor}
+                            onChange={(e) => handleUpdateField('hero', 'textColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.hero.textColor}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* About Editor */}
+              {activeSection === 'about' && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص النبذة والتعريف</h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div id="about-analytics-editor-header" className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">عنوان قسم النبذة</label>
+                      <input
+                        type="text"
+                        value={content.about.title}
+                        onChange={(e) => handleUpdateField('about', 'title', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">تفاصيل وسيرة ذاتية (محتوى النبذة)</label>
+                      <textarea
+                        value={content.about.subtitle}
+                        onChange={(e) => handleUpdateField('about', 'subtitle', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[140px]"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.about.backgroundColor}
+                            onChange={(e) => handleUpdateField('about', 'backgroundColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.backgroundColor}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون نصوص النبذة</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.about.textColor}
+                            onChange={(e) => handleUpdateField('about', 'textColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.textColor}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Analytics / Vision Chart Controls */}
+                    <div className="border-t border-slate-100 pt-3 mt-3 space-y-3">
+                      <h4 id="about-analytics-editor-header" className="text-[11px] font-extrabold text-slate-700">تخصيص رؤية الأداء المؤسسي والمخطط (Analytics & Vision)</h4>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">عنوان رؤية الأداء المؤسسي</label>
+                        <input
+                          type="text"
+                          value={content.about.analyticsTitle !== undefined ? content.about.analyticsTitle : 'رؤية الأداء المؤسسي'}
                           onChange={(e) => handleUpdateField('about', 'analyticsTitle', e.target.value)}
                           className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                          placeholder="رؤية الأداء المؤسسي"
                         />
                       </div>
 
@@ -1989,71 +2359,366 @@ export default function PageBuilderPage() {
                         })}
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Video Intro Editor */}
-            {activeSection === 'video' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص فيديو الفلسفة التعليمية (Video Intro)</h3>
-                </div>
-
+              {/* Video Intro Editor */}
+              {activeSection === 'video' && (
                 <div className="space-y-4">
-                  <div id="about-video-editor-header" className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">شارة الفيديو (Tag)</label>
-                    <input
-                      type="text"
-                      value={content.about.videoTag || ''}
-                      onChange={(e) => handleUpdateField('about', 'videoTag', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص فيديو الفلسفة التعليمية (Video Intro)</h3>
                   </div>
 
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان الفيديو</label>
-                    <input
-                      type="text"
-                      value={content.about.videoTitle || ''}
-                      onChange={(e) => handleUpdateField('about', 'videoTitle', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
+                  <div className="space-y-4">
+                    <div id="about-video-editor-header" className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">شارة الفيديو (Tag)</label>
+                      <input
+                        type="text"
+                        value={content.about.videoTag || ''}
+                        onChange={(e) => handleUpdateField('about', 'videoTag', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
 
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">وصف الفيديو</label>
-                    <textarea
-                      value={content.about.videoDesc || ''}
-                      onChange={(e) => handleUpdateField('about', 'videoDesc', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[80px]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">رابط الفيديو / صورة العرض (Video Link / Thumbnail)</label>
-                    <input
-                      type="text"
-                      value={content.about.videoLink || ''}
-                      onChange={(e) => handleUpdateField('about', 'videoLink', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
-                      dir="ltr"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية قسم الفيديو</label>
+                      <label className="text-[11px] font-bold text-slate-600">عنوان الفيديو</label>
+                      <input
+                        type="text"
+                        value={content.about.videoTitle || ''}
+                        onChange={(e) => handleUpdateField('about', 'videoTitle', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">وصف الفيديو</label>
+                      <textarea
+                        value={content.about.videoDesc || ''}
+                        onChange={(e) => handleUpdateField('about', 'videoDesc', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[80px]"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">رابط الفيديو / صورة العرض (Video Link / Thumbnail)</label>
+                      <input
+                        type="text"
+                        value={content.about.videoLink || ''}
+                        onChange={(e) => handleUpdateField('about', 'videoLink', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                        dir="ltr"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">خلفية قسم الفيديو</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.about.videoBg || '#ffffff'}
+                            onChange={(e) => handleUpdateField('about', 'videoBg', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.videoBg || '#ffffff'}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون نصوص الفيديو</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.about.videoTextColor || '#1b1b24'}
+                            onChange={(e) => handleUpdateField('about', 'videoTextColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.videoTextColor || '#1b1b24'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Features Editor */}
+              {activeSection === 'features' && (
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص المميزات والخصائص</h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">عنوان قسم المميزات الرئيسي</label>
+                      <input
+                        type="text"
+                        value={content.features.title}
+                        onChange={(e) => handleUpdateField('features', 'title', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">عنوان فرعي قصير للقسم</label>
+                      <input
+                        type="text"
+                        value={content.features.subtitle}
+                        onChange={(e) => handleUpdateField('features', 'subtitle', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Features Items list */}
+                  <div className="space-y-3 pt-3 border-t border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black text-slate-500">عناصر الميزات:</span>
+                      <button
+                        type="button"
+                        onClick={() => handleAddListItem('features', 'items', { icon: 'Award', title: 'ميزة جديدة', description: 'اكتب وصف الميزة هنا بشكل مبسط وجاذب.' })}
+                        className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-0.5"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        إضافة ميزة
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {content.features.items.map((item, idx) => (
+                        <div
+                          key={idx}
+                          id={`editor-item-features-${idx}`}
+                          className={`border rounded-xl p-3 relative flex flex-col gap-2.5 transition-all duration-300 ${activeSection === 'features' && activeItemIndex === idx
+                              ? 'bg-blue-50/50 border-blue-500 ring-2 ring-blue-500/20 shadow-md scale-[1.01]'
+                              : 'bg-slate-50 border-slate-200'
+                            }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveListItem('features', 'items', idx)}
+                            className="absolute top-2 left-2 text-slate-400 hover:text-red-500 transition-colors"
+                            title="حذف الميزة"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">أيقونة الميزة</label>
+                            {/* Visual Icon Picker without raw text name input */}
+                            <div className="border border-slate-200 rounded-xl bg-white overflow-hidden">
+                              <div className="flex items-center justify-between bg-slate-50 border border-slate-200/80 rounded-xl p-2">
+                                <div className="flex items-center gap-2.5">
+                                  <div className="w-8 h-8 rounded-lg bg-blue-100/80 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 shadow-sm">
+                                    {item.icon && (item.icon.startsWith('http') || item.icon.includes('/') || item.icon.startsWith('data:')) ? (
+                                      <img src={item.icon} className="w-7 h-7 rounded object-cover" alt="icon preview" />
+                                    ) : (
+                                      <span className="material-symbols-outlined text-[20px]">{item.icon || 'star'}</span>
+                                    )}
+                                  </div>
+                                  <span className="text-[10px] font-bold text-slate-600">الأيقونة المحددة</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setOpenIconPickerIdx(openIconPickerIdx === idx ? null : idx)}
+                                  className="px-2.5 py-1 bg-white border border-slate-200 hover:border-blue-500 hover:bg-blue-50 text-blue-600 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1"
+                                >
+                                  <span className="material-symbols-outlined text-sm">{openIconPickerIdx === idx ? 'close' : 'grid_view'}</span>
+                                  {openIconPickerIdx === idx ? 'إغلاق' : 'تغيير الأيقونة'}
+                                </button>
+                              </div>
+                              {/* Material Symbols grid picker (collapsible) */}
+                              {openIconPickerIdx === idx && (
+                                <div className="border-t border-slate-100 p-2">
+                                  <div className="flex items-center justify-between mb-1.5">
+                                    <p className="text-[9px] text-slate-400 font-bold">اختر أيقونة:</p>
+                                    <button
+                                      type="button"
+                                      onClick={() => setOpenIconPickerIdx(null)}
+                                      className="text-[9px] text-slate-400 hover:text-red-500 font-bold flex items-center gap-0.5"
+                                    >
+                                      <X className="w-3 h-3" /> إغلاق
+                                    </button>
+                                  </div>
+                                  <div className="grid grid-cols-8 gap-1">
+                                    {['school', 'menu_book', 'star', 'verified', 'check_circle', 'rocket_launch', 'psychology', 'lightbulb', 'emoji_events', 'workspace_premium', 'military_tech', 'grade', 'local_library', 'auto_stories', 'science', 'calculate', 'draw', 'edit', 'history_edu', 'sports_esports', 'devices', 'laptop', 'tablet_mac', 'phone_iphone', 'cloud', 'data_usage', 'analytics', 'bar_chart', 'trending_up', 'timeline', 'groups', 'people', 'person', 'supervisor_account', 'support_agent', 'headset_mic', 'chat', 'forum', 'language', 'translate', 'public', 'travel_explore', 'apartment', 'business', 'corporate_fare', 'account_balance', 'hub', 'bolt', 'diamond', 'favorite'].map((iconName) => (
+                                      <button
+                                        key={iconName}
+                                        type="button"
+                                        title={iconName}
+                                        onClick={() => {
+                                          handleUpdateNestedField('features', 'items', idx, 'icon', iconName);
+                                          setOpenIconPickerIdx(null);
+                                        }}
+                                        className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:bg-blue-100 hover:text-blue-600 ${item.icon === iconName
+                                            ? 'bg-blue-600 text-white'
+                                            : 'text-slate-600 bg-slate-50'
+                                          }`}
+                                      >
+                                        <span className="material-symbols-outlined" style={{ fontSize: '16px', fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20" }}>
+                                          {iconName}
+                                        </span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">عنوان الميزة</label>
+                            <input
+                              type="text"
+                              value={item.title}
+                              onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'title', e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-bold"
+                            />
+                          </div>
+
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">وصف الميزة</label>
+                            <textarea
+                              value={item.description}
+                              onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'description', e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none min-h-[50px] resize-none"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Courses Editor */}
+              {activeSection === 'courses' && content.courses && (
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص قسم الدورات التدريبية</h3>
+                  </div>
+
+                  <div className="bg-blue-50/70 border border-blue-200 p-3.5 rounded-xl text-[11px] text-blue-900 font-bold leading-relaxed flex items-start gap-2">
+                    <span className="material-symbols-outlined text-[18px] text-blue-600 shrink-0 mt-0.5">info</span>
+                    <div>
+                      يتم جلب وعرض بيانات الدورات الحقيقية تلقائياً من المنصة، يمكنك تخصيص الألوان فقط.
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.courses.backgroundColor || '#ffffff'}
+                            onChange={(e) => handleUpdateField('courses', 'backgroundColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.courses.backgroundColor || '#ffffff'}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">خلفية البطاقات</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.courses.cardBg || '#ffffff'}
+                            onChange={(e) => handleUpdateField('courses', 'cardBg', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.courses.cardBg || '#ffffff'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">لون النصوص والعناوين</label>
                       <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
                         <input
                           type="color"
-                          value={content.about.backgroundColor}
-                          onChange={(e) => handleUpdateField('about', 'backgroundColor', e.target.value)}
+                          value={content.courses.textColor || '#1b1b24'}
+                          onChange={(e) => handleUpdateField('courses', 'textColor', e.target.value)}
                           className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                         />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.backgroundColor}</span>
+                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.courses.textColor || '#1b1b24'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            {/* Stats / Benefits Editor */}
+            {activeSection === 'stats' && content.stats && (
+              <div className="space-y-5">
+                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص قسم الإحصائيات ورضا الطلاب</h3>
+                </div>
+
+                <div className="bg-blue-50/70 border border-blue-200 p-3.5 rounded-xl text-[11px] text-blue-900 font-bold leading-relaxed flex items-start gap-2">
+                  <span className="material-symbols-outlined text-[18px] text-blue-600 shrink-0 mt-0.5">insights</span>
+                  <div>
+                    تخصيص أرقام وعناوين بطاقات الإحصائيات والنتائج (نسبة رضا الطلاب، المناهج الشاملة، الخريجون، والدعم الأكاديمي).
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {(content.stats.items || []).map((item, idx) => {
+                    const defaultTitles = [
+                      'نسبة رضا الطلاب (Student Satisfaction)',
+                      'المناهج الشاملة (Comprehensive Curriculum)',
+                      'خريج متميز (Outstanding Graduates)',
+                      'الدعم الأكاديمي المباشر (Direct Academic Support)'
+                    ];
+                    return (
+                      <div key={idx} className="border border-slate-200 bg-slate-50 rounded-xl p-3 space-y-2">
+                        <span className="text-[10px] font-extrabold text-slate-700 block border-b border-slate-200 pb-1">
+                          البطاقة {idx + 1}: {defaultTitles[idx] || `عنصر ${idx + 1}`}
+                        </span>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">الرقم / النسبة</label>
+                            <input
+                              type="text"
+                              value={item.value}
+                              onChange={(e) => handleUpdateNestedField('stats', 'items', idx, 'value', e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-bold"
+                              placeholder="مثال: 98%"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">النص / التسمية</label>
+                            <input
+                              type="text"
+                              value={item.label}
+                              onChange={(e) => handleUpdateNestedField('stats', 'items', idx, 'label', e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
+                              placeholder="مثال: نسبة رضا الطلاب"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input
+                          type="color"
+                          value={content.stats.backgroundColor || '#f5f3ff'}
+                          onChange={(e) => handleUpdateField('stats', 'backgroundColor', e.target.value)}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                        />
+                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.stats.backgroundColor || '#f5f3ff'}</span>
                       </div>
                     </div>
 
@@ -2062,11 +2727,11 @@ export default function PageBuilderPage() {
                       <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
                         <input
                           type="color"
-                          value={content.about.textColor}
-                          onChange={(e) => handleUpdateField('about', 'textColor', e.target.value)}
+                          value={content.stats.textColor || '#1e1b4b'}
+                          onChange={(e) => handleUpdateField('stats', 'textColor', e.target.value)}
                           className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                         />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.textColor}</span>
+                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.stats.textColor || '#1e1b4b'}</span>
                       </div>
                     </div>
                   </div>
@@ -2074,267 +2739,128 @@ export default function PageBuilderPage() {
               </div>
             )}
 
-            {/* Features Editor */}
-            {activeSection === 'features' && (
+            {/* Outcomes & Statistics (Pricing) Editor */}
+            {activeSection === 'pricing' && content.pricing && (
               <div className="space-y-5">
                 <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
                   <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص المميزات والخصائص</h3>
+                  <h3 className="text-xs font-extrabold text-slate-800">
+                    {currentRole === 'schoolcoach' ? 'تخصيص المجموعات الدراسية' : currentRole === 'coach' ? 'تخصيص سلسلة الماستركلاسز' : 'تخصيص قسم المخرجات والنتائج الإحصائية'}
+                  </h3>
+                </div>
+
+                <div className="bg-blue-50/70 border border-blue-200 p-3.5 rounded-xl text-[11px] text-blue-900 font-bold leading-relaxed flex items-start gap-2">
+                  <span className="material-symbols-outlined text-[18px] text-blue-600 shrink-0 mt-0.5">analytics</span>
+                  <div>
+                    تخصيص عناوين وأرقام المخرجات والنتائج الإحصائية التي تبرز كفاءة ونموذج الأكاديمية.
+                  </div>
                 </div>
 
                 <div className="space-y-4">
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم المميزات الرئيسي</label>
+                    <label className="text-[11px] font-bold text-slate-600">عنوان القسم الرئيسي</label>
                     <input
                       type="text"
-                      value={content.features.title}
-                      onChange={(e) => handleUpdateField('features', 'title', e.target.value)}
+                      value={content.pricing.title}
+                      onChange={(e) => handleUpdateField('pricing', 'title', e.target.value)}
                       className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      placeholder="المخرجات والنتائج الإحصائية"
                     />
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان فرعي قصير للقسم</label>
+                    <label className="text-[11px] font-bold text-slate-600">العنوان الفرعي للقسم</label>
                     <input
                       type="text"
-                      value={content.features.subtitle}
-                      onChange={(e) => handleUpdateField('features', 'subtitle', e.target.value)}
+                      value={content.pricing.subtitle}
+                      onChange={(e) => handleUpdateField('pricing', 'subtitle', e.target.value)}
                       className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      placeholder="معدلات تقدم وتحليلات رقمية للفصول الدراسية"
                     />
                   </div>
-                </div>
 
-                {/* Features Items list */}
-                <div className="space-y-3 pt-3 border-t border-slate-100">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-slate-500">عناصر الميزات:</span>
-                    <button
-                      type="button"
-                      onClick={() => handleAddListItem('features', 'items', { icon: 'Award', title: 'ميزة جديدة', description: 'اكتب وصف الميزة هنا بشكل مبسط وجاذب.' })}
-                      className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-0.5"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      إضافة ميزة
-                    </button>
-                  </div>
-
-                  <div className="space-y-4">
-                    {content.features.items.map((item, idx) => (
-                      <div
-                        key={idx}
-                        id={`editor-item-features-${idx}`}
-                        className={`border rounded-xl p-3 relative flex flex-col gap-2.5 transition-all duration-300 ${
-                          activeSection === 'features' && activeItemIndex === idx
-                            ? 'bg-blue-50/50 border-blue-500 ring-2 ring-blue-500/20 shadow-md scale-[1.01]'
-                            : 'bg-slate-50 border-slate-200'
-                        }`}
+                  {/* Pricing / Statistics Items */}
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-bold text-slate-600">عناصر النتائج والإحصائيات ({content.pricing.items?.length || 0})</label>
+                      <button
+                        type="button"
+                        onClick={() => handleAddListItem('pricing', 'items', { title: 'إحصائية جديدة', price: '100+', features: [] })}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[10px] font-bold rounded-lg transition-colors border border-blue-200"
                       >
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveListItem('features', 'items', idx)}
-                          className="absolute top-2 left-2 text-slate-400 hover:text-red-500 transition-colors"
-                          title="حذف الميزة"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                        
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">أيقونة الميزة</label>
-                          {/* Visual Icon Picker without raw text name input */}
-                          <div className="border border-slate-200 rounded-xl bg-white overflow-hidden">
-                            <div className="flex items-center justify-between bg-slate-50 border border-slate-200/80 rounded-xl p-2">
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-lg bg-blue-100/80 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 shadow-sm">
-                                  {item.icon && (item.icon.startsWith('http') || item.icon.includes('/') || item.icon.startsWith('data:')) ? (
-                                    <img src={item.icon} className="w-7 h-7 rounded object-cover" alt="icon preview" />
-                                  ) : (
-                                    <span className="material-symbols-outlined text-[20px]">{item.icon || 'star'}</span>
-                                  )}
-                                </div>
-                                <span className="text-[10px] font-bold text-slate-600">الأيقونة المحددة</span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => setOpenIconPickerIdx(openIconPickerIdx === idx ? null : idx)}
-                                className="px-2.5 py-1 bg-white border border-slate-200 hover:border-blue-500 hover:bg-blue-50 text-blue-600 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1"
-                              >
-                                <span className="material-symbols-outlined text-sm">{openIconPickerIdx === idx ? 'close' : 'grid_view'}</span>
-                                {openIconPickerIdx === idx ? 'إغلاق' : 'تغيير الأيقونة'}
-                              </button>
-                            </div>
-                            {/* Material Symbols grid picker (collapsible) */}
-                            {openIconPickerIdx === idx && (
-                              <div className="border-t border-slate-100 p-2">
-                                <div className="flex items-center justify-between mb-1.5">
-                                  <p className="text-[9px] text-slate-400 font-bold">اختر أيقونة:</p>
-                                  <button
-                                    type="button"
-                                    onClick={() => setOpenIconPickerIdx(null)}
-                                    className="text-[9px] text-slate-400 hover:text-red-500 font-bold flex items-center gap-0.5"
-                                  >
-                                    <X className="w-3 h-3" /> إغلاق
-                                  </button>
-                                </div>
-                                <div className="grid grid-cols-8 gap-1">
-                                  {['school','menu_book','star','verified','check_circle','rocket_launch','psychology','lightbulb','emoji_events','workspace_premium','military_tech','grade','local_library','auto_stories','science','calculate','draw','edit','history_edu','sports_esports','devices','laptop','tablet_mac','phone_iphone','cloud','data_usage','analytics','bar_chart','trending_up','timeline','groups','people','person','supervisor_account','support_agent','headset_mic','chat','forum','language','translate','public','travel_explore','apartment','business','corporate_fare','account_balance','hub','bolt','diamond','favorite'].map((iconName) => (
-                                    <button
-                                      key={iconName}
-                                      type="button"
-                                      title={iconName}
-                                      onClick={() => {
-                                        handleUpdateNestedField('features', 'items', idx, 'icon', iconName);
-                                        setOpenIconPickerIdx(null);
-                                      }}
-                                      className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:bg-blue-100 hover:text-blue-600 ${
-                                        item.icon === iconName
-                                          ? 'bg-blue-600 text-white'
-                                          : 'text-slate-600 bg-slate-50'
-                                      }`}
-                                    >
-                                      <span className="material-symbols-outlined" style={{ fontSize: '16px', fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20" }}>
-                                        {iconName}
-                                      </span>
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
+                        <Plus className="w-3 h-3" />
+                        <span>إضافة عنصر</span>
+                      </button>
+                    </div>
+
+                    {(content.pricing.items || []).map((item, idx) => (
+                      <div key={idx} className="border border-slate-200 bg-slate-50 rounded-xl p-3 space-y-2 relative group">
+                        <div className="flex items-center justify-between border-b border-slate-200 pb-1">
+                          <span className="text-[10px] font-extrabold text-slate-700">
+                            عنصر {idx + 1}: {item.title || `إحصائية ${idx + 1}`}
+                          </span>
+                          {(content.pricing.items?.length || 0) > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveListItem('pricing', 'items', idx)}
+                              className="text-red-500 hover:text-red-700 p-0.5 rounded transition-colors"
+                              title="حذف العنصر"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">القيمة / الرقم</label>
+                            <input
+                              type="text"
+                              value={item.price}
+                              onChange={(e) => handleUpdateNestedField('pricing', 'items', idx, 'price', e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-bold"
+                              placeholder="مثال: 12.4k أو 87%"
+                            />
                           </div>
-                        </div>
-
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">عنوان الميزة</label>
-                          <input
-                            type="text"
-                            value={item.title}
-                            onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'title', e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-bold"
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">وصف الميزة</label>
-                          <textarea
-                            value={item.description}
-                            onChange={(e) => handleUpdateNestedField('features', 'items', idx, 'description', e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none min-h-[50px] resize-none"
-                          />
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">التسمية / العنوان</label>
+                            <input
+                              type="text"
+                              value={item.title}
+                              onChange={(e) => handleUpdateNestedField('pricing', 'items', idx, 'title', e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
+                              placeholder="مثال: طلاب نشطون"
+                            />
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Courses Editor */}
-            {activeSection === 'courses' && content.courses && (
-              <div className="space-y-5">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص قسم الدورات التدريبية</h3>
-                </div>
-
-                <div className="bg-blue-50/70 border border-blue-200 p-3.5 rounded-xl text-[11px] text-blue-900 font-bold leading-relaxed flex items-start gap-2">
-                  <span className="material-symbols-outlined text-[18px] text-blue-600 shrink-0 mt-0.5">info</span>
-                  <div>
-                    يتم جلب وعرض بيانات الدورات الحقيقية تلقائياً من المنصة. يمكنك تخصيص العناوين، والحد الأقصى للدورات المعروضة، والخيارات أدناه:
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم الدورات</label>
-                    <input
-                      type="text"
-                      value={content.courses.title}
-                      onChange={(e) => handleUpdateField('courses', 'title', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">وصف / عنوان فرعي للقسم</label>
-                    <textarea
-                      value={content.courses.subtitle || ''}
-                      onChange={(e) => handleUpdateField('courses', 'subtitle', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px] resize-none"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">الحد الأقصى للدورات</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="24"
-                        value={content.courses.limit || 6}
-                        onChange={(e) => handleUpdateField('courses', 'limit', parseInt(e.target.value, 10) || 6)}
-                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">تخطيط الأعمدة</label>
-                      <select
-                        value={content.courses.gridCols || '3'}
-                        onChange={(e) => handleUpdateField('courses', 'gridCols', e.target.value)}
-                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                      >
-                        <option value="2">عمودين (2)</option>
-                        <option value="3">3 أعمدة (3)</option>
-                        <option value="4">4 أعمدة (4)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 pt-2 border-t border-slate-100">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={content.courses.showPrice !== false}
-                        onChange={(e) => handleUpdateField('courses', 'showPrice', e.target.checked)}
-                        className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500"
-                      />
-                      <span className="text-xs font-bold text-slate-700">إظهار أسعار الدورات</span>
-                    </label>
-
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={content.courses.showStudentsCount !== false}
-                        onChange={(e) => handleUpdateField('courses', 'showStudentsCount', e.target.checked)}
-                        className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500"
-                      />
-                      <span className="text-xs font-bold text-slate-700">إظهار عدد الطلاب المسجلين</span>
-                    </label>
-                  </div>
 
                   <div className="grid grid-cols-2 gap-3 pt-2">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون الأزرار / الشارة</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.courses.buttonBg || '#3525cd'}
-                          onChange={(e) => handleUpdateField('courses', 'buttonBg', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.courses.buttonBg || '#3525cd'}</span>
-                      </div>
-                    </div>
-
                     <div className="flex flex-col gap-1">
                       <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
                       <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
                         <input
                           type="color"
-                          value={content.courses.backgroundColor || '#ffffff'}
-                          onChange={(e) => handleUpdateField('courses', 'backgroundColor', e.target.value)}
+                          value={content.pricing.backgroundColor || '#fcf8ff'}
+                          onChange={(e) => handleUpdateField('pricing', 'backgroundColor', e.target.value)}
                           className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                         />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.courses.backgroundColor || '#ffffff'}</span>
+                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.pricing.backgroundColor || '#fcf8ff'}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">لون النصوص</label>
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <input
+                          type="color"
+                          value={content.pricing.textColor || '#1b1b24'}
+                          onChange={(e) => handleUpdateField('pricing', 'textColor', e.target.value)}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                        />
+                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.pricing.textColor || '#1b1b24'}</span>
                       </div>
                     </div>
                   </div>
@@ -2412,11 +2938,11 @@ export default function PageBuilderPage() {
                       <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
                         <input
                           type="color"
-                          value={content.pricing.backgroundColor}
-                          onChange={(e) => handleUpdateField('pricing', 'backgroundColor', e.target.value)}
+                          value={(content.pricing as any).testimonialsBg || '#f5f2ff'}
+                          onChange={(e) => handleUpdateField('pricing', 'testimonialsBg', e.target.value)}
                           className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                         />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.pricing.backgroundColor}</span>
+                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{(content.pricing as any).testimonialsBg || '#f5f2ff'}</span>
                       </div>
                     </div>
 
@@ -2425,11 +2951,11 @@ export default function PageBuilderPage() {
                       <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
                         <input
                           type="color"
-                          value={content.pricing.textColor}
-                          onChange={(e) => handleUpdateField('pricing', 'textColor', e.target.value)}
+                          value={(content.pricing as any).testimonialsTextColor || '#1b1b24'}
+                          onChange={(e) => handleUpdateField('pricing', 'testimonialsTextColor', e.target.value)}
                           className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                         />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.pricing.textColor}</span>
+                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{(content.pricing as any).testimonialsTextColor || '#1b1b24'}</span>
                       </div>
                     </div>
                   </div>
@@ -2437,273 +2963,308 @@ export default function PageBuilderPage() {
               </div>
             )}
 
-            {/* FAQ Editor */}
-            {activeSection === 'faq' && (
-              <div className="space-y-5">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص الأسئلة الشائعة</h3>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم الأسئلة الرئيسي</label>
-                    <input
-                      type="text"
-                      value={content.faq.title}
-                      onChange={(e) => handleUpdateField('faq', 'title', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-                </div>
-
-                {/* FAQ Items List */}
-                <div className="space-y-3 pt-3 border-t border-slate-100">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-slate-500">قائمة الأسئلة والإجابات:</span>
-                    <button
-                      type="button"
-                      onClick={() => handleAddListItem('faq', 'items', { question: 'سؤال افتراضي جديد؟', answer: 'اكتب الإجابة المفصلة للطلاب هنا.' })}
-                      className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-0.5"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      إضافة سؤال
-                    </button>
+              {/* FAQ Editor */}
+              {activeSection === 'faq' && (
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص الأسئلة الشائعة</h3>
                   </div>
 
                   <div className="space-y-4">
-                    {content.faq.items.map((item, idx) => (
-                      <div
-                        key={idx}
-                        id={`editor-item-faq-${idx}`}
-                        className={`border rounded-xl p-3 relative flex flex-col gap-2.5 transition-all duration-300 ${
-                          activeSection === 'faq' && activeItemIndex === idx
-                            ? 'bg-blue-50/50 border-blue-500 ring-2 ring-blue-500/20 shadow-md scale-[1.01]'
-                            : 'bg-slate-50 border-slate-200'
-                        }`}
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">عنوان قسم الأسئلة الرئيسي</label>
+                      <input
+                        type="text"
+                        value={content.faq.title}
+                        onChange={(e) => handleUpdateField('faq', 'title', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  {/* FAQ Items List */}
+                  <div className="space-y-3 pt-3 border-t border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black text-slate-500">قائمة الأسئلة والإجابات:</span>
+                      <button
+                        type="button"
+                        onClick={() => handleAddListItem('faq', 'items', { question: 'سؤال افتراضي جديد؟', answer: 'اكتب الإجابة المفصلة للطلاب هنا.' })}
+                        className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-0.5"
                       >
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveListItem('faq', 'items', idx)}
-                          className="absolute top-2 left-2 text-slate-400 hover:text-red-500 transition-colors"
-                          title="حذف السؤال"
+                        <Plus className="w-3.5 h-3.5" />
+                        إضافة سؤال
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {content.faq.items.map((item, idx) => (
+                        <div
+                          key={idx}
+                          id={`editor-item-faq-${idx}`}
+                          className={`border rounded-xl p-3 relative flex flex-col gap-2.5 transition-all duration-300 ${activeSection === 'faq' && activeItemIndex === idx
+                              ? 'bg-blue-50/50 border-blue-500 ring-2 ring-blue-500/20 shadow-md scale-[1.01]'
+                              : 'bg-slate-50 border-slate-200'
+                            }`}
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                        
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">السؤال المطروح</label>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveListItem('faq', 'items', idx)}
+                            className="absolute top-2 left-2 text-slate-400 hover:text-red-500 transition-colors"
+                            title="حذف السؤال"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">السؤال المطروح</label>
+                            <input
+                              type="text"
+                              value={item.question}
+                              onChange={(e) => handleUpdateNestedField('faq', 'items', idx, 'question', e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-bold"
+                            />
+                          </div>
+
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-500">الإجابة</label>
+                            <textarea
+                              value={item.answer}
+                              onChange={(e) => handleUpdateNestedField('faq', 'items', idx, 'answer', e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none min-h-[60px] resize-none text-slate-600"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">خلفية قسم الأسئلة</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
                           <input
-                            type="text"
-                            value={item.question}
-                            onChange={(e) => handleUpdateNestedField('faq', 'items', idx, 'question', e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none font-bold"
+                            type="color"
+                            value={content.faq.backgroundColor}
+                            onChange={(e) => handleUpdateField('faq', 'backgroundColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                           />
-                        </div>
-
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">الإجابة</label>
-                          <textarea
-                            value={item.answer}
-                            onChange={(e) => handleUpdateNestedField('faq', 'items', idx, 'answer', e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-[10px] bg-white outline-none min-h-[60px] resize-none text-slate-600"
-                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.faq.backgroundColor}</span>
                         </div>
                       </div>
-                    ))}
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-3 pt-2">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية قسم الأسئلة</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.faq.backgroundColor}
-                          onChange={(e) => handleUpdateField('faq', 'backgroundColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.faq.backgroundColor}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون نصوص الأسئلة</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.faq.textColor}
-                          onChange={(e) => handleUpdateField('faq', 'textColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.faq.textColor}</span>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون نصوص الأسئلة</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.faq.textColor}
+                            onChange={(e) => handleUpdateField('faq', 'textColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.faq.textColor}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Contact Editor */}
-            {activeSection === 'contact' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص أزرار التواصل</h3>
-                </div>
-
+              {/* Contact Editor */}
+              {activeSection === 'contact' && (
                 <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم تواصل معنا</label>
-                    <input
-                      type="text"
-                      value={content.contact.title}
-                      onChange={(e) => handleUpdateField('contact', 'title', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص أزرار التواصل والدعوة للعمل</h3>
                   </div>
 
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">الوصف والدعوة للاتصال</label>
-                    <textarea
-                      value={content.contact.description}
-                      onChange={(e) => handleUpdateField('contact', 'description', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px] resize-none"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">رقم الواتساب الاستشاري (مع رمز الدولة)</label>
-                    <input
-                      type="text"
-                      value={content.contact.phoneNumber}
-                      onChange={(e) => handleUpdateField('contact', 'phoneNumber', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
-                      dir="ltr"
-                      placeholder="مثال: 966500000000"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">نص زر التواصل / الواتساب</label>
-                    <input
-                      type="text"
-                      value={content.contact.buttonText}
-                      onChange={(e) => handleUpdateField('contact', 'buttonText', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div className="space-y-4">
                     <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.contact.backgroundColor}
-                          onChange={(e) => handleUpdateField('contact', 'backgroundColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.contact.backgroundColor}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون النصوص</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.contact.textColor}
-                          onChange={(e) => handleUpdateField('contact', 'textColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.contact.textColor}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Footer Editor */}
-            {activeSection === 'footer' && currentRole !== 'academy' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص تذييل الصفحة (الفوتر)</h3>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">نص حقوق الملكية والنشر</label>
-                    <input
-                      type="text"
-                      value={content.footer.text}
-                      onChange={(e) => handleUpdateField('footer', 'text', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-
-                  <div className="border-t border-slate-100 pt-3 mt-3 space-y-3">
-                    <h4 className="text-[11px] font-extrabold text-slate-700">تعديل النشرة البريدية (Newsletter)</h4>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">عنوان النشرة البريدية</label>
+                      <label className="text-[11px] font-bold text-slate-600">عنوان قسم تواصل معنا</label>
                       <input
                         type="text"
-                        value={content.footer.newsletterTitle || ''}
-                        onChange={(e) => handleUpdateField('footer', 'newsletterTitle', e.target.value)}
+                        value={content.contact.title}
+                        onChange={(e) => handleUpdateField('contact', 'title', e.target.value)}
                         className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
                       />
                     </div>
+
                     <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">وصف النشرة البريدية</label>
+                      <label className="text-[11px] font-bold text-slate-600">الوصف والدعوة للاتصال</label>
                       <textarea
-                        value={content.footer.newsletterDesc || ''}
-                        onChange={(e) => handleUpdateField('footer', 'newsletterDesc', e.target.value)}
-                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[60px]"
+                        value={content.contact.description}
+                        onChange={(e) => handleUpdateField('contact', 'description', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px] resize-none"
                       />
                     </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">نص زر الاشتراك</label>
-                      <input
-                        type="text"
-                        value={content.footer.newsletterBtnText || ''}
-                        onChange={(e) => handleUpdateField('footer', 'newsletterBtnText', e.target.value)}
-                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                      />
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية الفوتر</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                    {/* Button 1: Start / Call Button ("ابدأ الآن") */}
+                    <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                        <span className="text-[11px] font-extrabold text-slate-800">الزر الأول (ابدأ الآن / اتصال)</span>
+                        <span className="text-[9px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-md">اتصال هاتفي</span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-500">نص الزر الأول</label>
                         <input
-                          type="color"
-                          value={content.footer.backgroundColor}
-                          onChange={(e) => handleUpdateField('footer', 'backgroundColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          type="text"
+                          value={content.contact.buttonText}
+                          onChange={(e) => handleUpdateField('contact', 'buttonText', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-2.5 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
+                          placeholder="ابدأ الآن"
                         />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.footer.backgroundColor}</span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-500">رقم الهاتف / الاتصال (مثال: 01012345678)</label>
+                        <input
+                          type="text"
+                          value={content.contact.phoneNumber}
+                          onChange={(e) => handleUpdateField('contact', 'phoneNumber', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-2.5 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                          dir="ltr"
+                          placeholder="01012345678"
+                        />
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون نصوص الفوتر</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                    {/* Button 2: Demo / URL Button ("طلب عرض توضيحي") */}
+                    <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                        <span className="text-[11px] font-extrabold text-slate-800">الزر الثاني (طلب عرض توضيحي / رابط URL)</span>
+                        <span className="text-[9px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md">رابط مباشر</span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-500">نص الزر الثاني</label>
                         <input
-                          type="color"
-                          value={content.footer.textColor}
-                          onChange={(e) => handleUpdateField('footer', 'textColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          type="text"
+                          value={(content.contact as any).secondaryButtonText !== undefined ? (content.contact as any).secondaryButtonText : 'طلب عرض توضيحي'}
+                          onChange={(e) => handleUpdateField('contact', 'secondaryButtonText', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-2.5 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
+                          placeholder="طلب عرض توضيحي"
                         />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.footer.textColor}</span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-500">رابط الزر الثاني (URL)</label>
+                        <input
+                          type="text"
+                          value={(content.contact as any).secondaryButtonLink || ''}
+                          onChange={(e) => handleUpdateField('contact', 'secondaryButtonLink', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-2.5 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                          dir="ltr"
+                          placeholder="https://example.com/demo"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.contact.backgroundColor}
+                            onChange={(e) => handleUpdateField('contact', 'backgroundColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.contact.backgroundColor}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون النصوص</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.contact.textColor}
+                            onChange={(e) => handleUpdateField('contact', 'textColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.contact.textColor}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* Footer Editor */}
+              {activeSection === 'footer' && currentRole !== 'academy' && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص تذييل الصفحة (الفوتر)</h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">نص حقوق الملكية والنشر</label>
+                      <input
+                        type="text"
+                        value={content.footer.text}
+                        onChange={(e) => handleUpdateField('footer', 'text', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    <div className="border-t border-slate-100 pt-3 mt-3 space-y-3">
+                      <h4 className="text-[11px] font-extrabold text-slate-700">تعديل النشرة البريدية (Newsletter)</h4>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">عنوان النشرة البريدية</label>
+                        <input
+                          type="text"
+                          value={content.footer.newsletterTitle || ''}
+                          onChange={(e) => handleUpdateField('footer', 'newsletterTitle', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">وصف النشرة البريدية</label>
+                        <textarea
+                          value={content.footer.newsletterDesc || ''}
+                          onChange={(e) => handleUpdateField('footer', 'newsletterDesc', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[60px]"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">نص زر الاشتراك</label>
+                        <input
+                          type="text"
+                          value={content.footer.newsletterBtnText || ''}
+                          onChange={(e) => handleUpdateField('footer', 'newsletterBtnText', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">خلفية الفوتر</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.footer.backgroundColor}
+                            onChange={(e) => handleUpdateField('footer', 'backgroundColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.footer.backgroundColor}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون نصوص الفوتر</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.footer.textColor}
+                            onChange={(e) => handleUpdateField('footer', 'textColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.footer.textColor}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
             </div>
           </div>
@@ -2722,28 +3283,27 @@ export default function PageBuilderPage() {
 
         {/* Right Column: Live Interactive Simulation Preview */}
         <div className="flex-1 bg-slate-100 p-6 flex flex-col items-center justify-center overflow-hidden relative">
-          
+
           {/* Active section bubble tag floating indicator */}
           <div className="absolute top-4 right-6 bg-slate-900/80 backdrop-blur-md text-white text-[10px] px-3.5 py-1.5 rounded-full z-10 font-bold shadow-md flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping"></span>
             <span>معاينة حية:</span>
             <span className="text-amber-400 font-extrabold">
               {activeSection === 'navbar' ? 'الهيدر' :
-               activeSection === 'hero' ? 'البانر الترحيبي' :
-               activeSection === 'about' ? 'سيرة المعلم / من نحن' :
-               activeSection === 'features' ? 'المميزات الرئيسية' :
-               activeSection === 'pricing' ? 'الكورسات والباقات' :
-               activeSection === 'faq' ? 'الأسئلة المتكررة' :
-               activeSection === 'contact' ? 'تواصل واتساب' : 'الفوتر'}
+                activeSection === 'hero' ? 'البانر الترحيبي' :
+                  activeSection === 'about' ? 'سيرة المعلم / من نحن' :
+                    activeSection === 'features' ? 'المميزات الرئيسية' :
+                      activeSection === 'pricing' ? 'الكورسات والباقات' :
+                        activeSection === 'faq' ? 'الأسئلة المتكررة' :
+                          activeSection === 'contact' ? 'تواصل واتساب' : 'الفوتر'}
             </span>
           </div>
 
           {/* Preview canvas shell scaling depending on deviceMode */}
           <div
-            className={`bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden flex flex-col transition-all duration-300 ease-out w-full h-full ${
-              deviceMode === 'desktop' ? 'max-w-full' :
-              deviceMode === 'tablet' ? 'max-w-2xl h-[90%]' : 'max-w-sm h-[85%]'
-            }`}
+            className={`bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden flex flex-col transition-all duration-300 ease-out w-full h-full ${deviceMode === 'desktop' ? 'max-w-full' :
+                deviceMode === 'tablet' ? 'max-w-2xl h-[90%]' : 'max-w-sm h-[85%]'
+              }`}
           >
             {/* Simulation Header Address Bar */}
             <div className="bg-slate-50 px-4 py-2 border-b border-slate-200 flex items-center gap-2 select-none shrink-0">
@@ -2769,16 +3329,15 @@ export default function PageBuilderPage() {
               />
             ) : (
               <div className="flex-1 overflow-y-auto bg-white select-none">
-                
+
                 {/* Navbar Section */}
                 <div
                   onClick={() => { setActiveSection('navbar'); setActiveItemIndex(null); }}
                   style={{ backgroundColor: content.navbar.bgColor, color: content.navbar.textColor }}
-                  className={`py-4 px-6 flex justify-between items-center cursor-pointer border-b border-slate-100 transition-all relative group ${
-                    activeSection === 'navbar' 
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                  className={`py-4 px-6 flex justify-between items-center cursor-pointer border-b border-slate-100 transition-all relative group ${activeSection === 'navbar'
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
                       : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                  }`}
+                    }`}
                 >
                   <div className="absolute top-1 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
                     <Pencil className="w-2.5 h-2.5" />
@@ -2800,11 +3359,10 @@ export default function PageBuilderPage() {
                 <div
                   onClick={() => { setActiveSection('hero'); setActiveItemIndex(null); }}
                   style={{ backgroundColor: content.hero.backgroundColor, color: content.hero.textColor }}
-                  className={`p-8 sm:p-12 grid grid-cols-1 md:grid-cols-2 gap-6 items-center cursor-pointer transition-all relative group ${
-                    activeSection === 'hero' 
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                  className={`p-8 sm:p-12 grid grid-cols-1 md:grid-cols-2 gap-6 items-center cursor-pointer transition-all relative group ${activeSection === 'hero'
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
                       : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                  }`}
+                    }`}
                 >
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
                     <Pencil className="w-2.5 h-2.5" />
@@ -2842,11 +3400,10 @@ export default function PageBuilderPage() {
                 <div
                   onClick={() => { setActiveSection('about'); setActiveItemIndex(null); }}
                   style={{ backgroundColor: content.about.backgroundColor, color: content.about.textColor }}
-                  className={`p-8 sm:p-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center cursor-pointer border-t border-slate-100 transition-all relative group ${
-                    activeSection === 'about' 
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                  className={`p-8 sm:p-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center cursor-pointer border-t border-slate-100 transition-all relative group ${activeSection === 'about'
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
                       : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                  }`}
+                    }`}
                 >
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
                     <Pencil className="w-2.5 h-2.5" />
@@ -2871,11 +3428,10 @@ export default function PageBuilderPage() {
                 <div
                   onClick={() => { setActiveSection('features'); setActiveItemIndex(null); }}
                   style={{ backgroundColor: content.features.backgroundColor, color: content.features.textColor }}
-                  className={`p-8 sm:p-12 space-y-8 cursor-pointer border-t border-slate-100 transition-all relative group ${
-                    activeSection === 'features' 
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                  className={`p-8 sm:p-12 space-y-8 cursor-pointer border-t border-slate-100 transition-all relative group ${activeSection === 'features'
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
                       : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                  }`}
+                    }`}
                 >
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
                     <Pencil className="w-2.5 h-2.5" />
@@ -2894,11 +3450,10 @@ export default function PageBuilderPage() {
                           e.stopPropagation();
                           handleSelectSectionItem('features', i);
                         }}
-                        className={`bg-white border p-4 rounded-2xl flex flex-col gap-2.5 shadow-xs cursor-pointer transition-all relative group/item ${
-                          activeSection === 'features' && activeItemIndex === i
+                        className={`bg-white border p-4 rounded-2xl flex flex-col gap-2.5 shadow-xs cursor-pointer transition-all relative group/item ${activeSection === 'features' && activeItemIndex === i
                             ? 'border-blue-500 ring-2 ring-blue-500/40 scale-[1.03] z-20 shadow-md'
                             : 'border-slate-200 hover:border-blue-400 hover:shadow-sm'
-                        }`}
+                          }`}
                       >
                         <div className="absolute top-1 left-1 opacity-0 group-hover/item:opacity-100 transition-opacity bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm z-30 pointer-events-none flex items-center gap-0.5">
                           <Pencil className="w-2 h-2" />
@@ -2906,11 +3461,11 @@ export default function PageBuilderPage() {
                         </div>
                         <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200">
                           {item.icon === 'BookOpen' ? <BookOpen className="w-4 h-4" /> :
-                           item.icon === 'Award' ? <Award className="w-4 h-4" /> :
-                           item.icon === 'Clock' ? <Clock className="w-4 h-4" /> :
-                           item.icon === 'Laptop' ? <Laptop className="w-4 h-4" /> :
-                           item.icon === 'Phone' ? <Phone className="w-4 h-4" /> :
-                           <Sparkles className="w-4 h-4" />}
+                            item.icon === 'Award' ? <Award className="w-4 h-4" /> :
+                              item.icon === 'Clock' ? <Clock className="w-4 h-4" /> :
+                                item.icon === 'Laptop' ? <Laptop className="w-4 h-4" /> :
+                                  item.icon === 'Phone' ? <Phone className="w-4 h-4" /> :
+                                    <Sparkles className="w-4 h-4" />}
                         </div>
                         <h4 className="text-xs font-black text-slate-900">{item.title}</h4>
                         <p className="text-[10px] text-slate-500 leading-relaxed font-bold">{item.description}</p>
@@ -2924,11 +3479,10 @@ export default function PageBuilderPage() {
                   <div
                     onClick={() => { setActiveSection('courses'); setActiveItemIndex(null); }}
                     style={{ backgroundColor: content.courses.backgroundColor || '#ffffff', color: content.courses.textColor || '#1b1b24' }}
-                    className={`p-8 sm:p-12 space-y-8 cursor-pointer border-t border-slate-100 transition-all relative group ${
-                      activeSection === 'courses' 
-                        ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                    className={`p-8 sm:p-12 space-y-8 cursor-pointer border-t border-slate-100 transition-all relative group ${activeSection === 'courses'
+                        ? 'ring-4 ring-blue-500 z-10 shadow-md'
                         : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                    }`}
+                      }`}
                   >
                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
                       <Pencil className="w-2.5 h-2.5" />
@@ -2963,11 +3517,10 @@ export default function PageBuilderPage() {
                 <div
                   onClick={() => { setActiveSection('faq'); setActiveItemIndex(null); }}
                   style={{ backgroundColor: content.faq.backgroundColor, color: content.faq.textColor }}
-                  className={`p-8 sm:p-12 space-y-6 cursor-pointer border-t border-slate-100 transition-all relative group ${
-                    activeSection === 'faq' 
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                  className={`p-8 sm:p-12 space-y-6 cursor-pointer border-t border-slate-100 transition-all relative group ${activeSection === 'faq'
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
                       : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                  }`}
+                    }`}
                 >
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
                     <Pencil className="w-2.5 h-2.5" />
@@ -2985,11 +3538,10 @@ export default function PageBuilderPage() {
                           e.stopPropagation();
                           handleSelectSectionItem('faq', i);
                         }}
-                        className={`bg-white border rounded-xl p-4 flex gap-3 text-right cursor-pointer transition-all relative group/item ${
-                          activeSection === 'faq' && activeItemIndex === i
+                        className={`bg-white border rounded-xl p-4 flex gap-3 text-right cursor-pointer transition-all relative group/item ${activeSection === 'faq' && activeItemIndex === i
                             ? 'border-blue-500 ring-2 ring-blue-500/40 scale-[1.02] z-20 shadow-md'
                             : 'border-slate-200 hover:border-blue-400 hover:shadow-sm'
-                        }`}
+                          }`}
                       >
                         <div className="absolute top-2 left-2 opacity-0 group-hover/item:opacity-100 transition-opacity bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm z-30 pointer-events-none flex items-center gap-0.5">
                           <Pencil className="w-2 h-2" />
@@ -3011,11 +3563,10 @@ export default function PageBuilderPage() {
                 <div
                   onClick={() => { setActiveSection('contact'); setActiveItemIndex(null); }}
                   style={{ backgroundColor: content.contact.backgroundColor, color: content.contact.textColor }}
-                  className={`p-8 sm:p-10 text-center space-y-4 cursor-pointer border-t border-slate-100 transition-all relative group ${
-                    activeSection === 'contact' 
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                  className={`p-8 sm:p-10 text-center space-y-4 cursor-pointer border-t border-slate-100 transition-all relative group ${activeSection === 'contact'
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
                       : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                  }`}
+                    }`}
                 >
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
                     <Pencil className="w-2.5 h-2.5" />
@@ -3042,11 +3593,10 @@ export default function PageBuilderPage() {
                   <div
                     onClick={() => { setActiveSection('footer'); setActiveItemIndex(null); }}
                     style={{ backgroundColor: content.footer.backgroundColor, color: content.footer.textColor }}
-                    className={`py-6 px-6 text-center text-[10px] cursor-pointer opacity-90 border-t border-slate-100 transition-all relative group ${
-                      activeSection === 'footer' 
-                        ? 'ring-4 ring-blue-500 z-10 shadow-md' 
+                    className={`py-6 px-6 text-center text-[10px] cursor-pointer opacity-90 border-t border-slate-100 transition-all relative group ${activeSection === 'footer'
+                        ? 'ring-4 ring-blue-500 z-10 shadow-md'
                         : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
-                    }`}
+                      }`}
                   >
                     <div className="absolute top-1 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
                       <Pencil className="w-2.5 h-2.5" />

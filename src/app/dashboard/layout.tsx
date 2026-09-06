@@ -1,15 +1,25 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Dashboard/Sidebar';
 import Header from '@/components/Dashboard/Header';
+import { getStoredAuthToken } from '@/lib/auth-storage';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const token = getStoredAuthToken();
+    if (!token) {
+      router.push('/auth/login');
+    }
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-[#f8faff] flex">

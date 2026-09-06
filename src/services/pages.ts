@@ -87,7 +87,7 @@ export const clearPagesCache = () => {
   pagesPromise = null;
 };
 
-export const getPages = async (forceRefresh = false): Promise<any[]> => {
+export const getPages = async (forceRefresh = false, template: string = 'academic'): Promise<any[]> => {
   const now = Date.now();
   if (!forceRefresh && pagesCache && now - pagesCache.timestamp < CACHE_TTL_MS) {
     return pagesCache.data;
@@ -98,7 +98,9 @@ export const getPages = async (forceRefresh = false): Promise<any[]> => {
 
   pagesPromise = (async () => {
     try {
-      const response = await academyApi.get<any>('/pages');
+      const response = await academyApi.get<any>('/pages', {
+        params: template ? { template } : undefined,
+      });
       const data = response.data?.data ?? response.data;
       const result = (Array.isArray(data) ? data : []) as any[];
       pagesCache = { data: result, timestamp: Date.now() };
@@ -111,9 +113,20 @@ export const getPages = async (forceRefresh = false): Promise<any[]> => {
   return pagesPromise;
 };
 
-export const getPublicPages = async (): Promise<any[]> => {
+export const getPublicPages = async (template?: string): Promise<any[]> => {
   try {
-    const response = await api.get<any>('/pages');
+    let response;
+    try {
+      response = await api.get<any>('/pages', {
+        params: template ? { template } : undefined,
+      });
+    } catch (e: any) {
+      if (e?.response?.status === 404 || e?.status === 404) {
+        response = await api.get<any>('/pages');
+      } else {
+        throw e;
+      }
+    }
     const data = response.data?.data ?? response.data;
     return (Array.isArray(data) ? data : []) as any[];
   } catch (error) {
@@ -401,6 +414,22 @@ export function normalizeSectionProps(type: string, rawProps: any): Record<strin
     merged.phoneNumber = val;
     merged.phone_number = val;
   }
+  if (merged.secondary_button_text || merged.secondaryButtonText || merged.demo_button_text || merged.demoButtonText) {
+    const val = merged.secondaryButtonText || merged.secondary_button_text || merged.demoButtonText || merged.demo_button_text;
+    merged.secondaryButtonText = val;
+    merged.secondary_button_text = val;
+  }
+  if (merged.secondary_button_link || merged.secondaryButtonLink || merged.demo_button_link || merged.demoButtonLink) {
+    const val = merged.secondaryButtonLink || merged.secondary_button_link || merged.demoButtonLink || merged.demo_button_link;
+    merged.secondaryButtonLink = val;
+    merged.secondary_button_link = val;
+  }
+  // About Analytics / Vision Title
+  if (merged.analytics_title || merged.analyticsTitle || merged.vision_title || merged.visionTitle) {
+    const val = merged.analyticsTitle || merged.analytics_title || merged.visionTitle || merged.vision_title;
+    merged.analyticsTitle = val;
+    merged.analytics_title = val;
+  }
   // Video Intro
   if (merged.video_tag || merged.videoTag) {
     const val = merged.videoTag || merged.video_tag;
@@ -421,6 +450,16 @@ export function normalizeSectionProps(type: string, rawProps: any): Record<strin
     const val = merged.videoLink || merged.video_link;
     merged.videoLink = val;
     merged.video_link = val;
+  }
+  if (merged.video_bg || merged.videoBg || merged.video_background_color || merged.videoBackgroundColor) {
+    const val = merged.videoBg || merged.video_bg || merged.videoBackgroundColor || merged.video_background_color;
+    merged.videoBg = val;
+    merged.video_bg = val;
+  }
+  if (merged.video_text_color || merged.videoTextColor) {
+    const val = merged.videoTextColor || merged.video_text_color;
+    merged.videoTextColor = val;
+    merged.video_text_color = val;
   }
   // Newsletter
   if (merged.newsletter_title || merged.newsletterTitle) {

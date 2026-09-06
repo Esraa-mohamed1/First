@@ -416,8 +416,7 @@ export default function PageBuilderPage() {
   };
 
   const handleGoBack = () => {
-    // If the template was edited, go back to template list or pages manager
-    router.push('/academic/templates');
+    router.push('/academic');
   };
 
   if (!currentTemplate) {
@@ -448,8 +447,8 @@ export default function PageBuilderPage() {
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className={`p-2.5 hover:bg-slate-800 rounded-xl transition-all border ${isSidebarOpen
-                  ? 'bg-blue-600/10 text-blue-400 border-blue-500/20'
-                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+                ? 'bg-blue-600/10 text-blue-400 border-blue-500/20'
+                : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
                 }`}
               title={isSidebarOpen ? "إخفاء قائمة العناصر" : "إظهار قائمة العناصر"}
             >

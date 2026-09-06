@@ -92,7 +92,7 @@ export default function FAQSection({
               return (
                 <div 
                   key={idx} 
-                  style={{ backgroundColor: '#ffffff', borderColor: `rgba(${textRgb}, 0.12)` }}
+                  style={{ backgroundColor: data.questionBackgroundColor || '#ffffff', borderColor: `rgba(${textRgb}, 0.12)` }}
                   className="border rounded-2xl overflow-hidden transition-all duration-300"
                 >
                   <button
@@ -111,7 +111,7 @@ export default function FAQSection({
 
                   {isExpanded && (
                     <div 
-                      style={{ borderTopColor: `rgba(${textRgb}, 0.08)`, backgroundColor: `rgba(${textRgb}, 0.02)`, color: `rgba(${textRgb}, 0.75)` }}
+                      style={{ borderTopColor: `rgba(${textRgb}, 0.08)`, backgroundColor: data.answerBackgroundColor || '#FBF7EE', color: `rgba(${textRgb}, 0.85)` }}
                       className="border-t p-5 px-8 text-sm leading-relaxed"
                     >
                       {item.answer}

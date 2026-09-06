@@ -141,7 +141,13 @@ export default function Template3Renderer({
           <div className="flex-1 space-y-12 order-2 lg:order-1">
             
             {/* What you'll learn */}
-            <section className="bg-white p-5 lg:p-8 rounded-3xl shadow-sm border border-slate-200/60 relative group">
+            <section 
+              className="p-5 lg:p-8 rounded-3xl shadow-sm border border-slate-200/60 relative group"
+              style={{
+                backgroundColor: content.template3_learning?.backgroundColor || content.learning?.backgroundColor || '#ffffff',
+                color: content.template3_learning?.textColor || content.learning?.textColor || '#0f172a'
+              }}
+            >
               {isEditable && (
                 <button
                   type="button"
@@ -151,29 +157,33 @@ export default function Template3Renderer({
                   تعديل المزايا
                 </button>
               )}
-              <h2 className="text-lg lg:text-2xl font-black text-slate-900 mb-5">ماذا ستتعلم في هذه الدورة؟</h2>
+              <h2 className="text-lg lg:text-2xl font-black mb-5" style={{ color: content.template3_learning?.textColor || content.learning?.textColor || '#0f172a' }}>
+                ماذا ستتعلم في هذه الدورة؟
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                {(content.learning?.cards || []).map((card: any, idx: number) => (
+                {(content.template3_learning?.cards || content.learning?.cards || []).map((card: any, idx: number) => (
                   <div key={card.id || idx} className="flex gap-3 items-start">
                     <div className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
                       <Check size={14} className="stroke-[3]" />
                     </div>
-                    <p className="text-slate-700 text-sm leading-relaxed font-semibold">{card.info_value || card.value}</p>
+                    <p className="text-sm leading-relaxed font-semibold" style={{ color: content.template3_learning?.textColor || content.learning?.textColor || '#334155' }}>
+                      {card.info_value || card.value}
+                    </p>
                   </div>
                 ))}
-                {(!content.learning?.cards || content.learning.cards.length === 0) && (
+                {(!content.template3_learning?.cards && (!content.learning?.cards || content.learning.cards.length === 0)) && (
                   <>
                     <div className="flex gap-3">
                       <Check className="text-blue-600 shrink-0" size={18} />
-                      <p className="text-slate-700 text-sm">فهم عميق لمبادئ سيكولوجية المستخدم وتأثيرها على التصميم.</p>
+                      <p className="text-sm" style={{ color: content.template3_learning?.textColor || content.learning?.textColor || '#334155' }}>فهم عميق لمبادئ سيكولوجية المستخدم وتأثيرها على التصميم.</p>
                     </div>
                     <div className="flex gap-3">
                       <Check className="text-blue-600 shrink-0" size={18} />
-                      <p className="text-slate-700 text-sm">إتقان أدوات التصميم العالمية مثل Figma من الصفر الاحترافي.</p>
+                      <p className="text-sm" style={{ color: content.template3_learning?.textColor || content.learning?.textColor || '#334155' }}>إتقان أدوات التصميم العالمية مثل Figma من الصفر الاحترافي.</p>
                     </div>
                     <div className="flex gap-3">
                       <Check className="text-blue-600 shrink-0" size={18} />
-                      <p className="text-slate-700 text-sm">بناء أنظمة تصميم (Design Systems) متكاملة وقابلة للتوسع.</p>
+                      <p className="text-sm" style={{ color: content.template3_learning?.textColor || content.learning?.textColor || '#334155' }}>بناء أنظمة تصميم (Design Systems) متكاملة وقابلة للتوسع.</p>
                     </div>
                   </>
                 )}
@@ -181,7 +191,13 @@ export default function Template3Renderer({
             </section>
 
             {/* Curriculum */}
-            <section className="relative group">
+            <section 
+              className="relative group p-6 md:p-8 rounded-3xl"
+              style={{
+                backgroundColor: content.template3_curriculum?.backgroundColor || content.chapters?.backgroundColor || '#ffffff',
+                color: content.template3_curriculum?.textColor || content.chapters?.textColor || '#0f172a'
+              }}
+            >
               {isEditable && (
                 <button
                   type="button"
@@ -192,9 +208,11 @@ export default function Template3Renderer({
                 </button>
               )}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-8">
-                <h2 className="text-xl lg:text-2xl font-black text-slate-900">محتوى الدورة منهج متكامل</h2>
+                <h2 className="text-xl lg:text-2xl font-black" style={{ color: content.template3_curriculum?.textColor || content.chapters?.textColor || '#0f172a' }}>
+                  {content.template3_curriculum?.title || content.chapters?.title || 'محتوى الدورة منهج متكامل'}
+                </h2>
                 <div className="text-xs font-bold text-slate-400">
-                  {units.length} وحدات • {lessonsCount} درساً • محتوى شامل
+                  {units.length} وحدات • {lessonsCount} درساً
                 </div>
               </div>
               <div className="space-y-4">
@@ -229,7 +247,7 @@ export default function Template3Renderer({
                               </div>
                               {lesson.is_preview || lesson.free ? (
                                 <button
-                                  type="button"
+                                   type="button"
                                   onClick={() => {
                                     if (lesson.video_url || courseData?.preview_url) {
                                       setIsVideoModalOpen(true);
@@ -263,39 +281,59 @@ export default function Template3Renderer({
             </section>
 
             {/* About Instructor */}
-            <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200/60 relative group">
+            <section 
+              className="p-8 rounded-3xl shadow-sm border border-slate-200/60 relative group"
+              style={{
+                backgroundColor: content.template3_instructor?.backgroundColor || '#ffffff',
+                color: content.template3_instructor?.textColor || '#0f172a'
+              }}
+            >
               {isEditable && (
                 <button
                   type="button"
-                  onClick={(e) => triggerEdit('footer', e)}
+                  onClick={(e) => triggerEdit('instructor', e)}
                   className="absolute top-4 left-4 z-10 bg-blue-600 text-white px-3 py-1 rounded-md text-[10px] font-bold shadow-md hover:bg-blue-700 cursor-pointer"
                 >
                   تعديل بيانات المدرب
                 </button>
               )}
-              <h2 className="text-xl lg:text-2xl font-black text-slate-900 mb-8">عن المحاضر والمدرب</h2>
+              <h2 className="text-xl lg:text-2xl font-black mb-8" style={{ color: content.template3_instructor?.textColor || '#0f172a' }}>
+                {content.template3_instructor?.title || 'عن المحاضر والمدرب'}
+              </h2>
               <div className="flex flex-col md:flex-row gap-8 items-start">
                 <div className="w-24 h-24 rounded-full overflow-hidden shrink-0 border-4 border-emerald-400 shadow-md">
                   <img 
                     alt="Instructor" 
                     className="w-full h-full object-cover" 
-                    src={courseData?.instructor?.avatar || courseData?.user?.avatar || 'https://lh3.googleusercontent.com/aida-public/AD-v9Z-y-V_K_Z6-z-v9Z-y-V_K_Z6-z-v9Z-y-V_K_Z6-z-v9Z-y-V_K_Z6-z-v9Z-y-V_K_Z6-z-v9Z-y-V_K_Z6-z'}
+                    src={content.template3_instructor?.avatar || courseData?.instructor?.avatar || courseData?.user?.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400'}
                   />
                 </div>
                 <div>
-                  <h3 className="text-lg lg:text-xl font-black text-slate-800">{courseData?.instructor_name || courseData?.instructor?.name || courseData?.user?.name || 'أ. سارة أحمد'}</h3>
-                  <p className="text-blue-600 font-bold text-xs lg:text-sm mt-1 mb-4">{courseData?.instructor_title || 'خبير وكبير مصممي المنتجات الرقمية'}</p>
-                  <p className="text-slate-600 text-sm leading-relaxed font-semibold">
-                    {courseData?.instructor_bio || 'خبرة طويلة في تصميم وتطوير المنتجات الرقمية الموجهة للمستخدمين. عمل مع عدة جهات ومستشار تقني للتصميم وتطوير الهويات وتسهيل رحلة العميل.'}
+                  <h3 className="text-lg lg:text-xl font-black" style={{ color: content.template3_instructor?.textColor || '#1e293b' }}>
+                    {content.template3_instructor?.name || courseData?.instructor_name || courseData?.instructor?.name || courseData?.user?.name || 'أ. سارة أحمد'}
+                  </h3>
+                  <p className="text-blue-600 font-bold text-xs lg:text-sm mt-1 mb-4">
+                    {content.template3_instructor?.jobTitle || courseData?.instructor_title || 'خبير وكبير مصممي المنتجات الرقمية'}
+                  </p>
+                  <p className="text-sm leading-relaxed font-semibold" style={{ color: content.template3_instructor?.textColor ? `${content.template3_instructor.textColor}cc` : '#475569' }}>
+                    {content.template3_instructor?.bio || courseData?.instructor_bio || 'خبرة طويلة في تصميم وتطوير المنتجات الرقمية الموجهة للمستخدمين. عمل مع عدة جهات ومستشار تقني للتصميم وتطوير الهويات وتسهيل رحلة العميل.'}
                   </p>
                   <div className="flex gap-8 mt-6">
                     <div className="flex flex-col">
-                      <span className="text-xl lg:text-2xl font-black text-slate-900">45,000+</span>
-                      <span className="text-[10px] lg:text-xs font-bold text-slate-400 mt-0.5">طالب مستفيد</span>
+                      <span className="text-xl lg:text-2xl font-black" style={{ color: content.template3_instructor?.textColor || '#0f172a' }}>
+                        {content.template3_instructor?.studentsCount || '45,000+'}
+                      </span>
+                      <span className="text-[10px] lg:text-xs font-bold text-slate-400 mt-0.5">
+                        {content.template3_instructor?.studentsLabel || 'طالب مستفيد'}
+                      </span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-xl lg:text-2xl font-black text-slate-900">12+</span>
-                      <span className="text-[10px] lg:text-xs font-bold text-slate-400 mt-0.5">برنامج تدريبي</span>
+                      <span className="text-xl lg:text-2xl font-black" style={{ color: content.template3_instructor?.textColor || '#0f172a' }}>
+                        {content.template3_instructor?.coursesCount || '12+'}
+                      </span>
+                      <span className="text-[10px] lg:text-xs font-bold text-slate-400 mt-0.5">
+                        {content.template3_instructor?.coursesLabel || 'برنامج تدريبي'}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -303,7 +341,13 @@ export default function Template3Renderer({
             </section>
 
             {/* FAQ Section */}
-            <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200/60 relative group">
+            <section 
+              className="p-8 rounded-3xl shadow-sm border border-slate-200/60 relative group"
+              style={{
+                backgroundColor: content.template3_faq?.backgroundColor || content.faq?.backgroundColor || '#ffffff',
+                color: content.template3_faq?.textColor || content.faq?.textColor || '#0f172a'
+              }}
+            >
               {isEditable && (
                 <button
                   type="button"
@@ -313,20 +357,22 @@ export default function Template3Renderer({
                   تعديل الأسئلة الشائعة
                 </button>
               )}
-              <h2 className="text-xl lg:text-2xl font-black text-slate-900 mb-8">الأسئلة الشائعة حول البرنامج</h2>
+              <h2 className="text-xl lg:text-2xl font-black mb-8" style={{ color: content.template3_faq?.textColor || content.faq?.textColor || '#0f172a' }}>
+                {content.template3_faq?.title || content.faq?.title || 'الأسئلة الشائعة حول البرنامج'}
+              </h2>
               <div className="space-y-6">
-                {(content.faq?.items || []).map((faq: any, fIdx: number) => (
+                {(content.template3_faq?.items || content.faq?.items || []).map((faq: any, fIdx: number) => (
                   <div key={fIdx} className="border-b border-slate-100 pb-4 last:border-b-0 last:pb-0">
-                    <h4 className="font-extrabold text-sm lg:text-base text-slate-800 flex items-start gap-2">
+                    <h4 className="font-extrabold text-sm lg:text-base flex items-start gap-2" style={{ color: content.template3_faq?.textColor || content.faq?.textColor || '#1e293b' }}>
                       <span className="text-blue-600 shrink-0">؟</span>
                       <span>{faq.question}</span>
                     </h4>
-                    <p className="text-slate-500 text-xs lg:text-sm leading-relaxed mt-2 pr-4 font-semibold">
+                    <p className="text-xs lg:text-sm leading-relaxed mt-2 pr-4 font-semibold" style={{ color: content.template3_faq?.textColor ? `${content.template3_faq.textColor}bb` : '#64748b' }}>
                       {faq.answer}
                     </p>
                   </div>
                 ))}
-                {(!content.faq?.items || content.faq.items.length === 0) && (
+                {((!content.template3_faq?.items || content.template3_faq.items.length === 0) && (!content.faq?.items || content.faq.items.length === 0)) && (
                   <div className="text-slate-400 italic text-xs font-bold text-center py-4">
                     لا توجد أسئلة شائعة مضافة حالياً.
                   </div>
@@ -335,32 +381,55 @@ export default function Template3Renderer({
             </section>
 
             {/* Requirements */}
-            <section>
-              <h2 className="text-xl lg:text-2xl font-black text-slate-900 mb-6">المتطلبات الأساسية للبدء</h2>
-              <ul className="space-y-3 list-disc list-inside text-slate-600 text-xs lg:text-sm font-semibold leading-relaxed pr-2">
-                {courseData?.requirements ? (
-                  (Array.isArray(courseData.requirements)
-                    ? courseData.requirements
-                    : typeof courseData.requirements === 'string'
-                      ? courseData.requirements.split('\n')
-                      : []
-                  ).map((req: string, idx: number) => (
-                    <li key={idx} className="leading-relaxed">{req}</li>
-                  ))
-                ) : (
-                  <>
-                    <li>لا يشترط وجود خبرة سابقة في التصميم أو التطوير.</li>
-                    <li>جهاز كمبيوتر (Mac أو Windows) متصل بالإنترنت.</li>
-                    <li>الالتزام والرغبة بالتطبيق والعمل والتطوير المستمر.</li>
-                  </>
-                )}
+            <section 
+              className="relative group p-6 md:p-8 rounded-3xl"
+              style={{
+                backgroundColor: content.template3_requirements?.backgroundColor || '#ffffff',
+                color: content.template3_requirements?.textColor || '#0f172a'
+              }}
+            >
+              {isEditable && (
+                <button
+                  type="button"
+                  onClick={(e) => triggerEdit('requirements', e)}
+                  className="absolute top-4 left-4 z-10 bg-blue-600 text-white px-3 py-1 rounded-md text-[10px] font-bold shadow-md hover:bg-blue-700 cursor-pointer"
+                >
+                  تعديل المتطلبات
+                </button>
+              )}
+              <h2 className="text-xl lg:text-2xl font-black mb-6" style={{ color: content.template3_requirements?.textColor || '#0f172a' }}>
+                {content.template3_requirements?.title || 'المتطلبات الأساسية للبدء'}
+              </h2>
+              <ul className="space-y-3 list-disc list-inside text-xs lg:text-sm font-semibold leading-relaxed pr-2" style={{ color: content.template3_requirements?.textColor ? `${content.template3_requirements.textColor}cc` : '#475569' }}>
+                {((content.template3_requirements?.items && content.template3_requirements.items.length > 0) ? content.template3_requirements.items : (
+                  courseData?.requirements ? (
+                    (Array.isArray(courseData.requirements)
+                      ? courseData.requirements
+                      : typeof courseData.requirements === 'string'
+                        ? courseData.requirements.split('\n').filter(Boolean)
+                        : []
+                    )
+                  ) : [
+                    'لا يشترط وجود خبرة سابقة في التصميم أو التطوير.',
+                    'جهاز كمبيوتر (Mac أو Windows) متصل بالإنترنت.',
+                    'الالتزام والرغبة بالتطبيق والعمل والتطوير المستمر.'
+                  ]
+                )).map((req: string, idx: number) => (
+                  <li key={idx} className="leading-relaxed">{req}</li>
+                ))}
               </ul>
             </section>
           </div>
 
           {/* Right Side: Sticky Pricing Card — hidden on mobile, shown lg+ */}
           <aside className="hidden lg:block lg:w-[400px] order-1 lg:order-2 shrink-0">
-            <div className="lg:sticky lg:top-28 bg-white rounded-3xl shadow-xl border border-slate-200/50 overflow-hidden transform transition-all duration-300 hover:translate-y-[-4px] hover:shadow-2xl relative group">
+            <div 
+              className="lg:sticky lg:top-28 rounded-3xl shadow-xl border border-slate-200/50 overflow-hidden transform transition-all duration-300 hover:translate-y-[-4px] hover:shadow-2xl relative group"
+              style={{
+                backgroundColor: content.template3_pricing?.backgroundColor || '#ffffff',
+                color: content.template3_pricing?.textColor || '#0f172a'
+              }}
+            >
               {isEditable && (
                 <button
                   type="button"
@@ -372,8 +441,16 @@ export default function Template3Renderer({
               )}
               
               {/* Badge/Price Header */}
-              <div className="bg-blue-600 p-6 text-white text-center">
-                <div className="text-xs font-bold opacity-80 mb-1">رسوم الاشتراك الفوري بالدورة</div>
+              <div 
+                className="p-6 text-white text-center"
+                style={{
+                  backgroundColor: content.template3_pricing?.headerBackgroundColor || '#2563eb',
+                  color: content.template3_pricing?.headerTextColor || '#ffffff'
+                }}
+              >
+                <div className="text-xs font-bold opacity-80 mb-1">
+                  {content.template3_pricing?.title || content.payment?.title || 'رسوم الاشتراك الفوري بالدورة'}
+                </div>
                 <div className="flex items-center justify-center gap-2">
                   <span className="text-4xl font-black">{price.toLocaleString('ar-EG')}</span>
                   <span className="text-sm font-bold">ريال سعودي</span>
@@ -397,51 +474,40 @@ export default function Template3Renderer({
                   className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-4 rounded-2xl font-black text-base shadow-xl shadow-blue-500/25 hover:shadow-blue-500/35 transition-all mb-4 flex items-center justify-center gap-3 cursor-pointer"
                 >
                   <ShoppingCart size={18} />
-                  <span>{isSubscribing ? 'جاري الاشتراك...' : 'اشترك وسجل بالدورة الآن'}</span>
+                  <span>{isSubscribing ? 'جاري الاشتراك...' : (content.template3_pricing?.buttonText || 'اشترك وسجل بالدورة الآن')}</span>
                 </button>
 
                 <div className="mt-6">
-                  <h4 className="font-extrabold text-sm text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-3">
+                  <h4 className="font-extrabold text-sm mb-6 flex items-center gap-2 border-b border-slate-100 pb-3" style={{ color: content.template3_pricing?.textColor || '#1e293b' }}>
                     <ShieldCheck className="text-blue-600" size={18} />
                     <span>ما يشتمل عليه تسجيلك:</span>
                   </h4>
                   <ul className="space-y-4">
-                    <li className="flex items-center gap-4 text-slate-600">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
-                        <Video size={16} />
-                      </div>
-                      <span className="text-xs lg:text-sm font-bold">وصول كامل لكافة المحاضرات والدروس المصورة</span>
-                    </li>
-                    <li className="flex items-center gap-4 text-slate-600">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
-                        <FileDown size={16} />
-                      </div>
-                      <span className="text-xs lg:text-sm font-bold">ملفات عمل ومصادر وتطبيقات قابلة للتحميل</span>
-                    </li>
-                    <li className="flex items-center gap-4 text-slate-600">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
-                        <GraduationCap size={16} />
-                      </div>
-                      <span className="text-xs lg:text-sm font-bold">شهادة إتمام معتمدة باسمك من منصة دَرّب</span>
-                    </li>
-                    <li className="flex items-center gap-4 text-slate-600">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
-                        <RefreshCw size={16} />
-                      </div>
-                      <span className="text-xs lg:text-sm font-bold">تحديثات دورية مجانية للمحتوى مدى الحياة</span>
-                    </li>
-                    <li className="flex items-center gap-4 text-slate-600">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
-                        <Smartphone size={16} />
-                      </div>
-                      <span className="text-xs lg:text-sm font-bold">إمكانية الحضور والمتابعة من الهاتف أو الكمبيوتر</span>
-                    </li>
+                    {((content.template3_pricing?.items && content.template3_pricing.items.length > 0) ? content.template3_pricing.items : [
+                      'وصول كامل لكافة المحاضرات والدروس المصورة',
+                      'ملفات عمل ومصادر وتطبيقات قابلة للتحميل',
+                      'شهادة إتمام معتمدة باسمك من منصة دَرّب',
+                      'تحديثات دورية مجانية للمحتوى مدى الحياة',
+                      'إمكانية الحضور والمتابعة من الهاتف أو الكمبيوتر'
+                    ]).map((item: string, iIdx: number) => {
+                      const icons = [Video, FileDown, GraduationCap, RefreshCw, Smartphone];
+                      const IconComponent = icons[iIdx % icons.length];
+                      return (
+                        <li key={iIdx} className="flex items-center gap-4" style={{ color: content.template3_pricing?.textColor ? `${content.template3_pricing.textColor}cc` : '#475569' }}>
+                          <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
+                            <IconComponent size={16} />
+                          </div>
+                          <span className="text-xs lg:text-sm font-bold">{item}</span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
 
                 <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between text-slate-400">
-                  <span className="text-[10px] font-black tracking-wider">ضمان استرداد الأموال كاملة</span>
-                  <span className="text-xs font-extrabold text-slate-500">خلال 30 يوماً</span>
+                  <span className="text-[10px] font-black tracking-wider">
+                    {content.template3_pricing?.guaranteeText || 'ضمان استرداد الأموال كاملة خلال 30 يوماً'}
+                  </span>
                 </div>
               </div>
             </div>

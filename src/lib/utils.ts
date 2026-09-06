@@ -22,6 +22,25 @@ export function getLogoUrl(logo?: string | null): string {
   return url;
 }
 
+export function formatCourseAccessDuration(course: any): string {
+  if (!course) return 'صلاحية مدى الحياة';
+  const type = course.access_duration_type || course.access_type || course.accessDurationType;
+  if (type === 'days') {
+    const days = course.access_days || course.accessDays;
+    if (days) return `وصول لمدة ${days} يوم`;
+    return 'وصول محدود بأيام';
+  }
+  if (type === 'until_date' || type === 'date') {
+    const date = course.access_until_date || course.accessUntilDate;
+    if (date) return `وصول حتى ${date}`;
+    return 'وصول حتى تاريخ محدد';
+  }
+  if (course.access_period && typeof course.access_period === 'string') {
+    return course.access_period;
+  }
+  return 'صلاحية مدى الحياة';
+}
+
 export function translateErrorToArabic(msg: string): string {
   if (!msg) return '';
   const normalized = msg.toLowerCase().trim();

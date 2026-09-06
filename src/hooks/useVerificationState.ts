@@ -14,6 +14,17 @@ export function useVerificationState() {
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const [contact, setContact] = useState<string | null>(null);
+    const [resendTimer, setResendTimer] = useState<number>(0);
+
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+        if (resendTimer > 0) {
+            timer = setInterval(() => {
+                setResendTimer((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(timer);
+    }, [resendTimer]);
 
     useEffect(() => {
         const contactParam = searchParams.get('contact');
@@ -43,6 +54,7 @@ export function useVerificationState() {
             await sendOtp(contact, selectedCountry?.isoCode);
             toast.success('تم إرسال رمز التحقق بنجاح');
             setStep('otp');
+            setResendTimer(60);
         } catch (error: any) {
             toast.error(getErrorMessage(error, 'فشل إرسال رمز التحقق'));
         } finally {
@@ -51,14 +63,30 @@ export function useVerificationState() {
     };
 
     const handleOtpChange = (index: number, value: string) => {
-        if (value.length > 1) value = value[0];
-        if (!/^\d*$/.test(value)) return;
+        const digitsOnly = value.replace(/\D/g, '');
+        if (!digitsOnly) {
+            const newOtp = [...otp];
+            newOtp[index] = '';
+            setOtp(newOtp);
+            return;
+        }
+
+        if (digitsOnly.length > 1) {
+            const newOtp = [...otp];
+            digitsOnly.slice(0, 6).split('').forEach((char, i) => {
+                if (i < 6) newOtp[i] = char;
+            });
+            setOtp(newOtp);
+            const lastIndex = Math.min(digitsOnly.length - 1, 5);
+            inputRefs.current[lastIndex]?.focus();
+            return;
+        }
 
         const newOtp = [...otp];
-        newOtp[index] = value;
+        newOtp[index] = digitsOnly;
         setOtp(newOtp);
 
-        if (value && index < 5) {
+        if (digitsOnly && index < 5) {
             inputRefs.current[index + 1]?.focus();
         }
     };
@@ -67,6 +95,21 @@ export function useVerificationState() {
         if (e.key === 'Backspace' && !otp[index] && index > 0) {
             inputRefs.current[index - 1]?.focus();
         }
+    };
+
+    const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        e.preventDefault();
+        const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+        if (!pastedData) return;
+
+        const newOtp = [...otp];
+        pastedData.split('').forEach((char, index) => {
+            if (index < 6) newOtp[index] = char;
+        });
+        setOtp(newOtp);
+
+        const lastIndex = Math.min(pastedData.length - 1, 5);
+        inputRefs.current[lastIndex]?.focus();
     };
 
     const handleVerify = async () => {
@@ -123,9 +166,11 @@ export function useVerificationState() {
         otp,
         inputRefs,
         contact,
+        resendTimer,
         handleSendOtp,
         handleOtpChange,
         handleKeyDown,
+        handlePaste,
         handleVerify
     };
 }

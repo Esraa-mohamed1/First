@@ -17,18 +17,33 @@ export default function RootLandingPage() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const { openModal } = useModal();
 
-  useEffect(() => {
-    async function loadCourse() {
-      if (!slug) return;
-      try {
-        const data = await getStudentCourse(slug);
-        if (data) setCourse(data);
-      } catch (e) {
-        console.error('Failed to load course details for landing page:', e);
-      }
+  const loadCourse = React.useCallback(async () => {
+    if (!slug) return;
+    try {
+      const data = await getStudentCourse(slug);
+      if (data) setCourse(data);
+    } catch (e) {
+      console.error('Failed to load course details for landing page:', e);
     }
-    loadCourse();
   }, [slug]);
+
+  useEffect(() => {
+    loadCourse();
+  }, [loadCourse]);
+
+  useEffect(() => {
+    const handleSubscriptionUpdated = () => {
+      loadCourse();
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('course-subscription-updated', handleSubscriptionUpdated);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('course-subscription-updated', handleSubscriptionUpdated);
+      }
+    };
+  }, [loadCourse]);
 
   const handleSubscribe = () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -59,6 +74,7 @@ export default function RootLandingPage() {
           courseId={course.id}
           coursePrice={course.final_price || course.price}
           courseCurrency={course.currency || 'SAR'}
+          onSuccess={loadCourse}
         />
       )}
     </div>

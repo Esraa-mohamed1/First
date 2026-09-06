@@ -13,9 +13,11 @@ function VerificationContent() {
         otp,
         inputRefs,
         contact,
+        resendTimer,
         handleSendOtp,
         handleOtpChange,
         handleKeyDown,
+        handlePaste,
         handleVerify
     } = useVerificationState();
 
@@ -71,10 +73,12 @@ function VerificationContent() {
                                     key={index}
                                     ref={(el) => { inputRefs.current[index] = el; }}
                                     type="text"
-                                    maxLength={1}
+                                    inputMode="numeric"
+                                    maxLength={6}
                                     value={digit}
                                     onChange={(e) => handleOtpChange(index, e.target.value)}
                                     onKeyDown={(e) => handleKeyDown(index, e)}
+                                    onPaste={handlePaste}
                                     className="w-12 h-14 md:w-16 md:h-20 border-2 border-gray-300 rounded-xl text-center text-2xl md:text-4xl font-bold focus:border-blue-600 focus:outline-none transition-colors bg-white text-gray-900"
                                 />
                             ))}
@@ -91,10 +95,14 @@ function VerificationContent() {
                         <div className="mt-6 text-center">
                             <button
                                 onClick={handleSendOtp}
-                                disabled={loading}
-                                className="text-blue-600 hover:text-blue-700 font-bold text-sm hover:underline disabled:opacity-50"
+                                disabled={loading || resendTimer > 0}
+                                className="text-blue-600 hover:text-blue-700 font-bold text-sm hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                لم يصلك الرمز؟ إعادة الإرسال
+                                {resendTimer > 0 ? (
+                                    `إعادة الإرسال بعد ${resendTimer} ثانية`
+                                ) : (
+                                    'لم يصلك الرمز؟ إعادة الإرسال'
+                                )}
                             </button>
                         </div>
                     </>
