@@ -103,9 +103,9 @@ const DEFAULT_CONTENT = {
     textColor: '#1b1b24',
   },
   contact: {
-    title: 'ابْنِ مستقبل التعليم',
-    description: 'انضم إلى المؤسسات الرائدة عالميًا في تحويل التجربة الأكاديمية. ارتقِ بمستوى مؤسستك التعليمية وابدأ رحلتك نحو التميز اليوم.',
-    phoneNumber: '201000000000',
+    title: '',
+    description: '',
+    phoneNumber: '',
     buttonText: 'ابدأ الآن',
     backgroundColor: '#3525cd',
     textColor: '#ffffff',
@@ -136,27 +136,49 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
     ? realCourses
     : (isEditing && courseNode?.props?.courses ? courseNode.props.courses : []);
 
-  const safeFeatureItems = (items: any[] | undefined | null) => {
+  const safeFeatureItems = (items: any) => {
+    if (typeof items === 'string') {
+      try { items = JSON.parse(items); } catch (e) {}
+    }
     if (!Array.isArray(items) || items.length === 0) return fallback.features.items;
     return items.map((it: any) => {
-      const p = it.props || it;
+      const p = it?.props || it || {};
       return {
-        icon: p.icon || it.icon || 'star',
-        title: p.title || it.title || '',
-        description: p.description || it.description || '',
+        icon: p.icon || it?.icon || 'star',
+        title: p.title || it?.title || '',
+        description: p.description || it?.description || '',
       };
     });
   };
 
-  const safeStatItems = (items: any[] | undefined | null) => {
+  const safeStatItems = (items: any) => {
+    if (typeof items === 'string') {
+      try { items = JSON.parse(items); } catch (e) {}
+    }
     if (!Array.isArray(items) || items.length === 0) return fallback.stats.items;
     return items.map((it: any) => {
-      const p = it.props || it;
+      const p = it?.props || it || {};
       return {
-        value: p.value || it.value || '',
-        label: p.label || it.label || p.title || it.title || '',
+        value: p.value || it?.value || '',
+        label: p.label || it?.label || p.title || it?.title || '',
       };
     });
+  };
+
+  const safePricingItems = (items: any) => {
+    if (typeof items === 'string') {
+      try { items = JSON.parse(items); } catch (e) {}
+    }
+    if (!Array.isArray(items) || items.length === 0) return fallback.pricing.items;
+    return items;
+  };
+
+  const safeFaqItems = (items: any) => {
+    if (typeof items === 'string') {
+      try { items = JSON.parse(items); } catch (e) {}
+    }
+    if (!Array.isArray(items) || items.length === 0) return fallback.faq.items;
+    return items;
   };
 
   return {
@@ -215,7 +237,7 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
     pricing: pricingNode?.props ? {
       title: pricingNode.props.title ?? fallback.pricing.title,
       subtitle: pricingNode.props.subtitle ?? fallback.pricing.subtitle,
-      items: pricingNode.props.items ?? fallback.pricing.items,
+      items: safePricingItems(pricingNode.props.items),
       backgroundColor: pricingNode.props.backgroundColor ?? pricingNode.props.background_color ?? fallback.pricing.backgroundColor,
       textColor: pricingNode.props.textColor ?? pricingNode.props.text_color ?? fallback.pricing.textColor,
       testimonialsTitle: pricingNode.props.testimonialsTitle ?? pricingNode.props.testimonials_title ?? fallback.pricing.testimonialsTitle,
@@ -232,18 +254,18 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
     } : fallback.pricing,
     faq: faqNode?.props ? {
       title: faqNode.props.title ?? fallback.faq.title,
-      items: faqNode.props.items ?? fallback.faq.items,
+      items: safeFaqItems(faqNode.props.items),
       backgroundColor: faqNode.props.backgroundColor ?? fallback.faq.backgroundColor,
       textColor: faqNode.props.textColor ?? fallback.faq.textColor,
     } : fallback.faq,
     contact: contactNode?.props ? {
-      title: contactNode.props.title ?? fallback.contact.title,
-      description: contactNode.props.description ?? fallback.contact.description,
-      phoneNumber: contactNode.props.phoneNumber ?? contactNode.props.phone_number ?? fallback.contact.phoneNumber,
-      buttonText: contactNode.props.buttonText ?? contactNode.props.button_text ?? fallback.contact.buttonText,
-      backgroundColor: contactNode.props.backgroundColor ?? contactNode.props.background_color ?? fallback.contact.backgroundColor,
-      textColor: contactNode.props.textColor ?? contactNode.props.text_color ?? fallback.contact.textColor,
-    } : fallback.contact,
+      title: contactNode.props.title ?? '',
+      description: contactNode.props.description ?? '',
+      phoneNumber: contactNode.props.phoneNumber ?? contactNode.props.phone_number ?? '',
+      buttonText: contactNode.props.buttonText ?? contactNode.props.button_text ?? 'ابدأ الآن',
+      backgroundColor: contactNode.props.backgroundColor ?? contactNode.props.background_color ?? '',
+      textColor: contactNode.props.textColor ?? contactNode.props.text_color ?? '',
+    } : { title: '', description: '', phoneNumber: '', buttonText: '', backgroundColor: '', textColor: '' },
     footer: footerNode?.props ? {
       text: footerNode.props.text ?? fallback.footer.text,
       backgroundColor: footerNode.props.backgroundColor ?? footerNode.props.background_color ?? fallback.footer.backgroundColor,

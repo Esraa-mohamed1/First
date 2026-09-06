@@ -26,25 +26,7 @@ export default function TenantHomeClient({
       try {
         setLoading(true);
 
-        // Try loading from local tenant-cache first
-        const tenantKey = getClientTenantKey();
-        if (tenantKey) {
-          try {
-            const cacheRes = await fetch(`/tenant-cache/${tenantKey.toLowerCase()}.json`);
-            if (cacheRes.ok) {
-              const cacheData = await cacheRes.json();
-              if (cacheData && cacheData.templateId && Array.isArray(cacheData.sections)) {
-                console.log('[TenantHomeClient] Successfully loaded homepage configuration from cache');
-                setTemplateId(cacheData.templateId);
-                setSections(cacheData.sections);
-                setLoading(false);
-                return;
-              }
-            }
-          } catch (cacheErr) {
-            console.warn('[TenantHomeClient] Local cache fetch failed, falling back to API:', cacheErr);
-          }
-        }
+        // Fetch fresh pages list directly from public /pages endpoint (API priority)
 
         // Fallback: Fetch fresh pages list from public /pages endpoint
         const pagesList = await getPublicPages('academic');

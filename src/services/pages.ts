@@ -543,15 +543,21 @@ export function normalizeSectionProps(type: string, rawProps: any): Record<strin
 export function apiToEditor(sections: ApiSection[]): BuilderNode[] {
   if (!Array.isArray(sections)) return [];
 
-  const sorted = [...sections].sort((a, b) => (a.order || 0) - (b.order || 0));
+  const validSections = sections.filter((sec) => sec && typeof sec === 'object' && sec.type);
+  const sorted = [...validSections].sort((a, b) => (a.order || 0) - (b.order || 0));
 
   return sorted.map((sec) => {
     const rawProps = safeParseProps(sec.props);
     const props = normalizeSectionProps(sec.type, rawProps);
 
-    let editorItems = undefined;
-    if (sec.items) {
-      const sortedItems = [...sec.items].sort((a, b) => (a.order || 0) - (b.order || 0));
+    let editorItems: any[] | undefined = undefined;
+    let rawItems = sec.items;
+    if (typeof rawItems === 'string') {
+      try { rawItems = JSON.parse(rawItems); } catch (e) {}
+    }
+
+    if (Array.isArray(rawItems)) {
+      const sortedItems = [...rawItems].filter(it => it && typeof it === 'object').sort((a, b) => (a.order || 0) - (b.order || 0));
       editorItems = sortedItems.map((item) => {
         let itemProps: Record<string, any> = {};
         if (item.props) {
@@ -580,7 +586,7 @@ export function apiToEditor(sections: ApiSection[]): BuilderNode[] {
       props: {
         ...props,
         ...(rawHide !== undefined ? { hide_on_mobile: !!rawHide, hideOnMobile: !!rawHide } : {}),
-        items: editorItems,
+        items: editorItems || props.items,
       },
     };
   });

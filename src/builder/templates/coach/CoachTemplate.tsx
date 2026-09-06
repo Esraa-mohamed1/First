@@ -127,27 +127,41 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT) 
   const contactNode = nodes.find(n => n.type === 'contact');
   const footerNode = nodes.find(n => n.type === 'footer');
 
-  const safeFeatureItems = (items: any[] | undefined | null) => {
+  const safeFeatureItems = (items: any) => {
+    if (typeof items === 'string') {
+      try { items = JSON.parse(items); } catch (e) {}
+    }
     if (!Array.isArray(items) || items.length === 0) return fallback.features.items;
     return items.map((it: any) => {
-      const p = it.props || it;
+      const p = it?.props || it || {};
       return {
-        icon: p.icon || it.icon || 'star',
-        title: p.title || it.title || '',
-        description: p.description || it.description || '',
+        icon: p.icon || it?.icon || 'star',
+        title: p.title || it?.title || '',
+        description: p.description || it?.description || '',
       };
     });
   };
 
-  const safeStatItems = (items: any[] | undefined | null) => {
+  const safeStatItems = (items: any) => {
+    if (typeof items === 'string') {
+      try { items = JSON.parse(items); } catch (e) {}
+    }
     if (!Array.isArray(items) || items.length === 0) return fallback.stats.items;
     return items.map((it: any) => {
-      const p = it.props || it;
+      const p = it?.props || it || {};
       return {
-        value: p.value || it.value || '',
-        label: p.label || it.label || p.title || it.title || '',
+        value: p.value || it?.value || '',
+        label: p.label || it?.label || p.title || it?.title || '',
       };
     });
+  };
+
+  const safePricingItems = (items: any) => {
+    if (typeof items === 'string') {
+      try { items = JSON.parse(items); } catch (e) {}
+    }
+    if (!Array.isArray(items) || items.length === 0) return fallback.pricing.items;
+    return items;
   };
 
   return {
@@ -193,7 +207,7 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT) 
     pricing: pricingNode?.props ? {
       title: pricingNode.props.title ?? fallback.pricing.title,
       subtitle: pricingNode.props.subtitle ?? fallback.pricing.subtitle,
-      items: pricingNode.props.items ?? fallback.pricing.items,
+      items: safePricingItems(pricingNode.props.items),
       backgroundColor: pricingNode.props.backgroundColor ?? pricingNode.props.background_color ?? fallback.pricing.backgroundColor,
       textColor: pricingNode.props.textColor ?? pricingNode.props.text_color ?? fallback.pricing.textColor,
       testimonialsTitle: pricingNode.props.testimonialsTitle ?? pricingNode.props.testimonials_title ?? fallback.pricing.testimonialsTitle,

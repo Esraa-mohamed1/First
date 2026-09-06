@@ -661,12 +661,12 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         textColor: '#1b1b24'
       },
       contact: {
-        title: 'ابْنِ مستقبل التعليم',
-        description: 'انضم إلى المؤسسات الرائدة عالميًا في تحويل التجربة الأكاديمية. ارتقِ بمستوى مؤسستك التعليمية وابدأ رحلتك نحو التميز اليوم.',
-        phoneNumber: '01012345678',
+        title: '',
+        description: '',
+        phoneNumber: '',
         buttonText: 'ابدأ الآن',
-        secondaryButtonText: 'طلب عرض توضيحي',
-        secondaryButtonLink: 'https://example.com/demo',
+        secondaryButtonText: '',
+        secondaryButtonLink: '',
         backgroundColor: '',
         textColor: ''
       },

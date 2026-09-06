@@ -228,8 +228,8 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
   const pricingBg = content?.pricing?.backgroundColor || (content?.pricing as any)?.background_color || (content?.pricing as any)?.bg_color || '#fcf8ff';
   const pricingTextColor = content?.pricing?.textColor || (content?.pricing as any)?.text_color || '#1b1b24';
 
-  const contactTitle = content?.contact?.title || 'ابْنِ مستقبل التعليم';
-  const contactDesc = content?.contact?.description || 'انضم إلى المؤسسات الرائدة عالميًا في تحويل التجربة الأكاديمية. ارتقِ بمستوى مؤسستك التعليمية وابدأ رحلتك نحو التميز اليوم.';
+  const contactTitle = content?.contact?.title || '';
+  const contactDesc = content?.contact?.description || '';
   const contactPhone = content?.contact?.phoneNumber || (content?.contact as any)?.phone_number || '';
   const contactBtnText = content?.contact?.buttonText || (content?.contact as any)?.button_text || 'ابدأ الآن';
   const contactSecondaryBtnText = (content?.contact as any)?.secondaryButtonText || (content?.contact as any)?.secondary_button_text || (content?.contact as any)?.demoButtonText || 'طلب عرض توضيحي';
@@ -809,6 +809,7 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
   </div>
 </section>
 
+${(contactTitle || contactDesc) ? `
 <!-- Final CTA -->
 <section data-section="contact" class="py-32 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto text-center mb-16 transition-all duration-300 section-hover cursor-pointer rounded-3xl" style="${contactBg ? `background-color: ${contactBg};` : ''} ${contactTextColor ? `color: ${contactTextColor};` : ''}">
 <div class="max-w-4xl mx-auto bg-primary/5 border border-primary/20 rounded-[3rem] p-stack-lg md:p-24 relative overflow-hidden shadow-2xl">
@@ -840,6 +841,7 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 </div>
 </div>
 </section>
+` : ''}
 </main>
 <script>
         // Mobile Drawer Toggle
