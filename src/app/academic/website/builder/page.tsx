@@ -43,33 +43,32 @@ const MySwal = withReactContent(Swal);
 
 // --- Typings for Website Builder Sections ---
 interface NavbarConfig {
-  title?: string;
-  logo?: string;
-  bgColor?: string;
-  textColor?: string;
+  title: string;
+  logo: string;
+  bgColor: string;
+  textColor: string;
   [key: string]: any;
 }
 
 interface HeroConfig {
-  title?: string;
-  subtitle?: string;
-  description?: string;
-  buttonText?: string;
-  buttonLink?: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  buttonText: string;
+  buttonLink: string;
   secondaryButtonText?: string;
   secondaryButtonLink?: string;
-  image?: string;
-  backgroundColor?: string;
-  textColor?: string;
-  [key: string]: any;
+  image: string;
+  backgroundColor: string;
+  textColor: string;
 }
 
 interface AboutConfig {
-  title?: string;
-  subtitle?: string;
-  image?: string;
-  backgroundColor?: string;
-  textColor?: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  backgroundColor: string;
+  textColor: string;
   videoTag?: string;
   videoTitle?: string;
   videoDesc?: string;
@@ -79,38 +78,34 @@ interface AboutConfig {
   analyticsTitle?: string;
   analyticsBars?: number[];
   analyticsColor?: string;
-  [key: string]: any;
 }
 
 interface FeatureItem {
-  icon?: string;
-  title?: string;
-  description?: string;
-  [key: string]: any;
+  icon: string;
+  title: string;
+  description: string;
 }
 
 interface FeaturesConfig {
-  title?: string;
-  subtitle?: string;
-  items?: FeatureItem[];
-  backgroundColor?: string;
-  textColor?: string;
-  [key: string]: any;
+  title: string;
+  subtitle: string;
+  items: FeatureItem[];
+  backgroundColor: string;
+  textColor: string;
 }
 
 interface PricingItem {
-  title?: string;
-  price?: string;
-  features?: string[];
-  [key: string]: any;
+  title: string;
+  price: string;
+  features: string[];
 }
 
 interface PricingConfig {
-  title?: string;
-  subtitle?: string;
-  items?: PricingItem[];
-  backgroundColor?: string;
-  textColor?: string;
+  title: string;
+  subtitle: string;
+  items: PricingItem[];
+  backgroundColor: string;
+  textColor: string;
   testimonialsTitle?: string;
   testimonialsSubtitle?: string;
   testimonialsBg?: string;
@@ -124,45 +119,40 @@ interface PricingConfig {
   testimonial3Text?: string;
   testimonial3Author?: string;
   testimonial3Role?: string;
-  [key: string]: any;
 }
 
 interface FAQItem {
-  question?: string;
-  answer?: string;
-  [key: string]: any;
+  question: string;
+  answer: string;
 }
 
 interface FAQConfig {
-  title?: string;
-  items?: FAQItem[];
-  backgroundColor?: string;
-  textColor?: string;
+  title: string;
+  items: FAQItem[];
+  backgroundColor: string;
+  textColor: string;
   testimonialsTitle?: string;
   testimonialsSubtitle?: string;
-  [key: string]: any;
 }
 
 interface ContactConfig {
-  title?: string;
-  description?: string;
-  phoneNumber?: string;
-  buttonText?: string;
+  title: string;
+  description: string;
+  phoneNumber: string;
+  buttonText: string;
   secondaryButtonText?: string;
   secondaryButtonLink?: string;
-  backgroundColor?: string;
-  textColor?: string;
-  [key: string]: any;
+  backgroundColor: string;
+  textColor: string;
 }
 
 interface FooterConfig {
-  text?: string;
-  backgroundColor?: string;
-  textColor?: string;
+  text: string;
+  backgroundColor: string;
+  textColor: string;
   newsletterTitle?: string;
   newsletterDesc?: string;
   newsletterBtnText?: string;
-  [key: string]: any;
 }
 
 interface CoursesConfig {
@@ -760,9 +750,9 @@ export default function PageBuilderPage() {
 
   // Helper to get HTML for role
   const getHtmlForRole = (role: string, c: TemplateContent) => {
-    if (role === 'academy') return getAcademicHtml(c);
-    if (role === 'coach') return getCoachHtml(c);
-    if (role === 'schoolcoach') return getSchoolCoachHtml(c);
+    if (role === 'academy') return getAcademicHtml(c as any);
+    if (role === 'coach') return getCoachHtml(c as any);
+    if (role === 'schoolcoach') return getSchoolCoachHtml(c as any);
     return '';
   };
 
@@ -1562,12 +1552,14 @@ export default function PageBuilderPage() {
             const footerNode = editorNodes.find(n => n.type === 'footer');
 
             // Helper: get items already flattened by apiToEditor (node.props.items), 
-            // falling back to default items if empty/missing.
-            const safeItems = (nodeItems: any[] | undefined | null, defaultItems: any[]) => {
-              if (!Array.isArray(nodeItems) || nodeItems.length === 0) return defaultItems;
-              // Items from apiToEditor already have props merged at root level
-              return nodeItems.map(item => {
-                // Ensure required fields have safe values
+            // Safe item list accessor: returns API items (safely typed) or fallback
+            const safeItems = (nodeItems: any, defaultItems: any = []): any[] => {
+              let list = nodeItems;
+              if (typeof list === 'string') {
+                try { list = JSON.parse(list); } catch (e) { list = []; }
+              }
+              if (!Array.isArray(list) || list.length === 0) return defaultItems || [];
+              return list.map(item => {
                 const merged = { ...item };
                 if (merged.features && !Array.isArray(merged.features)) {
                   merged.features = [];
@@ -1589,14 +1581,14 @@ export default function PageBuilderPage() {
             });
 
             const parsedContent: TemplateContent = {
-              navbar: navbarNode?.props ? ({
+              navbar: (navbarNode?.props ? ({
                 ...mergeSection(navbarNode.props, fallback.navbar),
                 // Normalize critical aliases
                 bgColor: sv(navbarNode.props.bgColor ?? navbarNode.props.bg_color, fallback.navbar.bgColor),
                 textColor: sv(navbarNode.props.textColor ?? navbarNode.props.text_color, fallback.navbar.textColor),
-              }) : fallback.navbar,
+              }) : fallback.navbar) as any,
 
-              hero: heroNode?.props ? ({
+              hero: (heroNode?.props ? ({
                 ...mergeSection(heroNode.props, fallback.hero),
                 buttonText: sv(heroNode.props.buttonText ?? heroNode.props.button_text, fallback.hero.buttonText),
                 buttonLink: sv(heroNode.props.buttonLink ?? heroNode.props.button_link, fallback.hero.buttonLink),
@@ -1604,9 +1596,9 @@ export default function PageBuilderPage() {
                 secondaryButtonLink: sv(heroNode.props.secondaryButtonLink ?? heroNode.props.secondary_button_link ?? heroNode.props.demoButtonLink ?? heroNode.props.demo_button_link, fallback.hero.secondaryButtonLink || '#contact'),
                 backgroundColor: sv(heroNode.props.backgroundColor ?? heroNode.props.background_color ?? heroNode.props.bg_color, fallback.hero.backgroundColor),
                 textColor: sv(heroNode.props.textColor ?? heroNode.props.text_color, fallback.hero.textColor),
-              }) : fallback.hero,
+              }) : fallback.hero) as any,
 
-              about: aboutNode?.props ? ({
+              about: (aboutNode?.props ? ({
                 ...mergeSection(aboutNode.props, fallback.about),
                 backgroundColor: sv(aboutNode.props.backgroundColor ?? aboutNode.props.background_color ?? aboutNode.props.bg_color, fallback.about.backgroundColor),
                 textColor: sv(aboutNode.props.textColor ?? aboutNode.props.text_color, fallback.about.textColor),
@@ -1619,17 +1611,19 @@ export default function PageBuilderPage() {
                 analyticsTitle: sv(aboutNode.props.analyticsTitle ?? aboutNode.props.analytics_title ?? aboutNode.props.visionTitle ?? aboutNode.props.vision_title, fallback.about.analyticsTitle || 'رؤية الأداء المؤسسي'),
                 analyticsBars: Array.isArray(aboutNode.props.analyticsBars ?? aboutNode.props.analytics_bars) ? (aboutNode.props.analyticsBars ?? aboutNode.props.analytics_bars) : (fallback.about.analyticsBars || [40, 65, 85, 50, 95]),
                 analyticsColor: sv(aboutNode.props.analyticsColor ?? aboutNode.props.analytics_color, fallback.about.analyticsColor || '#3525cd'),
-              }) : fallback.about,
+              }) : fallback.about) as any,
 
-              features: featuresNode?.props ? ({
+              features: (featuresNode?.props ? ({
                 ...mergeSection(featuresNode.props, fallback.features),
                 items: safeItems(featuresNode.props.items, fallback.features.items),
                 backgroundColor: sv(featuresNode.props.backgroundColor ?? featuresNode.props.background_color ?? featuresNode.props.bg_color, fallback.features.backgroundColor),
                 textColor: sv(featuresNode.props.textColor ?? featuresNode.props.text_color, fallback.features.textColor),
-              }) : fallback.features,
+              }) : fallback.features) as any,
 
-              courses: courseNode?.props ? ({
+              courses: (courseNode?.props ? ({
                 ...mergeSection(courseNode.props, fallback.courses || {}),
+                title: sv(courseNode.props.title, fallback.courses?.title || 'أحدث الدورات والبرامج الأكاديمية'),
+                subtitle: sv(courseNode.props.subtitle, fallback.courses?.subtitle || 'استكشف مساراتنا التدريبية المتخصصة لتطوير مهاراتك والارتقاء بمسيرتك المهنية.'),
                 limit: courseNode.props.limit ? Number(courseNode.props.limit) : (fallback.courses?.limit ?? 6),
                 showPrice: courseNode.props.showPrice !== undefined ? Boolean(courseNode.props.showPrice) : (fallback.courses?.showPrice ?? true),
                 showStudentsCount: courseNode.props.showStudentsCount !== undefined ? Boolean(courseNode.props.showStudentsCount) : (fallback.courses?.showStudentsCount ?? true),
@@ -1639,16 +1633,16 @@ export default function PageBuilderPage() {
                 backgroundColor: sv(courseNode.props.backgroundColor ?? courseNode.props.background_color ?? courseNode.props.bg_color, fallback.courses?.backgroundColor || '#ffffff'),
                 textColor: sv(courseNode.props.textColor ?? courseNode.props.text_color, fallback.courses?.textColor || '#1b1b24'),
                 items: fallback.courses?.items || [],
-              }) : fallback.courses,
+              }) : fallback.courses) as any,
 
-              stats: statsNode?.props ? ({
+              stats: (statsNode?.props ? ({
                 ...mergeSection(statsNode.props, fallback.stats || {}),
                 items: safeItems(statsNode.props.items || statsNode.props.cards, fallback.stats?.items || []),
                 backgroundColor: sv(statsNode.props.backgroundColor ?? statsNode.props.background_color ?? statsNode.props.bg_color, fallback.stats?.backgroundColor || ''),
                 textColor: sv(statsNode.props.textColor ?? statsNode.props.text_color, fallback.stats?.textColor || ''),
-              }) : fallback.stats,
+              }) : fallback.stats) as any,
 
-              pricing: pricingNode?.props ? ({
+              pricing: (pricingNode?.props ? ({
                 ...mergeSection(pricingNode.props, fallback.pricing),
                 items: safeItems(pricingNode.props.items, fallback.pricing.items),
                 backgroundColor: sv(pricingNode.props.backgroundColor ?? pricingNode.props.background_color ?? pricingNode.props.bg_color, fallback.pricing.backgroundColor),
@@ -1666,18 +1660,18 @@ export default function PageBuilderPage() {
                 testimonial3Text: sv(pricingNode.props.testimonial3Text ?? pricingNode.props.testimonial3_text, fallback.pricing.testimonial3Text),
                 testimonial3Author: sv(pricingNode.props.testimonial3Author ?? pricingNode.props.testimonial3_author, fallback.pricing.testimonial3Author),
                 testimonial3Role: sv(pricingNode.props.testimonial3Role ?? pricingNode.props.testimonial3_role, fallback.pricing.testimonial3Role),
-              }) : fallback.pricing,
+              }) : fallback.pricing) as any,
 
-              faq: faqNode?.props ? ({
+              faq: (faqNode?.props ? ({
                 ...mergeSection(faqNode.props, fallback.faq),
                 items: safeItems(faqNode.props.items, fallback.faq.items),
                 backgroundColor: sv(faqNode.props.backgroundColor ?? faqNode.props.background_color ?? faqNode.props.bg_color, fallback.faq.backgroundColor),
                 textColor: sv(faqNode.props.textColor ?? faqNode.props.text_color, fallback.faq.textColor),
                 testimonialsTitle: sv(faqNode.props.testimonialsTitle ?? faqNode.props.testimonials_title, fallback.faq.testimonialsTitle),
                 testimonialsSubtitle: sv(faqNode.props.testimonialsSubtitle ?? faqNode.props.testimonials_subtitle, fallback.faq.testimonialsSubtitle),
-              }) : fallback.faq,
+              }) : fallback.faq) as any,
 
-              contact: contactNode?.props ? ({
+              contact: (contactNode?.props ? ({
                 ...mergeSection(contactNode.props, fallback.contact),
                 phoneNumber: sv(contactNode.props.phoneNumber ?? contactNode.props.phone_number, fallback.contact.phoneNumber),
                 buttonText: sv(contactNode.props.buttonText ?? contactNode.props.button_text, fallback.contact.buttonText),
@@ -1685,16 +1679,16 @@ export default function PageBuilderPage() {
                 secondaryButtonLink: sv(contactNode.props.secondaryButtonLink ?? contactNode.props.secondary_button_link ?? contactNode.props.demoButtonLink ?? contactNode.props.demo_button_link, fallback.contact.secondaryButtonLink || 'https://example.com/demo'),
                 backgroundColor: sv(contactNode.props.backgroundColor ?? contactNode.props.background_color ?? contactNode.props.bg_color, fallback.contact.backgroundColor),
                 textColor: sv(contactNode.props.textColor ?? contactNode.props.text_color, fallback.contact.textColor),
-              }) : fallback.contact,
+              }) : fallback.contact) as any,
 
-              footer: footerNode?.props ? ({
+              footer: (footerNode?.props ? ({
                 ...mergeSection(footerNode.props, fallback.footer),
                 backgroundColor: sv(footerNode.props.backgroundColor ?? footerNode.props.background_color ?? footerNode.props.bg_color, fallback.footer.backgroundColor),
                 textColor: sv(footerNode.props.textColor ?? footerNode.props.text_color, fallback.footer.textColor),
                 newsletterTitle: sv(footerNode.props.newsletterTitle ?? footerNode.props.newsletter_title, fallback.footer.newsletterTitle),
                 newsletterDesc: sv(footerNode.props.newsletterDesc ?? footerNode.props.newsletter_desc, fallback.footer.newsletterDesc),
                 newsletterBtnText: sv(footerNode.props.newsletterBtnText ?? footerNode.props.newsletter_btn_text, fallback.footer.newsletterBtnText),
-              }) : fallback.footer,
+              }) : fallback.footer) as any,
             };
             setContent(parsedContent);
             setPreviewContent(parsedContent);

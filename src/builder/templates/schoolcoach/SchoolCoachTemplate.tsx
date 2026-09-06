@@ -126,6 +126,15 @@ const DEFAULT_CONTENT = {
     backgroundColor: '#0a1628',
     textColor: '#ffffff',
   },
+  courses: {
+    title: 'أحدث الدورات والمراجعات الدراسية',
+    subtitle: 'دروس تفاعلية ومراجعات مكثفة للدرجات النهائية',
+    items: [],
+    limit: 6,
+    showPrice: true,
+    showStudentsCount: false,
+    buttonBg: '#f0b429',
+  },
   footer: {
     text: '© ٢٠٢٦ الأستاذ أحمد محمد. جميع الحقوق محفوظة.',
     backgroundColor: '#0a1628',
