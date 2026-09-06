@@ -12,13 +12,30 @@ interface CoachTemplateProps {
 }
 
 const DEFAULT_CONTENT = {
-  navbar: { title: 'Deep Knowledge', logo: '', bgColor: '#fbfafc', textColor: '#6750a4' },
+  navbar: {
+    title: 'Deep Knowledge',
+    logo: '',
+    bgColor: '#fbfafc',
+    textColor: '#6750a4',
+    links: [
+      { label: 'الرئيسية', href: '/' },
+      { label: 'المرشدون', href: '#features' },
+      { label: 'الماستركلاس', href: '#pricing' },
+      { label: 'عن الأكاديمية', href: '#about' },
+    ],
+    loginText: 'تسجيل الدخول',
+    loginLink: '/auth/login',
+    registerText: 'انضم للنخبة',
+    registerLink: '/auth/register',
+  },
   hero: {
     title: 'تعمّج في المعرفة. <br/> تعلم من الصفوة.',
     subtitle: 'أكاديمية النخبة',
     description: 'مساحة حصرية مصممة للمفكرين والقادة. استكشف مناهج متقدمة وتواصل مع خبراء عالميين في بيئة دراسية مصممة للتركيز العميق والتميز الأكاديمي.',
     buttonText: 'ابدأ رحلتك',
     buttonLink: '#',
+    secondaryButtonText: 'طلب عرض توضيحي',
+    secondaryButtonLink: '#about',
     image: '',
     backgroundColor: '#fbfafc',
     textColor: '#1c1a22',
@@ -102,7 +119,9 @@ const DEFAULT_CONTENT = {
     title: 'Deep Knowledge',
     description: 'أكاديمية النخبة للتعليم العالي المستقل. نبني قادة الفكر للمستقبل من خلال مناهج صارمة وعميقة.',
     phoneNumber: '',
-    buttonText: '',
+    buttonText: 'ابدأ الآن',
+    secondaryButtonText: 'طلب عرض توضيحي',
+    secondaryButtonLink: '#about',
     backgroundColor: '#6750a4',
     textColor: '#ffffff',
   },
@@ -116,7 +135,48 @@ const DEFAULT_CONTENT = {
   },
 };
 
+function parseProps(p: any): any {
+  if (!p) return {};
+  if (typeof p === 'object') return p;
+  if (typeof p === 'string') {
+    try {
+      return JSON.parse(p);
+    } catch (e) {
+      return {};
+    }
+  }
+  return {};
+}
+
+function parseItems(items: any): any[] {
+  if (!items) return [];
+  if (typeof items === 'string') {
+    try {
+      items = JSON.parse(items);
+    } catch (e) {
+      return [];
+    }
+  }
+  return Array.isArray(items) ? items : [];
+}
+
 function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT) {
+  const hasApiData = Array.isArray(nodes) && nodes.length > 0;
+
+  if (!hasApiData) {
+    return {
+      navbar: fallback.navbar,
+      hero: fallback.hero,
+      about: fallback.about,
+      features: fallback.features,
+      stats: fallback.stats,
+      pricing: fallback.pricing,
+      faq: fallback.faq,
+      contact: fallback.contact,
+      footer: fallback.footer,
+    };
+  }
+
   const navbarNode = nodes.find(n => n.type === 'navbar');
   const heroNode = nodes.find(n => n.type === 'hero');
   const aboutNode = nodes.find(n => n.type === 'about');
@@ -127,123 +187,214 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT) 
   const contactNode = nodes.find(n => n.type === 'contact');
   const footerNode = nodes.find(n => n.type === 'footer');
 
-  const safeFeatureItems = (items: any) => {
-    if (typeof items === 'string') {
-      try { items = JSON.parse(items); } catch (e) {}
-    }
-    if (!Array.isArray(items) || items.length === 0) return fallback.features.items;
-    return items.map((it: any) => {
-      const p = it?.props || it || {};
+  // Navbar
+  let navbar: any = null;
+  if (navbarNode) {
+    const np = parseProps(navbarNode.props);
+    const linksList = parseItems(np.links || navbarNode.items);
+    navbar = {
+      ...np,
+      title: np.title ?? np.name ?? fallback.navbar.title,
+      logo: np.logo ?? fallback.navbar.logo,
+      bgColor: np.bgColor ?? np.bg_color ?? np.background_color ?? fallback.navbar.bgColor,
+      textColor: np.textColor ?? np.text_color ?? fallback.navbar.textColor,
+      loginText: np.loginText ?? np.login_text ?? fallback.navbar.loginText,
+      loginLink: np.loginLink ?? np.login_link ?? fallback.navbar.loginLink,
+      loginBgColor: np.loginBgColor ?? np.login_bg_color ?? np.loginBg ?? np.login_bg ?? '',
+      loginTextColor: np.loginTextColor ?? np.login_text_color ?? np.loginColor ?? np.login_color ?? '',
+      registerText: np.registerText ?? np.register_text ?? fallback.navbar.registerText,
+      registerLink: np.registerLink ?? np.register_link ?? fallback.navbar.registerLink,
+      registerBgColor: np.registerBgColor ?? np.register_bg_color ?? np.registerBg ?? np.register_bg ?? '',
+      registerTextColor: np.registerTextColor ?? np.register_text_color ?? np.registerColor ?? np.register_color ?? '',
+      links: linksList.length > 0 ? linksList : fallback.navbar.links,
+    };
+  } else {
+    navbar = fallback.navbar;
+  }
+
+  // Hero
+  let hero: any = null;
+  if (heroNode) {
+    const hp = parseProps(heroNode.props);
+    hero = {
+      ...hp,
+      title: hp.title ?? fallback.hero.title,
+      subtitle: hp.subtitle ?? fallback.hero.subtitle,
+      description: hp.description ?? fallback.hero.description,
+      buttonText: hp.buttonText ?? hp.button_text ?? fallback.hero.buttonText,
+      buttonLink: hp.buttonLink ?? hp.button_link ?? fallback.hero.buttonLink,
+      buttonBg: hp.buttonBg ?? hp.button_bg ?? hp.button_background_color ?? hp.buttonBgColor ?? '',
+      buttonTextColor: hp.buttonTextColor ?? hp.button_text_color ?? hp.buttonColor ?? '',
+      secondaryButtonText: hp.secondaryButtonText ?? hp.secondary_button_text ?? hp.demoButtonText ?? hp.demo_button_text ?? fallback.hero.secondaryButtonText,
+      secondaryButtonLink: hp.secondaryButtonLink ?? hp.secondary_button_link ?? hp.demoButtonLink ?? hp.demo_button_link ?? fallback.hero.secondaryButtonLink,
+      secondaryButtonBg: hp.secondaryButtonBg ?? hp.secondary_button_bg ?? hp.secondary_button_background_color ?? '',
+      secondaryButtonTextColor: hp.secondaryButtonTextColor ?? hp.secondary_button_text_color ?? hp.secondary_button_color ?? '',
+      image: hp.image ?? hp.img ?? hp.video ?? fallback.hero.image,
+      backgroundColor: hp.backgroundColor ?? hp.background_color ?? hp.bg_color ?? fallback.hero.backgroundColor,
+      textColor: hp.textColor ?? hp.text_color ?? fallback.hero.textColor,
+    };
+  }
+
+  // About
+  let about: any = null;
+  if (aboutNode) {
+    const ap = parseProps(aboutNode.props);
+    about = {
+      ...ap,
+      title: ap.title ?? '',
+      subtitle: ap.subtitle ?? '',
+      image: ap.image ?? ap.img ?? ap.video ?? '',
+      backgroundColor: ap.backgroundColor ?? ap.background_color ?? ap.bg_color ?? '#ffffff',
+      textColor: ap.textColor ?? ap.text_color ?? '#1c1a22',
+      videoTag: ap.videoTag ?? ap.video_tag ?? '',
+      videoTitle: ap.videoTitle ?? ap.video_title ?? '',
+      videoDesc: ap.videoDesc ?? ap.video_desc ?? '',
+      videoLink: ap.videoLink ?? ap.video_link ?? ap.videoImage ?? ap.video_image ?? '',
+    };
+  }
+
+  // Features
+  let features: any = null;
+  if (featuresNode) {
+    const fp = parseProps(featuresNode.props);
+    const rawItems = parseItems(fp.items || featuresNode.items);
+    const items = rawItems.map((it: any) => {
+      const p = parseProps(it?.props || it);
       return {
         icon: p.icon || it?.icon || 'star',
         title: p.title || it?.title || '',
         description: p.description || it?.description || '',
       };
     });
-  };
+    features = {
+      ...fp,
+      title: fp.title ?? '',
+      subtitle: fp.subtitle ?? '',
+      items: items,
+      backgroundColor: fp.backgroundColor ?? fp.background_color ?? fp.bg_color ?? '#fbfafc',
+      textColor: fp.textColor ?? fp.text_color ?? '#1c1a22',
+    };
+  }
 
-  const safeStatItems = (items: any) => {
-    if (typeof items === 'string') {
-      try { items = JSON.parse(items); } catch (e) {}
-    }
-    if (!Array.isArray(items) || items.length === 0) return fallback.stats.items;
-    return items.map((it: any) => {
-      const p = it?.props || it || {};
+  // Stats
+  let stats: any = null;
+  if (statsNode) {
+    const sp = parseProps(statsNode.props);
+    const rawItems = parseItems(sp.items || sp.cards || statsNode.items);
+    const items = rawItems.map((it: any) => {
+      const p = parseProps(it?.props || it);
       return {
         value: p.value || it?.value || '',
         label: p.label || it?.label || p.title || it?.title || '',
       };
     });
-  };
+    stats = {
+      ...sp,
+      items: items,
+      backgroundColor: sp.backgroundColor ?? sp.background_color ?? sp.bg_color ?? '',
+      textColor: sp.textColor ?? sp.text_color ?? '',
+    };
+  }
 
-  const safePricingItems = (items: any) => {
-    if (typeof items === 'string') {
-      try { items = JSON.parse(items); } catch (e) {}
-    }
-    if (!Array.isArray(items) || items.length === 0) return fallback.pricing.items;
-    return items;
-  };
+  // Pricing
+  let pricing: any = null;
+  if (pricingNode) {
+    const pp = parseProps(pricingNode.props);
+    const rawItems = parseItems(pp.items || pricingNode.items);
+    const items = rawItems.map((it: any) => {
+      const p = parseProps(it?.props || it);
+      return {
+        title: p.title || it?.title || '',
+        price: p.price || it?.price || '',
+        features: Array.isArray(p.features || it?.features) ? (p.features || it?.features) : [],
+      };
+    });
+    pricing = {
+      ...pp,
+      title: pp.title ?? '',
+      subtitle: pp.subtitle ?? '',
+      items: items,
+      backgroundColor: pp.backgroundColor ?? pp.background_color ?? pp.bg_color ?? '#ffffff',
+      textColor: pp.textColor ?? pp.text_color ?? '#1c1a22',
+      testimonialsTitle: pp.testimonialsTitle ?? pp.testimonials_title ?? '',
+      testimonialsSubtitle: pp.testimonialsSubtitle ?? pp.testimonials_subtitle ?? '',
+      testimonial1Text: pp.testimonial1Text ?? pp.testimonial1_text ?? '',
+      testimonial1Author: pp.testimonial1Author ?? pp.testimonial1_author ?? '',
+      testimonial1Role: pp.testimonial1Role ?? pp.testimonial1_role ?? '',
+      testimonial2Text: pp.testimonial2Text ?? pp.testimonial2_text ?? '',
+      testimonial2Author: pp.testimonial2Author ?? pp.testimonial2_author ?? '',
+      testimonial2Role: pp.testimonial2Role ?? pp.testimonial2_role ?? '',
+      testimonial3Text: pp.testimonial3Text ?? pp.testimonial3_text ?? '',
+      testimonial3Author: pp.testimonial3Author ?? pp.testimonial3_author ?? '',
+      testimonial3Role: pp.testimonial3Role ?? pp.testimonial3_role ?? '',
+    };
+  }
+
+  // FAQ
+  let faq: any = null;
+  if (faqNode) {
+    const fp = parseProps(faqNode.props);
+    const rawItems = parseItems(fp.items || faqNode.items);
+    const items = rawItems.map((it: any) => {
+      const p = parseProps(it?.props || it);
+      return {
+        question: p.question || it?.question || '',
+        answer: p.answer || it?.answer || '',
+      };
+    });
+    faq = {
+      ...fp,
+      title: fp.title ?? '',
+      items: items,
+      backgroundColor: fp.backgroundColor ?? fp.background_color ?? fp.bg_color ?? '#fbfafc',
+      textColor: fp.textColor ?? fp.text_color ?? '#1c1a22',
+    };
+  }
+
+  // Contact
+  let contact: any = null;
+  if (contactNode) {
+    const cp = parseProps(contactNode.props);
+    contact = {
+      ...cp,
+      title: cp.title ?? '',
+      description: cp.description ?? '',
+      phoneNumber: cp.phoneNumber ?? cp.phone_number ?? '',
+      buttonText: cp.buttonText ?? cp.button_text ?? 'ابدأ الآن',
+      secondaryButtonText: cp.secondaryButtonText ?? cp.secondary_button_text ?? cp.demoButtonText ?? '',
+      secondaryButtonLink: cp.secondaryButtonLink ?? cp.secondary_button_link ?? cp.demoButtonLink ?? '',
+      backgroundColor: cp.backgroundColor ?? cp.background_color ?? cp.bg_color ?? '#6750a4',
+      textColor: cp.textColor ?? cp.text_color ?? '#ffffff',
+    };
+  }
+
+  // Footer
+  let footer: any = null;
+  if (footerNode) {
+    const fp = parseProps(footerNode.props);
+    footer = {
+      ...fp,
+      text: fp.text ?? fallback.footer.text,
+      backgroundColor: fp.backgroundColor ?? fp.background_color ?? fp.bg_color ?? '#fbfafc',
+      textColor: fp.textColor ?? fp.text_color ?? '#1c1a22',
+      newsletterTitle: fp.newsletterTitle ?? fp.newsletter_title ?? '',
+      newsletterDesc: fp.newsletterDesc ?? fp.newsletter_desc ?? '',
+      newsletterBtnText: fp.newsletterBtnText ?? fp.newsletter_btn_text ?? '',
+    };
+  } else {
+    footer = fallback.footer;
+  }
 
   return {
-    navbar: navbarNode?.props ? {
-      title: navbarNode.props.title ?? fallback.navbar.title,
-      logo: navbarNode.props.logo ?? fallback.navbar.logo,
-      bgColor: navbarNode.props.bgColor ?? navbarNode.props.bg_color ?? fallback.navbar.bgColor,
-      textColor: navbarNode.props.textColor ?? navbarNode.props.text_color ?? fallback.navbar.textColor,
-    } : fallback.navbar,
-    hero: heroNode?.props ? {
-      title: heroNode.props.title ?? fallback.hero.title,
-      subtitle: heroNode.props.subtitle ?? fallback.hero.subtitle,
-      description: heroNode.props.description ?? fallback.hero.description,
-      buttonText: heroNode.props.buttonText ?? heroNode.props.button_text ?? fallback.hero.buttonText,
-      buttonLink: heroNode.props.buttonLink ?? heroNode.props.button_link ?? fallback.hero.buttonLink,
-      image: heroNode.props.image ?? fallback.hero.image,
-      backgroundColor: heroNode.props.backgroundColor ?? heroNode.props.background_color ?? fallback.hero.backgroundColor,
-      textColor: heroNode.props.textColor ?? heroNode.props.text_color ?? fallback.hero.textColor,
-    } : fallback.hero,
-    about: aboutNode?.props ? {
-      title: aboutNode.props.title ?? fallback.about.title,
-      subtitle: aboutNode.props.subtitle ?? fallback.about.subtitle,
-      image: aboutNode.props.image ?? fallback.about.image,
-      backgroundColor: aboutNode.props.backgroundColor ?? aboutNode.props.background_color ?? fallback.about.backgroundColor,
-      textColor: aboutNode.props.textColor ?? aboutNode.props.text_color ?? fallback.about.textColor,
-      videoTag: aboutNode.props.videoTag ?? aboutNode.props.video_tag ?? fallback.about.videoTag,
-      videoTitle: aboutNode.props.videoTitle ?? aboutNode.props.video_title ?? fallback.about.videoTitle,
-      videoDesc: aboutNode.props.videoDesc ?? aboutNode.props.video_desc ?? fallback.about.videoDesc,
-      videoLink: aboutNode.props.videoLink ?? aboutNode.props.video_link ?? fallback.about.videoLink,
-    } : fallback.about,
-    features: featuresNode?.props ? {
-      title: featuresNode.props.title ?? fallback.features.title,
-      subtitle: featuresNode.props.subtitle ?? fallback.features.subtitle,
-      items: safeFeatureItems(featuresNode.props.items),
-      backgroundColor: featuresNode.props.backgroundColor ?? featuresNode.props.background_color ?? fallback.features.backgroundColor,
-      textColor: featuresNode.props.textColor ?? featuresNode.props.text_color ?? fallback.features.textColor,
-    } : fallback.features,
-    stats: statsNode?.props ? {
-      items: safeStatItems(statsNode.props.items || statsNode.props.cards),
-      backgroundColor: statsNode.props.backgroundColor ?? statsNode.props.background_color ?? fallback.stats.backgroundColor,
-      textColor: statsNode.props.textColor ?? statsNode.props.text_color ?? fallback.stats.textColor,
-    } : fallback.stats,
-    pricing: pricingNode?.props ? {
-      title: pricingNode.props.title ?? fallback.pricing.title,
-      subtitle: pricingNode.props.subtitle ?? fallback.pricing.subtitle,
-      items: safePricingItems(pricingNode.props.items),
-      backgroundColor: pricingNode.props.backgroundColor ?? pricingNode.props.background_color ?? fallback.pricing.backgroundColor,
-      textColor: pricingNode.props.textColor ?? pricingNode.props.text_color ?? fallback.pricing.textColor,
-      testimonialsTitle: pricingNode.props.testimonialsTitle ?? pricingNode.props.testimonials_title ?? fallback.pricing.testimonialsTitle,
-      testimonialsSubtitle: pricingNode.props.testimonialsSubtitle ?? pricingNode.props.testimonials_subtitle ?? fallback.pricing.testimonialsSubtitle,
-      testimonial1Text: pricingNode.props.testimonial1Text ?? pricingNode.props.testimonial1_text ?? fallback.pricing.testimonial1Text,
-      testimonial1Author: pricingNode.props.testimonial1Author ?? pricingNode.props.testimonial1_author ?? fallback.pricing.testimonial1Author,
-      testimonial1Role: pricingNode.props.testimonial1Role ?? pricingNode.props.testimonial1_role ?? fallback.pricing.testimonial1Role,
-      testimonial2Text: pricingNode.props.testimonial2Text ?? pricingNode.props.testimonial2_text ?? fallback.pricing.testimonial2Text,
-      testimonial2Author: pricingNode.props.testimonial2Author ?? pricingNode.props.testimonial2_author ?? fallback.pricing.testimonial2Author,
-      testimonial2Role: pricingNode.props.testimonial2Role ?? pricingNode.props.testimonial2_role ?? fallback.pricing.testimonial2Role,
-      testimonial3Text: pricingNode.props.testimonial3Text ?? pricingNode.props.testimonial3_text ?? fallback.pricing.testimonial3Text,
-      testimonial3Author: pricingNode.props.testimonial3Author ?? pricingNode.props.testimonial3_author ?? fallback.pricing.testimonial3Author,
-      testimonial3Role: pricingNode.props.testimonial3Role ?? pricingNode.props.testimonial3_role ?? fallback.pricing.testimonial3Role,
-    } : fallback.pricing,
-    faq: faqNode?.props ? {
-      title: faqNode.props.title ?? fallback.faq.title,
-      items: faqNode.props.items ?? fallback.faq.items,
-      backgroundColor: faqNode.props.backgroundColor ?? faqNode.props.background_color ?? fallback.faq.backgroundColor,
-      textColor: faqNode.props.textColor ?? faqNode.props.text_color ?? fallback.faq.textColor,
-    } : fallback.faq,
-    contact: contactNode?.props ? {
-      title: contactNode.props.title ?? fallback.contact.title,
-      description: contactNode.props.description ?? fallback.contact.description,
-      phoneNumber: contactNode.props.phoneNumber ?? contactNode.props.phone_number ?? fallback.contact.phoneNumber,
-      buttonText: contactNode.props.buttonText ?? contactNode.props.button_text ?? fallback.contact.buttonText,
-      backgroundColor: contactNode.props.backgroundColor ?? contactNode.props.background_color ?? fallback.contact.backgroundColor,
-      textColor: contactNode.props.textColor ?? contactNode.props.text_color ?? fallback.contact.textColor,
-    } : fallback.contact,
-    footer: footerNode?.props ? {
-      text: footerNode.props.text ?? fallback.footer.text,
-      backgroundColor: footerNode.props.backgroundColor ?? footerNode.props.background_color ?? fallback.footer.backgroundColor,
-      textColor: footerNode.props.textColor ?? footerNode.props.text_color ?? fallback.footer.textColor,
-      newsletterTitle: footerNode.props.newsletterTitle ?? footerNode.props.newsletter_title ?? fallback.footer.newsletterTitle,
-      newsletterDesc: footerNode.props.newsletterDesc ?? footerNode.props.newsletter_desc ?? fallback.footer.newsletterDesc,
-      newsletterBtnText: footerNode.props.newsletterBtnText ?? footerNode.props.newsletter_btn_text ?? fallback.footer.newsletterBtnText,
-    } : fallback.footer,
+    navbar,
+    hero,
+    about,
+    features,
+    stats,
+    pricing,
+    faq,
+    contact,
+    footer,
   };
 }
 
