@@ -43,32 +43,33 @@ const MySwal = withReactContent(Swal);
 
 // --- Typings for Website Builder Sections ---
 interface NavbarConfig {
-  title: string;
-  logo: string;
-  bgColor: string;
-  textColor: string;
+  title?: string;
+  logo?: string;
+  bgColor?: string;
+  textColor?: string;
   [key: string]: any;
 }
 
 interface HeroConfig {
-  title: string;
-  subtitle: string;
-  description: string;
-  buttonText: string;
-  buttonLink: string;
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  buttonText?: string;
+  buttonLink?: string;
   secondaryButtonText?: string;
   secondaryButtonLink?: string;
-  image: string;
-  backgroundColor: string;
-  textColor: string;
+  image?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  [key: string]: any;
 }
 
 interface AboutConfig {
-  title: string;
-  subtitle: string;
-  image: string;
-  backgroundColor: string;
-  textColor: string;
+  title?: string;
+  subtitle?: string;
+  image?: string;
+  backgroundColor?: string;
+  textColor?: string;
   videoTag?: string;
   videoTitle?: string;
   videoDesc?: string;
@@ -78,34 +79,38 @@ interface AboutConfig {
   analyticsTitle?: string;
   analyticsBars?: number[];
   analyticsColor?: string;
+  [key: string]: any;
 }
 
 interface FeatureItem {
-  icon: string;
-  title: string;
-  description: string;
+  icon?: string;
+  title?: string;
+  description?: string;
+  [key: string]: any;
 }
 
 interface FeaturesConfig {
-  title: string;
-  subtitle: string;
-  items: FeatureItem[];
-  backgroundColor: string;
-  textColor: string;
+  title?: string;
+  subtitle?: string;
+  items?: FeatureItem[];
+  backgroundColor?: string;
+  textColor?: string;
+  [key: string]: any;
 }
 
 interface PricingItem {
-  title: string;
-  price: string;
-  features: string[];
+  title?: string;
+  price?: string;
+  features?: string[];
+  [key: string]: any;
 }
 
 interface PricingConfig {
-  title: string;
-  subtitle: string;
-  items: PricingItem[];
-  backgroundColor: string;
-  textColor: string;
+  title?: string;
+  subtitle?: string;
+  items?: PricingItem[];
+  backgroundColor?: string;
+  textColor?: string;
   testimonialsTitle?: string;
   testimonialsSubtitle?: string;
   testimonialsBg?: string;
@@ -119,40 +124,45 @@ interface PricingConfig {
   testimonial3Text?: string;
   testimonial3Author?: string;
   testimonial3Role?: string;
+  [key: string]: any;
 }
 
 interface FAQItem {
-  question: string;
-  answer: string;
+  question?: string;
+  answer?: string;
+  [key: string]: any;
 }
 
 interface FAQConfig {
-  title: string;
-  items: FAQItem[];
-  backgroundColor: string;
-  textColor: string;
+  title?: string;
+  items?: FAQItem[];
+  backgroundColor?: string;
+  textColor?: string;
   testimonialsTitle?: string;
   testimonialsSubtitle?: string;
+  [key: string]: any;
 }
 
 interface ContactConfig {
-  title: string;
-  description: string;
-  phoneNumber: string;
-  buttonText: string;
+  title?: string;
+  description?: string;
+  phoneNumber?: string;
+  buttonText?: string;
   secondaryButtonText?: string;
   secondaryButtonLink?: string;
-  backgroundColor: string;
-  textColor: string;
+  backgroundColor?: string;
+  textColor?: string;
+  [key: string]: any;
 }
 
 interface FooterConfig {
-  text: string;
-  backgroundColor: string;
-  textColor: string;
+  text?: string;
+  backgroundColor?: string;
+  textColor?: string;
   newsletterTitle?: string;
   newsletterDesc?: string;
   newsletterBtnText?: string;
+  [key: string]: any;
 }
 
 interface CoursesConfig {
@@ -765,7 +775,7 @@ export default function PageBuilderPage() {
   const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
   const [openIconPickerIdx, setOpenIconPickerIdx] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [sectionsList, setSectionsList] = useState<string[]>(['navbar','hero','about','video','features','courses','stats','pricing','testimonials','faq','contact']);
+  const [sectionsList, setSectionsList] = useState<string[]>(['navbar', 'hero', 'about', 'video', 'features', 'courses', 'stats', 'pricing', 'testimonials', 'faq', 'contact']);
   const [saving, setSaving] = useState<boolean>(false);
   const lastScrollYRef = useRef<number>(0);
 
@@ -818,7 +828,7 @@ export default function PageBuilderPage() {
         els.forEach((el) => {
           (el as HTMLElement).style.setProperty(styleProp, value);
         });
-      } catch (e) {}
+      } catch (e) { }
     };
 
     // Live Background & Text Color Updates across all section banners
@@ -892,7 +902,7 @@ export default function PageBuilderPage() {
     updateText('[data-section="hero"] h1', content.hero.title);
     updateText('[data-section="hero"] p', content.hero.description);
     updateText('[data-section="hero"] .text-label-md.text-primary, [data-section="hero"] .bg-gold-500\\/10 span, [data-section="hero"] .eyebrow-line', content.hero.subtitle);
-    
+
     // Primary Button
     const heroPrimaryBtn = doc.querySelector('[data-section="hero"] [data-hero-btn="primary"], [data-section="hero"] a.bg-primary, [data-section="hero"] a.btn-primary') as HTMLAnchorElement;
     if (heroPrimaryBtn) {
@@ -1214,14 +1224,14 @@ export default function PageBuilderPage() {
       win.addEventListener('scroll', () => {
         try {
           lastScrollYRef.current = win.scrollY || doc.documentElement.scrollTop || 0;
-        } catch (e) {}
+        } catch (e) { }
       }, { passive: true });
 
       if (lastScrollYRef.current > 0) {
         setTimeout(() => {
           try {
             win.scrollTo({ top: lastScrollYRef.current, behavior: 'instant' });
-          } catch (e) {}
+          } catch (e) { }
         }, 50);
       }
     }
@@ -1386,24 +1396,24 @@ export default function PageBuilderPage() {
         activeSection === 'video'
           ? '[data-section="video"], #about-video'
           : activeSection === 'testimonials'
-          ? '[data-section="testimonials"], #testimonials, [data-testimonial]'
-          : activeSection === 'stats'
-          ? '[data-section="stats"], #stats'
-          : activeSection === 'courses'
-          ? '[data-section="courses"], [data-section="course-cards"], #courses'
-          : activeSection === 'pricing'
-          ? '[data-section="pricing"], #pricing, #outcomes'
-          : activeSection === 'features'
-          ? '[data-section="features"], #features, #subjects'
-          : activeSection === 'about'
-          ? '[data-section="about"], #about-analytics, #about'
-          : activeSection === 'contact'
-          ? '[data-section="contact"], #contact'
-          : activeSection === 'footer'
-          ? '[data-section="footer"], #footer-bar, #newsletter, footer'
-          : activeSection === 'navbar'
-          ? '[data-section="navbar"], header, nav'
-          : `[data-section="${activeSection}"], #${activeSection}`;
+            ? '[data-section="testimonials"], #testimonials, [data-testimonial]'
+            : activeSection === 'stats'
+              ? '[data-section="stats"], #stats'
+              : activeSection === 'courses'
+                ? '[data-section="courses"], [data-section="course-cards"], #courses'
+                : activeSection === 'pricing'
+                  ? '[data-section="pricing"], #pricing, #outcomes'
+                  : activeSection === 'features'
+                    ? '[data-section="features"], #features, #subjects'
+                    : activeSection === 'about'
+                      ? '[data-section="about"], #about-analytics, #about'
+                      : activeSection === 'contact'
+                        ? '[data-section="contact"], #contact'
+                        : activeSection === 'footer'
+                          ? '[data-section="footer"], #footer-bar, #newsletter, footer'
+                          : activeSection === 'navbar'
+                            ? '[data-section="navbar"], header, nav'
+                            : `[data-section="${activeSection}"], #${activeSection}`;
 
       const targetSectionEl = doc.querySelector(targetSelector);
       if (targetSectionEl) {
@@ -1512,8 +1522,8 @@ export default function PageBuilderPage() {
 
             // Drive sidebar dropdown from the actual API section order
             const KNOWN_SECTION_TYPES = currentRole === 'academy'
-              ? ['navbar','hero','about','video','features','courses','stats','pricing','testimonials','faq','contact']
-              : ['navbar','hero','about','video','features','courses','stats','pricing','testimonials','faq','contact','footer'];
+              ? ['navbar', 'hero', 'about', 'video', 'features', 'courses', 'stats', 'pricing', 'testimonials', 'faq', 'contact']
+              : ['navbar', 'hero', 'about', 'video', 'features', 'courses', 'stats', 'pricing', 'testimonials', 'faq', 'contact', 'footer'];
             const apiSectionTypes = editorNodes
               .map(n => (n.type === 'course-cards' || n.type === 'courses') ? 'courses' : n.type)
               .filter(t => KNOWN_SECTION_TYPES.includes(t));
@@ -1917,7 +1927,7 @@ export default function PageBuilderPage() {
     if (iframe?.contentWindow) {
       try {
         lastScrollYRef.current = iframe.contentWindow.scrollY || iframe.contentDocument?.documentElement.scrollTop || 0;
-      } catch (e) {}
+      } catch (e) { }
     }
     setContent(updated);
     setPreviewContent(updated);
@@ -1944,7 +1954,7 @@ export default function PageBuilderPage() {
     if (iframe?.contentWindow) {
       try {
         lastScrollYRef.current = iframe.contentWindow.scrollY || iframe.contentDocument?.documentElement.scrollTop || 0;
-      } catch (e) {}
+      } catch (e) { }
     }
     setContent(updated);
     setPreviewContent(updated);
@@ -2089,14 +2099,14 @@ export default function PageBuilderPage() {
               >
                 {sectionsList.map((sectionType) => {
                   const SECTION_LABELS: Record<string, string> = {
-                    navbar:       'شريط التنقل العلوي (Navbar)',
-                    hero:         'البانر الترحيبي (Hero Banner)',
-                    about:        'النبذة والتعريف (About Section)',
-                    video:        'فيديو العرض التعريفي (Video Intro)',
-                    features:     'مميزات الأكاديمية (Features)',
-                    courses:      'الدورات والبرامج التدريبية (Courses)',
-                    stats:        'إحصائيات ورضا الطلاب (Stats & Benefits)',
-                    pricing:      'المخرجات والنتائج الإحصائية (Outcomes & Statistics)',
+                    navbar: 'شريط التنقل العلوي (Navbar)',
+                    hero: 'البانر الترحيبي (Hero Banner)',
+                    about: 'النبذة والتعريف (About Section)',
+                    video: 'فيديو العرض التعريفي (Video Intro)',
+                    features: 'مميزات الأكاديمية (Features)',
+                    courses: 'الدورات والبرامج التدريبية (Courses)',
+                    stats: 'إحصائيات ورضا الطلاب (Stats & Benefits)',
+                    pricing: 'المخرجات والنتائج الإحصائية (Outcomes & Statistics)',
                     testimonials: 'آراء العملاء والتقييمات (Testimonials)',
                     faq: 'الأسئلة الشائعة (FAQ Accordions)',
                     contact: 'أزرار التواصل (Contact/WhatsApp)',
@@ -2632,8 +2642,8 @@ export default function PageBuilderPage() {
                           key={idx}
                           id={`editor-item-features-${idx}`}
                           className={`border rounded-xl p-3 relative flex flex-col gap-2.5 transition-all duration-300 ${activeSection === 'features' && activeItemIndex === idx
-                              ? 'bg-blue-50/50 border-blue-500 ring-2 ring-blue-500/20 shadow-md scale-[1.01]'
-                              : 'bg-slate-50 border-slate-200'
+                            ? 'bg-blue-50/50 border-blue-500 ring-2 ring-blue-500/20 shadow-md scale-[1.01]'
+                            : 'bg-slate-50 border-slate-200'
                             }`}
                         >
                           <button
@@ -2693,8 +2703,8 @@ export default function PageBuilderPage() {
                                           setOpenIconPickerIdx(null);
                                         }}
                                         className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:bg-blue-100 hover:text-blue-600 ${item.icon === iconName
-                                            ? 'bg-blue-600 text-white'
-                                            : 'text-slate-600 bg-slate-50'
+                                          ? 'bg-blue-600 text-white'
+                                          : 'text-slate-600 bg-slate-50'
                                           }`}
                                       >
                                         <span className="material-symbols-outlined" style={{ fontSize: '16px', fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20" }}>
@@ -2793,314 +2803,314 @@ export default function PageBuilderPage() {
                 </div>
               )}
 
-            {/* Stats / Benefits Editor */}
-            {activeSection === 'stats' && content.stats && (
-              <div className="space-y-5">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص قسم الإحصائيات ورضا الطلاب</h3>
-                </div>
-
-                <div className="bg-blue-50/70 border border-blue-200 p-3.5 rounded-xl text-[11px] text-blue-900 font-bold leading-relaxed flex items-start gap-2">
-                  <span className="material-symbols-outlined text-[18px] text-blue-600 shrink-0 mt-0.5">insights</span>
-                  <div>
-                    تخصيص أرقام وعناوين بطاقات الإحصائيات والنتائج (نسبة رضا الطلاب، المناهج الشاملة، الخريجون، والدعم الأكاديمي).
+              {/* Stats / Benefits Editor */}
+              {activeSection === 'stats' && content.stats && (
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص قسم الإحصائيات ورضا الطلاب</h3>
                   </div>
-                </div>
 
-                <div className="space-y-4">
-                  {(content.stats.items || []).map((item, idx) => {
-                    const defaultTitles = [
-                      'نسبة رضا الطلاب (Student Satisfaction)',
-                      'المناهج الشاملة (Comprehensive Curriculum)',
-                      'خريج متميز (Outstanding Graduates)',
-                      'الدعم الأكاديمي المباشر (Direct Academic Support)'
-                    ];
-                    return (
-                      <div key={idx} className="border border-slate-200 bg-slate-50 rounded-xl p-3 space-y-2">
-                        <span className="text-[10px] font-extrabold text-slate-700 block border-b border-slate-200 pb-1">
-                          البطاقة {idx + 1}: {defaultTitles[idx] || `عنصر ${idx + 1}`}
-                        </span>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="flex flex-col gap-1">
-                            <label className="text-[9px] font-bold text-slate-500">الرقم / النسبة</label>
-                            <input
-                              type="text"
-                              value={item.value}
-                              onChange={(e) => handleUpdateNestedField('stats', 'items', idx, 'value', e.target.value)}
-                              className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-bold"
-                              placeholder="مثال: 98%"
-                            />
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <label className="text-[9px] font-bold text-slate-500">النص / التسمية</label>
-                            <input
-                              type="text"
-                              value={item.label}
-                              onChange={(e) => handleUpdateNestedField('stats', 'items', idx, 'label', e.target.value)}
-                              className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
-                              placeholder="مثال: نسبة رضا الطلاب"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  <div className="grid grid-cols-2 gap-3 pt-2">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.stats.backgroundColor || '#f5f3ff'}
-                          onChange={(e) => handleUpdateField('stats', 'backgroundColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.stats.backgroundColor || '#f5f3ff'}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون النصوص</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.stats.textColor || '#1e1b4b'}
-                          onChange={(e) => handleUpdateField('stats', 'textColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.stats.textColor || '#1e1b4b'}</span>
-                      </div>
+                  <div className="bg-blue-50/70 border border-blue-200 p-3.5 rounded-xl text-[11px] text-blue-900 font-bold leading-relaxed flex items-start gap-2">
+                    <span className="material-symbols-outlined text-[18px] text-blue-600 shrink-0 mt-0.5">insights</span>
+                    <div>
+                      تخصيص أرقام وعناوين بطاقات الإحصائيات والنتائج (نسبة رضا الطلاب، المناهج الشاملة، الخريجون، والدعم الأكاديمي).
                     </div>
                   </div>
-                </div>
-              </div>
-            )}
 
-            {/* Outcomes & Statistics (Pricing) Editor */}
-            {activeSection === 'pricing' && content.pricing && (
-              <div className="space-y-5">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">
-                    {currentRole === 'schoolcoach' ? 'تخصيص المجموعات الدراسية' : currentRole === 'coach' ? 'تخصيص سلسلة الماستركلاسز' : 'تخصيص قسم المخرجات والنتائج الإحصائية'}
-                  </h3>
-                </div>
-
-                <div className="bg-blue-50/70 border border-blue-200 p-3.5 rounded-xl text-[11px] text-blue-900 font-bold leading-relaxed flex items-start gap-2">
-                  <span className="material-symbols-outlined text-[18px] text-blue-600 shrink-0 mt-0.5">analytics</span>
-                  <div>
-                    تخصيص عناوين وأرقام المخرجات والنتائج الإحصائية التي تبرز كفاءة ونموذج الأكاديمية.
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان القسم الرئيسي</label>
-                    <input
-                      type="text"
-                      value={content.pricing.title}
-                      onChange={(e) => handleUpdateField('pricing', 'title', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                      placeholder="المخرجات والنتائج الإحصائية"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">العنوان الفرعي للقسم</label>
-                    <input
-                      type="text"
-                      value={content.pricing.subtitle}
-                      onChange={(e) => handleUpdateField('pricing', 'subtitle', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                      placeholder="معدلات تقدم وتحليلات رقمية للفصول الدراسية"
-                    />
-                  </div>
-
-                  {/* Pricing / Statistics Items */}
-                  <div className="space-y-3 pt-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-bold text-slate-600">عناصر النتائج والإحصائيات ({content.pricing.items?.length || 0})</label>
-                      <button
-                        type="button"
-                        onClick={() => handleAddListItem('pricing', 'items', { title: 'إحصائية جديدة', price: '100+', features: [] })}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[10px] font-bold rounded-lg transition-colors border border-blue-200"
-                      >
-                        <Plus className="w-3 h-3" />
-                        <span>إضافة عنصر</span>
-                      </button>
-                    </div>
-
-                    {(content.pricing.items || []).map((item, idx) => (
-                      <div key={idx} className="border border-slate-200 bg-slate-50 rounded-xl p-3 space-y-2 relative group">
-                        <div className="flex items-center justify-between border-b border-slate-200 pb-1">
-                          <span className="text-[10px] font-extrabold text-slate-700">
-                            عنصر {idx + 1}: {item.title || `إحصائية ${idx + 1}`}
+                  <div className="space-y-4">
+                    {(content.stats.items || []).map((item, idx) => {
+                      const defaultTitles = [
+                        'نسبة رضا الطلاب (Student Satisfaction)',
+                        'المناهج الشاملة (Comprehensive Curriculum)',
+                        'خريج متميز (Outstanding Graduates)',
+                        'الدعم الأكاديمي المباشر (Direct Academic Support)'
+                      ];
+                      return (
+                        <div key={idx} className="border border-slate-200 bg-slate-50 rounded-xl p-3 space-y-2">
+                          <span className="text-[10px] font-extrabold text-slate-700 block border-b border-slate-200 pb-1">
+                            البطاقة {idx + 1}: {defaultTitles[idx] || `عنصر ${idx + 1}`}
                           </span>
-                          {(content.pricing.items?.length || 0) > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveListItem('pricing', 'items', idx)}
-                              className="text-red-500 hover:text-red-700 p-0.5 rounded transition-colors"
-                              title="حذف العنصر"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          )}
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] font-bold text-slate-500">الرقم / النسبة</label>
+                              <input
+                                type="text"
+                                value={item.value}
+                                onChange={(e) => handleUpdateNestedField('stats', 'items', idx, 'value', e.target.value)}
+                                className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-bold"
+                                placeholder="مثال: 98%"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] font-bold text-slate-500">النص / التسمية</label>
+                              <input
+                                type="text"
+                                value={item.label}
+                                onChange={(e) => handleUpdateNestedField('stats', 'items', idx, 'label', e.target.value)}
+                                className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
+                                placeholder="مثال: نسبة رضا الطلاب"
+                              />
+                            </div>
+                          </div>
                         </div>
+                      );
+                    })}
 
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.stats.backgroundColor || '#f5f3ff'}
+                            onChange={(e) => handleUpdateField('stats', 'backgroundColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.stats.backgroundColor || '#f5f3ff'}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون النصوص</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.stats.textColor || '#1e1b4b'}
+                            onChange={(e) => handleUpdateField('stats', 'textColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.stats.textColor || '#1e1b4b'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Outcomes & Statistics (Pricing) Editor */}
+              {activeSection === 'pricing' && content.pricing && (
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">
+                      {currentRole === 'schoolcoach' ? 'تخصيص المجموعات الدراسية' : currentRole === 'coach' ? 'تخصيص سلسلة الماستركلاسز' : 'تخصيص قسم المخرجات والنتائج الإحصائية'}
+                    </h3>
+                  </div>
+
+                  <div className="bg-blue-50/70 border border-blue-200 p-3.5 rounded-xl text-[11px] text-blue-900 font-bold leading-relaxed flex items-start gap-2">
+                    <span className="material-symbols-outlined text-[18px] text-blue-600 shrink-0 mt-0.5">analytics</span>
+                    <div>
+                      تخصيص عناوين وأرقام المخرجات والنتائج الإحصائية التي تبرز كفاءة ونموذج الأكاديمية.
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">عنوان القسم الرئيسي</label>
+                      <input
+                        type="text"
+                        value={content.pricing.title}
+                        onChange={(e) => handleUpdateField('pricing', 'title', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                        placeholder="المخرجات والنتائج الإحصائية"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">العنوان الفرعي للقسم</label>
+                      <input
+                        type="text"
+                        value={content.pricing.subtitle}
+                        onChange={(e) => handleUpdateField('pricing', 'subtitle', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                        placeholder="معدلات تقدم وتحليلات رقمية للفصول الدراسية"
+                      />
+                    </div>
+
+                    {/* Pricing / Statistics Items */}
+                    <div className="space-y-3 pt-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-bold text-slate-600">عناصر النتائج والإحصائيات ({content.pricing.items?.length || 0})</label>
+                        <button
+                          type="button"
+                          onClick={() => handleAddListItem('pricing', 'items', { title: 'إحصائية جديدة', price: '100+', features: [] })}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[10px] font-bold rounded-lg transition-colors border border-blue-200"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>إضافة عنصر</span>
+                        </button>
+                      </div>
+
+                      {(content.pricing.items || []).map((item, idx) => (
+                        <div key={idx} className="border border-slate-200 bg-slate-50 rounded-xl p-3 space-y-2 relative group">
+                          <div className="flex items-center justify-between border-b border-slate-200 pb-1">
+                            <span className="text-[10px] font-extrabold text-slate-700">
+                              عنصر {idx + 1}: {item.title || `إحصائية ${idx + 1}`}
+                            </span>
+                            {(content.pricing.items?.length || 0) > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveListItem('pricing', 'items', idx)}
+                                className="text-red-500 hover:text-red-700 p-0.5 rounded transition-colors"
+                                title="حذف العنصر"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] font-bold text-slate-500">القيمة / الرقم</label>
+                              <input
+                                type="text"
+                                value={item.price}
+                                onChange={(e) => handleUpdateNestedField('pricing', 'items', idx, 'price', e.target.value)}
+                                className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-bold"
+                                placeholder="مثال: 12.4k أو 87%"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] font-bold text-slate-500">التسمية / العنوان</label>
+                              <input
+                                type="text"
+                                value={item.title}
+                                onChange={(e) => handleUpdateNestedField('pricing', 'items', idx, 'title', e.target.value)}
+                                className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
+                                placeholder="مثال: طلاب نشطون"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.pricing.backgroundColor || '#fcf8ff'}
+                            onChange={(e) => handleUpdateField('pricing', 'backgroundColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.pricing.backgroundColor || '#fcf8ff'}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون النصوص</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.pricing.textColor || '#1b1b24'}
+                            onChange={(e) => handleUpdateField('pricing', 'textColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.pricing.textColor || '#1b1b24'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Testimonials Editor (Standalone Section) */}
+              {activeSection === 'testimonials' && (
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص آراء العملاء والتقييمات</h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">عنوان قسم الآراء الرئيسي</label>
+                      <input
+                        type="text"
+                        value={content.pricing.testimonialsTitle || ''}
+                        onChange={(e) => handleUpdateField('pricing', 'testimonialsTitle', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">عنوان فرعي لقسم الآراء</label>
+                      <input
+                        type="text"
+                        value={content.pricing.testimonialsSubtitle || ''}
+                        onChange={(e) => handleUpdateField('pricing', 'testimonialsSubtitle', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    {/* Testimonials Items 1, 2, 3 */}
+                    {[1, 2, 3].map((num) => (
+                      <div key={num} className="border border-slate-200 bg-slate-50 rounded-xl p-3 space-y-2">
+                        <span className="text-[10px] font-extrabold text-slate-700 block border-b border-slate-200 pb-1">الرأي {num}:</span>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[9px] font-bold text-slate-500">نص الرأي</label>
+                          <textarea
+                            value={(content.pricing as any)[`testimonial${num}Text`] || ''}
+                            onChange={(e) => handleUpdateField('pricing', `testimonial${num}Text`, e.target.value)}
+                            className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 min-h-[60px]"
+                          />
+                        </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div className="flex flex-col gap-1">
-                            <label className="text-[9px] font-bold text-slate-500">القيمة / الرقم</label>
+                            <label className="text-[9px] font-bold text-slate-500">صاحب الرأي</label>
                             <input
                               type="text"
-                              value={item.price}
-                              onChange={(e) => handleUpdateNestedField('pricing', 'items', idx, 'price', e.target.value)}
+                              value={(content.pricing as any)[`testimonial${num}Author`] || ''}
+                              onChange={(e) => handleUpdateField('pricing', `testimonial${num}Author`, e.target.value)}
                               className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-bold"
-                              placeholder="مثال: 12.4k أو 87%"
                             />
                           </div>
                           <div className="flex flex-col gap-1">
-                            <label className="text-[9px] font-bold text-slate-500">التسمية / العنوان</label>
+                            <label className="text-[9px] font-bold text-slate-500">الوظيفة / الصفة</label>
                             <input
                               type="text"
-                              value={item.title}
-                              onChange={(e) => handleUpdateNestedField('pricing', 'items', idx, 'title', e.target.value)}
-                              className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
-                              placeholder="مثال: طلاب نشطون"
+                              value={(content.pricing as any)[`testimonial${num}Role`] || ''}
+                              onChange={(e) => handleUpdateField('pricing', `testimonial${num}Role`, e.target.value)}
+                              className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600"
                             />
                           </div>
                         </div>
                       </div>
                     ))}
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-3 pt-2">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.pricing.backgroundColor || '#fcf8ff'}
-                          onChange={(e) => handleUpdateField('pricing', 'backgroundColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.pricing.backgroundColor || '#fcf8ff'}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون النصوص</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={content.pricing.textColor || '#1b1b24'}
-                          onChange={(e) => handleUpdateField('pricing', 'textColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.pricing.textColor || '#1b1b24'}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Testimonials Editor (Standalone Section) */}
-            {activeSection === 'testimonials' && (
-              <div className="space-y-5">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                  <h3 className="text-xs font-extrabold text-slate-800">تخصيص آراء العملاء والتقييمات</h3>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان قسم الآراء الرئيسي</label>
-                    <input
-                      type="text"
-                      value={content.pricing.testimonialsTitle || ''}
-                      onChange={(e) => handleUpdateField('pricing', 'testimonialsTitle', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">عنوان فرعي لقسم الآراء</label>
-                    <input
-                      type="text"
-                      value={content.pricing.testimonialsSubtitle || ''}
-                      onChange={(e) => handleUpdateField('pricing', 'testimonialsSubtitle', e.target.value)}
-                      className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                    />
-                  </div>
-
-                  {/* Testimonials Items 1, 2, 3 */}
-                  {[1, 2, 3].map((num) => (
-                    <div key={num} className="border border-slate-200 bg-slate-50 rounded-xl p-3 space-y-2">
-                      <span className="text-[10px] font-extrabold text-slate-700 block border-b border-slate-200 pb-1">الرأي {num}:</span>
+                    <div className="grid grid-cols-2 gap-3 pt-2">
                       <div className="flex flex-col gap-1">
-                        <label className="text-[9px] font-bold text-slate-500">نص الرأي</label>
-                        <textarea
-                          value={(content.pricing as any)[`testimonial${num}Text`] || ''}
-                          onChange={(e) => handleUpdateField('pricing', `testimonial${num}Text`, e.target.value)}
-                          className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 min-h-[60px]"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">صاحب الرأي</label>
+                        <label className="text-[11px] font-bold text-slate-600">خلفية قسم الآراء</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
                           <input
-                            type="text"
-                            value={(content.pricing as any)[`testimonial${num}Author`] || ''}
-                            onChange={(e) => handleUpdateField('pricing', `testimonial${num}Author`, e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-bold"
+                            type="color"
+                            value={(content.pricing as any).testimonialsBg || '#f5f2ff'}
+                            onChange={(e) => handleUpdateField('pricing', 'testimonialsBg', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                           />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[9px] font-bold text-slate-500">الوظيفة / الصفة</label>
-                          <input
-                            type="text"
-                            value={(content.pricing as any)[`testimonial${num}Role`] || ''}
-                            onChange={(e) => handleUpdateField('pricing', `testimonial${num}Role`, e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600"
-                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{(content.pricing as any).testimonialsBg || '#f5f2ff'}</span>
                         </div>
                       </div>
-                    </div>
-                  ))}
 
-                  <div className="grid grid-cols-2 gap-3 pt-2">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">خلفية قسم الآراء</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={(content.pricing as any).testimonialsBg || '#f5f2ff'}
-                          onChange={(e) => handleUpdateField('pricing', 'testimonialsBg', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{(content.pricing as any).testimonialsBg || '#f5f2ff'}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">لون نصوص الآراء</label>
-                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-                        <input
-                          type="color"
-                          value={(content.pricing as any).testimonialsTextColor || '#1b1b24'}
-                          onChange={(e) => handleUpdateField('pricing', 'testimonialsTextColor', e.target.value)}
-                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
-                        />
-                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{(content.pricing as any).testimonialsTextColor || '#1b1b24'}</span>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون نصوص الآراء</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={(content.pricing as any).testimonialsTextColor || '#1b1b24'}
+                            onChange={(e) => handleUpdateField('pricing', 'testimonialsTextColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{(content.pricing as any).testimonialsTextColor || '#1b1b24'}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
               {/* FAQ Editor */}
               {activeSection === 'faq' && (
@@ -3142,8 +3152,8 @@ export default function PageBuilderPage() {
                           key={idx}
                           id={`editor-item-faq-${idx}`}
                           className={`border rounded-xl p-3 relative flex flex-col gap-2.5 transition-all duration-300 ${activeSection === 'faq' && activeItemIndex === idx
-                              ? 'bg-blue-50/50 border-blue-500 ring-2 ring-blue-500/20 shadow-md scale-[1.01]'
-                              : 'bg-slate-50 border-slate-200'
+                            ? 'bg-blue-50/50 border-blue-500 ring-2 ring-blue-500/20 shadow-md scale-[1.01]'
+                            : 'bg-slate-50 border-slate-200'
                             }`}
                         >
                           <button
@@ -3441,7 +3451,7 @@ export default function PageBuilderPage() {
           {/* Preview canvas shell scaling depending on deviceMode */}
           <div
             className={`bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden flex flex-col transition-all duration-300 ease-out w-full h-full ${deviceMode === 'desktop' ? 'max-w-full' :
-                deviceMode === 'tablet' ? 'max-w-2xl h-[90%]' : 'max-w-sm h-[85%]'
+              deviceMode === 'tablet' ? 'max-w-2xl h-[90%]' : 'max-w-sm h-[85%]'
               }`}
           >
             {/* Simulation Header Address Bar */}
@@ -3474,8 +3484,8 @@ export default function PageBuilderPage() {
                   onClick={() => { setActiveSection('navbar'); setActiveItemIndex(null); }}
                   style={{ backgroundColor: content.navbar.bgColor, color: content.navbar.textColor }}
                   className={`py-4 px-6 flex justify-between items-center cursor-pointer border-b border-slate-100 transition-all relative group ${activeSection === 'navbar'
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
-                      : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
+                    ? 'ring-4 ring-blue-500 z-10 shadow-md'
+                    : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
                     }`}
                 >
                   <div className="absolute top-1 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
@@ -3499,8 +3509,8 @@ export default function PageBuilderPage() {
                   onClick={() => { setActiveSection('hero'); setActiveItemIndex(null); }}
                   style={{ backgroundColor: content.hero.backgroundColor, color: content.hero.textColor }}
                   className={`p-8 sm:p-12 grid grid-cols-1 md:grid-cols-2 gap-6 items-center cursor-pointer transition-all relative group ${activeSection === 'hero'
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
-                      : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
+                    ? 'ring-4 ring-blue-500 z-10 shadow-md'
+                    : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
                     }`}
                 >
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
@@ -3540,8 +3550,8 @@ export default function PageBuilderPage() {
                   onClick={() => { setActiveSection('about'); setActiveItemIndex(null); }}
                   style={{ backgroundColor: content.about.backgroundColor, color: content.about.textColor }}
                   className={`p-8 sm:p-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center cursor-pointer border-t border-slate-100 transition-all relative group ${activeSection === 'about'
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
-                      : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
+                    ? 'ring-4 ring-blue-500 z-10 shadow-md'
+                    : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
                     }`}
                 >
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
@@ -3568,8 +3578,8 @@ export default function PageBuilderPage() {
                   onClick={() => { setActiveSection('features'); setActiveItemIndex(null); }}
                   style={{ backgroundColor: content.features.backgroundColor, color: content.features.textColor }}
                   className={`p-8 sm:p-12 space-y-8 cursor-pointer border-t border-slate-100 transition-all relative group ${activeSection === 'features'
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
-                      : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
+                    ? 'ring-4 ring-blue-500 z-10 shadow-md'
+                    : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
                     }`}
                 >
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
@@ -3590,8 +3600,8 @@ export default function PageBuilderPage() {
                           handleSelectSectionItem('features', i);
                         }}
                         className={`bg-white border p-4 rounded-2xl flex flex-col gap-2.5 shadow-xs cursor-pointer transition-all relative group/item ${activeSection === 'features' && activeItemIndex === i
-                            ? 'border-blue-500 ring-2 ring-blue-500/40 scale-[1.03] z-20 shadow-md'
-                            : 'border-slate-200 hover:border-blue-400 hover:shadow-sm'
+                          ? 'border-blue-500 ring-2 ring-blue-500/40 scale-[1.03] z-20 shadow-md'
+                          : 'border-slate-200 hover:border-blue-400 hover:shadow-sm'
                           }`}
                       >
                         <div className="absolute top-1 left-1 opacity-0 group-hover/item:opacity-100 transition-opacity bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm z-30 pointer-events-none flex items-center gap-0.5">
@@ -3619,8 +3629,8 @@ export default function PageBuilderPage() {
                     onClick={() => { setActiveSection('courses'); setActiveItemIndex(null); }}
                     style={{ backgroundColor: content.courses.backgroundColor || '#ffffff', color: content.courses.textColor || '#1b1b24' }}
                     className={`p-8 sm:p-12 space-y-8 cursor-pointer border-t border-slate-100 transition-all relative group ${activeSection === 'courses'
-                        ? 'ring-4 ring-blue-500 z-10 shadow-md'
-                        : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
+                      : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
                       }`}
                   >
                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
@@ -3657,8 +3667,8 @@ export default function PageBuilderPage() {
                   onClick={() => { setActiveSection('faq'); setActiveItemIndex(null); }}
                   style={{ backgroundColor: content.faq.backgroundColor, color: content.faq.textColor }}
                   className={`p-8 sm:p-12 space-y-6 cursor-pointer border-t border-slate-100 transition-all relative group ${activeSection === 'faq'
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
-                      : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
+                    ? 'ring-4 ring-blue-500 z-10 shadow-md'
+                    : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
                     }`}
                 >
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
@@ -3678,8 +3688,8 @@ export default function PageBuilderPage() {
                           handleSelectSectionItem('faq', i);
                         }}
                         className={`bg-white border rounded-xl p-4 flex gap-3 text-right cursor-pointer transition-all relative group/item ${activeSection === 'faq' && activeItemIndex === i
-                            ? 'border-blue-500 ring-2 ring-blue-500/40 scale-[1.02] z-20 shadow-md'
-                            : 'border-slate-200 hover:border-blue-400 hover:shadow-sm'
+                          ? 'border-blue-500 ring-2 ring-blue-500/40 scale-[1.02] z-20 shadow-md'
+                          : 'border-slate-200 hover:border-blue-400 hover:shadow-sm'
                           }`}
                       >
                         <div className="absolute top-2 left-2 opacity-0 group-hover/item:opacity-100 transition-opacity bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm z-30 pointer-events-none flex items-center gap-0.5">
@@ -3703,8 +3713,8 @@ export default function PageBuilderPage() {
                   onClick={() => { setActiveSection('contact'); setActiveItemIndex(null); }}
                   style={{ backgroundColor: content.contact.backgroundColor, color: content.contact.textColor }}
                   className={`p-8 sm:p-10 text-center space-y-4 cursor-pointer border-t border-slate-100 transition-all relative group ${activeSection === 'contact'
-                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
-                      : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
+                    ? 'ring-4 ring-blue-500 z-10 shadow-md'
+                    : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
                     }`}
                 >
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2.5 py-1 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">
@@ -3733,8 +3743,8 @@ export default function PageBuilderPage() {
                     onClick={() => { setActiveSection('footer'); setActiveItemIndex(null); }}
                     style={{ backgroundColor: content.footer.backgroundColor, color: content.footer.textColor }}
                     className={`py-6 px-6 text-center text-[10px] cursor-pointer opacity-90 border-t border-slate-100 transition-all relative group ${activeSection === 'footer'
-                        ? 'ring-4 ring-blue-500 z-10 shadow-md'
-                        : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
+                      ? 'ring-4 ring-blue-500 z-10 shadow-md'
+                      : 'hover:ring-2 hover:ring-dashed hover:ring-blue-400 hover:ring-offset-1'
                       }`}
                   >
                     <div className="absolute top-1 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-sm z-20 pointer-events-none flex items-center gap-1">

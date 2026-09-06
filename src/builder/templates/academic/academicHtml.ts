@@ -1,9 +1,9 @@
 export interface TemplateContent {
-  navbar: {
-    title: string;
-    logo: string;
-    bgColor: string;
-    textColor: string;
+  navbar?: {
+    title?: string;
+    logo?: string;
+    bgColor?: string;
+    textColor?: string;
     links?: Array<{ label: string; href: string }>;
     loginText?: string;
     loginLink?: string;
@@ -11,31 +11,34 @@ export interface TemplateContent {
     registerLink?: string;
     [key: string]: any;
   };
-  hero: {
-    title: string;
-    subtitle: string;
-    description: string;
-    buttonText: string;
-    buttonLink: string;
+  hero?: {
+    title?: string;
+    subtitle?: string;
+    description?: string;
+    buttonText?: string;
+    buttonLink?: string;
     secondaryButtonText?: string;
     secondaryButtonLink?: string;
-    image: string;
-    backgroundColor: string;
-    textColor: string;
+    image?: string;
+    backgroundColor?: string;
+    textColor?: string;
+    [key: string]: any;
   };
-  about: {
-    title: string;
-    subtitle: string;
-    image: string;
-    backgroundColor: string;
-    textColor: string;
+  about?: {
+    title?: string;
+    subtitle?: string;
+    image?: string;
+    backgroundColor?: string;
+    textColor?: string;
+    [key: string]: any;
   };
-  features: {
-    title: string;
-    subtitle: string;
-    items: Array<{ icon: string; title: string; description: string }>;
-    backgroundColor: string;
-    textColor: string;
+  features?: {
+    title?: string;
+    subtitle?: string;
+    items?: Array<{ icon: string; title: string; description: string }>;
+    backgroundColor?: string;
+    textColor?: string;
+    [key: string]: any;
   };
   courses?: {
     title?: string;
@@ -49,37 +52,43 @@ export interface TemplateContent {
     titleColor?: string;
     backgroundColor?: string;
     textColor?: string;
+    [key: string]: any;
   };
   stats?: {
-    items: Array<{ value: string; label: string }>;
+    items?: Array<{ value: string; label: string }>;
     backgroundColor?: string;
     textColor?: string;
+    [key: string]: any;
   };
-  pricing: {
-    title: string;
-    subtitle: string;
-    items: Array<{ title: string; price: string; features: string[] }>;
-    backgroundColor: string;
-    textColor: string;
+  pricing?: {
+    title?: string;
+    subtitle?: string;
+    items?: Array<{ title: string; price: string; features: string[] }>;
+    backgroundColor?: string;
+    textColor?: string;
+    [key: string]: any;
   };
-  faq: {
-    title: string;
-    items: Array<{ question: string; answer: string }>;
-    backgroundColor: string;
-    textColor: string;
+  faq?: {
+    title?: string;
+    items?: Array<{ question: string; answer: string }>;
+    backgroundColor?: string;
+    textColor?: string;
+    [key: string]: any;
   };
-  contact: {
-    title: string;
-    description: string;
-    phoneNumber: string;
-    buttonText: string;
-    backgroundColor: string;
-    textColor: string;
+  contact?: {
+    title?: string;
+    description?: string;
+    phoneNumber?: string;
+    buttonText?: string;
+    backgroundColor?: string;
+    textColor?: string;
+    [key: string]: any;
   };
-  footer: {
-    text: string;
-    backgroundColor: string;
-    textColor: string;
+  footer?: {
+    text?: string;
+    backgroundColor?: string;
+    textColor?: string;
+    [key: string]: any;
   };
 }
 
@@ -507,6 +516,7 @@ ${navLinks.map((link: any) => {
 </div>
 <!-- Main Content Canvas -->
 <main class="w-full">
+${content?.hero ? `
 <!-- Hero Section -->
 <section data-section="hero" id="hero" class="w-full transition-all duration-300 section-hover cursor-pointer" style="background-color: ${heroBg}; color: ${heroTextColor};">
 <div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-36 pb-32 flex flex-col lg:flex-row items-center gap-stack-xl">
@@ -548,7 +558,9 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 </div>
 </div>
 </section>
+` : ''}
 
+${content?.about && (videoTitle || videoLink) ? `
 <!-- Video Intro Section -->
 <section data-section="video" id="about-video" class="w-full transition-all duration-300 section-hover cursor-pointer rounded-3xl" style="${videoBg ? `background-color: ${videoBg};` : ''} ${videoTextColor ? `color: ${videoTextColor};` : ''}">
   <div class="max-w-container-max mx-auto py-20 px-margin-mobile md:px-margin-desktop">
@@ -568,7 +580,9 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
     </div>
   </div>
 </section>
+` : ''}
 
+${content?.about && (aboutTitle || aboutSubtitle) ? `
 <!-- Smart Analytics Section -->
 <section data-section="about" id="about-analytics" class="w-full transition-all duration-300 section-hover cursor-pointer" style="background-color: ${aboutBg}; color: ${aboutTextColor};">
 <div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
@@ -613,7 +627,9 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 </div>
 </div>
 </section>
+` : ''}
 
+${content?.features && (featuresTitle || (featuresItems && featuresItems.length > 0)) ? `
 <!-- Complete Academic Ecosystem (Bento Grid) -->
 <section data-section="features" class="w-full bg-surface-container-low transition-all duration-300 section-hover cursor-pointer" style="${featuresBg ? `background-color: ${featuresBg};` : ''} ${featuresTextColor ? `color: ${featuresTextColor};` : ''}">
 <div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
@@ -622,7 +638,7 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 <p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mx-auto">${featuresSubtitle}</p>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter auto-rows-[280px]">
-  ${featuresItems.map((item, idx) => {
+  ${featuresItems.map((item: any, idx: number) => {
     const isImg = item.icon && (item.icon.startsWith('http') || item.icon.includes('/') || item.icon.startsWith('data:'));
     const symbolIcon = formatMaterialIcon(item.icon);
     const colSpan = idx === 0 || idx === featuresItems.length - 1 ? 'col-span-1 lg:col-span-2' : 'col-span-1';
@@ -643,7 +659,9 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 </div>
 </div>
 </section>
+` : ''}
 
+${content?.courses ? `
 <!-- Courses Section -->
 <section data-section="courses" id="courses" class="w-full transition-all duration-300 section-hover cursor-pointer" style="${coursesBg ? `background-color: ${coursesBg};` : 'background-color: #ffffff;'} ${coursesTextColor ? `color: ${coursesTextColor};` : ''}">
   <div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
@@ -730,31 +748,25 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
     `}
   </div>
 </section>
+` : ''}
 
+${content?.stats && statsItems && statsItems.length > 0 ? `
 <!-- Stats Section -->
 <section data-section="stats" id="stats-benefits" class="w-full section-hover cursor-pointer transition-all duration-300" style="${statsBg ? `background-color: ${statsBg};` : 'background-color: rgba(53, 37, 205, 0.05);'} ${statsTextColor ? `color: ${statsTextColor};` : ''}">
   <div class="max-w-container-max mx-auto py-20 px-margin-mobile md:px-margin-desktop">
     <div class="grid grid-cols-2 md:grid-cols-4 gap-gutter">
-      <div data-stat-index="0" class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-        <span class="block text-display-lg font-display-lg font-black mb-2" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #3525cd;'}">${stat1Value}</span>
-        <span class="text-body-md font-body-md font-bold" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #464555;'}">${stat1Label}</span>
-      </div>
-      <div data-stat-index="1" class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-        <span class="block text-display-lg font-display-lg font-black mb-2" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #3525cd;'}">${stat2Value}</span>
-        <span class="text-body-md font-body-md font-bold" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #464555;'}">${stat2Label}</span>
-      </div>
-      <div data-stat-index="2" class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-        <span class="block text-display-lg font-display-lg font-black mb-2" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #3525cd;'}">${stat3Value}</span>
-        <span class="text-body-md font-body-md font-bold" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #464555;'}">${stat3Label}</span>
-      </div>
-      <div data-stat-index="3" class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-        <span class="block text-display-lg font-display-lg font-black mb-2" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #3525cd;'}">${stat4Value}</span>
-        <span class="text-body-md font-body-md font-bold" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #464555;'}">${stat4Label}</span>
-      </div>
+      ${statsItems.map((st: any, idx: number) => `
+        <div data-stat-index="${idx}" class="bg-surface border border-outline-variant/20 p-8 rounded-3xl text-center hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
+          <span class="block text-display-lg font-display-lg font-black mb-2" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #3525cd;'}">${st.value || ''}</span>
+          <span class="text-body-md font-body-md font-bold" style="${statsTextColor ? `color: ${statsTextColor};` : 'color: #464555;'}">${st.label || ''}</span>
+        </div>
+      `).join('')}
     </div>
   </div>
 </section>
+` : ''}
 
+${content?.pricing && (pricingTitle || (pricingItems && pricingItems.length > 0)) ? `
 <!-- 2. Academic Management (Stats / Pricing items) -->
 <section data-section="pricing" id="pricing-plans" class="w-full border-y border-outline-variant/30 transition-all duration-300 section-hover cursor-pointer" style="${pricingBg ? `background-color: ${pricingBg};` : 'background-color: #fcf8ff;'} ${pricingTextColor ? `color: ${pricingTextColor};` : ''}">
 <div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
@@ -763,19 +775,21 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
   <p class="text-xs font-bold" style="${pricingTextColor ? `color: ${pricingTextColor}; opacity: 0.8;` : 'color: #777587;'}">${pricingSubtitle}</p>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter divide-y md:divide-y-0 md:divide-x md:divide-x-reverse divide-outline-variant/50 text-center">
-  ${pricingItems.map((item, idx) => `
+  ${pricingItems.map((item: any, idx: number) => `
     <div data-section="pricing" data-index="${idx}" class="py-stack-md flex flex-col items-center justify-center group cursor-pointer hover:scale-105 transition-all">
       <span class="material-symbols-outlined text-primary text-[48px] mb-4 opacity-80 group-hover:opacity-100 group-hover:-translate-y-2 transition-all duration-300">
         ${idx === 0 ? 'school' : idx === 1 ? 'library_books' : 'check_circle'}
       </span>
-      <h4 class="text-display-lg font-display-lg" style="${pricingTextColor ? `color: ${pricingTextColor};` : 'color: #1b1b24;'}">${item.price}</h4>
-      <p class="text-label-md font-label-md uppercase tracking-wider mt-2" style="${pricingTextColor ? `color: ${pricingTextColor}; opacity: 0.85;` : 'color: #464555;'}">${item.title}</p>
+      <h4 class="text-display-lg font-display-lg" style="${pricingTextColor ? `color: ${pricingTextColor};` : 'color: #1b1b24;'}">${item.price || ''}</h4>
+      <p class="text-label-md font-label-md uppercase tracking-wider mt-2" style="${pricingTextColor ? `color: ${pricingTextColor}; opacity: 0.85;` : 'color: #464555;'}">${item.title || ''}</p>
     </div>
   `).join('')}
 </div>
 </div>
 </section>
+` : ''}
 
+${content?.pricing && (testimonial1Text || testimonialsTitle) ? `
 <!-- Testimonials Section -->
 <section data-section="testimonials" id="testimonials" class="w-full border-y border-outline-variant/30 section-hover cursor-pointer transition-all duration-300" style="${testimonialsBg ? `background-color: ${testimonialsBg};` : 'background-color: #f5f2ff;'} ${testimonialsTextColor ? `color: ${testimonialsTextColor};` : ''}">
 <div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
@@ -785,12 +799,12 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
   <p class="text-body-lg font-body-lg max-w-2xl mx-auto" style="${testimonialsTextColor ? `color: ${testimonialsTextColor}; opacity: 0.85;` : 'color: #464555;'}">${testimonialsSubtitle}</p>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
-  <!-- Card 1 -->
+  ${testimonial1Text ? `
   <div data-testimonial="0" class="bg-surface border border-outline-variant/50 p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
     <p class="text-body-md font-body-md italic mb-8" style="${testimonialsTextColor ? `color: ${testimonialsTextColor}; opacity: 0.9;` : 'color: #464555;'}">"${testimonial1Text}"</p>
     <div class="flex items-center gap-4">
       <div class="w-12 h-12 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center font-bold text-primary text-sm">
-        ${testimonial1Author.slice(0, 2)}
+        ${testimonial1Author ? testimonial1Author.slice(0, 2) : ''}
       </div>
       <div>
         <h4 class="font-extrabold text-sm" style="${testimonialsTextColor ? `color: ${testimonialsTextColor};` : 'color: #1b1b24;'}">${testimonial1Author}</h4>
@@ -798,12 +812,13 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
       </div>
     </div>
   </div>
-  <!-- Card 2 -->
+  ` : ''}
+  ${testimonial2Text ? `
   <div data-testimonial="1" class="bg-surface border border-outline-variant/50 p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
     <p class="text-body-md font-body-md italic mb-8" style="${testimonialsTextColor ? `color: ${testimonialsTextColor}; opacity: 0.9;` : 'color: #464555;'}">"${testimonial2Text}"</p>
     <div class="flex items-center gap-4">
       <div class="w-12 h-12 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center font-bold text-primary text-sm">
-        ${testimonial2Author.slice(0, 2)}
+        ${testimonial2Author ? testimonial2Author.slice(0, 2) : ''}
       </div>
       <div>
         <h4 class="font-extrabold text-sm" style="${testimonialsTextColor ? `color: ${testimonialsTextColor};` : 'color: #1b1b24;'}">${testimonial2Author}</h4>
@@ -811,12 +826,13 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
       </div>
     </div>
   </div>
-  <!-- Card 3 -->
+  ` : ''}
+  ${testimonial3Text ? `
   <div data-testimonial="2" class="bg-surface border border-outline-variant/50 p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
     <p class="text-body-md font-body-md italic mb-8" style="${testimonialsTextColor ? `color: ${testimonialsTextColor}; opacity: 0.9;` : 'color: #464555;'}">"${testimonial3Text}"</p>
     <div class="flex items-center gap-4">
       <div class="w-12 h-12 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center font-bold text-primary text-sm">
-        ${testimonial3Author.slice(0, 2)}
+        ${testimonial3Author ? testimonial3Author.slice(0, 2) : ''}
       </div>
       <div>
         <h4 class="font-extrabold text-sm" style="${testimonialsTextColor ? `color: ${testimonialsTextColor};` : 'color: #1b1b24;'}">${testimonial3Author}</h4>
@@ -824,8 +840,13 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
       </div>
     </div>
   </div>
+  ` : ''}
 </div>
 </div>
+</section>
+` : ''}
+
+${content?.faq && faqItems && faqItems.length > 0 ? `
 <!-- FAQ Section -->
 <section data-section="faq" id="faq" class="py-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto transition-all duration-300 section-hover cursor-pointer rounded-3xl mb-16" style="${faqBg ? `background-color: ${faqBg};` : ''} ${faqTextColor ? `color: ${faqTextColor};` : ''}">
   <div class="max-w-4xl mx-auto">
@@ -834,13 +855,13 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
       <h2 class="text-display-sm font-display-sm ${faqTextColor ? '' : 'text-on-surface'}" style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${faqTitle}</h2>
     </div>
     <div class="space-y-4">
-      ${faqItems.map((item, idx) => `
+      ${faqItems.map((item: any, idx: number) => `
         <div data-section="faq" data-index="${idx}" class="p-6 md:p-8 bg-surface-container-lowest border border-outline-variant/30 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
           <div class="flex items-start gap-4">
             <span class="material-symbols-outlined text-primary text-[28px] shrink-0 mt-0.5">help_outline</span>
             <div class="space-y-2 flex-1">
-              <h4 class="text-headline-sm font-headline-sm font-bold ${faqTextColor ? '' : 'text-on-surface'}" style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${item.question}</h4>
-              <p class="text-body-md font-body-md ${faqTextColor ? '' : 'text-on-surface-variant'} leading-relaxed" style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.85;` : ''}">${item.answer}</p>
+              <h4 class="text-headline-sm font-headline-sm font-bold ${faqTextColor ? '' : 'text-on-surface'}" style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${item.question || ''}</h4>
+              <p class="text-body-md font-body-md ${faqTextColor ? '' : 'text-on-surface-variant'} leading-relaxed" style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.85;` : ''}">${item.answer || ''}</p>
             </div>
           </div>
         </div>
@@ -848,8 +869,9 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
     </div>
   </div>
 </section>
+` : ''}
 
-${(contactTitle || contactDesc) ? `
+${content?.contact && (contactTitle || contactDesc || contactPhone) ? `
 <!-- Final CTA -->
 <section data-section="contact" class="py-32 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto text-center mb-16 transition-all duration-300 section-hover cursor-pointer rounded-3xl" style="${contactBg ? `background-color: ${contactBg};` : ''} ${contactTextColor ? `color: ${contactTextColor};` : ''}">
 <div class="max-w-4xl mx-auto bg-primary/5 border border-primary/20 rounded-[3rem] p-stack-lg md:p-24 relative overflow-hidden shadow-2xl">
