@@ -93,3 +93,49 @@ export const purgeAllCourseDraftCache = () => {
     console.error('Error purging course draft cache:', e);
   }
 };
+
+export const getStoredUserRole = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const userInfoStr = localStorage.getItem('user_info');
+    if (userInfoStr) {
+      const parsed = JSON.parse(userInfoStr);
+      const userType = parsed?.type || parsed?.account_type || parsed?.user_type || (parsed?.role !== 'admin' && parsed?.role !== 'الادمن' ? parsed?.role : null);
+      if (userType) return userType;
+    }
+
+    const directRole =
+      localStorage.getItem('user_role') ||
+      localStorage.getItem('user_account_type') ||
+      localStorage.getItem('registration_role');
+    if (directRole && directRole !== 'admin' && directRole !== 'الادمن') return directRole;
+
+    if (userInfoStr) {
+      const parsed = JSON.parse(userInfoStr);
+      return parsed?.role || parsed?.type || null;
+    }
+    if (directRole) return directRole;
+  } catch (e) {
+    return null;
+  }
+  return null;
+};
+
+export const isSchoolTeacherRole = (userOrRole?: any): boolean => {
+  if (!userOrRole) return false;
+  let roleStr: string | null = null;
+  if (typeof userOrRole === 'object') {
+    roleStr = userOrRole.type || userOrRole.account_type || userOrRole.user_type || (userOrRole.role !== 'admin' && userOrRole.role !== 'الادمن' ? userOrRole.role : null);
+  } else if (typeof userOrRole === 'string') {
+    roleStr = userOrRole;
+  }
+  if (!roleStr) return false;
+  const normalized = roleStr.toLowerCase().trim();
+  return (
+    normalized === 'schoolteacher' ||
+    normalized === 'school_teacher' ||
+    normalized === 'schoolcoach' ||
+    normalized === 'school'
+  );
+};
+
