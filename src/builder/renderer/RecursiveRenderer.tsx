@@ -31,7 +31,6 @@ const PricingSection = dynamic(() => import('../registry/componentRegistry').the
 const CategoriesSection = dynamic(() => import('../registry/componentRegistry').then(m => m.CategoriesSection), { ssr: false });
 const CustomHtmlSection = dynamic(() => import('../registry/componentRegistry').then(m => m.CustomHtmlSection), { ssr: false });
 
-// Component Rendering Map
 const rendererRegistry: Record<string, React.ComponentType<any>> = {
   // Dynamic backend-linked sections
   hero_section: HeroSection,
@@ -50,11 +49,20 @@ const rendererRegistry: Record<string, React.ComponentType<any>> = {
   tables: TableBlock,
   'student-feed': StudentFeed,
   'course-cards': CourseCards,
+  courses: CourseCards,
   sidebar: SidebarBlock,
   navbar: NavbarBlock,
   footer: FooterBlock,
   tabs: TabsBlock,
   metrics: MetricsCards,
+  // Aliases for DB section types
+  features: FeaturesSection,
+  stats: KpiCards,
+  pricing: PricingSection,
+  faq: FaqSection,
+  testimonials: TestimonialsSection,
+  contact: CustomHtmlSection,
+  about: HeroSection,
 };
 
 // ─── Section Background Wrapper ───────────────────────────────────────────────

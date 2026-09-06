@@ -1,5 +1,16 @@
 export interface TemplateContent {
-  navbar: { title: string; logo: string; bgColor: string; textColor: string };
+  navbar: {
+    title: string;
+    logo: string;
+    bgColor: string;
+    textColor: string;
+    links?: Array<{ label: string; href: string }>;
+    loginText?: string;
+    loginLink?: string;
+    registerText?: string;
+    registerLink?: string;
+    [key: string]: any;
+  };
   hero: {
     title: string;
     subtitle: string;
@@ -161,13 +172,37 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
   const navbarText = content?.navbar?.textColor || (content?.navbar as any)?.text_color || '#3525cd';
   const navbarLogo = content?.navbar?.logo || '';
 
+  // Dynamic nav links — use saved props or fall back to defaults
+  const defaultNavLinks = [
+    { label: 'الرئيسية', href: '/' },
+    { label: 'الدورات', href: '/courses' },
+    { label: 'الحقائب', href: '/bags' },
+    { label: 'حول', href: '/#about' },
+  ];
+  const navLinks: Array<{ label: string; href: string }> =
+    Array.isArray((content?.navbar as any)?.links) && (content?.navbar as any).links.length > 0
+      ? (content?.navbar as any).links
+      : defaultNavLinks;
+  const loginText = (content?.navbar as any)?.loginText || (content?.navbar as any)?.login_text || 'تسجيل الدخول';
+  const loginLink = (content?.navbar as any)?.loginLink || (content?.navbar as any)?.login_link || '/auth/login';
+  const registerText = (content?.navbar as any)?.registerText || (content?.navbar as any)?.register_text || 'ابدأ الآن';
+  const registerLink = (content?.navbar as any)?.registerLink || (content?.navbar as any)?.register_link || '/auth/register';
+  const loginBg = (content?.navbar as any)?.loginBgColor || (content?.navbar as any)?.login_bg_color || (content?.navbar as any)?.loginBg || (content?.navbar as any)?.login_bg || '';
+  const loginTextColor = (content?.navbar as any)?.loginTextColor || (content?.navbar as any)?.login_text_color || (content?.navbar as any)?.loginColor || (content?.navbar as any)?.login_color || '';
+  const registerBg = (content?.navbar as any)?.registerBgColor || (content?.navbar as any)?.register_bg_color || (content?.navbar as any)?.registerBg || (content?.navbar as any)?.register_bg || '';
+  const registerTextColor = (content?.navbar as any)?.registerTextColor || (content?.navbar as any)?.register_text_color || (content?.navbar as any)?.registerColor || (content?.navbar as any)?.register_color || '';
+
   const heroSubtitle = content?.hero?.subtitle || 'حل مؤسسي متقدم';
   const heroTitle = content?.hero?.title || 'بناء تجربة أكاديمية أكثر ذكاءً.';
   const heroDesc = content?.hero?.description || 'اربط الطلاب، والمعلمين، والإداريين على منصة مؤسسية موحدة مصممة لتحقيق التميز القابل للقياس وسير العمل المبسط بكفاءة عالية.';
   const heroBtnText = content?.hero?.buttonText || (content?.hero as any)?.button_text || 'استكشف المنصة';
   const heroBtnLink = content?.hero?.buttonLink || (content?.hero as any)?.button_link || '#';
+  const heroBtnBg = (content?.hero as any)?.buttonBg || (content?.hero as any)?.button_bg || (content?.hero as any)?.button_background_color || '';
+  const heroBtnTextColor = (content?.hero as any)?.buttonTextColor || (content?.hero as any)?.button_text_color || (content?.hero as any)?.button_color || '';
   const heroSecondaryBtnText = content?.hero?.secondaryButtonText || (content?.hero as any)?.secondary_button_text || (content?.hero as any)?.demoButtonText || 'طلب عرض توضيحي';
   const heroSecondaryBtnLink = content?.hero?.secondaryButtonLink || (content?.hero as any)?.secondary_button_link || (content?.hero as any)?.demoButtonLink || '#contact';
+  const heroSecondaryBtnBg = (content?.hero as any)?.secondaryButtonBg || (content?.hero as any)?.secondary_button_bg || (content?.hero as any)?.secondary_button_background_color || '';
+  const heroSecondaryBtnTextColor = (content?.hero as any)?.secondaryButtonTextColor || (content?.hero as any)?.secondary_button_text_color || (content?.hero as any)?.secondary_button_color || '';
   const heroImg = content?.hero?.image || (content?.hero as any)?.img || (content?.hero as any)?.video || 'https://tse4.mm.bing.net/th/id/OIP.CGEfBMBIYoz4Syk_3B8DawHaEK?r=0&rs=1&pid=ImgDetMain&o=7&rm=3';
   const heroBg = content?.hero?.backgroundColor || (content?.hero as any)?.background_color || (content?.hero as any)?.bg_color || '#fcf8ff';
   const heroTextColor = content?.hero?.textColor || (content?.hero as any)?.text_color || '#1b1b24';
@@ -228,12 +263,16 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
   const pricingBg = content?.pricing?.backgroundColor || (content?.pricing as any)?.background_color || (content?.pricing as any)?.bg_color || '#fcf8ff';
   const pricingTextColor = content?.pricing?.textColor || (content?.pricing as any)?.text_color || '#1b1b24';
 
-  const contactTitle = content?.contact?.title || 'ابْنِ مستقبل التعليم';
-  const contactDesc = content?.contact?.description || 'انضم إلى المؤسسات الرائدة عالميًا في تحويل التجربة الأكاديمية. ارتقِ بمستوى مؤسستك التعليمية وابدأ رحلتك نحو التميز اليوم.';
+  const contactTitle = content?.contact?.title || '';
+  const contactDesc = content?.contact?.description || '';
   const contactPhone = content?.contact?.phoneNumber || (content?.contact as any)?.phone_number || '';
   const contactBtnText = content?.contact?.buttonText || (content?.contact as any)?.button_text || 'ابدأ الآن';
+  const contactBtnBg = (content?.contact as any)?.buttonBg || (content?.contact as any)?.button_bg || (content?.contact as any)?.button_background_color || '';
+  const contactBtnTextColor = (content?.contact as any)?.buttonTextColor || (content?.contact as any)?.button_text_color || (content?.contact as any)?.button_color || '';
   const contactSecondaryBtnText = (content?.contact as any)?.secondaryButtonText || (content?.contact as any)?.secondary_button_text || (content?.contact as any)?.demoButtonText || 'طلب عرض توضيحي';
   const contactSecondaryBtnLink = (content?.contact as any)?.secondaryButtonLink || (content?.contact as any)?.secondary_button_link || (content?.contact as any)?.demoButtonLink || '';
+  const contactSecondaryBtnBg = (content?.contact as any)?.secondaryButtonBg || (content?.contact as any)?.secondary_button_bg || (content?.contact as any)?.secondary_button_background_color || '';
+  const contactSecondaryBtnTextColor = (content?.contact as any)?.secondaryButtonTextColor || (content?.contact as any)?.secondary_button_text_color || (content?.contact as any)?.secondary_button_color || '';
   const contactBg = content?.contact?.backgroundColor || (content?.contact as any)?.background_color || (content?.contact as any)?.bg_color || '';
   const contactTextColor = content?.contact?.textColor || (content?.contact as any)?.text_color || '';
 
@@ -420,15 +459,22 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 </div>
 <!-- Desktop Nav -->
 <nav class="hidden md:flex items-center gap-stack-lg">
-<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="/" ${isEditing ? '' : 'target="_parent"'}>الرئيسية</a>
-<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="/courses" ${isEditing ? '' : 'target="_parent"'}>الدورات</a>
-<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="/bags" ${isEditing ? '' : 'target="_parent"'}>الحقائب</a>
-<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" href="/#about" ${isEditing ? '' : 'target="_parent"'}>حول</a>
+${navLinks.map((link: any) => {
+  const isBtn = link.isButton || link.is_button || link.variant === 'button' || link.type === 'button';
+  const linkBg = link.bgColor || link.bg_color || link.backgroundColor || link.background_color || '';
+  const linkColor = link.textColor || link.text_color || link.color || '';
+  const customStyle = link.style || `${linkBg ? `background-color: ${linkBg}; ` : ''}${linkColor ? `color: ${linkColor}; ` : ''}`;
+
+  if (isBtn || linkBg) {
+    return `<a class="text-label-md font-label-md px-5 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all duration-200 inline-block text-center" style="${customStyle}" href="${link.href || '#'}" ${isEditing ? '' : 'target="_parent"'}>${link.label}</a>`;
+  }
+  return `<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" style="${linkColor ? `color: ${linkColor};` : ''}" href="${link.href || '#'}" ${isEditing ? '' : 'target="_parent"'}>${link.label}</a>`;
+}).join('\n')}
 </nav>
 <div class="flex items-center gap-stack-md">
-<a class="text-label-md font-label-md text-primary hover:opacity-80 transition-opacity hidden sm:block" href="/auth/login" ${isEditing ? '' : 'target="_parent"'}>تسجيل الدخول</a>
-<a href="/auth/register" ${isEditing ? '' : 'target="_parent"'} class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all duration-200 hidden sm:block inline-block text-center">
-    ابدأ الآن
+<a class="text-label-md font-label-md hover:opacity-80 transition-opacity hidden sm:block" style="${loginBg ? `background-color: ${loginBg}; ` : ''}${loginTextColor ? `color: ${loginTextColor}; ` : ''}" href="${loginLink}" ${isEditing ? '' : 'target="_parent"'}>${loginText}</a>
+<a href="${registerLink}" ${isEditing ? '' : 'target="_parent"'} class="text-label-md font-label-md px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all duration-200 hidden sm:block inline-block text-center" style="${registerBg ? `background-color: ${registerBg}; ` : 'background-color: #3525cd; '}${registerTextColor ? `color: ${registerTextColor}; ` : 'color: #ffffff; '}">
+    ${registerText}
 </a>
 <button class="md:hidden flex items-center justify-center p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors">
 <span class="material-symbols-outlined">menu</span>
@@ -443,25 +489,19 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 <span class="text-headline-md font-headline-md text-primary">مركز التعلم</span>
 </div>
 <nav class="flex flex-col gap-stack-sm px-4">
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/" ${isEditing ? '' : 'target="_parent"'}>
-<span class="material-symbols-outlined">home</span> الرئيسية
-                </a>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/courses" ${isEditing ? '' : 'target="_parent"'}>
-<span class="material-symbols-outlined">menu_book</span> الدورات
-                </a>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/bags" ${isEditing ? '' : 'target="_parent"'}>
-<span class="material-symbols-outlined">shopping_bag</span> الحقائب
-                </a>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/#about" ${isEditing ? '' : 'target="_parent"'}>
-<span class="material-symbols-outlined">info</span> حول
-                </a>
+${navLinks.map((link: any) => {
+  const linkColor = link.textColor || link.text_color || link.color || '';
+  const linkBg = link.bgColor || link.bg_color || link.backgroundColor || link.background_color || '';
+  const customStyle = `${linkBg ? `background-color: ${linkBg}; ` : ''}${linkColor ? `color: ${linkColor}; ` : ''}`;
+  return `<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" style="${customStyle}" href="${link.href || '#'}" ${isEditing ? '' : 'target="_parent"'}><span class="material-symbols-outlined">home</span> ${link.label}</a>`;
+}).join('\n')}
 <div class="h-px bg-outline-variant/30 my-4"></div>
-<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/auth/login" ${isEditing ? '' : 'target="_parent"'}>
-<span class="material-symbols-outlined">login</span> تسجيل الدخول
-                </a>
-<a class="bg-primary text-on-primary flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" href="/auth/register" ${isEditing ? '' : 'target="_parent"'}>
-<span class="material-symbols-outlined">person_add</span> ابدأ الآن
-                </a>
+<a class="text-label-md font-label-md hover:opacity-80 transition-opacity px-4 py-2.5 rounded-xl text-center flex items-center justify-center gap-2" style="${loginBg ? `background-color: ${loginBg}; ` : ''}${loginTextColor ? `color: ${loginTextColor}; ` : ''}" href="${loginLink}" ${isEditing ? '' : 'target="_parent"'}>
+  <span class="material-symbols-outlined text-[20px]">login</span> ${loginText}
+</a>
+<a href="${registerLink}" ${isEditing ? '' : 'target="_parent"'} class="text-label-md font-label-md px-6 py-2.5 rounded-xl shadow-sm transition-all duration-200 flex items-center justify-center gap-2 mt-2" style="${registerBg ? `background-color: ${registerBg}; ` : 'background-color: #3525cd; '}${registerTextColor ? `color: ${registerTextColor}; ` : 'color: #ffffff; '}">
+  <span class="material-symbols-outlined text-[20px]">person_add</span> ${registerText}
+</a>
 </nav>
 </aside>
 </div>
@@ -487,7 +527,7 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
   const trimmed = heroBtnLink.trim();
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
   return `#${trimmed}`;
-})()}" ${heroBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-8 py-4 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 inline-block text-center">
+})()}" ${heroBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="text-label-md font-label-md px-8 py-4 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 inline-block text-center" style="${heroBtnBg ? `background-color: ${heroBtnBg}; ` : 'background-color: #3525cd; '}${heroBtnTextColor ? `color: ${heroBtnTextColor}; ` : 'color: #ffffff; '}">
     ${heroBtnText}
 </a>
 <a data-hero-btn="secondary" href="${(() => {
@@ -495,7 +535,7 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
   const trimmed = heroSecondaryBtnLink.trim();
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
   return `#${trimmed}`;
-})()}" ${heroSecondaryBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="bg-surface hover:bg-surface-container text-on-surface border border-outline-variant text-label-md font-label-md px-8 py-4 rounded-full transition-all duration-300 inline-flex items-center gap-3 group">
+})()}" ${heroSecondaryBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="border border-outline-variant text-label-md font-label-md px-8 py-4 rounded-full transition-all duration-300 inline-flex items-center gap-3 group" style="${heroSecondaryBtnBg ? `background-color: ${heroSecondaryBtnBg}; ` : 'background-color: #ffffff; '}${heroSecondaryBtnTextColor ? `color: ${heroSecondaryBtnTextColor}; ` : 'color: #1b1b24; '}">
     <span>${heroSecondaryBtnText}</span> <span class="material-symbols-outlined text-[20px] rtl-icon group-hover:-translate-x-1 transition-transform">arrow_forward</span>
 </a>
 </div>
@@ -809,6 +849,7 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
   </div>
 </section>
 
+${(contactTitle || contactDesc) ? `
 <!-- Final CTA -->
 <section data-section="contact" class="py-32 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto text-center mb-16 transition-all duration-300 section-hover cursor-pointer rounded-3xl" style="${contactBg ? `background-color: ${contactBg};` : ''} ${contactTextColor ? `color: ${contactTextColor};` : ''}">
 <div class="max-w-4xl mx-auto bg-primary/5 border border-primary/20 rounded-[3rem] p-stack-lg md:p-24 relative overflow-hidden shadow-2xl">
@@ -821,18 +862,18 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
                     </p>
 <div class="flex flex-col sm:flex-row items-center justify-center gap-stack-md">
   ${contactPhone
-    ? `<a data-contact-btn="primary" href="tel:${contactPhone.replace(/\s+/g, '')}" class="w-full sm:w-auto inline-flex items-center justify-center bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-10 py-5 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer text-decoration-none">
+    ? `<a data-contact-btn="primary" href="tel:${contactPhone.replace(/\s+/g, '')}" class="w-full sm:w-auto inline-flex items-center justify-center text-label-md font-label-md px-10 py-5 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer text-decoration-none" style="${contactBtnBg ? `background-color: ${contactBtnBg}; ` : 'background-color: #3525cd; '}${contactBtnTextColor ? `color: ${contactBtnTextColor}; ` : 'color: #ffffff; '}">
         ${contactBtnText}
        </a>`
-    : `<button data-contact-btn="primary" class="w-full sm:w-auto bg-primary hover:bg-primary-container text-on-primary text-label-md font-label-md px-10 py-5 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+    : `<button data-contact-btn="primary" class="w-full sm:w-auto text-label-md font-label-md px-10 py-5 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300" style="${contactBtnBg ? `background-color: ${contactBtnBg}; ` : 'background-color: #3525cd; '}${contactBtnTextColor ? `color: ${contactBtnTextColor}; ` : 'color: #ffffff; '}">
         ${contactBtnText}
        </button>`
   }
   ${contactSecondaryBtnLink
-    ? `<a data-contact-btn="secondary" href="${contactSecondaryBtnLink}" ${contactSecondaryBtnLink.startsWith('http') || contactSecondaryBtnLink.startsWith('https') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="w-full sm:w-auto inline-flex items-center justify-center bg-surface hover:bg-surface-container text-on-surface border border-outline-variant text-label-md font-label-md px-10 py-5 rounded-full hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer text-decoration-none">
+    ? `<a data-contact-btn="secondary" href="${contactSecondaryBtnLink}" ${contactSecondaryBtnLink.startsWith('http') || contactSecondaryBtnLink.startsWith('https') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="w-full sm:w-auto inline-flex items-center justify-center border border-outline-variant text-label-md font-label-md px-10 py-5 rounded-full hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer text-decoration-none" style="${contactSecondaryBtnBg ? `background-color: ${contactSecondaryBtnBg}; ` : 'background-color: #ffffff; '}${contactSecondaryBtnTextColor ? `color: ${contactSecondaryBtnTextColor}; ` : 'color: #1b1b24; '}">
         ${contactSecondaryBtnText}
        </a>`
-    : `<button data-contact-btn="secondary" class="w-full sm:w-auto bg-surface hover:bg-surface-container text-on-surface border border-outline-variant text-label-md font-label-md px-10 py-5 rounded-full hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-md">
+    : `<button data-contact-btn="secondary" class="w-full sm:w-auto border border-outline-variant text-label-md font-label-md px-10 py-5 rounded-full hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-md" style="${contactSecondaryBtnBg ? `background-color: ${contactSecondaryBtnBg}; ` : 'background-color: #ffffff; '}${contactSecondaryBtnTextColor ? `color: ${contactSecondaryBtnTextColor}; ` : 'color: #1b1b24; '}">
         ${contactSecondaryBtnText}
        </button>`
   }
@@ -840,6 +881,7 @@ ${renderMedia(heroImg, 'relative max-w-full h-auto object-contain rounded-2xl bo
 </div>
 </div>
 </section>
+` : ''}
 </main>
 <script>
         // Mobile Drawer Toggle

@@ -2,25 +2,39 @@
 
 import React, { useState, useEffect } from 'react';
 import { getAcademicHtml } from './academicHtml';
-import { getPublicPages, getPublicSections, apiToEditor } from '@/services/pages';
 import { getCourses } from '@/services/courses';
 import { getStudentCourses } from '@/services/student-courses';
 import { useBuilderStore } from '../../store/builderStore';
-
-const TEMPLATE_SLUGS = ['academy-dashboard', 'template_1', 'template_2', 'template_3', 'template_4'];
 
 interface AcademicTemplateProps {
   sections?: any[];
 }
 
 const DEFAULT_CONTENT = {
-  navbar: { title: 'إديوكور', logo: '', bgColor: '#ffffff', textColor: '#3525cd' },
+  navbar: {
+    title: 'إديوكور',
+    logo: '',
+    bgColor: '#ffffff',
+    textColor: '#3525cd',
+    links: [
+      { label: 'الرئيسية', href: '/' },
+      { label: 'الدورات', href: '/courses' },
+      { label: 'الحقائب', href: '/bags' },
+      { label: 'حول', href: '/#about' },
+    ],
+    loginText: 'تسجيل الدخول',
+    loginLink: '/auth/login',
+    registerText: 'ابدأ الآن',
+    registerLink: '/auth/register',
+  },
   hero: {
     title: 'بناء تجربة أكاديمية أكثر ذكاءً.',
     subtitle: 'حل مؤسسي متقدم',
     description: 'اربط الطلاب، والمعلمين، والإداريين على منصة مؤسسية موحدة مصممة لتحقيق التميز القابل للقياس وسير العمل المبسط بكفاءة عالية.',
     buttonText: 'استكشف المنصة',
     buttonLink: '#',
+    secondaryButtonText: 'طلب عرض توضيحي',
+    secondaryButtonLink: '#contact',
     image: 'https://tse4.mm.bing.net/th/id/OIP.CGEfBMBIYoz4Syk_3B8DawHaEK?r=0&rs=1&pid=ImgDetMain&o=7&rm=3',
     backgroundColor: '#fcf8ff',
     textColor: '#1b1b24',
@@ -35,6 +49,9 @@ const DEFAULT_CONTENT = {
     videoTitle: 'تعرف على فلسفتنا التعليمية في ٣ دقائق',
     videoDesc: 'نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.',
     videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
+    analyticsTitle: 'رؤية الأداء المؤسسي',
+    analyticsBars: [40, 65, 85, 50, 95],
+    analyticsColor: '#3525cd',
   },
   features: {
     title: 'نظام بيئي أكاديمي متكامل',
@@ -58,6 +75,7 @@ const DEFAULT_CONTENT = {
     buttonBg: '#3525cd',
     cardBg: '#ffffff',
     titleColor: '#1b1b24',
+    gridCols: '3',
     backgroundColor: '#ffffff',
     textColor: '#1b1b24',
   },
@@ -103,10 +121,12 @@ const DEFAULT_CONTENT = {
     textColor: '#1b1b24',
   },
   contact: {
-    title: 'ابْنِ مستقبل التعليم',
-    description: 'انضم إلى المؤسسات الرائدة عالميًا في تحويل التجربة الأكاديمية. ارتقِ بمستوى مؤسستك التعليمية وابدأ رحلتك نحو التميز اليوم.',
-    phoneNumber: '201000000000',
+    title: 'تواصل معنا',
+    description: 'نحن هنا لمساعدتك في التوسع والتفوق الأكاديمي.',
+    phoneNumber: '+966500000000',
     buttonText: 'ابدأ الآن',
+    secondaryButtonText: 'طلب عرض توضيحي',
+    secondaryButtonLink: '#contact',
     backgroundColor: '#3525cd',
     textColor: '#ffffff',
   },
@@ -132,91 +152,136 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
   const contactNode = nodes.find(n => n.type === 'contact');
   const footerNode = nodes.find(n => n.type === 'footer');
 
+  // Priority: realCourses (live API) > section.items (saved DB items) > section.props.courses (legacy)
   const coursesList = realCourses.length > 0
     ? realCourses
-    : (isEditing && courseNode?.props?.courses ? courseNode.props.courses : []);
+    : (Array.isArray(courseNode?.props?.items) && courseNode.props.items.length > 0
+        ? courseNode.props.items
+        : (courseNode?.props?.courses || []));
 
-  const safeFeatureItems = (items: any[] | undefined | null) => {
+  const safeFeatureItems = (items: any) => {
+    if (typeof items === 'string') {
+      try { items = JSON.parse(items); } catch (e) {}
+    }
     if (!Array.isArray(items) || items.length === 0) return fallback.features.items;
     return items.map((it: any) => {
-      const p = it.props || it;
+      const p = it?.props || it || {};
       return {
-        icon: p.icon || it.icon || 'star',
-        title: p.title || it.title || '',
-        description: p.description || it.description || '',
+        icon: p.icon || it?.icon || 'star',
+        title: p.title || it?.title || '',
+        description: p.description || it?.description || '',
       };
     });
   };
 
-  const safeStatItems = (items: any[] | undefined | null) => {
+  const safeStatItems = (items: any) => {
+    if (typeof items === 'string') {
+      try { items = JSON.parse(items); } catch (e) {}
+    }
     if (!Array.isArray(items) || items.length === 0) return fallback.stats.items;
     return items.map((it: any) => {
-      const p = it.props || it;
+      const p = it?.props || it || {};
       return {
-        value: p.value || it.value || '',
-        label: p.label || it.label || p.title || it.title || '',
+        value: p.value || it?.value || '',
+        label: p.label || it?.label || p.title || it?.title || '',
       };
     });
+  };
+
+  const safePricingItems = (items: any) => {
+    if (typeof items === 'string') {
+      try { items = JSON.parse(items); } catch (e) {}
+    }
+    if (!Array.isArray(items) || items.length === 0) return fallback.pricing.items;
+    return items;
+  };
+
+  const safeFaqItems = (items: any) => {
+    if (typeof items === 'string') {
+      try { items = JSON.parse(items); } catch (e) {}
+    }
+    if (!Array.isArray(items) || items.length === 0) return fallback.faq.items;
+    return items;
   };
 
   return {
     navbar: navbarNode?.props ? {
+      ...navbarNode.props,
       title: navbarNode.props.title ?? fallback.navbar.title,
       logo: navbarNode.props.logo ?? fallback.navbar.logo,
       bgColor: navbarNode.props.bgColor ?? navbarNode.props.bg_color ?? fallback.navbar.bgColor,
       textColor: navbarNode.props.textColor ?? navbarNode.props.text_color ?? fallback.navbar.textColor,
+      loginText: navbarNode.props.loginText ?? navbarNode.props.login_text ?? fallback.navbar.loginText,
+      loginLink: navbarNode.props.loginLink ?? navbarNode.props.login_link ?? fallback.navbar.loginLink,
+      registerText: navbarNode.props.registerText ?? navbarNode.props.register_text ?? fallback.navbar.registerText,
+      registerLink: navbarNode.props.registerLink ?? navbarNode.props.register_link ?? fallback.navbar.registerLink,
+      links: Array.isArray(navbarNode.props.links) && navbarNode.props.links.length > 0 ? navbarNode.props.links : fallback.navbar.links,
     } : fallback.navbar,
     hero: heroNode?.props ? {
+      ...heroNode.props,
       title: heroNode.props.title ?? fallback.hero.title,
       subtitle: heroNode.props.subtitle ?? fallback.hero.subtitle,
       description: heroNode.props.description ?? fallback.hero.description,
       buttonText: heroNode.props.buttonText ?? heroNode.props.button_text ?? fallback.hero.buttonText,
       buttonLink: heroNode.props.buttonLink ?? heroNode.props.button_link ?? fallback.hero.buttonLink,
-      image: heroNode.props.image ?? fallback.hero.image,
-      backgroundColor: heroNode.props.backgroundColor ?? heroNode.props.background_color ?? fallback.hero.backgroundColor,
+      secondaryButtonText: heroNode.props.secondaryButtonText ?? heroNode.props.secondary_button_text ?? heroNode.props.demoButtonText ?? heroNode.props.demo_button_text ?? fallback.hero.secondaryButtonText,
+      secondaryButtonLink: heroNode.props.secondaryButtonLink ?? heroNode.props.secondary_button_link ?? heroNode.props.demoButtonLink ?? heroNode.props.demo_button_link ?? fallback.hero.secondaryButtonLink,
+      image: heroNode.props.image ?? heroNode.props.img ?? heroNode.props.video ?? fallback.hero.image,
+      backgroundColor: heroNode.props.backgroundColor ?? heroNode.props.background_color ?? heroNode.props.bg_color ?? fallback.hero.backgroundColor,
       textColor: heroNode.props.textColor ?? heroNode.props.text_color ?? fallback.hero.textColor,
     } : fallback.hero,
     about: aboutNode?.props ? {
+      ...aboutNode.props,
       title: aboutNode.props.title ?? fallback.about.title,
       subtitle: aboutNode.props.subtitle ?? fallback.about.subtitle,
-      image: aboutNode.props.image ?? fallback.about.image,
-      backgroundColor: aboutNode.props.backgroundColor ?? aboutNode.props.background_color ?? fallback.about.backgroundColor,
+      image: aboutNode.props.image ?? aboutNode.props.img ?? aboutNode.props.video ?? fallback.about.image,
+      backgroundColor: aboutNode.props.backgroundColor ?? aboutNode.props.background_color ?? aboutNode.props.bg_color ?? fallback.about.backgroundColor,
       textColor: aboutNode.props.textColor ?? aboutNode.props.text_color ?? fallback.about.textColor,
       videoTag: aboutNode.props.videoTag ?? aboutNode.props.video_tag ?? fallback.about.videoTag,
       videoTitle: aboutNode.props.videoTitle ?? aboutNode.props.video_title ?? fallback.about.videoTitle,
       videoDesc: aboutNode.props.videoDesc ?? aboutNode.props.video_desc ?? fallback.about.videoDesc,
-      videoLink: aboutNode.props.videoLink ?? aboutNode.props.video_link ?? fallback.about.videoLink,
+      videoLink: aboutNode.props.videoLink ?? aboutNode.props.video_link ?? aboutNode.props.videoImage ?? aboutNode.props.video_image ?? fallback.about.videoLink,
+      videoBg: aboutNode.props.videoBg ?? aboutNode.props.video_bg ?? aboutNode.props.videoBackgroundColor ?? aboutNode.props.video_background_color ?? fallback.about.videoBg,
+      videoTextColor: aboutNode.props.videoTextColor ?? aboutNode.props.video_text_color ?? fallback.about.videoTextColor,
+      analyticsTitle: aboutNode.props.analyticsTitle ?? aboutNode.props.analytics_title ?? aboutNode.props.visionTitle ?? aboutNode.props.vision_title ?? fallback.about.analyticsTitle,
+      analyticsBars: aboutNode.props.analyticsBars ?? aboutNode.props.analytics_bars ?? fallback.about.analyticsBars,
+      analyticsColor: aboutNode.props.analyticsColor ?? aboutNode.props.analytics_color ?? fallback.about.analyticsColor,
     } : fallback.about,
     features: featuresNode?.props ? {
+      ...featuresNode.props,
       title: featuresNode.props.title ?? fallback.features.title,
       subtitle: featuresNode.props.subtitle ?? fallback.features.subtitle,
       items: safeFeatureItems(featuresNode.props.items),
-      backgroundColor: featuresNode.props.backgroundColor ?? featuresNode.props.background_color ?? fallback.features.backgroundColor,
+      backgroundColor: featuresNode.props.backgroundColor ?? featuresNode.props.background_color ?? featuresNode.props.bg_color ?? fallback.features.backgroundColor,
       textColor: featuresNode.props.textColor ?? featuresNode.props.text_color ?? fallback.features.textColor,
     } : fallback.features,
     courses: {
-      title: courseNode?.props?.title || 'أحدث الدورات والبرامج الأكاديمية',
-      subtitle: courseNode?.props?.subtitle || 'استكشف مساراتنا التدريبية المتخصصة لتطوير مهاراتك والارتقاء بمسيرتك المهنية.',
+      ...(courseNode?.props || {}),
+      title: courseNode?.props?.title || fallback.courses.title,
+      subtitle: courseNode?.props?.subtitle || fallback.courses.subtitle,
       items: coursesList,
       limit: courseNode?.props?.limit || 6,
-      showPrice: courseNode?.props?.showPrice ?? true,
-      showStudentsCount: courseNode?.props?.showStudentsCount ?? true,
-      buttonBg: courseNode?.props?.buttonBg || '#3525cd',
-      cardBg: courseNode?.props?.cardBg || '#ffffff',
-      titleColor: courseNode?.props?.titleColor || '#1b1b24',
+      showPrice: courseNode?.props?.showPrice ?? courseNode?.props?.show_price ?? true,
+      showStudentsCount: courseNode?.props?.showStudentsCount ?? courseNode?.props?.show_students_count ?? true,
+      buttonBg: courseNode?.props?.buttonBg ?? courseNode?.props?.button_bg ?? '#3525cd',
+      cardBg: courseNode?.props?.cardBg ?? courseNode?.props?.card_bg ?? '#ffffff',
+      titleColor: courseNode?.props?.titleColor ?? courseNode?.props?.title_color ?? '#1b1b24',
+      gridCols: courseNode?.props?.gridCols ?? courseNode?.props?.grid_cols ?? '3',
       backgroundColor: courseNode?.props?.backgroundColor ?? courseNode?.props?.background_color ?? '#ffffff',
       textColor: courseNode?.props?.textColor ?? courseNode?.props?.text_color ?? '#1b1b24',
     },
     stats: statsNode?.props ? {
+      ...statsNode.props,
       items: safeStatItems(statsNode.props.items || statsNode.props.cards),
-      backgroundColor: statsNode.props.backgroundColor ?? statsNode.props.background_color ?? fallback.stats.backgroundColor,
+      backgroundColor: statsNode.props.backgroundColor ?? statsNode.props.background_color ?? statsNode.props.bg_color ?? fallback.stats.backgroundColor,
       textColor: statsNode.props.textColor ?? statsNode.props.text_color ?? fallback.stats.textColor,
     } : fallback.stats,
     pricing: pricingNode?.props ? {
+      ...pricingNode.props,
       title: pricingNode.props.title ?? fallback.pricing.title,
       subtitle: pricingNode.props.subtitle ?? fallback.pricing.subtitle,
-      items: pricingNode.props.items ?? fallback.pricing.items,
-      backgroundColor: pricingNode.props.backgroundColor ?? pricingNode.props.background_color ?? fallback.pricing.backgroundColor,
+      items: safePricingItems(pricingNode.props.items),
+      backgroundColor: pricingNode.props.backgroundColor ?? pricingNode.props.background_color ?? pricingNode.props.bg_color ?? fallback.pricing.backgroundColor,
       textColor: pricingNode.props.textColor ?? pricingNode.props.text_color ?? fallback.pricing.textColor,
       testimonialsTitle: pricingNode.props.testimonialsTitle ?? pricingNode.props.testimonials_title ?? fallback.pricing.testimonialsTitle,
       testimonialsSubtitle: pricingNode.props.testimonialsSubtitle ?? pricingNode.props.testimonials_subtitle ?? fallback.pricing.testimonialsSubtitle,
@@ -231,26 +296,31 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
       testimonial3Role: pricingNode.props.testimonial3Role ?? pricingNode.props.testimonial3_role ?? fallback.pricing.testimonial3Role,
     } : fallback.pricing,
     faq: faqNode?.props ? {
+      ...faqNode.props,
       title: faqNode.props.title ?? fallback.faq.title,
-      items: faqNode.props.items ?? fallback.faq.items,
-      backgroundColor: faqNode.props.backgroundColor ?? fallback.faq.backgroundColor,
-      textColor: faqNode.props.textColor ?? fallback.faq.textColor,
+      items: safeFaqItems(faqNode.props.items),
+      backgroundColor: faqNode.props.backgroundColor ?? faqNode.props.background_color ?? fallback.faq.backgroundColor,
+      textColor: faqNode.props.textColor ?? faqNode.props.text_color ?? fallback.faq.textColor,
     } : fallback.faq,
     contact: contactNode?.props ? {
+      ...contactNode.props,
       title: contactNode.props.title ?? fallback.contact.title,
       description: contactNode.props.description ?? fallback.contact.description,
       phoneNumber: contactNode.props.phoneNumber ?? contactNode.props.phone_number ?? fallback.contact.phoneNumber,
       buttonText: contactNode.props.buttonText ?? contactNode.props.button_text ?? fallback.contact.buttonText,
-      backgroundColor: contactNode.props.backgroundColor ?? contactNode.props.background_color ?? fallback.contact.backgroundColor,
+      secondaryButtonText: contactNode.props.secondaryButtonText ?? contactNode.props.secondary_button_text ?? contactNode.props.demoButtonText ?? contactNode.props.demo_button_text ?? fallback.contact.secondaryButtonText,
+      secondaryButtonLink: contactNode.props.secondaryButtonLink ?? contactNode.props.secondary_button_link ?? contactNode.props.demoButtonLink ?? contactNode.props.demo_button_link ?? fallback.contact.secondaryButtonLink,
+      backgroundColor: contactNode.props.backgroundColor ?? contactNode.props.background_color ?? contactNode.props.bg_color ?? fallback.contact.backgroundColor,
       textColor: contactNode.props.textColor ?? contactNode.props.text_color ?? fallback.contact.textColor,
     } : fallback.contact,
     footer: footerNode?.props ? {
+      ...footerNode.props,
       text: footerNode.props.text ?? fallback.footer.text,
       backgroundColor: footerNode.props.backgroundColor ?? footerNode.props.background_color ?? fallback.footer.backgroundColor,
       textColor: footerNode.props.textColor ?? footerNode.props.text_color ?? fallback.footer.textColor,
-      newsletterTitle: footerNode.props.newsletterTitle ?? fallback.footer.newsletterTitle,
-      newsletterDesc: footerNode.props.newsletterDesc ?? fallback.footer.newsletterDesc,
-      newsletterBtnText: footerNode.props.newsletterBtnText ?? fallback.footer.newsletterBtnText,
+      newsletterTitle: footerNode.props.newsletterTitle ?? footerNode.props.newsletter_title ?? fallback.footer.newsletterTitle,
+      newsletterDesc: footerNode.props.newsletterDesc ?? footerNode.props.newsletter_desc ?? fallback.footer.newsletterDesc,
+      newsletterBtnText: footerNode.props.newsletterBtnText ?? footerNode.props.newsletter_btn_text ?? fallback.footer.newsletterBtnText,
     } : fallback.footer,
   };
 }
@@ -279,51 +349,12 @@ export default function AcademicTemplate({ sections: sectionsProp }: AcademicTem
   }, [isEditing]);
 
   useEffect(() => {
-    async function load() {
-      const fallback = DEFAULT_CONTENT;
-
-      // 1. If sections were passed directly as a prop — use them immediately
-      if (sectionsProp && sectionsProp.length > 0) {
-        const parsed = parseSectionsToContent(sectionsProp, fallback, realCourses, isEditing);
-        setContent(parsed);
-        return;
-      }
-
-      // 2. Call the public sections endpoint directly
-      try {
-        const pagesList = await getPublicPages('academic');
-
-        let activePage = pagesList.find(
-          (p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true'
-        );
-        if (!activePage) {
-          const templatePages = pagesList.filter((p: any) =>
-            TEMPLATE_SLUGS.includes(p.template_name || p.template || p.title)
-          );
-          activePage = templatePages.sort((a: any, b: any) => Number(b.id || 0) - Number(a.id || 0))[0];
-        }
-        if (!activePage) {
-          activePage = pagesList.find((p: any) => p.slug === 'home' || p.slug?.startsWith('home-')) || pagesList[0];
-        }
-
-        if (activePage?.id) {
-          const apiSections = await getPublicSections(activePage.id);
-          if (apiSections && apiSections.length > 0) {
-            const editorNodes = apiToEditor(apiSections);
-            const parsed = parseSectionsToContent(editorNodes, fallback, realCourses, isEditing);
-            setContent(parsed);
-            return;
-          }
-        }
-      } catch (err) {
-        console.error('[AcademicTemplate] Failed to fetch sections from API:', err);
-      }
-
-      // 3. Fallback to defaults
-      setContent(parseSectionsToContent([], fallback, realCourses, isEditing));
-    }
-
-    load();
+    const fallback = DEFAULT_CONTENT;
+    // Use sections from prop (passed by TenantHomeClient/TemplateRenderer)
+    // If none are provided, fall back to DEFAULT_CONTENT
+    const nodes = sectionsProp && sectionsProp.length > 0 ? sectionsProp : [];
+    const parsed = parseSectionsToContent(nodes, fallback, realCourses, isEditing);
+    setContent(parsed);
   }, [sectionsProp, realCourses, isEditing]);
 
   if (!content) return null;
