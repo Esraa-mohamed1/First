@@ -471,10 +471,11 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
   if (!content) return null;
 
   return (
-    <div style={{ width: '100%', height: '100vh', overflow: 'hidden' }}>
+    <div className="w-full min-h-screen">
       <iframe
         srcDoc={getSchoolCoachHtml(content, isEditing)}
-        style={{ width: '100%', height: '100%', border: 'none' }}
+        className="w-full min-h-screen border-none"
+        style={{ width: '100%', minHeight: '100vh', border: 'none' }}
         title="Teacher Template"
       />
     </div>
