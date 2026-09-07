@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { ArrowRight, Check, Loader2, Plus, Save, X } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { clsx } from 'clsx';
-import { createPackage, getFeatures, createFeature, getPackageById, updatePackage, associateFeatures } from '@/services/packages';
+import { createPackage, getFeatures, createFeature, getPackageById, updatePackage, associateFeatures } from '@/services/admin-packages';
 import { CreatePackagePayload, Feature, Package } from '@/types/api';
 import toast from 'react-hot-toast';
 

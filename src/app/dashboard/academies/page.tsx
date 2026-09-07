@@ -26,7 +26,7 @@ import {
   Filter
 } from 'lucide-react';
 import { getAcademies, createAcademy, updateAcademy, deleteAcademy } from '@/services/academies';
-import { getPackages } from '@/services/packages';
+import { getAdminPackages } from '@/services/admin-packages';
 import { Academy, Package, CreateAcademyPayload, UpdateAcademyPayload } from '@/types/api';
 import toast from 'react-hot-toast';
 
@@ -64,7 +64,7 @@ export default function AcademiesPage() {
     try {
       const [academiesData, packagesData] = await Promise.all([
         getAcademies(),
-        getPackages()
+        getAdminPackages()
       ]);
       setAcademies(academiesData);
       setPackages(packagesData);
@@ -239,7 +239,7 @@ export default function AcademiesPage() {
     const emailMatch = (academy.email || '').toLowerCase().includes(searchTerm.toLowerCase());
     const phoneMatch = (academy.phone || academy.phone_academy || '').toLowerCase().includes(searchTerm.toLowerCase());
     const linkMatch = (academy.link_academy || academy.subdomain || academy.domain || '').toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesSearch = nameMatch || emailMatch || phoneMatch || linkMatch;
 
     if (!matchesSearch) return false;
@@ -318,31 +318,28 @@ export default function AcademiesPage() {
           <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-2xl border border-gray-200/60 w-full md:w-auto">
             <button
               onClick={() => setStatusFilter('all')}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex-1 md:flex-initial ${
-                statusFilter === 'all'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-900'
-              }`}
+              className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex-1 md:flex-initial ${statusFilter === 'all'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-500 hover:text-gray-900'
+                }`}
             >
               الكل ({totalCount})
             </button>
             <button
               onClick={() => setStatusFilter('active')}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex-1 md:flex-initial ${
-                statusFilter === 'active'
-                  ? 'bg-white text-green-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-900'
-              }`}
+              className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex-1 md:flex-initial ${statusFilter === 'active'
+                ? 'bg-white text-green-600 shadow-sm'
+                : 'text-gray-500 hover:text-gray-900'
+                }`}
             >
               مفعلة ({activeCount})
             </button>
             <button
               onClick={() => setStatusFilter('inactive')}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex-1 md:flex-initial ${
-                statusFilter === 'inactive'
-                  ? 'bg-white text-gray-700 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-900'
-              }`}
+              className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex-1 md:flex-initial ${statusFilter === 'inactive'
+                ? 'bg-white text-gray-700 shadow-sm'
+                : 'text-gray-500 hover:text-gray-900'
+                }`}
             >
               معطلة ({inactiveCount})
             </button>
@@ -469,11 +466,10 @@ export default function AcademiesPage() {
                         <td className="px-6 py-5 whitespace-nowrap text-center">
                           <button
                             onClick={() => handleToggleStatus(academy)}
-                            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-black transition-all cursor-pointer ${
-                              isActive
-                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
-                                : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
-                            }`}
+                            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-black transition-all cursor-pointer ${isActive
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                              : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
+                              }`}
                             title={isActive ? 'انقر للتعطيل' : 'انقر للتفعيل'}
                           >
                             <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}></span>
@@ -574,11 +570,10 @@ export default function AcademiesPage() {
                     placeholder="admin@academy.com"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    className={`w-full border rounded-xl p-3.5 text-right font-bold outline-none text-sm ${
-                      editingAcademy
-                        ? 'bg-gray-100/80 border-gray-200 text-gray-500 cursor-not-allowed select-none'
-                        : 'bg-gray-50 border-gray-200 focus:border-blue-500 focus:bg-white transition-all'
-                    }`}
+                    className={`w-full border rounded-xl p-3.5 text-right font-bold outline-none text-sm ${editingAcademy
+                      ? 'bg-gray-100/80 border-gray-200 text-gray-500 cursor-not-allowed select-none'
+                      : 'bg-gray-50 border-gray-200 focus:border-blue-500 focus:bg-white transition-all'
+                      }`}
                     dir="ltr"
                   />
                 </div>
@@ -612,11 +607,10 @@ export default function AcademiesPage() {
                     onChange={(e) => handleInputChange('link_academy', e.target.value)}
                     readOnly={!!editingAcademy}
                     disabled={!!editingAcademy}
-                    className={`w-full border rounded-xl p-3.5 text-right font-bold outline-none text-sm ${
-                      editingAcademy
-                        ? 'bg-gray-100/80 border-gray-200 text-gray-500 cursor-not-allowed select-none'
-                        : 'bg-gray-50 border-gray-200 focus:border-blue-500 focus:bg-white transition-all'
-                    }`}
+                    className={`w-full border rounded-xl p-3.5 text-right font-bold outline-none text-sm ${editingAcademy
+                      ? 'bg-gray-100/80 border-gray-200 text-gray-500 cursor-not-allowed select-none'
+                      : 'bg-gray-50 border-gray-200 focus:border-blue-500 focus:bg-white transition-all'
+                      }`}
                     dir="ltr"
                   />
                 </div>
