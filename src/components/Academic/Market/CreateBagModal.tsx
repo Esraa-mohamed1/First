@@ -107,6 +107,7 @@ export default function CreateBagModal({
       description: formData.description,
       coverImage: formData.coverImage,
       category: formData.category,
+      category_bag_id: (formData as any).category_bag_id,
       instructorName: formData.instructorName,
       isFree: formData.isFree,
       price: Number(formData.price),

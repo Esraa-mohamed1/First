@@ -36,7 +36,7 @@ import BagPreviewCard from './BagPreviewCard';
 import { BagFormState } from '@/types/market';
 import { getCourses, getCategories } from '@/services/courses';
 import { getUserPaymentInfos } from '@/services/finance';
-import { createBag, updateBag, getBag, BagApiItem, BagItemInput } from '@/services/bags';
+import { createBag, updateBag, getBag, getBagCategories, createBagCategory, BagCategory, BagApiItem, BagItemInput } from '@/services/bags';
 import { Course } from '@/types/api';
 
 interface BagWizardPageProps {
@@ -238,10 +238,40 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
   const [courseSearch, setCourseSearch] = useState<string>('');
   const [loadingCourses, setLoadingCourses] = useState<boolean>(false);
 
-  // Categories from API (for Step 1 dropdown)
-  const [categories, setCategories] = useState<string[]>([
-    'برمجة وتطوير', 'تصميم الواجهات', 'ذكاء اصطناعي', 'تسويق', 'ريادة أعمال', 'عام',
+  // Categories from category_bags API (for Step 1 dropdown)
+  const [bagCategoriesList, setBagCategoriesList] = useState<BagCategory[]>([
+    { id: 1, name: 'برمجة وتطوير' },
+    { id: 2, name: 'تصميم الواجهات' },
+    { id: 3, name: 'ذكاء اصطناعي' },
+    { id: 4, name: 'تسويق' },
+    { id: 5, name: 'ريادة أعمال' },
+    { id: 6, name: 'عام' },
   ]);
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    setIsAddingCategory(true);
+    try {
+      const created = await createBagCategory(newCategoryName.trim());
+      toast.success('تم إضافة التصنيف بنجاح');
+      setBagCategoriesList((prev) => [...prev, created]);
+      setFormData((prev) => ({
+        ...prev,
+        category: created.name,
+        category_bag_id: created.id,
+      }));
+      setNewCategoryName('');
+      setShowAddCategoryModal(false);
+    } catch (err: any) {
+      console.error('Failed to create category:', err);
+      toast.error('فشل إضافة التصنيف، يرجى المحاولة لاحقاً');
+    } finally {
+      setIsAddingCategory(false);
+    }
+  };
 
   // Payment methods from instructor_receiver_accounts API (for Step 3)
   const [paymentInfos, setPaymentInfos] = useState<Array<{ id: number; name: string; logo?: string }>>([]);
@@ -297,12 +327,12 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
       }).catch((err) => console.error('Failed to load bag for edit:', err));
     }
 
-    /* ── Fetch real categories for Step 1 dropdown ── */
-    getCategories().then((cats: any[]) => {
+    /* ── Fetch real bag categories from /category_bags for Step 1 dropdown ── */
+    getBagCategories().then((cats) => {
       if (Array.isArray(cats) && cats.length > 0) {
-        setCategories(cats.map((c: any) => c.name || c));
+        setBagCategoriesList(cats);
       }
-    }).catch(() => {}); // silently keep defaults
+    }).catch(() => { });
 
     /* ── Fetch instructor payment methods for Step 3 ── */
     setLoadingPaymentInfos(true);
@@ -314,7 +344,7 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
           logo: info.logo || info.receiver_account?.logo || '',
         })));
       }
-    }).catch(() => {}).finally(() => setLoadingPaymentInfos(false));
+    }).catch(() => { }).finally(() => setLoadingPaymentInfos(false));
 
     /* ── Fetch courses for Step 2 ── */
     const fetchAcademyCourses = async () => {
@@ -442,8 +472,8 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
       const mainImagePayload = mainPhoto?.file
         ? mainPhoto.file
         : mainPhoto?.url && !mainPhoto.url.startsWith('blob:') && !mainPhoto.url.startsWith('data:')
-        ? mainPhoto.url
-        : coverImageFile || (formData.coverImage && !formData.coverImage.startsWith('blob:') ? formData.coverImage : undefined);
+          ? mainPhoto.url
+          : coverImageFile || (formData.coverImage && !formData.coverImage.startsWith('blob:') ? formData.coverImage : undefined);
 
       const galleryPayload: Array<File | string> = galleryPhotos
         .map((p) => {
@@ -453,20 +483,32 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
         })
         .filter((x): x is File | string => x !== null);
 
-      // Download policy keys (times vs. forever)
-      const countDownloadPayload = formData.downloadPolicy === 'limited' ? (Number(formData.downloadLimit) || 0) : 0;
+      // Category resolution
+      const matchedCategory = bagCategoriesList.find(
+        (c) => String(c.id) === String((formData as any).category_bag_id) || c.name === formData.category
+      );
+      const finalCategoryBagId = matchedCategory?.id || (Number((formData as any).category_bag_id) || 1);
+      const finalCategoryName = matchedCategory?.name || formData.category || 'عام';
+
+      // Download policy keys (limited vs. unlimited)
+      const isLimitedPolicy = formData.downloadPolicy === 'limited';
+      const countDownloadPayload = isLimitedPolicy ? (Number(formData.downloadLimit) || 0) : 0;
+      const downloadTypePayload = isLimitedPolicy ? 'limited' : 'unlimited';
+      const downloadLimitPayload = isLimitedPolicy ? (Number(formData.downloadLimit) || 0) : undefined;
 
       const payload = {
         title: formData.title.trim(),
         short_description: formData.description || undefined,
         description: formData.description || undefined,
-        category_name: formData.category || undefined,
+        category_name: finalCategoryName,
+        category_bag_id: finalCategoryBagId,
         type_price: formData.isFree ? 'free' : 'paid',
         price: formData.isFree ? undefined : formData.price,
         discount_price: formData.isFree ? undefined : (formData.discountPrice || undefined),
         is_active: formData.visibility === 'published' ? 1 : 0,
         count_download: countDownloadPayload,
-        download_type: formData.downloadPolicy === 'limited' ? 'times' : 'forever',
+        download_type: downloadTypePayload,
+        download_limit: downloadLimitPayload,
         // Only include payment_info_ids when non-empty (omitting avoids backend 422)
         payment_info_ids: validPaymentIds.length > 0 ? validPaymentIds : undefined,
         // Include items array with type and file for each selected course/file
@@ -525,16 +567,14 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
         <button
           type="button"
           onClick={() => setCurrentStep(1)}
-          className={`py-4 px-4 rounded-2xl flex items-center justify-center gap-3 transition-all font-black text-sm ${
-            currentStep === 1
-              ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-              : 'bg-gray-50/70 text-blue-600 hover:bg-gray-100'
-          }`}
+          className={`py-4 px-4 rounded-2xl flex items-center justify-center gap-3 transition-all font-black text-sm ${currentStep === 1
+            ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+            : 'bg-gray-50/70 text-blue-600 hover:bg-gray-100'
+            }`}
         >
           <span
-            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-              currentStep === 1 ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'
-            }`}
+            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${currentStep === 1 ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'
+              }`}
           >
             01
           </span>
@@ -544,16 +584,14 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
         <button
           type="button"
           onClick={() => setCurrentStep(2)}
-          className={`py-4 px-4 rounded-2xl flex items-center justify-center gap-3 transition-all font-black text-sm ${
-            currentStep === 2
-              ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-              : 'bg-gray-50/70 text-blue-600 hover:bg-gray-100'
-          }`}
+          className={`py-4 px-4 rounded-2xl flex items-center justify-center gap-3 transition-all font-black text-sm ${currentStep === 2
+            ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+            : 'bg-gray-50/70 text-blue-600 hover:bg-gray-100'
+            }`}
         >
           <span
-            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-              currentStep === 2 ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'
-            }`}
+            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${currentStep === 2 ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'
+              }`}
           >
             02
           </span>
@@ -563,16 +601,14 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
         <button
           type="button"
           onClick={() => setCurrentStep(3)}
-          className={`py-4 px-4 rounded-2xl flex items-center justify-center gap-3 transition-all font-black text-sm ${
-            currentStep === 3
-              ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-              : 'bg-gray-50/70 text-blue-600 hover:bg-gray-100'
-          }`}
+          className={`py-4 px-4 rounded-2xl flex items-center justify-center gap-3 transition-all font-black text-sm ${currentStep === 3
+            ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+            : 'bg-gray-50/70 text-blue-600 hover:bg-gray-100'
+            }`}
         >
           <span
-            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-              currentStep === 3 ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'
-            }`}
+            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${currentStep === 3 ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'
+              }`}
           >
             03
           </span>
@@ -641,11 +677,10 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                   <button
                     type="button"
                     onClick={() => setImageUploadMode('file')}
-                    className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                      imageUploadMode === 'file'
-                        ? 'bg-white text-blue-600 shadow-sm font-black'
-                        : 'text-gray-500 hover:text-gray-800'
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${imageUploadMode === 'file'
+                      ? 'bg-white text-blue-600 shadow-sm font-black'
+                      : 'text-gray-500 hover:text-gray-800'
+                      }`}
                   >
                     <Upload size={14} />
                     <span>رفع صور</span>
@@ -653,11 +688,10 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                   <button
                     type="button"
                     onClick={() => setImageUploadMode('url')}
-                    className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                      imageUploadMode === 'url'
-                        ? 'bg-white text-blue-600 shadow-sm font-black'
-                        : 'text-gray-500 hover:text-gray-800'
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${imageUploadMode === 'url'
+                      ? 'bg-white text-blue-600 shadow-sm font-black'
+                      : 'text-gray-500 hover:text-gray-800'
+                      }`}
                   >
                     <Link2 size={14} />
                     <span>رابط صورة</span>
@@ -696,11 +730,10 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                       }
                     }}
                     onClick={() => fileInputRef.current?.click()}
-                    className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center space-y-3 ${
-                      isDragging
-                        ? 'border-blue-600 bg-blue-50/50 scale-[0.99]'
-                        : 'border-gray-200 bg-gray-50/70 hover:border-blue-400 hover:bg-blue-50/20'
-                    }`}
+                    className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center space-y-3 ${isDragging
+                      ? 'border-blue-600 bg-blue-50/50 scale-[0.99]'
+                      : 'border-gray-200 bg-gray-50/70 hover:border-blue-400 hover:bg-blue-50/20'
+                      }`}
                   >
                     <div className="w-14 h-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center shadow-inner">
                       <UploadCloud size={28} />
@@ -758,11 +791,10 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                     {bagPhotos.map((photo) => (
                       <div
                         key={photo.id}
-                        className={`relative rounded-2xl overflow-hidden border-2 transition-all group bg-gray-50 flex flex-col justify-between ${
-                          photo.isMain
-                            ? 'border-blue-600 shadow-md ring-2 ring-blue-100'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
+                        className={`relative rounded-2xl overflow-hidden border-2 transition-all group bg-gray-50 flex flex-col justify-between ${photo.isMain
+                          ? 'border-blue-600 shadow-md ring-2 ring-blue-100'
+                          : 'border-gray-200 hover:border-gray-300'
+                          }`}
                       >
                         {/* Image Preview */}
                         <div className="h-36 w-full relative bg-gray-900/5">
@@ -842,18 +874,38 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                 <label className="text-xs font-black text-gray-700 block">
                   التصنيف
                 </label>
-                <select
-                  value={formData.category}
-                  onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
-                  }
-                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:border-blue-500 transition-all text-gray-900"
-                >
-                  {/* Dynamic categories from API */}
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={(formData as any).category_bag_id || formData.category}
+                    onChange={(e) => {
+                      const selectedVal = e.target.value;
+                      const matchedObj = bagCategoriesList.find(
+                        (c) => String(c.id) === selectedVal || c.name === selectedVal
+                      );
+                      setFormData({
+                        ...formData,
+                        category: matchedObj?.name || selectedVal,
+                        category_bag_id: matchedObj?.id || selectedVal,
+                      } as any);
+                    }}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:border-blue-500 transition-all text-gray-900"
+                  >
+                    {bagCategoriesList.map((cat) => (
+                      <option key={cat.id || cat.name} value={cat.id || cat.name}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowAddCategoryModal(true)}
+                    className="w-14 h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-md hover:scale-105 transition-all flex-shrink-0 cursor-pointer"
+                    title="إضافة تصنيف جديد"
+                  >
+                    <Plus size={22} strokeWidth={3} />
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -940,11 +992,10 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                     }
                   }}
                   onClick={() => bagFilesInputRef.current?.click()}
-                  className={`group h-full min-h-[310px] border-2 border-dashed rounded-[32px] p-8 lg:p-12 text-center cursor-pointer transition-all duration-300 flex flex-col items-center justify-center space-y-5 bg-white shadow-sm hover:shadow-md ${
-                    isDraggingBagFiles
-                      ? 'border-blue-600 bg-blue-50/50 scale-[0.99] ring-4 ring-blue-100'
-                      : 'border-gray-200 hover:border-blue-400 hover:bg-blue-50/20'
-                  }`}
+                  className={`group h-full min-h-[310px] border-2 border-dashed rounded-[32px] p-8 lg:p-12 text-center cursor-pointer transition-all duration-300 flex flex-col items-center justify-center space-y-5 bg-white shadow-sm hover:shadow-md ${isDraggingBagFiles
+                    ? 'border-blue-600 bg-blue-50/50 scale-[0.99] ring-4 ring-blue-100'
+                    : 'border-gray-200 hover:border-blue-400 hover:bg-blue-50/20'
+                    }`}
                 >
                   <div className="w-24 h-24 rounded-full bg-blue-50/80 text-blue-500 flex items-center justify-center shadow-inner group-hover:scale-110 group-hover:bg-blue-100 transition-all duration-300">
                     <UploadCloud size={46} strokeWidth={1.5} className="group-hover:animate-pulse" />
@@ -1256,19 +1307,17 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                           <div
                             key={info.id}
                             onClick={() => togglePaymentMethod(idStr)}
-                            className={`p-4 rounded-2xl border-2 cursor-pointer flex items-center justify-between transition-all ${
-                              isSelected
-                                ? 'border-blue-600 bg-white shadow-sm'
-                                : 'border-gray-100 bg-gray-50 hover:border-gray-200'
-                            }`}
+                            className={`p-4 rounded-2xl border-2 cursor-pointer flex items-center justify-between transition-all ${isSelected
+                              ? 'border-blue-600 bg-white shadow-sm'
+                              : 'border-gray-100 bg-gray-50 hover:border-gray-200'
+                              }`}
                           >
                             <div className="flex items-center gap-3">
                               <div
-                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                  isSelected
-                                    ? 'border-blue-600 bg-blue-600 text-white'
-                                    : 'border-gray-300'
-                                }`}
+                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSelected
+                                  ? 'border-blue-600 bg-blue-600 text-white'
+                                  : 'border-gray-300'
+                                  }`}
                               >
                                 {isSelected && (
                                   <div className="w-2 h-2 rounded-full bg-white" />
@@ -1311,11 +1360,10 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                     onClick={() =>
                       setFormData({ ...formData, downloadPolicy: 'unlimited' })
                     }
-                    className={`p-4 rounded-2xl border-2 cursor-pointer flex items-center justify-between transition-all ${
-                      (formData.downloadPolicy || 'unlimited') === 'unlimited'
-                        ? 'border-blue-600 bg-blue-50/30 shadow-sm'
-                        : 'border-gray-100 bg-gray-50 hover:border-gray-200'
-                    }`}
+                    className={`p-4 rounded-2xl border-2 cursor-pointer flex items-center justify-between transition-all ${(formData.downloadPolicy || 'unlimited') === 'unlimited'
+                      ? 'border-blue-600 bg-blue-50/30 shadow-sm'
+                      : 'border-gray-100 bg-gray-50 hover:border-gray-200'
+                      }`}
                   >
                     <div className="space-y-1">
                       <h4 className="text-sm font-black text-gray-900">
@@ -1326,11 +1374,10 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                       </p>
                     </div>
                     <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                        (formData.downloadPolicy || 'unlimited') === 'unlimited'
-                          ? 'border-blue-600 bg-blue-600 text-white'
-                          : 'border-gray-300'
-                      }`}
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${(formData.downloadPolicy || 'unlimited') === 'unlimited'
+                        ? 'border-blue-600 bg-blue-600 text-white'
+                        : 'border-gray-300'
+                        }`}
                     >
                       {(formData.downloadPolicy || 'unlimited') === 'unlimited' && (
                         <div className="w-2 h-2 rounded-full bg-white" />
@@ -1343,11 +1390,10 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                     onClick={() =>
                       setFormData({ ...formData, downloadPolicy: 'limited' })
                     }
-                    className={`p-4 rounded-2xl border-2 cursor-pointer flex items-center justify-between transition-all ${
-                      formData.downloadPolicy === 'limited'
-                        ? 'border-blue-600 bg-blue-50/30 shadow-sm'
-                        : 'border-gray-100 bg-gray-50 hover:border-gray-200'
-                    }`}
+                    className={`p-4 rounded-2xl border-2 cursor-pointer flex items-center justify-between transition-all ${formData.downloadPolicy === 'limited'
+                      ? 'border-blue-600 bg-blue-50/30 shadow-sm'
+                      : 'border-gray-100 bg-gray-50 hover:border-gray-200'
+                      }`}
                   >
                     <div className="space-y-1">
                       <h4 className="text-sm font-black text-gray-900">
@@ -1358,11 +1404,10 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                       </p>
                     </div>
                     <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                        formData.downloadPolicy === 'limited'
-                          ? 'border-blue-600 bg-blue-600 text-white'
-                          : 'border-gray-300'
-                      }`}
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${formData.downloadPolicy === 'limited'
+                        ? 'border-blue-600 bg-blue-600 text-white'
+                        : 'border-gray-300'
+                        }`}
                     >
                       {formData.downloadPolicy === 'limited' && (
                         <div className="w-2 h-2 rounded-full bg-white" />
@@ -1432,11 +1477,10 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                     onClick={() =>
                       setFormData({ ...formData, visibility: 'published' })
                     }
-                    className={`p-5 rounded-2xl border-2 cursor-pointer flex flex-col items-center justify-center text-center space-y-2 transition-all ${
-                      (formData.visibility || 'published') === 'published'
-                        ? 'border-blue-600 bg-white text-blue-600 shadow-sm'
-                        : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-200'
-                    }`}
+                    className={`p-5 rounded-2xl border-2 cursor-pointer flex flex-col items-center justify-center text-center space-y-2 transition-all ${(formData.visibility || 'published') === 'published'
+                      ? 'border-blue-600 bg-white text-blue-600 shadow-sm'
+                      : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-200'
+                      }`}
                   >
                     <Share2 size={24} />
                     <span className="text-sm font-black">منشور</span>
@@ -1446,11 +1490,10 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                     onClick={() =>
                       setFormData({ ...formData, visibility: 'draft' })
                     }
-                    className={`p-5 rounded-2xl border-2 cursor-pointer flex flex-col items-center justify-center text-center space-y-2 transition-all ${
-                      formData.visibility === 'draft'
-                        ? 'border-blue-600 bg-white text-blue-600 shadow-sm'
-                        : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-200'
-                    }`}
+                    className={`p-5 rounded-2xl border-2 cursor-pointer flex flex-col items-center justify-center text-center space-y-2 transition-all ${formData.visibility === 'draft'
+                      ? 'border-blue-600 bg-white text-blue-600 shadow-sm'
+                      : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-200'
+                      }`}
                   >
                     <FileText size={24} />
                     <span className="text-sm font-black">مسودة</span>
@@ -1460,11 +1503,10 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                     onClick={() =>
                       setFormData({ ...formData, visibility: 'hidden' })
                     }
-                    className={`p-5 rounded-2xl border-2 cursor-pointer flex flex-col items-center justify-center text-center space-y-2 transition-all ${
-                      formData.visibility === 'hidden'
-                        ? 'border-blue-600 bg-white text-blue-600 shadow-sm'
-                        : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-200'
-                    }`}
+                    className={`p-5 rounded-2xl border-2 cursor-pointer flex flex-col items-center justify-center text-center space-y-2 transition-all ${formData.visibility === 'hidden'
+                      ? 'border-blue-600 bg-white text-blue-600 shadow-sm'
+                      : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-200'
+                      }`}
                   >
                     <EyeOff size={24} />
                     <span className="text-sm font-black">خفي</span>
@@ -1519,6 +1561,72 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
           </button>
         )}
       </div>
+
+      {/* Add New Bag Category Modal */}
+      {showAddCategoryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn" dir="rtl">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative text-right animate-scaleUp">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+              <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                <Plus className="text-blue-600 w-5 h-5" />
+                إضافة تصنيف جديد للحقائب
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowAddCategoryModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <label className="text-xs font-black text-slate-700 block">
+                اسم التصنيف الجديد
+              </label>
+              <input
+                type="text"
+                placeholder="أدخل اسم التصنيف..."
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddCategory();
+                  }
+                }}
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-bold outline-none focus:border-blue-500 transition-all text-slate-900"
+                autoFocus
+              />
+            </div>
+
+            <div className="flex items-center gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setShowAddCategoryModal(false)}
+                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors cursor-pointer"
+              >
+                إغلاق
+              </button>
+              <button
+                type="button"
+                onClick={handleAddCategory}
+                disabled={isAddingCategory || !newCategoryName.trim()}
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl text-sm transition-colors shadow-md shadow-blue-200 disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+              >
+                {isAddingCategory ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>جاري الحفظ...</span>
+                  </>
+                ) : (
+                  <span>إضافة التصنيف</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

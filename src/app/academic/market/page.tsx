@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import {
   Package,
   ShoppingCart,
-  Wallet,
   Download,
   ChevronDown,
   Plus,
@@ -98,9 +97,8 @@ export default function MarketPage() {
   const handlePreviewBag = (bag: BagItem) => router.push(`/academic/market/${bag.id}`);
 
   const totalBagsCount = bags.length;
-  const totalSalesCount = totalBagsCount > 0 ? 6540 : 0;
-  const totalProfits = totalBagsCount > 0 ? 3640 : 0;
-  const totalDownloads = totalBagsCount > 0 ? 41 : 0;
+  const totalSalesCount = bags.reduce((sum, b) => sum + (Number((b as any).count_sales || (b as any).sales_count) || 0), 0);
+  const totalDownloads = bags.reduce((sum, b) => sum + (Number((b as any).count_download || (b as any).downloads_count) || 0), 0);
 
   return (
     <div className="space-y-10" dir="rtl">
@@ -114,18 +112,7 @@ export default function MarketPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all min-h-[130px]">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-gray-400">العدد الكلي</span>
-            <div className="w-12 h-12 rounded-2xl bg-blue-100/70 text-blue-600 flex items-center justify-center flex-shrink-0"><Package size={22} /></div>
-          </div>
-          <div className="space-y-1 pt-2">
-            <span className="text-3xl font-black text-gray-900 block">{loading ? '...' : totalBagsCount}</span>
-            <span className="text-xs font-bold text-gray-500 block">إجمالي عدد الحقائب</span>
-          </div>
-        </div>
-
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all min-h-[130px]">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-gray-400">المبيعات</span>
@@ -139,12 +126,12 @@ export default function MarketPage() {
 
         <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all min-h-[130px]">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-gray-400">الأرباح</span>
-            <div className="w-12 h-12 rounded-2xl bg-emerald-100/70 text-emerald-600 flex items-center justify-center flex-shrink-0"><Wallet size={22} /></div>
+            <span className="text-xs font-bold text-gray-400">العدد الكلي</span>
+            <div className="w-12 h-12 rounded-2xl bg-blue-100/70 text-blue-600 flex items-center justify-center flex-shrink-0"><Package size={22} /></div>
           </div>
           <div className="space-y-1 pt-2">
-            <span className="text-3xl font-black text-gray-900 block">{totalProfits > 0 ? totalProfits.toLocaleString('ar-EG') : 0}</span>
-            <span className="text-xs font-bold text-gray-500 block">إجمالي ارباح الحقائب</span>
+            <span className="text-3xl font-black text-gray-900 block">{loading ? '...' : totalBagsCount}</span>
+            <span className="text-xs font-bold text-gray-500 block">إجمالي عدد الحقائب</span>
           </div>
         </div>
 
@@ -154,7 +141,7 @@ export default function MarketPage() {
             <div className="w-12 h-12 rounded-2xl bg-orange-100/70 text-orange-500 flex items-center justify-center flex-shrink-0"><Download size={22} /></div>
           </div>
           <div className="space-y-1 pt-2">
-            <span className="text-3xl font-black text-gray-900 block">{totalDownloads}</span>
+            <span className="text-3xl font-black text-gray-900 block">{totalDownloads > 0 ? totalDownloads.toLocaleString('ar-EG') : 0}</span>
             <span className="text-xs font-bold text-gray-500 block">إجمالي عدد تحميلات الحقائب</span>
           </div>
         </div>

@@ -15,6 +15,7 @@ export interface BagApiItem {
   description?: string;
   image?: string;
   category_name?: string;
+  category_bag_id?: number | string;
   /** "free" | "paid" */
   type_price?: string;
   price?: number | string;
@@ -48,12 +49,14 @@ export interface CreateBagPayload {
   /** Array of File objects or URL strings for the bag gallery */
   gallery?: (File | string)[];
   category_name?: string;
+  category_bag_id?: number | string;
   type_price?: 'free' | 'paid' | string;
   price?: number | string;
   discount_price?: number | string;
   is_active?: number | boolean;
   count_download?: number | string | null;
-  download_type?: 'forever' | 'times' | string;
+  download_type?: 'unlimited' | 'limited' | string;
+  download_limit?: number | string | null;
   items?: BagItemInput[];
   payment_info_ids?: number[];
 }

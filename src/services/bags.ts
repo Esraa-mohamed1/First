@@ -32,6 +32,9 @@ function buildBagFormData(payload: CreateBagPayload): FormData {
   if (payload.category_name != null)
     fd.append('category_name', payload.category_name);
 
+  if (payload.category_bag_id != null)
+    fd.append('category_bag_id', String(payload.category_bag_id));
+
   if (payload.type_price != null)
     fd.append('type_price', payload.type_price);
 
@@ -46,6 +49,12 @@ function buildBagFormData(payload: CreateBagPayload): FormData {
 
   if (payload.count_download !== undefined && payload.count_download !== null)
     fd.append('count_download', String(payload.count_download));
+
+  if (payload.download_type != null)
+    fd.append('download_type', payload.download_type);
+
+  if (payload.download_limit !== undefined && payload.download_limit !== null)
+    fd.append('download_limit', String(payload.download_limit));
 
   // Main Cover Image: File object = upload binary file; string = existing URL
   if (payload.image instanceof File) {
@@ -160,6 +169,36 @@ export const deleteBag = async (id: number): Promise<void> => {
     await academyApi.delete(`bags/${id}`);
   } catch (error: any) {
     console.error(`Failed to delete bag ${id}:`, error);
+    throw error.response?.data || error;
+  }
+};
+
+export interface BagCategory {
+  id: number;
+  name: string;
+  is_active?: number | boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/** Fetch all bag categories from /category_bags */
+export const getBagCategories = async (): Promise<BagCategory[]> => {
+  try {
+    const response = await academyApi.get<ApiResponse<BagCategory[]>>('category_bags');
+    return response.data.data || [];
+  } catch (error: any) {
+    console.error('Failed to fetch bag categories:', error);
+    return [];
+  }
+};
+
+/** Create a new bag category via POST /category_bags */
+export const createBagCategory = async (name: string): Promise<BagCategory> => {
+  try {
+    const response = await academyApi.post<ApiResponse<BagCategory>>('category_bags', { name });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to create bag category:', error);
     throw error.response?.data || error;
   }
 };
