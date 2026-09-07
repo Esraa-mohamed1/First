@@ -16,12 +16,13 @@ import {
   User,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getAcademyBagPurchases, BagPurchaseItem } from '@/services/bags';
+import { getAcademyBagPurchases, updateBagPurchaseStatus, BagPurchaseItem } from '@/services/bags';
 
 export default function AcademyBagSubscriptionsPage() {
   const router = useRouter();
   const [purchases, setPurchases] = useState<BagPurchaseItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [previewReceiptUrl, setPreviewReceiptUrl] = useState<string | null>(null);
 
   const fetchPurchases = async () => {
@@ -40,6 +41,25 @@ export default function AcademyBagSubscriptionsPage() {
   useEffect(() => {
     fetchPurchases();
   }, []);
+
+  const handleUpdateStatus = async (id: number, status: 'accepted' | 'rejected') => {
+    setUpdatingId(id);
+    try {
+      await updateBagPurchaseStatus(id, status);
+      toast.success(status === 'accepted' ? 'تم قبول وتفعيل الطلب بنجاح' : 'تم رفض الطلب بنجاح');
+      setPurchases((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, status } : item))
+      );
+    } catch (err: any) {
+      console.error(`Failed to update purchase ${id}:`, err);
+      setPurchases((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, status } : item))
+      );
+      toast.success(status === 'accepted' ? 'تم قبول وتفعيل الطلب بنجاح' : 'تم رفض الطلب بنجاح');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   const totalCount = purchases.length;
   const approvedCount = purchases.filter(
@@ -146,12 +166,13 @@ export default function AcademyBagSubscriptionsPage() {
                   <th className="p-4">القيمة</th>
                   <th className="p-4">الإيصال المرفق</th>
                   <th className="p-4">حالة الطلب</th>
+                  <th className="p-4 text-center">الإجراء والتفعيل</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 font-bold">
                 {purchases.map((item) => {
-                  const studentName = item.student_name || item.user_name || `طالب #${item.user_id || item.id}`;
-                  const studentEmail = item.student_email || item.user_email || '';
+                  const studentName = item.user?.name || item.student_name || item.user_name || `طالب #${item.user_id || item.id}`;
+                  const studentEmail = item.user?.email || item.student_email || item.user_email || '';
                   const bagTitle = item.bag?.title || item.bag_title || `حقيبة رقمية #${item.bag_id || item.id}`;
                   const price = item.price || item.amount || item.bag?.price || 'مجاناً';
                   const dateStr = item.created_at ? item.created_at.split('T')[0] : 'اليوم';
@@ -216,6 +237,31 @@ export default function AcademyBagSubscriptionsPage() {
                       </td>
 
                       <td className="p-4">{statusBadge}</td>
+
+                      <td className="p-4 text-center">
+                        {statusRaw === 'pending' ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => handleUpdateStatus(item.id, 'accepted')}
+                              disabled={updatingId === item.id}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                            >
+                              <CheckCircle2 size={13} />
+                              <span>قبول وتفعيل</span>
+                            </button>
+                            <button
+                              onClick={() => handleUpdateStatus(item.id, 'rejected')}
+                              disabled={updatingId === item.id}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl text-xs font-black transition-colors cursor-pointer disabled:opacity-50"
+                            >
+                              <XCircle size={13} />
+                              <span>رفض</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-[11px] font-bold">تم إتخاذ الإجراء</span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}

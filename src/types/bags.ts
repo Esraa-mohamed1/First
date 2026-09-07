@@ -85,6 +85,12 @@ export interface BagPurchaseItem {
   user_email?: string;
   student_name?: string;
   student_email?: string;
+  user?: {
+    id?: number;
+    name?: string;
+    email?: string;
+    phone?: string;
+  };
   bag_id?: number;
   bag_title?: string;
   bag?: BagApiItem;

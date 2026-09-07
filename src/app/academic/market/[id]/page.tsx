@@ -108,21 +108,25 @@ export default function BagDetailsPage() {
             }
           }
 
-          // Fetch payment infos if available
-          try {
-            const infos = await getUserPaymentInfos();
-            if (Array.isArray(infos) && infos.length > 0) {
-              const mapped = infos.map((info: any) => ({
-                id: info.id,
-                name: info.name || info.receiver_account?.name || 'وسيلة دفع',
-                logo: info.logo || info.receiver_account?.logo || '',
-                account_number: info.account_number || info.receiver_account?.account_number || '',
-              }));
-              setPaymentMethods(mapped);
-              if (mapped.length > 0) setSelectedPaymentMethod(mapped[0].id);
-            }
-          } catch (err) {
-            console.error('Failed to load payment methods:', err);
+          // Load payment methods directly from bag response (payment_infos)
+          if (Array.isArray(bagData.payment_infos) && bagData.payment_infos.length > 0) {
+            const mapped = bagData.payment_infos.map((info: any, idx: number) => ({
+              id: info.id || info.payment_info_id || (idx + 1),
+              name: info.name || info.account_name || info.payment_info?.name || info.receiver_account?.name || `وسيلة دفع #${idx + 1}`,
+              logo: info.logo || info.payment_info?.logo || info.receiver_account?.logo || '',
+              account_number: info.value || info.account_number || info.payment_info?.account_number || info.receiver_account?.account_number || '',
+            }));
+            setPaymentMethods(mapped);
+            if (mapped.length > 0) setSelectedPaymentMethod(mapped[0].id);
+          } else if (Array.isArray(bagData.payment_info_ids) && bagData.payment_info_ids.length > 0) {
+            const mapped = bagData.payment_info_ids.map((id: any, idx: number) => ({
+              id: Number(id),
+              name: `وسيلة دفع #${idx + 1}`,
+              logo: '',
+              account_number: '',
+            }));
+            setPaymentMethods(mapped);
+            if (mapped.length > 0) setSelectedPaymentMethod(mapped[0].id);
           }
         }
       } catch (err) {

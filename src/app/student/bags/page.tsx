@@ -229,13 +229,23 @@ export default function StudentBagsPage() {
                       <td className="p-4">{statusBadge}</td>
 
                       <td className="p-4 text-center">
-                        <Link
-                          href={`/bags/${targetBagId}`}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-xs transition-colors"
-                        >
-                          <span>فتح الحقيبة</span>
-                          <ExternalLink size={13} />
-                        </Link>
+                        {statusRaw === 'accepted' || statusRaw === 'approved' ? (
+                          <Link
+                            href={`/bags/${targetBagId}`}
+                            className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-xs transition-colors"
+                          >
+                            <span>فتح وتحميل الحقيبة</span>
+                            <ExternalLink size={13} />
+                          </Link>
+                        ) : statusRaw === 'rejected' ? (
+                          <span className="inline-block px-3 py-1 rounded-xl bg-red-50 text-red-600 border border-red-200 text-xs font-bold">
+                            الطلب مرفوض
+                          </span>
+                        ) : (
+                          <span className="inline-block px-3 py-1 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold">
+                            في انتظار الموافقة
+                          </span>
+                        )}
                       </td>
                     </tr>
                   );

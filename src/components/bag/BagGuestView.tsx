@@ -100,12 +100,24 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
       });
       setIsProcessingPurchase(false);
       setPurchaseSuccess(true);
-      toast.success('تم إرسال إيصال الدفع وطلب شراء الحقيبة بنجاح!');
+      toast.success(isFree ? 'تم الحصول على الحقيبة بنجاح!' : 'تم تقديم طلب شراء الحقيبة بنجاح!');
     } catch (err: any) {
       console.error('Failed to submit bag purchase:', err);
       setIsProcessingPurchase(false);
-      setPurchaseSuccess(true);
-      toast.success('تم تسجيل طلب شراء الحقيبة بنجاح!');
+      setPurchaseSuccess(false);
+
+      let errorMsg = 'حدث خطأ أثناء تقديم طلب الشراء. يرجى التأكد من البيانات والمحاولة مجدداً.';
+      if (err?.errors) {
+        const firstVal = Object.values(err.errors)[0];
+        if (Array.isArray(firstVal) && firstVal.length > 0) {
+          errorMsg = String(firstVal[0]);
+        } else if (typeof firstVal === 'string') {
+          errorMsg = firstVal;
+        }
+      } else if (err?.message) {
+        errorMsg = String(err.message);
+      }
+      toast.error(errorMsg);
     }
   };
 
@@ -137,20 +149,25 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
             }
           }
 
-          try {
-            const infos = await getUserPaymentInfos();
-            if (Array.isArray(infos) && infos.length > 0) {
-              const mapped = infos.map((info: any) => ({
-                id: info.id,
-                name: info.name || info.receiver_account?.name || 'وسيلة دفع',
-                logo: info.logo || info.receiver_account?.logo || '',
-                account_number: info.account_number || info.receiver_account?.account_number || '',
-              }));
-              setPaymentMethods(mapped);
-              if (mapped.length > 0) setSelectedPaymentMethod(mapped[0].id);
-            }
-          } catch (err) {
-            console.error('Failed to load payment methods:', err);
+          // Load payment methods directly from bag response (payment_infos)
+          if (Array.isArray(bagData.payment_infos) && bagData.payment_infos.length > 0) {
+            const mapped = bagData.payment_infos.map((info: any, idx: number) => ({
+              id: info.id || info.payment_info_id || (idx + 1),
+              name: info.name || info.account_name || info.payment_info?.name || info.receiver_account?.name || `وسيلة دفع #${idx + 1}`,
+              logo: info.logo || info.payment_info?.logo || info.receiver_account?.logo || '',
+              account_number: info.value || info.account_number || info.payment_info?.account_number || info.receiver_account?.account_number || '',
+            }));
+            setPaymentMethods(mapped);
+            if (mapped.length > 0) setSelectedPaymentMethod(mapped[0].id);
+          } else if (Array.isArray(bagData.payment_info_ids) && bagData.payment_info_ids.length > 0) {
+            const mapped = bagData.payment_info_ids.map((id: any, idx: number) => ({
+              id: Number(id),
+              name: `وسيلة دفع #${idx + 1}`,
+              logo: '',
+              account_number: '',
+            }));
+            setPaymentMethods(mapped);
+            if (mapped.length > 0) setSelectedPaymentMethod(mapped[0].id);
           }
         } else {
           setNotFoundState(true);
@@ -623,13 +640,17 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                     <CheckCircle2 size={48} />
                   </div>
                   <div className="space-y-2">
-                    <h3 className="text-2xl font-black text-gray-900">تمت عملية الشراء بنجاح!</h3>
-                    <p className="text-sm font-medium text-gray-500 max-w-xs mx-auto">
-                      مبروك! تم إضافة حقيبة "{bag.title}" إلى حسابك ويمكنك الآن الوصول لجميع محتوياتها وتنزيلها.
+                    <h3 className="text-2xl font-black text-gray-900">
+                      {isFree ? 'تمت عملية الشراء بنجاح!' : 'تم تقديم طلب شراء الحقيبة بنجاح!'}
+                    </h3>
+                    <p className="text-sm font-medium text-gray-600 max-w-sm mx-auto leading-relaxed">
+                      {isFree
+                        ? `مبروك! تم إضافة حقيبة "${bag.title}" إلى حسابك ويمكنك الآن الوصول لجميع محتوياتها وتنزيلها.`
+                        : `تم إرسال إيصال التحويل بنجاح. طلبك حالياً قيد المراجعة والتدقيق من قبل الأكاديمية، ويمكنك متابعة حالة الطلب وتأكيد التفعيل من صفحة اشتراكات ومشتريات الحقائب.`}
                     </p>
                   </div>
 
-                  {itemsList.length > 0 && (
+                  {isFree && itemsList.length > 0 && (
                     <div className="space-y-2 text-right pt-2 border-t border-gray-100">
                       <span className="text-xs font-black text-gray-600 block">ملفات الحقيبة الجاهزة للتنزيل:</span>
                       {itemsList.map((item, idx) => (
@@ -647,15 +668,30 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                     </div>
                   )}
 
-                  <button
-                    onClick={() => {
-                      setShowBuyModal(false);
-                      setPurchaseSuccess(false);
-                    }}
-                    className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm shadow-md transition-all mt-4 cursor-pointer"
-                  >
-                    إغلاق المودال
-                  </button>
+                  <div className="space-y-2 pt-2">
+                    {!isFree && (
+                      <button
+                        onClick={() => {
+                          setShowBuyModal(false);
+                          setPurchaseSuccess(false);
+                          router.push('/student/bags');
+                        }}
+                        className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <span>متابعة حالة الطلب في حسابي</span>
+                        <ArrowRight size={16} />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setShowBuyModal(false);
+                        setPurchaseSuccess(false);
+                      }}
+                      className="w-full py-3.5 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-black text-sm transition-all cursor-pointer"
+                    >
+                      إغلاق المودال
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <>

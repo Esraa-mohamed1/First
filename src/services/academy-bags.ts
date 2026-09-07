@@ -211,3 +211,27 @@ export const getAcademyBagPurchases = async (): Promise<BagPurchaseItem[]> => {
     }
   }
 };
+
+/** Update status of a bag purchase in academy dashboard (approve/accept or reject) */
+export const updateBagPurchaseStatus = async (
+  id: number | string,
+  status: 'accepted' | 'approved' | 'rejected' | string,
+  rejection_reason?: string
+): Promise<any> => {
+  try {
+    let response;
+    try {
+      response = await academyApi.post(`bag_purchases/${id}/status`, { status, rejection_reason });
+    } catch (e1) {
+      try {
+        response = await academyApi.post(`bag_purchases/${id}`, { _method: 'PUT', status, rejection_reason });
+      } catch (e2) {
+        response = await academyApi.put(`bag_purchases/${id}`, { status, rejection_reason });
+      }
+    }
+    return response.data?.data || response.data;
+  } catch (error: any) {
+    console.error(`Failed to update status for bag purchase ${id}:`, error);
+    throw error.response?.data || error;
+  }
+};
