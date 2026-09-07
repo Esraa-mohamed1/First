@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import BagPreviewCard from './BagPreviewCard';
 import { BagItem, BagFormState } from '@/types/market';
+import toast from 'react-hot-toast';
 
 interface CreateBagModalProps {
   /** Controls modal visibility */
@@ -90,6 +91,17 @@ export default function CreateBagModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.title?.trim()) {
+      toast.error('عنوان الحقيبة مطلوب');
+      setCurrentStep(1);
+      return;
+    }
+    if (!formData.isFree && (!formData.paymentMethods || formData.paymentMethods.length === 0)) {
+      toast.error('يرجى تحديد وسيلة دفع واحدة على الأقل للحقيبة المدفوعة');
+      setCurrentStep(3);
+      return;
+    }
+
     onSave({
       title: formData.title,
       description: formData.description,

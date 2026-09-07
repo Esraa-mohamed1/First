@@ -138,7 +138,9 @@ export default function BagDetailsPage() {
 
   const handleShare = () => {
     if (typeof window !== 'undefined') {
-      navigator.clipboard.writeText(window.location.href);
+      const shareSlug = (bag as any)?.slug || bag?.id || bagId;
+      const shareUrl = `${window.location.origin}/bags/${shareSlug}`;
+      navigator.clipboard.writeText(shareUrl);
       toast.success('تم نسخ رابط الحقيبة بنجاح!');
     }
   };

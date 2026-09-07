@@ -274,6 +274,9 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
           }
           setBagPhotos(loadedPhotos);
 
+          const countDl = apiBag.count_download != null ? Number(apiBag.count_download) : null;
+          const isLimited = countDl !== null && countDl > 0;
+
           setFormData({
             title: apiBag.title || '',
             description: apiBag.description || apiBag.short_description || '',
@@ -284,8 +287,8 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
             price: Number(apiBag.price) || 0,
             discountPrice: Number(apiBag.discount_price) || 0,
             paymentMethods: (apiBag.payment_info_ids || []).map(String),
-            downloadPolicy: 'unlimited',
-            downloadLimit: 0,
+            downloadPolicy: isLimited ? 'limited' : 'unlimited',
+            downloadLimit: isLimited ? (countDl || 0) : 0,
             downloadExpiry: 'never',
             visibility: apiBag.is_active === 1 ? 'published' : 'draft',
             selectedCourseIds: Array.isArray(apiBag.items) ? apiBag.items : [],
@@ -403,14 +406,20 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
       return;
     }
 
+    // Build valid payment_info_ids — only numeric IDs from instructor_receiver_accounts.
+    const validPaymentIds = safePaymentMethods
+      .map((s) => Number(s))
+      .filter((n) => !isNaN(n) && n > 0);
+
+    // Require at least one payment method if bag is paid
+    if (!formData.isFree && validPaymentIds.length === 0) {
+      toast.error('يرجى تحديد وسيلة دفع واحدة على الأقل للحقيبة المدفوعة');
+      setCurrentStep(3);
+      return;
+    }
+
     setIsSaving(true);
     try {
-      // Build valid payment_info_ids — only numeric IDs from instructor_receiver_accounts.
-      // Empty array is omitted entirely; sending invalid IDs causes backend 422 errors.
-      const validPaymentIds = safePaymentMethods
-        .map((s) => Number(s))
-        .filter((n) => !isNaN(n) && n > 0);
-
       // Build items array combining uploaded files and selected courses
       const fileItemsPayload: BagItemInput[] = uploadedBagFiles.map((f) => {
         if (f.file) {
@@ -444,6 +453,9 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
         })
         .filter((x): x is File | string => x !== null);
 
+      // Download policy keys (times vs. forever)
+      const countDownloadPayload = formData.downloadPolicy === 'limited' ? (Number(formData.downloadLimit) || 0) : 0;
+
       const payload = {
         title: formData.title.trim(),
         short_description: formData.description || undefined,
@@ -453,6 +465,8 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
         price: formData.isFree ? undefined : formData.price,
         discount_price: formData.isFree ? undefined : (formData.discountPrice || undefined),
         is_active: formData.visibility === 'published' ? 1 : 0,
+        count_download: countDownloadPayload,
+        download_type: formData.downloadPolicy === 'limited' ? 'times' : 'forever',
         // Only include payment_info_ids when non-empty (omitting avoids backend 422)
         payment_info_ids: validPaymentIds.length > 0 ? validPaymentIds : undefined,
         // Include items array with type and file for each selected course/file
