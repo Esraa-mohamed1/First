@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, notFound } from 'next/navigation';
 import {
-  ArrowRight, ShoppingCart, Download, Share2, Bookmark, Star, CheckCircle2, BookOpen, Clock, ShieldCheck, CreditCard, FileText, Layers, Loader2, Check, Video, X,
+  ArrowRight, ShoppingCart, Download, Share2, Bookmark, Star, CheckCircle2, BookOpen, Clock, ShieldCheck, CreditCard, FileText, Layers, Loader2, Check, Video, X, Clipboard,
   FileCode,
   FileType,
   ExternalLink,
@@ -60,6 +60,7 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
 
   const [isSaved, setIsSaved] = useState(false);
   const [showBuyModal, setShowBuyModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<number | null>(null);
   const [isProcessingPurchase, setIsProcessingPurchase] = useState(false);
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
@@ -121,22 +122,35 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
     loadBagData();
   }, [bagId]);
 
+  const getBagShareUrl = () => {
+    if (typeof window === 'undefined') return '';
+    const shareSlug = (bag as any)?.slug || bag?.id || bagId;
+    return `${window.location.origin}/bags/${shareSlug}`;
+  };
+
   const handleShare = () => {
     if (typeof window !== 'undefined') {
-      const shareUrl = window.location.href;
+      const shareUrl = getBagShareUrl();
       if (navigator.share) {
         navigator.share({
           title: bag?.title || 'حقيبة رقمية',
           text: bag?.description || '',
           url: shareUrl,
         }).catch(() => {
-          navigator.clipboard.writeText(shareUrl);
-          toast.success('تم نسخ رابط الحقيبة بنجاح!');
+          setShowShareModal(true);
         });
       } else {
-        navigator.clipboard.writeText(shareUrl);
-        toast.success('تم نسخ رابط الحقيبة بنجاح!');
+        setShowShareModal(true);
       }
+    }
+  };
+
+  const copyToClipboard = () => {
+    if (typeof window !== 'undefined') {
+      const shareUrl = getBagShareUrl();
+      navigator.clipboard.writeText(shareUrl);
+      toast.success('تم نسخ رابط الحقيبة بنجاح!');
+      setShowShareModal(false);
     }
   };
 
@@ -686,6 +700,108 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                   </button>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Modal Dialog */}
+      {showShareModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn" dir="rtl">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative text-right animate-scaleUp">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+              <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                <Share2 className="text-blue-600 w-5 h-5" />
+                مشاركة الحقيبة التعليمية
+              </h3>
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="text-slate-500 text-xs mb-6 text-right">اختر المنصة لمشاركة رابط الحقيبة مباشرة أو انسخ الرابط المباشر:</p>
+
+            {/* Social Share Buttons Grid */}
+            {(() => {
+              const fullUrl = getBagShareUrl();
+              const encodedUrl = encodeURIComponent(fullUrl);
+              const encodedText = encodeURIComponent(bag?.title || 'حقيبة تعليمية');
+
+              return (
+                <div className="grid grid-cols-4 gap-3 mb-6">
+                  {/* WhatsApp */}
+                  <a
+                    href={`https://api.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-all text-xs font-bold border border-emerald-100"
+                  >
+                    <span className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm">W</span>
+                    <span>واتساب</span>
+                  </a>
+
+                  {/* Telegram */}
+                  <a
+                    href={`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-sky-50 hover:bg-sky-100 text-sky-700 transition-all text-xs font-bold border border-sky-100"
+                  >
+                    <span className="w-8 h-8 rounded-full bg-sky-500 text-white flex items-center justify-center font-bold text-sm">T</span>
+                    <span>تلجرام</span>
+                  </a>
+
+                  {/* Facebook */}
+                  <a
+                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-700 transition-all text-xs font-bold border border-blue-100"
+                  >
+                    <span className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">F</span>
+                    <span>فيسبوك</span>
+                  </a>
+
+                  {/* Twitter / X */}
+                  <a
+                    href={`https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-all text-xs font-bold border border-slate-200"
+                  >
+                    <span className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs">X</span>
+                    <span>تويتر</span>
+                  </a>
+                </div>
+              );
+            })()}
+
+            <div className="flex items-center gap-2 bg-[#f3f4f5] p-3 rounded-2xl border border-slate-100 mb-6">
+              <button
+                onClick={copyToClipboard}
+                className="p-2 bg-white text-blue-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm flex items-center justify-center cursor-pointer"
+                title="نسخ الرابط"
+              >
+                <Clipboard size={18} />
+              </button>
+              <input
+                type="text"
+                readOnly
+                value={getBagShareUrl()}
+                className="bg-transparent border-none focus:ring-0 text-xs text-left w-full outline-none font-mono text-slate-600 select-all"
+              />
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors cursor-pointer"
+              >
+                إغلاق
+              </button>
             </div>
           </div>
         </div>

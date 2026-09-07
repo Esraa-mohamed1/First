@@ -9,3 +9,4 @@ export default function RootSlugCoursePage() {
 
   return <CourseGuestView slug={slug} />;
 }
+
