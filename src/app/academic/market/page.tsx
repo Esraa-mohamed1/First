@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import {
   Package,
   ShoppingCart,
-  Wallet,
   Download,
   ChevronDown,
   Plus,
@@ -20,7 +19,7 @@ import withReactContent from 'sweetalert2-react-content';
 import toast from 'react-hot-toast';
 import BagCard from '@/components/Academic/Market/BagCard';
 import { BagItem } from '@/types/market';
-import { getBags, deleteBag, BagApiItem } from '@/services/bags';
+import { getAcademyBags, deleteBag, BagApiItem } from '@/services/bags';
 
 const MySwal = withReactContent(Swal);
 
@@ -40,7 +39,7 @@ function adaptApiBagToLocal(apiBag: BagApiItem): BagItem {
     isFree: apiBag.type_price === 'free',
     paymentMethods: (apiBag.payment_info_ids || []).map(String),
     downloadPolicy: 'unlimited',
-    visibility: apiBag.is_active === 1 ? 'published' : 'draft',
+    visibility: (apiBag.is_active === 1 || apiBag.is_active === true || apiBag.status === 'published' || apiBag.status === 'active') ? 'published' : 'draft',
     createdAt: apiBag.created_at?.split('T')[0] || '',
   };
 }
@@ -53,7 +52,7 @@ export default function MarketPage() {
   const fetchBagsFromApi = useCallback(async () => {
     setLoading(true);
     try {
-      const apiBags = await getBags();
+      const apiBags = await getAcademyBags();
       setBags(apiBags.map(adaptApiBagToLocal));
     } catch (err) {
       console.error('Failed to load bags:', err);
@@ -98,34 +97,25 @@ export default function MarketPage() {
   const handlePreviewBag = (bag: BagItem) => router.push(`/academic/market/${bag.id}`);
 
   const totalBagsCount = bags.length;
-  const totalSalesCount = totalBagsCount > 0 ? 6540 : 0;
-  const totalProfits = totalBagsCount > 0 ? 3640 : 0;
-  const totalDownloads = totalBagsCount > 0 ? 41 : 0;
+  const totalSalesCount = bags.reduce((sum, b) => sum + (Number((b as any).count_sales || (b as any).sales_count) || 0), 0);
+  const totalDownloads = bags.reduce((sum, b) => sum + (Number((b as any).count_download || (b as any).downloads_count) || 0), 0);
 
   return (
     <div className="space-y-10" dir="rtl">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h2 className="text-3xl font-black text-gray-900 tracking-tight">متجر الحقائب</h2>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-3 bg-white border border-gray-100 px-6 py-3.5 rounded-2xl text-sm font-black text-gray-600 shadow-sm hover:bg-gray-50 transition-all">
-            <ChevronDown size={18} className="text-gray-400" />
-            <span>التاريخ</span>
+          <button
+            onClick={() => router.push('/academic/market/subscriptions')}
+            className="flex items-center gap-2 bg-purple-50 hover:bg-purple-100 border border-purple-100 px-5 py-3.5 rounded-2xl text-sm font-black text-purple-700 shadow-sm transition-all cursor-pointer"
+          >
+            <ShoppingCart size={18} />
+            <span>طلبات شراء الحقائب</span>
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all min-h-[130px]">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-gray-400">العدد الكلي</span>
-            <div className="w-12 h-12 rounded-2xl bg-blue-100/70 text-blue-600 flex items-center justify-center flex-shrink-0"><Package size={22} /></div>
-          </div>
-          <div className="space-y-1 pt-2">
-            <span className="text-3xl font-black text-gray-900 block">{loading ? '...' : totalBagsCount}</span>
-            <span className="text-xs font-bold text-gray-500 block">إجمالي عدد الحقائب</span>
-          </div>
-        </div>
-
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all min-h-[130px]">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-gray-400">المبيعات</span>
@@ -139,12 +129,12 @@ export default function MarketPage() {
 
         <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all min-h-[130px]">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-gray-400">الأرباح</span>
-            <div className="w-12 h-12 rounded-2xl bg-emerald-100/70 text-emerald-600 flex items-center justify-center flex-shrink-0"><Wallet size={22} /></div>
+            <span className="text-xs font-bold text-gray-400">العدد الكلي</span>
+            <div className="w-12 h-12 rounded-2xl bg-blue-100/70 text-blue-600 flex items-center justify-center flex-shrink-0"><Package size={22} /></div>
           </div>
           <div className="space-y-1 pt-2">
-            <span className="text-3xl font-black text-gray-900 block">{totalProfits > 0 ? totalProfits.toLocaleString('ar-EG') : 0}</span>
-            <span className="text-xs font-bold text-gray-500 block">إجمالي ارباح الحقائب</span>
+            <span className="text-3xl font-black text-gray-900 block">{loading ? '...' : totalBagsCount}</span>
+            <span className="text-xs font-bold text-gray-500 block">إجمالي عدد الحقائب</span>
           </div>
         </div>
 
@@ -154,7 +144,7 @@ export default function MarketPage() {
             <div className="w-12 h-12 rounded-2xl bg-orange-100/70 text-orange-500 flex items-center justify-center flex-shrink-0"><Download size={22} /></div>
           </div>
           <div className="space-y-1 pt-2">
-            <span className="text-3xl font-black text-gray-900 block">{totalDownloads}</span>
+            <span className="text-3xl font-black text-gray-900 block">{totalDownloads > 0 ? totalDownloads.toLocaleString('ar-EG') : 0}</span>
             <span className="text-xs font-bold text-gray-500 block">إجمالي عدد تحميلات الحقائب</span>
           </div>
         </div>

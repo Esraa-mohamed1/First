@@ -31,22 +31,20 @@ interface CreateBagModalProps {
 }
 
 const initialFormState: BagFormState = {
-  title: 'Tailwind CSS Mastery',
-  description:
-    'هي لغة تنسيق المواقع التي تجعل الصفحات جميلة CSS ومنظمة وتحكم في ألوانها وأشكالها وتخطيطها بشكل مرن.',
-  coverImage:
-    'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80',
-  category: 'برمجة وتطوير',
-  instructorName: 'أحمد محمد',
+  title: '',
+  description: '',
+  coverImage: '',
+  category: 'عام',
+  instructorName: '',
   isFree: false,
   price: 0,
   discountPrice: 0,
-  paymentMethods: ['instapay'],
+  paymentMethods: [],
   downloadPolicy: 'unlimited',
   downloadLimit: 0,
   downloadExpiry: 'never',
   visibility: 'published',
-  selectedCourseIds: [1, 2],
+  selectedCourseIds: [],
 };
 
 /**
@@ -107,6 +105,7 @@ export default function CreateBagModal({
       description: formData.description,
       coverImage: formData.coverImage,
       category: formData.category,
+      category_bag_id: (formData as any).category_bag_id,
       instructorName: formData.instructorName,
       isFree: formData.isFree,
       price: Number(formData.price),

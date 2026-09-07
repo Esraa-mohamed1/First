@@ -639,7 +639,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, courseTit
                           <div className="text-right flex items-center gap-2">
                             {uploadStatus === 'creating' && 'جاري تحضير الخوادم...'}
                             {uploadStatus === 'uploading' && (activeLessonType === 'video' ? 'جاري رفع الفيديو للشبكة السحابية' : 'جاري رفع الملف')}
-                            {uploadStatus === 'processing' && 'جاري معالجة وتشفير الفيديو...'}
+                            {uploadStatus === 'processing' && (activeLessonType === 'video' ? 'جاري معالجة الفيديو...' : 'جاري معالجة الملف')}
                             {uploadStatus === 'ready' && (activeLessonType === 'video' ? 'الفيديو جاهز للمشاهدة' : 'الملف جاهز')}
                             {uploadStatus === 'error' && <span className="text-red-500">حدث خطأ أثناء الرفع</span>}
                           </div>
@@ -657,11 +657,6 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, courseTit
                         </div>
                       </div>
                     )}
-                  </div>
-                )}
-                {uploadStatus === 'processing' && processingStatus !== null && (
-                  <div className="text-right text-sm font-bold text-blue-600 bg-blue-50 p-3 rounded-xl">
-                    تشفير البيانات: {processingStatus}%
                   </div>
                 )}
 

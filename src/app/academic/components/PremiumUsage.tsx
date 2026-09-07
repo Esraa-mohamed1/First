@@ -64,12 +64,6 @@ export const PremiumUsage = ({
       {/* Content (Collapsible) */}
       {isPremiumExpanded && (
         <div className="space-y-4 sm:space-y-6 pt-4 sm:pt-5 border-t border-gray-100 animate-in fade-in duration-300">
-          <div className="text-right">
-            <p className="text-[10px] sm:text-xs font-black text-gray-500">
-              تاريخ التجديد القادم : <span className="text-gray-900 font-bold">12 يناير 2024</span>
-            </p>
-          </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             
             {/* Students Usage */}

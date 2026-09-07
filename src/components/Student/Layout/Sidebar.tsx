@@ -13,7 +13,8 @@ import {
   LogOut,
   Library,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  Package,
 } from 'lucide-react';
 import { clearUserSessionAndCache } from '@/lib/auth-storage';
 
@@ -21,13 +22,14 @@ const sidebarGroups = [
   {
     title: 'القائمة الرئيسية',
     items: [
-      { name: 'لوحة التحكم', href: '/student', icon: LayoutDashboard },
+      { name: 'لوحة التحكم', href: '/', icon: LayoutDashboard },
     ]
   },
   {
     title: 'التعليم',
     items: [
       { name: 'دوراتي', href: '/student/courses', icon: BookOpen },
+      { name: 'حقائبي الرقمية', href: '/student/bags', icon: Package },
       { name: 'طلبات الشراء والاشتراك', href: '/student/requests', icon: Trophy },
     ]
   },
@@ -59,7 +61,7 @@ export const StudentSidebar = () => {
   return (
     <aside className={`${isCollapsed ? 'w-24' : 'w-72'} bg-white border-l border-gray-200/60 flex flex-col h-screen sticky top-0 z-50 overflow-y-auto hidden lg:flex transition-all duration-300 relative`}>
       {/* Collapse Toggle Button */}
-      <button 
+      <button
         onClick={() => setIsCollapsed(!isCollapsed)}
         className="absolute -left-3 top-10 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm z-[60] hover:bg-gray-50 transition-colors"
       >
@@ -109,7 +111,7 @@ export const StudentSidebar = () => {
                     className={`transition-colors duration-300 shrink-0 ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`}
                   />
                   {!isCollapsed && <span className="text-sm truncate">{item.name}</span>}
-                  
+
                   {isCollapsed && (
                     <div className="absolute left-full mr-2 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[100]">
                       {item.name}
@@ -137,7 +139,7 @@ export const StudentSidebar = () => {
             )}
           </div>
           {!isCollapsed && (
-            <button 
+            <button
               onClick={handleLogout}
               className="w-full bg-white border border-gray-100 text-red-500 text-xs font-bold py-2.5 rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all flex items-center justify-center gap-2"
             >
@@ -146,7 +148,7 @@ export const StudentSidebar = () => {
             </button>
           )}
           {isCollapsed && (
-            <button 
+            <button
               onClick={handleLogout}
               className="mt-2 w-10 h-10 bg-white border border-gray-100 text-red-500 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all flex items-center justify-center"
               title="تسجيل الخروج"

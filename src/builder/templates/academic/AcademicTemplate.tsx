@@ -292,8 +292,7 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
   let courses: any = null;
   if (courseNode || realCourses.length > 0) {
     const cp = courseNode ? parseProps(courseNode.props) : {};
-    const rawCourseItems = parseItems(cp.items || courseNode?.items || cp.courses);
-    const coursesList = realCourses.length > 0 ? realCourses : rawCourseItems;
+    const coursesList = realCourses;
     courses = {
       ...cp,
       title: cp.title ?? fallback.courses.title,

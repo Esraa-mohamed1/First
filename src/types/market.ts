@@ -16,6 +16,7 @@ export interface BagItem {
   description: string;
   coverImage: string;
   category: string;
+  category_bag_id?: number | string;
   instructorName: string;
   courseCount: number; // e.g. 20 فيديو وملف or 20 دورة
   rating: number; // e.g. 4.9
@@ -37,6 +38,7 @@ export interface BagFormState {
   description: string;
   coverImage: string;
   category: string;
+  category_bag_id?: number | string;
   instructorName: string;
   isFree: boolean;
   price: number;

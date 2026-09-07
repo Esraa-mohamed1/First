@@ -75,9 +75,7 @@ export default function BagsPage() {
       setLoading(true);
       try {
         const data = await getBags();
-        // filter active bags
-        const activeBags = (data || []).filter((b) => b.is_active === 1 || b.is_active === true);
-        setBags(activeBags);
+        setBags(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error('Failed to fetch bags:', err);
         toast.error('حدث خطأ أثناء تحميل الحقائب التعليمية.');
