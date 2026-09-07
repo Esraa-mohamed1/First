@@ -499,6 +499,14 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                 </li>
                 <li className="flex items-center gap-2.5">
                   <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
+                  <span>
+                    {bag.count_download != null && Number(bag.count_download) > 0
+                      ? `عدد التحميلات المتاحة: ${bag.count_download} مرات`
+                      : 'تحميل غير محدود وتنزيل دائم (مدى الحياة)'}
+                  </span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
                   <span>دعم فني وتواصل مباشر مع المدرب</span>
                 </li>
               </ul>

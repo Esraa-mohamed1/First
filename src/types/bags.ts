@@ -52,6 +52,8 @@ export interface CreateBagPayload {
   price?: number | string;
   discount_price?: number | string;
   is_active?: number | boolean;
+  count_download?: number | string | null;
+  download_type?: 'forever' | 'times' | string;
   items?: BagItemInput[];
   payment_info_ids?: number[];
 }

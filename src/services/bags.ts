@@ -44,6 +44,9 @@ function buildBagFormData(payload: CreateBagPayload): FormData {
   if (payload.is_active != null)
     fd.append('is_active', String(payload.is_active));
 
+  if (payload.count_download !== undefined && payload.count_download !== null)
+    fd.append('count_download', String(payload.count_download));
+
   // Main Cover Image: File object = upload binary file; string = existing URL
   if (payload.image instanceof File) {
     fd.append('image', payload.image);
