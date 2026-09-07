@@ -13,6 +13,9 @@ export default function UpgradePackagesPage() {
   const [loading, setLoading] = useState(true);
   const [submittingId, setSubmittingId] = useState<number | null>(null);
   const [userEmail, setUserEmail] = useState<string>('');
+  const [paymentProof, setPaymentProof] = useState<File | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -23,7 +26,7 @@ export default function UpgradePackagesPage() {
           getProfileStatus()
         ]);
         setPackages(packagesData);
-        
+
         // Extract email from profile
         const email = profileData?.data?.email || profileData?.email || '';
         setUserEmail(email);
@@ -35,24 +38,11 @@ export default function UpgradePackagesPage() {
     };
     fetchData();
   }, []);
-
-  const handleSelectPackage = async (pkg: Package) => {
-    setSubmittingId(pkg.id);
-    try {
-      const paymentLink = await subscribeToPackage(pkg.id, userEmail);
-      if (paymentLink) {
-        window.location.href = paymentLink;
-      } else {
-        toast.error('لم يتم العثور على رابط الدفع');
-      }
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || 'فشل الانتقال لعملية الدفع');
-    } finally {
-      setSubmittingId(null);
-    }
+  const handleSelectPackage = (pkg: Package) => {
+    setSelectedPackage(pkg);
+    setPaymentProof(null);
+    setShowPaymentModal(true);
   };
-
   const getFeatureInfo = (feature: any) => {
     const rawLable = feature.lable || feature.label || feature.name || feature.title;
     let labelName = rawLable && typeof rawLable === 'string' && rawLable.trim() !== '' ? rawLable.trim() : null;
@@ -115,7 +105,7 @@ export default function UpgradePackagesPage() {
 
   const getPackageFeaturesList = (pkg: any) => {
     const rawFeatures = pkg.package_features || pkg.packageFeatures || pkg.features || [];
-    
+
     if (Array.isArray(rawFeatures) && rawFeatures.length > 0) {
       return rawFeatures.map((feat: any) => getFeatureInfo(feat));
     }
@@ -124,7 +114,7 @@ export default function UpgradePackagesPage() {
     if (pkg.max_students) fallbackList.push({ label: 'عدد الطلاب', value: `${pkg.max_students}`, isNegative: false });
     if (pkg.max_courses) fallbackList.push({ label: 'عدد الدورات', value: `${pkg.max_courses}`, isNegative: false });
     if (pkg.video_hours) fallbackList.push({ label: 'ساعات الفيديو', value: `${pkg.video_hours} ساعة`, isNegative: false });
-    
+
     return fallbackList;
   };
 
@@ -151,7 +141,7 @@ export default function UpgradePackagesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <button 
+          <button
             onClick={() => router.back()}
             className="flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors font-bold mb-4"
           >
@@ -173,13 +163,12 @@ export default function UpgradePackagesPage() {
           const priceNum = Number(pkg.price || 0);
 
           return (
-            <div 
-              key={pkg.id} 
-              className={`rounded-[2.5rem] p-7 md:p-9 transition-all flex flex-col justify-between h-full relative ${
-                isRecommended 
-                  ? 'bg-white border-2 border-blue-600 shadow-2xl shadow-blue-500/15 scale-[1.02] z-10' 
-                  : 'bg-white border border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg'
-              }`}
+            <div
+              key={pkg.id}
+              className={`rounded-[2.5rem] p-7 md:p-9 transition-all flex flex-col justify-between h-full relative ${isRecommended
+                ? 'bg-white border-2 border-blue-600 shadow-2xl shadow-blue-500/15 scale-[1.02] z-10'
+                : 'bg-white border border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg'
+                }`}
             >
               {isRecommended && (
                 <div className="absolute -top-4 right-8 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-black px-4 py-1.5 rounded-full shadow-md flex items-center gap-1.5">
@@ -227,8 +216,8 @@ export default function UpgradePackagesPage() {
                 <div className="space-y-3 mb-8">
                   <p className="text-xs font-black text-gray-400 uppercase tracking-wider mb-4">مميزات الباقة:</p>
                   {featuresList.map((feat: any, idx: number) => (
-                    <div 
-                      key={idx} 
+                    <div
+                      key={idx}
                       className="flex items-center justify-between gap-3 text-xs md:text-sm py-2 border-b border-gray-100/60 last:border-0"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -241,11 +230,10 @@ export default function UpgradePackagesPage() {
                       </div>
 
                       {feat.value && (
-                        <span className={`text-xs font-black px-2.5 py-1 rounded-xl shrink-0 ${
-                          feat.isNegative 
-                            ? 'bg-gray-100 text-gray-400' 
-                            : 'bg-blue-50 text-blue-700 border border-blue-100/50'
-                        }`}>
+                        <span className={`text-xs font-black px-2.5 py-1 rounded-xl shrink-0 ${feat.isNegative
+                          ? 'bg-gray-100 text-gray-400'
+                          : 'bg-blue-50 text-blue-700 border border-blue-100/50'
+                          }`}>
                           {feat.value}
                         </span>
                       )}
@@ -259,14 +247,13 @@ export default function UpgradePackagesPage() {
               </div>
 
               {/* Action Button */}
-              <button 
+              <button
                 onClick={() => handleSelectPackage(pkg)}
                 disabled={submittingId === pkg.id}
-                className={`w-full py-4 rounded-2xl font-black text-base transition-all flex items-center justify-center gap-2 mt-auto shadow-md ${
-                  isRecommended 
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-500/20' 
-                    : 'bg-gray-900 hover:bg-gray-800 text-white shadow-gray-900/10'
-                } disabled:opacity-70 disabled:cursor-not-allowed`}
+                className={`w-full py-4 rounded-2xl font-black text-base transition-all flex items-center justify-center gap-2 mt-auto shadow-md ${isRecommended
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-500/20'
+                  : 'bg-gray-900 hover:bg-gray-800 text-white shadow-gray-900/10'
+                  } disabled:opacity-70 disabled:cursor-not-allowed`}
               >
                 {submittingId === pkg.id ? (
                   <>
@@ -281,7 +268,103 @@ export default function UpgradePackagesPage() {
           );
         })}
       </div>
+      {/* Payment Proof Modal */}
+      {showPaymentModal && selectedPackage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
+
+            <h2 className="text-xl font-black text-gray-900 mb-2">
+              ترقية الباقة
+            </h2>
+
+            <p className="text-sm text-gray-500 mb-6">
+              ارفع إيصال الدفع للباقة:
+              <span className="font-bold text-gray-900 mr-1">
+                {(selectedPackage as any).titile ||
+                  (selectedPackage as any).title ||
+                  'الباقة المختارة'}
+              </span>
+            </p>
+
+            <div className="mb-5">
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                إيصال الدفع
+              </label>
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  setPaymentProof(file);
+                }}
+                className="w-full border border-gray-200 rounded-xl p-3 text-sm"
+              />
+
+              {paymentProof && (
+                <p className="mt-2 text-sm text-emerald-600 font-bold">
+                  تم اختيار: {paymentProof.name}
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPaymentModal(false);
+                  setPaymentProof(null);
+                  setSelectedPackage(null);
+                }}
+                className="flex-1 rounded-xl border border-gray-200 py-3 font-bold text-gray-600"
+              >
+                إلغاء
+              </button>
+
+              <button
+                type="button"
+                disabled={!paymentProof || submittingId !== null}
+                onClick={async () => {
+                  if (!paymentProof || !selectedPackage) return;
+
+                  setSubmittingId(selectedPackage.id);
+
+                  try {
+                    const paymentLink = await subscribeToPackage(
+                      selectedPackage.id,
+                      userEmail,
+                      paymentProof
+                    );
+
+                    if (paymentLink) {
+                      window.location.href = paymentLink;
+                    } else {
+                      toast.error('لم يتم العثور على رابط الدفع');
+                    }
+                  } catch (err: any) {
+                    console.error(err);
+                    toast.error(
+                      err.message || 'فشل الانتقال لعملية الدفع'
+                    );
+                  } finally {
+                    setSubmittingId(null);
+                  }
+                }}
+                className="flex-1 rounded-xl bg-blue-600 py-3 font-bold text-white disabled:opacity-50"
+              >
+                {submittingId === selectedPackage.id
+                  ? 'جاري الإرسال...'
+                  : 'تأكيد الترقية'}
+              </button>
+
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
+
 
