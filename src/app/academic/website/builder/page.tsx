@@ -32,6 +32,7 @@ import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { getProfileStatus } from '@/services/auth';
+import { getStoredUserRole, isSchoolTeacherRole } from '@/lib/auth-storage';
 import { getPages, getSections, saveSections, createPage, updatePage, apiToEditor, editorToApi } from '@/services/pages';
 import { syncHomepageCache } from '@/lib/homepage-cache';
 import { getAcademicHtml, renderVideoPlayer } from '@/builder/templates/academic/academicHtml';
@@ -758,6 +759,7 @@ export default function PageBuilderPage() {
 
   // --- Core States ---
   const [currentRole, setCurrentRole] = useState<'schoolcoach' | 'coach' | 'academy'>('academy');
+  const [roleReady, setRoleReady] = useState<boolean>(false);
   const [activeTemplateId, setActiveTemplateId] = useState<string>('template_1');
   const [activePageId, setActivePageId] = useState<string | null>(null);
   const [deviceMode, setDeviceMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
@@ -1427,26 +1429,42 @@ export default function PageBuilderPage() {
   useEffect(() => {
     async function loadUserRole() {
       try {
-        const profile = await getProfileStatus();
+        const paramRole = searchParams?.get('role');
+        const profile = await getProfileStatus().catch(() => null);
         const userData = profile?.data || profile;
-        if (userData && userData.role) {
-          const roleStr = userData.role.toLowerCase().trim();
-          if (roleStr === 'schoolteacher' || roleStr === 'school_teacher' || roleStr === 'schoolcoach') {
+        const rawRole =
+          paramRole ||
+          userData?.type ||
+          userData?.account_type ||
+          userData?.user_type ||
+          (userData?.role !== 'admin' && userData?.role !== 'الادمن' ? userData?.role : null) ||
+          userData?.user_role ||
+          userData?.registration_role ||
+          userData?.user?.type ||
+          userData?.user?.account_type ||
+          getStoredUserRole();
+
+        if (rawRole || userData) {
+          if (isSchoolTeacherRole(rawRole) || isSchoolTeacherRole(userData)) {
             setCurrentRole('schoolcoach');
-          } else if (roleStr === 'coach' || roleStr === 'instructor' || roleStr === 'teacher') {
-            setCurrentRole('coach');
           } else {
-            setCurrentRole('academy');
+            const roleStr = String(rawRole || '').toLowerCase().trim();
+            if (roleStr === 'coach' || roleStr === 'instructor' || roleStr === 'teacher') {
+              setCurrentRole('coach');
+            } else if (roleStr === 'academic' || roleStr === 'academy' || roleStr === 'organization' || roleStr) {
+              setCurrentRole('academy');
+            }
           }
         }
       } catch (err) {
         console.warn('Failed to load user profile, falling back to default role: academy', err);
       } finally {
-        setLoading(false);
+        // Signal that the role is now resolved; loadPageData controls the loading spinner
+        setRoleReady(true);
       }
     }
     loadUserRole();
-  }, []);
+  }, [searchParams]);
 
   // --- Listen to selection messages from preview iframe ---
   useEffect(() => {
@@ -1472,6 +1490,8 @@ export default function PageBuilderPage() {
 
   // --- Load page and sections from Database ---
   useEffect(() => {
+    // Wait until loadUserRole has resolved the actual role before fetching page data
+    if (!roleReady) return;
     async function loadPageData() {
       if (!currentRole) return;
       setLoading(true);
@@ -1730,7 +1750,7 @@ export default function PageBuilderPage() {
     }
 
     loadPageData();
-  }, [currentRole, activeTemplateId, templateIdParam]);
+  }, [currentRole, activeTemplateId, templateIdParam, roleReady]);
 
   // --- Navigation & Action Handlers ---
   const handleGoBack = () => {

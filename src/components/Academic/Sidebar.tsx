@@ -69,6 +69,9 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     if (pathname.startsWith('/academic/courses')) {
       setExpandedItems(prev => (prev.includes('الدورات') ? prev : [...prev, 'الدورات']));
     }
+    if (pathname.startsWith('/academic/market') || pathname.startsWith('/academic/bag-purchases')) {
+      setExpandedItems(prev => (prev.includes('المتجر') ? prev : [...prev, 'المتجر']));
+    }
     if (pathname.startsWith('/academic/settings')) {
       setExpandedItems(prev => (prev.includes('الأعدادات') ? prev : [...prev, 'الأعدادات']));
     }
@@ -115,6 +118,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       label: 'المتجر',
       icon: ShoppingBag,
       href: '/academic/market',
+      subItems: [
+        { label: 'الحقائب', href: '/academic/market' },
+        { label: 'اشتراكات ومشتريات الحقائب', href: '/academic/market/subscriptions' },
+      ],
     },
     {
       label: 'الطلاب',

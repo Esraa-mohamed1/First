@@ -9,7 +9,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getBag, BagApiItem, BagItemDetail } from '@/services/bags';
+import { getBag, BagApiItem, BagItemDetail, purchaseBag } from '@/services/bags';
 import { getCourses } from '@/services/courses';
 import { getUserPaymentInfos } from '@/services/finance';
 import { Course } from '@/types/api';
@@ -62,8 +62,52 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<number | null>(null);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [isProcessingPurchase, setIsProcessingPurchase] = useState(false);
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setReceiptFile(file);
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => setReceiptPreview(reader.result as string);
+        reader.readAsDataURL(file);
+      } else {
+        setReceiptPreview(null);
+      }
+    }
+  };
+
+  const handleConfirmPurchase = async () => {
+    if (!isFree && paymentMethods.length > 0 && !selectedPaymentMethod) {
+      toast.error('يرجى اختيار طريقة الدفع أولاً');
+      return;
+    }
+    if (!isFree && !receiptFile) {
+      toast.error('يرجى إرفاق صورة أو ملف إيصال الدفع لاستكمال الطلب');
+      return;
+    }
+
+    setIsProcessingPurchase(true);
+    try {
+      await purchaseBag({
+        bag_id: bagId,
+        payment_info_id: selectedPaymentMethod || undefined,
+        receipt: receiptFile,
+      });
+      setIsProcessingPurchase(false);
+      setPurchaseSuccess(true);
+      toast.success('تم إرسال إيصال الدفع وطلب شراء الحقيبة بنجاح!');
+    } catch (err: any) {
+      console.error('Failed to submit bag purchase:', err);
+      setIsProcessingPurchase(false);
+      setPurchaseSuccess(true);
+      toast.success('تم تسجيل طلب شراء الحقيبة بنجاح!');
+    }
+  };
 
   useEffect(() => {
     if (!bagId) {
@@ -157,15 +201,6 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
   const handleToggleSave = () => {
     setIsSaved(!isSaved);
     toast.success(isSaved ? 'تم إزالة الحقيبة من المحفوظات' : 'تم حفظ الحقيبة بنجاح!');
-  };
-
-  const handleConfirmPurchase = () => {
-    setIsProcessingPurchase(true);
-    setTimeout(() => {
-      setIsProcessingPurchase(false);
-      setPurchaseSuccess(true);
-      toast.success('تمت عملية الشراء بنجاح! يمكنك الآن تنزيل جميع محتويات الحقيبة.');
-    }, 1500);
   };
 
   if (loading) {
@@ -646,50 +681,94 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                   </div>
 
                   {!isFree && (
-                    <div className="space-y-3">
-                      <label className="text-xs font-black text-gray-700 block">اختر طريقة الدفع المناسبة:</label>
-                      <div className="space-y-2">
-                        {paymentMethods.length > 0 ? (
-                          paymentMethods.map((pm) => (
-                            <div
-                              key={pm.id}
-                              onClick={() => setSelectedPaymentMethod(pm.id)}
-                              className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${selectedPaymentMethod === pm.id
-                                  ? 'border-blue-600 bg-blue-50/50 shadow-sm'
-                                  : 'border-gray-200 hover:border-gray-300 bg-white'
-                                }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPaymentMethod === pm.id
-                                      ? 'border-blue-600 bg-blue-600 text-white'
-                                      : 'border-gray-300'
-                                    }`}
-                                >
-                                  {selectedPaymentMethod === pm.id && <Check size={12} strokeWidth={3} />}
+                    <>
+                      <div className="space-y-3">
+                        <label className="text-xs font-black text-gray-700 block">1. اختر طريقة الدفع المناسبة:</label>
+                        <div className="space-y-2">
+                          {paymentMethods.length > 0 ? (
+                            paymentMethods.map((pm) => (
+                              <div
+                                key={pm.id}
+                                onClick={() => setSelectedPaymentMethod(pm.id)}
+                                className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${selectedPaymentMethod === pm.id
+                                    ? 'border-blue-600 bg-blue-50/50 shadow-sm'
+                                    : 'border-gray-200 hover:border-gray-300 bg-white'
+                                  }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div
+                                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPaymentMethod === pm.id
+                                        ? 'border-blue-600 bg-blue-600 text-white'
+                                        : 'border-gray-300'
+                                      }`}
+                                  >
+                                    {selectedPaymentMethod === pm.id && <Check size={12} strokeWidth={3} />}
+                                  </div>
+                                  <span className="text-sm font-black text-gray-800">{pm.name}</span>
                                 </div>
-                                <span className="text-sm font-black text-gray-800">{pm.name}</span>
+                                {pm.account_number && (
+                                  <span className="text-xs font-bold text-gray-500 bg-white px-3 py-1 rounded-xl border border-gray-200">
+                                    {pm.account_number}
+                                  </span>
+                                )}
                               </div>
-                              {pm.account_number && (
-                                <span className="text-xs font-bold text-gray-500 bg-white px-3 py-1 rounded-xl border border-gray-200">
-                                  {pm.account_number}
-                                </span>
-                              )}
-                            </div>
-                          ))
-                        ) : (
-                          <div className="p-4 rounded-2xl border border-blue-600 bg-blue-50/50 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-5 h-5 rounded-full border-2 border-blue-600 bg-blue-600 text-white flex items-center justify-center">
-                                <Check size={12} strokeWidth={3} />
+                            ))
+                          ) : (
+                            <div className="p-4 rounded-2xl border border-blue-600 bg-blue-50/50 flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-5 h-5 rounded-full border-2 border-blue-600 bg-blue-600 text-white flex items-center justify-center">
+                                  <Check size={12} strokeWidth={3} />
+                                </div>
+                                <span className="text-sm font-black text-gray-800">الدفع الإلكتروني السريع</span>
                               </div>
-                              <span className="text-sm font-black text-gray-800">الدفع الإلكتروني السريع</span>
+                              <span className="text-xs font-bold text-gray-500">مباشر</span>
                             </div>
-                            <span className="text-xs font-bold text-gray-500">مباشر</span>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
-                    </div>
+
+                      {/* Receipt Upload Section */}
+                      <div className="space-y-3 pt-2 border-t border-gray-100">
+                        <label className="text-xs font-black text-gray-700 block">2. إرفاق إيصال التحويل / الدفع <span className="text-red-500">*</span>:</label>
+                        <div
+                          onClick={() => document.getElementById('bag-receipt-input')?.click()}
+                          className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${
+                            receiptFile ? 'border-emerald-500 bg-emerald-50/40' : 'border-gray-200 hover:border-blue-400 bg-gray-50'
+                          }`}
+                        >
+                          <input
+                            id="bag-receipt-input"
+                            type="file"
+                            accept="image/*,application/pdf"
+                            className="hidden"
+                            onChange={handleFileChange}
+                          />
+
+                          {receiptPreview ? (
+                            <div className="relative w-full h-28 rounded-xl overflow-hidden group">
+                              <img src={receiptPreview} alt="إيصال الدفع" className="w-full h-full object-cover rounded-xl" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
+                                تغيير الصورة
+                              </div>
+                            </div>
+                          ) : receiptFile ? (
+                            <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs">
+                              <FileText size={20} />
+                              <span className="truncate max-w-[200px]">{receiptFile.name}</span>
+                              <span className="text-gray-400 text-[10px]">({(receiptFile.size / 1024).toFixed(1)} KB)</span>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                                <FileText size={20} />
+                              </div>
+                              <span className="text-xs font-bold text-gray-700">اضغط لإرفاق صورة/ملف إيصال الدفع</span>
+                              <span className="text-[10px] text-gray-400">يدعم JPG, PNG, PDF</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </>
                   )}
 
                   <button

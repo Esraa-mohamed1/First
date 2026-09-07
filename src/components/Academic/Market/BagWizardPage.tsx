@@ -36,7 +36,7 @@ import BagPreviewCard from './BagPreviewCard';
 import { BagFormState } from '@/types/market';
 import { getCourses, getCategories } from '@/services/courses';
 import { getUserPaymentInfos } from '@/services/finance';
-import { createBag, updateBag, getBag, getBagCategories, createBagCategory, BagCategory, BagApiItem, BagItemInput } from '@/services/bags';
+import { createBag, updateBag, getAcademyBag, getBagCategories, createBagCategory, BagCategory, BagApiItem, BagItemInput } from '@/services/bags';
 import { Course } from '@/types/api';
 
 interface BagWizardPageProps {
@@ -44,48 +44,7 @@ interface BagWizardPageProps {
   editBagId?: number;
 }
 
-const mockAvailableCourses = [
-  {
-    id: 1,
-    title: 'كورس Tailwind CSS Mastery الكامل',
-    category: 'برمجة وتطوير',
-    instructor: 'أحمد محمد',
-    lessonCount: 20,
-    price: 199,
-  },
-  {
-    id: 2,
-    title: 'دورة JavaScript 2025 التفاعلية',
-    category: 'برمجة وتطوير',
-    instructor: 'أحمد محمد',
-    lessonCount: 20,
-    price: 299,
-  },
-  {
-    id: 3,
-    title: 'دورة React 2025 المتقدمة وبناء المشاريع',
-    category: 'تصميم الواجهات',
-    instructor: 'أحمد محمد',
-    lessonCount: 20,
-    price: 349,
-  },
-  {
-    id: 4,
-    title: 'أساسيات تصميم واجهات وتجربة المستخدم UI/UX',
-    category: 'تصميم الواجهات',
-    instructor: 'سارة أحمد',
-    lessonCount: 15,
-    price: 150,
-  },
-  {
-    id: 5,
-    title: 'دورة Node.js وبناء الأبي أي API الاحترافية',
-    category: 'برمجة وتطوير',
-    instructor: 'محمود علي',
-    lessonCount: 25,
-    price: 250,
-  },
-];
+
 
 const initialFormState: BagFormState = {
   title: '',
@@ -234,19 +193,12 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
   const [isDraggingBagFiles, setIsDraggingBagFiles] = useState(false);
 
   // Step 2 Courses State
-  const [availableCourses, setAvailableCourses] = useState<any[]>(mockAvailableCourses);
+  const [availableCourses, setAvailableCourses] = useState<any[]>([]);
   const [courseSearch, setCourseSearch] = useState<string>('');
   const [loadingCourses, setLoadingCourses] = useState<boolean>(false);
 
   // Categories from category_bags API (for Step 1 dropdown)
-  const [bagCategoriesList, setBagCategoriesList] = useState<BagCategory[]>([
-    { id: 1, name: 'برمجة وتطوير' },
-    { id: 2, name: 'تصميم الواجهات' },
-    { id: 3, name: 'ذكاء اصطناعي' },
-    { id: 4, name: 'تسويق' },
-    { id: 5, name: 'ريادة أعمال' },
-    { id: 6, name: 'عام' },
-  ]);
+  const [bagCategoriesList, setBagCategoriesList] = useState<BagCategory[]>([]);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isAddingCategory, setIsAddingCategory] = useState(false);
@@ -280,7 +232,7 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
   useEffect(() => {
     /* ── Edit mode: load bag data from API ── */
     if (editBagId) {
-      getBag(editBagId).then((apiBag: BagApiItem | null) => {
+      getAcademyBag(editBagId).then((apiBag: BagApiItem | null) => {
         if (apiBag) {
           const loadedPhotos: BagPhotoItem[] = [];
           if (apiBag.image) {

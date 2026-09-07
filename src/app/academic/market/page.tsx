@@ -19,7 +19,7 @@ import withReactContent from 'sweetalert2-react-content';
 import toast from 'react-hot-toast';
 import BagCard from '@/components/Academic/Market/BagCard';
 import { BagItem } from '@/types/market';
-import { getBags, deleteBag, BagApiItem } from '@/services/bags';
+import { getAcademyBags, deleteBag, BagApiItem } from '@/services/bags';
 
 const MySwal = withReactContent(Swal);
 
@@ -39,7 +39,7 @@ function adaptApiBagToLocal(apiBag: BagApiItem): BagItem {
     isFree: apiBag.type_price === 'free',
     paymentMethods: (apiBag.payment_info_ids || []).map(String),
     downloadPolicy: 'unlimited',
-    visibility: apiBag.is_active === 1 ? 'published' : 'draft',
+    visibility: (apiBag.is_active === 1 || apiBag.is_active === true || apiBag.status === 'published' || apiBag.status === 'active') ? 'published' : 'draft',
     createdAt: apiBag.created_at?.split('T')[0] || '',
   };
 }
@@ -52,7 +52,7 @@ export default function MarketPage() {
   const fetchBagsFromApi = useCallback(async () => {
     setLoading(true);
     try {
-      const apiBags = await getBags();
+      const apiBags = await getAcademyBags();
       setBags(apiBags.map(adaptApiBagToLocal));
     } catch (err) {
       console.error('Failed to load bags:', err);
@@ -105,9 +105,12 @@ export default function MarketPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h2 className="text-3xl font-black text-gray-900 tracking-tight">متجر الحقائب</h2>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-3 bg-white border border-gray-100 px-6 py-3.5 rounded-2xl text-sm font-black text-gray-600 shadow-sm hover:bg-gray-50 transition-all">
-            <ChevronDown size={18} className="text-gray-400" />
-            <span>التاريخ</span>
+          <button
+            onClick={() => router.push('/academic/market/subscriptions')}
+            className="flex items-center gap-2 bg-purple-50 hover:bg-purple-100 border border-purple-100 px-5 py-3.5 rounded-2xl text-sm font-black text-purple-700 shadow-sm transition-all cursor-pointer"
+          >
+            <ShoppingCart size={18} />
+            <span>طلبات شراء الحقائب</span>
           </button>
         </div>
       </div>

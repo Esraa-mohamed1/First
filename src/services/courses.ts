@@ -75,30 +75,15 @@ export const getCourses = async (userId?: number, userRole?: string, type?: stri
       url += `?${queryString}`;
     }
 
-    // For unauthenticated guest requests (no token), use studentApi (/api/user/courses)
-    const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
-    const client = hasToken ? academyApi : studentApi;
+    // Use academyApi ONLY when userRole is explicitly 'academy'. For user/student requests, use studentApi (/api/user/courses).
+    const client = userRole === 'academy' ? academyApi : studentApi;
 
     const response = await client.get<ApiResponse<Course[]>>(url);
     const data = response.data?.data || [];
     return limit ? data.slice(0, limit) : data;
   } catch (error: any) {
-    // If academyApi fails (e.g., 401 for guests), fallback to studentApi (/api/user/courses)
-    try {
-      let url = 'courses';
-      if (type || limit) {
-        const params = new URLSearchParams();
-        if (type) params.append('type', type);
-        if (limit) params.append('limit', String(limit));
-        url += `?${params.toString()}`;
-      }
-      const fallbackRes = await studentApi.get<ApiResponse<Course[]>>(url);
-      const data = fallbackRes.data?.data || [];
-      return limit ? data.slice(0, limit) : data;
-    } catch (fallbackErr) {
-      console.error('Failed to get courses:', error);
-      return [];
-    }
+    console.error('Failed to get courses:', error);
+    return [];
   }
 };
 

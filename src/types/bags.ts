@@ -22,6 +22,8 @@ export interface BagApiItem {
   discount_price?: number | string | null;
   count_download?: number | null;
   count_view?: number | null;
+  /** "published" | "active" | "draft" */
+  status?: string;
   /** 1/true = active (published), 0/false = inactive (draft) */
   is_active?: number | boolean;
   /** Array of item objects or course IDs included in this bag */
@@ -59,4 +61,42 @@ export interface CreateBagPayload {
   download_limit?: number | string | null;
   items?: BagItemInput[];
   payment_info_ids?: number[];
+}
+
+export interface BagCategory {
+  id: number;
+  name: string;
+  is_active?: number | boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PurchaseBagPayload {
+  bag_id: number | string;
+  payment_info_id?: number | string;
+  receipt?: File | string | null;
+  notes?: string;
+}
+
+export interface BagPurchaseItem {
+  id: number;
+  user_id?: number;
+  user_name?: string;
+  user_email?: string;
+  student_name?: string;
+  student_email?: string;
+  bag_id?: number;
+  bag_title?: string;
+  bag?: BagApiItem;
+  payment_info_id?: number;
+  payment_info?: any;
+  payment_method?: any;
+  receipt?: string;
+  receipt_file?: string;
+  status?: string; // 'pending' | 'accepted' | 'approved' | 'rejected'
+  created_at?: string;
+  updated_at?: string;
+  price?: number | string;
+  amount?: number | string;
+  notes?: string;
 }

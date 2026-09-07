@@ -28,7 +28,7 @@ import {
   FileType,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getBag, BagApiItem, BagItemDetail } from '@/services/bags';
+import { getAcademyBag, BagApiItem, BagItemDetail } from '@/services/bags';
 import { getCourses } from '@/services/courses';
 import { getUserPaymentInfos } from '@/services/finance';
 import { Course } from '@/types/api';
@@ -89,7 +89,7 @@ export default function BagDetailsPage() {
     const loadBagData = async () => {
       setLoading(true);
       try {
-        const bagData = await getBag(bagId);
+        const bagData = await getAcademyBag(bagId);
         if (bagData) {
           setBag(bagData);
           if (bagData.image) setActiveImage(bagData.image);
