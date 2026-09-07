@@ -17,19 +17,44 @@ export const getPackages = async (): Promise<Package[]> => {
     return [];
   }
 };
-export const subscribeToPackage = async (packageId: number, email?: string): Promise<string> => {
+export const subscribeToPackage = async (
+  packageId: number,
+  email: string | undefined,
+  paymentProof: File
+): Promise<string> => {
   try {
-    const response = await api.post<ApiResponse<any>>('create-link-payment', {
-      package_id: packageId,
-      email: email
-    });
-    // Handle response formats for paymentLink
+    const formData = new FormData();
+
+    formData.append('package_id', String(packageId));
+
+    if (email) {
+      formData.append('email', email);
+    }
+
+    formData.append('payment_proof', paymentProof, paymentProof.name);
+
+    const response = await api.post<ApiResponse<any>>(
+      '/academy/upgrade-packages',
+      formData,
+      {
+        baseURL: 'https://api.darab.academy/api',
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+
     const data = response.data as any;
-    const paymentLink = data.paymentLink || data.data?.paymentLink || (typeof data.data === 'string' ? data.data : null);
+
+    const paymentLink =
+      data.paymentLink ||
+      data.data?.paymentLink ||
+      (typeof data.data === 'string' ? data.data : null);
 
     if (paymentLink) {
       return paymentLink;
     }
+
     throw new Error('رابط الدفع غير موجود في الرد');
   } catch (error: any) {
     console.error('Failed to subscribe to package:', error);

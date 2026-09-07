@@ -38,21 +38,7 @@ export default function DashboardPage() {
           icon={AlertCircle}
           color="orange"
         />
-        <StatCard
-          title="عدد الدورات المنشورة"
-          value="40,689"
-          trend={{ value: 2.6, isPositive: true }}
-          icon={GraduationCap}
-          color="purple"
-        />
-        <StatCard
-          title="عدد المدربين"
-          value="40,689"
-          trend={{ value: 2.6, isPositive: true }}
-          icon={Users}
-          color="orange"
-        />
-        
+
         {/* Row 2 */}
         <button className="border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center p-6 text-gray-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition-all group cursor-pointer h-full min-h-[140px]">
           <div className="w-12 h-12 rounded-full bg-gray-100 group-hover:bg-blue-100 flex items-center justify-center mb-3 transition-colors">
@@ -75,13 +61,7 @@ export default function DashboardPage() {
           icon={GraduationCap}
           color="blue"
         />
-        <StatCard
-          title="عدد الطلاب"
-          value="40,689"
-          trend={{ value: 9.2, isPositive: true }}
-          icon={GraduationCap}
-          color="red"
-        />
+
       </div>
 
       {/* Charts Section */}
@@ -95,10 +75,10 @@ export default function DashboardPage() {
         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
           <h3 className="text-lg font-black text-gray-900">آخر الأكاديميات المسجلة</h3>
           <div className="relative w-64">
-            <input 
-                type="text" 
-                placeholder="البحث" 
-                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-blue-500 transition-all"
+            <input
+              type="text"
+              placeholder="البحث"
+              className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-blue-500 transition-all"
             />
           </div>
         </div>
@@ -125,7 +105,7 @@ export default function DashboardPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">30 يوم</td>
                   <td className="px-6 py-4 whitespace-nowrap text-left">
                     <button className="text-xs font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors">
-                        عرض التفاصيل
+                      عرض التفاصيل
                     </button>
                   </td>
                 </tr>
