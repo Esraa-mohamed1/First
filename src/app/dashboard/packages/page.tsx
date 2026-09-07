@@ -1,25 +1,25 @@
 'use client';
 
 import Link from 'next/link';
-import { 
-  Plus, 
-  Edit, 
-  Search, 
-  Trash2, 
-  Loader2, 
-  Sparkles, 
-  Users, 
-  GraduationCap, 
-  BookOpen, 
-  Video, 
-  Globe, 
-  CheckCircle2, 
-  Gift, 
+import {
+  Plus,
+  Edit,
+  Search,
+  Trash2,
+  Loader2,
+  Sparkles,
+  Users,
+  GraduationCap,
+  BookOpen,
+  Video,
+  Globe,
+  CheckCircle2,
+  Gift,
   Package as PackageIcon,
   Check
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { getPackages, deletePackage, updatePackage } from '@/services/packages';
+import { getAdminPackages, deletePackage, updatePackage } from '@/services/admin-packages';
 import { Package } from '@/types/api';
 import toast from 'react-hot-toast';
 
@@ -35,7 +35,7 @@ export default function PackagesPage() {
   const fetchPackages = async () => {
     setIsLoading(true);
     try {
-      const data = await getPackages();
+      const data = await getAdminPackages();
       setPackages(data);
     } catch (error) {
       toast.error('فشل في تحميل الباقات');
@@ -229,11 +229,10 @@ export default function PackagesPage() {
                 return (
                   <div
                     key={pkg.id}
-                    className={`group relative bg-white rounded-[28px] border transition-all duration-300 flex flex-col justify-between overflow-hidden hover:-translate-y-1.5 ${
-                      isPopular
-                        ? 'border-amber-300/80 shadow-lg shadow-amber-500/5 ring-1 ring-amber-300/50 hover:shadow-2xl hover:shadow-amber-500/15'
-                        : 'border-gray-100 shadow-sm hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/10'
-                    }`}
+                    className={`group relative bg-white rounded-[28px] border transition-all duration-300 flex flex-col justify-between overflow-hidden hover:-translate-y-1.5 ${isPopular
+                      ? 'border-amber-300/80 shadow-lg shadow-amber-500/5 ring-1 ring-amber-300/50 hover:shadow-2xl hover:shadow-amber-500/15'
+                      : 'border-gray-100 shadow-sm hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/10'
+                      }`}
                   >
                     {/* Top Ribbon for Popular */}
                     {isPopular && (
@@ -247,11 +246,10 @@ export default function PackagesPage() {
                       {/* Status & Quick Toggle */}
                       <div className="flex items-center justify-between">
                         <span
-                          className={`px-3 py-1 rounded-full text-[11px] font-black inline-flex items-center gap-1.5 ${
-                            pkg.is_active === 1
-                              ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                              : 'bg-gray-100 text-gray-500 border border-gray-200'
-                          }`}
+                          className={`px-3 py-1 rounded-full text-[11px] font-black inline-flex items-center gap-1.5 ${pkg.is_active === 1
+                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                            : 'bg-gray-100 text-gray-500 border border-gray-200'
+                            }`}
                         >
                           <span className={`w-2 h-2 rounded-full ${pkg.is_active === 1 ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}></span>
                           {pkg.is_active === 1 ? 'مفعلة' : 'مخفية'}
@@ -261,25 +259,22 @@ export default function PackagesPage() {
                           type="button"
                           onClick={() => handleToggleStatus(pkg)}
                           title={pkg.is_active === 1 ? 'إخفاء الباقة' : 'تفعيل الباقة'}
-                          className={`w-11 h-6 rounded-full transition-all duration-300 relative cursor-pointer ${
-                            pkg.is_active === 1 ? 'bg-emerald-500' : 'bg-gray-200'
-                          }`}
+                          className={`w-11 h-6 rounded-full transition-all duration-300 relative cursor-pointer ${pkg.is_active === 1 ? 'bg-emerald-500' : 'bg-gray-200'
+                            }`}
                         >
                           <div
-                            className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 shadow-sm ${
-                              pkg.is_active === 1 ? 'translate-x-5' : ''
-                            }`}
+                            className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 shadow-sm ${pkg.is_active === 1 ? 'translate-x-5' : ''
+                              }`}
                           />
                         </button>
                       </div>
 
                       {/* Header Info */}
                       <div className="flex items-start gap-4">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl flex-shrink-0 transition-transform group-hover:scale-105 duration-300 shadow-sm ${
-                          isPopular 
-                            ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-amber-200'
-                            : 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-blue-200'
-                        }`}>
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl flex-shrink-0 transition-transform group-hover:scale-105 duration-300 shadow-sm ${isPopular
+                          ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-amber-200'
+                          : 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-blue-200'
+                          }`}>
                           {pkg.titile?.charAt(0) || 'ب'}
                         </div>
                         <div className="flex-1 min-w-0 text-right">

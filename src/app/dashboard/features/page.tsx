@@ -13,7 +13,7 @@ import {
     CheckCircle2,
     XCircle
 } from 'lucide-react';
-import { getFeatures, createFeature, updateFeature, deleteFeature } from '@/services/packages';
+import { getFeatures, createFeature, updateFeature, deleteFeature } from '@/services/admin-packages';
 import { Feature } from '@/types/api';
 import toast from 'react-hot-toast';
 import { twMerge } from 'tailwind-merge';
