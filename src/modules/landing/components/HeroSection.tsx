@@ -5,7 +5,9 @@ import { Play, PlayCircle, Video, Award, Clock, Users, Pen } from 'lucide-react'
 import { HeroSectionData } from '../types/landing';
 import { twMerge } from 'tailwind-merge';
 import { PaymentMethodCard } from '@/components/payment/PaymentMethodCard';
-import { colorToRgbTriplet } from '../utils/color';
+import { colorToRgbTriplet, getContrastColor } from '../utils/color';
+import { mapCoursePaymentMethods } from '@/lib/payment-methods';
+import { getLessonVideoSrc } from '@/lib/lesson-video-src';
 
 interface HeroSectionProps {
   data: HeroSectionData;
@@ -36,9 +38,15 @@ export default function HeroSection({
 }: HeroSectionProps) {
   const isTemplate1 = templateId === 'template_1' || templateId === 'Modern Course';
   
-  // Dynamic metrics
+  // Dynamic metrics & Video
   const totalLessons = course?.units?.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0) || 0;
-  const videoUrl = course?.units?.[0]?.lessons?.[0]?.video_url;
+  const firstLesson = course?.units?.[0]?.lessons?.[0];
+  const rawVideoUrl = course?.intro_video || course?.intro_video_url || course?.video_url || firstLesson?.video_url || firstLesson?.videoUrl;
+  const resolvedVideoSrc = getLessonVideoSrc(firstLesson || { video_url: rawVideoUrl }) || rawVideoUrl || '';
+  const isIframeVideo = Boolean(resolvedVideoSrc && /iframe\.mediadelivery\.net|embed|youtube\.com|vimeo\.com|player\.vimeo/i.test(resolvedVideoSrc));
+
+  const paymentMethods = mapCoursePaymentMethods(course);
+
   const instructorName = typeof course?.instructor === 'object' && course.instructor !== null
     ? course.instructor.name || 'المدرب المعتمد'
     : course?.instructor || 'المدرب المعتمد';
@@ -53,7 +61,7 @@ export default function HeroSection({
   const defaultText = isTemplate1 ? '#FBF7EE' : '#1f2937';
   
   const localBg = data.backgroundColor || defaultBg;
-  const localText = data.textColor || defaultText;
+  const localText = getContrastColor(localBg, data.textColor || defaultText, '#0F172A', '#FBF7EE');
   
   const bgRgb = colorToRgbTriplet(localBg);
   const textRgb = colorToRgbTriplet(localText);
@@ -71,6 +79,46 @@ export default function HeroSection({
   } as React.CSSProperties;
 
   const isFree = course?.price_type === 'free' || Number(course?.final_price || course?.price || 0) === 0;
+
+  const renderVideoPlayer = (posterImage?: string) => {
+    if (!resolvedVideoSrc) {
+      return (
+        <div 
+          style={{ color: `rgb(${primaryRgbTriplet})` }}
+          className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center"
+        >
+          <img src={posterImage || data.image || course?.image} alt="Course Hero Preview" className="absolute inset-0 w-full h-full object-cover opacity-45" />
+          <div 
+            style={{ backgroundColor: `rgba(${primaryRgbTriplet}, 0.2)`, borderColor: `rgb(${primaryRgbTriplet})` }}
+            className="w-20 h-20 rounded-full border flex items-center justify-center text-2xl font-bold shadow-lg z-10"
+          >
+            ▶
+          </div>
+          <span className="font-bold text-sm z-10 text-white shadow-sm">مشاهدة الإعلان الترويجي للدورة</span>
+        </div>
+      );
+    }
+
+    if (isIframeVideo) {
+      return (
+        <iframe
+          src={resolvedVideoSrc}
+          className="w-full h-full border-0"
+          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+          allowFullScreen
+        />
+      );
+    }
+
+    return (
+      <video
+        src={resolvedVideoSrc}
+        controls
+        className="w-full h-full object-cover"
+        poster={posterImage || data.image || course?.image}
+      />
+    );
+  };
 
   if (isTemplate1) {
     return (
@@ -109,13 +157,9 @@ export default function HeroSection({
           {/* Hero image / video */}
           <div
             style={{ borderColor: `rgba(${primaryRgbTriplet}, 0.6)` }}
-            className="relative aspect-video w-full rounded-2xl overflow-hidden border-2 shadow-xl"
+            className="relative aspect-video w-full rounded-2xl overflow-hidden border-2 shadow-xl bg-slate-950"
           >
-            <img src={data.image || course?.image} alt="Course" className="absolute inset-0 w-full h-full object-cover opacity-50" />
-            <div style={{ color: `rgb(${primaryRgbTriplet})` }} className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-              <div style={{ backgroundColor: `rgba(${primaryRgbTriplet}, 0.25)`, borderColor: `rgb(${primaryRgbTriplet})` }} className="w-14 h-14 rounded-full border-2 flex items-center justify-center text-xl font-bold shadow-lg">▶</div>
-              <span className="text-white text-xs font-bold drop-shadow">مشاهدة الإعلان</span>
-            </div>
+            {renderVideoPlayer()}
           </div>
 
           {/* Title */}
@@ -125,7 +169,7 @@ export default function HeroSection({
 
           {/* Description */}
           <div
-            style={{ ...bodySizeStyle, color: `rgba(${textRgb}, 0.85)` }}
+            style={{ ...bodySizeStyle, color: `rgba(${textRgb}, 0.9)` }}
             className="text-xs leading-relaxed ql-editor !p-0"
             dangerouslySetInnerHTML={{ __html: data.description || course?.description || '' }}
           />
@@ -172,44 +216,23 @@ export default function HeroSection({
 
           <div 
             style={{ borderColor: `rgba(${primaryRgbTriplet}, 0.7)`, backgroundColor: `rgba(${bgRgb}, 0.6)` }}
-            className="relative aspect-video rounded-3xl overflow-hidden border-2 shadow-2xl max-w-[800px] mx-auto mb-10"
+            className="relative aspect-video rounded-3xl overflow-hidden border-2 shadow-2xl max-w-[800px] mx-auto mb-10 bg-slate-950"
           >
-            {videoUrl ? (
-              <video
-                src={videoUrl}
-                controls
-                className="w-full h-full object-cover"
-                poster={data.image || course?.image}
-              />
-            ) : (
-              <div 
-                style={{ color: `rgb(${primaryRgbTriplet})` }}
-                className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center"
-              >
-                <img src={data.image || course?.image} alt="Course Hero Preview" className="absolute inset-0 w-full h-full object-cover opacity-45" />
-                <div 
-                  style={{ backgroundColor: `rgba(${primaryRgbTriplet}, 0.2)`, borderColor: `rgb(${primaryRgbTriplet})` }}
-                  className="w-20 h-20 rounded-full border flex items-center justify-center text-2xl font-bold shadow-lg z-10"
-                >
-                  ▶
-                </div>
-                <span className="font-bold text-sm z-10 text-white shadow-sm">مشاهدة الإعلان الترويجي للدورة</span>
-              </div>
-            )}
+            {renderVideoPlayer()}
           </div>
 
           {/* Details block overlay */}
           <div 
-            style={{ backgroundColor: '#ffffff', color: localText, borderColor: `rgba(${textRgb}, 0.15)` }}
+            style={{ backgroundColor: '#ffffff', color: '#0D3B33', borderColor: `rgba(0, 0, 0, 0.12)` }}
             className="rounded-3xl border shadow-2xl p-8 max-w-[940px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-center text-right"
           >
             <div className="md:col-span-2 space-y-4">
-              <h1 style={{ ...titleSizeStyle, color: localText || '#0D3B33' }} className="text-2xl md:text-3xl font-extrabold leading-snug">
+              <h1 style={{ ...titleSizeStyle, color: '#0D3B33' }} className="text-2xl md:text-3xl font-extrabold leading-snug">
                 {data.title || course?.title}
               </h1>
               
               <div
-                style={{ ...bodySizeStyle, color: `rgba(${textRgb}, 0.85)` }}
+                style={{ ...bodySizeStyle, color: '#334155' }}
                 className="font-medium text-sm leading-relaxed ql-editor !p-0"
                 dangerouslySetInnerHTML={{ __html: data.description || course?.description || 'برنامج عملي مكثّف، تتعلم فيه بناء المهارات خطوة بخطوة، وتطبّق على مشاريع حقيقية.' }}
               />
@@ -244,14 +267,15 @@ export default function HeroSection({
                   <div className="text-right">
                     <span className="text-slate-700 font-bold text-xs">اختر وسيلة الدفع:</span>
                   </div>
-                  {course.payment_methods && course.payment_methods.length > 0 ? (
+                  {paymentMethods.length > 0 ? (
                     <div className="grid grid-cols-2 gap-2">
-                      {course.payment_methods.map((pm: any) => (
+                      {paymentMethods.map((pm: any) => (
                         <PaymentMethodCard
                           key={pm.methodId}
                           id={pm.methodId}
                           name={pm.methodName}
                           type={pm.type}
+                          logo={pm.logo}
                           isSelected={selectedPaymentMethod?.methodId === pm.methodId}
                           onSelect={() => setSelectedPaymentMethod(pm)}
                         />
@@ -326,20 +350,12 @@ export default function HeroSection({
 
         {/* Video */}
         <div className="relative aspect-video w-full rounded-2xl overflow-hidden shadow-xl border-2 border-white bg-slate-900">
-          {videoUrl ? (
-            <video src={videoUrl} controls className="w-full h-full object-cover" poster={data.image || course?.image} />
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-white gap-3 bg-slate-950">
-              <img src={data.image || course?.image} alt="Course" className="absolute inset-0 w-full h-full object-cover opacity-50" />
-              <Video size={28} className="text-slate-400 z-10" />
-              <span className="font-bold text-xs z-10">فيديو تعريفي بالدورة</span>
-            </div>
-          )}
+          {renderVideoPlayer()}
         </div>
 
         {/* Description */}
         <div
-          style={{ ...bodySizeStyle, color: `rgba(${textRgb}, 0.72)` }}
+          style={{ ...bodySizeStyle, color: `rgba(${textRgb}, 0.85)` }}
           className="text-xs leading-relaxed ql-editor !p-0 line-clamp-4"
           dangerouslySetInnerHTML={{ __html: data.description || course?.description }}
         />
@@ -396,7 +412,7 @@ export default function HeroSection({
             </h1>
 
             <div 
-              style={{ ...bodySizeStyle, color: `rgba(${textRgb}, 0.75)` }}
+              style={{ ...bodySizeStyle, color: `rgba(${textRgb}, 0.85)` }}
               className="font-medium text-sm leading-relaxed ql-editor !p-0"
               dangerouslySetInnerHTML={{ __html: data.description || course?.description }}
             />
@@ -429,26 +445,13 @@ export default function HeroSection({
 
           <div className="w-full lg:w-[480px] shrink-0 space-y-6">
             <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-slate-900">
-              {videoUrl ? (
-                <video
-                  src={videoUrl}
-                  controls
-                  className="w-full h-full object-cover"
-                  poster={data.image || course?.image}
-                />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-white gap-4 bg-slate-950">
-                  <img src={data.image || course?.image} alt="Course Preview" className="absolute inset-0 w-full h-full object-cover opacity-50" />
-                  <Video size="32" className="text-slate-400 z-10" />
-                  <span className="font-bold text-sm z-10">فيديو تعريفي بالدورة</span>
-                </div>
-              )}
+              {renderVideoPlayer()}
             </div>
 
             {!isEditable && (
               <div 
                 style={{ backgroundColor: `rgba(${textRgb}, 0.03)`, borderColor: `rgba(${textRgb}, 0.08)` }}
-                className="border p-6 rounded-2xl flex flex-col gap-4 text-right"
+                className="border p-6 rounded-2xl flex flex-col gap-4 text-right shadow-sm"
               >
                 <div className="flex justify-between items-baseline">
                   <span className="text-xs text-slate-400 font-bold">الرسوم المطلوبة:</span>
@@ -465,14 +468,15 @@ export default function HeroSection({
                 {!isFree && !course?.is_subscribed && setSelectedPaymentMethod && (
                   <div className="space-y-2">
                     <span className="text-slate-700 font-bold text-xs">اختر وسيلة الدفع:</span>
-                    {course.payment_methods && course.payment_methods.length > 0 ? (
+                    {paymentMethods.length > 0 ? (
                       <div className="grid grid-cols-2 gap-2">
-                        {course.payment_methods.map((pm: any) => (
+                        {paymentMethods.map((pm: any) => (
                           <PaymentMethodCard
                             key={pm.methodId}
                             id={pm.methodId}
                             name={pm.methodName}
                             type={pm.type}
+                            logo={pm.logo}
                             isSelected={selectedPaymentMethod?.methodId === pm.methodId}
                             onSelect={() => setSelectedPaymentMethod(pm)}
                           />

@@ -31,12 +31,14 @@ export function useEditLesson({
   const isLive = courseType === 'online' || courseType === 'live-online';
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [isFree, setIsFree] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!lesson) return;
 
     setTitle(lesson.title || '');
+    setIsFree(lesson.is_free === true || (lesson as any).is_free === 'free' || (lesson as any).is_free === 1 || (lesson as any).is_free_preview === 'free' || (lesson as any).price_type === 'free');
     const desc = lesson.description || '';
     const match = desc.match(/<!--OFFLINE_METADATA:(.*?)-->/);
     const liveMatch = desc.match(/<!--LIVE_METADATA:(.*?)-->/);
@@ -150,7 +152,7 @@ export function useEditLesson({
         type: isLive ? 'video' : lesson!.type,
         video_id: isLive ? undefined : lesson!.video_id,
         file_url: isLive ? undefined : lesson!.file_url,
-        is_free: lesson!.is_free,
+        is_free: isFree ? 1 : 0,
         order: (lesson as any).order || 1,
         location_link: isLive ? undefined : (locationLink || undefined),
         start_date: isLive ? undefined : (startDate || undefined),
@@ -177,6 +179,8 @@ export function useEditLesson({
     setTitle,
     description,
     setDescription,
+    isFree,
+    setIsFree,
     locationLink,
     setLocationLink,
     startDate,

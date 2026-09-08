@@ -9,6 +9,7 @@ import {
 } from '../services/landing.api';
 import { useLandingStore } from '../store/landingStore';
 import { getTemplateDefaultContent } from '../constants/defaultContent';
+import { mapCoursePaymentMethods } from '@/lib/payment-methods';
 
 const DEMO_COURSE_DATA = {
   id: "demo",
@@ -222,6 +223,7 @@ export function useLandingContent(options: { courseId?: string | number; courseS
         }
 
         if (course) {
+          course.payment_methods = mapCoursePaymentMethods(course);
           setCourseData(course);
           if (landingPage) {
             setLandingPageData(landingPage);

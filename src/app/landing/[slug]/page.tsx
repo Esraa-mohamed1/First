@@ -6,6 +6,7 @@ import LandingRenderer from '@/modules/landing/renderer/LandingRenderer';
 import { PaymentMethodModal } from '@/components/payment/PaymentMethodModal';
 import { getStudentCourse } from '@/services/student-courses';
 import { useModal } from '@/context/ModalContext';
+import { mapCoursePaymentMethods } from '@/lib/payment-methods';
 
 export default function DedicatedLandingPage() {
   const params = useParams();
@@ -71,37 +72,7 @@ export default function DedicatedLandingPage() {
 
   const getMappedMethods = React.useCallback(() => {
     if (!course) return [];
-    if (course.payment_methods && course.payment_methods.length > 0) {
-      return course.payment_methods.map((pm: any) => {
-        const resolvedId = pm.id || pm.receiver_account_id || pm.methodId || pm.method_id || pm.receiver_account?.id;
-        return {
-          ...pm,
-          id: resolvedId,
-          methodId: String(resolvedId || ''),
-          receiver_account_id: resolvedId
-        };
-      });
-    }
-    if (course.receiver_accounts && course.receiver_accounts.length > 0) {
-      return course.receiver_accounts.map((acc: any) => {
-        const logoUrl = acc.logo || acc.receiver_account?.logo || '';
-        const fullLogoUrl = logoUrl && !logoUrl.startsWith('http') 
-          ? `https://api.darab.academy${logoUrl.startsWith('/') ? '' : '/'}${logoUrl}`
-          : logoUrl;
-
-        const resolvedId = acc.id || acc.receiver_account_id || acc.methodId || acc.method_id || acc.receiver_account?.id || '';
-        return {
-          id: resolvedId,
-          methodId: String(resolvedId),
-          methodName: acc.name || acc.methodName || acc.receiver_account?.name || 'حساب استقبال',
-          type: acc.type || acc.receiver_account?.key || 'mobile',
-          value: acc.value || acc.account_value || acc.account_number || '',
-          logo: fullLogoUrl,
-          receiver_account_id: resolvedId
-        };
-      });
-    }
-    return [];
+    return mapCoursePaymentMethods(course);
   }, [course]);
 
   useEffect(() => {

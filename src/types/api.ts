@@ -160,7 +160,7 @@ export interface CreateLessonPayload {
   embed_url?: string;
   order?: number;
   file_size_mb?: number;
-  is_free: boolean;
+  is_free: boolean | number;
 }
 
 export interface User {

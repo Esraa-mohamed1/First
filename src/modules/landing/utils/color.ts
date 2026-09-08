@@ -30,3 +30,36 @@ export function colorToRgbTriplet(color: string): string {
   
   return '124, 58, 237';
 }
+
+export function getColorLuminance(color: string): number {
+  if (!color) return 1;
+  const triplet = colorToRgbTriplet(color);
+  const parts = triplet.split(',').map((p) => parseInt(p.trim(), 10) || 0);
+  const r = parts[0] ?? 255;
+  const g = parts[1] ?? 255;
+  const b = parts[2] ?? 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+
+export function getContrastColor(
+  bgColor: string,
+  preferredTextColor?: string,
+  defaultDark = '#0D3B33',
+  defaultLight = '#FFFFFF'
+): string {
+  const bgLuminance = getColorLuminance(bgColor || '#FFFFFF');
+  const isBgLight = bgLuminance > 0.55;
+
+  if (preferredTextColor && preferredTextColor.trim()) {
+    const textLuminance = getColorLuminance(preferredTextColor);
+    if (isBgLight && textLuminance > 0.5) {
+      return defaultDark;
+    }
+    if (!isBgLight && textLuminance <= 0.5) {
+      return defaultLight;
+    }
+    return preferredTextColor;
+  }
+
+  return isBgLight ? defaultDark : defaultLight;
+}

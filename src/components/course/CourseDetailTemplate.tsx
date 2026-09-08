@@ -10,6 +10,7 @@ import withReactContent from 'sweetalert2-react-content';
 import { PaymentMethodCard } from '@/components/payment/PaymentMethodCard';
 import { PaymentMethodModal } from '@/components/payment/PaymentMethodModal';
 import { formatCourseAccessDuration } from '@/lib/utils';
+import { mapCoursePaymentMethods } from '@/lib/payment-methods';
 
 const MySwal = withReactContent(Swal);
 
@@ -53,6 +54,7 @@ interface CourseDetailTemplateProps {
     subscription_status?: string;
     rejection_reason?: string;
     payment_methods?: any[];
+    receiver_accounts?: any[];
     slug?: string;
     updated_at?: string;
     created_at?: string;
@@ -105,11 +107,13 @@ export default function CourseDetailTemplate({
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
+  const paymentMethods = mapCoursePaymentMethods(course);
+
   useEffect(() => {
-    if (course?.payment_methods && course.payment_methods.length > 0 && !selectedPaymentMethod) {
-      setSelectedPaymentMethod(course.payment_methods[0]);
+    if (paymentMethods.length > 0 && !selectedPaymentMethod) {
+      setSelectedPaymentMethod(paymentMethods[0]);
     }
-  }, [course?.payment_methods]);
+  }, [course]);
 
   const handleSubscribeClick = () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -295,8 +299,6 @@ export default function CourseDetailTemplate({
           </button>
         </div>
       )}
-
-
 
       {/* Back Button */}
       <div className="max-w-7xl mx-auto px-6 pt-8 w-full flex justify-start">
@@ -646,9 +648,9 @@ export default function CourseDetailTemplate({
                         <div className="text-right">
                           <span className="text-slate-900 font-black text-xs">اختر وسيلة الدفع</span>
                         </div>
-                        {course.payment_methods && course.payment_methods.length > 0 ? (
+                        {paymentMethods.length > 0 ? (
                           <div className="grid grid-cols-2 gap-2">
-                            {course.payment_methods.map((pm: any) => (
+                            {paymentMethods.map((pm: any) => (
                               <PaymentMethodCard
                                 key={pm.methodId}
                                 id={pm.methodId}
@@ -744,7 +746,7 @@ export default function CourseDetailTemplate({
         <PaymentMethodModal
           isOpen={isPaymentModalOpen}
           onClose={() => setIsPaymentModalOpen(false)}
-          methods={course.payment_methods || []}
+          methods={paymentMethods}
           initialSelectedMethod={selectedPaymentMethod}
           courseId={course.id}
           coursePrice={course.final_price || course.price}

@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { createLesson } from '@/services/courses';
+import { createLesson, createPhysicalLesson, createOnlineSession } from '@/services/courses';
 import {
   createVideoResource,
   uploadVideoFile,
@@ -22,6 +22,7 @@ export type UploadStatus = 'idle' | 'creating' | 'uploading' | 'processing' | 'r
 
 interface UseAddLessonOptions {
   unitId: number;
+  courseId?: number;
   unitName: string;
   courseTitle: string;
   instructorName: string;
@@ -32,6 +33,7 @@ interface UseAddLessonOptions {
 
 export function useAddLesson({
   unitId,
+  courseId,
   unitName,
   courseTitle,
   instructorName,
@@ -49,6 +51,7 @@ export function useAddLesson({
   // Common fields
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [isFree, setIsFree] = useState(false);
   const [lessonType, setLessonType] = useState<LessonFileType>('video');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -94,6 +97,7 @@ export function useAddLesson({
   const reset = () => {
     setTitle('');
     setDescription('');
+    setIsFree(false);
     setSelectedFile(null);
     setUploadProgress(0);
     setUploadStatus('idle');
@@ -238,16 +242,40 @@ export function useAddLesson({
       }
     }
 
-    setIsSubmitting(true);
-    try {
-      let finalVideoId = videoId;
-      let finalFileUrl: string | null = null;
+    // Capture current values for background submission
+    const targetFile = selectedFile;
+    const targetTitle = title;
+    const targetDescription = description;
+    const targetIsFree = isFree ? 1 : 0;
+    const targetLessonType = activeLessonType;
+    const targetSessionLink = sessionLink;
+    const targetSessionDateTime = sessionDateTime;
+    const targetLocationLink = locationLink;
+    const targetStartDate = startDate;
+    const targetEndDate = endDate;
+    const targetUploadFileToggle = uploadFileToggle;
 
-      if (selectedFile && needsFile) {
-        if (activeLessonType === 'video') {
-          if (uploadStatus !== 'ready') {
-            setUploadStatus('creating');
+    const finalDescription = isLive
+      ? `تفاصيل المحاضرة المباشرة:
+🔗 رابط السيشن: ${targetSessionLink || 'غير محدد'}
+📅 التاريخ والوقت: ${targetSessionDateTime || 'غير محدد'}
 
+<!--LIVE_METADATA:${JSON.stringify({ sessionLink: targetSessionLink, dateTime: targetSessionDateTime })}-->`
+      : isPhysical
+      ? `تفاصيل المحاضرة الحضورية:\n📍 الموقع: ${targetLocationLink || 'غير محدد'}\n📅 تاريخ البداية: ${targetStartDate || 'غير محدد'}\n📅 تاريخ النهاية: ${targetEndDate || 'غير محدد'}\n\n<!--OFFLINE_METADATA:${JSON.stringify({ locationLink: targetLocationLink, startDate: targetStartDate, endDate: targetEndDate })}-->`
+      : targetDescription;
+
+    if (targetFile && needsFile) {
+      // Close modal immediately and run upload in background
+      handleClose();
+      const toastId = toast.loading(`جاري بدء رفع درس "${targetTitle}" في الخلفية...`);
+
+      (async () => {
+        try {
+          let finalVideoId: string | null = null;
+          let finalFileUrl: string | null = null;
+
+          if (targetLessonType === 'video') {
             let collectionId = '';
             try {
               let tenantName = localStorage.getItem('academy_link_name');
@@ -277,68 +305,109 @@ export function useAddLesson({
               console.error('Collection handling failed, continuing without one:', err);
             }
 
-            const videoTitle = `(${courseTitle}-${unitName}-${title})`;
+            const videoTitle = `(${courseTitle}-${unitName}-${targetTitle})`;
             const guid = await createVideoResource(
               libraryId,
               bunnyApiKey,
               videoTitle,
               collectionId || undefined,
             );
-            setVideoId(guid);
             finalVideoId = guid;
 
-            setUploadStatus('uploading');
-            await uploadVideoFile(libraryId, bunnyApiKey, guid, selectedFile!, setUploadProgress);
+            await uploadVideoFile(libraryId, bunnyApiKey, guid, targetFile, (percent) => {
+              toast.loading(`جاري رفع فيديو "${targetTitle}" (${percent}%)...`, { id: toastId });
+            });
 
-            setUploadStatus('processing');
+            toast.loading(`جاري معالجة فيديو "${targetTitle}"...`, { id: toastId });
             try {
-              await waitForVideoReady(libraryId, bunnyApiKey, guid, setProcessingStatus);
+              await waitForVideoReady(libraryId, bunnyApiKey, guid);
             } catch (pollingError) {
-              console.warn('Video processing is slow, continuing on provider servers:', pollingError);
+              console.warn('Video processing slow, continuing on provider servers:', pollingError);
             }
-            setUploadStatus('ready');
+          } else {
+            toast.loading(`جاري رفع ملف "${targetTitle}"...`, { id: toastId });
+            finalFileUrl = await uploadFile(targetFile, (percent) => {
+              toast.loading(`جاري رفع ملف "${targetTitle}" (${percent}%)...`, { id: toastId });
+            });
           }
-        } else {
-          setUploadStatus('uploading');
-          finalFileUrl = await uploadFile(selectedFile!, setUploadProgress);
-          setUploadStatus('ready');
+
+          await createLesson({
+            chapter_id: unitId,
+            title: targetTitle,
+            description: finalDescription,
+            type: isLive ? 'video' : targetLessonType,
+            video_id: finalVideoId || undefined,
+            file_url: finalFileUrl || undefined,
+            library_id: (targetLessonType === 'video' && !isLive) ? libraryId || undefined : undefined,
+            video_url: isLive ? targetSessionLink : (finalVideoId
+              ? `https://iframe.mediadelivery.net/embed/${libraryId}/${finalVideoId}`
+              : undefined),
+            thumbnail_url: (finalVideoId && !isLive)
+              ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/thumbnail.jpg`
+              : undefined,
+            embed_url: isLive ? targetSessionLink : (targetLocationLink ||
+              (finalVideoId
+                ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/playlist.m3u8`
+                : undefined)),
+            order: 1,
+            file_size_mb: parseFloat((targetFile.size / (1024 * 1024)).toFixed(2)),
+            is_free: targetIsFree,
+          });
+
+          toast.success(`تم رفع وحفظ درس "${targetTitle}" بنجاح! 🎉`, { id: toastId });
+          onLessonAdded();
+        } catch (bgError: any) {
+          console.error('Background upload failed:', bgError);
+          toast.error(`فشل رفع درس "${targetTitle}" في الخلفية`, { id: toastId });
         }
+      })();
+
+      return;
+    }
+
+    // Direct submit for non-file lessons
+    setIsSubmitting(true);
+    try {
+      if (isPhysical) {
+        await createPhysicalLesson({
+          course_id: courseId || undefined,
+          chapter_id: unitId,
+          address: targetLocationLink,
+          start_date: targetStartDate,
+          end_date: targetEndDate,
+          map_url: targetLocationLink.startsWith('http') ? targetLocationLink : undefined,
+          attachment: null,
+          title: targetTitle,
+          description: targetDescription || undefined,
+        });
+      } else if (isLive) {
+        let sessionDate = '';
+        let sessionTime = '';
+        if (targetSessionDateTime) {
+          const [datePart, timePart] = targetSessionDateTime.split('T');
+          sessionDate = datePart || '';
+          sessionTime = timePart ? timePart.substring(0, 5) : '';
+        }
+
+        await createOnlineSession({
+          course_id: courseId || undefined,
+          chapter_id: unitId,
+          title: targetTitle,
+          session_url: targetSessionLink,
+          date: sessionDate,
+          time: sessionTime,
+          description: targetDescription || undefined,
+        });
+      } else {
+        await createLesson({
+          chapter_id: unitId,
+          title: targetTitle,
+          description: finalDescription,
+          type: targetLessonType,
+          order: 1,
+          is_free: targetIsFree,
+        });
       }
-
-      const finalDescription = isLive
-        ? `تفاصيل المحاضرة المباشرة:
-🔗 رابط السيشن: ${sessionLink || 'غير محدد'}
-📅 التاريخ والوقت: ${sessionDateTime || 'غير محدد'}
-
-<!--LIVE_METADATA:${JSON.stringify({ sessionLink, dateTime: sessionDateTime })}-->`
-        : isPhysical
-        ? `تفاصيل المحاضرة الحضورية:\n📍 الموقع: ${locationLink || 'غير محدد'}\n📅 تاريخ البداية: ${startDate || 'غير محدد'}\n📅 تاريخ النهاية: ${endDate || 'غير محدد'}\n\n<!--OFFLINE_METADATA:${JSON.stringify({ locationLink, startDate, endDate })}-->`
-        : description;
-
-      await createLesson({
-        chapter_id: unitId,
-        title,
-        description: finalDescription,
-        type: isLive ? 'video' : activeLessonType,
-        video_id: finalVideoId || undefined,
-        file_url: finalFileUrl || undefined,
-        library_id: (activeLessonType === 'video' && !isLive) ? libraryId || undefined : undefined,
-        video_url: isLive ? sessionLink : (finalVideoId
-          ? `https://iframe.mediadelivery.net/embed/${libraryId}/${finalVideoId}`
-          : undefined),
-        thumbnail_url: (finalVideoId && !isLive)
-          ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/thumbnail.jpg`
-          : undefined,
-        embed_url: isLive ? sessionLink : (locationLink ||
-          (finalVideoId
-            ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/playlist.m3u8`
-            : undefined)),
-        order: 1,
-        file_size_mb: selectedFile
-          ? parseFloat((selectedFile.size / (1024 * 1024)).toFixed(2))
-          : 0,
-        is_free: false,
-      });
 
       toast.success('تم حفظ الدرس بنجاح');
       onLessonAdded();
@@ -360,6 +429,8 @@ export function useAddLesson({
     setTitle,
     description,
     setDescription,
+    isFree,
+    setIsFree,
     lessonType,
     setLessonType,
     selectedFile,
