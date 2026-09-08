@@ -19,6 +19,7 @@ interface PaymentMethodModalProps {
   coursePrice: number | string;
   courseCurrency: string;
   onSuccess?: () => void | Promise<void>;
+  initialSelectedMethod?: AcademyPaymentMethod | null;
 }
 
 export const PaymentMethodModal = ({
@@ -29,6 +30,7 @@ export const PaymentMethodModal = ({
   coursePrice,
   courseCurrency,
   onSuccess,
+  initialSelectedMethod,
 }: PaymentMethodModalProps) => {
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedMethod, setSelectedMethod] = useState<AcademyPaymentMethod | null>(null);
@@ -46,11 +48,17 @@ export const PaymentMethodModal = ({
       setCopied(false);
       setScreenshot(null);
       if (previewUrl) { URL.revokeObjectURL(previewUrl); setPreviewUrl(null); }
+    } else if (initialSelectedMethod) {
+      setSelectedMethod(initialSelectedMethod);
+      setStep(2);
     } else if (methods && methods.length === 1) {
       setSelectedMethod(methods[0]);
       setStep(2);
+    } else {
+      setSelectedMethod(null);
+      setStep(1);
     }
-  }, [isOpen, methods]);
+  }, [isOpen, initialSelectedMethod, methods]);
 
   useEffect(() => {
     return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
@@ -123,8 +131,14 @@ export const PaymentMethodModal = ({
     if (!selectedMethod) return;
     setLoading(true);
     try {
-      const receiverAccountId = selectedMethod.methodId || (selectedMethod as any)?.id || (selectedMethod as any)?.receiver_account_id || (selectedMethod as any)?.receiverAccountId;
-      await enrollInCourse(courseId, selectedMethod.methodId, screenshot, receiverAccountId);
+      const selectedReceiverAccountId = 
+        (selectedMethod as any)?.id ?? 
+        (selectedMethod as any)?.receiver_account_id ?? 
+        (selectedMethod as any)?.receiver_account?.id ?? 
+        selectedMethod?.methodId ?? 
+        (selectedMethod as any)?.method_id;
+
+      await enrollInCourse(courseId, selectedReceiverAccountId, screenshot);
       if (onSuccess) {
         try {
           await onSuccess();

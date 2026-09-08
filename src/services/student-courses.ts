@@ -78,8 +78,8 @@ export const subscribeToCourse = async (
       amount: price,
       starts_at: new Date().toISOString().split('T')[0],
     };
-    if (receiverAccountId) {
-      payload.receiver_account_id = receiverAccountId;
+    if (receiverAccountId !== undefined && receiverAccountId !== null && receiverAccountId !== '') {
+      payload.receiver_accounts = Number(receiverAccountId);
     }
     const response = await studentApi.post<any>('user-subscribe', payload);
     return response.data;
@@ -91,21 +91,16 @@ export const subscribeToCourse = async (
 
 export const enrollInCourse = async (
   courseId: number | string,
-  methodId: number | string,
-  receipt: File,
-  receiverAccountId?: number | string
+  selectedReceiverAccountId: number | string,
+  receipt: File
 ): Promise<any> => {
   try {
-    const targetReceiverId = receiverAccountId || methodId;
     const formData = new FormData();
     formData.append('course_id', String(courseId));
-    formData.append('courseId', String(courseId));
-    formData.append('receiver_account_id', String(targetReceiverId));
-    formData.append('receiverAccountId', String(targetReceiverId));
-    formData.append('method_id', String(targetReceiverId));
-    formData.append('methodId', String(targetReceiverId));
-    formData.append('receipt_file', receipt);
+    formData.append('receiver_account_id', String(selectedReceiverAccountId));
+    formData.append('receiver_accounts', String(selectedReceiverAccountId));
     formData.append('receipt', receipt);
+    formData.append('receipt_file', receipt);
     formData.append('starts_at', new Date().toISOString().split('T')[0]);
 
     const response = await studentApi.post<any>('user-subscribe', formData, {

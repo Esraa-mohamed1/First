@@ -744,7 +744,8 @@ export default function CourseDetailTemplate({
         <PaymentMethodModal
           isOpen={isPaymentModalOpen}
           onClose={() => setIsPaymentModalOpen(false)}
-          methods={selectedPaymentMethod ? [selectedPaymentMethod] : (course.payment_methods || [])}
+          methods={course.payment_methods || []}
+          initialSelectedMethod={selectedPaymentMethod}
           courseId={course.id}
           coursePrice={course.final_price || course.price}
           courseCurrency={course.currency || 'SAR'}
