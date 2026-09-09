@@ -3,7 +3,7 @@ import { BuilderNode } from '../../interfaces';
 import RecursiveRenderer from '../../renderer/RecursiveRenderer';
 import { getThemeBySlug } from '../themeStyles';
 import { Mail, Phone, MapPin, Facebook, Instagram, Linkedin, Twitter } from 'lucide-react';
-import { unwrapEncryptedResponseData } from '@/lib/decryption';
+import { getMyAcademyProfile } from '@/services/student-auth';
 
 const isValidField = (val: any) => {
   if (!val || typeof val !== 'string') return false;
@@ -34,54 +34,19 @@ export function TenantFooter() {
 
     const fetchProfile = async () => {
       try {
-        if (typeof window === 'undefined') return;
-        let hostname = window.location.hostname;
-        if (hostname.endsWith('.localhost')) {
-          hostname = hostname.replace('.localhost', '');
-        }
-        const tenantKey = (hostname === 'localhost' || hostname === 'darab.academy' || hostname === 'www.darab.academy') ? '' : hostname;
-        if (!tenantKey) return;
+        const data = await getMyAcademyProfile();
+        if (data) {
+          setProfile(data);
+          localStorage.setItem('darab_academy_profile_full', JSON.stringify(data));
 
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-          'X-Tenant-Key': tenantKey.toLowerCase(),
-          'X-Tenant': tenantKey.toLowerCase(),
-          'x-tenant-name': tenantKey.toLowerCase()
-        };
-
-        const token = localStorage.getItem('token');
-        const cachedFull = localStorage.getItem('darab_academy_profile_full');
-        if (cachedFull) {
-          try {
-            setProfile(JSON.parse(cachedFull));
-            return;
-          } catch (e) { }
-        }
-
-        const role = localStorage.getItem('role') || localStorage.getItem('user_role');
-        if (!token || (role && role !== 'academy' && role !== 'admin' && role !== 'schoolteacher')) return;
-
-        headers['Authorization'] = `Bearer ${token}`;
-
-        const res = await fetch('https://api.darab.academy/api/academy/me', { headers });
-        if (res.ok) {
-          const resJson = await res.json();
-          const decryptedData = unwrapEncryptedResponseData(resJson) as any;
-          const data = decryptedData?.data ?? decryptedData;
-          if (data) {
-            setProfile(data);
-            localStorage.setItem('darab_academy_profile_full', JSON.stringify(data));
-
-            // Also sync the simpler cache used by navbar
-            const info = {
-              name: data.academy_name || data.name || '',
-              logo: data.logo || data.logo_url || ''
-            };
-            localStorage.setItem('darab_academy_profile', JSON.stringify(info));
-          }
+          const info = {
+            name: data.academy_name || data.name || '',
+            logo: data.logo || data.logo_url || ''
+          };
+          localStorage.setItem('darab_academy_profile', JSON.stringify(info));
         }
       } catch (err) {
-        console.error('Failed to fetch academy profile in footer:', err);
+        console.error('Failed to fetch my-academy profile in footer:', err);
       }
     };
 

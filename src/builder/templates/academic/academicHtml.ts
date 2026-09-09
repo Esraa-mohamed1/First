@@ -176,10 +176,13 @@ export const renderMedia = (url: string | undefined | null, className: string = 
 };
 
 export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = false, isLoggedIn: boolean = false, dashboardUrl: string = '/student') => {
-  const navbarTitle = content?.navbar?.title || (content?.navbar as any)?.name || 'إديوكور';
+  const cachedProfile = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('darab_academy_profile') || '{}') : {};
+  const realName = cachedProfile.site_name || cachedProfile.name || cachedProfile.academy_name;
+
+  const navbarTitle = realName || content?.navbar?.title || (content?.navbar as any)?.name || 'إديوكور';
   const navbarBg = content?.navbar?.bgColor || (content?.navbar as any)?.bg_color || '#ffffff';
   const navbarText = content?.navbar?.textColor || (content?.navbar as any)?.text_color || '#3525cd';
-  const navbarLogo = content?.navbar?.logo || '';
+  const navbarLogo = cachedProfile.logo || content?.navbar?.logo || '';
 
   // Dynamic nav links — use saved props or fall back to defaults
   const defaultNavLinks = [

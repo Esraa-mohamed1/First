@@ -11,10 +11,21 @@ function normalizeMyCourseDetailsPayload(data: unknown): unknown {
   return data;
 }
 
-export const getStudentCourses = async (): Promise<any[]> => {
+export const getStudentCourses = async (filters?: { grade_id?: any; subject_id?: any; category_id?: any; type?: any; limit?: any }): Promise<any[]> => {
   try {
-    const response = await studentApi.get<ApiResponse<any[]>>('courses');
-    return response.data.data;
+    const params = new URLSearchParams();
+    if (filters?.grade_id) params.append('grade_id', String(filters.grade_id));
+    if (filters?.subject_id) params.append('subject_id', String(filters.subject_id));
+    if (filters?.category_id) params.append('category_id', String(filters.category_id));
+    if (filters?.type) params.append('type', String(filters.type));
+    if (filters?.limit) params.append('limit', String(filters.limit));
+
+    const queryString = params.toString();
+    const url = queryString ? `courses?${queryString}` : 'courses';
+
+    const response = await studentApi.get<ApiResponse<any[]>>(url);
+    const data = response.data?.data || response.data || [];
+    return Array.isArray(data) ? data : [];
   } catch (error: any) {
     console.error('Failed to get student courses:', error);
     return [];

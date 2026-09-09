@@ -1,7 +1,12 @@
 import { TemplateContent, renderVideoPlayer } from '../academic/academicHtml';
 
 export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean = false, isLoggedIn: boolean = false, dashboardUrl: string = '/student') => {
-  const navbarTitle = content?.navbar?.title || (content?.navbar as any)?.name || 'الأستاذ أحمد محمد';
+  const cachedProfile = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('darab_academy_profile') || '{}') : {};
+  const realName = cachedProfile.site_name || cachedProfile.name || cachedProfile.academy_name;
+  const realEmail = cachedProfile.site_email || cachedProfile.email;
+  const realPhone = cachedProfile.site_phone || cachedProfile.academy_phone || cachedProfile.phone;
+
+  const navbarTitle = realName || content?.navbar?.title || (content?.navbar as any)?.name || 'الأستاذ أحمد محمد';
   const navbarBg = content?.navbar?.bgColor || (content?.navbar as any)?.bg_color || '#0a1628';
   const navbarText = content?.navbar?.textColor || (content?.navbar as any)?.text_color || '#ffffff';
 
@@ -691,8 +696,8 @@ ${!isEditing && isLoggedIn ? `
       </div>
       <div>
         <h4 class="text-white font-extrabold text-sm mb-4">معلومات الاتصال</h4>
-        <p class="text-xs leading-relaxed">البريد: info@ahmedmath.com</p>
-        <p class="text-xs leading-relaxed mt-2">الهاتف: ٩٦٦٥٠٠٠٠٠٠٠٠+</p>
+        <p class="text-xs leading-relaxed">البريد: ${realEmail || 'info@ahmedmath.com'}</p>
+        <p class="text-xs leading-relaxed mt-2">الهاتف: ${realPhone || '٩٦٦٥٠٠٠٠٠٠٠٠+'}</p>
       </div>
     </div>
     

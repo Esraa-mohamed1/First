@@ -7,6 +7,7 @@ import {
   Layers, AlertCircle, Sparkles, Filter, RefreshCw
 } from 'lucide-react';
 import { getStudentCourses } from '@/services/student-courses';
+import { getMyAcademyProfile } from '@/services/student-auth';
 import { Course } from '@/types/api';
 import toast from 'react-hot-toast';
 import { getStoredAuthToken, getDashboardUrl } from '@/lib/auth-storage';
@@ -29,52 +30,28 @@ export default function CoursesPage() {
     }
   }, []);
 
-  // Fetch academy profile details for header branding
+  // Fetch academy profile details for header branding using /api/user/my-academy
   useEffect(() => {
     const cached = localStorage.getItem('darab_academy_profile');
     if (cached) {
       try {
         setAcademyInfo(JSON.parse(cached));
-      } catch (e) { }
+      } catch (e) {}
     }
 
     const fetchProfile = async () => {
       try {
-        let hostname = window.location.hostname;
-        if (hostname.endsWith('.localhost')) {
-          hostname = hostname.replace('.localhost', '');
-        }
-        const tenantKey = (hostname === 'localhost' || hostname === 'darab.academy' || hostname === 'www.darab.academy') ? '' : hostname;
-        if (!tenantKey) return;
-
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-          'X-Tenant-Key': tenantKey.toLowerCase(),
-          'X-Tenant': tenantKey.toLowerCase(),
-          'x-tenant-name': tenantKey.toLowerCase()
-        };
-
-        const token = localStorage.getItem('token');
-        const role = localStorage.getItem('role') || localStorage.getItem('user_role');
-        if (!token || (role && role !== 'academy' && role !== 'admin' && role !== 'schoolteacher')) return;
-
-        headers['Authorization'] = `Bearer ${token}`;
-
-        const res = await fetch('https://api.darab.academy/api/academy/me', { headers });
-        if (res.ok) {
-          const resJson = await res.json();
-          const data = resJson.data ?? resJson;
-          if (data) {
-            const info = {
-              name: data.academy_name || data.name || '',
-              logo: data.logo || data.logo_url || ''
-            };
-            setAcademyInfo(info);
-            localStorage.setItem('darab_academy_profile', JSON.stringify(info));
-          }
+        const data = await getMyAcademyProfile();
+        if (data) {
+          const info = {
+            name: data.academy_name || data.name || '',
+            logo: data.logo || data.logo_url || ''
+          };
+          setAcademyInfo(info);
+          localStorage.setItem('darab_academy_profile', JSON.stringify(info));
         }
       } catch (err) {
-        console.error('Failed to fetch academy profile in courses page:', err);
+        console.error('Failed to fetch my-academy profile in courses page:', err);
       }
     };
 

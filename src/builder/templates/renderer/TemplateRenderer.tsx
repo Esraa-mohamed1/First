@@ -12,6 +12,7 @@ import SchoolCoachTemplate from '../schoolcoach/SchoolCoachTemplate';
 import { useBuilderStore } from '../../store/builderStore';
 
 import { getStoredUserRole, isSchoolTeacherRole } from '@/lib/auth-storage';
+import { getMyAcademyProfile } from '@/services/student-auth';
 
 interface TemplateRendererProps {
   templateId: string;
@@ -45,6 +46,17 @@ export default function TemplateRenderer({ templateId, sections }: TemplateRende
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // 0. Fetch my-academy under base URL user to get dynamic academy role
+      getMyAcademyProfile().then((data) => {
+        if (data) {
+          const role = resolveNormalizedRole(data.role || data.type || data.account_type || data.user_type);
+          if (role) {
+            setPublishedRole(role);
+            return;
+          }
+        }
+      }).catch(() => null);
+
       // 1. Try logged in user stored role first
       const stored = getStoredUserRole();
       if (stored && isSchoolTeacherRole(stored)) {

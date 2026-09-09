@@ -1,7 +1,10 @@
 import { TemplateContent, renderVideoPlayer } from '../academic/academicHtml';
 
 export const getCoachHtml = (content: TemplateContent, isEditing: boolean = false, isLoggedIn: boolean = false, dashboardUrl: string = '/student') => {
-  const navbarTitle = content?.navbar?.title || (content?.navbar as any)?.name || 'Deep Knowledge';
+  const cachedProfile = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('darab_academy_profile') || '{}') : {};
+  const realName = cachedProfile.site_name || cachedProfile.name || cachedProfile.academy_name;
+
+  const navbarTitle = realName || content?.navbar?.title || (content?.navbar as any)?.name || 'Deep Knowledge';
   const navbarBg = content?.navbar?.bgColor || (content?.navbar as any)?.bg_color || '#141218';
   const navbarText = content?.navbar?.textColor || (content?.navbar as any)?.text_color || '#cfbcff';
 

@@ -5,6 +5,7 @@ import { getSchoolCoachHtml } from './schoolcoachHtml';
 import { getPublicPages, getPublicSections, apiToEditor } from '@/services/pages';
 import { getCourses } from '@/services/courses';
 import { getStudentCourses } from '@/services/student-courses';
+import { getStudentGrades, getStudentSubjects } from '@/services/academic-classification';
 import { useBuilderStore } from '../../store/builderStore';
 
 const TEMPLATE_SLUGS = ['schoolcoach-dashboard', 'template_1', 'template_2', 'template_3', 'template_4'];
@@ -401,6 +402,10 @@ import { getStoredAuthToken, getDashboardUrl } from '@/lib/auth-storage';
 export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCoachTemplateProps) {
   const [content, setContent] = useState<any>(null);
   const [realCourses, setRealCourses] = useState<any[]>([]);
+  const [grades, setGrades] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
+  const [selectedGrade, setSelectedGrade] = useState<string>('');
+  const [selectedSubject, setSelectedSubject] = useState<string>('');
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [dashboardUrl, setDashboardUrl] = useState<string>('/student');
   const { isEditing } = useBuilderStore();
@@ -410,6 +415,9 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
       const token = getStoredAuthToken();
       setIsLoggedIn(Boolean(token));
       setDashboardUrl(getDashboardUrl());
+
+      getStudentGrades().then((res) => setGrades(res || [])).catch(() => null);
+      getStudentSubjects().then((res) => setSubjects(res || [])).catch(() => null);
     }
   }, []);
 
@@ -417,7 +425,14 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
     let isMounted = true;
     async function fetchCourses() {
       try {
-        const data = isEditing ? await getCourses() : await getStudentCourses();
+        const filters: any = {};
+        if (selectedGrade) filters.grade_id = selectedGrade;
+        if (selectedSubject) filters.subject_id = selectedSubject;
+
+        const data = isEditing
+          ? await getCourses()
+          : await getStudentCourses(filters);
+
         if (isMounted && data && Array.isArray(data)) {
           setRealCourses(data);
         }
@@ -429,7 +444,7 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
     return () => {
       isMounted = false;
     };
-  }, [isEditing]);
+  }, [isEditing, selectedGrade, selectedSubject]);
 
   useEffect(() => {
     async function load() {
@@ -483,6 +498,40 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
 
   return (
     <div className="w-full min-h-screen">
+      {!isEditing && (grades.length > 0 || subjects.length > 0) && (
+        <div className="w-full bg-slate-900 border-b border-slate-800 text-white py-3 px-4 sm:px-8 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50 shadow-md" dir="rtl">
+          <div className="flex items-center gap-2 text-xs font-black text-amber-400">
+            <span>🔍 تصفية المناهج والدورات:</span>
+          </div>
+          <div className="flex items-center gap-3">
+            {grades.length > 0 && (
+              <select
+                value={selectedGrade}
+                onChange={(e) => setSelectedGrade(e.target.value)}
+                className="bg-slate-800 border border-slate-700 text-white text-xs font-bold px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
+              >
+                <option value="">جميع المراحل والصفوف الدراسية</option>
+                {grades.map((g: any) => (
+                  <option key={g.id} value={g.id}>{g.name || g.title}</option>
+                ))}
+              </select>
+            )}
+
+            {subjects.length > 0 && (
+              <select
+                value={selectedSubject}
+                onChange={(e) => setSelectedSubject(e.target.value)}
+                className="bg-slate-800 border border-slate-700 text-white text-xs font-bold px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
+              >
+                <option value="">جميع المواد والتخصصات</option>
+                {subjects.map((s: any) => (
+                  <option key={s.id} value={s.id}>{s.name || s.title}</option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
+      )}
       <iframe
         srcDoc={getSchoolCoachHtml(content, isEditing, isLoggedIn, dashboardUrl)}
         className="w-full min-h-screen border-none"
