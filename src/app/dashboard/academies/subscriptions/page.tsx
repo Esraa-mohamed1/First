@@ -22,16 +22,22 @@ import {
   Image as ImageIcon,
   ImageOff,
   Maximize2,
-  X
+  X,
+  ChevronDown,
+  Check
 } from 'lucide-react';
-import { getAcademySubscriptions } from '@/services/academy-subscriptions';
+import { getAcademySubscriptions, approveAcademySubscription } from '@/services/academy-subscriptions';
+import { getAdminPackages } from '@/services/admin-packages';
 import {
   AcademySubscription,
   SubscriptionStats
 } from '@/types/academy-subscription';
+import { Package } from '@/types/api';
+import toast from 'react-hot-toast';
 
 export default function AcademySubscriptionsPage() {
   const [subscriptions, setSubscriptions] = useState<AcademySubscription[]>([]);
+  const [packages, setPackages] = useState<Package[]>([]);
   const [stats, setStats] = useState<SubscriptionStats>({
     totalCount: 0,
     activeCount: 0,
@@ -44,7 +50,8 @@ export default function AcademySubscriptionsPage() {
 
   // Filters & Pagination State
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'trial' | 'pending'>('all');
+  const [packageFilter, setPackageFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'trial' | 'pending' | 'cancelled'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
@@ -53,13 +60,49 @@ export default function AcademySubscriptionsPage() {
   // Receipt Modal State
   const [previewReceiptUrl, setPreviewReceiptUrl] = useState<string | null>(null);
 
+  // Action Loading State
+  const [approvingId, setApprovingId] = useState<number | string | null>(null);
+
+  const handleApproveSubscription = async (id: number | string) => {
+    if (!window.confirm('هل أنت متأكد من قبول طلب الاشتراك؟')) return;
+
+    setApprovingId(id);
+    try {
+      const response = await approveAcademySubscription(id);
+      if (response.status || response.success) {
+        toast.success('تم قبول الاشتراك بنجاح');
+        await fetchSubscriptions();
+      } else {
+        toast.error(response.message || 'فشل في قبول الاشتراك');
+      }
+    } catch (error: any) {
+      console.error('Failed to approve subscription:', error);
+      toast.error(error.message || 'حدث خطأ أثناء قبول الاشتراك');
+    } finally {
+      setApprovingId(null);
+    }
+  };
+
+  useEffect(() => {
+    const loadPackages = async () => {
+      try {
+        const pkgs = await getAdminPackages();
+        setPackages(pkgs);
+      } catch (e) {
+        console.error('Failed to load packages for filter:', e);
+      }
+    };
+    loadPackages();
+  }, []);
+
   const fetchSubscriptions = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await getAcademySubscriptions({
-        search: searchTerm,
-        status: statusFilter,
+        search: searchTerm.trim() || undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        package_id: packageFilter !== 'all' ? packageFilter : undefined,
         page: currentPage,
         limit: pageSize
       });
@@ -74,7 +117,7 @@ export default function AcademySubscriptionsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchTerm, statusFilter, currentPage]);
+  }, [searchTerm, statusFilter, packageFilter, currentPage]);
 
   useEffect(() => {
     fetchSubscriptions();
@@ -125,6 +168,13 @@ export default function AcademySubscriptionsPage() {
           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-black">
             <AlertCircle size={12} className="text-amber-500" />
             <span>{label || 'معلق'}</span>
+          </span>
+        );
+      case 'cancelled':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-700 border border-gray-200 rounded-full text-xs font-black">
+            <XCircle size={12} className="text-gray-500" />
+            <span>{label || 'ملغي'}</span>
           </span>
         );
       default:
@@ -199,87 +249,62 @@ export default function AcademySubscriptionsPage() {
       {/* 3. Main Content Container */}
       <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden">
         {/* Search & Filter Bar */}
-        <div className="p-6 md:p-8 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-2xl border border-gray-200/60 w-full md:w-auto overflow-x-auto">
-            <button
-              onClick={() => {
-                setStatusFilter('all');
-                setCurrentPage(1);
-              }}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap cursor-pointer ${
-                statusFilter === 'all'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              الكل ({stats.totalCount})
-            </button>
-            <button
-              onClick={() => {
-                setStatusFilter('active');
-                setCurrentPage(1);
-              }}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap cursor-pointer ${
-                statusFilter === 'active'
-                  ? 'bg-white text-emerald-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              نشطة ({stats.activeCount})
-            </button>
-            <button
-              onClick={() => {
-                setStatusFilter('trial');
-                setCurrentPage(1);
-              }}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap cursor-pointer ${
-                statusFilter === 'trial'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              تجريبية ({stats.trialCount})
-            </button>
-            <button
-              onClick={() => {
-                setStatusFilter('expired');
-                setCurrentPage(1);
-              }}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap cursor-pointer ${
-                statusFilter === 'expired'
-                  ? 'bg-white text-rose-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              منتهية ({stats.expiredCount})
-            </button>
-            <button
-              onClick={() => {
-                setStatusFilter('pending');
-                setCurrentPage(1);
-              }}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap cursor-pointer ${
-                statusFilter === 'pending'
-                  ? 'bg-white text-amber-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              معلقة ({stats.pendingCount})
-            </button>
-          </div>
+        <div className="p-6 md:p-8 border-b border-gray-100 flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
+            {/* Search Input */}
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                placeholder="بحث بالمستخدم، البريد، أو الباقة..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full bg-gray-50 border border-gray-200/80 rounded-2xl pr-11 pl-4 py-3 text-sm outline-none focus:border-blue-500 focus:bg-white transition-all font-bold text-right placeholder:text-gray-400"
+              />
+            </div>
 
-          <div className="relative w-full md:w-80">
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input
-              type="text"
-              placeholder="بحث بالمستخدم، البريد، أو الباقة..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full bg-gray-50 border border-gray-200/80 rounded-2xl pr-11 pl-4 py-3 text-sm outline-none focus:border-blue-500 focus:bg-white transition-all font-bold text-right placeholder:text-gray-400"
-            />
+            {/* Package Filter Dropdown */}
+            <div className="relative min-w-[170px]">
+              <select
+                value={packageFilter}
+                onChange={(e) => {
+                  setPackageFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full bg-gray-50 border border-gray-200/80 rounded-2xl pr-4 pl-9 py-3 text-sm font-bold text-gray-700 outline-none focus:border-blue-500 focus:bg-white transition-all appearance-none cursor-pointer text-right"
+              >
+                <option value="all">جميع الباقات</option>
+                {packages.map((pkg) => (
+                  <option key={pkg.id} value={pkg.id}>
+                    {pkg.titile || (pkg as any).title}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+
+            {/* Status Filter Dropdown */}
+            <div className="relative min-w-[150px]">
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value as 'all' | 'active' | 'expired' | 'trial' | 'pending' | 'cancelled');
+                  setCurrentPage(1);
+                }}
+                className="w-full bg-gray-50 border border-gray-200/80 rounded-2xl pr-4 pl-9 py-3 text-sm font-bold text-gray-700 outline-none focus:border-blue-500 focus:bg-white transition-all appearance-none cursor-pointer text-right"
+              >
+                <option value="all">جميع الحالات</option>
+                <option value="active">نشطة</option>
+                <option value="trial">فترة تجريبية</option>
+                <option value="expired">منتهية</option>
+                <option value="pending">معلقة</option>
+                <option value="cancelled">ملغية</option>
+              </select>
+              <ChevronDown size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
           </div>
         </div>
 
@@ -313,11 +338,12 @@ export default function AcademySubscriptionsPage() {
               <p className="text-xs text-gray-400 font-bold max-w-sm">
                 لم يتم العثور على أي نتائج وفقاً لمعايير البحث أو التصفية الحالية.
               </p>
-              {(searchTerm || statusFilter !== 'all') && (
+              {(searchTerm || statusFilter !== 'all' || packageFilter !== 'all') && (
                 <button
                   onClick={() => {
                     setSearchTerm('');
                     setStatusFilter('all');
+                    setPackageFilter('all');
                     setCurrentPage(1);
                   }}
                   className="text-blue-600 font-bold text-sm hover:underline mt-2 cursor-pointer"
@@ -337,7 +363,8 @@ export default function AcademySubscriptionsPage() {
                     <th className="px-6 py-4">تاريخ البدء</th>
                     <th className="px-6 py-4">تاريخ الانتهاء</th>
                     <th className="px-6 py-4 text-center">الإيصال</th>
-                    <th className="px-6 py-4 text-left rounded-l-2xl">قيمة الاشتراك</th>
+                    <th className="px-6 py-4 text-left">قيمة الاشتراك</th>
+                    <th className="px-6 py-4 text-left rounded-l-2xl">الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -460,6 +487,28 @@ export default function AcademySubscriptionsPage() {
                               </p>
                             )}
                           </div>
+                        </td>
+
+                        {/* 8. Actions */}
+                        <td className="px-6 py-5 whitespace-nowrap text-left">
+                          {sub.status === 'pending' ? (
+                            <button
+                              type="button"
+                              onClick={() => handleApproveSubscription(sub.id)}
+                              disabled={approvingId === sub.id}
+                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl font-black text-xs transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer shadow-xs"
+                              title="قبول طلب الاشتراك وتفعيله"
+                            >
+                              {approvingId === sub.id ? (
+                                <Loader2 size={13} className="animate-spin text-emerald-600" />
+                              ) : (
+                                <Check size={13} strokeWidth={2.5} className="text-emerald-600" />
+                              )}
+                              <span>قبول</span>
+                            </button>
+                          ) : (
+                            <span className="text-xs text-gray-300 font-bold select-none px-2">—</span>
+                          )}
                         </td>
                       </tr>
                     );

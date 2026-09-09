@@ -4,22 +4,66 @@ import { getStoredAuthToken } from '@/lib/auth-storage';
 
 const SUPER_ADMIN_API_URL = 'https://api.darab.academy/api/superAdmin';
 
-export const getAcademies = async (): Promise<Academy[]> => {
+export interface AcademyQueryParams {
+  page?: number;
+  limit?: number;
+}
+
+export interface AcademyListResponse {
+  items: Academy[];
+  total: number;
+  page: number;
+  totalPages: number;
+  limit: number;
+}
+
+export const getAcademies = async (params?: AcademyQueryParams): Promise<AcademyListResponse> => {
   try {
     const token = getStoredAuthToken();
+    const page = params?.page || 1;
+    const limit = params?.limit || 10;
     const response = await api.get<ApiResponse<Academy[]>>('/academies', {
       baseURL: SUPER_ADMIN_API_URL,
+      params: {
+        ...(params?.page ? { page: params.page } : {}),
+        ...(params?.limit ? { limit: params.limit, per_page: params.limit } : {})
+      },
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       }
     });
+
+    let rawData: Academy[] = [];
     if (response.data && (response.data.status || response.data.success)) {
-      return response.data.data || [];
+      rawData = Array.isArray(response.data.data) ? response.data.data : [];
+    } else if (Array.isArray(response.data)) {
+      rawData = response.data;
+    } else if (Array.isArray((response.data as any)?.data)) {
+      rawData = (response.data as any).data;
     }
-    return Array.isArray(response.data?.data) ? response.data.data : (Array.isArray(response.data) ? response.data : []);
+
+    const meta = response.data?.meta || (response.data as any)?.pagination;
+    const total = meta?.total !== undefined ? meta.total : rawData.length;
+    const currentPage = meta?.current_page !== undefined ? meta.current_page : page;
+    const perPage = meta?.per_page !== undefined ? meta.per_page : limit;
+    const totalPages = meta?.last_page !== undefined ? meta.last_page : Math.max(1, Math.ceil(total / perPage));
+
+    return {
+      items: rawData,
+      total,
+      page: currentPage,
+      totalPages,
+      limit: perPage
+    };
   } catch (error) {
     console.error('Failed to fetch academies:', error);
-    return [];
+    return {
+      items: [],
+      total: 0,
+      page: 1,
+      totalPages: 1,
+      limit: 10
+    };
   }
 };
 
