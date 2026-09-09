@@ -535,6 +535,12 @@ const CSS = `
 .lst-editing-hover:hover{outline:1.5px dashed #60a5fa !important;outline-offset:1px !important;z-index:30}
 `;
 
+import { getStoredAuthToken, getDashboardUrl } from '@/lib/auth-storage';
+
+interface TemplateProps {
+  sections: BuilderNode[];
+}
+
 export default function PurpleTemplate({ sections }: TemplateProps) {
   const [academyName, setAcademyName] = useState('أكاديمية درب');
   const [navScrolled, setNavScrolled] = useState(false);
@@ -542,10 +548,20 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
   const [heroVisible, setHeroVisible] = useState(false);
   const [realCourses, setRealCourses] = useState<any[]>([]);
   const [isCoursesLoading, setIsCoursesLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [dashboardUrl, setDashboardUrl] = useState('/student');
   const rootRef = useRef<HTMLDivElement>(null);
 
   // Read editor builder store for active status
   const { isEditing, selectedNodeId, setSelectedNodeId } = useBuilderStore();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = getStoredAuthToken();
+      setIsLoggedIn(Boolean(token));
+      setDashboardUrl(getDashboardUrl());
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -813,10 +829,18 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
               <a href="#stories" className="lst-nav-link">قصص النجاح</a>
             </div>
             <div className="lst-nav-right">
-              <a href="/auth/login" className="lst-signin">تسجيل الدخول</a>
-              <a href="/auth/register" className="lst-btn lst-btn-primary" style={{ height: 40, fontSize: 13, padding: '0 20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                ابدأ التعلم الآن
-              </a>
+              {!isEditing && isLoggedIn ? (
+                <a href={dashboardUrl} className="lst-btn lst-btn-primary" style={{ height: 40, fontSize: 13, padding: '0 20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                  لوحة التحكم
+                </a>
+              ) : (
+                <>
+                  <a href="/auth/login" className="lst-signin">تسجيل الدخول</a>
+                  <a href="/auth/register" className="lst-btn lst-btn-primary" style={{ height: 40, fontSize: 13, padding: '0 20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                    ابدأ التعلم الآن
+                  </a>
+                </>
+              )}
             </div>
           </nav>
         ))}

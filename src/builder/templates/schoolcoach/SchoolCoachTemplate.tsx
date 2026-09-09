@@ -396,10 +396,22 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
   };
 }
 
+import { getStoredAuthToken, getDashboardUrl } from '@/lib/auth-storage';
+
 export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCoachTemplateProps) {
   const [content, setContent] = useState<any>(null);
   const [realCourses, setRealCourses] = useState<any[]>([]);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [dashboardUrl, setDashboardUrl] = useState<string>('/student');
   const { isEditing } = useBuilderStore();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = getStoredAuthToken();
+      setIsLoggedIn(Boolean(token));
+      setDashboardUrl(getDashboardUrl());
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -472,7 +484,7 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
   return (
     <div className="w-full min-h-screen">
       <iframe
-        srcDoc={getSchoolCoachHtml(content, isEditing)}
+        srcDoc={getSchoolCoachHtml(content, isEditing, isLoggedIn, dashboardUrl)}
         className="w-full min-h-screen border-none"
         style={{ width: '100%', minHeight: '100vh', border: 'none' }}
         title="Teacher Template"

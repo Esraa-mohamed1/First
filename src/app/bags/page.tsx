@@ -9,6 +9,7 @@ import {
 import { getBags } from '@/services/bags';
 import { BagApiItem } from '@/types/bags';
 import toast from 'react-hot-toast';
+import { getStoredAuthToken, getDashboardUrl } from '@/lib/auth-storage';
 
 export default function BagsPage() {
   const router = useRouter();
@@ -17,6 +18,16 @@ export default function BagsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [academyInfo, setAcademyInfo] = useState<{ name?: string; logo?: string } | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [dashboardUrl, setDashboardUrl] = useState('/student');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = getStoredAuthToken();
+      setIsLoggedIn(Boolean(token));
+      setDashboardUrl(getDashboardUrl());
+    }
+  }, []);
 
   // Fetch academy profile details for header branding
   useEffect(() => {
@@ -170,10 +181,10 @@ export default function BagsPage() {
           {/* Portal redirect Button */}
           <div>
             <a 
-              href="/login" 
-              className="px-5 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs transition-all shadow-sm"
+              href={isLoggedIn ? dashboardUrl : '/auth/login'} 
+              className="px-5 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs transition-all shadow-sm"
             >
-              حسابي
+              {isLoggedIn ? 'لوحة التحكم' : 'تسجيل الدخول'}
             </a>
           </div>
         </div>

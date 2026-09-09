@@ -175,7 +175,7 @@ export const renderMedia = (url: string | undefined | null, className: string = 
   return `<img src="${url}" alt="${alt}" class="${className} object-cover" />`;
 };
 
-export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = false) => {
+export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = false, isLoggedIn: boolean = false, dashboardUrl: string = '/student') => {
   const navbarTitle = content?.navbar?.title || (content?.navbar as any)?.name || 'إديوكور';
   const navbarBg = content?.navbar?.bgColor || (content?.navbar as any)?.bg_color || '#ffffff';
   const navbarText = content?.navbar?.textColor || (content?.navbar as any)?.text_color || '#3525cd';
@@ -481,10 +481,16 @@ ${navLinks.map((link: any) => {
 }).join('\n')}
 </nav>
 <div class="flex items-center gap-stack-md">
+${!isEditing && isLoggedIn ? `
+<a href="${dashboardUrl}" ${isEditing ? '' : 'target="_parent"'} class="text-label-md font-label-md px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all duration-200 hidden sm:flex items-center justify-center gap-2" style="background-color: #3525cd; color: #ffffff;">
+    <span class="material-symbols-outlined text-[20px]">dashboard</span> لوحة التحكم
+</a>
+` : `
 <a class="text-label-md font-label-md hover:opacity-80 transition-opacity hidden sm:block" style="${loginBg ? `background-color: ${loginBg}; ` : ''}${loginTextColor ? `color: ${loginTextColor}; ` : ''}" href="${loginLink}" ${isEditing ? '' : 'target="_parent"'}>${loginText}</a>
 <a href="${registerLink}" ${isEditing ? '' : 'target="_parent"'} class="text-label-md font-label-md px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all duration-200 hidden sm:block inline-block text-center" style="${registerBg ? `background-color: ${registerBg}; ` : 'background-color: #3525cd; '}${registerTextColor ? `color: ${registerTextColor}; ` : 'color: #ffffff; '}">
     ${registerText}
 </a>
+`}
 <button class="md:hidden flex items-center justify-center p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors">
 <span class="material-symbols-outlined">menu</span>
 </button>
@@ -505,12 +511,18 @@ ${navLinks.map((link: any) => {
   return `<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" style="${customStyle}" href="${link.href || '#'}" ${isEditing ? '' : 'target="_parent"'}><span class="material-symbols-outlined">home</span> ${link.label}</a>`;
 }).join('\n')}
 <div class="h-px bg-outline-variant/30 my-4"></div>
+${!isEditing && isLoggedIn ? `
+<a href="${dashboardUrl}" ${isEditing ? '' : 'target="_parent"'} class="text-label-md font-label-md px-6 py-2.5 rounded-xl shadow-sm transition-all duration-200 flex items-center justify-center gap-2 mt-2" style="background-color: #3525cd; color: #ffffff;">
+  <span class="material-symbols-outlined text-[20px]">dashboard</span> لوحة التحكم
+</a>
+` : `
 <a class="text-label-md font-label-md hover:opacity-80 transition-opacity px-4 py-2.5 rounded-xl text-center flex items-center justify-center gap-2" style="${loginBg ? `background-color: ${loginBg}; ` : ''}${loginTextColor ? `color: ${loginTextColor}; ` : ''}" href="${loginLink}" ${isEditing ? '' : 'target="_parent"'}>
   <span class="material-symbols-outlined text-[20px]">login</span> ${loginText}
 </a>
 <a href="${registerLink}" ${isEditing ? '' : 'target="_parent"'} class="text-label-md font-label-md px-6 py-2.5 rounded-xl shadow-sm transition-all duration-200 flex items-center justify-center gap-2 mt-2" style="${registerBg ? `background-color: ${registerBg}; ` : 'background-color: #3525cd; '}${registerTextColor ? `color: ${registerTextColor}; ` : 'color: #ffffff; '}">
   <span class="material-symbols-outlined text-[20px]">person_add</span> ${registerText}
 </a>
+`}
 </nav>
 </aside>
 </div>

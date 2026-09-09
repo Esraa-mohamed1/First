@@ -3,6 +3,7 @@ import { Search, Bell, User, HelpCircle, Mail, Phone, MapPin, Facebook, Instagra
 import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
 import { unwrapEncryptedResponseData } from '@/lib/decryption';
 import { useBuilderStore } from '../store/builderStore';
+import { getStoredAuthToken, getDashboardUrl } from '@/lib/auth-storage';
 
 interface NavbarBlockProps {
   title?: string;
@@ -58,12 +59,24 @@ export default function NavbarBlock(props: NavbarBlockProps) {
   } = props;
 
   const [academyInfo, setAcademyInfo] = useState<{ name?: string; logo?: string } | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [dashboardUrl, setDashboardUrl] = useState<string>('/student');
 
   let currentTemplate: any = null;
+  let isEditing = false;
   try {
     currentTemplate = useBuilderStore((state) => state.currentTemplate);
+    isEditing = useBuilderStore((state) => state.isEditing);
   } catch (e) {}
   const isUdemy = currentTemplate?.id === 'template_2';
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = getStoredAuthToken();
+      setIsLoggedIn(Boolean(token));
+      setDashboardUrl(getDashboardUrl());
+    }
+  }, []);
 
   useEffect(() => {
     // Try localStorage first
@@ -178,16 +191,27 @@ export default function NavbarBlock(props: NavbarBlockProps) {
 
         {/* Left Side: Buttons */}
         <div className="flex items-center gap-4">
-          <a href="/auth/login" className="hidden sm:inline-block px-5 py-2 rounded-full border-[1.5px] border-[var(--t2-ink)] text-[var(--t2-ink)] font-bold text-sm hover:bg-[var(--t2-ink)] hover:text-white transition-all font-['Inter']">
-            تسجيل الدخول
-          </a>
-          {showButton && (
+          {!isEditing && isLoggedIn ? (
             <a 
-              href={!buttonLink || buttonLink === '#' ? '/auth/register' : buttonLink}
-              className="px-6 py-2 rounded-full bg-[var(--t2-gold)] text-[var(--t2-ink)] font-bold text-sm hover:brightness-110 hover:shadow-[0_4px_15px_rgba(232,163,61,0.4)] hover:-translate-y-0.5 transition-all font-['Inter']"
+              href={dashboardUrl}
+              className="px-6 py-2 rounded-full bg-[var(--t2-gold)] text-[var(--t2-ink)] font-bold text-sm hover:brightness-110 hover:shadow-[0_4px_15px_rgba(232,163,61,0.4)] hover:-translate-y-0.5 transition-all font-['Inter'] flex items-center gap-2"
             >
-              {buttonText}
+              لوحة التحكم
             </a>
+          ) : (
+            <>
+              <a href="/auth/login" className="hidden sm:inline-block px-5 py-2 rounded-full border-[1.5px] border-[var(--t2-ink)] text-[var(--t2-ink)] font-bold text-sm hover:bg-[var(--t2-ink)] hover:text-white transition-all font-['Inter']">
+                تسجيل الدخول
+              </a>
+              {showButton && (
+                <a 
+                  href={!buttonLink || buttonLink === '#' ? '/auth/register' : buttonLink}
+                  className="px-6 py-2 rounded-full bg-[var(--t2-gold)] text-[var(--t2-ink)] font-bold text-sm hover:brightness-110 hover:shadow-[0_4px_15px_rgba(232,163,61,0.4)] hover:-translate-y-0.5 transition-all font-['Inter']"
+                >
+                  {buttonText}
+                </a>
+              )}
+            </>
           )}
         </div>
       </header>
@@ -206,14 +230,24 @@ export default function NavbarBlock(props: NavbarBlockProps) {
       >
         {/* Left Side: Registration Button */}
         <div>
-          {showButton && (
+          {!isEditing && isLoggedIn ? (
             <a 
-              href={buttonLink}
+              href={dashboardUrl}
               style={{ backgroundColor: 'var(--theme-primary)' }}
               className="px-5 py-2 rounded-xl text-white font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md inline-block text-center"
             >
-              {buttonText}
+              لوحة التحكم
             </a>
+          ) : (
+            showButton && (
+              <a 
+                href={buttonLink}
+                style={{ backgroundColor: 'var(--theme-primary)' }}
+                className="px-5 py-2 rounded-xl text-white font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md inline-block text-center"
+              >
+                {buttonText}
+              </a>
+            )
           )}
         </div>
 

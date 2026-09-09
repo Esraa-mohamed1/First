@@ -1,6 +1,6 @@
 import { TemplateContent, renderVideoPlayer } from '../academic/academicHtml';
 
-export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean = false) => {
+export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean = false, isLoggedIn: boolean = false, dashboardUrl: string = '/student') => {
   const navbarTitle = content?.navbar?.title || (content?.navbar as any)?.name || 'الأستاذ أحمد محمد';
   const navbarBg = content?.navbar?.bgColor || (content?.navbar as any)?.bg_color || '#0a1628';
   const navbarText = content?.navbar?.textColor || (content?.navbar as any)?.text_color || '#ffffff';
@@ -393,8 +393,14 @@ export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean 
         }).join('\n')}
       </nav>
       <div class="flex items-center gap-4">
+${!isEditing && isLoggedIn ? `
+        <a href="${dashboardUrl}" ${isEditing ? '' : 'target="_parent"'} class="btn-primary text-xs py-3.5 px-6 flex items-center justify-center gap-2 text-center">
+          <span class="material-symbols-outlined text-[18px]">dashboard</span> لوحة التحكم
+        </a>
+` : `
         <a href="${loginLink}" ${isEditing ? '' : 'target="_parent"'} class="text-xs font-bold px-4 py-2 rounded-lg hover:opacity-80 transition-opacity" style="${loginBg ? `background-color: ${loginBg}; ` : ''}${loginTextColor ? `color: ${loginTextColor}; ` : 'color: var(--color-gray-400);'}">${loginText}</a>
         <a href="${registerLink}" ${isEditing ? '' : 'target="_parent"'} class="btn-primary text-xs py-3.5 px-6 block text-center" style="${registerBg ? `background-color: ${registerBg}; ` : ''}${registerTextColor ? `color: ${registerTextColor}; ` : ''}">${registerText}</a>
+`}
       </div>
     </div>
   </header>

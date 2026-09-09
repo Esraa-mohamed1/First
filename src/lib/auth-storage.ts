@@ -139,3 +139,29 @@ export const isSchoolTeacherRole = (userOrRole?: any): boolean => {
   );
 };
 
+export const getDashboardUrl = (overrideRole?: string | null): string => {
+  if (typeof window === 'undefined') return '/student';
+  const role = overrideRole || getStoredUserRole();
+  if (role) {
+    const r = String(role).toLowerCase().trim();
+    if (r === 'admin' || r === 'superadmin' || r === 'الادمن') {
+      return '/dashboard';
+    }
+    if (
+      r === 'academy' ||
+      r === 'coach' ||
+      r === 'schoolcoach' ||
+      r === 'schoolteacher' ||
+      r === 'school_teacher' ||
+      r === 'teacher' ||
+      r === 'instructor' ||
+      r === 'organization' ||
+      r === 'center'
+    ) {
+      return '/academic';
+    }
+  }
+  return '/student';
+};
+
+

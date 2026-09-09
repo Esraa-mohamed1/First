@@ -1,6 +1,6 @@
 import { TemplateContent, renderVideoPlayer } from '../academic/academicHtml';
 
-export const getCoachHtml = (content: TemplateContent, isEditing: boolean = false) => {
+export const getCoachHtml = (content: TemplateContent, isEditing: boolean = false, isLoggedIn: boolean = false, dashboardUrl: string = '/student') => {
   const navbarTitle = content?.navbar?.title || (content?.navbar as any)?.name || 'Deep Knowledge';
   const navbarBg = content?.navbar?.bgColor || (content?.navbar as any)?.bg_color || '#141218';
   const navbarText = content?.navbar?.textColor || (content?.navbar as any)?.text_color || '#cfbcff';
@@ -329,10 +329,16 @@ ${navLinks.map((link: any) => {
 }).join('\n')}
 </nav>
 <div class="flex items-center gap-3">
+${!isEditing && isLoggedIn ? `
+<a href="${dashboardUrl}" ${isEditing ? '' : 'target="_parent"'} class="bg-tertiary text-on-tertiary text-xs font-bold px-5 py-2.5 rounded shadow-sm hover:opacity-90 transition-all duration-200 inline-flex items-center gap-2">
+    <span class="material-symbols-outlined text-[18px]">dashboard</span> لوحة التحكم
+</a>
+` : `
 <a class="text-xs font-bold px-3 py-2 rounded hover:opacity-80 transition-opacity" style="${loginBg ? `background-color: ${loginBg}; ` : ''}${loginTextColor ? `color: ${loginTextColor}; ` : ''}" href="${loginLink}" ${isEditing ? '' : 'target="_parent"'}>${loginText}</a>
 <a href="${registerLink}" ${isEditing ? '' : 'target="_parent"'} class="bg-tertiary text-on-tertiary text-xs font-bold px-5 py-2.5 rounded shadow-sm hover:opacity-90 transition-all duration-200" style="${registerBg ? `background-color: ${registerBg}; ` : ''}${registerTextColor ? `color: ${registerTextColor}; ` : ''}">
     ${registerText}
 </a>
+`}
 </div>
 </div>
 </header>
