@@ -1,4 +1,4 @@
-export type AcademySubscriptionStatus = 'active' | 'expired' | 'pending' | 'canceled' | 'trial' | string;
+export type AcademySubscriptionStatus = 'active' | 'expired' | 'pending' | 'cancelled' | 'trial' | string;
 
 /**
  * Raw structure from backend response (accommodates various potential backend formats)
@@ -77,7 +77,7 @@ export interface AcademySubscription {
   courseId?: number | string | null;
   courseTitle?: string | null;
   packageName?: string | null;
-  status: 'active' | 'expired' | 'pending' | 'canceled' | 'trial';
+  status: 'active' | 'expired' | 'pending' | 'cancelled' | 'trial';
   statusLabel: string;
   startDate: string;
   endDate: string;
@@ -94,11 +94,13 @@ export interface SubscriptionStats {
   expiredCount: number;
   pendingCount: number;
   trialCount: number;
+  cancelledCount?: number;
 }
 
 export interface AcademySubscriptionQueryParams {
   search?: string;
-  status?: 'all' | 'active' | 'expired' | 'pending' | 'canceled' | 'trial';
+  status?: 'all' | 'active' | 'expired' | 'pending' | 'cancelled' | 'trial';
+  package_id?: number | string;
   page?: number;
   limit?: number;
 }
@@ -111,3 +113,4 @@ export interface AcademySubscriptionListResponse {
   totalPages: number;
   limit: number;
 }
+
