@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getBag, BagApiItem, BagItemDetail, purchaseBag } from '@/services/bags';
-import { getCourses } from '@/services/courses';
+import { getStudentCourses } from '@/services/student-courses';
 import { getUserPaymentInfos } from '@/services/finance';
 import { Course } from '@/types/api';
 
@@ -140,9 +140,9 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
             const firstItem = bagData.items[0];
             if (typeof firstItem === 'number' || typeof firstItem === 'string') {
               try {
-                const allCourses = await getCourses();
-                const matched = allCourses.filter((c) => (bagData.items as any[])?.includes(c.id));
-                setIncludedCourses(matched);
+                const allCourses = await getStudentCourses();
+                const matched = allCourses.filter((c: any) => (bagData.items as any[])?.includes(c.id));
+                setIncludedCourses(matched as Course[]);
               } catch (err) {
                 console.error('Failed to load courses for bag:', err);
               }

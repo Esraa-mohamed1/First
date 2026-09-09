@@ -29,7 +29,7 @@ export function TenantFooter() {
     if (cached) {
       try {
         setProfile(JSON.parse(cached));
-      } catch (e) {}
+      } catch (e) { }
     }
 
     const fetchProfile = async () => {
@@ -55,10 +55,11 @@ export function TenantFooter() {
           try {
             setProfile(JSON.parse(cachedFull));
             return;
-          } catch (e) {}
+          } catch (e) { }
         }
 
-        if (!token) return;
+        const role = localStorage.getItem('role') || localStorage.getItem('user_role');
+        if (!token || (role && role !== 'academy' && role !== 'admin' && role !== 'schoolteacher')) return;
 
         headers['Authorization'] = `Bearer ${token}`;
 
@@ -70,7 +71,7 @@ export function TenantFooter() {
           if (data) {
             setProfile(data);
             localStorage.setItem('darab_academy_profile_full', JSON.stringify(data));
-            
+
             // Also sync the simpler cache used by navbar
             const info = {
               name: data.academy_name || data.name || '',
@@ -98,7 +99,7 @@ export function TenantFooter() {
     <footer className="mt-20 border-t border-slate-100 bg-white pt-16 pb-8 select-none w-full" dir="rtl">
       <div className="mx-auto max-w-7xl px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12 text-right">
-          
+
           {/* Column 1: Brand details */}
           <div className="flex flex-col gap-5 items-start">
             <div className="flex items-center gap-3">
@@ -118,7 +119,7 @@ export function TenantFooter() {
                 {description}
               </p>
             )}
-            
+
             {/* Social Icons */}
             <div className="flex items-center gap-3 mt-2">
               {profile?.facebook_handle && isValidField(profile.facebook_handle) && (

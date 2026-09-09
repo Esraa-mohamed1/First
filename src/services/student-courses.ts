@@ -11,9 +11,9 @@ function normalizeMyCourseDetailsPayload(data: unknown): unknown {
   return data;
 }
 
-export const getStudentCourses = async (): Promise<StudentCourse[]> => {
+export const getStudentCourses = async (): Promise<any[]> => {
   try {
-    const response = await studentApi.get<ApiResponse<StudentCourse[]>>('courses');
+    const response = await studentApi.get<ApiResponse<any[]>>('courses');
     return response.data.data;
   } catch (error: any) {
     console.error('Failed to get student courses:', error);

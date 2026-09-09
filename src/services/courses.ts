@@ -75,8 +75,8 @@ export const getCourses = async (userId?: number, userRole?: string, type?: stri
       url += `?${queryString}`;
     }
 
-    // Use academyApi ONLY when userRole is explicitly 'academy'. For user/student requests, use studentApi (/api/user/courses).
-    const client = userRole === 'academy' ? academyApi : studentApi;
+    // Use studentApi ONLY when userRole is explicitly 'student' or 'user'. Otherwise (for academy, schoolteacher, coach, etc.), use academyApi.
+    const client = (userRole === 'student' || userRole === 'user') ? studentApi : academyApi;
 
     const response = await client.get<ApiResponse<Course[]>>(url);
     const data = response.data?.data || [];

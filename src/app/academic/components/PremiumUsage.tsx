@@ -4,6 +4,8 @@ import React from 'react';
 import { Layers, ChevronUp, ChevronDown, Users, Cloud } from 'lucide-react';
 
 interface PremiumUsageProps {
+  packageName?: string;
+  packageStatus?: string;
   isPremiumExpanded: boolean;
   setIsPremiumExpanded: (val: boolean) => void;
   totalStudentsLimit: number;
@@ -18,6 +20,8 @@ interface PremiumUsageProps {
 }
 
 export const PremiumUsage = ({
+  packageName,
+  packageStatus,
   isPremiumExpanded,
   setIsPremiumExpanded,
   totalStudentsLimit,
@@ -42,9 +46,11 @@ export const PremiumUsage = ({
           {/* Title & Desc */}
           <div className="text-right space-y-0.5 sm:space-y-1">
             <div className="flex items-center gap-2">
-              <h3 className="text-sm sm:text-lg font-black text-gray-900">استهلاك الباقة البريميوم</h3>
+              <h3 className="text-sm sm:text-lg font-black text-gray-900">
+                {packageName ? `استهلاك ${packageName}` : 'استهلاك الباقة البريميوم'}
+              </h3>
               <span className="bg-emerald-50 text-emerald-600 text-[9px] sm:text-[10px] font-black px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border border-emerald-100">
-                نشط
+                {packageStatus || 'نشط'}
               </span>
             </div>
             <p className="text-[11px] sm:text-xs font-bold text-gray-400">

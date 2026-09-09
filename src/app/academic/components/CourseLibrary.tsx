@@ -75,7 +75,7 @@ export const CourseLibrary = ({
                   تعديل الدورة
                 </button>
                 <button 
-                  onClick={() => router.push(`/academic/courses/stats`)}
+                  onClick={() => router.push(course.id ? `/academic/courses/${course.id}?tab=subscribers` : `/academic/courses/stats`)}
                   className="flex-1 py-2 sm:py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs transition-all active:scale-95 text-center"
                 >
                   احصائيات الدورة

@@ -61,6 +61,8 @@ export default function AcademicDashboardPage() {
     carouselSlides,
     handleNextSlide,
     handlePrevSlide,
+    packageName,
+    packageStatus,
     totalStudentsLimit,
     usedStudents,
     remainingStudents,
@@ -226,6 +228,8 @@ export default function AcademicDashboardPage() {
           {/* C. Premium Package Usage Card */}
           <div id="premium-usage" className="scroll-mt-24">
             <PremiumUsage
+              packageName={packageName}
+              packageStatus={packageStatus}
               isPremiumExpanded={isPremiumExpanded}
               setIsPremiumExpanded={setIsPremiumExpanded}
               totalStudentsLimit={totalStudentsLimit}

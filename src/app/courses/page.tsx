@@ -6,7 +6,7 @@ import {
   Search, BookOpen, Clock, Tag, ChevronLeft, GraduationCap, Grid,
   Layers, AlertCircle, Sparkles, Filter, RefreshCw
 } from 'lucide-react';
-import { getCourses } from '@/services/courses';
+import { getStudentCourses } from '@/services/student-courses';
 import { Course } from '@/types/api';
 import toast from 'react-hot-toast';
 import { getStoredAuthToken, getDashboardUrl } from '@/lib/auth-storage';
@@ -35,7 +35,7 @@ export default function CoursesPage() {
     if (cached) {
       try {
         setAcademyInfo(JSON.parse(cached));
-      } catch (e) {}
+      } catch (e) { }
     }
 
     const fetchProfile = async () => {
@@ -55,9 +55,10 @@ export default function CoursesPage() {
         };
 
         const token = localStorage.getItem('token');
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
+        const role = localStorage.getItem('role') || localStorage.getItem('user_role');
+        if (!token || (role && role !== 'academy' && role !== 'admin' && role !== 'schoolteacher')) return;
+
+        headers['Authorization'] = `Bearer ${token}`;
 
         const res = await fetch('https://api.darab.academy/api/academy/me', { headers });
         if (res.ok) {
@@ -85,9 +86,9 @@ export default function CoursesPage() {
     const loadCourses = async () => {
       setLoading(true);
       try {
-        const data = await getCourses();
-        const published = (data || []).filter((c) => !c.status || c.status === 'published');
-        setCourses(published);
+        const data = await getStudentCourses();
+        const published = (data || []).filter((c: any) => !c.status || c.status === 'published' || c.status === 'active');
+        setCourses(published as Course[]);
       } catch (err) {
         console.error('Failed to fetch courses:', err);
         toast.error('حدث خطأ أثناء تحميل الدورات. يرجى المحاولة مرة أخرى.');
@@ -150,11 +151,11 @@ export default function CoursesPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-indigo-500 selection:text-white" dir="rtl">
-      
+
       {/* Premium Header/Navbar */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-sm transition-all duration-300">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          
+
           {/* Logo & Academy Name */}
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => router.push('/')}>
             {academyInfo?.logo ? (
@@ -181,8 +182,8 @@ export default function CoursesPage() {
 
           {/* Portal redirect Button */}
           <div>
-            <a 
-              href={isLoggedIn ? dashboardUrl : '/auth/login'} 
+            <a
+              href={isLoggedIn ? dashboardUrl : '/auth/login'}
               className="px-5 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs transition-all shadow-sm"
             >
               {isLoggedIn ? 'لوحة التحكم' : 'تسجيل الدخول'}
@@ -195,7 +196,7 @@ export default function CoursesPage() {
       <section className="bg-gradient-to-b from-indigo-50/70 via-white to-slate-50 pt-16 pb-12 px-6 relative overflow-hidden">
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-indigo-200/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-violet-200/20 rounded-full blur-3xl pointer-events-none" />
-        
+
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-indigo-50 border border-indigo-100 rounded-full mb-6">
             <Sparkles size={14} className="text-indigo-600" />
@@ -213,7 +214,7 @@ export default function CoursesPage() {
       {/* Filter and Search Container */}
       <section className="max-w-7xl mx-auto px-6 w-full -mt-6 mb-12 relative z-20">
         <div className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-xl shadow-slate-100 flex flex-col md:flex-row gap-4 items-center justify-between">
-          
+
           {/* Search bar with glassmorphism */}
           <div className="relative w-full md:max-w-md">
             <input
@@ -230,11 +231,10 @@ export default function CoursesPage() {
           <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-start md:justify-end overflow-x-auto py-1">
             <button
               onClick={() => setSelectedCategory('all')}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
-                selectedCategory === 'all'
+              className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${selectedCategory === 'all'
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100'
                   : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200'
-              }`}
+                }`}
             >
               الكل
             </button>
@@ -242,11 +242,10 @@ export default function CoursesPage() {
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap ${
-                  selectedCategory === cat
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap ${selectedCategory === cat
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100'
                     : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200'
-                }`}
+                  }`}
               >
                 {cat}
               </button>
@@ -258,7 +257,7 @@ export default function CoursesPage() {
 
       {/* Main Grid View */}
       <main className="max-w-7xl mx-auto px-6 w-full flex-grow pb-24">
-        
+
         {/* Loading State */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -275,7 +274,7 @@ export default function CoursesPage() {
             ))}
           </div>
         ) : filteredCourses.length === 0 ? (
-          
+
           /* Empty State */
           <div className="bg-white border border-slate-200/60 rounded-3xl p-16 flex flex-col items-center justify-center text-center shadow-sm max-w-xl mx-auto my-12">
             <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 mb-6">
@@ -299,7 +298,7 @@ export default function CoursesPage() {
             )}
           </div>
         ) : (
-          
+
           /* Cards Grid List */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredCourses.map((course) => {
@@ -375,7 +374,7 @@ export default function CoursesPage() {
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="w-8 h-8 rounded-full bg-slate-50 group-hover:bg-indigo-600 group-hover:text-white flex items-center justify-center text-slate-400 transition-all">
                         <ChevronLeft size={16} />
                       </div>
@@ -391,7 +390,7 @@ export default function CoursesPage() {
       {/* Styled Premium Footer */}
       <footer className="bg-slate-950 text-slate-400 py-12 border-t border-slate-900 mt-auto select-none">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8 mb-8 text-right">
-          
+
           <div className="flex flex-col gap-4 items-start">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-extrabold text-sm">
