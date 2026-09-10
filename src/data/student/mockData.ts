@@ -1,16 +1,4 @@
-import { Course, UserProfile } from '@/types/student';
-
-export const mockUserProfile: UserProfile = {
-  name: 'Ahmed Mohamed Al-Otaibi',
-  email: 'ahmed.otaibi@example.com',
-  phone: '+966 50 123 4567',
-  city: 'الرياض',
-  avatar: '/images/avatar.png',
-  points: 1240,
-  level: 'طالب متميز',
-  progress: 85,
-};
-
+import { Course } from '@/types/student';
 export const mockCourses: Course[] = [
   {
     id: '1',

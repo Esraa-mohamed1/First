@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { UserProfile } from '@/types/student';
-import { Edit2, Star, Shield, Award, User } from 'lucide-react';
+import { Edit2, Shield, User } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import profileImg from '@/assets/profile.png';
@@ -45,14 +45,6 @@ export const ProfileHeader = ({ profile }: ProfileHeaderProps) => {
         <div className="text-center md:text-right text-white">
           <h1 className="text-3xl font-bold mb-3 tracking-tight">{profile.name}</h1>
           <div className="flex items-center gap-3 justify-center md:justify-start">
-            <div className="flex items-center gap-1.5 bg-blue-700/50 backdrop-blur-md px-4 py-1.5 rounded-full text-sm font-medium border border-blue-500/30">
-              <Award size={16} className="text-yellow-400" />
-              <span>{profile.level}</span>
-            </div>
-            <div className="flex items-center gap-1.5 bg-green-500/20 text-green-100 backdrop-blur-md px-4 py-1.5 rounded-full text-sm font-medium border border-green-400/30">
-              <Star size={16} className="text-green-300" />
-              <span>{profile.points} نقطة</span>
-            </div>
           </div>
         </div>
       </div>

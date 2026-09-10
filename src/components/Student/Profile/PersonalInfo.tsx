@@ -4,28 +4,26 @@ import { User, Loader2, Pencil } from 'lucide-react';
 
 interface PersonalInfoProps {
   profile: UserProfile;
-  onSave: (updatedData: { name: string; email: string; phone: string; city: string }) => Promise<void>;
+  onSave: (updatedData: { name: string; email: string; phone: string }) => Promise<void>;
 }
 
 export const PersonalInfo = ({ profile, onSave }: PersonalInfoProps) => {
   const [name, setName] = useState(profile.name || '');
   const [email, setEmail] = useState(profile.email || '');
   const [phone, setPhone] = useState(profile.phone || '');
-  const [city, setCity] = useState(profile.city || '');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setName(profile.name || '');
     setEmail(profile.email || '');
     setPhone(profile.phone || '');
-    setCity(profile.city || '');
   }, [profile]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     try {
-      await onSave({ name, email, phone, city });
+      await onSave({ name, email, phone });
     } finally {
       setIsSaving(false);
     }
@@ -79,19 +77,6 @@ export const PersonalInfo = ({ profile, onSave }: PersonalInfoProps) => {
               onChange={(e) => setPhone(e.target.value)}
               dir="ltr"
               className="w-full bg-[#EAEFEF] border border-gray-100 rounded-2xl pl-12 pr-5 py-3.5 text-gray-800 font-medium text-right focus:ring-2 focus:ring-blue-100 focus:border-blue-400 focus:bg-white transition-all outline-none"
-            />
-            <Pencil size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-semibold text-gray-600 mr-2">المدينة</label>
-          <div className="relative">
-            <input
-              type="text"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              className="w-full bg-[#EAEFEF] border border-gray-100 rounded-2xl pl-12 pr-5 py-3.5 text-gray-800 font-medium focus:ring-2 focus:ring-blue-100 focus:border-blue-400 focus:bg-white transition-all outline-none"
             />
             <Pencil size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>

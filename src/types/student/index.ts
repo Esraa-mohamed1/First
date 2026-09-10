@@ -19,9 +19,5 @@ export interface UserProfile {
   name: string;
   email: string;
   phone: string;
-  city: string;
   avatar: string;
-  points: number;
-  level: string;
-  progress: number;
 }
