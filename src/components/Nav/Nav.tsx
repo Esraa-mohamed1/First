@@ -1,23 +1,12 @@
-'use client';
+grade'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useModal } from '@/context/ModalContext';
 import SearchParamsHandler from './SearchParamsHandler';
-import { getStoredAuthToken, getDashboardUrl } from '@/lib/auth-storage';
 
 const Nav = () => {
     const { openModal } = useModal();
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [dashboardUrl, setDashboardUrl] = useState('/student');
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const token = getStoredAuthToken();
-            setIsLoggedIn(Boolean(token));
-            setDashboardUrl(getDashboardUrl());
-        }
-    }, []);
 
     return (
         <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-[100] shadow-[0_4px_30px_0px_rgba(72,128,255,0.2)]">
@@ -35,29 +24,18 @@ const Nav = () => {
                 </ul>
 
                 <div className="flex items-center gap-4">
-                    {isLoggedIn ? (
-                        <Link
-                            href={dashboardUrl}
-                            className="px-6 py-2.5 font-bold bg-[#2563eb] text-white rounded-xl shadow-lg shadow-blue-200 hover:-translate-y-0.5 hover:shadow-blue-300 transition-all cursor-pointer inline-flex items-center gap-2"
-                        >
-                            لوحة التحكم
-                        </Link>
-                    ) : (
-                        <>
-                            <button
-                                onClick={() => openModal('registration')}
-                                className="hidden sm:block px-6 py-2.5 font-bold text-[#2563eb] bg-white border-2 border-[#2563eb] rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 hover:bg-[#2563eb] hover:text-white transition-all cursor-pointer"
-                            >
-                                إنشاء حساب
-                            </button>
-                            <button
-                                onClick={() => openModal('login')}
-                                className="px-6 py-2.5 font-bold bg-[#2563eb] text-white rounded-xl shadow-lg shadow-blue-200 hover:-translate-y-0.5 hover:shadow-blue-300 transition-all cursor-pointer"
-                            >
-                                تسجيل الدخول
-                            </button>
-                        </>
-                    )}
+                    <button
+                        onClick={() => openModal('registration')}
+                        className="hidden sm:block px-6 py-2.5 font-bold text-[#2563eb] bg-white border-2 border-[#2563eb] rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 hover:bg-[#2563eb] hover:text-white transition-all cursor-pointer"
+                    >
+                        إنشاء حساب
+                    </button>
+                    <button
+                        onClick={() => openModal('login')}
+                        className="px-6 py-2.5 font-bold bg-[#2563eb] text-white rounded-xl shadow-lg shadow-blue-200 hover:-translate-y-0.5 hover:shadow-blue-300 transition-all cursor-pointer"
+                    >
+                        تسجيل الدخول
+                    </button>
                 </div>
             </div>
         </nav>
