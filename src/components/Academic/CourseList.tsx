@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCourses, deleteCourse } from '@/services/courses';
 import { getProfileStatus } from '@/services/auth';
+import { getGrades, getSubjects, ClassificationItem } from '@/services/academic-classification';
+import { isSchoolTeacherRole } from '@/lib/auth-storage';
 import { Course } from '@/types/api';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
@@ -28,6 +30,12 @@ export default function CourseList({ typeFilter, title, description, createType 
   const [activeDropdownId, setActiveDropdownId] = useState<number | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
+  // Schoolteacher classification filters
+  const [grades, setGrades] = useState<ClassificationItem[]>([]);
+  const [subjects, setSubjects] = useState<ClassificationItem[]>([]);
+  const [selectedGrade, setSelectedGrade] = useState<string>('');
+  const [selectedSubject, setSelectedSubject] = useState<string>('');
+
   // Edit Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
@@ -36,14 +44,29 @@ export default function CourseList({ typeFilter, title, description, createType 
     fetchCourses();
   }, [typeFilter]);
 
-  const fetchCourses = async () => {
+  const fetchCourses = async (gradeId?: string | number, subjectId?: string | number) => {
     setLoading(true);
     try {
       const profile = await getProfileStatus();
       const userData = profile.data || profile;
       setCurrentUser(userData);
 
-      const data = await getCourses(userData?.id, userData?.role, typeFilter);
+      if (isSchoolTeacherRole(userData)) {
+        getGrades().then(res => setGrades(res || [])).catch(() => null);
+        getSubjects().then(res => setSubjects(res || [])).catch(() => null);
+      }
+
+      const activeGrade = gradeId !== undefined ? gradeId : selectedGrade;
+      const activeSubject = subjectId !== undefined ? subjectId : selectedSubject;
+
+      const data = await getCourses(
+        userData?.id, 
+        userData?.role, 
+        typeFilter, 
+        undefined, 
+        activeGrade || undefined, 
+        activeSubject || undefined
+      );
       setCourses(data || []);
     } catch (error) {
       console.error(error);
@@ -51,6 +74,16 @@ export default function CourseList({ typeFilter, title, description, createType 
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGradeChange = async (gradeId: string) => {
+    setSelectedGrade(gradeId);
+    fetchCourses(gradeId, selectedSubject);
+  };
+
+  const handleSubjectChange = (subjectId: string) => {
+    setSelectedSubject(subjectId);
+    fetchCourses(selectedGrade, subjectId);
   };
 
   const handleDeleteCourse = async (id: number) => {
@@ -178,6 +211,38 @@ export default function CourseList({ typeFilter, title, description, createType 
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+
+          {isSchoolTeacherRole(currentUser) && (
+            <>
+              {/* Dropdown 1: Grades */}
+              <div className="relative">
+                <select
+                  value={selectedGrade}
+                  onChange={(e) => handleGradeChange(e.target.value)}
+                  className="bg-white border border-gray-100 px-4 py-3.5 rounded-2xl text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:border-blue-500 transition-all cursor-pointer"
+                >
+                  <option value="">جميع المراحل والصفوف</option>
+                  {grades.map((g: any) => (
+                    <option key={g.id} value={g.id}>{g.name || g.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Dropdown 2: Subjects (Independent of grade) */}
+              <div className="relative">
+                <select
+                  value={selectedSubject}
+                  onChange={(e) => handleSubjectChange(e.target.value)}
+                  className="bg-white border border-gray-100 px-4 py-3.5 rounded-2xl text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:border-blue-500 transition-all cursor-pointer"
+                >
+                  <option value="">جميع المواد والتخصصات</option>
+                  {subjects.map((s: any) => (
+                    <option key={s.id} value={s.id}>{s.name || s.title}</option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
           
           <button 
             onClick={() => router.push(`/academic/courses/create?type=${createType}`)}

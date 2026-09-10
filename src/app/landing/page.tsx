@@ -6,6 +6,7 @@ import LandingRenderer from '@/modules/landing/renderer/LandingRenderer';
 import { PaymentMethodModal } from '@/components/payment/PaymentMethodModal';
 import { getStudentCourse } from '@/services/student-courses';
 import { useModal } from '@/context/ModalContext';
+import { mapCoursePaymentMethods } from '@/lib/payment-methods';
 
 export default function RootLandingPage() {
   const searchParams = useSearchParams();
@@ -15,6 +16,7 @@ export default function RootLandingPage() {
   
   const [course, setCourse] = useState<any | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
   const { openModal } = useModal();
 
   const loadCourse = React.useCallback(async () => {
@@ -54,6 +56,18 @@ export default function RootLandingPage() {
     setIsPaymentModalOpen(true);
   };
 
+  const getMappedMethods = React.useCallback(() => {
+    if (!course) return [];
+    return mapCoursePaymentMethods(course);
+  }, [course]);
+
+  useEffect(() => {
+    const methods = getMappedMethods();
+    if (methods.length > 0 && !selectedPaymentMethod) {
+      setSelectedPaymentMethod(methods[0]);
+    }
+  }, [course, getMappedMethods, selectedPaymentMethod]);
+
   return (
     <div className="min-h-screen w-full bg-white" dir="rtl">
       <LandingRenderer
@@ -62,6 +76,8 @@ export default function RootLandingPage() {
         landingPageId={lpId}
         isEditable={false}
         onSubscribe={handleSubscribe}
+        selectedPaymentMethod={selectedPaymentMethod}
+        setSelectedPaymentMethod={setSelectedPaymentMethod}
         isPaymentModalOpen={isPaymentModalOpen}
         setIsPaymentModalOpen={setIsPaymentModalOpen}
       />
@@ -70,7 +86,8 @@ export default function RootLandingPage() {
         <PaymentMethodModal
           isOpen={isPaymentModalOpen}
           onClose={() => setIsPaymentModalOpen(false)}
-          methods={course.payment_methods || []}
+          methods={getMappedMethods()}
+          initialSelectedMethod={selectedPaymentMethod}
           courseId={course.id}
           coursePrice={course.final_price || course.price}
           courseCurrency={course.currency || 'SAR'}

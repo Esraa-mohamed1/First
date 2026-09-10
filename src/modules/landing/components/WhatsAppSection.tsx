@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Phone, MessageSquare, Pen, CheckCircle, Loader2 } from 'lucide-react';
 import { WhatsAppSectionData } from '../types/landing';
 import { twMerge } from 'tailwind-merge';
-import { colorToRgbTriplet } from '../utils/color';
+import { colorToRgbTriplet, getContrastColor } from '../utils/color';
 
 interface WhatsAppSectionProps {
   data: WhatsAppSectionData;
@@ -44,7 +44,7 @@ export default function WhatsAppSection({
   const localBg = data.backgroundColor && data.backgroundColor !== '#499A13' && data.backgroundColor !== '#25D366'
     ? data.backgroundColor
     : defaultBg;
-  const localText = data.textColor || defaultText;
+  const localText = getContrastColor(localBg, data.textColor, defaultText, '#FFFFFF');
 
   const bgRgb = colorToRgbTriplet(localBg);
   const textRgb = colorToRgbTriplet(localText);
@@ -113,7 +113,7 @@ export default function WhatsAppSection({
                   {data.subtitle || 'سجّل اهتمامك وهنكلمك بنفسنا'}
                 </h2>
 
-                <p style={{ color: `rgba(${textRgb}, 0.8)` }} className="text-xs md:text-sm font-medium leading-relaxed max-w-xl">
+                <p style={{ color: localText, opacity: 0.9 }} className="text-xs md:text-sm font-bold leading-relaxed max-w-xl">
                   {data.contactMessage !== undefined ? data.contactMessage : 'سيب اسمك ورقم موبايلك، وفريق الدورة هيتواصل معاك خلال 24 ساعة يجاوب على كل أسئلتك ويساعدك تقرر إذا كانت الدورة مناسبة لك — بدون أي التزام.'}
                 </p>
 

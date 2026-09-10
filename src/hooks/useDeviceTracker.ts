@@ -68,7 +68,7 @@ export const useDeviceTracker = () => {
       try {
         await fetch('/api/track', {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
           },

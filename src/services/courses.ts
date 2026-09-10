@@ -53,7 +53,14 @@ export const createCourse = async (payload: CreateCoursePayload): Promise<Course
   }
 };
 
-export const getCourses = async (userId?: number, userRole?: string, type?: string, limit?: number): Promise<Course[]> => {
+export const getCourses = async (
+  userId?: number,
+  userRole?: string,
+  type?: string,
+  limit?: number,
+  gradeId?: string | number,
+  subjectId?: string | number
+): Promise<Course[]> => {
   try {
     let url = 'courses';
     const params = new URLSearchParams();
@@ -70,13 +77,21 @@ export const getCourses = async (userId?: number, userRole?: string, type?: stri
       params.append('limit', String(limit));
     }
 
+    if (gradeId) {
+      params.append('grade_id', String(gradeId));
+    }
+
+    if (subjectId) {
+      params.append('subject_id', String(subjectId));
+    }
+
     const queryString = params.toString();
     if (queryString) {
       url += `?${queryString}`;
     }
 
-    // Use academyApi ONLY when userRole is explicitly 'academy'. For user/student requests, use studentApi (/api/user/courses).
-    const client = userRole === 'academy' ? academyApi : studentApi;
+    // Use studentApi ONLY when userRole is explicitly 'student' or 'user'. Otherwise (for academy, schoolteacher, coach, etc.), use academyApi.
+    const client = (userRole === 'student' || userRole === 'user') ? studentApi : academyApi;
 
     const response = await client.get<ApiResponse<Course[]>>(url);
     const data = response.data?.data || [];

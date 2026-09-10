@@ -16,7 +16,7 @@ const SUPER_ADMIN_API_URL = 'https://api.darab.academy/api/superAdmin';
  */
 export function mapRawSubscriptionToDisplayModel(raw: RawAcademySubscription): AcademySubscription {
   // Normalize Status
-  let status: 'active' | 'expired' | 'pending' | 'canceled' | 'trial' = 'active';
+  let status: 'active' | 'expired' | 'pending' | 'cancelled' | 'trial' = 'active';
   const rawStatus = (raw.status || '').toLowerCase().trim();
 
   if (rawStatus === 'active' || raw.is_active === 1 || raw.is_active === true) {
@@ -27,8 +27,8 @@ export function mapRawSubscriptionToDisplayModel(raw: RawAcademySubscription): A
     status = 'trial';
   } else if (rawStatus === 'pending' || rawStatus === 'waiting') {
     status = 'pending';
-  } else if (rawStatus === 'canceled' || rawStatus === 'cancelled' || raw.is_active === 0) {
-    status = 'canceled';
+  } else if (rawStatus === 'cancelled' || rawStatus === 'canceled' || raw.is_active === 0) {
+    status = 'cancelled';
   }
 
   // Localized Status Label
@@ -37,7 +37,7 @@ export function mapRawSubscriptionToDisplayModel(raw: RawAcademySubscription): A
     expired: 'منتهي',
     trial: 'فترة تجريبية',
     pending: 'معلق',
-    canceled: 'ملغي'
+    cancelled: 'ملغي'
   };
 
   const academyName =
@@ -130,6 +130,7 @@ export async function getAcademySubscriptions(
       params: {
         ...(params?.search ? { search: params.search } : {}),
         ...(params?.status && params.status !== 'all' ? { status: params.status } : {}),
+        ...(params?.package_id && params.package_id !== 'all' ? { package_id: params.package_id } : {}),
         ...(params?.page ? { page: params.page } : {}),
         ...(params?.limit ? { limit: params.limit } : {})
       },
@@ -155,7 +156,8 @@ export async function getAcademySubscriptions(
       activeCount: allMapped.filter((i) => i.status === 'active').length,
       expiredCount: allMapped.filter((i) => i.status === 'expired').length,
       trialCount: allMapped.filter((i) => i.status === 'trial').length,
-      pendingCount: allMapped.filter((i) => i.status === 'pending').length
+      pendingCount: allMapped.filter((i) => i.status === 'pending').length,
+      cancelledCount: allMapped.filter((i) => i.status === 'cancelled').length
     };
 
     const meta = response.data?.meta || (response.data as any)?.pagination;
@@ -177,3 +179,23 @@ export async function getAcademySubscriptions(
     throw error?.response?.data || error;
   }
 }
+
+/**
+ * Approve a pending academy subscription (POST /superAdmin/academy-packages/{id}/approve)
+ */
+export const approveAcademySubscription = async (id: number | string): Promise<ApiResponse<any>> => {
+  try {
+    const token = getStoredAuthToken();
+    const response = await api.post<ApiResponse<any>>(`/academy-packages/${id}/approve`, {}, {
+      baseURL: SUPER_ADMIN_API_URL,
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error(`Failed to approve academy subscription ${id}:`, error);
+    throw error?.response?.data || error;
+  }
+};
+

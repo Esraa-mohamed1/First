@@ -20,6 +20,7 @@ export default function CourseGuestView({ slug }: CourseGuestViewProps) {
   const [loading, setLoading] = useState(true);
   const [notFoundState, setNotFoundState] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
   const { openModal } = useModal();
   const [activeTemplateId, setActiveTemplateId] = useState<string>('template_1');
   const [showLandingPage, setShowLandingPage] = useState(false);
@@ -144,15 +145,21 @@ export default function CourseGuestView({ slug }: CourseGuestViewProps) {
       const rawPaymentMethods = data.payment_methods || data.receiverAccounts || data.receiver_accounts || [];
       const paymentMethodsData = rawPaymentMethods.map((item: any) => {
         const receiverAccount = item.receiver_account || item.receiverAccount;
+        const actualId = item.id || item.receiver_account_id || item.methodId || item.method_id || receiverAccount?.id;
         return {
-          methodId: (receiverAccount?.id || item.methodId || item.method_id || item.id)?.toString() || '',
+          id: actualId,
+          methodId: String(actualId || ''),
           methodName: receiverAccount?.name || item.name || item.methodName || '',
-          type: 'account_number' as const,
+          type: item.type || ('account_number' as const),
           value: item.value || item.accountValue || item.account_value || '',
           currency: item.currency || receiverAccount?.currency || 'SAR',
           logo: receiverAccount?.logo || item.logo || undefined
         };
       });
+
+      if (paymentMethodsData.length > 0 && !selectedPaymentMethod) {
+        setSelectedPaymentMethod(paymentMethodsData[0]);
+      }
 
       const mergedCourse = {
         id: data.id,
@@ -290,6 +297,8 @@ export default function CourseGuestView({ slug }: CourseGuestViewProps) {
             courseSlug={slug}
             isEditable={false}
             onSubscribe={handleSubscribe}
+            selectedPaymentMethod={selectedPaymentMethod}
+            setSelectedPaymentMethod={setSelectedPaymentMethod}
             isPaymentModalOpen={isPaymentModalOpen}
             setIsPaymentModalOpen={handleSetPaymentModalOpen}
           />
@@ -309,6 +318,7 @@ export default function CourseGuestView({ slug }: CourseGuestViewProps) {
           isOpen={isPaymentModalOpen}
           onClose={() => setIsPaymentModalOpen(false)}
           methods={course.payment_methods || []}
+          initialSelectedMethod={selectedPaymentMethod}
           courseId={course.id}
           coursePrice={course.final_price || course.price}
           courseCurrency={course.currency || 'SAR'}

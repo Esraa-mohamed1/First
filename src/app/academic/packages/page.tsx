@@ -22,7 +22,7 @@ export default function PackagesPage() {
           getMyUsageLimit(),
           getMyPackage()
         ]);
-        
+
         // Handle different possible response structures (with or without .data wrapper)
         const profileData = profile?.data || profile;
         const limitsDataRaw = limits?.data || (Array.isArray(limits) ? limits : []);
@@ -30,12 +30,12 @@ export default function PackagesPage() {
 
         setUsageData(profileData);
         setLimitsData(limitsDataRaw);
-        
+
         if (packageDataRaw) {
           // If the structure is { package_info: ..., features: ... }
           if (packageDataRaw.package_info) {
             setPackageData(packageDataRaw.package_info);
-            
+
             // Features might be a single object or an array
             const features = packageDataRaw.features;
             if (features) {
@@ -53,7 +53,7 @@ export default function PackagesPage() {
             setPackageData(packageDataRaw);
           }
         }
-        
+
         setPackageHistory(Array.isArray(pkgRes?.data) ? pkgRes.data : (Array.isArray(pkgRes) ? pkgRes : []));
       } catch (err) {
         console.error('Failed to fetch data:', err);
@@ -164,11 +164,10 @@ export default function PackagesPage() {
           {/* Right side: Title & Badge */}
           <div className="flex items-center gap-4">
             <h2 className="text-3xl font-black text-gray-900">{packageData?.package_name || 'الباقة الحالية'}</h2>
-            <span className={`px-5 py-1.5 rounded-xl text-sm font-bold border ${
-              packageData?.status === 'active' || packageData?.active === 1
-                ? 'text-green-600 bg-green-50 border-green-100'
-                : 'text-red-600 bg-red-50 border-red-100'
-            }`}>
+            <span className={`px-5 py-1.5 rounded-xl text-sm font-bold border ${packageData?.status === 'active' || packageData?.active === 1
+              ? 'text-green-600 bg-green-50 border-green-100'
+              : 'text-red-600 bg-red-50 border-red-100'
+              }`}>
               {packageData?.status === 'active' || packageData?.active === 1 ? 'نشط' : 'غير نشط'}
             </span>
           </div>
@@ -177,13 +176,13 @@ export default function PackagesPage() {
           <div className="flex flex-col md:flex-row items-end md:items-center gap-8">
             <div className="flex gap-10">
               <div className="text-left">
-                <p className="text-gray-400 font-bold mb-1">نهاية الأشتراك</p>
+                <p className="text-gray-400 font-bold mb-1">بدايه الأشتراك</p>
                 <p className="text-gray-900 font-bold" dir="ltr">
                   {packageData?.end_date ? new Date(packageData.end_date).toLocaleDateString('ar-EG') : 'غير محدد'}
                 </p>
               </div>
               <div className="text-left">
-                <p className="text-gray-400 font-bold mb-1">بداية الأشتراك</p>
+                <p className="text-gray-400 font-bold mb-1">نهايه الأشتراك</p>
                 <p className="text-gray-900 font-bold" dir="ltr">
                   {packageData?.start_date ? new Date(packageData.start_date).toLocaleDateString('ar-EG') : 'غير محدد'}
                 </p>
@@ -196,7 +195,7 @@ export default function PackagesPage() {
                   تجديد الاشتراك
                 </button>
               )}
-              <button 
+              <button
                 onClick={() => router.push('/academic/packages/upgrade')}
                 className="px-6 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold transition-colors"
               >
@@ -330,7 +329,7 @@ export default function PackagesPage() {
           <p className="text-blue-100 leading-relaxed font-bold text-sm">
             لقد اقتربت من الحد الأقصى للطلاب والدورات في خطتك الحالية لتستمر أكاديميتك في النمو بدون أي قيود، يمكنك الترقية إلى باقة أعلى الآن، بهذه الطريقة ستتمكن من إضافة عدد أكبر من الطلاب والدورات، والاستفادة من مميزات إضافية
           </p>
-          <button 
+          <button
             onClick={() => router.push('/academic/packages/upgrade')}
             className="bg-white text-blue-500 hover:bg-blue-50 px-10 py-3 rounded-2xl font-black transition-colors mt-2"
           >

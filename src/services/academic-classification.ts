@@ -1,4 +1,5 @@
 import academyApi from '@/lib/academy-api';
+import studentApi from '@/lib/student-api';
 
 import { ClassificationItem, CreateClassificationPayload } from '@/types/academic-classification';
 export type { ClassificationItem, CreateClassificationPayload };
@@ -18,11 +19,26 @@ export const getGrades = async (): Promise<ClassificationItem[]> => {
     return unwrapData<ClassificationItem[]>(res) || [];
   } catch (error) {
     try {
-      const fallbackRes = await academyApi.get('academy/grades');
+      const fallbackRes = await academyApi.get('/grades');
       return unwrapData<ClassificationItem[]>(fallbackRes) || [];
     } catch (e) {
       console.warn('Failed to fetch grades from API:', e);
       throw e;
+    }
+  }
+};
+
+export const getStudentGrades = async (): Promise<ClassificationItem[]> => {
+  try {
+    const res = await studentApi.get('grades');
+    return unwrapData<ClassificationItem[]>(res) || [];
+  } catch (error) {
+    try {
+      const fallbackRes = await studentApi.get('/grades');
+      return unwrapData<ClassificationItem[]>(fallbackRes) || [];
+    } catch (e) {
+      console.warn('Failed to fetch student grades from API:', e);
+      return [];
     }
   }
 };
@@ -32,7 +48,7 @@ export const createGrade = async (payload: CreateClassificationPayload): Promise
     const res = await academyApi.post('grades', payload);
     return unwrapData<ClassificationItem>(res);
   } catch (error) {
-    const fallbackRes = await academyApi.post('academy/grades', payload);
+    const fallbackRes = await academyApi.post('/grades', payload);
     return unwrapData<ClassificationItem>(fallbackRes);
   }
 };
@@ -112,13 +128,57 @@ export const deleteTerm = async (id: string | number): Promise<void> => {
 };
 
 // ─── 4. SUBJECTS (subjects) ───
-export const getSubjects = async (): Promise<ClassificationItem[]> => {
+export const getSubjects = async (gradeId?: string | number): Promise<ClassificationItem[]> => {
   try {
-    const res = await academyApi.get('subjects');
-    return unwrapData<ClassificationItem[]>(res) || [];
+    const url = gradeId ? `subjects?grade_id=${gradeId}` : 'subjects';
+    const res = await academyApi.get(url);
+    const data = unwrapData<ClassificationItem[]>(res) || [];
+    if (gradeId && Array.isArray(data)) {
+      const filtered = data.filter((s: any) => String(s.grade_id) === String(gradeId) || String(s.grade?.id) === String(gradeId));
+      return filtered.length > 0 ? filtered : data;
+    }
+    return data;
   } catch (error) {
-    console.warn('Failed to fetch subjects:', error);
-    throw error;
+    try {
+      const fallbackUrl = gradeId ? `/subjects?grade_id=${gradeId}` : '/subjects';
+      const fallbackRes = await academyApi.get(fallbackUrl);
+      const data = unwrapData<ClassificationItem[]>(fallbackRes) || [];
+      if (gradeId && Array.isArray(data)) {
+        const filtered = data.filter((s: any) => String(s.grade_id) === String(gradeId) || String(s.grade?.id) === String(gradeId));
+        return filtered.length > 0 ? filtered : data;
+      }
+      return data;
+    } catch (e) {
+      console.warn('Failed to fetch subjects:', error);
+      throw error;
+    }
+  }
+};
+
+export const getStudentSubjects = async (gradeId?: string | number): Promise<ClassificationItem[]> => {
+  try {
+    const url = gradeId ? `subjects?grade_id=${gradeId}` : 'subjects';
+    const res = await studentApi.get(url);
+    const data = unwrapData<ClassificationItem[]>(res) || [];
+    if (gradeId && Array.isArray(data)) {
+      const filtered = data.filter((s: any) => String(s.grade_id) === String(gradeId) || String(s.grade?.id) === String(gradeId));
+      return filtered.length > 0 ? filtered : data;
+    }
+    return data;
+  } catch (error) {
+    try {
+      const fallbackUrl = gradeId ? `/subjects?grade_id=${gradeId}` : '/subjects';
+      const fallbackRes = await studentApi.get(fallbackUrl);
+      const data = unwrapData<ClassificationItem[]>(fallbackRes) || [];
+      if (gradeId && Array.isArray(data)) {
+        const filtered = data.filter((s: any) => String(s.grade_id) === String(gradeId) || String(s.grade?.id) === String(gradeId));
+        return filtered.length > 0 ? filtered : data;
+      }
+      return data;
+    } catch (e) {
+      console.warn('Failed to fetch student subjects from API:', e);
+      return [];
+    }
   }
 };
 

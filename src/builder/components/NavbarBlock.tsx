@@ -3,6 +3,8 @@ import { Search, Bell, User, HelpCircle, Mail, Phone, MapPin, Facebook, Instagra
 import { getTypographyStyle, hasSectionBackground } from '../utils/typography';
 import { unwrapEncryptedResponseData } from '@/lib/decryption';
 import { useBuilderStore } from '../store/builderStore';
+import { getStoredAuthToken, getDashboardUrl } from '@/lib/auth-storage';
+import { getMyAcademyProfile } from '@/services/student-auth';
 
 interface NavbarBlockProps {
   title?: string;
@@ -58,12 +60,24 @@ export default function NavbarBlock(props: NavbarBlockProps) {
   } = props;
 
   const [academyInfo, setAcademyInfo] = useState<{ name?: string; logo?: string } | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [dashboardUrl, setDashboardUrl] = useState<string>('/student');
 
   let currentTemplate: any = null;
+  let isEditing = false;
   try {
     currentTemplate = useBuilderStore((state) => state.currentTemplate);
-  } catch (e) {}
+    isEditing = useBuilderStore((state) => state.isEditing);
+  } catch (e) { }
   const isUdemy = currentTemplate?.id === 'template_2';
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = getStoredAuthToken();
+      setIsLoggedIn(Boolean(token));
+      setDashboardUrl(getDashboardUrl());
+    }
+  }, []);
 
   useEffect(() => {
     // Try localStorage first
@@ -71,7 +85,7 @@ export default function NavbarBlock(props: NavbarBlockProps) {
     if (cached) {
       try {
         setAcademyInfo(JSON.parse(cached));
-      } catch (e) {}
+      } catch (e) { }
     }
 
     const fetchProfile = async () => {
@@ -97,29 +111,20 @@ export default function NavbarBlock(props: NavbarBlockProps) {
           try {
             setAcademyInfo(JSON.parse(cachedInfo));
             return;
-          } catch (e) {}
+          } catch (e) { }
         }
 
-        if (!token) return;
-
-        headers['Authorization'] = `Bearer ${token}`;
-
-        const res = await fetch('https://api.darab.academy/api/academy/me', { headers });
-        if (res.ok) {
-          const resJson = await res.json();
-          const decryptedData = unwrapEncryptedResponseData(resJson) as any;
-          const profile = decryptedData?.data ?? decryptedData;
-          if (profile) {
-            const info = {
-              name: profile.academy_name || profile.name || '',
-              logo: profile.logo || profile.logo_url || ''
-            };
-            setAcademyInfo(info);
-            localStorage.setItem('darab_academy_profile', JSON.stringify(info));
-          }
+        const profile = await getMyAcademyProfile();
+        if (profile) {
+          const info = {
+            name: profile.academy_name || profile.name || '',
+            logo: profile.logo || profile.logo_url || ''
+          };
+          setAcademyInfo(info);
+          localStorage.setItem('darab_academy_profile', JSON.stringify(info));
         }
       } catch (err) {
-        console.error('Failed to fetch academy profile in navbar:', err);
+        console.error('Failed to fetch my-academy profile in navbar:', err);
       }
     };
 
@@ -144,7 +149,7 @@ export default function NavbarBlock(props: NavbarBlockProps) {
 
   if (isUdemy) {
     return (
-      <header 
+      <header
         className="sticky top-0 left-0 right-0 w-full z-50 flex justify-between items-center px-6 py-4 backdrop-blur-xl bg-white/80 border-b border-slate-200/50 shadow-sm transition-all duration-300"
         dir="rtl"
       >
@@ -165,9 +170,9 @@ export default function NavbarBlock(props: NavbarBlockProps) {
         {/* Center: Navigation Links */}
         <nav className="hidden md:flex items-center gap-8 text-[15px] font-medium text-[var(--t2-ink)] font-['Inter']">
           {links.map((link: any, idx: number) => (
-            <a 
-              key={idx} 
-              href={link.href} 
+            <a
+              key={idx}
+              href={link.href}
               className="relative group hover:text-[var(--t2-gold)] transition-colors"
             >
               {link.label}
@@ -178,16 +183,27 @@ export default function NavbarBlock(props: NavbarBlockProps) {
 
         {/* Left Side: Buttons */}
         <div className="flex items-center gap-4">
-          <a href="/auth/login" className="hidden sm:inline-block px-5 py-2 rounded-full border-[1.5px] border-[var(--t2-ink)] text-[var(--t2-ink)] font-bold text-sm hover:bg-[var(--t2-ink)] hover:text-white transition-all font-['Inter']">
-            تسجيل الدخول
-          </a>
-          {showButton && (
-            <a 
-              href={!buttonLink || buttonLink === '#' ? '/auth/register' : buttonLink}
-              className="px-6 py-2 rounded-full bg-[var(--t2-gold)] text-[var(--t2-ink)] font-bold text-sm hover:brightness-110 hover:shadow-[0_4px_15px_rgba(232,163,61,0.4)] hover:-translate-y-0.5 transition-all font-['Inter']"
+          {!isEditing && isLoggedIn ? (
+            <a
+              href={dashboardUrl}
+              className="px-6 py-2 rounded-full bg-[var(--t2-gold)] text-[var(--t2-ink)] font-bold text-sm hover:brightness-110 hover:shadow-[0_4px_15px_rgba(232,163,61,0.4)] hover:-translate-y-0.5 transition-all font-['Inter'] flex items-center gap-2"
             >
-              {buttonText}
+              لوحة التحكم
             </a>
+          ) : (
+            <>
+              <a href="/auth/login" className="hidden sm:inline-block px-5 py-2 rounded-full border-[1.5px] border-[var(--t2-ink)] text-[var(--t2-ink)] font-bold text-sm hover:bg-[var(--t2-ink)] hover:text-white transition-all font-['Inter']">
+                تسجيل الدخول
+              </a>
+              {showButton && (
+                <a
+                  href={!buttonLink || buttonLink === '#' ? '/auth/register' : buttonLink}
+                  className="px-6 py-2 rounded-full bg-[var(--t2-gold)] text-[var(--t2-ink)] font-bold text-sm hover:brightness-110 hover:shadow-[0_4px_15px_rgba(232,163,61,0.4)] hover:-translate-y-0.5 transition-all font-['Inter']"
+                >
+                  {buttonText}
+                </a>
+              )}
+            </>
           )}
         </div>
       </header>
@@ -196,33 +212,43 @@ export default function NavbarBlock(props: NavbarBlockProps) {
 
   if (isLandingPage) {
     return (
-      <header 
-        style={{ 
-          backgroundColor: isTransparentBg ? 'rgba(255, 255, 255, 0.7)' : bgColor, 
-          borderColor: isTransparentBg ? 'rgba(255, 255, 255, 0.4)' : borderColor 
+      <header
+        style={{
+          backgroundColor: isTransparentBg ? 'rgba(255, 255, 255, 0.7)' : bgColor,
+          borderColor: isTransparentBg ? 'rgba(255, 255, 255, 0.4)' : borderColor
         }}
         className={`w-full rounded-2xl border px-6 py-4 flex justify-between items-center ${isTransparentBg ? 'backdrop-blur-md shadow-md' : 'shadow-sm'} select-none z-50`}
         dir="rtl"
       >
         {/* Left Side: Registration Button */}
         <div>
-          {showButton && (
-            <a 
-              href={buttonLink}
+          {!isEditing && isLoggedIn ? (
+            <a
+              href={dashboardUrl}
               style={{ backgroundColor: 'var(--theme-primary)' }}
               className="px-5 py-2 rounded-xl text-white font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md inline-block text-center"
             >
-              {buttonText}
+              لوحة التحكم
             </a>
+          ) : (
+            showButton && (
+              <a
+                href={buttonLink}
+                style={{ backgroundColor: 'var(--theme-primary)' }}
+                className="px-5 py-2 rounded-xl text-white font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md inline-block text-center"
+              >
+                {buttonText}
+              </a>
+            )
           )}
         </div>
 
         {/* Center: Navigation Links */}
         <nav className="hidden md:flex items-center gap-6 text-xs font-bold text-slate-600">
           {links.map((link: any, idx: number) => (
-            <a 
-              key={idx} 
-              href={link.href} 
+            <a
+              key={idx}
+              href={link.href}
               className="hover:text-[var(--theme-primary)] transition-colors"
             >
               {link.label}
@@ -239,7 +265,7 @@ export default function NavbarBlock(props: NavbarBlockProps) {
               {logoText || activeTitle?.[0] || 'د'}
             </div>
           )}
-          <span 
+          <span
             style={{ ...titleTypography.style, fontSize: '18px', color: 'var(--theme-primary)' }}
             className={`font-black tracking-wide ${titleTypography.className}`}
           >
@@ -251,10 +277,10 @@ export default function NavbarBlock(props: NavbarBlockProps) {
   }
 
   return (
-    <header 
-      style={{ 
-        backgroundColor: isTransparentBg ? 'rgba(255, 255, 255, 0.7)' : bgColor, 
-        borderColor: isTransparentBg ? 'rgba(255, 255, 255, 0.4)' : borderColor 
+    <header
+      style={{
+        backgroundColor: isTransparentBg ? 'rgba(255, 255, 255, 0.7)' : bgColor,
+        borderColor: isTransparentBg ? 'rgba(255, 255, 255, 0.4)' : borderColor
       }}
       className={`w-full rounded-2xl border px-6 py-4 flex justify-between items-center ${isTransparentBg ? 'backdrop-blur-md shadow-md' : 'shadow-sm'} select-none`}
       dir="rtl"
@@ -269,7 +295,7 @@ export default function NavbarBlock(props: NavbarBlockProps) {
             {logoText || activeTitle?.[0] || 'د'}
           </div>
         )}
-        <span 
+        <span
           style={titleTypography.style}
           className={`${titleTypography.className}`}
         >
@@ -281,9 +307,9 @@ export default function NavbarBlock(props: NavbarBlockProps) {
       {showSearch && (
         <div className={`hidden md:flex items-center flex-1 max-w-sm mx-8 ${isTransparentBg ? 'bg-white/30 border-white/20' : 'bg-slate-50 border-slate-200/60'} rounded-xl px-3.5 py-1.5 relative shadow-inner`}>
 
-          <input 
-            type="text" 
-            placeholder="البحث عن دروس أو معلمين..." 
+          <input
+            type="text"
+            placeholder="البحث عن دروس أو معلمين..."
             className="w-full bg-transparent text-[11px] font-bold text-slate-700 outline-none text-right placeholder-slate-400"
             dir="rtl"
           />
@@ -297,7 +323,7 @@ export default function NavbarBlock(props: NavbarBlockProps) {
           <Bell className="w-4 h-4" />
           <span className="absolute top-1 left-1.5 w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
         </div>
-        
+
         <div className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 cursor-pointer transition-colors">
           <HelpCircle className="w-4 h-4" />
         </div>
@@ -336,7 +362,7 @@ export function FooterBlock(props: any) {
   let currentTemplate: any = null;
   try {
     currentTemplate = useBuilderStore((state) => state.currentTemplate);
-  } catch (e) {}
+  } catch (e) { }
   const isUdemy = currentTemplate?.id === 'template_2';
 
   useEffect(() => {
@@ -344,7 +370,7 @@ export function FooterBlock(props: any) {
     if (cached) {
       try {
         setProfile(JSON.parse(cached));
-      } catch (e) {}
+      } catch (e) { }
     }
 
     const fetchProfile = async () => {
@@ -370,25 +396,16 @@ export function FooterBlock(props: any) {
           try {
             setProfile(JSON.parse(cachedFull));
             return;
-          } catch (e) {}
+          } catch (e) { }
         }
 
-        if (!token) return;
-
-        headers['Authorization'] = `Bearer ${token}`;
-
-        const res = await fetch('https://api.darab.academy/api/academy/me', { headers });
-        if (res.ok) {
-          const resJson = await res.json();
-          const decryptedData = unwrapEncryptedResponseData(resJson) as any;
-          const data = decryptedData?.data ?? decryptedData;
-          if (data) {
-            setProfile(data);
-            localStorage.setItem('darab_academy_profile_full', JSON.stringify(data));
-          }
+        const data = await getMyAcademyProfile();
+        if (data) {
+          setProfile(data);
+          localStorage.setItem('darab_academy_profile_full', JSON.stringify(data));
         }
       } catch (err) {
-        console.error('Failed to fetch academy profile in footer:', err);
+        console.error('Failed to fetch my-academy profile in footer:', err);
       }
     };
 
@@ -412,7 +429,7 @@ export function FooterBlock(props: any) {
       <footer className="w-full bg-[var(--t2-ink)] text-[var(--t2-canvas)] pt-20 pb-10 select-none font-['Inter']" dir="rtl">
         <div className="mx-auto max-w-7xl px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-            
+
             {/* Column 1: Brand details */}
             <div className="flex flex-col gap-6 items-start md:col-span-1">
               {showLogo && (
@@ -434,7 +451,7 @@ export function FooterBlock(props: any) {
                   {description}
                 </p>
               )}
-              
+
               {/* Social Icons */}
               {showSocials && (
                 <div className="flex items-center gap-3 mt-2">
@@ -529,7 +546,7 @@ export function FooterBlock(props: any) {
     <footer style={{ backgroundColor: bgColor, color: textColor }} className="mt-20 border-t border-slate-100 pt-16 pb-8 select-none w-full" dir="rtl">
       <div className="mx-auto max-w-7xl px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12 text-right">
-          
+
           {/* Column 1: Brand details */}
           <div className="flex flex-col gap-5 items-start">
             {showLogo && (
@@ -551,7 +568,7 @@ export function FooterBlock(props: any) {
                 {description}
               </p>
             )}
-            
+
             {/* Social Icons */}
             {showSocials && (
               <div className="flex items-center gap-3 mt-2">

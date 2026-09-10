@@ -6,6 +6,7 @@ import LandingRenderer from '@/modules/landing/renderer/LandingRenderer';
 import { PaymentMethodModal } from '@/components/payment/PaymentMethodModal';
 import { getStudentCourse } from '@/services/student-courses';
 import { useModal } from '@/context/ModalContext';
+import { mapCoursePaymentMethods } from '@/lib/payment-methods';
 
 export default function DedicatedLandingPage() {
   const params = useParams();
@@ -18,6 +19,7 @@ export default function DedicatedLandingPage() {
   
   const [course, setCourse] = useState<any | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
   const { openModal } = useModal();
 
   const loadCourse = React.useCallback(async () => {
@@ -68,31 +70,17 @@ export default function DedicatedLandingPage() {
     setIsPaymentModalOpen(true);
   };
 
-  const getMappedMethods = () => {
+  const getMappedMethods = React.useCallback(() => {
     if (!course) return [];
-    if (course.payment_methods && course.payment_methods.length > 0) {
-      return course.payment_methods;
-    }
-    if (course.receiver_accounts && course.receiver_accounts.length > 0) {
-      return course.receiver_accounts.map((acc: any) => {
-        const logoUrl = acc.receiver_account?.logo || '';
-        const fullLogoUrl = logoUrl && !logoUrl.startsWith('http') 
-          ? `https://api.darab.academy${logoUrl.startsWith('/') ? '' : '/'}${logoUrl}`
-          : logoUrl;
+    return mapCoursePaymentMethods(course);
+  }, [course]);
 
-        const resolvedId = acc.id || acc.receiver_account_id || acc.receiver_account?.id || '';
-        return {
-          methodId: resolvedId,
-          methodName: acc.receiver_account?.name || 'حساب استقبال',
-          type: acc.receiver_account?.key || 'mobile',
-          value: acc.account_value || '',
-          logo: fullLogoUrl,
-          receiver_account_id: resolvedId
-        };
-      });
+  useEffect(() => {
+    const methods = getMappedMethods();
+    if (methods.length > 0 && !selectedPaymentMethod) {
+      setSelectedPaymentMethod(methods[0]);
     }
-    return [];
-  };
+  }, [course, getMappedMethods, selectedPaymentMethod]);
 
   return (
     <div className="min-h-screen w-full bg-white" dir="rtl">
@@ -102,6 +90,8 @@ export default function DedicatedLandingPage() {
         landingPageId={lpId}
         isEditable={false}
         onSubscribe={handleSubscribe}
+        selectedPaymentMethod={selectedPaymentMethod}
+        setSelectedPaymentMethod={setSelectedPaymentMethod}
         isPaymentModalOpen={isPaymentModalOpen}
         setIsPaymentModalOpen={setIsPaymentModalOpen}
       />
@@ -111,6 +101,7 @@ export default function DedicatedLandingPage() {
           isOpen={isPaymentModalOpen}
           onClose={() => setIsPaymentModalOpen(false)}
           methods={getMappedMethods()}
+          initialSelectedMethod={selectedPaymentMethod}
           courseId={course.id}
           coursePrice={course.final_price || course.price}
           courseCurrency={course.currency || 'SAR'}

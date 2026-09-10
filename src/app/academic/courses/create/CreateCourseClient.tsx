@@ -40,7 +40,7 @@ import {
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { createCourse, createUnit, deleteUnit, getCategories, getCourse, getCourses, updateCourse, createCategory } from '@/services/courses';
+import { createCourse, createUnit, deleteUnit, updateLesson, getCategories, getCourse, getCourses, updateCourse, createCategory } from '@/services/courses';
 import { getErrorMessage } from '@/lib/utils';
 import { purgeAllCourseDraftCache, getStoredUserRole, isSchoolTeacherRole } from '@/lib/auth-storage';
 import { getGrades, getTerms, getSubjects, getAcademicYears, ClassificationItem } from '@/services/academic-classification';
@@ -55,6 +55,7 @@ import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
 import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdown';
 import { AcademyPaymentMethod, PaymentMethod } from '@/types/payment';
 import { getUserPaymentInfos, UserPaymentInfo, getReceiverAccounts, createUserPaymentInfo } from '@/services/finance';
+import { getLessonVideoSrc } from '@/lib/lesson-video-src';
 
 import {
   getLandingPagesList,
@@ -243,6 +244,7 @@ export default function CreateCourseClient() {
     isOpen: false,
     type: 'grade',
   });
+  const [previewVideoLesson, setPreviewVideoLesson] = useState<any | null>(null);
 
   const handleClassificationSuccess = async (type: 'grade' | 'semester' | 'subject' | 'year', newItem: any) => {
     try {
@@ -723,36 +725,46 @@ export default function CreateCourseClient() {
     return Math.min(100, score);
   };
 
-  const activeGrades = gradesList.length > 0 ? gradesList : [
-    { id: 'first_sec', name: 'أولى ثانوي' },
-    { id: 'second_sec', name: 'ثانية ثانوي' },
-    { id: 'third_sec', name: 'ثالثة ثانوي' }
-  ];
+  const isTeacher = isSchoolTeacherRole(userRole || currentUser);
 
-  const activeSemesters = semestersList.length > 0 
-    ? semestersList.filter(item => !gradeLevel || !item.grade_id || String(item.grade_id) === String(gradeLevel))
-    : [
-        { id: 'term_1', name: 'الترم الأول' },
-        { id: 'term_2', name: 'الترم الثاني' },
-        { id: 'full_year', name: 'العام الدراسي كامل' },
-        { id: 'final_review', name: 'مراجعة نهائية' },
-        { id: 'not_linked', name: 'غير مرتبط بترم' }
-      ];
+  const activeGrades = isTeacher
+    ? gradesList
+    : (gradesList.length > 0 ? gradesList : [
+        { id: 'first_sec', name: 'أولى ثانوي' },
+        { id: 'second_sec', name: 'ثانية ثانوي' },
+        { id: 'third_sec', name: 'ثالثة ثانوي' }
+      ]);
 
-  const activeSubjects = subjectsList.length > 0
-    ? subjectsList.filter(item => !gradeLevel || !item.grade_id || String(item.grade_id) === String(gradeLevel))
-    : [
-        { id: 'physics', name: 'فيزياء' },
-        { id: 'chemistry', name: 'كيمياء' },
-        { id: 'math', name: 'رياضيات' },
-        { id: 'biology', name: 'أحياء' },
-        { id: 'arabic', name: 'عربي' }
-      ];
+  const activeSemesters = isTeacher
+    ? semestersList
+    : (semestersList.length > 0 
+        ? semestersList.filter(item => !gradeLevel || !item.grade_id || String(item.grade_id) === String(gradeLevel))
+        : [
+            { id: 'term_1', name: 'الترم الأول' },
+            { id: 'term_2', name: 'الترم الثاني' },
+            { id: 'full_year', name: 'العام الدراسي كامل' },
+            { id: 'final_review', name: 'مراجعة نهائية' },
+            { id: 'not_linked', name: 'غير مرتبط بترم' }
+          ]);
 
-  const activeYears = academicYearsList.length > 0 ? academicYearsList : [
-    { id: '2026/2027', name: '2026 / 2027' },
-    { id: '2025/2026', name: '2025 / 2026' }
-  ];
+  const activeSubjects = isTeacher
+    ? subjectsList
+    : (subjectsList.length > 0
+        ? subjectsList.filter(item => !gradeLevel || !item.grade_id || String(item.grade_id) === String(gradeLevel))
+        : [
+            { id: 'physics', name: 'فيزياء' },
+            { id: 'chemistry', name: 'كيمياء' },
+            { id: 'math', name: 'رياضيات' },
+            { id: 'biology', name: 'أحياء' },
+            { id: 'arabic', name: 'عربي' }
+          ]);
+
+  const activeYears = isTeacher
+    ? academicYearsList
+    : (academicYearsList.length > 0 ? academicYearsList : [
+        { id: '2026/2027', name: '2026 / 2027' },
+        { id: '2025/2026', name: '2025 / 2026' }
+      ]);
 
   const mapTypeToBackend = (type: string | null | undefined): string => {
     if (!type) return 'recorded';
@@ -1680,8 +1692,10 @@ export default function CreateCourseClient() {
                             value={gradeLevel}
                             onChange={(e) => {
                               setGradeLevel(e.target.value);
-                              setSemester('');
-                              setSubject('');
+                              if (!isTeacher) {
+                                setSemester('');
+                                setSubject('');
+                              }
                             }}
                             className="flex-1 border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white cursor-pointer"
                           >
@@ -2488,13 +2502,61 @@ export default function CreateCourseClient() {
                                       </div>
                                     </div>
 
-                                    <div className="flex items-center gap-4 justify-end">
-                                      {/* Free preview toggle */}
-                                      <label className="relative inline-flex items-center cursor-pointer gap-2">
-                                        <input type="checkbox" defaultChecked={lesson.is_free === 1} className="sr-only peer" />
-                                        <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                                        <span className="text-xs font-bold text-slate-600">معاينة</span>
-                                      </label>
+                                    <div className="flex items-center gap-3 justify-end">
+                                      {/* Free preview toggle pill */}
+                                      <button
+                                        type="button"
+                                        onClick={async (e) => {
+                                          e.stopPropagation();
+                                          const isCurrentlyFree = lesson.is_free === 1 || lesson.is_free === true;
+                                          const newIsFreeVal = isCurrentlyFree ? 0 : 1;
+
+                                          setUnits((prevUnits: any[]) =>
+                                            prevUnits.map((u: any) => {
+                                              if (u.id !== unit.id) return u;
+                                              return {
+                                                ...u,
+                                                lessons: (u.lessons || []).map((l: any) =>
+                                                  l.id === lesson.id ? { ...l, is_free: newIsFreeVal } : l
+                                                ),
+                                              };
+                                            })
+                                          );
+
+                                          if (lesson.id && (typeof lesson.id === 'number' || (typeof lesson.id === 'string' && !lesson.id.startsWith('temp_')))) {
+                                            try {
+                                              await updateLesson(lesson.id, { is_free: newIsFreeVal });
+                                              toast.success(newIsFreeVal === 1 ? 'تم تعيين الدرس كـ "معاينة مجانية (1)"' : 'تم تعيين الدرس كـ "مدفوع (0)"');
+                                            } catch (err: any) {
+                                              toast.error(getErrorMessage(err, 'فشل تحديث حالة المعاينة'));
+                                            }
+                                          }
+                                        }}
+                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all border shadow-2xs cursor-pointer ${
+                                          lesson.is_free === 1 || lesson.is_free === true
+                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 ring-2 ring-emerald-400/20'
+                                            : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                                        }`}
+                                        title="انقر للتغيير بين مجاني ومدفوع"
+                                      >
+                                        <span className="material-symbols-outlined text-[16px]">
+                                          {lesson.is_free === 1 || lesson.is_free === true ? 'visibility' : 'lock'}
+                                        </span>
+                                        <span>{lesson.is_free === 1 || lesson.is_free === true ? 'معاينة مجانية (1)' : 'مدفوع (0)'}</span>
+                                      </button>
+
+                                      {/* Dedicated Eye Icon Button to View / Preview Lesson Video */}
+                                      {(lessonType === 'video' || lesson.video_url || lesson.video_id || lesson.file_url) && (
+                                        <button
+                                          type="button"
+                                          onClick={() => setPreviewVideoLesson(lesson)}
+                                          className="px-3.5 py-1.5 text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white border border-blue-200 rounded-xl transition-all flex items-center gap-1.5 text-xs font-black shrink-0 cursor-pointer shadow-2xs group/btn"
+                                          title="معاينة ومشاهدة فيديو الدرس"
+                                        >
+                                          <span className="material-symbols-outlined text-[18px] group-hover/btn:scale-110 transition-transform">visibility</span>
+                                          <span>معاينة</span>
+                                        </button>
+                                      )}
 
                                       <div className="flex items-center gap-1">
                                         <button
@@ -3473,6 +3535,7 @@ export default function CreateCourseClient() {
           initialType={addClassificationModal.type}
           availableGrades={gradesList}
           currentGradeId={gradeLevel}
+          isSchoolTeacher={true}
           onClose={() => setAddClassificationModal((prev) => ({ ...prev, isOpen: false }))}
           onSuccess={handleClassificationSuccess}
         />
@@ -3510,6 +3573,64 @@ export default function CreateCourseClient() {
           }
         }}
       />
+      {/* Enhanced Video Lesson Preview Modal */}
+      {previewVideoLesson && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200" dir="rtl">
+          <div className="relative w-full max-w-4xl bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-800 flex flex-col">
+            <div className="flex items-center justify-between p-5 px-6 border-b border-slate-800 bg-slate-950/90 text-white">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-2xl">visibility</span>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-extrabold text-white text-base">{previewVideoLesson.title || 'معاينة الدرس'}</h3>
+                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                      معاينة مباشرة
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 font-medium mt-0.5">مشاهدة فيديو الدرس التعليمي في وضع التعديل</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setPreviewVideoLesson(null)}
+                className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-full transition-all cursor-pointer"
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            <div className="p-3 bg-black aspect-video flex items-center justify-center relative">
+              {getLessonVideoSrc(previewVideoLesson) ? (
+                getLessonVideoSrc(previewVideoLesson).includes('iframe') || getLessonVideoSrc(previewVideoLesson).includes('mediadelivery') ? (
+                  <iframe
+                    src={getLessonVideoSrc(previewVideoLesson)}
+                    className="w-full h-full border-0 rounded-2xl shadow-inner"
+                    allowFullScreen
+                    allow="autoplay; encrypted-media"
+                  />
+                ) : (
+                  <video
+                    src={getLessonVideoSrc(previewVideoLesson)}
+                    controls
+                    autoPlay
+                    className="w-full h-full object-contain rounded-2xl"
+                  />
+                )
+              ) : (
+                <div className="text-center p-12 text-slate-400 font-bold flex flex-col items-center gap-3">
+                  <div className="w-16 h-16 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600">
+                    <span className="material-symbols-outlined text-3xl">videocam_off</span>
+                  </div>
+                  <p className="text-sm font-extrabold text-slate-300">عفواً، لا يوجد رابط فيديو صالح لعرض هذا الدرس حالياً</p>
+                  <p className="text-xs text-slate-500">قد يكون الفيديو في طور المعالجة على الخادم أو لم يتم رفع ملف بعد.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

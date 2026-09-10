@@ -2,7 +2,8 @@ import React from 'react';
 import { CreditCard, Globe, Hash, Pen } from 'lucide-react';
 import { PaymentSectionData } from '../types/landing';
 import { twMerge } from 'tailwind-merge';
-import { colorToRgbTriplet } from '../utils/color';
+import { colorToRgbTriplet, getContrastColor } from '../utils/color';
+import { mapCoursePaymentMethods } from '@/lib/payment-methods';
 
 interface PaymentSectionProps {
   data: PaymentSectionData;
@@ -26,7 +27,7 @@ export default function PaymentSection({
   const defaultText = isTemplate1 ? '#0D3B33' : '#1f2937';
   
   const localBg = data.background || defaultBg;
-  const localText = data.textColor || defaultText;
+  const localText = getContrastColor(localBg, data.textColor || defaultText, '#0F172A', '#FBF7EE');
   
   const bgRgb = colorToRgbTriplet(localBg);
   const textRgb = colorToRgbTriplet(localText);
@@ -43,26 +44,23 @@ export default function PaymentSection({
     '--theme-primary-rgb': primaryRgbTriplet,
   } as React.CSSProperties;
 
-  // Extract raw receiver accounts / payment methods
-  const rawMethods = course?.payment_methods || course?.receiver_accounts || course?.receiverAccounts || [];
+  // Extract payment methods using central helper
+  const mappedMethods = mapCoursePaymentMethods(course);
   
   // Format to standard structure for rendering
-  const receiverAccounts = rawMethods.map((item: any, index: number) => {
-    const value = item.value || item.accountValue || item.account_value || item.accountNumber || item.account_number || '';
-    const name = item.name || item.methodName || item.receiver_account?.name || '';
-    const logo = item.logo || item.receiver_account?.logo || undefined;
-    const country = item.country || item.country_name || item.receiver_account?.country_name || item.country_code || '';
-    
+  const receiverAccounts = mappedMethods.map((item: any, index: number) => {
     return {
       id: item.methodId || item.id || `pm-${index}`,
-      name,
-      accountNumber: value,
-      country,
-      logo
+      name: item.methodName || item.name || 'حساب استقبال',
+      accountNumber: item.value || '',
+      country: item.country || item.country_name || '',
+      logo: item.logo
     };
   });
 
   if (receiverAccounts.length === 0) return null;
+
+  const cardTitleColor = getContrastColor('#ffffff', localText, '#0F172A', '#0F172A');
 
   if (isTemplate1) {
     return (
@@ -97,7 +95,7 @@ export default function PaymentSection({
             <h2 style={{ color: localText }} className="section-title text-2xl md:text-3xl font-extrabold mt-2 mb-4">
               {data.title || 'وسائل الدفع المتاحة للامتلاك'}
             </h2>
-            <p style={{ color: `rgba(${textRgb}, 0.7)` }} className="max-w-[500px] mx-auto text-sm">
+            <p style={{ color: `rgba(${textRgb}, 0.8)` }} className="max-w-[500px] mx-auto text-sm font-medium">
               يمكنك إرسال رسوم الاشتراك مباشرة عن طريق التحويل البنكي إلى أحد حساباتنا المعتمدة أدناه.
             </p>
           </div>
@@ -106,7 +104,7 @@ export default function PaymentSection({
             {receiverAccounts.map((account: any) => (
               <div 
                 key={account.id} 
-                style={{ backgroundColor: '#ffffff', borderColor: `rgba(${textRgb}, 0.12)` }}
+                style={{ backgroundColor: '#ffffff', borderColor: `rgba(0, 0, 0, 0.12)` }}
                 className="border rounded-3xl p-6 shadow-sm flex items-start gap-4 text-right hover:shadow-md transition-shadow"
               >
                 <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center overflow-hidden shrink-0 p-1">
@@ -118,13 +116,12 @@ export default function PaymentSection({
                 </div>
 
                 <div className="flex-1 space-y-2">
-                  <h3 style={{ color: localText }} className="font-extrabold text-base">{account.name}</h3>
+                  <h3 style={{ color: cardTitleColor }} className="font-extrabold text-base">{account.name}</h3>
                   
                   <div className="flex items-center gap-2 text-xs text-slate-500">
                     <Hash size={14} style={{ color: `rgb(${primaryRgbTriplet})` }} />
                     <span 
-                      style={{ color: `rgba(${textRgb}, 0.85)` }}
-                      className="font-mono select-all font-bold tracking-wider"
+                      className="font-mono select-all font-bold tracking-wider text-slate-800"
                     >
                       {account.accountNumber}
                     </span>
@@ -181,7 +178,7 @@ export default function PaymentSection({
           {receiverAccounts.map((account: any) => (
             <div 
               key={account.id} 
-              style={{ backgroundColor: '#ffffff', borderColor: `rgba(${textRgb}, 0.1)` }}
+              style={{ backgroundColor: '#ffffff', borderColor: `rgba(0, 0, 0, 0.1)` }}
               className="p-6 rounded-2xl border flex flex-col gap-4 text-right shadow-sm hover:border-[var(--theme-primary)] transition-all"
             >
               <div className="flex items-center gap-4">
@@ -192,22 +189,21 @@ export default function PaymentSection({
                     <CreditCard size={22} style={{ color: `rgb(${primaryRgbTriplet})` }} />
                   )}
                 </div>
-                <h3 style={{ color: localText }} className="font-extrabold text-sm">{account.name}</h3>
+                <h3 style={{ color: cardTitleColor }} className="font-extrabold text-sm">{account.name}</h3>
               </div>
 
               <div className="space-y-1 text-xs">
                 <div 
-                  style={{ backgroundColor: `rgba(${textRgb}, 0.03)` }}
-                  className="p-2.5 rounded-xl flex items-center justify-between"
+                  className="p-2.5 rounded-xl flex items-center justify-between bg-slate-50 border border-slate-100"
                 >
                   <span className="text-slate-400 font-bold">رقم الحساب:</span>
-                  <span style={{ color: localText }} className="font-mono select-all font-bold tracking-wider">{account.accountNumber}</span>
+                  <span className="font-mono select-all font-bold tracking-wider text-slate-800">{account.accountNumber}</span>
                 </div>
 
                 {account.country && (
                   <div className="flex items-between justify-between pt-1">
                     <span className="text-slate-400 font-bold">بلد الحساب:</span>
-                    <span style={{ color: `rgba(${textRgb}, 0.8)` }} className="font-bold">{account.country}</span>
+                    <span className="font-bold text-slate-600">{account.country}</span>
                   </div>
                 )}
               </div>

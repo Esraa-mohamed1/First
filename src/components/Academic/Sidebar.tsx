@@ -310,7 +310,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             <button
               onClick={() => {
                 clearUserSessionAndCache();
-                window.location.href = '/auth/login';
+                window.location.href = '/';
               }}
               className="flex items-center gap-3 text-red-500 hover:text-red-600 transition-colors font-bold text-sm group"
             >

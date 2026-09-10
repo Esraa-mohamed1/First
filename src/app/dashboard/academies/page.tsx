@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   GraduationCap,
@@ -23,7 +23,10 @@ import {
   ShieldCheck,
   ToggleLeft,
   ToggleRight,
-  Filter
+  Filter,
+  ChevronDown,
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
 import { getAcademies, createAcademy, updateAcademy, deleteAcademy } from '@/services/academies';
 import { getAdminPackages } from '@/services/admin-packages';
@@ -35,7 +38,12 @@ export default function AcademiesPage() {
   const [packages, setPackages] = useState<Package[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [packageFilter, setPackageFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const pageSize = 10;
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -56,25 +64,38 @@ export default function AcademiesPage() {
   });
 
   useEffect(() => {
-    fetchInitialData();
+    const loadPackages = async () => {
+      try {
+        const pkgs = await getAdminPackages();
+        setPackages(pkgs);
+      } catch (e) {
+        console.error('Failed to load packages:', e);
+      }
+    };
+    loadPackages();
   }, []);
 
-  const fetchInitialData = async () => {
+  const fetchAcademies = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [academiesData, packagesData] = await Promise.all([
-        getAcademies(),
-        getAdminPackages()
-      ]);
-      setAcademies(academiesData);
-      setPackages(packagesData);
+      const response = await getAcademies({
+        page: currentPage,
+        limit: pageSize
+      });
+      setAcademies(response.items);
+      setTotalPages(response.totalPages);
+      setTotalItems(response.total);
     } catch (error) {
       console.error('Failed to load academies data:', error);
       toast.error('فشل في تحميل بيانات الأكاديميات');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage]);
+
+  useEffect(() => {
+    fetchAcademies();
+  }, [fetchAcademies]);
 
   const handleOpenModal = (academy?: Academy) => {
     if (academy) {
@@ -157,8 +178,7 @@ export default function AcademiesPage() {
         if (response.status || response.success) {
           toast.success('تم تحديث بيانات الأكاديمية بنجاح');
           handleCloseModal();
-          const refreshed = await getAcademies();
-          setAcademies(refreshed);
+          await fetchAcademies();
         } else {
           toast.error(response.message || 'فشل في تحديث الأكاديمية');
         }
@@ -182,8 +202,7 @@ export default function AcademiesPage() {
         if (response.status || response.success) {
           toast.success('تم إضافة الأكاديمية بنجاح');
           handleCloseModal();
-          const refreshed = await getAcademies();
-          setAcademies(refreshed);
+          await fetchAcademies();
         } else {
           toast.error(response.message || 'فشل في إضافة الأكاديمية');
         }
@@ -204,6 +223,7 @@ export default function AcademiesPage() {
       if (response.status || response.success) {
         toast.success('تم حذف الأكاديمية بنجاح');
         setAcademies(prev => prev.filter(a => a.id !== id));
+        setTotalItems(prev => Math.max(0, prev - 1));
       } else {
         toast.error(response.message || 'فشل في حذف الأكاديمية');
       }
@@ -241,18 +261,24 @@ export default function AcademiesPage() {
     const linkMatch = (academy.link_academy || academy.subdomain || academy.domain || '').toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesSearch = nameMatch || emailMatch || phoneMatch || linkMatch;
-
     if (!matchesSearch) return false;
 
     const isActive = academy.is_active === 1 || academy.is_active === true;
-    if (statusFilter === 'active') return isActive;
-    if (statusFilter === 'inactive') return !isActive;
+    if (statusFilter === 'active' && !isActive) return false;
+    if (statusFilter === 'inactive' && isActive) return false;
+
+    if (packageFilter !== 'all') {
+      const academyPackageId = academy.package_id ?? academy.package?.id;
+      if (String(academyPackageId) !== String(packageFilter)) {
+        return false;
+      }
+    }
+
     return true;
   });
 
-  const totalCount = academies.length;
   const activeCount = academies.filter(a => a.is_active === 1 || a.is_active === true).length;
-  const inactiveCount = totalCount - activeCount;
+  const inactiveCount = academies.length - activeCount;
 
   return (
     <div className="space-y-8 pb-16">
@@ -278,12 +304,12 @@ export default function AcademiesPage() {
         </div>
       </div>
 
-      {/* Overview Stats */}
+      {/* Overview Stats (Option A: Global Total + Page-scoped Active/Inactive) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex items-center justify-between">
           <div className="space-y-1 text-right">
             <p className="text-xs font-bold text-gray-400">إجمالي الأكاديميات</p>
-            <h3 className="text-2xl font-black text-gray-900">{totalCount}</h3>
+            <h3 className="text-2xl font-black text-gray-900">{totalItems}</h3>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
             <Building2 size={24} />
@@ -292,7 +318,7 @@ export default function AcademiesPage() {
 
         <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex items-center justify-between">
           <div className="space-y-1 text-right">
-            <p className="text-xs font-bold text-gray-400">الأكاديميات المفعلة</p>
+            <p className="text-xs font-bold text-gray-400">المفعلة (الصفحة الحالية)</p>
             <h3 className="text-2xl font-black text-green-600">{activeCount}</h3>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center">
@@ -302,7 +328,7 @@ export default function AcademiesPage() {
 
         <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex items-center justify-between">
           <div className="space-y-1 text-right">
-            <p className="text-xs font-bold text-gray-400">الأكاديميات المعطلة</p>
+            <p className="text-xs font-bold text-gray-400">المعطلة (الصفحة الحالية)</p>
             <h3 className="text-2xl font-black text-gray-400">{inactiveCount}</h3>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-gray-50 text-gray-400 flex items-center justify-center">
@@ -314,46 +340,50 @@ export default function AcademiesPage() {
       {/* Main Content Box */}
       <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden">
         {/* Search & Filter Bar */}
-        <div className="p-6 md:p-8 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-2xl border border-gray-200/60 w-full md:w-auto">
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex-1 md:flex-initial ${statusFilter === 'all'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-900'
-                }`}
-            >
-              الكل ({totalCount})
-            </button>
-            <button
-              onClick={() => setStatusFilter('active')}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex-1 md:flex-initial ${statusFilter === 'active'
-                ? 'bg-white text-green-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-900'
-                }`}
-            >
-              مفعلة ({activeCount})
-            </button>
-            <button
-              onClick={() => setStatusFilter('inactive')}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex-1 md:flex-initial ${statusFilter === 'inactive'
-                ? 'bg-white text-gray-700 shadow-sm'
-                : 'text-gray-500 hover:text-gray-900'
-                }`}
-            >
-              معطلة ({inactiveCount})
-            </button>
-          </div>
+        <div className="p-6 md:p-8 border-b border-gray-100 flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
+            {/* Search Input */}
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                placeholder="بحث في الصفحة الحالية (الاسم، البريد، الرابط)..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200/80 rounded-2xl pr-11 pl-4 py-3 text-sm outline-none focus:border-blue-500 focus:bg-white transition-all font-bold text-right placeholder:text-gray-400"
+              />
+            </div>
 
-          <div className="relative w-full md:w-80">
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input
-              type="text"
-              placeholder="بحث باسم الأكاديمية أو البريد أو الرابط..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-gray-50 border border-gray-200/80 rounded-2xl pr-11 pl-4 py-3 text-sm outline-none focus:border-blue-500 focus:bg-white transition-all font-bold text-right placeholder:text-gray-400"
-            />
+            {/* Package Filter Dropdown */}
+            <div className="relative min-w-[170px]">
+              <select
+                value={packageFilter}
+                onChange={(e) => setPackageFilter(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200/80 rounded-2xl pr-4 pl-9 py-3 text-sm font-bold text-gray-700 outline-none focus:border-blue-500 focus:bg-white transition-all appearance-none cursor-pointer text-right"
+              >
+                <option value="all">جميع الباقات</option>
+                {packages.map((pkg) => (
+                  <option key={pkg.id} value={pkg.id}>
+                    {pkg.titile || (pkg as any).title}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+
+            {/* Status Filter Dropdown */}
+            <div className="relative min-w-[150px]">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+                className="w-full bg-gray-50 border border-gray-200/80 rounded-2xl pr-4 pl-9 py-3 text-sm font-bold text-gray-700 outline-none focus:border-blue-500 focus:bg-white transition-all appearance-none cursor-pointer text-right"
+              >
+                <option value="all">جميع الحالات (الصفحة الحالية)</option>
+                <option value="active">مفعلة ({activeCount})</option>
+                <option value="inactive">معطلة ({inactiveCount})</option>
+              </select>
+              <ChevronDown size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
           </div>
         </div>
 
@@ -369,13 +399,19 @@ export default function AcademiesPage() {
               <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400">
                 <GraduationCap size={32} />
               </div>
-              <p className="text-gray-600 font-black text-lg">لا توجد أكاديميات مطابقة للبحث</p>
-              <button
-                onClick={() => handleOpenModal()}
-                className="text-blue-600 font-bold hover:underline text-sm"
-              >
-                أضف أكاديمية جديدة الآن
-              </button>
+              <p className="text-gray-600 font-black text-lg">لا توجد أكاديميات مطابقة للبحث في هذه الصفحة</p>
+              {(searchTerm || statusFilter !== 'all' || packageFilter !== 'all') && (
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setStatusFilter('all');
+                    setPackageFilter('all');
+                  }}
+                  className="text-blue-600 font-bold hover:underline text-sm cursor-pointer mt-1"
+                >
+                  إعادة ضبط البحث والتصفية
+                </button>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -504,6 +540,51 @@ export default function AcademiesPage() {
             </div>
           )}
         </div>
+
+        {/* Pagination Bar (if totalPages > 1) */}
+        {!isLoading && totalPages > 1 && (
+          <div className="p-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold text-gray-500">
+            <div>
+              عرض {filteredAcademies.length} من أصل {totalItems} أكاديمية
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                title="الصفحة السابقة"
+              >
+                <ChevronRight size={16} />
+              </button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setCurrentPage(p)}
+                    className={`w-8 h-8 rounded-xl font-black text-xs transition-all cursor-pointer ${
+                      currentPage === p
+                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-200'
+                        : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                title="الصفحة التالية"
+              >
+                <ChevronLeft size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Add / Edit Modal */}

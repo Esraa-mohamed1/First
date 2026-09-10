@@ -21,7 +21,7 @@ interface AddSubscriberModalProps {
 export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded, courseId }: AddSubscriberModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [subMode, setSubMode] = useState<'existing' | 'new'>('existing');
-  
+
   const [coursesList, setCoursesList] = useState<Course[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string | number>(courseId || '');
   const [loadingCourses, setLoadingCourses] = useState<boolean>(false);
@@ -263,7 +263,7 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" dir="rtl">
-      <div 
+      <div
         className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300"
         onClick={(e) => e.stopPropagation()}
       >
@@ -280,7 +280,7 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
               <p className="text-sm font-bold text-gray-400 mt-1">اختر طالباً مثالياً أو أضف طالباً جديداً للاشتراك</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
           >
@@ -294,11 +294,10 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
             <button
               type="button"
               onClick={() => setSubMode('existing')}
-              className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                subMode === 'existing'
+              className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center justify-center gap-2 ${subMode === 'existing'
                   ? 'bg-white text-blue-600 shadow-sm font-black'
                   : 'text-gray-500 hover:text-gray-900'
-              }`}
+                }`}
             >
               <Users size={18} />
               <span>اختر من الطلاب الحاليين</span>
@@ -306,11 +305,10 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
             <button
               type="button"
               onClick={() => setSubMode('new')}
-              className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                subMode === 'new'
+              className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center justify-center gap-2 ${subMode === 'new'
                   ? 'bg-white text-blue-600 shadow-sm font-black'
                   : 'text-gray-500 hover:text-gray-900'
-              }`}
+                }`}
             >
               <UserIcon size={18} />
               <span>إضافة طالب جديد</span>
@@ -462,7 +460,7 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
               {/* Password */}
               <div className="space-y-2">
                 <label className="block text-sm font-black text-gray-900">
-                  كلمة المرور (اختياري)
+                  كلمة المرور
                 </label>
                 <div className="relative">
                   <Lock className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -482,14 +480,14 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
 
         {/* Footer */}
         <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex items-center justify-end gap-3">
-          <button 
+          <button
             type="button"
             onClick={onClose}
             className="px-8 py-3.5 bg-white text-gray-600 border border-gray-200 font-black rounded-2xl hover:bg-gray-50 transition-all text-sm cursor-pointer"
           >
             إلغاء
           </button>
-          <button 
+          <button
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}

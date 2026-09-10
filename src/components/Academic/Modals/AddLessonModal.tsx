@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Play, Video, FileText, FilePieChart as FilePowerpoint, Upload, Check, CheckCircle2, Loader2, Link2, Save, CornerUpLeft, Calendar, Type } from 'lucide-react';
+import { X, Play, Video, FileText, FilePieChart as FilePowerpoint, Upload, Check, CheckCircle2, Loader2, Link2, Save, CornerUpLeft, Calendar, Type, Eye, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -31,6 +31,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, courseTit
   const [lessonType, setLessonType] = useState<'video' | 'pdf' | 'powerpoint'>('video');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [isFree, setIsFree] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const router = useRouter();
 
@@ -83,6 +84,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, courseTit
   const handleClose = () => {
     setTitle('');
     setDescription('');
+    setIsFree(false);
     setSelectedFile(null);
     setUploadProgress(0);
     setUploadStatus('idle');
@@ -376,7 +378,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, courseTit
           embed_url: finalVideoId ? `https://vz-${pullZoneId}.b-cdn.net/${finalVideoId}/playlist.m3u8` : undefined,
           order: 1,
           file_size_mb: selectedFile ? parseFloat((selectedFile.size / (1024 * 1024)).toFixed(2)) : 0,
-          is_free: false,
+          is_free: isFree,
         });
       }
 
@@ -569,6 +571,47 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, courseTit
                       <span>فيديو</span>
                     </button>
                   </div>
+                </div>
+
+                {/* Clear Free / Paid Access Selection */}
+                <div className="space-y-2 text-right">
+                  <label className="block text-sm font-black text-gray-900">
+                    نوع الوصول للدرس (مجاني أم مدفوع) <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-3 p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setIsFree(true)}
+                      className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-extrabold text-sm transition-all duration-200 cursor-pointer ${
+                        isFree
+                          ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25 ring-2 ring-emerald-500/40 scale-[1.02]'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
+                      }`}
+                    >
+                      <Eye size={18} />
+                      <span>درس مجاني (معاينة)</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full font-black bg-emerald-800/60 text-emerald-100">1</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsFree(false)}
+                      className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-extrabold text-sm transition-all duration-200 cursor-pointer ${
+                        !isFree
+                          ? 'bg-slate-800 text-white shadow-md shadow-slate-900/25 ring-2 ring-slate-700/40 scale-[1.02]'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
+                      }`}
+                    >
+                      <Lock size={18} />
+                      <span>درس مدفوع</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full font-black bg-slate-700/60 text-slate-200">0</span>
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-500 font-bold px-1">
+                    {isFree
+                      ? '🟢 هذا الدرس سيكون متاحاً كمعاينة مجانية (is_free = 1).'
+                      : '🔒 هذا الدرس سيكون مغلقاً للمشتركين فقط (is_free = 0).'}
+                  </p>
                 </div>
               </>
             )}
