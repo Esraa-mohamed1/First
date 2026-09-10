@@ -53,7 +53,14 @@ export const createCourse = async (payload: CreateCoursePayload): Promise<Course
   }
 };
 
-export const getCourses = async (userId?: number, userRole?: string, type?: string, limit?: number): Promise<Course[]> => {
+export const getCourses = async (
+  userId?: number,
+  userRole?: string,
+  type?: string,
+  limit?: number,
+  gradeId?: string | number,
+  subjectId?: string | number
+): Promise<Course[]> => {
   try {
     let url = 'courses';
     const params = new URLSearchParams();
@@ -68,6 +75,14 @@ export const getCourses = async (userId?: number, userRole?: string, type?: stri
 
     if (limit) {
       params.append('limit', String(limit));
+    }
+
+    if (gradeId) {
+      params.append('grade_id', String(gradeId));
+    }
+
+    if (subjectId) {
+      params.append('subject_id', String(subjectId));
     }
 
     const queryString = params.toString();

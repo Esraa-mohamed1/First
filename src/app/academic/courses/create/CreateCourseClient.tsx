@@ -725,36 +725,46 @@ export default function CreateCourseClient() {
     return Math.min(100, score);
   };
 
-  const activeGrades = gradesList.length > 0 ? gradesList : [
-    { id: 'first_sec', name: 'أولى ثانوي' },
-    { id: 'second_sec', name: 'ثانية ثانوي' },
-    { id: 'third_sec', name: 'ثالثة ثانوي' }
-  ];
+  const isTeacher = isSchoolTeacherRole(userRole || currentUser);
 
-  const activeSemesters = semestersList.length > 0 
-    ? semestersList.filter(item => !gradeLevel || !item.grade_id || String(item.grade_id) === String(gradeLevel))
-    : [
-        { id: 'term_1', name: 'الترم الأول' },
-        { id: 'term_2', name: 'الترم الثاني' },
-        { id: 'full_year', name: 'العام الدراسي كامل' },
-        { id: 'final_review', name: 'مراجعة نهائية' },
-        { id: 'not_linked', name: 'غير مرتبط بترم' }
-      ];
+  const activeGrades = isTeacher
+    ? gradesList
+    : (gradesList.length > 0 ? gradesList : [
+        { id: 'first_sec', name: 'أولى ثانوي' },
+        { id: 'second_sec', name: 'ثانية ثانوي' },
+        { id: 'third_sec', name: 'ثالثة ثانوي' }
+      ]);
 
-  const activeSubjects = subjectsList.length > 0
-    ? subjectsList.filter(item => !gradeLevel || !item.grade_id || String(item.grade_id) === String(gradeLevel))
-    : [
-        { id: 'physics', name: 'فيزياء' },
-        { id: 'chemistry', name: 'كيمياء' },
-        { id: 'math', name: 'رياضيات' },
-        { id: 'biology', name: 'أحياء' },
-        { id: 'arabic', name: 'عربي' }
-      ];
+  const activeSemesters = isTeacher
+    ? semestersList
+    : (semestersList.length > 0 
+        ? semestersList.filter(item => !gradeLevel || !item.grade_id || String(item.grade_id) === String(gradeLevel))
+        : [
+            { id: 'term_1', name: 'الترم الأول' },
+            { id: 'term_2', name: 'الترم الثاني' },
+            { id: 'full_year', name: 'العام الدراسي كامل' },
+            { id: 'final_review', name: 'مراجعة نهائية' },
+            { id: 'not_linked', name: 'غير مرتبط بترم' }
+          ]);
 
-  const activeYears = academicYearsList.length > 0 ? academicYearsList : [
-    { id: '2026/2027', name: '2026 / 2027' },
-    { id: '2025/2026', name: '2025 / 2026' }
-  ];
+  const activeSubjects = isTeacher
+    ? subjectsList
+    : (subjectsList.length > 0
+        ? subjectsList.filter(item => !gradeLevel || !item.grade_id || String(item.grade_id) === String(gradeLevel))
+        : [
+            { id: 'physics', name: 'فيزياء' },
+            { id: 'chemistry', name: 'كيمياء' },
+            { id: 'math', name: 'رياضيات' },
+            { id: 'biology', name: 'أحياء' },
+            { id: 'arabic', name: 'عربي' }
+          ]);
+
+  const activeYears = isTeacher
+    ? academicYearsList
+    : (academicYearsList.length > 0 ? academicYearsList : [
+        { id: '2026/2027', name: '2026 / 2027' },
+        { id: '2025/2026', name: '2025 / 2026' }
+      ]);
 
   const mapTypeToBackend = (type: string | null | undefined): string => {
     if (!type) return 'recorded';
@@ -1682,8 +1692,10 @@ export default function CreateCourseClient() {
                             value={gradeLevel}
                             onChange={(e) => {
                               setGradeLevel(e.target.value);
-                              setSemester('');
-                              setSubject('');
+                              if (!isTeacher) {
+                                setSemester('');
+                                setSubject('');
+                              }
                             }}
                             className="flex-1 border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white cursor-pointer"
                           >
@@ -3523,6 +3535,7 @@ export default function CreateCourseClient() {
           initialType={addClassificationModal.type}
           availableGrades={gradesList}
           currentGradeId={gradeLevel}
+          isSchoolTeacher={true}
           onClose={() => setAddClassificationModal((prev) => ({ ...prev, isOpen: false }))}
           onSuccess={handleClassificationSuccess}
         />

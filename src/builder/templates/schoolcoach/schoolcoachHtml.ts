@@ -1,6 +1,20 @@
 import { TemplateContent, renderVideoPlayer } from '../academic/academicHtml';
 
-export const getSchoolCoachHtml = (content: TemplateContent, isEditing: boolean = false, isLoggedIn: boolean = false, dashboardUrl: string = '/student') => {
+export const getSchoolCoachHtml = (
+  content: TemplateContent, 
+  isEditing: boolean = false, 
+  isLoggedIn: boolean = false, 
+  dashboardUrl: string = '/student',
+  grades: any[] = [],
+  subjects: any[] = [],
+  selectedGrade: string = '',
+  selectedSubject: string = '',
+  realCourses: any[] = []
+) => {
+  const effectiveGrades = (Array.isArray(grades) && grades.length > 0) ? grades : [];
+  const rawSubjects = (Array.isArray(subjects) && subjects.length > 0) ? subjects : [];
+  const filteredSubjects = rawSubjects;
+
   const cachedProfile = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('darab_academy_profile') || '{}') : {};
   const realName = cachedProfile.site_name || cachedProfile.name || cachedProfile.academy_name;
   const realEmail = cachedProfile.site_email || cachedProfile.email;
@@ -534,47 +548,128 @@ ${!isEditing && isLoggedIn ? `
       </div>
     </section>
 
-    <!-- 5. Groups/Cohorts Grid ("المجموعات الدراسية") -->
-    <section id="groups" data-section="pricing" class="py-24 px-margin-mobile md:px-margin-desktop bg-[var(--color-gray-100)] border-y border-gray-200/50 mb-20 section-hover cursor-pointer">
-      <div class="max-w-[1200px] mx-auto">
-        <div class="text-center mb-16">
+    <!-- 5. Groups/Courses Grid ("المجموعات والدورات الدراسية") -->
+    <section id="courses" data-section="pricing" class="py-24 px-margin-mobile md:px-margin-desktop bg-[var(--color-gray-100)] border-y border-gray-200/50 mb-20 section-hover cursor-pointer">
+      <div id="groups" class="max-w-[1200px] mx-auto">
+        <div class="text-center mb-10">
           <h2 class="section-title text-center">${pricingTitle}</h2>
           <p class="text-body-lg text-gray-600 max-w-2xl mx-auto">${pricingSubtitle}</p>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          ${pricingItems.map((item, idx) => {
-            const days = item.features?.[0] || 'الأيام: غير محددة';
-            const time = item.features?.[1] || 'الوقت: غير محدد';
-            const type = item.features?.[2] || 'نوع الدراسة: تفاعلي';
-            
-            return `
-              <!-- Cohort Card (card-dark) -->
-              <div data-section="pricing" data-index="${idx}" class="card-dark flex flex-col justify-between">
-                <div>
-                  <h3 class="text-[20px] font-bold text-white mb-6 border-b border-navy-700 pb-4">${item.title}</h3>
-                  <div class="space-y-4 text-right mb-8">
-                    <div class="flex justify-between items-center text-sm border-b border-navy-700/50 pb-2">
-                      <span class="text-gray-400">الجدول</span>
-                      <span class="font-bold text-white">${days}</span>
+        <!-- Dropdown filters: Grade and Subject (Independent, strictly real data) -->
+        <div class="flex flex-wrap items-center justify-center gap-4 mb-12" dir="rtl">
+          <!-- Grade Dropdown -->
+          <div class="relative min-w-[240px] text-right">
+            <label class="block text-xs font-bold text-gray-700 mb-1.5">المرحلة / الصف الدراسي:</label>
+            <div class="relative">
+              <select
+                id="schoolcoach-grade-select"
+                onchange="handleGradeChange(this.value)"
+                class="w-full bg-white border-2 border-navy-700/20 hover:border-[var(--color-gold-500)] text-navy-950 font-bold text-sm rounded-2xl px-4 py-3 appearance-none shadow-sm focus:outline-none focus:border-[var(--color-gold-500)] transition-all cursor-pointer text-right"
+              >
+                <option value="">جميع المراحل والصفوف الدراسية</option>
+                ${effectiveGrades.map((g: any) => `
+                  <option value="${g.id}" ${String(selectedGrade) === String(g.id) ? 'selected' : ''}>
+                    ${g.name || g.title}
+                  </option>
+                `).join('')}
+              </select>
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[20px]">expand_more</span>
+            </div>
+          </div>
+
+          <!-- Subject Dropdown (Independent of grade) -->
+          <div class="relative min-w-[240px] text-right">
+            <label class="block text-xs font-bold text-gray-700 mb-1.5">المادة الدراسية:</label>
+            <div class="relative">
+              <select
+                id="schoolcoach-subject-select"
+                onchange="handleSubjectChange(this.value)"
+                class="w-full bg-white border-2 border-navy-700/20 hover:border-[var(--color-gold-500)] text-navy-950 font-bold text-sm rounded-2xl px-4 py-3 appearance-none shadow-sm focus:outline-none focus:border-[var(--color-gold-500)] transition-all cursor-pointer text-right"
+              >
+                <option value="">جميع المواد والتخصصات</option>
+                ${rawSubjects.map((s: any) => `
+                  <option value="${s.id}" ${String(selectedSubject) === String(s.id) ? 'selected' : ''}>
+                    ${s.name || s.title}
+                  </option>
+                `).join('')}
+              </select>
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[20px]">expand_more</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Courses Container (No Hard Refresh, No Static Cohort Fallback) -->
+        <div id="schoolcoach-courses-container" class="transition-opacity duration-200">
+          ${realCourses.length > 0 ? `
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              ${realCourses.map((course: any, idx: number) => {
+                const courseTitle = course.title || 'دورة تدريبية';
+                const courseHref = `/courses/${course.slug || course.id}`;
+                const instructorName = typeof course.instructor === 'object' && course.instructor?.name
+                  ? course.instructor.name
+                  : (course.instructor || course.coach || '');
+                const isFree = Number(course.price) === 0 || course.price_type === 'free';
+                const priceDisplay = isFree
+                  ? 'مجانًا'
+                  : (course.final_price ? `${course.final_price} ${course.currency || 'ر.س'}` : (course.price ? `${course.price} ${course.currency || 'ر.س'}` : 'متاح للتسجيل'));
+                const courseImg = course.image || course.cover_image || '';
+                const lessonsCount = course.units?.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0);
+                const duration = course.duration || (lessonsCount ? `${lessonsCount} درس` : 'محتوى تفاعلي');
+
+                return `
+                  <!-- Course Card (card-dark) -->
+                  <div data-section="courses" data-index="${idx}" class="card-dark flex flex-col justify-between text-right group overflow-hidden">
+                    <div>
+                      ${courseImg ? `
+                        <div class="relative w-full aspect-video rounded-xl overflow-hidden mb-4 bg-navy-900 border border-navy-700">
+                          <img src="${courseImg}" alt="${courseTitle}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                          <span class="absolute top-3 left-3 bg-[var(--color-gold-500)] text-[var(--color-navy-950)] font-extrabold text-xs px-3 py-1 rounded-full shadow-md">
+                            ${priceDisplay}
+                          </span>
+                        </div>
+                      ` : `
+                        <div class="flex justify-between items-center mb-4 border-b border-navy-700 pb-3">
+                          <span class="text-xs font-bold text-[var(--color-gold-500)]">منهج دراسي</span>
+                          <span class="text-xs font-bold bg-[var(--color-gold-500)]/20 text-[var(--color-gold-500)] px-3 py-1 rounded-full">${priceDisplay}</span>
+                        </div>
+                      `}
+                      <h3 class="text-[20px] font-bold text-white mb-4 ${courseImg ? '' : 'border-b border-navy-700 pb-2'} group-hover:text-[var(--color-gold-500)] transition-colors">
+                        ${courseTitle}
+                      </h3>
+                      <div class="space-y-3 text-right mb-6 text-sm">
+                        ${instructorName ? `
+                          <div class="flex justify-between items-center text-sm border-b border-navy-700/50 pb-2">
+                            <span class="text-gray-400">الأستاذ</span>
+                            <span class="font-bold text-white">${instructorName}</span>
+                          </div>
+                        ` : ''}
+                        <div class="flex justify-between items-center text-sm border-b border-navy-700/50 pb-2">
+                          <span class="text-gray-400">الدروس والمدة</span>
+                          <span class="font-bold text-white">${duration}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm">
+                          <span class="text-gray-400">نظام الدراسة</span>
+                          <span class="font-bold text-white">${course.type === 'recorded' ? 'مسجل' : (course.type === 'online' ? 'أونلاين تفاعلي' : 'حضوري')}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div class="flex justify-between items-center text-sm border-b border-navy-700/50 pb-2">
-                      <span class="text-gray-400">التوقيت</span>
-                      <span class="font-bold text-white">${time}</span>
-                    </div>
-                    <div class="flex justify-between items-center text-sm">
-                      <span class="text-gray-400">نظام الفصل</span>
-                      <span class="font-bold text-white">${type}</span>
+                    <div class="pt-2">
+                      <a href="${courseHref}" target="_top" class="btn-primary block text-center w-full text-xs py-3.5 shadow-md hover:shadow-gold-500/20 font-bold">
+                        احجز مكانك الآن
+                      </a>
                     </div>
                   </div>
-                </div>
-                <div>
-                  <span class="block text-xs font-bold text-[var(--color-gold-500)] mb-4">${item.price}</span>
-                  <a href="#contact" class="btn-primary block text-center w-full text-xs py-3.5">${heroBtnText}</a>
-                </div>
-              </div>
-            `;
-          }).join('')}
+                `;
+              }).join('')}
+            </div>
+          ` : `
+            <div class="card-dark p-12 text-center my-4 border border-dashed border-navy-700 rounded-2xl">
+              <span class="material-symbols-outlined text-[var(--color-gold-500)] text-[48px] mb-3 block">menu_book</span>
+              <h3 class="text-white text-lg font-bold mb-2">لا توجد دورات متاحة حالياً</h3>
+              <p class="text-gray-400 text-sm">يرجى اختيار مرحلة أو مادة أخرى، أو مراجعة المعلم لاحقاً.</p>
+            </div>
+          `}
         </div>
       </div>
     </section>
@@ -707,6 +802,113 @@ ${!isEditing && isLoggedIn ? `
   </footer>
 
   <script>
+        function handleGradeChange(gradeId) {
+          window.parent.postMessage({ type: 'SCHOOLCOACH_FILTER_GRADE', gradeId: gradeId }, '*');
+        }
+
+        function handleSubjectChange(subjectId) {
+          window.parent.postMessage({ type: 'SCHOOLCOACH_FILTER_SUBJECT', subjectId: subjectId }, '*');
+        }
+
+        window.addEventListener('message', function(e) {
+          if (!e.data) return;
+
+          if (e.data.type === 'SCHOOLCOACH_COURSES_LOADING') {
+            var container = document.getElementById('schoolcoach-courses-container');
+            if (container) {
+              container.style.opacity = '0.4';
+              container.style.pointerEvents = 'none';
+            }
+          } else if (e.data.type === 'SCHOOLCOACH_UPDATE_COURSES') {
+            var container = document.getElementById('schoolcoach-courses-container');
+            if (container) {
+              container.style.opacity = '1';
+              container.style.pointerEvents = '';
+              var courses = Array.isArray(e.data.courses) ? e.data.courses : [];
+              if (courses.length === 0) {
+                container.innerHTML = '<div class="card-dark p-12 text-center my-4 border border-dashed border-navy-700 rounded-2xl">' +
+                  '<span class="material-symbols-outlined text-[var(--color-gold-500)] text-[48px] mb-3 block">menu_book</span>' +
+                  '<h3 class="text-white text-lg font-bold mb-2">لا توجد دورات متاحة حالياً</h3>' +
+                  '<p class="text-gray-400 text-sm">يرجى اختيار مرحلة أو مادة أخرى، أو مراجعة المعلم لاحقاً.</p>' +
+                '</div>';
+              } else {
+                var html = '<div class="grid grid-cols-1 md:grid-cols-3 gap-6">';
+                for (var i = 0; i < courses.length; i++) {
+                  var c = courses[i];
+                  var title = c.title || 'دورة تدريبية';
+                  var href = '/courses/' + (c.slug || c.id);
+                  var inst = (typeof c.instructor === 'object' && c.instructor && c.instructor.name) ? c.instructor.name : (c.instructor || c.coach || '');
+                  var isFree = Number(c.price) === 0 || c.price_type === 'free';
+                  var price = isFree ? 'مجانًا' : (c.final_price ? c.final_price + ' ' + (c.currency || 'ر.س') : (c.price ? c.price + ' ' + (c.currency || 'ر.س') : 'متاح للتسجيل'));
+                  var img = c.image || c.cover_image || '';
+                  var lessonsCount = c.units ? c.units.reduce(function(acc, u){ return acc + (u.lessons ? u.lessons.length : 0); }, 0) : 0;
+                  var duration = c.duration || (lessonsCount ? lessonsCount + ' درس' : 'محتوى تفاعلي');
+                  var studyType = c.type === 'recorded' ? 'مسجل' : (c.type === 'online' ? 'أونلاين تفاعلي' : 'حضوري');
+
+                  html += '<div data-section="courses" data-index="' + i + '" class="card-dark flex flex-col justify-between text-right group overflow-hidden animate-in fade-in duration-300">';
+                  html += '<div>';
+                  if (img) {
+                    html += '<div class="relative w-full aspect-video rounded-xl overflow-hidden mb-4 bg-navy-900 border border-navy-700">' +
+                      '<img src="' + img + '" alt="' + title + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />' +
+                      '<span class="absolute top-3 left-3 bg-[var(--color-gold-500)] text-[var(--color-navy-950)] font-extrabold text-xs px-3 py-1 rounded-full shadow-md">' + price + '</span>' +
+                    '</div>';
+                  } else {
+                    html += '<div class="flex justify-between items-center mb-4 border-b border-navy-700 pb-3">' +
+                      '<span class="text-xs font-bold text-[var(--color-gold-500)]">منهج دراسي</span>' +
+                      '<span class="text-xs font-bold bg-[var(--color-gold-500)]/20 text-[var(--color-gold-500)] px-3 py-1 rounded-full">' + price + '</span>' +
+                    '</div>';
+                  }
+                  html += '<h3 class="text-[20px] font-bold text-white mb-4 ' + (img ? '' : 'border-b border-navy-700 pb-2') + ' group-hover:text-[var(--color-gold-500)] transition-colors">' + title + '</h3>';
+                  html += '<div class="space-y-3 text-right mb-6 text-sm">';
+                  if (inst) {
+                    html += '<div class="flex justify-between items-center text-sm border-b border-navy-700/50 pb-2"><span class="text-gray-400">الأستاذ</span><span class="font-bold text-white">' + inst + '</span></div>';
+                  }
+                  html += '<div class="flex justify-between items-center text-sm border-b border-navy-700/50 pb-2"><span class="text-gray-400">الدروس والمدة</span><span class="font-bold text-white">' + duration + '</span></div>';
+                  html += '<div class="flex justify-between items-center text-sm"><span class="text-gray-400">نظام الدراسة</span><span class="font-bold text-white">' + studyType + '</span></div>';
+                  html += '</div></div>';
+                  html += '<div class="pt-2"><a href="' + href + '" target="_top" class="btn-primary block text-center w-full text-xs py-3.5 shadow-md hover:shadow-gold-500/20 font-bold">احجز مكانك الآن</a></div>';
+                  html += '</div>';
+                }
+                html += '</div>';
+                container.innerHTML = html;
+              }
+            }
+          } else if (e.data.type === 'SCHOOLCOACH_UPDATE_DROPDOWNS') {
+            if (Array.isArray(e.data.grades)) {
+              var gradeSelect = document.getElementById('schoolcoach-grade-select');
+              if (gradeSelect) {
+                var curGrade = gradeSelect.value;
+                var gHtml = '<option value="">جميع المراحل والصفوف الدراسية</option>';
+                e.data.grades.forEach(function(g) {
+                  gHtml += '<option value="' + g.id + '"' + (String(curGrade) === String(g.id) ? ' selected' : '') + '>' + (g.name || g.title) + '</option>';
+                });
+                gradeSelect.innerHTML = gHtml;
+              }
+            }
+            if (Array.isArray(e.data.subjects)) {
+              var subjectSelect = document.getElementById('schoolcoach-subject-select');
+              if (subjectSelect) {
+                var curSubject = subjectSelect.value;
+                var sHtml = '<option value="">جميع المواد والتخصصات</option>';
+                e.data.subjects.forEach(function(s) {
+                  sHtml += '<option value="' + s.id + '"' + (String(curSubject) === String(s.id) ? ' selected' : '') + '>' + (s.name || s.title) + '</option>';
+                });
+                subjectSelect.innerHTML = sHtml;
+              }
+            }
+          }
+        });
+
+        window.addEventListener('load', function() {
+          try {
+            var saved = sessionStorage.getItem('schoolcoach_scroll_pos');
+            if (saved !== null) {
+              window.scrollTo(0, parseInt(saved, 10));
+              sessionStorage.removeItem('schoolcoach_scroll_pos');
+            }
+          } catch(e){}
+        });
+
         // Post messages to parent editor on section clicks
         document.addEventListener('click', (e) => {
           const el = e.target.closest('[data-section]');
