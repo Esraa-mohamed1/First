@@ -1,5 +1,6 @@
 import academyApi from '@/lib/academy-api';
 import studentApi from '@/lib/student-api';
+import { getStoredUserRole } from '@/lib/auth-storage';
 import { ApiResponse, Course, CreateCoursePayload, CreateUnitPayload, CreateLessonPayload, Unit, Lesson } from '@/types/api';
 
 export const createCourse = async (payload: CreateCoursePayload): Promise<Course> => {
@@ -55,10 +56,11 @@ export const createCourse = async (payload: CreateCoursePayload): Promise<Course
 
 export const getCourses = async (userId?: number, userRole?: string, type?: string, limit?: number): Promise<Course[]> => {
   try {
+    const effectiveRole = userRole || (typeof window !== 'undefined' ? getStoredUserRole() : undefined);
     let url = 'courses';
     const params = new URLSearchParams();
 
-    if (userRole === 'academy' && userId) {
+    if (effectiveRole === 'academy' && userId) {
       params.append('user_id', String(userId));
     }
 
@@ -76,7 +78,7 @@ export const getCourses = async (userId?: number, userRole?: string, type?: stri
     }
 
     // Use studentApi ONLY when userRole is explicitly 'student' or 'user'. Otherwise (for academy, schoolteacher, coach, etc.), use academyApi.
-    const client = (userRole === 'student' || userRole === 'user') ? studentApi : academyApi;
+    const client = (effectiveRole === 'student' || effectiveRole === 'user') ? studentApi : academyApi;
 
     const response = await client.get<ApiResponse<Course[]>>(url);
     const data = response.data?.data || [];
