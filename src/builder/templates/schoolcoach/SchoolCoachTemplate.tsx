@@ -423,38 +423,48 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
         let loadedGrades: any[] = [];
         let loadedSubjects: any[] = [];
 
-        try {
-          let g = isEditing ? await getGrades() : await getStudentGrades();
-          if (!g || g.length === 0) g = await getGrades();
-          if (g && g.length > 0) {
-            loadedGrades = g;
-            setGrades(g);
-          }
-        } catch (e) {
+        if (isEditing) {
+          // Builder mode: use academy APIs
           try {
             const g = await getGrades();
             if (g && g.length > 0) {
               loadedGrades = g;
               setGrades(g);
             }
-          } catch (err) {}
-        }
-
-        try {
-          let s = isEditing ? await getSubjects() : await getStudentSubjects();
-          if (!s || s.length === 0) s = await getSubjects();
-          if (s && s.length > 0) {
-            loadedSubjects = s;
-            setSubjects(s);
+          } catch (err) {
+            console.error('[SchoolCoachTemplate] Failed to fetch grades in builder mode:', err);
           }
-        } catch (e) {
+
           try {
             const s = await getSubjects();
             if (s && s.length > 0) {
               loadedSubjects = s;
               setSubjects(s);
             }
-          } catch (err) {}
+          } catch (err) {
+            console.error('[SchoolCoachTemplate] Failed to fetch subjects in builder mode:', err);
+          }
+        } else {
+          // Live student mode: strictly use student APIs (no academy fallbacks on empty [])
+          try {
+            const g = await getStudentGrades();
+            if (g && g.length > 0) {
+              loadedGrades = g;
+              setGrades(g);
+            }
+          } catch (err) {
+            console.error('[SchoolCoachTemplate] Failed to fetch student grades:', err);
+          }
+
+          try {
+            const s = await getStudentSubjects();
+            if (s && s.length > 0) {
+              loadedSubjects = s;
+              setSubjects(s);
+            }
+          } catch (err) {
+            console.error('[SchoolCoachTemplate] Failed to fetch student subjects:', err);
+          }
         }
 
         if (iframeRef.current?.contentWindow) {
