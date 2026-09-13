@@ -24,7 +24,7 @@ import { CourseStatusToggle } from '@/components/course/CourseStatusToggle';
 import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdown';
 import { PaymentMethodValueInput } from '@/components/payment/PaymentMethodValueInput';
 import { showAlert } from '@/lib/sweetalert';
-import { getUserPaymentInfos, UserPaymentInfo, getReceiverAccounts } from '@/services/finance';
+import { getUserPaymentInfos, UserPaymentInfo, getReceiverAccounts, createUserPaymentInfo } from '@/services/finance';
 import { getLogoUrl, getErrorMessage } from '@/lib/utils';
 import { getStoredUserRole, isSchoolTeacherRole } from '@/lib/auth-storage';
 import { SearchableSelect } from '@/components/Academic/Common/SearchableSelect';
@@ -332,6 +332,13 @@ export default function CourseDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [expandedUnits, setExpandedUnits] = useState<number[]>([]);
   const [academyPaymentMethods, setAcademyPaymentMethods] = useState<UserPaymentInfo[]>([]);
+
+  // Add payment method modal states
+  const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
+  const [newPaymentTemplateId, setNewPaymentTemplateId] = useState('');
+  const [newPaymentAccountValue, setNewPaymentAccountValue] = useState('');
+  const [newPaymentCustomName, setNewPaymentCustomName] = useState('');
+  const [isSavingNewPayment, setIsSavingNewPayment] = useState(false);
 
   // Global Data
   const [categories, setCategories] = useState<any[]>([]);
@@ -794,6 +801,11 @@ export default function CourseDetailsPage() {
     if (!courseInfo.title.trim()) newErrors.title = 'عنوان الدورة مطلوب';
     if (!courseInfo.description.trim() || courseInfo.description === '<p><br></p>') newErrors.description = 'وصف الدورة مطلوب';
 
+    // Require at least one payment method for paid courses
+    if (pricingType === 'paid' && selectedPaymentMethods.length === 0) {
+      newErrors.receiver_accounts = 'يرجى اختيار وسيلة دفع واحدة على الأقل للدورات المدفوعة';
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       toast.error('يرجى ملء الحقول المطلوبة وتصحيح الأخطاء');
@@ -916,6 +928,65 @@ export default function CourseDetailsPage() {
     });
   };
 
+  const handleCreatePaymentMethod = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPaymentTemplateId) {
+      toast.error('يرجى اختيار وسيلة الدفع أولاً');
+      return;
+    }
+    if (!newPaymentAccountValue) {
+      toast.error('يرجى إدخال رقم الحساب أو الهاتف المربوط بالخدمة');
+      return;
+    }
+
+    setIsSavingNewPayment(true);
+    try {
+      const payload = {
+        name: newPaymentCustomName || 'حساب استقبال',
+        accountValue: newPaymentAccountValue,
+        currency: currency,
+        receiver_account_id: Number(newPaymentTemplateId),
+      };
+
+      const result = await createUserPaymentInfo(payload);
+      toast.success('تمت إضافة وتفعيل وسيلة الدفع بنجاح');
+
+      // 1. Refetch active academy payment methods
+      const updatedMethods = await getUserPaymentInfos();
+      setAcademyPaymentMethods(updatedMethods);
+
+      // 2. Auto-select the newly added payment method
+      const newMethod = {
+        methodId: result.id.toString(),
+        methodName: result.name || newPaymentCustomName || '',
+        type: 'account_number' as const,
+        value: result.accountValue || newPaymentAccountValue,
+        currency: result.currency || currency,
+        logo: result.logo || '',
+      };
+      
+      setSelectedPaymentMethods((prev) => {
+        const next = [...prev, newMethod];
+        if (next.length > 3) {
+          toast.success('تمت إضافة وسيلة الدفع وتفعيلها واستبدال أقدم وسيلة محددة لتظل ٣ وسائل كحد أقصى');
+          return next.slice(next.length - 3);
+        }
+        return next;
+      });
+
+      // 3. Clear form and close modal
+      setNewPaymentTemplateId('');
+      setNewPaymentAccountValue('');
+      setNewPaymentCustomName('');
+      setShowAddPaymentModal(false);
+    } catch (err: any) {
+      console.error('Failed to create payment info:', err);
+      toast.error(err?.message || 'فشل إضافة وسيلة الدفع. يرجى التحقق من البيانات.');
+    } finally {
+      setIsSavingNewPayment(false);
+    }
+  };
+
   const handleSavePricing = async () => {
     setErrors({});
     setIsSavingPricing(true);
@@ -1008,9 +1079,10 @@ export default function CourseDetailsPage() {
 
   const fetchCourse = async () => {
     try {
-      const [data, paymentInfos, grades, terms, subjects, years] = await Promise.all([
+      const [data, paymentInfos, templates, grades, terms, subjects, years] = await Promise.all([
         getCourse(id),
         getUserPaymentInfos(),
+        getReceiverAccounts().catch(e => { console.warn('Failed to fetch receiver templates:', e); return []; }),
         getGrades().catch(e => { console.warn('Failed to fetch grades:', e); return []; }),
         getTerms().catch(e => { console.warn('Failed to fetch terms:', e); return []; }),
         getSubjects().catch(e => { console.warn('Failed to fetch subjects:', e); return []; }),
@@ -1027,6 +1099,7 @@ export default function CourseDetailsPage() {
         setPreviewImage(data.image || (data as any).cover_image);
       }
       setAcademyPaymentMethods(paymentInfos || []);
+      setReceiverTemplates(templates || []);
 
       const formatClassification = (items: any[], isGrade = false) => {
         return (items || []).map((item: any, i: number) => ({
@@ -2252,17 +2325,30 @@ export default function CourseDetailsPage() {
 
               {/* Collection Accounts */}
               <div className="pt-6 border-t border-slate-100 space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
                   <div>
                     <h4 className="text-base font-black text-gray-900">طرق التحصيل (وسائل الدفع)</h4>
                     <p className="text-xs text-gray-400 font-bold mt-0.5">اختر وسائل الدفع التي تريد تفعيلها لهذه الدورة</p>
                   </div>
                   <button
                     type="button"
-                    onClick={() => router.push('/academic/finance/payment-settings')}
-                    className="text-xs font-bold text-primary hover:underline"
+                    onClick={() => {
+                      const countryCode = currency === 'EGP' ? 'EG' : 'SA';
+                      const filtered = receiverTemplates.filter(t => t.country_code === countryCode);
+                      if (filtered.length > 0) {
+                        setNewPaymentTemplateId(filtered[0].id.toString());
+                        setNewPaymentCustomName(filtered[0].name);
+                      } else {
+                        setNewPaymentTemplateId('');
+                        setNewPaymentCustomName('');
+                      }
+                      setNewPaymentAccountValue('');
+                      setShowAddPaymentModal(true);
+                    }}
+                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer self-start sm:self-center"
                   >
-                    إدارة وسائل الدفع
+                    <Plus className="w-4 h-4" />
+                    إضافة وسيلة استقبال جديدة
                   </button>
                 </div>
 
@@ -3775,6 +3861,92 @@ export default function CourseDetailsPage() {
           }}
         />
       )}
+      {/* Add Payment Method Modal */}
+      {showAddPaymentModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-250" dir="rtl">
+          <div 
+            className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl p-8 border border-slate-100 animate-in zoom-in-95 duration-250 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowAddPaymentModal(false)}
+              className="absolute top-6 left-6 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            <h2 className="text-lg font-black text-slate-900 mb-2">إضافة حساب استقبال جديد</h2>
+            <p className="text-xs font-bold text-slate-400 mb-6">أدخل بيانات وسيلة الدفع التي ترغب في تفعيلها لاستقبال مستحقات الطلاب بهذه العملة ({currency})</p>
+
+            <form onSubmit={handleCreatePaymentMethod} className="space-y-5 text-right">
+              {/* Template Select Dropdown */}
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-slate-700">نوع وسيلة الاستقبال *</label>
+                <select
+                  value={newPaymentTemplateId}
+                  onChange={(e) => {
+                    setNewPaymentTemplateId(e.target.value);
+                    const countryCode = currency === 'EGP' ? 'EG' : 'SA';
+                    const filtered = receiverTemplates.filter(t => t.country_code === countryCode);
+                    const tmpl = filtered.find(t => t.id.toString() === e.target.value);
+                    if (tmpl) {
+                      setNewPaymentCustomName(tmpl.name);
+                    }
+                  }}
+                  required
+                  className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-bold bg-white"
+                >
+                  <option value="">اختر النوع...</option>
+                  {(() => {
+                    const countryCode = currency === 'EGP' ? 'EG' : 'SA';
+                    const filtered = receiverTemplates.filter(t => t.country_code === countryCode);
+                    return (filtered.length > 0 ? filtered : receiverTemplates).map(tmpl => (
+                      <option key={tmpl.id} value={tmpl.id}>{tmpl.name}</option>
+                    ));
+                  })()}
+                </select>
+              </div>
+
+              {/* Name Input */}
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-slate-700">اسم الحساب التوضيحي *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="مثال: حساب البنك الأهلي، رقم كاش..."
+                  value={newPaymentCustomName}
+                  onChange={(e) => setNewPaymentCustomName(e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-bold"
+                />
+              </div>
+
+              {/* Account Value Input */}
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-slate-700">رقم الحساب / رقم الهاتف *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="أدخل رقم الحساب أو المحفظة هنا..."
+                  value={newPaymentAccountValue}
+                  onChange={(e) => setNewPaymentAccountValue(e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-bold text-left"
+                  dir="ltr"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSavingNewPayment}
+                className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer mt-4"
+              >
+                {isSavingNewPayment ? <Loader2 className="animate-spin" size={16} /> : 'حفظ وتفعيل الحساب'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Add Classification Pop-up Modal */}
       {isSchoolTeacherRole(userRole || currentUser) && (
         <AddClassificationModal

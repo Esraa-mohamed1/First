@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
+import {
   Plus, Edit3, Trash2, Search, Check, X, Loader2,
   ListFilter, Calendar, BookOpen, CalendarCheck, Layers,
   Info, CheckCircle, Zap, RefreshCw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { 
+import {
   getGrades, createGrade, updateGrade, deleteGrade,
   getAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear,
   getTerms, createTerm, updateTerm, deleteTerm,
@@ -133,7 +133,7 @@ export default function AcademicClassificationPage() {
   }, [activeTab, fetchTabContent]);
 
   const currentList = dataStore[activeTab] || [];
-  const filteredList = currentList.filter(item => 
+  const filteredList = currentList.filter(item =>
     (item.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (item.desc || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (item.stage || '').toLowerCase().includes(searchQuery.toLowerCase())
@@ -327,14 +327,14 @@ export default function AcademicClassificationPage() {
           >
             <RefreshCw size={16} className={loading ? 'animate-spin text-blue-600' : ''} />
           </button>
-          <button
+          {/* <button
             type="button"
             onClick={() => setIsAddModalOpen(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-black text-xs shadow-lg shadow-blue-600/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <Plus size={18} />
             <span>إضافة جديد</span>
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -345,11 +345,10 @@ export default function AcademicClassificationPage() {
           <button
             type="button"
             onClick={() => setActiveTab('grades')}
-            className={`px-5 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
-              activeTab === 'grades'
+            className={`px-5 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${activeTab === 'grades'
                 ? 'border-blue-600 text-blue-600 bg-white shadow-xs'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
-            }`}
+              }`}
           >
             <ListFilter size={16} />
             <span>الصفوف الدراسية</span>
@@ -358,11 +357,10 @@ export default function AcademicClassificationPage() {
           <button
             type="button"
             onClick={() => setActiveTab('semesters')}
-            className={`px-5 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
-              activeTab === 'semesters'
+            className={`px-5 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${activeTab === 'semesters'
                 ? 'border-blue-600 text-blue-600 bg-white shadow-xs'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
-            }`}
+              }`}
           >
             <Calendar size={16} />
             <span>الفصول الدراسية</span>
@@ -371,11 +369,10 @@ export default function AcademicClassificationPage() {
           <button
             type="button"
             onClick={() => setActiveTab('subjects')}
-            className={`px-5 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
-              activeTab === 'subjects'
+            className={`px-5 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${activeTab === 'subjects'
                 ? 'border-blue-600 text-blue-600 bg-white shadow-xs'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
-            }`}
+              }`}
           >
             <BookOpen size={16} />
             <span>المواد الدراسية</span>
@@ -384,11 +381,10 @@ export default function AcademicClassificationPage() {
           <button
             type="button"
             onClick={() => setActiveTab('years')}
-            className={`px-5 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
-              activeTab === 'years'
+            className={`px-5 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${activeTab === 'years'
                 ? 'border-blue-600 text-blue-600 bg-white shadow-xs'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
-            }`}
+              }`}
           >
             <CalendarCheck size={16} />
             <span>الأعوام الدراسية</span>
@@ -461,11 +457,10 @@ export default function AcademicClassificationPage() {
                       )}
                       <td className="px-6 py-4 text-blue-600 font-bold">{item.academic_year || '2025/2026'}</td>
                       <td className="px-6 py-4">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-black inline-flex items-center gap-1.5 ${
-                          item.active 
-                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60' 
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black inline-flex items-center gap-1.5 ${item.active
+                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60'
                             : 'bg-slate-100 text-slate-500'
-                        }`}>
+                          }`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${item.active ? 'bg-emerald-500' : 'bg-slate-400'}`} />
                           {item.active ? 'نشط' : 'غير مفعل'}
                         </span>
@@ -563,8 +558,8 @@ export default function AcademicClassificationPage() {
                 <Plus className="text-blue-600" size={18} />
                 <span>إضافة عنصر جديد</span>
               </h3>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setIsAddModalOpen(false)}
                 className="w-8 h-8 rounded-full hover:bg-slate-200/60 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
               >
@@ -622,17 +617,6 @@ export default function AcademicClassificationPage() {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-black text-slate-700">الوصف</label>
-                <textarea
-                  rows={3}
-                  placeholder="اكتب وصفاً مختصراً..."
-                  value={addDesc}
-                  onChange={(e) => setAddDesc(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"
-                />
-              </div>
-
               <div className="flex gap-3 pt-2">
                 <button
                   type="submit"
@@ -663,8 +647,8 @@ export default function AcademicClassificationPage() {
                 <Edit3 className="text-blue-600" size={18} />
                 <span>تعديل البيانات</span>
               </h3>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setIsEditModalOpen(false)}
                 className="w-8 h-8 rounded-full hover:bg-slate-200/60 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
               >
@@ -719,16 +703,6 @@ export default function AcademicClassificationPage() {
                     <option value="2022/2023">2022/2023</option>
                   </select>
                 </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-black text-slate-700">الوصف</label>
-                <textarea
-                  rows={3}
-                  value={editItemData.desc || editItemData.description || ''}
-                  onChange={(e) => setEditItemData({ ...editItemData, desc: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"
-                />
               </div>
 
               <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-200/60">
