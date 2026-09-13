@@ -14,7 +14,7 @@ import {
   ChevronRight, 
   Loader2 
 } from 'lucide-react';
-import { getStudentCourses, getMySubscriptions, enrollInCourse } from '@/services/student-courses';
+import { getStudentCourses, getMySubscriptions, enrollInCourse, subscribeToCourse } from '@/services/student-courses';
 import { Course } from '@/types/student';
 import { getLogoUrl } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -58,6 +58,12 @@ export default function StudentRequestsPage() {
   const selectedCourse = useMemo(() => {
     return courses.find(c => String(c.id) === selectedCourseId);
   }, [courses, selectedCourseId]);
+
+  const isFreeCourse = useMemo(() => {
+    if (!selectedCourse) return false;
+    const priceVal = (selectedCourse as any).final_price ?? (selectedCourse as any).price ?? 0;
+    return Number(priceVal) === 0 || priceVal === '0' || priceVal === 'free' || (selectedCourse as any).is_free === true;
+  }, [selectedCourse]);
 
   const currentCoursePaymentMethods = useMemo(() => {
     if (!selectedCourse) return [];
@@ -258,7 +264,12 @@ export default function StudentRequestsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedCourseId || !amount || !receiptFile || !selectedPaymentMethodId) {
+    if (!selectedCourseId) {
+      toast.error('الرجاء اختيار الدورة التدريبية');
+      return;
+    }
+
+    if (!isFreeCourse && (!amount || !receiptFile || !selectedPaymentMethodId)) {
       toast.error('الرجاء إدخال جميع الحقول وتحديد طريقة الدفع وإرفاق إيصال الدفع');
       return;
     }
@@ -266,7 +277,11 @@ export default function StudentRequestsPage() {
     setSubmitting(true);
     
     try {
-      await enrollInCourse(selectedCourseId, selectedPaymentMethodId, receiptFile);
+      if (isFreeCourse) {
+        await subscribeToCourse(selectedCourseId, 0);
+      } else {
+        await enrollInCourse(selectedCourseId, selectedPaymentMethodId, receiptFile!);
+      }
       
       setSubmitting(false);
       setShowAddForm(false);
@@ -284,8 +299,8 @@ export default function StudentRequestsPage() {
       setReceiptBase64('');
 
       MySwal.fire({
-        title: 'تم إرسال طلب الشراء بنجاح!',
-        text: 'طلبك قيد المراجعة حالياً من قبل إدارة الأكاديمية. يمكنك تتبع حالة الطلب من هذه الصفحة.',
+        title: isFreeCourse ? 'تم الاشتراك بنجاح!' : 'تم إرسال طلب الشراء بنجاح!',
+        text: isFreeCourse ? 'تم تفعيل الدورة المجانية ويمكنك البدء في التعلم الآن.' : 'طلبك قيد المراجعة حالياً من قبل إدارة الأكاديمية. يمكنك تتبع حالة الطلب من هذه الصفحة.',
         icon: 'success',
         confirmButtonText: 'حسناً',
         confirmButtonColor: '#2563eb'
@@ -416,109 +431,126 @@ export default function StudentRequestsPage() {
               </select>
             </div>
 
+            {isFreeCourse && (
+              <div className="p-4 bg-emerald-50 border border-emerald-200/80 rounded-2xl flex items-center gap-3 text-emerald-800 text-xs font-bold">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span>هذه الدورة مجانية بالكامل. لا يلزم إرفاق إيصال دفع أو تحديد حساب تحصيل!</span>
+              </div>
+            )}
+
             {/* Payment Method */}
-            <div className="space-y-2">
-              <label className="text-xs font-black text-gray-400 block pr-1">طريقة الدفع المستخدمة</label>
-              {selectedCourseId ? (
-                currentCoursePaymentMethods.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {currentCoursePaymentMethods.map((pm: any) => (
-                      <label
-                        key={pm.methodId}
-                        className={`flex items-center gap-3 p-4 border rounded-2xl cursor-pointer hover:bg-slate-50 transition-all ${
-                          selectedPaymentMethodId === pm.methodId
-                            ? 'border-blue-500 bg-blue-50/10'
-                            : 'border-gray-100 bg-white'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value={pm.methodId}
-                          checked={selectedPaymentMethodId === pm.methodId}
-                          onChange={() => setSelectedPaymentMethodId(pm.methodId)}
-                          className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                        />
-                        <div>
-                          <span className="text-xs font-black text-gray-700 block">{pm.methodName}</span>
-                          <span className="text-[9px] font-bold text-gray-400">{pm.value}</span>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
+            {!isFreeCourse && (
+              <div className="space-y-2">
+                <label className="text-xs font-black text-gray-400 block pr-1">طريقة الدفع المستخدمة</label>
+                {selectedCourseId ? (
+                  currentCoursePaymentMethods.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {currentCoursePaymentMethods.map((pm: any) => (
+                        <label
+                          key={pm.methodId}
+                          className={`flex items-center gap-3 p-4 border rounded-2xl cursor-pointer hover:bg-slate-50 transition-all ${
+                            selectedPaymentMethodId === pm.methodId
+                              ? 'border-blue-500 bg-blue-50/10'
+                              : 'border-gray-100 bg-white'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="paymentMethod"
+                            value={pm.methodId}
+                            checked={selectedPaymentMethodId === pm.methodId}
+                            onChange={() => setSelectedPaymentMethodId(pm.methodId)}
+                            className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                          />
+                          <div>
+                            <span className="text-xs font-black text-gray-700 block">{pm.methodName}</span>
+                            <span className="text-[9px] font-bold text-gray-400">{pm.value}</span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 bg-slate-50 rounded-2xl border border-dashed border-gray-200">
+                      <p className="text-xs text-gray-400 font-bold">لا تتوفر طرق دفع لهذه الدورة حالياً</p>
+                    </div>
+                  )
                 ) : (
                   <div className="text-center py-6 bg-slate-50 rounded-2xl border border-dashed border-gray-200">
-                    <p className="text-xs text-gray-400 font-bold">لا تتوفر طرق دفع لهذه الدورة حالياً</p>
-                  </div>
-                )
-              ) : (
-                <div className="text-center py-6 bg-slate-50 rounded-2xl border border-dashed border-gray-200">
-                  <p className="text-xs text-gray-400 font-bold">الرجاء اختيار الدورة التدريبية أولاً لعرض طرق الدفع المتاحة</p>
-                </div>
-              )}
-            </div>
-
-            {/* Paid Amount */}
-            <div className="space-y-2">
-              <label className="text-xs font-black text-gray-400 block pr-1">المبلغ الذي قمت بدفعه (ريال/جنيه)</label>
-              <input
-                type="number"
-                placeholder="أدخل قيمة المبلغ المدفوع"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full p-4 bg-gray-50/80 border border-gray-100 hover:border-gray-200 focus:border-blue-500 focus:bg-white rounded-2xl text-xs font-bold text-gray-700 outline-none transition-all"
-                required
-              />
-            </div>
-
-            {/* Receipt Upload Drop Zone */}
-            <div className="space-y-2">
-              <label className="text-xs font-black text-gray-400 block pr-1">صورة إيصال التحويل (Proof of Payment)</label>
-              <div className="border-2 border-dashed border-gray-200 hover:border-blue-500 rounded-3xl p-6 bg-slate-50/50 hover:bg-white text-center cursor-pointer transition-all relative">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  required={!previewUrl}
-                />
-                
-                {previewUrl ? (
-                  <div className="flex flex-col items-center space-y-3">
-                    <img
-                      src={previewUrl}
-                      alt="Receipt Preview"
-                      className="w-32 h-32 object-cover rounded-xl border border-gray-200"
-                    />
-                    <span className="text-xs font-black text-blue-600">تغيير الصورة المرفقة</span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center py-4 space-y-3">
-                    <div className="w-12 h-12 bg-white rounded-2xl border border-gray-100 flex items-center justify-center text-slate-400 shadow-sm">
-                      <Upload className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-black text-gray-700">اضغط هنا أو اسحب الملف لرفعه</p>
-                      <p className="text-[10px] text-gray-400 font-bold mt-1">يدعم ملفات الصور (JPG, PNG) بحد أقصى 5 ميجابايت</p>
-                    </div>
+                    <p className="text-xs text-gray-400 font-bold">الرجاء اختيار الدورة التدريبية أولاً لعرض طرق الدفع المتاحة</p>
                   </div>
                 )}
               </div>
-            </div>
+            )}
+
+            {/* Paid Amount */}
+            {!isFreeCourse && (
+              <div className="space-y-2">
+                <label className="text-xs font-black text-gray-400 block pr-1">المبلغ الذي قمت بدفعه (ريال/جنيه)</label>
+                <input
+                  type="number"
+                  placeholder="أدخل قيمة المبلغ المدفوع"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="w-full p-4 bg-gray-50/80 border border-gray-100 hover:border-gray-200 focus:border-blue-500 focus:bg-white rounded-2xl text-xs font-bold text-gray-700 outline-none transition-all"
+                  required
+                />
+              </div>
+            )}
+
+            {/* Receipt Upload Drop Zone */}
+            {!isFreeCourse && (
+              <div className="space-y-2">
+                <label className="text-xs font-black text-gray-400 block pr-1">صورة إيصال التحويل (Proof of Payment)</label>
+                <div className="border-2 border-dashed border-gray-200 hover:border-blue-500 rounded-3xl p-6 bg-slate-50/50 hover:bg-white text-center cursor-pointer transition-all relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    required={!previewUrl && !isFreeCourse}
+                  />
+                  
+                  {previewUrl ? (
+                    <div className="flex flex-col items-center space-y-3">
+                      <img
+                        src={previewUrl}
+                        alt="Receipt Preview"
+                        className="w-32 h-32 object-cover rounded-xl border border-gray-200"
+                      />
+                      <span className="text-xs font-black text-blue-600">تغيير الصورة المرفقة</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center py-4 space-y-3">
+                      <div className="w-12 h-12 bg-white rounded-2xl border border-gray-100 flex items-center justify-center text-slate-400 shadow-sm">
+                        <Upload className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-gray-700">اضغط هنا أو اسحب الملف لرفعه</p>
+                        <p className="text-[10px] text-gray-400 font-bold mt-1">يدعم ملفات الصور (JPG, PNG) بحد أقصى 5 ميجابايت</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Submit Button */}
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl shadow-xl shadow-blue-500/15 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:bg-blue-300"
+              className={`w-full py-4 text-white font-black rounded-2xl shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 ${
+                isFreeCourse
+                  ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/15'
+                  : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/15'
+              }`}
             >
               {submitting ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>جاري إرسال طلب الشراء...</span>
+                  <span>{isFreeCourse ? 'جاري تفعيل الاشتراك...' : 'جاري إرسال طلب الشراء...'}</span>
                 </>
               ) : (
-                <span>إرسال طلب التحقق والشراء</span>
+                <span>{isFreeCourse ? 'اشترك الآن مجاناً' : 'إرسال طلب التحقق والشراء'}</span>
               )}
             </button>
           </form>
