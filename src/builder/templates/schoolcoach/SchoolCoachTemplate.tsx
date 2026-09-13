@@ -5,7 +5,7 @@ import { getSchoolCoachHtml } from './schoolcoachHtml';
 import { getPublicPages, getPublicSections, apiToEditor } from '@/services/pages';
 import { getCourses } from '@/services/courses';
 import { getStudentCourses } from '@/services/student-courses';
-import { getStudentGrades, getStudentSubjects } from '@/services/academic-classification';
+import { getStudentGrades, getStudentSubjects, getGrades, getSubjects } from '@/services/academic-classification';
 import { useBuilderStore } from '../../store/builderStore';
 
 const TEMPLATE_SLUGS = ['schoolcoach-dashboard', 'template_1', 'template_2', 'template_3', 'template_4'];
@@ -398,6 +398,7 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
 }
 
 import { getStoredAuthToken, getDashboardUrl } from '@/lib/auth-storage';
+import { useRef } from 'react';
 
 export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCoachTemplateProps) {
   const [content, setContent] = useState<any>(null);
@@ -409,18 +410,67 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [dashboardUrl, setDashboardUrl] = useState<string>('/student');
   const { isEditing } = useBuilderStore();
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  // Load grades and subjects independently once (No dependency of subject on grade)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const token = getStoredAuthToken();
       setIsLoggedIn(Boolean(token));
       setDashboardUrl(getDashboardUrl());
 
-      getStudentGrades().then((res) => setGrades(res || [])).catch(() => null);
-      getStudentSubjects().then((res) => setSubjects(res || [])).catch(() => null);
-    }
-  }, []);
+      const loadGradesAndSubjects = async () => {
+        let loadedGrades: any[] = [];
+        let loadedSubjects: any[] = [];
 
+        try {
+          let g = isEditing ? await getGrades() : await getStudentGrades();
+          if (!g || g.length === 0) g = await getGrades();
+          if (g && g.length > 0) {
+            loadedGrades = g;
+            setGrades(g);
+          }
+        } catch (e) {
+          try {
+            const g = await getGrades();
+            if (g && g.length > 0) {
+              loadedGrades = g;
+              setGrades(g);
+            }
+          } catch (err) {}
+        }
+
+        try {
+          let s = isEditing ? await getSubjects() : await getStudentSubjects();
+          if (!s || s.length === 0) s = await getSubjects();
+          if (s && s.length > 0) {
+            loadedSubjects = s;
+            setSubjects(s);
+          }
+        } catch (e) {
+          try {
+            const s = await getSubjects();
+            if (s && s.length > 0) {
+              loadedSubjects = s;
+              setSubjects(s);
+            }
+          } catch (err) {}
+        }
+
+        if (iframeRef.current?.contentWindow) {
+          iframeRef.current.contentWindow.postMessage({
+            type: 'SCHOOLCOACH_UPDATE_DROPDOWNS',
+            grades: loadedGrades,
+            subjects: loadedSubjects,
+          }, '*');
+        }
+      };
+
+      loadGradesAndSubjects();
+    }
+  }, [isEditing]);
+
+  // Fetch courses in background and update iframe smoothly without hard refresh
   useEffect(() => {
     let isMounted = true;
     async function fetchCourses() {
@@ -429,15 +479,33 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
         if (selectedGrade) filters.grade_id = selectedGrade;
         if (selectedSubject) filters.subject_id = selectedSubject;
 
+        // Visual feedback inside iframe
+        iframeRef.current?.contentWindow?.postMessage({
+          type: 'SCHOOLCOACH_COURSES_LOADING'
+        }, '*');
+
         const data = isEditing
-          ? await getCourses()
+          ? await getCourses(undefined, undefined, undefined, undefined, selectedGrade || undefined, selectedSubject || undefined)
           : await getStudentCourses(filters);
 
-        if (isMounted && data && Array.isArray(data)) {
-          setRealCourses(data);
+        if (isMounted) {
+          const coursesList = Array.isArray(data) ? data : [];
+          setRealCourses(coursesList);
+
+          // Update iframe DOM directly via postMessage (Zero hard refresh)
+          iframeRef.current?.contentWindow?.postMessage({
+            type: 'SCHOOLCOACH_UPDATE_COURSES',
+            courses: coursesList
+          }, '*');
         }
       } catch (err) {
         console.error('[SchoolCoachTemplate] Failed to fetch courses:', err);
+        if (isMounted) {
+          iframeRef.current?.contentWindow?.postMessage({
+            type: 'SCHOOLCOACH_UPDATE_COURSES',
+            courses: []
+          }, '*');
+        }
       }
     }
     fetchCourses();
@@ -446,18 +514,17 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
     };
   }, [isEditing, selectedGrade, selectedSubject]);
 
+  // Load template structure (Independent of dynamic course filters)
   useEffect(() => {
     async function load() {
       const fallback = DEFAULT_CONTENT;
 
-      // 1. If sections were passed directly as a prop — use them immediately
       if (sectionsProp && sectionsProp.length > 0) {
-        const parsed = parseSectionsToContent(sectionsProp, fallback, realCourses, isEditing);
+        const parsed = parseSectionsToContent(sectionsProp, fallback, [], isEditing);
         setContent(parsed);
         return;
       }
 
-      // 2. Call the public sections endpoint directly
       try {
         const pagesList = await getPublicPages();
 
@@ -478,7 +545,7 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
           const apiSections = await getPublicSections(activePage.id);
           if (apiSections && apiSections.length > 0) {
             const editorNodes = apiToEditor(apiSections);
-            const parsed = parseSectionsToContent(editorNodes, fallback, realCourses, isEditing);
+            const parsed = parseSectionsToContent(editorNodes, fallback, [], isEditing);
             setContent(parsed);
             return;
           }
@@ -487,53 +554,71 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
         console.error('[SchoolCoachTemplate] Failed to fetch sections from API:', err);
       }
 
-      // 3. Fallback to defaults
-      setContent(parseSectionsToContent([], fallback, realCourses, isEditing));
+      setContent(parseSectionsToContent([], fallback, [], isEditing));
     }
 
     load();
-  }, [sectionsProp, realCourses, isEditing]);
+  }, [sectionsProp, isEditing]);
+
+  // Listen to filter events from iframe
+  useEffect(() => {
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'SCHOOLCOACH_FILTER_GRADE') {
+        const gradeId = e.data.gradeId || '';
+        // Subject does NOT depend on grade, so do not reset subject or re-fetch subjects!
+        setSelectedGrade(gradeId);
+      } else if (e.data?.type === 'SCHOOLCOACH_FILTER_SUBJECT') {
+        const subjectId = e.data.subjectId || '';
+        setSelectedSubject(subjectId);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  // Sync initial dropdowns/courses when iframe loads
+  const handleIframeLoad = () => {
+    if (iframeRef.current?.contentWindow) {
+      if (grades.length > 0 || subjects.length > 0) {
+        iframeRef.current.contentWindow.postMessage({
+          type: 'SCHOOLCOACH_UPDATE_DROPDOWNS',
+          grades,
+          subjects,
+        }, '*');
+      }
+      if (realCourses.length > 0) {
+        iframeRef.current.contentWindow.postMessage({
+          type: 'SCHOOLCOACH_UPDATE_COURSES',
+          courses: realCourses,
+        }, '*');
+      }
+    }
+  };
+
+  // Memoize the initial HTML based only on static content layout, NOT on dynamic filter changes
+  const initialHtml = React.useMemo(() => {
+    if (!content) return '';
+    return getSchoolCoachHtml(
+      content,
+      isEditing,
+      isLoggedIn,
+      dashboardUrl,
+      grades,
+      subjects,
+      '',
+      '',
+      realCourses
+    );
+  }, [content, isEditing, isLoggedIn, dashboardUrl]);
 
   if (!content) return null;
 
   return (
     <div className="w-full min-h-screen">
-      {!isEditing && (grades.length > 0 || subjects.length > 0) && (
-        <div className="w-full bg-slate-900 border-b border-slate-800 text-white py-3 px-4 sm:px-8 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50 shadow-md" dir="rtl">
-          <div className="flex items-center gap-2 text-xs font-black text-amber-400">
-            <span>🔍 تصفية المناهج والدورات:</span>
-          </div>
-          <div className="flex items-center gap-3">
-            {grades.length > 0 && (
-              <select
-                value={selectedGrade}
-                onChange={(e) => setSelectedGrade(e.target.value)}
-                className="bg-slate-800 border border-slate-700 text-white text-xs font-bold px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
-              >
-                <option value="">جميع المراحل والصفوف الدراسية</option>
-                {grades.map((g: any) => (
-                  <option key={g.id} value={g.id}>{g.name || g.title}</option>
-                ))}
-              </select>
-            )}
-
-            {subjects.length > 0 && (
-              <select
-                value={selectedSubject}
-                onChange={(e) => setSelectedSubject(e.target.value)}
-                className="bg-slate-800 border border-slate-700 text-white text-xs font-bold px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
-              >
-                <option value="">جميع المواد والتخصصات</option>
-                {subjects.map((s: any) => (
-                  <option key={s.id} value={s.id}>{s.name || s.title}</option>
-                ))}
-              </select>
-            )}
-          </div>
-        </div>
-      )}
       <iframe
-        srcDoc={getSchoolCoachHtml(content, isEditing, isLoggedIn, dashboardUrl)}
+        ref={iframeRef}
+        srcDoc={initialHtml}
+        onLoad={handleIframeLoad}
         className="w-full min-h-screen border-none"
         style={{ width: '100%', minHeight: '100vh', border: 'none' }}
         title="Teacher Template"

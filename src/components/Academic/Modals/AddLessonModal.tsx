@@ -609,8 +609,8 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, courseTit
                   </div>
                   <p className="text-xs text-slate-500 font-bold px-1">
                     {isFree
-                      ? '🟢 هذا الدرس سيكون متاحاً كمعاينة مجانية (is_free = 1).'
-                      : '🔒 هذا الدرس سيكون مغلقاً للمشتركين فقط (is_free = 0).'}
+                      ? '🟢 هذا الدرس سيكون متاحاً كمعاينة مجانية.'
+                      : '🔒 هذا الدرس سيكون مغلقاً للمشتركين فقط.'}
                   </p>
                 </div>
               </>
