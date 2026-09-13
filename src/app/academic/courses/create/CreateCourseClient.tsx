@@ -52,6 +52,7 @@ import { getUsers } from '@/services/users';
 import ManageSubscribersView from '@/components/Academic/Subscribers/ManageSubscribersView';
 import { User, ReceiverAccount } from '@/types/api';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
+import EditUnitModal from '@/components/Academic/Modals/EditUnitModal';
 import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdown';
 import { AcademyPaymentMethod, PaymentMethod } from '@/types/payment';
 import { getUserPaymentInfos, UserPaymentInfo, getReceiverAccounts, createUserPaymentInfo } from '@/services/finance';
@@ -312,6 +313,8 @@ export default function CreateCourseClient() {
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
   const [currentUnitForLesson, setCurrentUnitForLesson] = useState<number | null>(null);
   const [collapsedUnits, setCollapsedUnits] = useState<Record<number, boolean>>({});
+  const [isEditUnitOpen, setIsEditUnitOpen] = useState(false);
+  const [editingUnit, setEditingUnit] = useState<any | null>(null);
 
   // Custom landing pages states
   const [courseSlug, setCourseSlug] = useState<string>('');
@@ -1043,8 +1046,14 @@ export default function CreateCourseClient() {
   };
 
   const handleNextTab = () => {
-    if (activeTab === 'info') setActiveTab('content');
-    else if (activeTab === 'content') setActiveTab('landing_pages');
+    if (activeTab === 'info') {
+      // Validate payment method when course is paid and moving from info tab
+      if (pricingType === 'paid' && selectedPaymentMethods.length === 0) {
+        toast.error('يرجى اختيار وسيلة دفع واحدة على الأقل قبل المتابعة');
+        return;
+      }
+      setActiveTab('content');
+    } else if (activeTab === 'content') setActiveTab('landing_pages');
     else if (activeTab === 'landing_pages') setActiveTab('subscribers');
   };
 
@@ -1056,6 +1065,11 @@ export default function CreateCourseClient() {
 
   const handleSave = async () => {
     if (isSubmitting) return;
+    // Validate payment method for paid courses
+    if (pricingType === 'paid' && selectedPaymentMethods.length === 0) {
+      toast.error('يرجى اختيار وسيلة دفع واحدة على الأقل للدورات المدفوعة');
+      return;
+    }
     setIsSubmitting(true);
     try {
       const createdId = await ensureCourseCreated('draft');
@@ -1078,6 +1092,11 @@ export default function CreateCourseClient() {
 
   const handlePublish = async () => {
     if (isSubmitting) return;
+    // Validate payment method for paid courses before publishing
+    if (pricingType === 'paid' && selectedPaymentMethods.length === 0) {
+      toast.error('يرجى اختيار وسيلة دفع واحدة على الأقل للدورات المدفوعة قبل النشر');
+      return;
+    }
     setIsSubmitting(true);
     try {
       const totalLessons = units.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0);
@@ -2369,8 +2388,8 @@ export default function CreateCourseClient() {
                             <button
                               type="button"
                               onClick={() => {
-                                // Action to edit unit
-                                toast.success(`تعديل الوحدة: ${unit.title}`);
+                                setEditingUnit(unit);
+                                setIsEditUnitOpen(true);
                               }}
                               className="p-2 text-slate-500 hover:text-blue-600 hover:bg-white rounded-xl transition-all"
                               title="تعديل الوحدة"
@@ -3631,6 +3650,14 @@ export default function CreateCourseClient() {
           </div>
         </div>
       )}
+
+      {/* Edit Unit Modal */}
+      <EditUnitModal
+        isOpen={isEditUnitOpen}
+        onClose={() => { setIsEditUnitOpen(false); setEditingUnit(null); }}
+        unit={editingUnit}
+        onUnitUpdated={() => refreshUnits(courseId)}
+      />
     </div>
   );
 }

@@ -109,7 +109,7 @@ export const useBuilderStore = create<BuilderState>()(
       selectedItemIndex: null,
       hoveredItemIndex: null,
       deviceMode: 'desktop',
-      isEditing: true,
+      isEditing: false,
       pageId: null,
       historyPast: [],
       historyFuture: [],

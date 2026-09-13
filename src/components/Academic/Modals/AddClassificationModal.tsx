@@ -254,8 +254,8 @@ export default function AddClassificationModal({
             </div>
           )}
 
-          {/* Description field - DELETED for school teacher role */}
-          {!isSchoolTeacher && (
+          {/* Description field - hidden for school teacher role and for subjects */}
+          {!isSchoolTeacher && activeTab !== 'subject' && (
             <div>
               <label className="block text-xs font-black mb-1.5 text-slate-800">الوصف (اختياري)</label>
               <textarea
