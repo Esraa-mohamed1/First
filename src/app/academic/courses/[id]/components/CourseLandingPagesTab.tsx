@@ -31,6 +31,7 @@ import Template3InstructorEditor from '@/modules/landing/editor/template3/Templa
 import Template3FAQEditor from '@/modules/landing/editor/template3/Template3FAQEditor';
 import Template3RequirementsEditor from '@/modules/landing/editor/template3/Template3RequirementsEditor';
 import Template3PricingEditor from '@/modules/landing/editor/template3/Template3PricingEditor';
+import LandingRenderer from '@/modules/landing/renderer/LandingRenderer';
 import toast from 'react-hot-toast';
 
 interface CourseLandingPagesTabProps {
@@ -587,7 +588,7 @@ export const CourseLandingPagesTab: React.FC<CourseLandingPagesTabProps> = ({
                   <div className="w-full h-full overflow-y-auto">
                     {course && (
                       <div className="pointer-events-none select-none">
-                        <LandingRenderer />
+                        <LandingRenderer courseId={id} isEditable={true} />
                       </div>
                     )}
                   </div>
