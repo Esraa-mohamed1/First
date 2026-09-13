@@ -18,16 +18,18 @@ interface AddLessonModalProps {
   onClose: () => void;
   unitId: number;
   courseId?: number;
-  unitName: string;
-  courseTitle: string;
-  instructorName: string;
+  unitName?: string;
+  unitTitle?: string;
+  courseTitle?: string;
+  instructorName?: string;
   onLessonAdded: () => void;
   courseType?: string;
 }
 
 const MySwal = withReactContent(Swal);
 
-const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, courseTitle, instructorName, onLessonAdded, courseType }: AddLessonModalProps) => {
+const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle, courseTitle = '', instructorName = '', onLessonAdded, courseType }: AddLessonModalProps) => {
+  const resolvedUnitName = unitName || unitTitle || '';
   const [lessonType, setLessonType] = useState<'video' | 'pdf' | 'powerpoint'>('video');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -286,7 +288,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, courseTit
               console.error('Failed to handle collection, proceeding without one:', colErr);
             }
 
-            const finalVideoTitle = `(${courseTitle}-${unitName}-${title})`;
+            const finalVideoTitle = `(${courseTitle}-${resolvedUnitName}-${title})`;
             const guid = await createVideoResource(libraryId, bunnyApiKey, finalVideoTitle, currentCollectionId || undefined);
             setVideoId(guid);
             finalVideoId = guid;
