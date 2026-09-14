@@ -43,7 +43,7 @@ function extractLibraryFromUrl(url: string): string | null {
 }
 
 function lessonLibraryId(
-  lesson: Record<string, unknown>,
+  lesson: any,
   context?: LessonVideoContext
 ): string {
   const fromLesson =
@@ -54,7 +54,7 @@ function lessonLibraryId(
   return '';
 }
 
-function lessonVideoGuid(lesson: Record<string, unknown>): string {
+function lessonVideoGuid(lesson: any): string {
   const id = lesson.video_id ?? lesson.videoId;
   if (typeof id === 'string' && id.trim()) return id.trim();
   if (typeof id === 'number') return String(id);
@@ -76,7 +76,7 @@ function normalizeBunnyEmbedUrl(
   return buildEmbedUrl(lib, guid);
 }
 
-function appendStartTime(url: string, lesson: Record<string, unknown>): string {
+function appendStartTime(url: string, lesson: any): string {
   const watched = Number(lesson.watched_seconds ?? lesson.watchedSeconds ?? 0);
   if (watched <= 0) return url;
   const separator = url.includes('?') ? '&' : '?';
@@ -84,7 +84,7 @@ function appendStartTime(url: string, lesson: Record<string, unknown>): string {
 }
 
 export function getLessonVideoSrc(
-  lesson: Record<string, unknown> | null | undefined,
+  lesson: any,
   context?: LessonVideoContext
 ): string {
   if (!lesson) return '';
@@ -124,7 +124,7 @@ export function getLessonVideoSrc(
 }
 
 export function getLessonVideoIds(
-  lesson: Record<string, unknown> | null | undefined,
+  lesson: any,
   context?: LessonVideoContext
 ): { videoId: string; libraryId: string } | null {
   if (!lesson) return null;
@@ -140,3 +140,24 @@ export function getLessonVideoIds(
   if (!videoId || !libraryId) return null;
   return { videoId, libraryId };
 }
+
+export function isLessonFree(lesson: any): boolean {
+  if (!lesson) return false;
+  return (
+    lesson.is_free === true ||
+    lesson.is_free === 1 ||
+    lesson.is_free === 'free' ||
+    lesson.is_free === '1' ||
+    lesson.is_preview === true ||
+    lesson.is_preview === 1 ||
+    lesson.is_preview === '1' ||
+    lesson.is_preview === 'free' ||
+    lesson.isPreview === true ||
+    lesson.is_free_preview === 'free' ||
+    lesson.is_free_preview === true ||
+    lesson.is_free_preview === 1 ||
+    lesson.price_type === 'free' ||
+    (lesson as any).free === true
+  );
+}
+
