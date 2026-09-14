@@ -185,7 +185,7 @@ export default function ProfilePage() {
 
         {/* Left Column - Security */}
         <div className="lg:col-span-1 space-y-6 order-1 lg:order-2">
-          <SecuritySettings />
+          <SecuritySettings email={profile.email} />
         </div>
 
       </div>
