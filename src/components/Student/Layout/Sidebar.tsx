@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -17,6 +18,17 @@ import {
   Package,
 } from 'lucide-react';
 import { clearUserSessionAndCache } from '@/lib/auth-storage';
+import { getMyAcademyProfile } from '@/services/student-auth';
+
+interface StudentSidebarUserData {
+  name: string;
+  avatar?: string | null;
+}
+
+interface AcademySidebarData {
+  name: string;
+  logo?: string | null;
+}
 
 const sidebarGroups = [
   {
@@ -51,7 +63,166 @@ const sidebarGroups = [
 export const StudentSidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
-  const [isCollapsed, setIsCollapsed] = React.useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(true);
+
+  const [user, setUser] = useState<StudentSidebarUserData>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedUserStr = localStorage.getItem('user_info');
+        const cachedName = localStorage.getItem('user_name');
+        if (cachedUserStr) {
+          const parsed = JSON.parse(cachedUserStr);
+          const name = parsed?.name || cachedName || '';
+          const avatar = parsed?.profile_image || parsed?.avatar || parsed?.image || null;
+          if (name && name !== 'أحمد محمد') {
+            return { name, avatar };
+          }
+        }
+        if (cachedName && cachedName !== 'أحمد محمد') {
+          return { name: cachedName, avatar: null };
+        }
+      } catch (e) {
+        // Fallback
+      }
+    }
+    return { name: 'طالب', avatar: null };
+  });
+
+  const [academy, setAcademy] = useState<AcademySidebarData>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('darab_academy_profile');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          const name = parsed?.name || parsed?.site_name || parsed?.academy_name || '';
+          const logo = parsed?.logo || parsed?.logo_url || null;
+          if (name && name !== 'Darrab' && name !== 'درب Darrab') {
+            return { name, logo };
+          }
+        }
+      } catch (e) {
+        // Fallback
+      }
+    }
+    return { name: '', logo: null };
+  });
+
+  const [isAcademyLoading, setIsAcademyLoading] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('darab_academy_profile');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          const name = parsed?.name || parsed?.site_name || parsed?.academy_name || '';
+          if (name && name !== 'Darrab' && name !== 'درب Darrab') {
+            return false;
+          }
+        }
+      } catch (e) {
+        // Fallback
+      }
+    }
+    return true;
+  });
+
+  const [imgError, setImgError] = useState(false);
+  const [academyLogoError, setAcademyLogoError] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedUserStr = localStorage.getItem('user_info');
+        const cachedName = localStorage.getItem('user_name');
+        if (cachedUserStr) {
+          const parsed = JSON.parse(cachedUserStr);
+          const name = parsed?.name || cachedName;
+          const avatar = parsed?.profile_image || parsed?.avatar || parsed?.image || null;
+          if (name && name !== 'أحمد محمد' && isMounted) {
+            setUser({ name, avatar });
+          }
+        } else if (cachedName && cachedName !== 'أحمد محمد' && isMounted) {
+          setUser(prev => ({ ...prev, name: cachedName }));
+        }
+      } catch (e) {
+        // Fallback
+      }
+    }
+
+    const fetchAcademy = async () => {
+      try {
+        const data = await getMyAcademyProfile();
+        if (isMounted) {
+          if (data) {
+            const name = data.name || data.site_name || data.academy_name || '';
+            const logo = data.logo || data.logo_url || null;
+            if (name || logo !== undefined) {
+              setAcademy(prev => ({
+                name: name || prev.name,
+                logo: logo !== undefined ? logo : prev.logo,
+              }));
+              setAcademyLogoError(false);
+            }
+          }
+          setIsAcademyLoading(false);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch academy profile in sidebar:', err);
+        if (isMounted) {
+          setIsAcademyLoading(false);
+        }
+      }
+    };
+
+    fetchAcademy();
+
+    const handleProfileUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const updatedUser = customEvent?.detail;
+      if (updatedUser && isMounted) {
+        const updatedName = updatedUser.name || updatedUser.fullName;
+        const updatedAvatar = updatedUser.profile_image || updatedUser.avatar || updatedUser.image;
+        if (updatedName) {
+          setUser(prev => ({
+            name: updatedName,
+            avatar: updatedAvatar !== undefined ? updatedAvatar : prev.avatar,
+          }));
+          setImgError(false);
+        }
+      }
+    };
+
+    const handleAcademyUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const updated = customEvent?.detail;
+      if (updated && isMounted) {
+        const name = updated.name || updated.site_name || updated.academy_name || '';
+        const logo = updated.logo || updated.logo_url || null;
+        if (name || logo !== undefined) {
+          setAcademy(prev => ({
+            name: name || prev.name,
+            logo: logo !== undefined ? logo : prev.logo,
+          }));
+          setAcademyLogoError(false);
+        }
+        setIsAcademyLoading(false);
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('student-profile-updated', handleProfileUpdated);
+      window.addEventListener('academy-profile-updated', handleAcademyUpdated);
+    }
+
+    return () => {
+      isMounted = false;
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('student-profile-updated', handleProfileUpdated);
+        window.removeEventListener('academy-profile-updated', handleAcademyUpdated);
+      }
+    };
+  }, []);
 
   const handleLogout = () => {
     clearUserSessionAndCache();
@@ -70,17 +241,46 @@ export const StudentSidebar = () => {
 
       {/* Sidebar Header / Logo Area */}
       <div className={`p-8 flex items-center ${isCollapsed ? 'justify-center' : 'justify-start'}`}>
-        <div className={`flex ${isCollapsed ? 'flex-col' : 'flex-row'} items-center gap-3`}>
-          <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200 shrink-0">
-            <GraduationCap size={28} />
+        {isAcademyLoading ? (
+          <div className={`flex ${isCollapsed ? 'flex-col' : 'flex-row'} items-center gap-3 animate-pulse`}>
+            <div className="w-12 h-12 bg-gray-200 rounded-2xl shrink-0"></div>
+            {!isCollapsed && (
+              <div className="space-y-2">
+                <div className="w-28 h-5 bg-gray-200 rounded"></div>
+                <div className="w-20 h-3 bg-gray-100 rounded"></div>
+              </div>
+            )}
           </div>
-          {!isCollapsed && (
-            <div className="text-right">
-              <h2 className="text-xl font-black text-gray-900 tracking-tight">درب <span className="text-blue-600">Darrab</span></h2>
-              <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mt-1">منصة التعلم الذكي</p>
+        ) : (
+          <div className={`flex ${isCollapsed ? 'flex-col' : 'flex-row'} items-center gap-3`}>
+            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200 shrink-0 overflow-hidden relative">
+              {academy.logo && !academyLogoError ? (
+                <Image
+                  src={academy.logo}
+                  alt={academy.name || 'Academy Logo'}
+                  fill
+                  className="object-cover"
+                  sizes="48px"
+                  onError={() => setAcademyLogoError(true)}
+                />
+              ) : (
+                <GraduationCap size={28} />
+              )}
             </div>
-          )}
-        </div>
+            {!isCollapsed && (
+              <div className="text-right overflow-hidden">
+                {academy.name ? (
+                  <>
+                    <h2 className="text-xl font-black text-gray-900 tracking-tight truncate">
+                      {academy.name}
+                    </h2>
+                    <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mt-1">منصة التعلم الذكي</p>
+                  </>
+                ) : null}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="px-6 mb-4">
@@ -127,17 +327,31 @@ export const StudentSidebar = () => {
       {/* Sidebar Footer */}
       <div className={`p-4 mt-auto ${isCollapsed ? 'items-center' : ''}`}>
         <div className={`bg-gray-50 rounded-[2rem] ${isCollapsed ? 'p-2' : 'p-4'} mb-6`}>
-          <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : 'mb-3'}`}>
-            <div className="w-10 h-10 rounded-full bg-white border-2 border-white shadow-sm flex items-center justify-center overflow-hidden shrink-0">
-              <User size={20} className="text-gray-400" />
+          <Link
+            href="/student/profile"
+            className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : 'mb-3'} group cursor-pointer hover:opacity-80 transition-opacity`}
+          >
+            <div className="w-10 h-10 rounded-full bg-white border-2 border-white shadow-sm flex items-center justify-center overflow-hidden shrink-0 relative group-hover:ring-2 group-hover:ring-blue-200 transition-all">
+              {user.avatar && !imgError ? (
+                <Image
+                  src={user.avatar}
+                  alt={user.name || 'Student Avatar'}
+                  fill
+                  className="object-cover"
+                  sizes="40px"
+                  onError={() => setImgError(true)}
+                />
+              ) : (
+                <User size={20} className="text-gray-400 group-hover:text-blue-600 transition-colors" />
+              )}
             </div>
             {!isCollapsed && (
-              <div>
-                <p className="text-xs font-bold text-gray-800">أحمد محمد</p>
-                <p className="text-[10px] text-gray-500">طالب نشط</p>
+              <div className="overflow-hidden">
+                <p className="text-xs font-bold text-gray-800 truncate group-hover:text-blue-600 transition-colors">{user.name || 'طالب'}</p>
+                <p className="text-[10px] text-gray-500">طالب</p>
               </div>
             )}
-          </div>
+          </Link>
           {!isCollapsed && (
             <button
               onClick={handleLogout}
