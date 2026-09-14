@@ -61,9 +61,14 @@ export default function ProfilePage() {
       });
 
       if (typeof window !== 'undefined') {
+        const updatedName = raw?.name || updatedData.name;
+        const updatedEmail = raw?.email || updatedData.email;
+        const updatedPhone = raw?.phone || updatedData.phone;
+        const updatedAvatar = raw?.profile_image;
+
         localStorage.setItem(
           'user_name',
-          raw?.name || updatedData.name
+          updatedName
         );
 
         const cachedUser = localStorage.getItem('user_info');
@@ -76,14 +81,30 @@ export default function ProfilePage() {
               'user_info',
               JSON.stringify({
                 ...u,
-                name: raw?.name || updatedData.name,
-                email: raw?.email || updatedData.email,
+                name: updatedName,
+                email: updatedEmail,
+                phone: updatedPhone,
+                ...(updatedAvatar ? { profile_image: updatedAvatar } : {}),
               })
             );
           } catch (e) {
             console.error('Failed to update cached user info:', e);
           }
         }
+
+        const updatedUser = {
+          name: updatedName,
+          email: updatedEmail,
+          phone: updatedPhone,
+          profile_image: updatedAvatar,
+          avatar: updatedAvatar,
+        };
+
+        window.dispatchEvent(
+          new CustomEvent('student-profile-updated', {
+            detail: updatedUser,
+          })
+        );
       }
 
       toast.success('تم تحديث الملف الشخصي بنجاح!', {
