@@ -48,15 +48,8 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         { label: 'إضافة / تعديل باقة', href: '/dashboard/packages/create' },
       ],
     },
+
     {
-<<<<<<< HEAD
-=======
-      label: 'ادارة النطاقات',
-      icon: Globe,
-      href: '/dashboard/domain',
-    },
-    {
->>>>>>> 629e05f7de0a7f710d744201d628a2817371c29a
       label: 'المدفوعات',
       icon: CreditCard,
       href: '/dashboard/academies/subscriptions',
