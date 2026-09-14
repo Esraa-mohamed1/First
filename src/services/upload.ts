@@ -25,8 +25,8 @@ export const uploadFile = async (
     
     throw new Error(response.data.error || 'Upload failed: No URL returned');
   } catch (error: any) {
-    console.error('File upload to Bunny Storage failed:', error);
-    throw error.response?.data || error;
+    console.warn('File upload to Bunny Storage failed, falling back to local upload:', error);
+    return await uploadFileLocal(file, onProgress);
   }
 };
 

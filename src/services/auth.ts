@@ -1,4 +1,5 @@
 import api from '@/lib/api';
+import academyApi from '@/lib/academy-api';
 import { ApiResponse, CreateAccountPayload, LoginResponse } from '@/types/api';
 
 export const createAccount = async (payload: CreateAccountPayload): Promise<ApiResponse<any> & { paymentLink?: any; token?: string }> => {
@@ -47,13 +48,24 @@ export const superAdminLogin = async (payload: any): Promise<LoginResponse> => {
 };
 
 export const getProfileStatus = async (): Promise<any> => {
+  return getAcademySettings();
+};
+
+export const getAcademySettings = async (): Promise<any> => {
+
   try {
-    const response = await api.get<any>('https://api.darab.academy/api/academy/me');
-    return response.data;
-  } catch (error: any) {
-    console.error('Failed to get profile status:', error);
-    throw error.response?.data || error;
+    const fallbackResponse = await academyApi.get('settings');
+    return fallbackResponse.data;
+  } catch (e) {
+    try {
+      const meResponse = await academyApi.get('me');
+      return meResponse.data;
+    } catch (err: any) {
+      console.error('Failed to get profile/setting status:', err);
+      throw err.response?.data || err;
+    }
   }
+
 };
 
 export const sendOtp = async (contact: string, countryCode?: string): Promise<ApiResponse<any>> => {
@@ -105,11 +117,40 @@ export const getMyPackage = async (): Promise<any> => {
 };
 
 export const updateDetailedProfile = async (payload: any): Promise<any> => {
+  return updateAcademySettings(payload);
+};
+
+
+// * Sends all academy settings in a single multipart/form-data request.
+
+export const updateAcademySettings = async (
+  payload: Record<string, any>,
+  imageFile?: File | null
+): Promise<any> => {
+  const formData = new FormData();
+
+  // Append each setting as key[] and value[] array pairs matching Laravel/PHP array input validation
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value !== null && value !== undefined) {
+      formData.append('key[]', key);
+      formData.append('value[]', String(value));
+    }
+  });
+
+  // Append the image binary as key[]='logo' & value[]=imageFile, plus 'logo' direct file
+  if (imageFile) {
+    formData.append('key[]', 'logo');
+    formData.append('value[]', imageFile);
+    formData.append('logo', imageFile);
+  }
+
   try {
-    const response = await api.post<any>('https://api.darab.academy/api/academy/organization_profiles', payload);
+    const response = await academyApi.post('settings', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   } catch (error: any) {
-    console.error('Failed to update detailed profile:', error);
+    console.error('Failed to update academy settings:', error);
     throw error.response?.data || error;
   }
 };
