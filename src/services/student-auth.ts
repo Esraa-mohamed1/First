@@ -33,7 +33,12 @@ export const getStudentProfile = async (): Promise<any> => {
 
 export const updateStudentProfile = async (payload: any): Promise<any> => {
   try {
-    const response = await studentApi.post<ApiResponse<any>>('profile', payload);
+    const isFormData = typeof FormData !== 'undefined' && payload instanceof FormData;
+    const config = isFormData
+      ? { headers: { 'Content-Type': 'multipart/form-data' } }
+      : undefined;
+
+    const response = await studentApi.post<ApiResponse<any>>('profile', payload, config);
     return response.data;
   } catch (error: any) {
     console.error('Failed to update student profile:', error);

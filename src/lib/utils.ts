@@ -22,6 +22,20 @@ export function getLogoUrl(logo?: string | null): string {
   return url;
 }
 
+export function normalizeProfileImageUrl(image?: string | null): string {
+  if (!image) return '';
+  if (
+    image.startsWith('http://') ||
+    image.startsWith('https://') ||
+    image.startsWith('blob:') ||
+    image.startsWith('data:')
+  ) {
+    return image;
+  }
+  const cleanPath = image.startsWith('/') ? image : `/${image}`;
+  return `https://api.darab.academy${cleanPath}`;
+}
+
 export function formatCourseAccessDuration(course: any): string {
   if (!course) return 'صلاحية مدى الحياة';
   const type = course.access_duration_type || course.access_type || course.accessDurationType;
