@@ -11,6 +11,7 @@ import { PaymentMethodCard } from '@/components/payment/PaymentMethodCard';
 import { PaymentMethodModal } from '@/components/payment/PaymentMethodModal';
 import { formatCourseAccessDuration } from '@/lib/utils';
 import { mapCoursePaymentMethods } from '@/lib/payment-methods';
+import { getLessonVideoSrc, isLessonFree } from '@/lib/lesson-video-src';
 
 const MySwal = withReactContent(Swal);
 
@@ -19,8 +20,15 @@ interface Lesson {
   title: string;
   type?: string;
   duration?: string;
-  is_preview?: boolean | number;
+  is_preview?: boolean | number | string;
   isPreview?: boolean;
+  is_free?: boolean | number | string;
+  is_free_preview?: boolean | number | string;
+  price_type?: string;
+  video_url?: string;
+  embed_url?: string;
+  file_url?: string;
+  url?: string;
 }
 
 interface Unit {
@@ -106,6 +114,18 @@ export default function CourseDetailTemplate({
   });
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [playingPreviewLesson, setPlayingPreviewLesson] = useState<any | null>(null);
+
+  const activeVideoSrc = React.useMemo(() => {
+    if (playingPreviewLesson) {
+      return getLessonVideoSrc(playingPreviewLesson) || playingPreviewLesson.video_url || playingPreviewLesson.embed_url || playingPreviewLesson.file_url || playingPreviewLesson.url || '';
+    }
+    const courseVideo = (course as any)?.intro_video_url || (course as any)?.intro_video || (course as any)?.video_url || (course as any)?.preview_url || '';
+    if (courseVideo) {
+      return getLessonVideoSrc({ video_url: courseVideo }) || courseVideo;
+    }
+    return '';
+  }, [playingPreviewLesson, course]);
 
   const paymentMethods = mapCoursePaymentMethods(course);
 
@@ -195,6 +215,16 @@ export default function CourseDetailTemplate({
     rawStatus === 'paid' ||
     rawStatus === 'completed' ||
     rawStatus === 'subscribed';
+
+  useEffect(() => {
+    if (course?.units && !isEnrolled && !playingPreviewLesson) {
+      const allLessons = course.units.flatMap((u: any) => u.lessons || []);
+      const firstFree = allLessons.find((l: any) => isLessonFree(l));
+      if (firstFree) {
+        setPlayingPreviewLesson(firstFree);
+      }
+    }
+  }, [course?.units, isEnrolled]);
 
   const isPending =
     rawStatus === 'pending' ||
@@ -360,8 +390,55 @@ export default function CourseDetailTemplate({
               )}
             </div>
 
-            {courseImage && (
-              <div className="aspect-video w-full rounded-3xl overflow-hidden relative group cursor-pointer shadow-2xl">
+            {activeVideoSrc ? (
+              <div id="course-video-player" className="aspect-video w-full rounded-3xl overflow-hidden shadow-2xl bg-black relative border border-slate-800">
+                <div className="absolute top-3 right-3 z-20 flex items-center justify-between gap-3 bg-black/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 text-white text-xs font-bold shadow-lg">
+                  <span className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                    <span>معاينة مجانية: {playingPreviewLesson?.title || 'فيديو الدرس'}</span>
+                  </span>
+                  <button
+                    onClick={() => setPlayingPreviewLesson(null)}
+                    className="p-1 hover:bg-white/20 rounded-lg transition text-slate-300 hover:text-white"
+                    title="إغلاق المشغل والعودة للغلاف"
+                  >
+                    <span className="material-symbols-outlined text-base">close</span>
+                  </button>
+                </div>
+
+                {activeVideoSrc.match(/\.(mp4|webm|mov)(\?|$)/i) ? (
+                  <video
+                    src={activeVideoSrc}
+                    controls
+                    autoPlay
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <iframe
+                    src={activeVideoSrc}
+                    className="w-full h-full border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                )}
+              </div>
+            ) : courseImage ? (
+              <div
+                id="course-video-player"
+                onClick={() => {
+                  const allLessons = course.units?.flatMap((u: any) => u.lessons || []) || [];
+                  const firstFree = allLessons.find((l: any) => isLessonFree(l));
+                  if (firstFree) {
+                    setPlayingPreviewLesson(firstFree);
+                    toast.success(`جاري تشغيل المعاينة المجانية: ${firstFree.title}`);
+                  } else if (isEnrolled && onLearnClick) {
+                    onLearnClick();
+                  } else {
+                    handleSubscribeClick();
+                  }
+                }}
+                className="aspect-video w-full rounded-3xl overflow-hidden relative group cursor-pointer shadow-2xl"
+              >
                 <img
                   alt="Course Preview"
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -378,7 +455,7 @@ export default function CourseDetailTemplate({
                   </div>
                 </div>
               </div>
-            )}
+            ) : null}
           </section>
 
           {/* Description */}
@@ -464,37 +541,61 @@ export default function CourseDetailTemplate({
                         <div className="bg-white p-2 divide-y divide-[#edeeef]">
                           {unit.lessons && unit.lessons.length > 0 ? (
                             unit.lessons.map((lesson) => {
-                              const isPreview = lesson.isPreview || lesson.is_preview;
-                              const canWatch = isEnrolled || isOwnerReview || isPreview;
+                              const isFree = isLessonFree(lesson);
+                              const canWatch = isEnrolled || isOwnerReview || isFree;
+                              const isPlayingThis = playingPreviewLesson?.id === lesson.id;
 
                               return (
                                 <div
                                   key={lesson.id}
                                   onClick={() => {
-                                    if (canWatch && onLearnClick) {
-                                      onLearnClick();
+                                    if (isEnrolled || isOwnerReview) {
+                                      if (onLearnClick) onLearnClick();
+                                    } else if (isFree) {
+                                      const videoSrc = getLessonVideoSrc(lesson) || lesson.video_url || lesson.embed_url || lesson.file_url || lesson.url || '';
+                                      if (!videoSrc) {
+                                        toast.error('رابط الفيديو غير متوفر لهذا الدرس المجاني');
+                                        return;
+                                      }
+                                      setPlayingPreviewLesson(lesson);
+                                      toast.success(`جاري تشغيل المعاينة المجانية: ${lesson.title}`);
+                                      const playerEl = document.getElementById('course-video-player');
+                                      if (playerEl) {
+                                        playerEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                      }
+                                    } else {
+                                      toast.error('هذا الدرس يتطلب الاشتراك في الدورة لمشاهدته');
                                     }
                                   }}
-                                  className={`flex items-center justify-between p-4 rounded-xl transition-colors ${canWatch
+                                  className={`flex items-center justify-between p-4 rounded-xl transition-all ${
+                                    isPlayingThis
+                                      ? 'bg-emerald-50 border border-emerald-200 shadow-sm'
+                                      : canWatch
                                       ? 'hover:bg-[#f3f4f5] cursor-pointer'
                                       : 'opacity-70 cursor-not-allowed'
-                                    }`}
+                                  }`}
                                 >
                                   <div className="flex items-center gap-3">
                                     <span
-                                      className={`material-symbols-outlined ${canWatch ? 'text-[#005c86]' : 'text-slate-400'
-                                        }`}
+                                      className={`material-symbols-outlined ${
+                                        isPlayingThis
+                                          ? 'text-emerald-600 animate-pulse'
+                                          : canWatch
+                                          ? 'text-[#005c86]'
+                                          : 'text-slate-400'
+                                      }`}
                                       style={{ fontVariationSettings: "'FILL' 1" }}
                                     >
-                                      {canWatch ? 'play_circle' : 'lock'}
+                                      {isPlayingThis ? 'play_circle' : canWatch ? 'play_circle' : 'lock'}
                                     </span>
-                                    <span className="text-on-surface text-right text-sm font-bold">
+                                    <span className={`text-right text-sm font-bold ${isPlayingThis ? 'text-emerald-900 font-extrabold' : 'text-on-surface'}`}>
                                       {lesson.title}
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-4">
-                                    {isPreview && !isEnrolled && (
-                                      <span className="text-xs bg-[#cfe6f2] text-[#004c6e] px-2 py-0.5 rounded-full font-bold">
+                                    {isFree && !isEnrolled && (
+                                      <span className="text-xs bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-ping" />
                                         معاينة مجانية
                                       </span>
                                     )}

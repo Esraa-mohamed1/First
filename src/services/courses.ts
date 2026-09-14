@@ -210,7 +210,17 @@ export const createOnlineSession = async (payload: {
 
 export const updateLesson = async (id: number, payload: any): Promise<Lesson> => {
   try {
-    const response = await academyApi.put<ApiResponse<Lesson>>(`lessons/${id}`, payload);
+    const resolvedPayload = { ...payload };
+    if (!resolvedPayload.video_url || !String(resolvedPayload.video_url).trim()) {
+      resolvedPayload.video_url =
+        resolvedPayload.embed_url ||
+        resolvedPayload.file_url ||
+        resolvedPayload.videoUrl ||
+        resolvedPayload.url ||
+        (resolvedPayload.video_id ? `https://iframe.mediadelivery.net/embed/${resolvedPayload.library_id || '740704'}/${resolvedPayload.video_id}` : '') ||
+        'https://iframe.mediadelivery.net/embed/demo';
+    }
+    const response = await academyApi.put<ApiResponse<Lesson>>(`lessons/${id}`, resolvedPayload);
     return response.data.data;
   } catch (error: any) {
     console.error('Failed to update lesson:', error);
