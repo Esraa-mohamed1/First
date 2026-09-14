@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Menu, User } from 'lucide-react';
 import Image from 'next/image';
 import { getStudentProfileStatus, getMyAcademyProfile } from '@/services/student-auth';
@@ -18,6 +19,7 @@ interface AcademyProfileData {
 }
 
 export const StudentHeader = () => {
+  const pathname = usePathname() || '';
   const [user, setUser] = useState<StudentHeaderUserData>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -267,12 +269,42 @@ export const StudentHeader = () => {
         </Link>
 
         <nav className="hidden md:flex items-center gap-6 ml-8">
-          <Link href="/student" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">الرئيسية</Link>
-          <Link href="/student/courses" className="text-blue-600 font-semibold border-b-2 border-blue-600 py-7">دوراتي</Link>
+          <Link
+            href="/"
+            className={`font-medium transition-colors py-7 ${
+              pathname === '/'
+                ? 'text-blue-600 font-semibold border-b-2 border-blue-600'
+                : 'text-gray-600 hover:text-blue-600'
+            }`}
+          >
+            الرئيسية
+          </Link>
+          <Link
+            href="/student/courses"
+            className={`font-medium transition-colors py-7 ${
+              pathname.startsWith('/student/courses')
+                ? 'text-blue-600 font-semibold border-b-2 border-blue-600'
+                : 'text-gray-600 hover:text-blue-600'
+            }`}
+          >
+            دوراتي
+          </Link>
+          <Link
+            href="/student/bags"
+            className={`font-medium transition-colors py-7 ${
+              pathname.startsWith('/student/bags')
+                ? 'text-blue-600 font-semibold border-b-2 border-blue-600'
+                : 'text-gray-600 hover:text-blue-600'
+            }`}
+          >
+            الحقائب
+          </Link>
         </nav>
       </div>
 
       <div className="flex items-center gap-4 lg:gap-6">
+        <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
+
         <Link href="/student/profile" className="flex items-center gap-3 cursor-pointer group">
           <div className="flex flex-col items-end hidden sm:block">
             {isUserLoading ? (
