@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { UserProfile } from '@/types/student';
-import { Edit2, Shield, User } from 'lucide-react';
+import { Shield, User } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import profileImg from '@/assets/profile.png';
@@ -47,13 +47,6 @@ export const ProfileHeader = ({ profile }: ProfileHeaderProps) => {
           <div className="flex items-center gap-3 justify-center md:justify-start">
           </div>
         </div>
-      </div>
-
-      <div className="relative z-10 mt-6 md:mt-0 self-start md:self-center w-full md:w-auto">
-        <button className="w-full md:w-auto flex items-center justify-center gap-2 bg-white text-[#0f62fe] px-6 py-3 rounded-2xl font-bold hover:bg-blue-50 transition-colors shadow-sm">
-          <Edit2 size={18} />
-          تعديل الملف
-        </button>
       </div>
     </div>
   );

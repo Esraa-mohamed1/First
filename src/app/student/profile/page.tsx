@@ -41,34 +41,47 @@ export default function ProfilePage() {
     updatedData: {
       name: string;
       email: string;
-      phone: string;
+      phone?: string;
     }
   ) => {
     try {
-      const response = await updateStudentProfile(updatedData);
+      const trimmedName = updatedData.name.trim();
+      const trimmedEmail = updatedData.email.trim();
+      const trimmedPhone = updatedData.phone ? updatedData.phone.trim() : '';
+
+      const payload: { name: string; email: string; phone?: string } = {
+        name: trimmedName,
+        email: trimmedEmail,
+      };
+
+      if (trimmedPhone) {
+        payload.phone = trimmedPhone;
+      }
+
+      const response = await updateStudentProfile(payload);
       const raw = response.data || response;
+
+      const finalName = raw?.name || trimmedName;
+      const finalEmail = raw?.email || trimmedEmail;
+      const finalPhone = raw?.phone !== undefined ? (raw.phone || '') : (trimmedPhone || '');
+      const finalAvatar = raw?.profile_image || profile?.avatar;
 
       setProfile(prev => {
         if (!prev) return prev;
 
         return {
           ...prev,
-          name: raw?.name || updatedData.name,
-          email: raw?.email || updatedData.email,
-          phone: raw?.phone || updatedData.phone,
-          avatar: raw?.profile_image || prev.avatar,
+          name: finalName,
+          email: finalEmail,
+          phone: finalPhone,
+          avatar: finalAvatar,
         };
       });
 
       if (typeof window !== 'undefined') {
-        const updatedName = raw?.name || updatedData.name;
-        const updatedEmail = raw?.email || updatedData.email;
-        const updatedPhone = raw?.phone || updatedData.phone;
-        const updatedAvatar = raw?.profile_image;
-
         localStorage.setItem(
           'user_name',
-          updatedName
+          finalName
         );
 
         const cachedUser = localStorage.getItem('user_info');
@@ -81,10 +94,10 @@ export default function ProfilePage() {
               'user_info',
               JSON.stringify({
                 ...u,
-                name: updatedName,
-                email: updatedEmail,
-                phone: updatedPhone,
-                ...(updatedAvatar ? { profile_image: updatedAvatar } : {}),
+                name: finalName,
+                email: finalEmail,
+                phone: finalPhone,
+                ...(finalAvatar ? { profile_image: finalAvatar } : {}),
               })
             );
           } catch (e) {
@@ -93,11 +106,11 @@ export default function ProfilePage() {
         }
 
         const updatedUser = {
-          name: updatedName,
-          email: updatedEmail,
-          phone: updatedPhone,
-          profile_image: updatedAvatar,
-          avatar: updatedAvatar,
+          name: finalName,
+          email: finalEmail,
+          phone: finalPhone,
+          profile_image: finalAvatar,
+          avatar: finalAvatar,
         };
 
         window.dispatchEvent(

@@ -327,8 +327,11 @@ export const StudentSidebar = () => {
       {/* Sidebar Footer */}
       <div className={`p-4 mt-auto ${isCollapsed ? 'items-center' : ''}`}>
         <div className={`bg-gray-50 rounded-[2rem] ${isCollapsed ? 'p-2' : 'p-4'} mb-6`}>
-          <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : 'mb-3'}`}>
-            <div className="w-10 h-10 rounded-full bg-white border-2 border-white shadow-sm flex items-center justify-center overflow-hidden shrink-0 relative">
+          <Link
+            href="/student/profile"
+            className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : 'mb-3'} group cursor-pointer hover:opacity-80 transition-opacity`}
+          >
+            <div className="w-10 h-10 rounded-full bg-white border-2 border-white shadow-sm flex items-center justify-center overflow-hidden shrink-0 relative group-hover:ring-2 group-hover:ring-blue-200 transition-all">
               {user.avatar && !imgError ? (
                 <Image
                   src={user.avatar}
@@ -339,16 +342,16 @@ export const StudentSidebar = () => {
                   onError={() => setImgError(true)}
                 />
               ) : (
-                <User size={20} className="text-gray-400" />
+                <User size={20} className="text-gray-400 group-hover:text-blue-600 transition-colors" />
               )}
             </div>
             {!isCollapsed && (
               <div className="overflow-hidden">
-                <p className="text-xs font-bold text-gray-800 truncate">{user.name || 'طالب'}</p>
+                <p className="text-xs font-bold text-gray-800 truncate group-hover:text-blue-600 transition-colors">{user.name || 'طالب'}</p>
                 <p className="text-[10px] text-gray-500">طالب</p>
               </div>
             )}
-          </div>
+          </Link>
           {!isCollapsed && (
             <button
               onClick={handleLogout}
