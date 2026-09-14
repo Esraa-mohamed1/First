@@ -7,12 +7,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   BookOpen,
-  Trophy,
-  Settings,
   User,
   GraduationCap,
   LogOut,
-  Library,
   ChevronRight,
   ChevronLeft,
   Package,
@@ -43,20 +40,12 @@ const sidebarGroups = [
     items: [
       { name: 'دوراتي', href: '/student/courses', icon: BookOpen },
       { name: 'حقائبي الرقمية', href: '/student/bags', icon: Package },
-      { name: 'طلبات الشراء والاشتراك', href: '/student/requests', icon: Trophy },
-    ]
-  },
-  {
-    title: 'الإنجازات',
-    items: [
-      { name: 'الإنجازات', href: '/student/achievements', icon: Trophy },
     ]
   },
   {
     title: 'الحساب',
     items: [
       { name: 'الملف الشخصي', href: '/student/profile', icon: User },
-      { name: 'الإعدادات', href: '/student/settings', icon: Settings },
     ]
   }
 ];
