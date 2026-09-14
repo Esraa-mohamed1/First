@@ -1,14 +1,111 @@
 'use client';
 
-import { Users, GraduationCap, Building2, TrendingUp, AlertCircle, Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { GraduationCap, Building2, TrendingUp, AlertCircle, Plus } from 'lucide-react';
 import StatCard from '@/components/Dashboard/StatsCard';
 import OverviewChart from '@/components/Dashboard/Charts/OverviewChart';
 import RevenueChart from '@/components/Dashboard/Charts/RevenueChart';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { getProfileStatus } from '@/services/auth';
+import api from '@/lib/api';
+import { getStoredAuthToken } from '@/lib/auth-storage';
+
+interface StatisticMetric {
+  value: number;
+  change_pct: number;
+}
+
+interface ChartMonthData {
+  month: string;
+  total: number;
+}
+
+interface DashboardStatisticsData {
+  new_subscriptions_this_month: StatisticMetric;
+  active_academies: StatisticMetric;
+  expired_academies: StatisticMetric;
+  total_revenue: StatisticMetric;
+  chart_last_12_months?: ChartMonthData[];
+}
+
+interface TransformedChartData {
+  name: string;
+  value: number;
+}
+
+const formatMonthToArabic = (monthStr: string): string => {
+  const monthMap: Record<string, string> = {
+    '01': 'يناير',
+    '02': 'فبراير',
+    '03': 'مارس',
+    '04': 'أبريل',
+    '05': 'مايو',
+    '06': 'يونيو',
+    '07': 'يوليو',
+    '08': 'أغسطس',
+    '09': 'سبتمبر',
+    '10': 'أكتوبر',
+    '11': 'نوفمبر',
+    '12': 'ديسمبر',
+    '1': 'يناير',
+    '2': 'فبراير',
+    '3': 'مارس',
+    '4': 'أبريل',
+    '5': 'مايو',
+    '6': 'يونيو',
+    '7': 'يوليو',
+    '8': 'أغسطس',
+    '9': 'سبتمبر',
+  };
+
+  if (!monthStr) return '';
+  const parts = monthStr.split('-');
+  const monthNum = parts.length > 1 ? parts[1] : parts[0];
+  return monthMap[monthNum] || monthStr;
+};
 
 export default function DashboardPage() {
+  const [statsData, setStatsData] = useState<DashboardStatisticsData | null>(null);
+  const [chartData, setChartData] = useState<TransformedChartData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStatistics = async () => {
+      try {
+        setIsLoading(true);
+        const token = getStoredAuthToken();
+        const response = await api.get<{
+          success: boolean;
+          status: number;
+          message: string;
+          data: DashboardStatisticsData;
+        }>('/Statistics-dashboard', {
+          baseURL: 'https://api.darab.academy/api/superAdmin',
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          }
+        });
+
+        if (response.data && response.data.data) {
+          const fetchedData = response.data.data;
+          setStatsData(fetchedData);
+
+          if (Array.isArray(fetchedData.chart_last_12_months)) {
+            const transformed = fetchedData.chart_last_12_months.map((item) => ({
+              name: formatMonthToArabic(item.month),
+              value: item.total,
+            }));
+            setChartData(transformed);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch dashboard statistics:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStatistics();
+  }, []);
+
   return (
     <div className="space-y-8 relative">
       {/* Header Section */}
@@ -26,15 +123,29 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="عدد الأكاديميات النشطة"
-          value="40,689"
-          trend={{ value: 8.5, isPositive: true }}
+          value={statsData ? statsData.active_academies.value.toLocaleString() : (isLoading ? '...' : '—')}
+          trend={
+            statsData
+              ? {
+                  value: statsData.active_academies.change_pct,
+                  isPositive: statsData.active_academies.change_pct >= 0,
+                }
+              : undefined
+          }
           icon={Building2}
           color="blue"
         />
         <StatCard
           title="عدد الأكاديميات باشتراك منتهي"
-          value="211"
-          trend={{ value: 1.2, isPositive: false }}
+          value={statsData ? statsData.expired_academies.value.toLocaleString() : (isLoading ? '...' : '—')}
+          trend={
+            statsData
+              ? {
+                  value: statsData.expired_academies.change_pct,
+                  isPositive: statsData.expired_academies.change_pct >= 0,
+                }
+              : undefined
+          }
           icon={AlertCircle}
           color="orange"
         />
@@ -49,15 +160,29 @@ export default function DashboardPage() {
 
         <StatCard
           title="عدد الاشتراكات الجدد هذا الشهر"
-          value="40,689"
-          trend={{ value: 2.6, isPositive: true }}
+          value={statsData ? statsData.new_subscriptions_this_month.value.toLocaleString() : (isLoading ? '...' : '—')}
+          trend={
+            statsData
+              ? {
+                  value: statsData.new_subscriptions_this_month.change_pct,
+                  isPositive: statsData.new_subscriptions_this_month.change_pct >= 0,
+                }
+              : undefined
+          }
           icon={GraduationCap}
           color="green"
         />
         <StatCard
           title="اجمالي الايراد الحالي"
-          value="40,689"
-          trend={{ value: 2.6, isPositive: true }}
+          value={statsData ? statsData.total_revenue.value.toLocaleString() : (isLoading ? '...' : '—')}
+          trend={
+            statsData
+              ? {
+                  value: statsData.total_revenue.change_pct,
+                  isPositive: statsData.total_revenue.change_pct >= 0,
+                }
+              : undefined
+          }
           icon={GraduationCap}
           color="blue"
         />
@@ -66,53 +191,8 @@ export default function DashboardPage() {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-        <OverviewChart />
+        <OverviewChart data={chartData} />
         <RevenueChart />
-      </div>
-
-      {/* Tables Section */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-          <h3 className="text-lg font-black text-gray-900">آخر الأكاديميات المسجلة</h3>
-          <div className="relative w-64">
-            <input
-              type="text"
-              placeholder="البحث"
-              className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-blue-500 transition-all"
-            />
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-right px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider">اسم الأكاديمية</th>
-                <th className="text-right px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider">تاريخ الالغاء</th>
-                <th className="text-right px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-wider">عدد الأيام منذ الالغاء</th>
-                <th className="px-6 py-4"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {[1, 2, 3, 4, 5].map((item) => (
-                <tr key={item} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gray-200"></div>
-                      <span className="font-bold text-sm text-gray-900">Horizon Academy</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">22/10/2022</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">30 يوم</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-left">
-                    <button className="text-xs font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors">
-                      عرض التفاصيل
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </div>
     </div>
   );

@@ -114,16 +114,6 @@ export default function FeaturesPage() {
                         <Settings2 size={16} className="text-blue-500" />
                     </p>
                 </div>
-
-                <button
-                    onClick={() => handleOpenModal()}
-                    className="flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-[20px] font-black transition-all shadow-lg shadow-blue-200 active:scale-95 group"
-                >
-                    <span>إضافة ميزة جديدة</span>
-                    <div className="bg-white/20 p-1 rounded-lg group-hover:rotate-90 transition-transform">
-                        <Plus size={20} />
-                    </div>
-                </button>
             </div>
 
             {/* Stats/Quick Actions */}

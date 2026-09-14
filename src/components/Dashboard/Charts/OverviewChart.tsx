@@ -2,7 +2,16 @@
 
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
-const data = [
+export interface OverviewChartItem {
+  name: string;
+  value: number;
+}
+
+export interface OverviewChartProps {
+  data?: OverviewChartItem[];
+}
+
+const defaultData: OverviewChartItem[] = [
   { name: 'يناير', value: 20 },
   { name: 'فبراير', value: 26 },
   { name: 'مارس', value: 26 },
@@ -75,7 +84,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return null;
 };
 
-const OverviewChart = () => {
+const OverviewChart = ({ data }: OverviewChartProps) => {
+  const chartData = data !== undefined ? data : defaultData;
+
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
       <div className="flex items-center justify-between mb-8">
@@ -83,7 +94,7 @@ const OverviewChart = () => {
       </div>
       <div className="h-[300px] w-full" dir="ltr">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+          <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>

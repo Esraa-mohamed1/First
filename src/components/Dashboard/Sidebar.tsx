@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, CreditCard, FileText, Settings, LogOut, X, Globe, User, GraduationCap } from 'lucide-react';
+import { LayoutDashboard, Package, CreditCard, Settings, LogOut, X, GraduationCap } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { clearUserSessionAndCache } from '@/lib/auth-storage';
@@ -30,11 +30,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       href: '/dashboard',
     },
     {
-      label: 'الملف الشخصي',
-      icon: User,
-      href: '/dashboard/profile',
-    },
-    {
       label: 'إدارة الأكاديميات',
       icon: GraduationCap,
       href: '/dashboard/academies',
@@ -54,23 +49,13 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       ],
     },
     {
-      label: 'ادارة النطاقات',
-      icon: Globe, 
-      href: '/dashboard/domain',
-    },
-    {
       label: 'المدفوعات',
       icon: CreditCard,
-      href: '/dashboard/payments',
+      href: '/dashboard/academies/subscriptions',
       subItems: [
-        { label: 'سجل المدفوعات', href: '/dashboard/payments' },
+        { label: 'سجل المدفوعات', href: '/dashboard/academies/subscriptions' },
         { label: 'طرق الدفع', href: '/dashboard/payment-methods' },
       ],
-    },
-    {
-      label: 'التقارير',
-      icon: FileText,
-      href: '/dashboard/reports',
     },
     {
       label: 'الإعدادات',
@@ -92,7 +77,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         >
           <X size={20} className="text-gray-500" />
         </button>
-        <h1 className="text-3xl font-black text-blue-600">First</h1>
+        <h1 className="text-3xl font-black text-blue-600">Darab</h1>
       </div>
 
       {/* Navigation */}
