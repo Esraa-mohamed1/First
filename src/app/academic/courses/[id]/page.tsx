@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Plus, ChevronDown, ChevronUp, Eye, Clock, Share2, Loader2, Sparkles, Check, X } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp, Eye, Clock, Share2, Loader2, Sparkles, Check, X, Pencil, ImagePlus, Upload } from 'lucide-react';
 import { getCourse, deleteUnit, deleteLesson, createUnit, updateCourse, getCategories, createCategory } from '@/services/courses';
 import { getGrades, getTerms, getSubjects, getAcademicYears, ClassificationItem } from '@/services/academic-classification';
 import { getProfileStatus } from '@/services/auth';
@@ -391,6 +391,15 @@ export default function CourseDetailsPage() {
         setPreviewImage(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedImage(null);
+    setPreviewImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -911,14 +920,42 @@ export default function CourseDetailsPage() {
         <div className="max-w-container-max mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div
-              onClick={() => fileInputRef.current?.click()}
-              className="w-16 h-16 rounded-lg overflow-hidden border border-outline-variant bg-surface-container cursor-pointer hover:opacity-90 transition-all"
+              className="w-16 h-16 rounded-2xl overflow-hidden border border-slate-300 bg-slate-100 flex items-center justify-center cursor-pointer hover:border-blue-500 hover:shadow-md transition-all shrink-0 group relative"
             >
-              <img
-                alt="Course Thumbnail"
-                className="w-full h-full object-cover"
-                src={previewImage || 'https://images.unsplash.com/photo-1586717791821-3f44a563fa4c'}
-              />
+              {previewImage ? (
+                <>
+                  <img src={previewImage} alt="Course Thumbnail" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-1 z-10">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fileInputRef.current?.click();
+                      }}
+                      className="w-6 h-6 rounded-full bg-white/90 hover:bg-white text-slate-800 flex items-center justify-center shadow-xs transition-transform hover:scale-110"
+                      title="تغيير الصورة"
+                    >
+                      <Pencil size={12} className="text-blue-600" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="w-6 h-6 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center shadow-xs transition-transform hover:scale-110"
+                      title="إلغاء الصورة"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full h-full flex items-center justify-center text-slate-400 group-hover:text-blue-600 transition-colors"
+                  title="رفع صورة"
+                >
+                  <ImagePlus className="w-7 h-7" />
+                </div>
+              )}
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -1096,6 +1133,7 @@ export default function CourseDetailsPage() {
             previewImage={previewImage}
             fileInputRef={fileInputRef}
             handleImageChange={handleImageChange}
+            handleRemoveImage={handleRemoveImage}
             categories={categories}
             setIsAddCategoryModalOpen={setIsAddCategoryModalOpen}
             instructors={instructors}

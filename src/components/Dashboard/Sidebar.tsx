@@ -55,7 +55,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     },
     {
       label: 'ادارة النطاقات',
-      icon: Globe, 
+      icon: Globe,
       href: '/dashboard/domain',
     },
     {
@@ -179,7 +179,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
       {/* Logout */}
       <div className="p-4 border-t border-gray-50">
-        <button 
+        <button
           onClick={() => {
             clearUserSessionAndCache();
             window.location.href = '/auth/login';

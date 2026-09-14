@@ -344,7 +344,7 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
           textColor: '#ffffff'
         },
         footer: {
-          text: '© ٢٠٢٦ الأستاذ أحمد محمد. جميع الحقوق محفوظة.',
+          text: ' جميع الحقوق محفوظة.',
           backgroundColor: '#0a1628',
           textColor: '#ffffff',
           newsletterTitle: 'اشترك في نشرتنا المعرفية',

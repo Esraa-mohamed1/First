@@ -6,6 +6,7 @@ import { SecuritySettings } from '@/components/Student/Profile/SecuritySettings'
 import { ConnectedDevices } from '@/components/Student/Profile/ConnectedDevices';
 import { getStudentProfile, updateStudentProfile } from '@/services/student-auth';
 import { UserProfile } from '@/types/student';
+import { normalizeProfileImageUrl } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
 export default function ProfilePage() {
@@ -20,11 +21,12 @@ export default function ProfilePage() {
         const raw = response.data || response;
 
         if (raw) {
+          const avatarUrl = normalizeProfileImageUrl(raw.profile_image || raw.avatar || raw.image);
           setProfile({
             name: raw.name || '',
             email: raw.email || '',
             phone: raw.phone || '',
-            avatar: raw.profile_image || undefined,
+            avatar: avatarUrl || undefined,
           });
         }
       } catch (err) {
@@ -41,29 +43,48 @@ export default function ProfilePage() {
     updatedData: {
       name: string;
       email: string;
-      phone: string;
+      phone?: string;
     }
   ) => {
     try {
-      const response = await updateStudentProfile(updatedData);
+      const trimmedName = updatedData.name.trim();
+      const trimmedEmail = updatedData.email.trim();
+      const trimmedPhone = updatedData.phone ? updatedData.phone.trim() : '';
+
+      const payload: { name: string; email: string; phone?: string } = {
+        name: trimmedName,
+        email: trimmedEmail,
+      };
+
+      if (trimmedPhone) {
+        payload.phone = trimmedPhone;
+      }
+
+      const response = await updateStudentProfile(payload);
       const raw = response.data || response;
+
+      const finalName = raw?.name || trimmedName;
+      const finalEmail = raw?.email || trimmedEmail;
+      const finalPhone = raw?.phone !== undefined ? (raw.phone || '') : (trimmedPhone || '');
+      const returnedAvatar = raw?.profile_image || raw?.avatar;
+      const finalAvatar = returnedAvatar ? normalizeProfileImageUrl(returnedAvatar) : profile?.avatar;
 
       setProfile(prev => {
         if (!prev) return prev;
 
         return {
           ...prev,
-          name: raw?.name || updatedData.name,
-          email: raw?.email || updatedData.email,
-          phone: raw?.phone || updatedData.phone,
-          avatar: raw?.profile_image || prev.avatar,
+          name: finalName,
+          email: finalEmail,
+          phone: finalPhone,
+          avatar: finalAvatar,
         };
       });
 
       if (typeof window !== 'undefined') {
         localStorage.setItem(
           'user_name',
-          raw?.name || updatedData.name
+          finalName
         );
 
         const cachedUser = localStorage.getItem('user_info');
@@ -76,14 +97,30 @@ export default function ProfilePage() {
               'user_info',
               JSON.stringify({
                 ...u,
-                name: raw?.name || updatedData.name,
-                email: raw?.email || updatedData.email,
+                name: finalName,
+                email: finalEmail,
+                phone: finalPhone,
+                ...(finalAvatar ? { profile_image: finalAvatar, avatar: finalAvatar } : {}),
               })
             );
           } catch (e) {
             console.error('Failed to update cached user info:', e);
           }
         }
+
+        const updatedUser = {
+          name: finalName,
+          email: finalEmail,
+          phone: finalPhone,
+          profile_image: finalAvatar,
+          avatar: finalAvatar,
+        };
+
+        window.dispatchEvent(
+          new CustomEvent('student-profile-updated', {
+            detail: updatedUser,
+          })
+        );
       }
 
       toast.success('تم تحديث الملف الشخصي بنجاح!', {
@@ -100,6 +137,103 @@ export default function ProfilePage() {
         err?.message ||
         err?.error ||
         'فشل تحديث البيانات، يرجى المحاولة مرة أخرى.';
+
+      toast.error(errMsg, {
+        style: {
+          fontFamily: 'IBM Plex Sans Arabic',
+          fontWeight: 'bold',
+          direction: 'rtl',
+        },
+      });
+
+      throw err;
+    }
+  };
+
+  const handleAvatarFileSelected = async (file: File) => {
+    if (!profile) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('name', profile.name);
+      formData.append('email', profile.email);
+
+      if (profile.phone && profile.phone.trim()) {
+        formData.append('phone', profile.phone.trim());
+      }
+
+      formData.append('profile_image', file);
+
+      const response = await updateStudentProfile(formData);
+      const raw = response.data || response;
+
+      const returnedAvatar = raw?.profile_image || raw?.avatar;
+      const finalAvatar = returnedAvatar ? normalizeProfileImageUrl(returnedAvatar) : profile.avatar;
+
+      const finalName = raw?.name || profile.name;
+      const finalEmail = raw?.email || profile.email;
+      const finalPhone = raw?.phone !== undefined ? raw.phone : profile.phone;
+
+      setProfile((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          name: finalName,
+          email: finalEmail,
+          phone: finalPhone,
+          avatar: finalAvatar,
+        };
+      });
+
+      if (typeof window !== 'undefined') {
+        const cachedUser = localStorage.getItem('user_info');
+        if (cachedUser) {
+          try {
+            const u = JSON.parse(cachedUser);
+            localStorage.setItem(
+              'user_info',
+              JSON.stringify({
+                ...u,
+                name: finalName,
+                email: finalEmail,
+                phone: finalPhone,
+                ...(finalAvatar ? { profile_image: finalAvatar, avatar: finalAvatar } : {}),
+              })
+            );
+          } catch (e) {
+            console.error('Failed to update cached user info for avatar:', e);
+          }
+        }
+
+        const updatedUser = {
+          name: finalName,
+          email: finalEmail,
+          phone: finalPhone,
+          profile_image: finalAvatar,
+          avatar: finalAvatar,
+        };
+
+        window.dispatchEvent(
+          new CustomEvent('student-profile-updated', {
+            detail: updatedUser,
+          })
+        );
+      }
+
+      toast.success('تم تحديث الصورة الشخصية بنجاح!', {
+        style: {
+          fontFamily: 'IBM Plex Sans Arabic',
+          fontWeight: 'bold',
+          direction: 'rtl',
+        },
+      });
+    } catch (err: any) {
+      console.error('Error updating student profile avatar:', err);
+
+      const errMsg =
+        err?.message ||
+        err?.error ||
+        'فشل تحديث الصورة الشخصية، يرجى المحاولة مرة أخرى.';
 
       toast.error(errMsg, {
         style: {
@@ -135,7 +269,10 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6 animate-slide-up-fade">
-      <ProfileHeader profile={profile} />
+      <ProfileHeader
+        profile={profile}
+        onAvatarFileSelected={handleAvatarFileSelected}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -151,7 +288,7 @@ export default function ProfilePage() {
 
         {/* Left Column - Security */}
         <div className="lg:col-span-1 space-y-6 order-1 lg:order-2">
-          <SecuritySettings />
+          <SecuritySettings email={profile.email} />
         </div>
 
       </div>

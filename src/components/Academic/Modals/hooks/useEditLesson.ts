@@ -145,6 +145,16 @@ export function useEditLesson({
         ? `تفاصيل المحاضرة الحضورية:\n📍 الموقع: ${locationLink || 'غير محدد'}\n📅 تاريخ البداية: ${startDate || 'غير محدد'}\n📅 تاريخ النهاية: ${endDate || 'غير محدد'}\n\n<!--OFFLINE_METADATA:${JSON.stringify({ locationLink, startDate, endDate })}-->`
         : description;
 
+      const resolvedVideoUrl = isLive
+        ? sessionLink
+        : (
+            lesson!.video_url ||
+            (lesson as any).videoUrl ||
+            (lesson as any).embed_url ||
+            (lesson as any).file_url ||
+            'https://iframe.mediadelivery.net/embed/demo'
+          );
+
       await updateLesson(lesson!.id, {
         chapter_id: (lesson as any).chapter_id || (lesson as any).unit_id,
         title,
@@ -157,8 +167,8 @@ export function useEditLesson({
         location_link: isLive ? undefined : (locationLink || undefined),
         start_date: isLive ? undefined : (startDate || undefined),
         end_date: isLive ? undefined : (endDate || undefined),
-        video_url: isLive ? sessionLink : lesson!.video_url,
-        embed_url: isLive ? sessionLink : lesson!.embed_url,
+        video_url: resolvedVideoUrl,
+        embed_url: isLive ? sessionLink : (lesson!.embed_url || resolvedVideoUrl),
       });
 
       toast.success('تم تحديث الدرس بنجاح');

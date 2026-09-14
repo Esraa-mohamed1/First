@@ -1,39 +1,99 @@
 import { TemplateContent, renderVideoPlayer } from '../academic/academicHtml';
 
 export const getSchoolCoachHtml = (
-  content: TemplateContent, 
-  isEditing: boolean = false, 
-  isLoggedIn: boolean = false, 
+  content: TemplateContent,
+  isEditing: boolean = false,
+  isLoggedIn: boolean = false,
   dashboardUrl: string = '/student',
   grades: any[] = [],
   subjects: any[] = [],
   selectedGrade: string = '',
   selectedSubject: string = '',
-  realCourses: any[] = []
+  realCourses: any[] = [],
+  realBags: any[] = [],
+  teacherProfile: any = null
 ) => {
   const effectiveGrades = (Array.isArray(grades) && grades.length > 0) ? grades : [];
   const rawSubjects = (Array.isArray(subjects) && subjects.length > 0) ? subjects : [];
   const filteredSubjects = rawSubjects;
 
   const cachedProfile = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('darab_academy_profile') || '{}') : {};
-  const realName = cachedProfile.site_name || cachedProfile.name || cachedProfile.academy_name;
-  const realEmail = cachedProfile.site_email || cachedProfile.email;
-  const realPhone = cachedProfile.site_phone || cachedProfile.academy_phone || cachedProfile.phone;
+  const realName = teacherProfile?.site_name || teacherProfile?.academy_name || teacherProfile?.name || teacherProfile?.teacher_name || cachedProfile.site_name || cachedProfile.name || cachedProfile.academy_name;
+  const realEmail = teacherProfile?.site_email || teacherProfile?.email || cachedProfile.site_email || cachedProfile.email;
+  const realPhone = teacherProfile?.site_phone || teacherProfile?.academy_phone || teacherProfile?.phone || cachedProfile.site_phone || cachedProfile.phone;
 
   const navbarTitle = realName || content?.navbar?.title || (content?.navbar as any)?.name || 'الأستاذ أحمد محمد';
   const navbarBg = content?.navbar?.bgColor || (content?.navbar as any)?.bg_color || '#0a1628';
   const navbarText = content?.navbar?.textColor || (content?.navbar as any)?.text_color || '#ffffff';
 
   const defaultNavLinks = [
-    { label: 'الرئيسية', href: '/' },
-    { label: 'المواد', href: '#features' },
-    { label: 'الدورات', href: '#courses' },
+    { label: 'الرئيسية', href: '#hero' },
+    { label: 'الحصص', href: '#courses' },
+    { label: 'الحقائب', href: '#bags' },
     { label: 'عن الأستاذ', href: '#about' },
   ];
-  const navLinks: Array<{ label: string; href: string }> =
+  const rawNavLinks: Array<{ label: string; href: string }> =
     Array.isArray((content?.navbar as any)?.links) && (content?.navbar as any).links.length > 0
       ? (content?.navbar as any).links
       : defaultNavLinks;
+
+  // Filter out "المواد" and "تواصل معنا"
+  let filteredNavLinks = rawNavLinks.filter((l: any) => {
+    const label = l.label || '';
+    const href = l.href || '';
+    if (label.includes('المواد') || href.includes('features') || href.includes('subjects')) return false;
+    if (label.includes('تواصل') || label.includes('اتصل') || href.includes('contact')) return false;
+    return true;
+  });
+
+  // Map link labels and href targets
+  filteredNavLinks = filteredNavLinks.map((l: any) => {
+    const label = l.label || '';
+    const href = l.href || '';
+    if (label.includes('الرئيسية') || href === '/' || href === '#') {
+      return { ...l, label: 'الرئيسية', href: '#hero' };
+    }
+    if (label.includes('الدورات') || href.includes('courses')) {
+      return { ...l, label: 'الحصص', href: '#courses' };
+    }
+    if (label.includes('الأستاذ') || label.includes('حول') || href.includes('about')) {
+      return { ...l, label: 'عن الأستاذ', href: '#about' };
+    }
+    return l;
+  });
+
+  // Ensure "الرئيسية" is present as first link with href="#hero"
+  const homeIdx = filteredNavLinks.findIndex((l: any) => l.label?.includes('الرئيسية') || l.href === '#hero' || l.href === '/');
+  if (homeIdx === -1) {
+    filteredNavLinks.unshift({ label: 'الرئيسية', href: '#hero' });
+  } else {
+    filteredNavLinks[homeIdx] = { ...filteredNavLinks[homeIdx], label: 'الرئيسية', href: '#hero' };
+  }
+
+  // Ensure "الحصص" is present
+  const hasCoursesLink = filteredNavLinks.some((l: any) => l.href?.includes('courses') || l.label?.includes('الحصص'));
+  if (!hasCoursesLink) {
+    filteredNavLinks.splice(1, 0, { label: 'الحصص', href: '#courses' });
+  }
+
+  // Ensure "الحقائب" is present
+  const hasBagsLink = filteredNavLinks.some((l: any) => l.href?.includes('bags') || l.label?.includes('حقائب') || l.label?.includes('الحقائب'));
+  if (!hasBagsLink) {
+    const coursesIdx = filteredNavLinks.findIndex((l: any) => l.href?.includes('courses') || l.label?.includes('الحصص'));
+    if (coursesIdx !== -1) {
+      filteredNavLinks.splice(coursesIdx + 1, 0, { label: 'الحقائب', href: '#bags' });
+    } else {
+      filteredNavLinks.push({ label: 'الحقائب', href: '#bags' });
+    }
+  }
+
+  // Ensure "عن الأستاذ" is present
+  const hasAboutLink = filteredNavLinks.some((l: any) => l.href?.includes('about') || l.label?.includes('الأستاذ') || l.label?.includes('حول'));
+  if (!hasAboutLink) {
+    filteredNavLinks.push({ label: 'عن الأستاذ', href: '#about' });
+  }
+
+  const navLinks = filteredNavLinks;
   const loginText = (content?.navbar as any)?.loginText || (content?.navbar as any)?.login_text || 'تسجيل الدخول';
   const loginLink = (content?.navbar as any)?.loginLink || (content?.navbar as any)?.login_link || '/auth/login';
   const registerText = (content?.navbar as any)?.registerText || (content?.navbar as any)?.register_text || 'احجز مكانك';
@@ -123,7 +183,7 @@ export const getSchoolCoachHtml = (
   const contactSecondaryBtnText = (content?.contact as any)?.secondaryButtonText || (content?.contact as any)?.secondary_button_text || (content?.contact as any)?.demoButtonText || 'طلب عرض توضيحي';
   const contactSecondaryBtnLink = (content?.contact as any)?.secondaryButtonLink || (content?.contact as any)?.secondary_button_link || (content?.contact as any)?.demoButtonLink || '';
 
-  const footerText = content?.footer?.text || '© ٢٠٢٦ الأستاذ أحمد محمد. جميع الحقوق محفوظة.';
+  const footerText = content?.footer?.text || ' جميع الحقوق محفوظة.';
 
   const videoTag = (content?.about as any)?.videoTag || 'شاهد وتعلّم';
   const videoTitle = (content?.about as any)?.videoTitle || 'تعرف على فلسفتنا التعليمية في ٣ دقائق';
@@ -400,25 +460,29 @@ export const getSchoolCoachHtml = (
       </div>
       <nav class="hidden md:flex items-center gap-8 text-sm font-bold text-gray-400">
         ${navLinks.map((link: any) => {
-          const isBtn = link.isButton || link.is_button || link.variant === 'button' || link.type === 'button';
-          const linkBg = link.bgColor || link.bg_color || link.backgroundColor || link.background_color || '';
-          const linkColor = link.textColor || link.text_color || link.color || '';
-          const customStyle = link.style || `${linkBg ? `background-color: ${linkBg}; ` : ''}${linkColor ? `color: ${linkColor}; ` : ''}`;
+    const isBtn = link.isButton || link.is_button || link.variant === 'button' || link.type === 'button';
+    const href = link.href || '#';
+    const isAnchor = href.startsWith('#');
+    const targetAttr = isEditing ? '' : (isAnchor ? '' : 'target="_top"');
+    const onClickAttr = isAnchor ? `onclick="scrollToAnchor(event, '${href}')"` : '';
+    const linkBg = link.bgColor || link.bg_color || link.backgroundColor || link.background_color || '';
+    const linkColor = link.textColor || link.text_color || link.color || '';
+    const customStyle = link.style || `${linkBg ? `background-color: ${linkBg}; ` : ''}${linkColor ? `color: ${linkColor}; ` : ''}`;
 
-          if (isBtn || linkBg) {
-            return `<a class="btn-primary text-xs py-2.5 px-5 block text-center" style="${customStyle}" href="${link.href || '#'}" ${isEditing ? '' : 'target="_parent"'}>${link.label}</a>`;
-          }
-          return `<a class="hover:text-[var(--color-gold-500)] transition-colors" style="${linkColor ? `color: ${linkColor};` : ''}" href="${link.href || '#'}" ${isEditing ? '' : 'target="_parent"'}>${link.label}</a>`;
-        }).join('\n')}
+    if (isBtn || linkBg) {
+      return `<a class="btn-primary text-xs py-2.5 px-5 block text-center" style="${customStyle}" href="${href}" ${targetAttr} ${onClickAttr}>${link.label}</a>`;
+    }
+    return `<a class="hover:text-[var(--color-gold-500)] transition-colors" style="${linkColor ? `color: ${linkColor};` : ''}" href="${href}" ${targetAttr} ${onClickAttr}>${link.label}</a>`;
+  }).join('\n')}
       </nav>
       <div class="flex items-center gap-4">
 ${!isEditing && isLoggedIn ? `
-        <a href="${dashboardUrl}" ${isEditing ? '' : 'target="_parent"'} class="btn-primary text-xs py-3.5 px-6 flex items-center justify-center gap-2 text-center">
+        <a href="${dashboardUrl}" ${isEditing ? '' : 'target="_top"'} class="btn-primary text-xs py-3.5 px-6 flex items-center justify-center gap-2 text-center">
           <span class="material-symbols-outlined text-[18px]">dashboard</span> لوحة التحكم
         </a>
 ` : `
-        <a href="${loginLink}" ${isEditing ? '' : 'target="_parent"'} class="text-xs font-bold px-4 py-2 rounded-lg hover:opacity-80 transition-opacity" style="${loginBg ? `background-color: ${loginBg}; ` : ''}${loginTextColor ? `color: ${loginTextColor}; ` : 'color: var(--color-gray-400);'}">${loginText}</a>
-        <a href="${registerLink}" ${isEditing ? '' : 'target="_parent"'} class="btn-primary text-xs py-3.5 px-6 block text-center" style="${registerBg ? `background-color: ${registerBg}; ` : ''}${registerTextColor ? `color: ${registerTextColor}; ` : ''}">${registerText}</a>
+        <a href="${loginLink}" ${isEditing ? '' : 'target="_top"'} class="text-xs font-bold px-4 py-2 rounded-lg hover:opacity-80 transition-opacity" style="${loginBg ? `background-color: ${loginBg}; ` : ''}${loginTextColor ? `color: ${loginTextColor}; ` : 'color: var(--color-gray-400);'}">${loginText}</a>
+        <a href="${registerLink}" ${isEditing ? '' : 'target="_top"'} class="btn-primary text-xs py-3.5 px-6 block text-center" style="${registerBg ? `background-color: ${registerBg}; ` : ''}${registerTextColor ? `color: ${registerTextColor}; ` : ''}">${registerText}</a>
 `}
       </div>
     </div>
@@ -440,17 +504,17 @@ ${!isEditing && isLoggedIn ? `
           </p>
           <div class="flex flex-wrap items-center gap-4 pt-6">
             <a data-hero-btn="primary" href="${(() => {
-              if (!heroBtnLink || heroBtnLink === '#') return '#contact';
-              const trimmed = heroBtnLink.trim();
-              if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
-              return `#${trimmed}`;
-            })()}" ${heroBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="btn-primary text-sm" style="${heroBtnBg ? `background-color: ${heroBtnBg}; ` : ''}${heroBtnTextColor ? `color: ${heroBtnTextColor}; ` : ''}">${heroBtnText}</a>
+      if (!heroBtnLink || heroBtnLink === '#') return '#contact';
+      const trimmed = heroBtnLink.trim();
+      if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
+      return `#${trimmed}`;
+    })()}" ${heroBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="btn-primary text-sm" style="${heroBtnBg ? `background-color: ${heroBtnBg}; ` : ''}${heroBtnTextColor ? `color: ${heroBtnTextColor}; ` : ''}">${heroBtnText}</a>
             <a data-hero-btn="secondary" href="${(() => {
-              if (!heroSecondaryBtnLink || heroSecondaryBtnLink === '#') return '#about';
-              const trimmed = heroSecondaryBtnLink.trim();
-              if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
-              return `#${trimmed}`;
-            })()}" ${heroSecondaryBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="btn-secondary text-sm" style="${heroSecondaryBtnBg ? `background-color: ${heroSecondaryBtnBg}; ` : ''}${heroSecondaryBtnTextColor ? `color: ${heroSecondaryBtnTextColor}; ` : ''}">${heroSecondaryBtnText}</a>
+      if (!heroSecondaryBtnLink || heroSecondaryBtnLink === '#') return '#about';
+      const trimmed = heroSecondaryBtnLink.trim();
+      if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
+      return `#${trimmed}`;
+    })()}" ${heroSecondaryBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="btn-secondary text-sm" style="${heroSecondaryBtnBg ? `background-color: ${heroSecondaryBtnBg}; ` : ''}${heroSecondaryBtnTextColor ? `color: ${heroSecondaryBtnTextColor}; ` : ''}">${heroSecondaryBtnText}</a>
           </div>
         </div>
         
@@ -471,7 +535,7 @@ ${!isEditing && isLoggedIn ? `
     </section>
 
     <!-- 3. About Section -->
-    <section id="about-analytics" data-section="about" class="py-24 px-margin-mobile md:px-margin-desktop bg-[var(--color-offwhite)] mb-20 section-hover cursor-pointer" style="${aboutBg ? `background-color: ${aboutBg};` : ''} ${aboutTextColor ? `color: ${aboutTextColor};` : ''}">
+    <section id="about" data-section="about" class="py-24 px-margin-mobile md:px-margin-desktop bg-[var(--color-offwhite)] mb-20 section-hover cursor-pointer" style="${aboutBg ? `background-color: ${aboutBg};` : ''} ${aboutTextColor ? `color: ${aboutTextColor};` : ''}">
       <div class="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         <div class="flex justify-center">
           <div class="relative w-full max-w-[400px] aspect-square rounded-[30%_70%_70%_30%_/_30%_30%_70%_70%] overflow-hidden border-2 border-[var(--color-gold-500)] shadow-xl bg-white">
@@ -527,8 +591,8 @@ ${!isEditing && isLoggedIn ? `
         ${featuresItems.map((item, idx) => `
           <!-- Subject Card (card-light) -->
           <div data-section="features" data-index="${idx}" class="card-light flex flex-col justify-between group">
-            <div class="relative rounded-xl overflow-hidden aspect-[4/3] mb-4">
-              <img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" src="${item.icon}" alt="${item.title}"/>
+            <div class="relative rounded-xl overflow-hidden aspect-[4/3] mb-4 bg-navy-900 border border-navy-700">
+              <img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" src="${item.icon}" alt="${item.title}" onError="this.onerror=null; this.src='https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&auto=format&fit=crop';" />
               <!-- Dark overlay/caption -->
               <div class="absolute inset-0 bg-gradient-to-t from-[var(--color-navy-950)]/90 via-[var(--color-navy-950)]/40 to-transparent flex items-end p-4">
                 <span class="text-white text-xs font-bold">رياضيات متقدمة</span>
@@ -604,20 +668,20 @@ ${!isEditing && isLoggedIn ? `
           ${realCourses.length > 0 ? `
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               ${realCourses.map((course: any, idx: number) => {
-                const courseTitle = course.title || 'دورة تدريبية';
-                const courseHref = `/courses/${course.slug || course.id}`;
-                const instructorName = typeof course.instructor === 'object' && course.instructor?.name
-                  ? course.instructor.name
-                  : (course.instructor || course.coach || '');
-                const isFree = Number(course.price) === 0 || course.price_type === 'free';
-                const priceDisplay = isFree
-                  ? 'مجانًا'
-                  : (course.final_price ? `${course.final_price} ${course.currency || 'ر.س'}` : (course.price ? `${course.price} ${course.currency || 'ر.س'}` : 'متاح للتسجيل'));
-                const courseImg = course.image || course.cover_image || '';
-                const lessonsCount = course.units?.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0);
-                const duration = course.duration || (lessonsCount ? `${lessonsCount} درس` : 'محتوى تفاعلي');
+      const courseTitle = course.title || 'دورة تدريبية';
+      const courseHref = `/courses/${course.slug || course.id}`;
+      const instructorName = typeof course.instructor === 'object' && course.instructor?.name
+        ? course.instructor.name
+        : (course.instructor || course.coach || '');
+      const isFree = Number(course.price) === 0 || course.price_type === 'free';
+      const priceDisplay = isFree
+        ? 'مجانًا'
+        : (course.final_price ? `${course.final_price} ${course.currency || 'ر.س'}` : (course.price ? `${course.price} ${course.currency || 'ر.س'}` : 'متاح للتسجيل'));
+      const courseImg = course.image || course.cover_image || '';
+      const lessonsCount = course.units?.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0);
+      const duration = course.duration || (lessonsCount ? `${lessonsCount} درس` : 'محتوى تفاعلي');
 
-                return `
+      return `
                   <!-- Course Card (card-dark) -->
                   <div data-section="courses" data-index="${idx}" class="card-dark flex flex-col justify-between text-right group overflow-hidden">
                     <div>
@@ -661,13 +725,82 @@ ${!isEditing && isLoggedIn ? `
                     </div>
                   </div>
                 `;
-              }).join('')}
+    }).join('')}
             </div>
           ` : `
             <div class="card-dark p-12 text-center my-4 border border-dashed border-navy-700 rounded-2xl">
               <span class="material-symbols-outlined text-[var(--color-gold-500)] text-[48px] mb-3 block">menu_book</span>
               <h3 class="text-white text-lg font-bold mb-2">لا توجد دورات متاحة حالياً</h3>
               <p class="text-gray-400 text-sm">يرجى اختيار مرحلة أو مادة أخرى، أو مراجعة المعلم لاحقاً.</p>
+            </div>
+          `}
+        </div>
+      </div>
+    </section>
+
+    <!-- 5.5. Educational Bags Grid ("الحقائب التعليمية والملفات الرقمية") -->
+    <section id="bags" data-section="bags" class="py-24 px-margin-mobile md:px-margin-desktop bg-[var(--color-navy-950)] text-white mb-20 section-hover cursor-pointer border-y border-navy-800">
+      <div class="max-w-[1200px] mx-auto">
+        <div class="text-center mb-16">
+          <h2 class="section-title dark-section-title text-center">${content?.bags?.title || 'الحقائب التعليمية والملفات الرقمية'}</h2>
+          <p class="text-body-lg text-gray-400 max-w-2xl mx-auto">${content?.bags?.subtitle || 'ملازم ومذكرات دراسية شاملة جاهزة للتحميل والاستفادة المباشرة'}</p>
+        </div>
+        
+        <div id="schoolcoach-bags-container" class="transition-opacity duration-200">
+          ${realBags.length > 0 ? `
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              ${realBags.map((bag: any, idx: number) => {
+      const bagTitle = bag.title || 'حقيبة تعليمية';
+      const bagHref = `/bags/${bag.id}`;
+      const isFree = Number(bag.price) === 0 || bag.price_type === 'free';
+      const priceDisplay = isFree ? 'مجانًا' : (bag.price ? `${bag.price} ر.س` : 'متاحة للتحميل');
+      const bagImg = bag.image || bag.cover_image || bag.thumbnail || '';
+      const itemsCount = bag.items_count || (Array.isArray(bag.items) ? bag.items.length : 1);
+      const desc = bag.short_description || bag.description || 'حقيبة دراسية متكاملة تحتوي على ملخصات وأوراق عمل واختبارات تجريبية.';
+
+      return `
+                  <div data-section="bags" data-index="${idx}" class="card-dark flex flex-col justify-between text-right group overflow-hidden border border-navy-700 bg-navy-900 rounded-2xl p-6">
+                    <div>
+                      ${bagImg ? `
+                        <div class="relative w-full aspect-video rounded-xl overflow-hidden mb-4 bg-navy-950 border border-navy-800">
+                          <img src="${bagImg}" alt="${bagTitle}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                          <span class="absolute top-3 left-3 bg-[var(--color-gold-500)] text-[var(--color-navy-950)] font-extrabold text-xs px-3 py-1 rounded-full shadow-md">
+                            ${priceDisplay}
+                          </span>
+                        </div>
+                      ` : `
+                        <div class="flex justify-between items-center mb-4 border-b border-navy-700 pb-3">
+                          <span class="text-xs font-bold text-[var(--color-gold-500)] flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[16px]">folder_zip</span> حقيبة رقمية
+                          </span>
+                          <span class="text-xs font-bold bg-[var(--color-gold-500)]/20 text-[var(--color-gold-500)] px-3 py-1 rounded-full">${priceDisplay}</span>
+                        </div>
+                      `}
+                      <h3 class="text-[20px] font-bold text-white mb-3 group-hover:text-[var(--color-gold-500)] transition-colors">
+                        ${bagTitle}
+                      </h3>
+                      <p class="text-xs text-gray-400 mb-6 leading-relaxed line-clamp-3">
+                        ${desc}
+                      </p>
+                      <div class="flex items-center justify-between text-xs border-t border-navy-800 pt-3 mb-4 text-gray-400">
+                        <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-[var(--color-gold-500)]">inventory_2</span> المحتويات</span>
+                        <span class="font-bold text-white">${itemsCount} ملفات دراسية</span>
+                      </div>
+                    </div>
+                    <div>
+                      <a href="${bagHref}" target="_top" class="btn-primary block text-center w-full text-xs py-3.5 shadow-md hover:shadow-gold-500/20 font-bold">
+                        استعرض الحقيبة والملفات
+                      </a>
+                    </div>
+                  </div>
+                `;
+    }).join('')}
+            </div>
+          ` : `
+            <div class="card-dark p-12 text-center my-4 border border-dashed border-navy-700 rounded-2xl">
+              <span class="material-symbols-outlined text-[var(--color-gold-500)] text-[48px] mb-3 block">folder_open</span>
+              <h3 class="text-white text-lg font-bold mb-2">لا توجد حقائب تعليمية حالياً</h3>
+              <p class="text-gray-400 text-sm">سيتم إضافة الحقائب والمذكرات الرقمية قريباً، تفقد الصفحة لاحقاً.</p>
             </div>
           `}
         </div>
@@ -745,21 +878,21 @@ ${!isEditing && isLoggedIn ? `
         </p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
           ${contactPhone
-            ? `<a data-contact-btn="primary" href="tel:${contactPhone.replace(/\s+/g, '')}" class="w-full sm:w-auto btn-primary text-sm flex items-center justify-center gap-2">
-                <span class="material-symbols-outlined">call</span> ${contactBtnText}
+      ? `<a data-contact-btn="primary" href="tel:${contactPhone.replace(/\s+/g, '')}" class="w-full sm:w-auto btn-primary text-sm flex items-center justify-center gap-2">
+                ${contactBtnText}
                </a>`
-            : `<button data-contact-btn="primary" class="w-full sm:w-auto btn-primary text-sm flex items-center justify-center gap-2">
-                <span class="material-symbols-outlined">call</span> ${contactBtnText}
+      : `<button data-contact-btn="primary" class="w-full sm:w-auto btn-primary text-sm flex items-center justify-center gap-2">
+                ${contactBtnText}
                </button>`
-          }
+    }
           ${contactSecondaryBtnLink
-            ? `<a data-contact-btn="secondary" href="${contactSecondaryBtnLink}" ${contactSecondaryBtnLink.startsWith('http') || contactSecondaryBtnLink.startsWith('https') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="w-full sm:w-auto btn-secondary text-sm flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 px-8 py-4 rounded-xl transition-all">
+      ? `<a data-contact-btn="secondary" href="${contactSecondaryBtnLink}" ${contactSecondaryBtnLink.startsWith('http') || contactSecondaryBtnLink.startsWith('https') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="w-full sm:w-auto btn-secondary text-sm flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 px-8 py-4 rounded-xl transition-all">
                 ${contactSecondaryBtnText}
                </a>`
-            : `<button data-contact-btn="secondary" class="w-full sm:w-auto btn-secondary text-sm flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 px-8 py-4 rounded-xl transition-all">
+      : `<button data-contact-btn="secondary" class="w-full sm:w-auto btn-secondary text-sm flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 px-8 py-4 rounded-xl transition-all">
                 ${contactSecondaryBtnText}
                </button>`
-          }
+    }
         </div>
       </div>
     </section>
@@ -802,6 +935,16 @@ ${!isEditing && isLoggedIn ? `
   </footer>
 
   <script>
+        function scrollToAnchor(e, selector) {
+          if (selector && selector.startsWith('#')) {
+            if (e && e.preventDefault) e.preventDefault();
+            var target = document.querySelector(selector);
+            if (target) {
+              target.scrollIntoView({ behavior: 'smooth' });
+            }
+          }
+        }
+
         function handleGradeChange(gradeId) {
           window.parent.postMessage({ type: 'SCHOOLCOACH_FILTER_GRADE', gradeId: gradeId }, '*');
         }
@@ -871,6 +1014,52 @@ ${!isEditing && isLoggedIn ? `
                 }
                 html += '</div>';
                 container.innerHTML = html;
+              }
+            }
+          } else if (e.data.type === 'SCHOOLCOACH_UPDATE_BAGS') {
+            var bagsContainer = document.getElementById('schoolcoach-bags-container');
+            if (bagsContainer) {
+              var bags = Array.isArray(e.data.bags) ? e.data.bags : [];
+              if (bags.length === 0) {
+                bagsContainer.innerHTML = '<div class="card-dark p-12 text-center my-4 border border-dashed border-navy-700 rounded-2xl">' +
+                  '<span class="material-symbols-outlined text-[var(--color-gold-500)] text-[48px] mb-3 block">folder_open</span>' +
+                  '<h3 class="text-white text-lg font-bold mb-2">لا توجد حقائب تعليمية حالياً</h3>' +
+                  '<p class="text-gray-400 text-sm">سيتم إضافة الحقائب والمذكرات الرقمية قريباً، تفقد الصفحة لاحقاً.</p>' +
+                '</div>';
+              } else {
+                var bHtml = '<div class="grid grid-cols-1 md:grid-cols-3 gap-6">';
+                for (var bIdx = 0; bIdx < bags.length; bIdx++) {
+                  var bItem = bags[bIdx];
+                  var bTitle = bItem.title || 'حقيبة تعليمية';
+                  var bHref = '/bags/' + bItem.id;
+                  var bFree = Number(bItem.price) === 0 || bItem.price_type === 'free';
+                  var bPrice = bFree ? 'مجانًا' : (bItem.price ? bItem.price + ' ر.س' : 'متاحة للتحميل');
+                  var bImg = bItem.image || bItem.cover_image || bItem.thumbnail || '';
+                  var bItemsCount = bItem.items_count || (Array.isArray(bItem.items) ? bItem.items.length : 1);
+                  var bDesc = bItem.short_description || bItem.description || 'حقيبة دراسية متكاملة تحتوي على ملخصات وأوراق عمل واختبارات تجريبية.';
+
+                  bHtml += '<div data-section="bags" data-index="' + bIdx + '" class="card-dark flex flex-col justify-between text-right group overflow-hidden border border-navy-700 bg-navy-900 rounded-2xl p-6 animate-in fade-in duration-300">';
+                  bHtml += '<div>';
+                  if (bImg) {
+                    bHtml += '<div class="relative w-full aspect-video rounded-xl overflow-hidden mb-4 bg-navy-950 border border-navy-800">' +
+                      '<img src="' + bImg + '" alt="' + bTitle + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />' +
+                      '<span class="absolute top-3 left-3 bg-[var(--color-gold-500)] text-[var(--color-navy-950)] font-extrabold text-xs px-3 py-1 rounded-full shadow-md">' + bPrice + '</span>' +
+                    '</div>';
+                  } else {
+                    bHtml += '<div class="flex justify-between items-center mb-4 border-b border-navy-700 pb-3">' +
+                      '<span class="text-xs font-bold text-[var(--color-gold-500)] flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">folder_zip</span> حقيبة رقمية</span>' +
+                      '<span class="text-xs font-bold bg-[var(--color-gold-500)]/20 text-[var(--color-gold-500)] px-3 py-1 rounded-full">' + bPrice + '</span>' +
+                    '</div>';
+                  }
+                  bHtml += '<h3 class="text-[20px] font-bold text-white mb-3 group-hover:text-[var(--color-gold-500)] transition-colors">' + bTitle + '</h3>';
+                  bHtml += '<p class="text-xs text-gray-400 mb-6 leading-relaxed line-clamp-3">' + bDesc + '</p>';
+                  bHtml += '<div class="flex items-center justify-between text-xs border-t border-navy-800 pt-3 mb-4 text-gray-400"><span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-[var(--color-gold-500)]">inventory_2</span> المحتويات</span><span class="font-bold text-white">' + bItemsCount + ' ملفات دراسية</span></div>';
+                  bHtml += '</div>';
+                  bHtml += '<div><a href="' + bHref + '" target="_top" class="btn-primary block text-center w-full text-xs py-3.5 shadow-md hover:shadow-gold-500/20 font-bold">استعرض الحقيبة والملفات</a></div>';
+                  bHtml += '</div>';
+                }
+                bHtml += '</div>';
+                bagsContainer.innerHTML = bHtml;
               }
             }
           } else if (e.data.type === 'SCHOOLCOACH_UPDATE_DROPDOWNS') {

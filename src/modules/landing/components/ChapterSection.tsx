@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { ChevronDown, Lock, PlayCircle, Play, Pen } from 'lucide-react';
+import { ChevronDown, Lock, PlayCircle, Play, Pen, X } from 'lucide-react';
 import { ChapterSectionData } from '../types/landing';
 import { twMerge } from 'tailwind-merge';
 import { colorToRgbTriplet } from '../utils/color';
+import { getLessonVideoSrc, isLessonFree } from '@/lib/lesson-video-src';
 
 interface ChapterSectionProps {
   data: ChapterSectionData;
@@ -21,6 +22,12 @@ export default function ChapterSection({
 }: ChapterSectionProps) {
   const isTemplate1 = templateId === 'template_1' || templateId === 'Modern Course';
   const [expandedUnits, setExpandedUnits] = useState<number[]>([]);
+  const [activePreviewLesson, setActivePreviewLesson] = useState<any | null>(null);
+
+  const activeVideoSrc = React.useMemo(() => {
+    if (!activePreviewLesson) return '';
+    return getLessonVideoSrc(activePreviewLesson) || activePreviewLesson.video_url || activePreviewLesson.embed_url || activePreviewLesson.file_url || activePreviewLesson.url || '';
+  }, [activePreviewLesson]);
 
   const toggleUnit = (unitId: number) => {
     setExpandedUnits(prev =>
@@ -132,34 +139,46 @@ export default function ChapterSection({
                       className="border-t"
                     >
                       {lessons.length > 0 ? (
-                        lessons.map((lesson: any, lIdx: number) => (
-                          <div 
-                            key={lesson.id || lIdx} 
-                            style={{ borderBottomColor: `rgba(${textRgb}, 0.06)` }}
-                            className="p-4 px-6 flex items-center justify-between border-b last:border-none"
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs font-semibold text-slate-400">{lesson.duration || '10:00'}</span>
-                              {lesson.isPreview && (
-                                <span 
-                                  style={{ backgroundColor: `rgba(${primaryRgbTriplet}, 0.1)`, color: `rgb(${primaryRgbTriplet})` }}
-                                  className="text-[9px] px-2 py-0.5 rounded-full font-black"
-                                >
-                                  معاينة مجانية
-                                </span>
+                        lessons.map((lesson: any, lIdx: number) => {
+                          const isFree = isLessonFree(lesson);
+                          return (
+                            <div 
+                              key={lesson.id || lIdx} 
+                              style={{ borderBottomColor: `rgba(${textRgb}, 0.06)` }}
+                              onClick={() => {
+                                if (isFree) {
+                                  setActivePreviewLesson(lesson);
+                                }
+                              }}
+                              className={twMerge(
+                                "p-4 px-6 flex items-center justify-between border-b last:border-none transition-all",
+                                isFree ? "cursor-pointer hover:bg-emerald-50/50" : "opacity-80"
                               )}
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span style={{ color: `rgba(${textRgb}, 0.85)` }} className="font-bold text-xs md:text-sm">{lesson.title}</span>
-                              <div 
-                                style={{ backgroundColor: `rgba(${textRgb}, 0.05)`, color: localText }}
-                                className="w-6 h-6 rounded-full flex items-center justify-center"
-                              >
-                                <PlayCircle size={14} />
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs font-semibold text-slate-400">{lesson.duration || '10:00'}</span>
+                                {isFree && (
+                                  <span 
+                                    style={{ backgroundColor: `rgba(${primaryRgbTriplet}, 0.1)`, color: `rgb(${primaryRgbTriplet})` }}
+                                    className="text-[9px] px-2.5 py-0.5 rounded-full font-black flex items-center gap-1"
+                                  >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                                    معاينة مجانية
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span style={{ color: `rgba(${textRgb}, 0.85)` }} className="font-bold text-xs md:text-sm">{lesson.title}</span>
+                                <div 
+                                  style={{ backgroundColor: `rgba(${textRgb}, 0.05)`, color: isFree ? '#059669' : localText }}
+                                  className="w-7 h-7 rounded-full flex items-center justify-center shadow-xs"
+                                >
+                                  <PlayCircle size={16} />
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))
+                          );
+                        })
                       ) : (
                         <div className="p-4 text-center text-xs text-slate-400 font-bold">لا يوجد دروس حالياً.</div>
                       )}
@@ -292,6 +311,45 @@ export default function ChapterSection({
           })}
         </div>
       </div>
+
+      {/* Video Preview Modal Overlay */}
+      {activePreviewLesson && activeVideoSrc && (
+        <div 
+          className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          dir="rtl"
+          onClick={() => setActivePreviewLesson(null)}
+        >
+          <div 
+            className="bg-slate-900 rounded-3xl w-full max-w-4xl overflow-hidden border border-slate-800 shadow-2xl flex flex-col"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="p-4 px-6 bg-slate-950 flex items-center justify-between border-b border-slate-800 text-white">
+              <div className="flex items-center gap-2 font-bold text-sm">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                <span>معاينة مجانية: {activePreviewLesson.title}</span>
+              </div>
+              <button 
+                onClick={() => setActivePreviewLesson(null)}
+                className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="aspect-video w-full bg-black relative">
+              {activeVideoSrc.match(/\.(mp4|webm|mov)(\?|$)/i) ? (
+                <video src={activeVideoSrc} controls autoPlay className="w-full h-full object-contain" />
+              ) : (
+                <iframe
+                  src={activeVideoSrc}
+                  className="w-full h-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

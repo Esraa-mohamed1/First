@@ -5,6 +5,7 @@ import { getPublicPages, getPublicSections, apiToEditor } from '@/services/pages
 import { getTemplateById } from '@/builder/utils/templates';
 import TemplateRenderer from '@/builder/templates/renderer/TemplateRenderer';
 import { getClientTenantKey } from '@/lib/homepage-cache';
+import { getMyAcademyProfile } from '@/services/student-auth';
 
 // Main platform landing page components
 import Nav from '@/components/Nav/Nav';
@@ -49,6 +50,7 @@ export default function TenantHomeClient({
   initialSections = []
 }: TenantHomeClientProps) {
   const [templateId, setTemplateId] = useState<string>(initialTemplateId);
+  const [tenantRole, setTenantRole] = useState<string | null>(null);
   const [sections, setSections] = useState<any[]>(initialSections);
   const [loading, setLoading] = useState<boolean>(true);
   const [tenantKey, setTenantKey] = useState<string | null>(null);
@@ -72,7 +74,24 @@ export default function TenantHomeClient({
       try {
         setLoading(true);
 
-        const pagesList = await getPublicPages('academic');
+        // Fetch pages and academy profile in parallel to resolve template and role together
+        const [pagesList, academyProfile] = await Promise.all([
+          getPublicPages('academic').catch((err) => {
+            console.error('Failed to load public pages in TenantHomeClient:', err);
+            return [];
+          }),
+          getMyAcademyProfile().catch((err) => {
+            console.error('Failed to load my academy profile in TenantHomeClient:', err);
+            return null;
+          }),
+        ]);
+
+        if (academyProfile) {
+          const role = academyProfile.role || academyProfile.type || academyProfile.account_type || academyProfile.user_type;
+          if (role) {
+            setTenantRole(role);
+          }
+        }
 
         let activePage = pagesList.find(
           (p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true'
@@ -134,7 +153,7 @@ export default function TenantHomeClient({
     return <MainPlatformLanding />;
   }
 
-  if (loading && sections.length === 0) {
+  if (loading) {
     return (
       <div className="w-full min-h-screen bg-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
@@ -147,7 +166,7 @@ export default function TenantHomeClient({
 
   return (
     <main className="w-full min-h-screen bg-white">
-      <TemplateRenderer templateId={templateId} sections={sections} />
+      <TemplateRenderer templateId={templateId} tenantRole={tenantRole} sections={sections} />
     </main>
   );
 }

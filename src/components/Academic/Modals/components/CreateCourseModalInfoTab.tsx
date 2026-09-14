@@ -8,7 +8,9 @@ import {
   Upload, 
   Loader2, 
   Save, 
-  ArrowRight 
+  ArrowRight,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import QuillEditor from '@/components/Academic/QuillEditor';
 import { SearchableSelect } from '@/components/Academic/Common/SearchableSelect';
@@ -29,6 +31,7 @@ interface CreateCourseModalInfoTabProps {
   previewUrl: string | null;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleRemoveImage?: (e?: React.MouseEvent) => void;
   description: string;
   setDescription: (val: string) => void;
   whatYouWillLearn: string;
@@ -57,6 +60,7 @@ export const CreateCourseModalInfoTab = ({
   previewUrl,
   fileInputRef,
   handleFileChange,
+  handleRemoveImage,
   description,
   setDescription,
   whatYouWillLearn,
@@ -131,7 +135,9 @@ export const CreateCourseModalInfoTab = ({
             </label>
             <div
               className="border-2 border-dashed border-gray-100 rounded-[24px] p-12 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:border-blue-600 transition-all min-h-[320px] relative overflow-hidden bg-gray-50/30"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => {
+                if (!previewUrl) fileInputRef.current?.click();
+              }}
             >
               <input
                 type="file"
@@ -141,7 +147,37 @@ export const CreateCourseModalInfoTab = ({
                 onChange={handleFileChange}
               />
               {previewUrl ? (
-                <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
+                <>
+                  <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 p-4 z-10">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fileInputRef.current?.click();
+                      }}
+                      className="px-4 py-2 rounded-xl bg-white text-gray-900 font-bold text-xs flex items-center gap-2 shadow-md hover:bg-gray-100 transition-transform active:scale-95 cursor-pointer"
+                      title="تغيير الصورة"
+                    >
+                      <Pencil size={14} className="text-blue-600" />
+                      <span>تغيير الصورة</span>
+                    </button>
+                    {handleRemoveImage && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveImage(e);
+                        }}
+                        className="px-4 py-2 rounded-xl bg-rose-600 text-white font-bold text-xs flex items-center gap-2 shadow-md hover:bg-rose-700 transition-transform active:scale-95 cursor-pointer"
+                        title="إلغاء الصورة"
+                      >
+                        <Trash2 size={14} />
+                        <span>إلغاء الصورة</span>
+                      </button>
+                    )}
+                  </div>
+                </>
               ) : (
                 <>
                   <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
