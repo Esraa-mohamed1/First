@@ -136,13 +136,6 @@ export default function StudentBagsPage() {
             <p className="text-xs text-gray-400 max-w-sm">
               يمكنك التصفح والحصول على أفضل الحقائب التدريبية الرقمية المتاحة على المنصة.
             </p>
-            <Link
-              href="/bags"
-              className="mt-2 inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl text-xs shadow-md transition-all cursor-pointer"
-            >
-              <ShoppingCart size={16} />
-              <span>تصفح وشراء الحقائب المتاحة الآن</span>
-            </Link>
           </div>
         ) : (
           <div className="divide-y divide-gray-100 overflow-x-auto">

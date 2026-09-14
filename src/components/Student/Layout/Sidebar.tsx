@@ -7,18 +7,16 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   BookOpen,
-  Trophy,
-  Settings,
   User,
   GraduationCap,
   LogOut,
-  Library,
   ChevronRight,
   ChevronLeft,
   Package,
 } from 'lucide-react';
 import { clearUserSessionAndCache } from '@/lib/auth-storage';
 import { getMyAcademyProfile } from '@/services/student-auth';
+import { normalizeProfileImageUrl } from '@/lib/utils';
 
 interface StudentSidebarUserData {
   name: string;
@@ -42,20 +40,12 @@ const sidebarGroups = [
     items: [
       { name: 'دوراتي', href: '/student/courses', icon: BookOpen },
       { name: 'حقائبي الرقمية', href: '/student/bags', icon: Package },
-      { name: 'طلبات الشراء والاشتراك', href: '/student/requests', icon: Trophy },
-    ]
-  },
-  {
-    title: 'الإنجازات',
-    items: [
-      { name: 'الإنجازات', href: '/student/achievements', icon: Trophy },
     ]
   },
   {
     title: 'الحساب',
     items: [
       { name: 'الملف الشخصي', href: '/student/profile', icon: User },
-      { name: 'الإعدادات', href: '/student/settings', icon: Settings },
     ]
   }
 ];
@@ -73,7 +63,8 @@ export const StudentSidebar = () => {
         if (cachedUserStr) {
           const parsed = JSON.parse(cachedUserStr);
           const name = parsed?.name || cachedName || '';
-          const avatar = parsed?.profile_image || parsed?.avatar || parsed?.image || null;
+          const avatarRaw = parsed?.profile_image || parsed?.avatar || parsed?.image || null;
+          const avatar = avatarRaw ? normalizeProfileImageUrl(avatarRaw) : null;
           if (name && name !== 'أحمد محمد') {
             return { name, avatar };
           }
@@ -129,6 +120,10 @@ export const StudentSidebar = () => {
   const [academyLogoError, setAcademyLogoError] = useState(false);
 
   useEffect(() => {
+    setImgError(false);
+  }, [user.avatar]);
+
+  useEffect(() => {
     let isMounted = true;
 
     if (typeof window !== 'undefined') {
@@ -138,7 +133,8 @@ export const StudentSidebar = () => {
         if (cachedUserStr) {
           const parsed = JSON.parse(cachedUserStr);
           const name = parsed?.name || cachedName;
-          const avatar = parsed?.profile_image || parsed?.avatar || parsed?.image || null;
+          const avatarRaw = parsed?.profile_image || parsed?.avatar || parsed?.image || null;
+          const avatar = avatarRaw ? normalizeProfileImageUrl(avatarRaw) : null;
           if (name && name !== 'أحمد محمد' && isMounted) {
             setUser({ name, avatar });
           }
@@ -182,10 +178,11 @@ export const StudentSidebar = () => {
       const updatedUser = customEvent?.detail;
       if (updatedUser && isMounted) {
         const updatedName = updatedUser.name || updatedUser.fullName;
-        const updatedAvatar = updatedUser.profile_image || updatedUser.avatar || updatedUser.image;
-        if (updatedName) {
+        const rawAvatar = updatedUser.profile_image || updatedUser.avatar || updatedUser.image;
+        const updatedAvatar = rawAvatar !== undefined && rawAvatar !== null ? normalizeProfileImageUrl(rawAvatar) : undefined;
+        if (updatedName || updatedAvatar !== undefined) {
           setUser(prev => ({
-            name: updatedName,
+            name: updatedName || prev.name,
             avatar: updatedAvatar !== undefined ? updatedAvatar : prev.avatar,
           }));
           setImgError(false);
@@ -334,6 +331,7 @@ export const StudentSidebar = () => {
             <div className="w-10 h-10 rounded-full bg-white border-2 border-white shadow-sm flex items-center justify-center overflow-hidden shrink-0 relative group-hover:ring-2 group-hover:ring-blue-200 transition-all">
               {user.avatar && !imgError ? (
                 <Image
+                  key={user.avatar || 'sidebar-avatar'}
                   src={user.avatar}
                   alt={user.name || 'Student Avatar'}
                   fill
@@ -372,7 +370,7 @@ export const StudentSidebar = () => {
           )}
         </div>
 
-        {!isCollapsed && <p className="text-[10px] text-center text-gray-400 font-medium italic">إصدار 1.2.0 - © 2024</p>}
+        {!isCollapsed && <p className="text-[10px] text-center text-gray-400 font-medium italic"></p>}
       </div>
     </aside>
   );

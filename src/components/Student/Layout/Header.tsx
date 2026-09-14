@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Bell, Search, Menu, User } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Menu, User } from 'lucide-react';
 import Image from 'next/image';
 import { getStudentProfileStatus, getMyAcademyProfile } from '@/services/student-auth';
+import { normalizeProfileImageUrl } from '@/lib/utils';
 
 interface StudentHeaderUserData {
   name: string;
@@ -17,6 +19,7 @@ interface AcademyProfileData {
 }
 
 export const StudentHeader = () => {
+  const pathname = usePathname() || '';
   const [user, setUser] = useState<StudentHeaderUserData>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -25,7 +28,8 @@ export const StudentHeader = () => {
         if (cachedUserStr) {
           const parsed = JSON.parse(cachedUserStr);
           const name = parsed?.name || cachedName || '';
-          const avatar = parsed?.profile_image || parsed?.avatar || parsed?.image || null;
+          const avatarRaw = parsed?.profile_image || parsed?.avatar || parsed?.image || null;
+          const avatar = avatarRaw ? normalizeProfileImageUrl(avatarRaw) : null;
           if (name && name !== 'أحمد محمد') {
             return { name, avatar };
           }
@@ -102,6 +106,10 @@ export const StudentHeader = () => {
   const [academyLogoError, setAcademyLogoError] = useState(false);
 
   useEffect(() => {
+    setImgError(false);
+  }, [user.avatar]);
+
+  useEffect(() => {
     let isMounted = true;
 
     const fetchMe = async () => {
@@ -110,7 +118,8 @@ export const StudentHeader = () => {
         const raw = response?.data || response;
         if (raw && isMounted) {
           const name = raw.name || raw.fullName || '';
-          const avatar = raw.profile_image || raw.avatar || raw.image || null;
+          const avatarRaw = raw.profile_image || raw.avatar || raw.image || null;
+          const avatar = avatarRaw ? normalizeProfileImageUrl(avatarRaw) : null;
 
           if (name) {
             setUser({ name, avatar });
@@ -179,10 +188,11 @@ export const StudentHeader = () => {
       const updatedUser = customEvent?.detail;
       if (updatedUser && isMounted) {
         const updatedName = updatedUser.name || updatedUser.fullName;
-        const updatedAvatar = updatedUser.profile_image || updatedUser.avatar || updatedUser.image;
-        if (updatedName) {
+        const rawAvatar = updatedUser.profile_image || updatedUser.avatar || updatedUser.image;
+        const updatedAvatar = rawAvatar !== undefined && rawAvatar !== null ? normalizeProfileImageUrl(rawAvatar) : undefined;
+        if (updatedName || updatedAvatar !== undefined) {
           setUser(prev => ({
-            name: updatedName,
+            name: updatedName || prev.name,
             avatar: updatedAvatar !== undefined ? updatedAvatar : prev.avatar,
           }));
           setImgError(false);
@@ -259,28 +269,40 @@ export const StudentHeader = () => {
         </Link>
 
         <nav className="hidden md:flex items-center gap-6 ml-8">
-          <Link href="/student" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">الرئيسية</Link>
-          <Link href="/student/courses" className="text-blue-600 font-semibold border-b-2 border-blue-600 py-7">دوراتي</Link>
-          <Link href="/student/paths" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">المسارات</Link>
-          <Link href="/student/reports" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">التقارير</Link>
+          <Link
+            href="/"
+            className={`font-medium transition-colors py-7 ${
+              pathname === '/'
+                ? 'text-blue-600 font-semibold border-b-2 border-blue-600'
+                : 'text-gray-600 hover:text-blue-600'
+            }`}
+          >
+            الرئيسية
+          </Link>
+          <Link
+            href="/student/courses"
+            className={`font-medium transition-colors py-7 ${
+              pathname.startsWith('/student/courses')
+                ? 'text-blue-600 font-semibold border-b-2 border-blue-600'
+                : 'text-gray-600 hover:text-blue-600'
+            }`}
+          >
+            دوراتي
+          </Link>
+          <Link
+            href="/student/bags"
+            className={`font-medium transition-colors py-7 ${
+              pathname.startsWith('/student/bags')
+                ? 'text-blue-600 font-semibold border-b-2 border-blue-600'
+                : 'text-gray-600 hover:text-blue-600'
+            }`}
+          >
+            الحقائب
+          </Link>
         </nav>
       </div>
 
       <div className="flex items-center gap-4 lg:gap-6">
-        <div className="relative hidden sm:block">
-          <input
-            type="text"
-            placeholder="ابحث عن دورة..."
-            className="bg-[#EAEFEF] text-sm border-none rounded-full py-2 pl-10 pr-4 w-64 focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all outline-none"
-          />
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        </div>
-
-        <button className="relative p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all">
-          <Bell size={20} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
-        </button>
-
         <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
 
         <Link href="/student/profile" className="flex items-center gap-3 cursor-pointer group">
@@ -296,6 +318,7 @@ export const StudentHeader = () => {
           <div className="w-10 h-10 rounded-full bg-blue-100 border-2 border-white shadow-sm flex items-center justify-center text-blue-600 font-bold overflow-hidden ring-2 ring-gray-100 relative">
             {user.avatar && !imgError ? (
               <Image
+                key={user.avatar || 'header-avatar'}
                 src={user.avatar}
                 alt={user.name || 'Student Avatar'}
                 fill
