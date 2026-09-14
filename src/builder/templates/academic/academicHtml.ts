@@ -90,6 +90,13 @@ export interface TemplateContent {
     textColor?: string;
     [key: string]: any;
   };
+  bags?: {
+    title?: string;
+    subtitle?: string;
+    items?: any[];
+    [key: string]: any;
+  };
+  [key: string]: any;
 }
 
 export const renderVideoPlayer = (url: string | undefined | null, className: string = 'w-full h-full object-cover') => {
@@ -148,6 +155,7 @@ export const formatMaterialIcon = (iconName: string | undefined | null): string 
     'user': 'person',
     'playo': 'play_circle',
     'play': 'play_circle',
+    'playcircle': 'play_circle',
     'play_circle': 'play_circle',
     'ab': 'workspace_premium',
     'award': 'workspace_premium',
@@ -155,11 +163,23 @@ export const formatMaterialIcon = (iconName: string | undefined | null): string 
     'sparkles': 'auto_awesome',
     'plus': 'add',
     'helpcircle': 'help',
+    'help_circle': 'help',
     'phone': 'call',
     'laptop': 'laptop_mac',
+    'checkcircle': 'check_circle',
     'checkcircle2': 'check_circle',
+    'check_circle': 'check_circle',
     'eye': 'visibility',
     'settings': 'settings',
+    'bookopen': 'menu_book',
+    'book_open': 'menu_book',
+    'graduationcap': 'school',
+    'graduation_cap': 'school',
+    'academic': 'school',
+    'quiz': 'quiz',
+    'insights': 'insights',
+    'assignment_ind': 'assignment_ind',
+    'assignmentind': 'assignment_ind',
   };
 
   if (iconMap[lower]) return iconMap[lower];
@@ -175,9 +195,11 @@ export const renderMedia = (url: string | undefined | null, className: string = 
   return `<img src="${url}" alt="${alt}" class="${className} object-cover" />`;
 };
 
-export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = false, isLoggedIn: boolean = false, dashboardUrl: string = '/student') => {
+export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = false, isLoggedIn: boolean = false, dashboardUrl: string = '/student', teacherProfile: any = null) => {
   const cachedProfile = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('darab_academy_profile') || '{}') : {};
-  const realName = cachedProfile.site_name || cachedProfile.name || cachedProfile.academy_name;
+  const realName = teacherProfile?.site_name || teacherProfile?.academy_name || teacherProfile?.name || teacherProfile?.teacher_name || cachedProfile.site_name || cachedProfile.name || cachedProfile.academy_name;
+  const realEmail = teacherProfile?.site_email || teacherProfile?.email || cachedProfile.site_email || cachedProfile.email || 'support@educore.edu.sa';
+  const realPhone = teacherProfile?.site_phone || teacherProfile?.academy_phone || teacherProfile?.phone || cachedProfile.site_phone || cachedProfile.phone || '+966 50 000 0000';
 
   const navbarTitle = realName || content?.navbar?.title || (content?.navbar as any)?.name || 'إديوكور';
   const navbarBg = content?.navbar?.bgColor || (content?.navbar as any)?.bg_color || '#ffffff';
@@ -186,15 +208,46 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 
   // Dynamic nav links — use saved props or fall back to defaults
   const defaultNavLinks = [
-    { label: 'الرئيسية', href: '/' },
+    { label: 'الرئيسية', href: '#hero' },
     { label: 'الدورات', href: '/courses' },
     { label: 'الحقائب', href: '/bags' },
-    { label: 'حول', href: '/#about' },
+    { label: 'حول الأكاديمية', href: '#features' },
   ];
-  const navLinks: Array<{ label: string; href: string }> =
+  const rawNavLinks: Array<{ label: string; href: string }> =
     Array.isArray((content?.navbar as any)?.links) && (content?.navbar as any).links.length > 0
       ? (content?.navbar as any).links
       : defaultNavLinks;
+
+  // Map nav links: الرئيسية -> #hero, حول -> #features
+  let mappedNavLinks = rawNavLinks.map((l: any) => {
+    const label = l.label || '';
+    const href = l.href || '';
+    if (label.includes('الرئيسية') || href === '/' || href === '#') {
+      return { ...l, label: 'الرئيسية', href: '#hero' };
+    }
+    if (label.includes('حول') || label.includes('عن الأكاديمية') || label.includes('عن الأستاذ') || href.includes('about') || href.includes('features')) {
+      return { ...l, label: 'حول الأكاديمية', href: '#features' };
+    }
+    return l;
+  });
+
+  const hasBagsLink = mappedNavLinks.some((l: any) =>
+    l.href?.includes('bags') || l.label?.includes('حقائب') || l.label?.includes('الحقائب')
+  );
+
+  let navLinks = mappedNavLinks;
+  if (!hasBagsLink) {
+    const coursesIdx = mappedNavLinks.findIndex((l: any) => l.href?.includes('courses') || l.label?.includes('الدورات'));
+    if (coursesIdx !== -1) {
+      navLinks = [
+        ...mappedNavLinks.slice(0, coursesIdx + 1),
+        { label: 'الحقائب', href: '/bags' },
+        ...mappedNavLinks.slice(coursesIdx + 1),
+      ];
+    } else {
+      navLinks = [...mappedNavLinks, { label: 'الحقائب', href: '/bags' }];
+    }
+  }
   const loginText = (content?.navbar as any)?.loginText || (content?.navbar as any)?.login_text || 'تسجيل الدخول';
   const loginLink = (content?.navbar as any)?.loginLink || (content?.navbar as any)?.login_link || '/auth/login';
   const registerText = (content?.navbar as any)?.registerText || (content?.navbar as any)?.register_text || 'ابدأ الآن';
@@ -248,6 +301,8 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
   const coursesCardBg = (content?.courses as any)?.cardBg || (content?.courses as any)?.card_bg || '';
   const coursesTitleColor = (content?.courses as any)?.titleColor || (content?.courses as any)?.title_color || '';
   const coursesBg = content?.courses?.backgroundColor || (content?.courses as any)?.background_color || (content?.courses as any)?.bg_color || '';
+
+  const bagsList = Array.isArray(content?.bags?.items) ? content.bags.items : [];
   const coursesTextColor = content?.courses?.textColor || (content?.courses as any)?.text_color || '';
   const rawCourses = content?.courses?.items || [];
   const coursesList = rawCourses.slice(0, coursesLimit);
@@ -288,9 +343,12 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
   const contactBg = content?.contact?.backgroundColor || (content?.contact as any)?.background_color || (content?.contact as any)?.bg_color || '';
   const contactTextColor = content?.contact?.textColor || (content?.contact as any)?.text_color || '';
 
-  const footerText = content?.footer?.text || '© 2024 إديوكور الأكاديمية. جميع الحقوق محفوظة.';
+  const footerText = content?.footer?.text || ' جميع الحقوق محفوظة.';
   const footerBg = content?.footer?.backgroundColor || (content?.footer as any)?.background_color || (content?.footer as any)?.bg_color || '#ffffff';
   const footerTextColor = content?.footer?.textColor || (content?.footer as any)?.text_color || '#1b1b24';
+  const newsletterTitle = (content?.footer as any)?.newsletterTitle || (content?.footer as any)?.newsletter_title || 'اشترك في نشرتنا البريدية المعرفية';
+  const newsletterDesc = (content?.footer as any)?.newsletterDesc || (content?.footer as any)?.newsletter_desc || 'احصل على أحدث المقالات التحليلية، والمناهج الجديدة، والماستركلاسز الحصرية مباشرة في بريدك الإلكتروني أسبوعياً.';
+  const newsletterBtnText = (content?.footer as any)?.newsletterBtnText || (content?.footer as any)?.newsletter_btn_text || 'اشترك الآن';
 
   const videoTag = (content?.about as any)?.videoTag || 'شاهد وتعلّم';
   const videoTitle = (content?.about as any)?.videoTitle || 'تعرف على فلسفتنا التعليمية في ٣ دقائق';
@@ -472,16 +530,20 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
 <!-- Desktop Nav -->
 <nav class="hidden md:flex items-center gap-stack-lg">
 ${navLinks.map((link: any) => {
-  const isBtn = link.isButton || link.is_button || link.variant === 'button' || link.type === 'button';
-  const linkBg = link.bgColor || link.bg_color || link.backgroundColor || link.background_color || '';
-  const linkColor = link.textColor || link.text_color || link.color || '';
-  const customStyle = link.style || `${linkBg ? `background-color: ${linkBg}; ` : ''}${linkColor ? `color: ${linkColor}; ` : ''}`;
+    const isBtn = link.isButton || link.is_button || link.variant === 'button' || link.type === 'button';
+    const href = link.href || '#';
+    const isAnchor = href.startsWith('#');
+    const targetAttr = isEditing ? '' : (isAnchor ? '' : 'target="_top"');
+    const onClickAttr = isAnchor ? `onclick="scrollToAnchor(event, '${href}')"` : '';
+    const linkBg = link.bgColor || link.bg_color || link.backgroundColor || link.background_color || '';
+    const linkColor = link.textColor || link.text_color || link.color || '';
+    const customStyle = link.style || `${linkBg ? `background-color: ${linkBg}; ` : ''}${linkColor ? `color: ${linkColor}; ` : ''}`;
 
-  if (isBtn || linkBg) {
-    return `<a class="text-label-md font-label-md px-5 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all duration-200 inline-block text-center" style="${customStyle}" href="${link.href || '#'}" ${isEditing ? '' : 'target="_parent"'}>${link.label}</a>`;
-  }
-  return `<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" style="${linkColor ? `color: ${linkColor};` : ''}" href="${link.href || '#'}" ${isEditing ? '' : 'target="_parent"'}>${link.label}</a>`;
-}).join('\n')}
+    if (isBtn || linkBg) {
+      return `<a class="text-label-md font-label-md px-5 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all duration-200 inline-block text-center" style="${customStyle}" href="${href}" ${targetAttr} ${onClickAttr}>${link.label}</a>`;
+    }
+    return `<a class="text-on-surface-variant text-label-md font-label-md hover:text-primary transition-colors duration-200" style="${linkColor ? `color: ${linkColor};` : ''}" href="${href}" ${targetAttr} ${onClickAttr}>${link.label}</a>`;
+  }).join('\n')}
 </nav>
 <div class="flex items-center gap-stack-md">
 ${!isEditing && isLoggedIn ? `
@@ -508,11 +570,11 @@ ${!isEditing && isLoggedIn ? `
 </div>
 <nav class="flex flex-col gap-stack-sm px-4">
 ${navLinks.map((link: any) => {
-  const linkColor = link.textColor || link.text_color || link.color || '';
-  const linkBg = link.bgColor || link.bg_color || link.backgroundColor || link.background_color || '';
-  const customStyle = `${linkBg ? `background-color: ${linkBg}; ` : ''}${linkColor ? `color: ${linkColor}; ` : ''}`;
-  return `<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" style="${customStyle}" href="${link.href || '#'}" ${isEditing ? '' : 'target="_parent"'}><span class="material-symbols-outlined">home</span> ${link.label}</a>`;
-}).join('\n')}
+    const linkColor = link.textColor || link.text_color || link.color || '';
+    const linkBg = link.bgColor || link.bg_color || link.backgroundColor || link.background_color || '';
+    const customStyle = `${linkBg ? `background-color: ${linkBg}; ` : ''}${linkColor ? `color: ${linkColor}; ` : ''}`;
+    return `<a class="text-on-surface-variant flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-container-low transition-all text-label-md font-label-md" style="${customStyle}" href="${link.href || '#'}" ${isEditing ? '' : 'target="_parent"'}><span class="material-symbols-outlined">home</span> ${link.label}</a>`;
+  }).join('\n')}
 <div class="h-px bg-outline-variant/30 my-4"></div>
 ${!isEditing && isLoggedIn ? `
 <a href="${dashboardUrl}" ${isEditing ? '' : 'target="_parent"'} class="text-label-md font-label-md px-6 py-2.5 rounded-xl shadow-sm transition-all duration-200 flex items-center justify-center gap-2 mt-2" style="background-color: #3525cd; color: #ffffff;">
@@ -548,19 +610,19 @@ ${content?.hero ? `
                 </p>
 <div class="flex flex-wrap items-center gap-stack-md pt-4">
 <a data-hero-btn="primary" href="${(() => {
-  if (!heroBtnLink || heroBtnLink === '#') return '#';
-  const trimmed = heroBtnLink.trim();
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
-  return `#${trimmed}`;
-})()}" ${heroBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="text-label-md font-label-md px-8 py-4 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 inline-block text-center" style="${heroBtnBg ? `background-color: ${heroBtnBg}; ` : 'background-color: #3525cd; '}${heroBtnTextColor ? `color: ${heroBtnTextColor}; ` : 'color: #ffffff; '}">
+        if (!heroBtnLink || heroBtnLink === '#') return '#';
+        const trimmed = heroBtnLink.trim();
+        if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
+        return `#${trimmed}`;
+      })()}" ${heroBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="text-label-md font-label-md px-8 py-4 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 inline-block text-center" style="${heroBtnBg ? `background-color: ${heroBtnBg}; ` : 'background-color: #3525cd; '}${heroBtnTextColor ? `color: ${heroBtnTextColor}; ` : 'color: #ffffff; '}">
     ${heroBtnText}
 </a>
 <a data-hero-btn="secondary" href="${(() => {
-  if (!heroSecondaryBtnLink || heroSecondaryBtnLink === '#') return '#contact';
-  const trimmed = heroSecondaryBtnLink.trim();
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
-  return `#${trimmed}`;
-})()}" ${heroSecondaryBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="border border-outline-variant text-label-md font-label-md px-8 py-4 rounded-full transition-all duration-300 inline-flex items-center gap-3 group" style="${heroSecondaryBtnBg ? `background-color: ${heroSecondaryBtnBg}; ` : 'background-color: #ffffff; '}${heroSecondaryBtnTextColor ? `color: ${heroSecondaryBtnTextColor}; ` : 'color: #1b1b24; '}">
+        if (!heroSecondaryBtnLink || heroSecondaryBtnLink === '#') return '#contact';
+        const trimmed = heroSecondaryBtnLink.trim();
+        if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
+        return `#${trimmed}`;
+      })()}" ${heroSecondaryBtnLink?.startsWith('http') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="border border-outline-variant text-label-md font-label-md px-8 py-4 rounded-full transition-all duration-300 inline-flex items-center gap-3 group" style="${heroSecondaryBtnBg ? `background-color: ${heroSecondaryBtnBg}; ` : 'background-color: #ffffff; '}${heroSecondaryBtnTextColor ? `color: ${heroSecondaryBtnTextColor}; ` : 'color: #1b1b24; '}">
     <span>${heroSecondaryBtnText}</span> <span class="material-symbols-outlined text-[20px] rtl-icon group-hover:-translate-x-1 transition-transform">arrow_forward</span>
 </a>
 </div>
@@ -646,7 +708,7 @@ ${content?.about && (aboutTitle || aboutSubtitle) ? `
 
 ${content?.features && (featuresTitle || (featuresItems && featuresItems.length > 0)) ? `
 <!-- Complete Academic Ecosystem (Bento Grid) -->
-<section data-section="features" class="w-full bg-surface-container-low transition-all duration-300 section-hover cursor-pointer" style="${featuresBg ? `background-color: ${featuresBg};` : ''} ${featuresTextColor ? `color: ${featuresTextColor};` : ''}">
+<section data-section="features" id="features" class="w-full bg-surface-container-low transition-all duration-300 section-hover cursor-pointer" style="${featuresBg ? `background-color: ${featuresBg};` : ''} ${featuresTextColor ? `color: ${featuresTextColor};` : ''}">
 <div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
 <div class="text-center mb-20">
 <h2 class="text-headline-lg font-headline-lg text-on-surface mb-stack-sm">${featuresTitle}</h2>
@@ -654,15 +716,23 @@ ${content?.features && (featuresTitle || (featuresItems && featuresItems.length 
 </div>
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter auto-rows-[280px]">
   ${featuresItems.map((item: any, idx: number) => {
-    const isImg = item.icon && (item.icon.startsWith('http') || item.icon.includes('/') || item.icon.startsWith('data:'));
-    const symbolIcon = formatMaterialIcon(item.icon);
-    const colSpan = idx === 0 || idx === featuresItems.length - 1 ? 'col-span-1 lg:col-span-2' : 'col-span-1';
-    const colors = ['primary', 'secondary', 'tertiary', 'primary'];
-    const color = colors[idx % colors.length];
-    const iconEl = isImg
-      ? `<img src="${item.icon}" alt="${item.title}" class="w-14 h-14 rounded-2xl object-cover border border-outline-variant/30" />`
-      : `<div class="w-14 h-14 rounded-2xl bg-${color}/10 flex items-center justify-center mb-stack-md group-hover:scale-110 group-hover:bg-${color} transition-all duration-300"><span class="material-symbols-outlined text-${color} group-hover:text-on-${color} text-[32px] transition-colors">${symbolIcon}</span></div>`;
-    return `
+        const isImg = item.icon && (item.icon.startsWith('http') || item.icon.includes('/') || item.icon.startsWith('data:'));
+        const symbolIcon = formatMaterialIcon(item.icon);
+        const colSpan = idx === 0 || idx === featuresItems.length - 1 ? 'col-span-1 lg:col-span-2' : 'col-span-1';
+        const colors = ['primary', 'secondary', 'tertiary', 'primary'];
+        const color = colors[idx % colors.length];
+        const defaultImgs = [
+          'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1586717791821-3f44a563de4c?w=400&auto=format&fit=crop'
+        ];
+        const fallbackImg = defaultImgs[idx % defaultImgs.length];
+
+        const iconEl = isImg
+          ? `<img src="${item.icon}" alt="${item.title || ''}" class="w-14 h-14 rounded-2xl object-cover border border-outline-variant/30" onError="this.onerror=null; this.src='${fallbackImg}';" />`
+          : `<div class="w-14 h-14 rounded-2xl bg-${color}/10 flex items-center justify-center mb-stack-md group-hover:scale-110 group-hover:bg-${color} transition-all duration-300"><span class="material-symbols-outlined text-${color} group-hover:text-on-${color} text-[32px] transition-colors">${symbolIcon}</span></div>`;
+        return `
     <div data-section="features" data-index="${idx}" class="${colSpan} row-span-1 bg-surface-container-lowest border border-outline-variant/60 rounded-3xl p-stack-lg shadow-sm hover:shadow-xl hover:border-${color}/50 hover:-translate-y-2 transition-all duration-300 group flex flex-col justify-between overflow-hidden relative">
       <div class="relative z-10">
         ${iconEl}
@@ -670,7 +740,7 @@ ${content?.features && (featuresTitle || (featuresItems && featuresItems.length 
         <p class="text-body-md font-body-md text-on-surface-variant max-w-md">${item.description || ''}</p>
       </div>
     </div>`;
-  }).join('')}
+      }).join('')}
 </div>
 </div>
 </section>
@@ -701,20 +771,20 @@ ${content?.courses ? `
     ` : `
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
         ${coursesList.map((course: any, idx: number) => {
-          const courseHref = `/courses/${course.slug || course.id}`;
-          const courseTitle = course.title || 'دورة تدريبية';
-          const courseImg = course.image || course.cover_image || 'https://images.unsplash.com/photo-1586717791821-3f44a563de4c?auto=format&fit=crop&q=80&w=600';
-          const instructorName = typeof course.instructor === 'object' && course.instructor?.name
-            ? course.instructor.name
-            : (course.instructor || course.instructor_name || course.coach || '');
-          const duration = course.duration || (course.units?.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0) ? `${course.units.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0)} درس` : '');
-          const students = course.students_count ?? course.students;
-          const isFree = Number(course.price) === 0 || course.price_type === 'free';
-          const priceDisplay = isFree
-            ? 'مجانًا'
-            : (course.final_price ? `${course.final_price} ${course.currency || 'ر.س'}` : (course.price ? `${course.price} ${course.currency || 'ر.س'}` : 'مجانًا'));
+        const courseHref = `/courses/${course.slug || course.id}`;
+        const courseTitle = course.title || 'دورة تدريبية';
+        const courseImg = course.image || course.cover_image || 'https://images.unsplash.com/photo-1586717791821-3f44a563de4c?auto=format&fit=crop&q=80&w=600';
+        const instructorName = typeof course.instructor === 'object' && course.instructor?.name
+          ? course.instructor.name
+          : (course.instructor || course.instructor_name || course.coach || '');
+        const duration = course.duration || (course.units?.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0) ? `${course.units.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0)} درس` : '');
+        const students = course.students_count ?? course.students;
+        const isFree = Number(course.price) === 0 || course.price_type === 'free';
+        const priceDisplay = isFree
+          ? 'مجانًا'
+          : (course.final_price ? `${course.final_price} ${course.currency || 'ر.س'}` : (course.price ? `${course.price} ${course.currency || 'ر.س'}` : 'مجانًا'));
 
-          return `
+        return `
             <a href="${courseHref}" target="_top" data-course-index="${idx}" class="group block border border-outline-variant/60 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:border-primary/40 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between" style="${coursesCardBg ? `background-color: ${coursesCardBg};` : 'background-color: #ffffff;'}">
               <div>
                 <div class="relative w-full aspect-video overflow-hidden bg-surface-container">
@@ -758,7 +828,69 @@ ${content?.courses ? `
               </div>
             </a>
           `;
-        }).join('')}
+      }).join('')}
+      </div>
+    `}
+  </div>
+</section>
+` : ''}
+
+${content?.bags ? `
+<!-- Bags Section (الحقائب التعليمية والملفات الرقمية) -->
+<section data-section="bags" id="bags" class="w-full bg-surface-container-low transition-all duration-300 section-hover cursor-pointer border-t border-outline-variant/30">
+  <div class="max-w-container-max mx-auto py-24 px-margin-mobile md:px-margin-desktop">
+    <div class="text-center mb-16">
+      <span class="text-label-md font-label-md bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20 text-primary">المكتبة الرقمية</span>
+      <h2 class="text-headline-lg font-headline-lg mt-4 mb-2 text-on-surface">${content?.bags?.title || 'الحقائب التعليمية والملفات الرقمية'}</h2>
+      <p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mx-auto">${content?.bags?.subtitle || 'ملازم ومذكرات دراسية شاملة جاهزة للتحميل والاستفادة المباشرة'}</p>
+    </div>
+
+    ${bagsList.length === 0 ? `
+      <div class="bg-surface-container-lowest border border-dashed border-outline-variant/60 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-3 my-4">
+        <span class="material-symbols-outlined text-outline text-[48px]">folder_open</span>
+        <h3 class="text-headline-md font-headline-md text-on-surface">لا توجد حقائب تعليمية حالياً</h3>
+        <p class="text-body-md font-body-md text-on-surface-variant max-w-md">سيتم إضافة الحقائب والمذكرات الرقمية قريباً، تفقد الصفحة لاحقاً.</p>
+      </div>
+    ` : `
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+        ${bagsList.map((bag: any, idx: number) => {
+        const bagHref = `/bags/${bag.id}`;
+        const bagTitle = bag.title || 'حقيبة تعليمية';
+        const bagImg = bag.image || bag.cover_image || bag.thumbnail || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=80&w=600';
+        const isFree = Number(bag.price) === 0 || bag.price_type === 'free';
+        const priceDisplay = isFree ? 'مجانًا' : (bag.price ? `${bag.price} ر.س` : 'متاحة للتحميل');
+        const itemsCount = bag.items_count || (Array.isArray(bag.items) ? bag.items.length : 1);
+        const desc = bag.short_description || bag.description || 'حقيبة دراسية متكاملة تحتوي على ملخصات وأوراق عمل واختبارات تجريبية.';
+
+        return `
+            <a href="${bagHref}" target="_top" data-bag-index="${idx}" class="group block bg-surface-container-lowest border border-outline-variant/60 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:border-primary/40 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between">
+              <div>
+                <div class="relative w-full aspect-video overflow-hidden bg-surface-container">
+                  <img src="${bagImg}" alt="${bagTitle}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <span class="absolute top-3 left-3 bg-surface/90 backdrop-blur-md font-extrabold text-xs px-3 py-1 rounded-full shadow-sm text-primary">
+                    ${priceDisplay}
+                  </span>
+                </div>
+                <div class="p-6">
+                  <div class="flex items-center gap-2 mb-3 text-xs font-bold text-primary">
+                    <span class="material-symbols-outlined text-[16px]">folder_zip</span>
+                    <span>حقيبة رقمية</span>
+                  </div>
+                  <h3 class="text-headline-md font-headline-md text-lg font-bold mb-2 text-on-surface group-hover:text-primary transition-colors line-clamp-2">
+                    ${bagTitle}
+                  </h3>
+                  <p class="text-body-md text-xs text-on-surface-variant line-clamp-2 mb-4 leading-relaxed opacity-80">
+                    ${desc}
+                  </p>
+                </div>
+              </div>
+              <div class="px-6 pb-6 pt-3 border-t border-outline-variant/20 flex items-center justify-between text-xs font-bold text-on-surface-variant">
+                <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-primary">inventory_2</span> المحتويات</span>
+                <span class="font-bold text-on-surface">${itemsCount} ملفات دراسية</span>
+              </div>
+            </a>
+          `;
+      }).join('')}
       </div>
     `}
   </div>
@@ -899,28 +1031,109 @@ ${content?.contact && (contactTitle || contactDesc || contactPhone) ? `
                     </p>
 <div class="flex flex-col sm:flex-row items-center justify-center gap-stack-md">
   ${contactPhone
-    ? `<a data-contact-btn="primary" href="tel:${contactPhone.replace(/\s+/g, '')}" class="w-full sm:w-auto inline-flex items-center justify-center text-label-md font-label-md px-10 py-5 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer text-decoration-none" style="${contactBtnBg ? `background-color: ${contactBtnBg}; ` : 'background-color: #3525cd; '}${contactBtnTextColor ? `color: ${contactBtnTextColor}; ` : 'color: #ffffff; '}">
+        ? `<a data-contact-btn="primary" href="tel:${contactPhone.replace(/\s+/g, '')}" class="w-full sm:w-auto inline-flex items-center justify-center text-label-md font-label-md px-10 py-5 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer text-decoration-none" style="${contactBtnBg ? `background-color: ${contactBtnBg}; ` : 'background-color: #3525cd; '}${contactBtnTextColor ? `color: ${contactBtnTextColor}; ` : 'color: #ffffff; '}">
         ${contactBtnText}
        </a>`
-    : `<button data-contact-btn="primary" class="w-full sm:w-auto text-label-md font-label-md px-10 py-5 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300" style="${contactBtnBg ? `background-color: ${contactBtnBg}; ` : 'background-color: #3525cd; '}${contactBtnTextColor ? `color: ${contactBtnTextColor}; ` : 'color: #ffffff; '}">
+        : `<button data-contact-btn="primary" class="w-full sm:w-auto text-label-md font-label-md px-10 py-5 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300" style="${contactBtnBg ? `background-color: ${contactBtnBg}; ` : 'background-color: #3525cd; '}${contactBtnTextColor ? `color: ${contactBtnTextColor}; ` : 'color: #ffffff; '}">
         ${contactBtnText}
        </button>`
-  }
+      }
   ${contactSecondaryBtnLink
-    ? `<a data-contact-btn="secondary" href="${contactSecondaryBtnLink}" ${contactSecondaryBtnLink.startsWith('http') || contactSecondaryBtnLink.startsWith('https') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="w-full sm:w-auto inline-flex items-center justify-center border border-outline-variant text-label-md font-label-md px-10 py-5 rounded-full hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer text-decoration-none" style="${contactSecondaryBtnBg ? `background-color: ${contactSecondaryBtnBg}; ` : 'background-color: #ffffff; '}${contactSecondaryBtnTextColor ? `color: ${contactSecondaryBtnTextColor}; ` : 'color: #1b1b24; '}">
+        ? `<a data-contact-btn="secondary" href="${contactSecondaryBtnLink}" ${contactSecondaryBtnLink.startsWith('http') || contactSecondaryBtnLink.startsWith('https') ? 'target="_blank" rel="noopener noreferrer"' : ''} class="w-full sm:w-auto inline-flex items-center justify-center border border-outline-variant text-label-md font-label-md px-10 py-5 rounded-full hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer text-decoration-none" style="${contactSecondaryBtnBg ? `background-color: ${contactSecondaryBtnBg}; ` : 'background-color: #ffffff; '}${contactSecondaryBtnTextColor ? `color: ${contactSecondaryBtnTextColor}; ` : 'color: #1b1b24; '}">
         ${contactSecondaryBtnText}
        </a>`
-    : `<button data-contact-btn="secondary" class="w-full sm:w-auto border border-outline-variant text-label-md font-label-md px-10 py-5 rounded-full hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-md" style="${contactSecondaryBtnBg ? `background-color: ${contactSecondaryBtnBg}; ` : 'background-color: #ffffff; '}${contactSecondaryBtnTextColor ? `color: ${contactSecondaryBtnTextColor}; ` : 'color: #1b1b24; '}">
+        : `<button data-contact-btn="secondary" class="w-full sm:w-auto border border-outline-variant text-label-md font-label-md px-10 py-5 rounded-full hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-md" style="${contactSecondaryBtnBg ? `background-color: ${contactSecondaryBtnBg}; ` : 'background-color: #ffffff; '}${contactSecondaryBtnTextColor ? `color: ${contactSecondaryBtnTextColor}; ` : 'color: #1b1b24; '}">
         ${contactSecondaryBtnText}
        </button>`
-  }
+      }
 </div>
 </div>
 </div>
 </section>
 ` : ''}
 </main>
+<!-- Footer Section -->
+<footer data-section="footer" id="footer" class="w-full border-t border-outline-variant/30 transition-all duration-300 section-hover cursor-pointer" style="${footerBg ? `background-color: ${footerBg};` : 'background-color: #ffffff;'} ${footerTextColor ? `color: ${footerTextColor};` : ''}">
+  <!-- Contact Banner row -->
+  <div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-16 pb-12 border-b border-outline-variant/20">
+    <div class="bg-surface-container-low rounded-3xl p-8 md:p-12 flex flex-col lg:flex-row items-center justify-between gap-8 border border-outline-variant/40 shadow-sm">
+      <div class="space-y-2 max-w-xl text-right">
+        <span class="text-xs font-bold px-3.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">تواصل مباشر</span>
+        <h3 class="text-headline-md font-headline-md font-extrabold mt-2" style="${footerTextColor ? `color: ${footerTextColor};` : 'color: #1b1b24;'}">تواصل مع الأكاديمية مباشرة</h3>
+        <p class="text-body-md font-body-md text-on-surface-variant opacity-80" style="${footerTextColor ? `color: ${footerTextColor}; opacity: 0.8;` : 'color: #464555;'}">يسعدنا الإجابة على كافة استفساراتك وتوفير المساعدة والخدمات الأكاديمية عبر بريدنا المباشر.</p>
+      </div>
+      <div class="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+        <div class="flex items-center gap-2 px-5 py-3.5 rounded-full bg-surface border border-outline-variant/60 text-sm font-bold text-on-surface shadow-sm">
+          <span class="material-symbols-outlined text-primary text-[20px]">mail</span>
+          <span class="font-mono text-xs font-bold" style="${footerTextColor ? `color: ${footerTextColor};` : 'color: #1b1b24;'}">${realEmail}</span>
+        </div>
+        <a href="mailto:${realEmail}" ${isEditing ? '' : 'target="_top"'} class="w-full sm:w-auto px-8 py-3.5 rounded-full font-bold text-sm shrink-0 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all inline-flex items-center justify-center gap-2" style="background-color: #3525cd; color: #ffffff;">
+          <span class="material-symbols-outlined text-[18px]">send</span>
+          <span>تواصل هنا</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Links Grid -->
+  <div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-16 grid grid-cols-1 md:grid-cols-4 gap-stack-lg text-right">
+    <div class="space-y-4">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-[32px]">school</span>
+        <span class="text-headline-md font-headline-md font-bold text-primary">${navbarTitle}</span>
+      </div>
+      <p class="text-body-md text-xs text-on-surface-variant leading-relaxed opacity-80" style="${footerTextColor ? `color: ${footerTextColor}; opacity: 0.8;` : 'color: #464555;'}">
+        منصة أكاديمية تعليمية متكاملة مصممة لإدارة المسارات التعليمية، وتسهيل تفاعل الطلاب والمعلمين بأسلوب علمي متطور.
+      </p>
+    </div>
+
+    <div class="space-y-3">
+      <h4 class="text-label-md font-label-md font-extrabold text-on-surface uppercase tracking-wider" style="${footerTextColor ? `color: ${footerTextColor};` : 'color: #1b1b24;'}">روابط سريعة</h4>
+      <ul class="space-y-2 text-xs font-bold text-on-surface-variant">
+        <li><a href="#hero" onclick="scrollToAnchor(event, '#hero')" class="hover:text-primary transition-colors">الرئيسية</a></li>
+        <li><a href="/courses" ${isEditing ? '' : 'target="_top"'} class="hover:text-primary transition-colors">الدورات والبرامج</a></li>
+        <li><a href="/bags" ${isEditing ? '' : 'target="_top"'} class="hover:text-primary transition-colors">الحقائب التعليمية</a></li>
+        <li><a href="#features" onclick="scrollToAnchor(event, '#features')" class="hover:text-primary transition-colors">حول الأكاديمية</a></li>
+      </ul>
+    </div>
+
+    <div class="space-y-3">
+      <h4 class="text-label-md font-label-md font-extrabold text-on-surface uppercase tracking-wider" style="${footerTextColor ? `color: ${footerTextColor};` : 'color: #1b1b24;'}">الدعم والمساعدة</h4>
+      <ul class="space-y-2 text-xs font-bold text-on-surface-variant">
+        <li><a href="#faq" onclick="scrollToAnchor(event, '#faq')" class="hover:text-primary transition-colors">الأسئلة الشائعة</a></li>
+        <li><a href="#contact" onclick="scrollToAnchor(event, '#contact')" class="hover:text-primary transition-colors">تواصل معنا</a></li>
+        <li><a href="/auth/login" ${isEditing ? '' : 'target="_top"'} class="hover:text-primary transition-colors">تسجيل الدخول</a></li>
+      </ul>
+    </div>
+
+    <div class="space-y-3">
+      <h4 class="text-label-md font-label-md font-extrabold text-on-surface uppercase tracking-wider" style="${footerTextColor ? `color: ${footerTextColor};` : 'color: #1b1b24;'}">معلومات التواصل</h4>
+      <p class="text-xs font-bold text-on-surface-variant opacity-80" style="${footerTextColor ? `color: ${footerTextColor}; opacity: 0.8;` : 'color: #464555;'}">
+        البريد: ${realEmail}
+      </p>
+      <p class="text-xs font-bold text-on-surface-variant opacity-80" style="${footerTextColor ? `color: ${footerTextColor}; opacity: 0.8;` : 'color: #464555;'}">
+        الهاتف: ${realPhone}
+      </p>
+    </div>
+  </div>
+
+  <!-- Copyright Sub-bar -->
+  <div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-6 border-t border-outline-variant/20 flex flex-col md:flex-row items-center justify-between text-xs font-bold opacity-75">
+    <span>${footerText}</span>
+    <span class="mt-2 md:mt-0">تم التطوير بواسطة منصة درب</span>
+  </div>
+</footer>
 <script>
+        function scrollToAnchor(e, selector) {
+          if (selector && selector.startsWith('#')) {
+            if (e && e.preventDefault) e.preventDefault();
+            var target = document.querySelector(selector) || document.querySelector('[data-section="' + selector.substring(1) + '"]');
+            if (target) {
+              target.scrollIntoView({ behavior: 'smooth' });
+            }
+          }
+        }
+
         // Mobile Drawer Toggle
         const menuBtn = document.querySelector('.md\\\\:hidden');
         const drawer = document.getElementById('mobile-drawer');

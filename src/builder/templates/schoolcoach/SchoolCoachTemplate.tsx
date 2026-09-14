@@ -6,6 +6,8 @@ import { getPublicPages, getPublicSections, apiToEditor } from '@/services/pages
 import { getCourses } from '@/services/courses';
 import { getStudentCourses } from '@/services/student-courses';
 import { getStudentGrades, getStudentSubjects, getGrades, getSubjects } from '@/services/academic-classification';
+import { getBags } from '@/services/bags';
+import { getMyAcademyProfile } from '@/services/student-auth';
 import { useBuilderStore } from '../../store/builderStore';
 
 const TEMPLATE_SLUGS = ['schoolcoach-dashboard', 'template_1', 'template_2', 'template_3', 'template_4'];
@@ -22,9 +24,9 @@ const DEFAULT_CONTENT = {
     textColor: '#ffffff',
     links: [
       { label: 'الرئيسية', href: '/' },
-      { label: 'المواد', href: '#features' },
-      { label: 'الدورات', href: '#courses' },
-      { label: 'عن الأستاذ', href: '#about' },
+      { label: 'الحصص', href: '#courses' },
+      { label: 'الحقائب', href: '#bags' },
+      { label: 'تواصل معنا', href: '#contact' },
     ],
     loginText: 'تسجيل الدخول',
     loginLink: '/auth/login',
@@ -136,8 +138,13 @@ const DEFAULT_CONTENT = {
     showStudentsCount: false,
     buttonBg: '#f0b429',
   },
+  bags: {
+    title: 'الحقائب التعليمية والملفات الرقمية',
+    subtitle: 'ملازم ومذكرات دراسية شاملة جاهزة للتحميل والاستفادة',
+    items: [],
+  },
   footer: {
-    text: '© ٢٠٢٦ الأستاذ أحمد محمد. جميع الحقوق محفوظة.',
+    text: ' جميع الحقوق محفوظة.',
     backgroundColor: '#0a1628',
     textColor: '#ffffff',
     newsletterTitle: 'اشترك في نشرتنا البريدية المعرفية',
@@ -171,7 +178,7 @@ function parseItems(items: any): any[] {
   return Array.isArray(items) ? items : [];
 }
 
-function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, realCourses: any[] = [], isEditing: boolean = false) {
+function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, realCourses: any[] = [], realBags: any[] = [], isEditing: boolean = false) {
   const hasApiData = Array.isArray(nodes) && nodes.length > 0;
 
   if (!hasApiData) {
@@ -181,6 +188,7 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
       about: fallback.about,
       features: fallback.features,
       courses: { ...fallback.courses, items: realCourses.length > 0 ? realCourses : [] },
+      bags: { ...fallback.bags, items: realBags.length > 0 ? realBags : [] },
       pricing: fallback.pricing,
       faq: fallback.faq,
       contact: fallback.contact,
@@ -193,6 +201,7 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
   const aboutNode = nodes.find(n => n.type === 'about');
   const featuresNode = nodes.find(n => n.type === 'features' || n.type === 'features_section');
   const courseNode = nodes.find(n => n.type === 'course-cards' || n.type === 'courses');
+  const bagsNode = nodes.find(n => n.type === 'bags' || n.type === 'bags-cards' || n.type === 'educational-bags');
   const pricingNode = nodes.find(n => n.type === 'pricing');
   const faqNode = nodes.find(n => n.type === 'faq');
   const contactNode = nodes.find(n => n.type === 'contact');
@@ -291,16 +300,27 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
   let courses: any = null;
   if (courseNode || realCourses.length > 0) {
     const cp = courseNode ? parseProps(courseNode.props) : {};
-    const coursesList = realCourses;
     courses = {
       ...cp,
       title: cp.title ?? 'أحدث الدورات والمراجعات الدراسية',
       subtitle: cp.subtitle ?? 'دروس تفاعلية ومراجعات مكثفة للدرجات النهائية',
-      items: coursesList,
+      items: realCourses,
       limit: cp.limit || 6,
       showPrice: cp.showPrice ?? cp.show_price ?? true,
       showStudentsCount: cp.showStudentsCount ?? cp.show_students_count ?? false,
       buttonBg: cp.buttonBg ?? cp.button_bg ?? '#f0b429',
+    };
+  }
+
+  // Bags
+  let bags: any = null;
+  if (bagsNode || realBags.length > 0) {
+    const bp = bagsNode ? parseProps(bagsNode.props) : {};
+    bags = {
+      ...bp,
+      title: bp.title ?? fallback.bags?.title ?? 'الحقائب التعليمية والملفات الرقمية',
+      subtitle: bp.subtitle ?? fallback.bags?.subtitle ?? 'ملازم ومذكرات دراسية شاملة جاهزة للتحميل والاستفادة',
+      items: realBags,
     };
   }
 
@@ -390,6 +410,7 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
     about,
     features,
     courses,
+    bags,
     pricing,
     faq,
     contact,
@@ -403,6 +424,8 @@ import { useRef } from 'react';
 export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCoachTemplateProps) {
   const [content, setContent] = useState<any>(null);
   const [realCourses, setRealCourses] = useState<any[]>([]);
+  const [realBags, setRealBags] = useState<any[]>([]);
+  const [teacherProfile, setTeacherProfile] = useState<any>(null);
   const [grades, setGrades] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [selectedGrade, setSelectedGrade] = useState<string>('');
@@ -412,7 +435,7 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
   const { isEditing } = useBuilderStore();
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Load grades and subjects independently once (No dependency of subject on grade)
+  // Load grades and subjects independently once
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const token = getStoredAuthToken();
@@ -424,7 +447,6 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
         let loadedSubjects: any[] = [];
 
         if (isEditing) {
-          // Builder mode: use academy APIs
           try {
             const g = await getGrades();
             if (g && g.length > 0) {
@@ -445,7 +467,6 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
             console.error('[SchoolCoachTemplate] Failed to fetch subjects in builder mode:', err);
           }
         } else {
-          // Live student mode: strictly use student APIs (no academy fallbacks on empty [])
           try {
             const g = await getStudentGrades();
             if (g && g.length > 0) {
@@ -480,6 +501,49 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
     }
   }, [isEditing]);
 
+  // Fetch bags dynamically from API endpoint
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchBags() {
+      try {
+        const data = await getBags();
+        if (isMounted) {
+          const bagsList = Array.isArray(data) ? data : [];
+          setRealBags(bagsList);
+          iframeRef.current?.contentWindow?.postMessage({
+            type: 'SCHOOLCOACH_UPDATE_BAGS',
+            bags: bagsList
+          }, '*');
+        }
+      } catch (err) {
+        console.error('[SchoolCoachTemplate] Failed to fetch bags:', err);
+      }
+    }
+    fetchBags();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Fetch teacher profile details dynamically from endpoint
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchProfile() {
+      try {
+        const data = await getMyAcademyProfile();
+        if (isMounted && data) {
+          setTeacherProfile(data);
+        }
+      } catch (err) {
+        console.error('[SchoolCoachTemplate] Failed to fetch teacher profile:', err);
+      }
+    }
+    fetchProfile();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Fetch courses in background and update iframe smoothly without hard refresh
   useEffect(() => {
     let isMounted = true;
@@ -489,7 +553,6 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
         if (selectedGrade) filters.grade_id = selectedGrade;
         if (selectedSubject) filters.subject_id = selectedSubject;
 
-        // Visual feedback inside iframe
         iframeRef.current?.contentWindow?.postMessage({
           type: 'SCHOOLCOACH_COURSES_LOADING'
         }, '*');
@@ -502,7 +565,6 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
           const coursesList = Array.isArray(data) ? data : [];
           setRealCourses(coursesList);
 
-          // Update iframe DOM directly via postMessage (Zero hard refresh)
           iframeRef.current?.contentWindow?.postMessage({
             type: 'SCHOOLCOACH_UPDATE_COURSES',
             courses: coursesList
@@ -524,13 +586,13 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
     };
   }, [isEditing, selectedGrade, selectedSubject]);
 
-  // Load template structure (Independent of dynamic course filters)
+  // Load template structure
   useEffect(() => {
     async function load() {
       const fallback = DEFAULT_CONTENT;
 
       if (sectionsProp && sectionsProp.length > 0) {
-        const parsed = parseSectionsToContent(sectionsProp, fallback, [], isEditing);
+        const parsed = parseSectionsToContent(sectionsProp, fallback, realCourses, realBags, isEditing);
         setContent(parsed);
         return;
       }
@@ -555,7 +617,7 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
           const apiSections = await getPublicSections(activePage.id);
           if (apiSections && apiSections.length > 0) {
             const editorNodes = apiToEditor(apiSections);
-            const parsed = parseSectionsToContent(editorNodes, fallback, [], isEditing);
+            const parsed = parseSectionsToContent(editorNodes, fallback, realCourses, realBags, isEditing);
             setContent(parsed);
             return;
           }
@@ -564,18 +626,17 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
         console.error('[SchoolCoachTemplate] Failed to fetch sections from API:', err);
       }
 
-      setContent(parseSectionsToContent([], fallback, [], isEditing));
+      setContent(parseSectionsToContent([], fallback, realCourses, realBags, isEditing));
     }
 
     load();
-  }, [sectionsProp, isEditing]);
+  }, [sectionsProp, isEditing, realCourses, realBags]);
 
   // Listen to filter events from iframe
   useEffect(() => {
     const handleMessage = (e: MessageEvent) => {
       if (e.data?.type === 'SCHOOLCOACH_FILTER_GRADE') {
         const gradeId = e.data.gradeId || '';
-        // Subject does NOT depend on grade, so do not reset subject or re-fetch subjects!
         setSelectedGrade(gradeId);
       } else if (e.data?.type === 'SCHOOLCOACH_FILTER_SUBJECT') {
         const subjectId = e.data.subjectId || '';
@@ -586,7 +647,7 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  // Sync initial dropdowns/courses when iframe loads
+  // Sync initial dropdowns/courses/bags when iframe loads
   const handleIframeLoad = () => {
     if (iframeRef.current?.contentWindow) {
       if (grades.length > 0 || subjects.length > 0) {
@@ -602,10 +663,16 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
           courses: realCourses,
         }, '*');
       }
+      if (realBags.length > 0) {
+        iframeRef.current.contentWindow.postMessage({
+          type: 'SCHOOLCOACH_UPDATE_BAGS',
+          bags: realBags,
+        }, '*');
+      }
     }
   };
 
-  // Memoize the initial HTML based only on static content layout, NOT on dynamic filter changes
+  // Memoize initial HTML
   const initialHtml = React.useMemo(() => {
     if (!content) return '';
     return getSchoolCoachHtml(
@@ -617,9 +684,11 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
       subjects,
       '',
       '',
-      realCourses
+      realCourses,
+      realBags,
+      teacherProfile
     );
-  }, [content, isEditing, isLoggedIn, dashboardUrl]);
+  }, [content, isEditing, isLoggedIn, dashboardUrl, grades, subjects, realCourses, realBags, teacherProfile]);
 
   if (!content) return null;
 

@@ -92,11 +92,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       icon: LayoutDashboard,
       href: '/academic',
     },
-    {
-      label: 'الملف الشخصي',
-      icon: User,
-      href: '/academic/profile',
-    },
+    // {
+    //   label: 'الملف الشخصي',
+    //   icon: User,
+    //   href: '/academic/profile',
+    // },
     {
       label: 'الدورات',
       icon: GraduationCap,

@@ -686,6 +686,16 @@ export default function CreateCourseClient() {
     }
   };
 
+  const handleRemoveImage = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    localStorage.removeItem(`darb_create_course_image_${courseTypeParam || 'recorded'}`);
+  };
+
   const handleAddLearningOutcome = () => {
     setLearningOutcomes([...learningOutcomes, '']);
   };
@@ -1420,13 +1430,41 @@ export default function CreateCourseClient() {
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div
-                onClick={() => fileInputRef.current?.click()}
                 className="w-16 h-16 rounded-2xl overflow-hidden border border-slate-300 bg-slate-100 flex items-center justify-center cursor-pointer hover:border-blue-500 hover:shadow-md transition-all shrink-0 group relative"
               >
                 {previewUrl ? (
-                  <img src={previewUrl} alt="Course Thumbnail" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                  <>
+                    <img src={previewUrl} alt="Course Thumbnail" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-1 z-10">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          fileInputRef.current?.click();
+                        }}
+                        className="w-6 h-6 rounded-full bg-white/90 hover:bg-white text-slate-800 flex items-center justify-center shadow-xs transition-transform hover:scale-110"
+                        title="تغيير الصورة"
+                      >
+                        <Pencil size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        className="w-6 h-6 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center shadow-xs transition-transform hover:scale-110"
+                        title="إلغاء الصورة"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  </>
                 ) : (
-                  <ImagePlus className="w-7 h-7 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full h-full flex items-center justify-center text-slate-400 group-hover:text-blue-600 transition-colors"
+                    title="رفع صورة"
+                  >
+                    <ImagePlus className="w-7 h-7" />
+                  </div>
                 )}
               </div>
               <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
@@ -1559,11 +1597,36 @@ export default function CreateCourseClient() {
                       <div className="order-2 md:order-2">
                         <label className="block text-sm font-bold mb-2 text-slate-800">الصورة التعريفية (Thumbnail)</label>
                         <div
-                          onClick={() => fileInputRef.current?.click()}
                           className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl h-28 flex flex-col items-center justify-center bg-slate-50/50 hover:bg-blue-50/20 transition-all cursor-pointer group overflow-hidden relative"
+                          onClick={() => {
+                            if (!previewUrl) fileInputRef.current?.click();
+                          }}
                         >
                           {previewUrl ? (
-                            <img src={previewUrl} alt="Thumbnail Preview" className="w-full h-full object-cover" />
+                            <>
+                              <img src={previewUrl} alt="Thumbnail Preview" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center gap-2.5 p-3 z-10">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    fileInputRef.current?.click();
+                                  }}
+                                  className="px-3 py-1.5 rounded-xl bg-white text-slate-900 font-bold text-xs flex items-center gap-1 shadow-md hover:bg-slate-100 transition-transform active:scale-95"
+                                >
+                                  <Pencil size={13} className="text-blue-600" />
+                                  تغيير الصورة
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleRemoveImage}
+                                  className="px-3 py-1.5 rounded-xl bg-rose-600 text-white font-bold text-xs flex items-center gap-1 shadow-md hover:bg-rose-700 transition-transform active:scale-95"
+                                >
+                                  <Trash2 size={13} />
+                                  إلغاء الصورة
+                                </button>
+                              </div>
+                            </>
                           ) : (
                             <>
                               <ImagePlus className="w-7 h-7 text-slate-400 group-hover:text-blue-600 transition-colors" />

@@ -144,6 +144,15 @@ export const useCreateCourseModal = ({
     }
   };
 
+  const handleRemoveImage = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSave = async () => {
     setIsSubmitting(true);
     setErrors({});
@@ -294,6 +303,7 @@ export const useCreateCourseModal = ({
     previewUrl,
     fileInputRef,
     handleFileChange,
+    handleRemoveImage,
     pricingType,
     setPricingType,
     price,
