@@ -84,6 +84,9 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle
   if (!isOpen) return null;
 
   const handleClose = () => {
+    if (isSubmitting || uploadStatus === 'creating' || uploadStatus === 'uploading' || uploadStatus === 'processing') {
+      toast.success('تم إغلاق النافذة وسوف يستمر رفع وتجهيز الدرس في الخلفية حتى الاكتمال');
+    }
     setTitle('');
     setDescription('');
     setIsFree(false);
@@ -400,6 +403,15 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle
       } else if (error?.message) {
         errorMsg = translateErrorToArabic(error.message);
       }
+
+      await MySwal.fire({
+        title: 'خطأ أثناء عملية الرفع',
+        text: errorMsg,
+        icon: 'error',
+        confirmButtonText: 'موافق',
+        confirmButtonColor: '#ef4444',
+      });
+
       toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
@@ -413,6 +425,20 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle
       <div className="relative w-full max-w-4xl bg-white rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[90vh] overflow-y-auto">
         <div className="p-10 space-y-10">
           <h2 className="text-2xl font-black text-center text-gray-900">اضافة درس جديد</h2>
+
+          {(isSubmitting || uploadStatus === 'creating' || uploadStatus === 'uploading' || uploadStatus === 'processing') && (
+            <div className="max-w-2xl mx-auto bg-blue-50/90 border border-blue-200 rounded-2xl p-4 flex items-start gap-3 text-blue-900 animate-in fade-in duration-300 shadow-xs">
+              <div className="p-2 bg-blue-600 text-white rounded-xl shrink-0 mt-0.5 shadow-xs">
+                <Upload size={18} className="animate-bounce" />
+              </div>
+              <div className="space-y-1 text-right">
+                <p className="font-extrabold text-blue-950 text-sm">جاري رفع ومعالجة محتوى الدرس...</p>
+                <p className="text-xs text-blue-700 font-bold leading-relaxed">
+                  💡 <strong>تنبيه هام:</strong> يمكنك إغلاق هذه النافذة بأمان الآن، وسوف تستمر عملية رفع ومعالجة الدرس في الخلفية حتى الانتهاء بنجاح.
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-6 max-w-2xl mx-auto">
             {isLive ? (

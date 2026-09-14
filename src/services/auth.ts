@@ -47,25 +47,38 @@ export const superAdminLogin = async (payload: any): Promise<LoginResponse> => {
   }
 };
 
+export const getMeProfile = async (): Promise<any> => {
+  try {
+    const meResponse = await academyApi.get('me');
+    return meResponse.data;
+  } catch (e) {
+    try {
+      const settingsResponse = await academyApi.get('settings');
+      return settingsResponse.data;
+    } catch (err: any) {
+      console.error('Failed to get user me profile:', err);
+      throw err.response?.data || err;
+    }
+  }
+};
+
 export const getProfileStatus = async (): Promise<any> => {
-  return getAcademySettings();
+  return getMeProfile();
 };
 
 export const getAcademySettings = async (): Promise<any> => {
-
   try {
-    const fallbackResponse = await academyApi.get('settings');
-    return fallbackResponse.data;
+    const response = await academyApi.get('settings');
+    return response.data;
   } catch (e) {
     try {
       const meResponse = await academyApi.get('me');
       return meResponse.data;
     } catch (err: any) {
-      console.error('Failed to get profile/setting status:', err);
+      console.error('Failed to get academy settings:', err);
       throw err.response?.data || err;
     }
   }
-
 };
 
 export const sendOtp = async (contact: string, countryCode?: string): Promise<ApiResponse<any>> => {
@@ -74,8 +87,13 @@ export const sendOtp = async (contact: string, countryCode?: string): Promise<Ap
     if (countryCode) {
       payload.country_code = countryCode;
     }
-    const response = await api.post<ApiResponse<any>>('https://api.darab.academy/api/academy/send-otp', payload);
-    return response.data;
+    try {
+      const response = await academyApi.post<ApiResponse<any>>('send-otp', payload);
+      return response.data;
+    } catch (err) {
+      const response = await api.post<ApiResponse<any>>('https://api.darab.academy/api/academy/send-otp', payload);
+      return response.data;
+    }
   } catch (error: any) {
     console.error('Failed to send OTP:', error);
     throw error.response?.data || error;
@@ -88,8 +106,13 @@ export const verifyOtp = async (contact: string, otp: string, countryCode?: stri
     if (countryCode) {
       payload.country_code = countryCode;
     }
-    const response = await api.post<ApiResponse<any>>('https://api.darab.academy/api/academy/check-otp', payload);
-    return response.data;
+    try {
+      const response = await academyApi.post<ApiResponse<any>>('check-otp', payload);
+      return response.data;
+    } catch (err) {
+      const response = await api.post<ApiResponse<any>>('https://api.darab.academy/api/academy/check-otp', payload);
+      return response.data;
+    }
   } catch (error: any) {
     console.error('Failed to verify OTP:', error);
     throw error.response?.data || error;

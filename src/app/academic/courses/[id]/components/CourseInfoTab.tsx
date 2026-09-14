@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Info, X, Upload, ImagePlus, Plus, Trash2, Landmark } from 'lucide-react';
+import { Info, X, Upload, ImagePlus, Plus, Trash2, Landmark, Pencil } from 'lucide-react';
 import { ClassificationItem } from '@/services/academic-classification';
 import { AcademyPaymentMethod, PaymentMethod } from '@/types/payment';
 import { User, ReceiverAccount } from '@/types/api';
@@ -37,6 +37,7 @@ interface CourseInfoTabProps {
   previewImage: string | null;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleRemoveImage?: (e?: React.MouseEvent) => void;
   categories: any[];
   setIsAddCategoryModalOpen: (open: boolean) => void;
   instructors: User[];
@@ -102,6 +103,7 @@ export const CourseInfoTab: React.FC<CourseInfoTabProps> = ({
   previewImage,
   fileInputRef,
   handleImageChange,
+  handleRemoveImage,
   categories,
   setIsAddCategoryModalOpen,
   instructors,
@@ -191,7 +193,9 @@ export const CourseInfoTab: React.FC<CourseInfoTabProps> = ({
           <div className="order-2 md:order-2 space-y-2">
             <label className="block text-label-md mb-2 text-gray-900">الصورة التعريفية (Thumbnail)</label>
             <div
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => {
+                if (!previewImage) fileInputRef.current?.click();
+              }}
               className="border-2 border-dashed border-outline-variant rounded-lg h-36 flex flex-col items-center justify-center bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer overflow-hidden relative group"
             >
               <input
@@ -204,9 +208,33 @@ export const CourseInfoTab: React.FC<CourseInfoTabProps> = ({
               {previewImage ? (
                 <div className="relative w-full h-full">
                   <img src={previewImage} alt="Course Preview" className="object-cover w-full h-full" />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all text-white font-bold text-xs gap-1.5">
-                    <Upload className="w-4 h-4" />
-                    تغيير الصورة
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all text-white font-bold text-xs gap-2 p-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fileInputRef.current?.click();
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-white text-slate-900 font-bold text-xs flex items-center gap-1 shadow-md hover:bg-slate-100 transition-transform active:scale-95 cursor-pointer"
+                      title="تغيير الصورة"
+                    >
+                      <Pencil size={13} className="text-blue-600" />
+                      <span>تغيير</span>
+                    </button>
+                    {handleRemoveImage && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveImage(e);
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-rose-600 text-white font-bold text-xs flex items-center gap-1 shadow-md hover:bg-rose-700 transition-transform active:scale-95 cursor-pointer"
+                        title="إلغاء الصورة"
+                      >
+                        <Trash2 size={13} />
+                        <span>إلغاء</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               ) : (

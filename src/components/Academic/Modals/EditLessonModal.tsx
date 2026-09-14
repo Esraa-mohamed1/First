@@ -3,10 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle2, Loader2, Video, FileText, FilePieChart as FilePowerpoint, Link2, Save, CornerUpLeft, Calendar, Type, Eye, Lock, Play } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import { updateLesson } from '@/services/courses';
 import { Lesson } from '@/types/api';
 import LiveLessonForm from './components/LiveLessonForm';
 import { getLessonVideoSrc } from '@/lib/lesson-video-src';
+
+const MySwal = withReactContent(Swal);
 
 interface EditLessonModalProps {
   isOpen: boolean;
@@ -182,9 +186,17 @@ const EditLessonModal = ({ isOpen, onClose, lesson, onLessonUpdated, courseType 
       toast.success('تم تحديث الدرس بنجاح');
       onLessonUpdated();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error('فشل تحديث الدرس');
+      const errorMsg = error?.message || 'فشل تحديث الدرس';
+      await MySwal.fire({
+        title: 'خطأ في عملية التحديث',
+        text: errorMsg,
+        icon: 'error',
+        confirmButtonText: 'موافق',
+        confirmButtonColor: '#ef4444',
+      });
+      toast.error(errorMsg);
     } finally {
       setIsLoading(false);
     }

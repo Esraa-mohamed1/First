@@ -1,9 +1,7 @@
-'use client';
-
 import React, { useState, useRef, useEffect } from 'react';
 import { ShieldCheck, Mail, X, Loader2, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { sendOtp, verifyOtp } from '@/services/auth';
+import { sendOtp, verifyOtp, getProfileStatus } from '@/services/auth';
 import { useCountry } from '@/hooks/useCountry';
 
 interface VerificationModalProps {
@@ -34,29 +32,65 @@ const VerificationModal = ({ isOpen, onClose, onSuccess }: VerificationModalProp
 
   useEffect(() => {
     if (isOpen) {
-      const userStr = localStorage.getItem('user_info');
-      if (userStr) {
+      const fetchUserData = async () => {
+        let foundContact: string | null = null;
         try {
-          const user = JSON.parse(userStr);
-          setContact(user.email || user.phone);
-        } catch (e) {
-          console.error('Failed to parse user info');
+          const profile = await getProfileStatus();
+          const user = profile?.data || profile?.user || profile;
+          if (user) {
+            foundContact = user.email || user.phone || user.mobile || null;
+            try {
+              localStorage.setItem('user_info', JSON.stringify(user));
+            } catch (e) {}
+          }
+        } catch (err) {
+          console.warn('Failed to fetch user profile in VerificationModal:', err);
         }
-      }
+
+        if (!foundContact) {
+          const userStr = localStorage.getItem('user_info');
+          if (userStr) {
+            try {
+              const user = JSON.parse(userStr);
+              foundContact = user.email || user.phone || user.mobile || null;
+            } catch (e) {}
+          }
+        }
+
+        if (foundContact) {
+          setContact(foundContact);
+        }
+      };
+
+      fetchUserData();
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   const handleSendOtp = async () => {
-    if (!contact) {
-      toast.error('لم يتم العثور على معلومات الاتصال');
+    let targetContact = contact;
+    if (!targetContact) {
+      try {
+        const profile = await getProfileStatus();
+        const user = profile?.data || profile?.user || profile;
+        if (user) {
+          targetContact = user.email || user.phone || user.mobile || null;
+          if (targetContact) setContact(targetContact);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch contact during handleSendOtp:', err);
+      }
+    }
+
+    if (!targetContact || !targetContact.trim()) {
+      toast.error('يرجى إدخال البريد الإلكتروني أو رقم الهاتف لاستلام رمز التحقق');
       return;
     }
 
     setLoading(true);
     try {
-      await sendOtp(contact, selectedCountry?.isoCode);
+      await sendOtp(targetContact, selectedCountry?.isoCode);
       toast.success('تم إرسال رمز التحقق بنجاح');
       setStep('otp');
       setResendTimer(60);
@@ -178,22 +212,39 @@ const VerificationModal = ({ isOpen, onClose, onSuccess }: VerificationModalProp
         </button>
 
         {step === 'initial' && (
-          <div className="space-y-10 mt-6">
+          <div className="space-y-8 mt-6">
             <div className="w-28 h-28 bg-blue-50 text-blue-600 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-sm transform hover:rotate-6 transition-transform">
               <ShieldCheck size={56} />
             </div>
             <div className="space-y-3">
               <h2 className="text-4xl font-black text-gray-900">تأكيد الحساب</h2>
-              <p className="text-gray-500 font-bold leading-relaxed max-w-md mx-auto text-lg">
+              <p className="text-gray-500 font-bold leading-relaxed max-w-md mx-auto text-base">
                 يرجى تأكيد حسابك لتتمكن من رفع فيديوهات دروس الأكاديمية وحفظها بأمان.
               </p>
+              {contact ? (
+                <div className="bg-blue-50/80 border border-blue-200/80 p-3 rounded-2xl max-w-md mx-auto">
+                  <span className="text-xs font-bold text-gray-500 block">وسيتم إرسال الرمز إلى:</span>
+                  <span className="text-blue-600 font-black text-base tracking-wide" dir="ltr">{contact}</span>
+                </div>
+              ) : (
+                <div className="max-w-md mx-auto text-right space-y-2 pt-2">
+                  <label className="block text-xs font-extrabold text-gray-700 px-1">البريد الإلكتروني أو رقم الهاتف</label>
+                  <input
+                    type="text"
+                    value={contact || ''}
+                    onChange={(e) => setContact(e.target.value)}
+                    placeholder="أدخل البريد الإلكتروني أو رقم الهاتف"
+                    className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl font-bold text-center text-gray-900 outline-none focus:border-blue-600 focus:bg-white transition-all text-base"
+                  />
+                </div>
+              )}
             </div>
             <button
               onClick={handleSendOtp}
               disabled={loading}
-              className="w-full py-6 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-black rounded-3xl shadow-2xl shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-70 text-xl"
+              className="w-full py-5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-black rounded-3xl shadow-2xl shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-70 text-lg cursor-pointer"
             >
-              {loading ? <Loader2 className="animate-spin" size={28} /> : <Mail size={28} />}
+              {loading ? <Loader2 className="animate-spin" size={26} /> : <Mail size={26} />}
               إرسال رمز التحقق
             </button>
           </div>
