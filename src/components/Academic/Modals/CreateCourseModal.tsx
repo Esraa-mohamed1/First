@@ -44,6 +44,7 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
     previewUrl,
     fileInputRef,
     handleFileChange,
+    handleRemoveImage,
     pricingType,
     setPricingType,
     price,
@@ -132,6 +133,7 @@ const CreateCourseModal = ({ isOpen, onClose, courseId, initialCourseType }: Cre
                   previewUrl={previewUrl}
                   fileInputRef={fileInputRef}
                   handleFileChange={handleFileChange}
+                  handleRemoveImage={handleRemoveImage}
                   description={description}
                   setDescription={setDescription}
                   whatYouWillLearn={whatYouWillLearn}

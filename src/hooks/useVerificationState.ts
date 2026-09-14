@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
-import { sendOtp, verifyOtp } from "@/services/auth";
+import { sendOtp, verifyOtp, getProfileStatus } from "@/services/auth";
 import { useCountry } from "@/hooks/useCountry";
 import { getErrorMessage } from "@/lib/utils";
 
@@ -31,27 +31,63 @@ export function useVerificationState() {
         if (contactParam) {
             setContact(contactParam);
         } else {
-            const userStr = localStorage.getItem('user_info');
-            if (userStr) {
+            const fetchProfileContact = async () => {
+                let found: string | null = null;
                 try {
-                    const user = JSON.parse(userStr);
-                    setContact(user.email || user.phone);
-                } catch (e) {
-                    console.error('Failed to parse user info');
+                    const profile = await getProfileStatus();
+                    const user = profile?.data || profile?.user || profile;
+                    if (user) {
+                        found = user.email || user.phone || user.mobile || null;
+                        try {
+                            localStorage.setItem('user_info', JSON.stringify(user));
+                        } catch (e) {}
+                    }
+                } catch (err) {
+                    console.warn('Failed to fetch me profile in useVerificationState:', err);
                 }
-            }
+
+                if (!found) {
+                    const userStr = localStorage.getItem('user_info');
+                    if (userStr) {
+                        try {
+                            const user = JSON.parse(userStr);
+                            found = user.email || user.phone || user.mobile || null;
+                        } catch (e) {}
+                    }
+                }
+
+                if (found) {
+                    setContact(found);
+                }
+            };
+
+            fetchProfileContact();
         }
     }, [searchParams]);
 
     const handleSendOtp = async () => {
-        if (!contact) {
+        let targetContact = contact;
+        if (!targetContact) {
+            try {
+                const profile = await getProfileStatus();
+                const user = profile?.data || profile?.user || profile;
+                if (user) {
+                    targetContact = user.email || user.phone || user.mobile || null;
+                    if (targetContact) setContact(targetContact);
+                }
+            } catch (err) {
+                console.warn('Failed to fetch contact during handleSendOtp:', err);
+            }
+        }
+
+        if (!targetContact || !targetContact.trim()) {
             toast.error('لم يتم العثور على معلومات الاتصال');
             return;
         }
 
         setLoading(true);
         try {
-            await sendOtp(contact, selectedCountry?.isoCode);
+            await sendOtp(targetContact, selectedCountry?.isoCode);
             toast.success('تم إرسال رمز التحقق بنجاح');
             setStep('otp');
             setResendTimer(60);

@@ -35,9 +35,9 @@ export default function SetupPage() {
       <header className="flex justify-between items-center px-6 sm:px-10 w-full h-16 bg-[#f8f9ff]/80 backdrop-blur-md fixed top-0 z-50 border-b border-[#E5E7EB]">
         <div className="text-2xl font-bold text-[#004ac6]">درب</div>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-[#434655] hidden sm:inline">هل لديك حساب؟</span>
-          <Link href="/auth/login" className="text-[#004ac6] font-semibold hover:underline text-sm">
-            تسجيل الدخول
+
+          <Link href="/" className="text-[#004ac6] font-semibold hover:underline text-sm">
+            العودة للرئيسية
           </Link>
         </div>
       </header>
@@ -190,11 +190,10 @@ export default function SetupPage() {
                       className="flex flex-col items-center gap-2 group transition-all duration-300 focus:outline-none"
                     >
                       <div
-                        className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center border-4 overflow-hidden transition-all duration-300 shadow-sm relative ${
-                          isSelected
-                            ? 'border-[#004ac6] bg-[#eef4ff] scale-105 shadow-md shadow-[#004ac6]/15'
-                            : 'border-slate-200 bg-white hover:border-slate-300 hover:scale-102 hover:shadow-md'
-                        }`}
+                        className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center border-4 overflow-hidden transition-all duration-300 shadow-sm relative ${isSelected
+                          ? 'border-[#004ac6] bg-[#eef4ff] scale-105 shadow-md shadow-[#004ac6]/15'
+                          : 'border-slate-200 bg-white hover:border-slate-300 hover:scale-102 hover:shadow-md'
+                          }`}
                       >
                         {country.flagUrl ? (
                           <img
@@ -239,9 +238,8 @@ export default function SetupPage() {
                     }
                   }}
                   placeholder="أدخل اسم أكاديميتك"
-                  className={`w-full p-4 border rounded-xl bg-white focus:outline-none text-sm font-medium text-[#111827] transition-all ${
-                    fieldErrors.username || fieldErrors.academy_name ? 'border-red-500 bg-red-50/20 focus:border-red-500' : 'border-slate-300 focus:border-[#004ac6]'
-                  }`}
+                  className={`w-full p-4 border rounded-xl bg-white focus:outline-none text-sm font-medium text-[#111827] transition-all ${fieldErrors.username || fieldErrors.academy_name ? 'border-red-500 bg-red-50/20 focus:border-red-500' : 'border-slate-300 focus:border-[#004ac6]'
+                    }`}
                 />
                 {(fieldErrors.username || fieldErrors.academy_name) && (
                   <p className="mt-1 text-red-500 text-xs font-semibold flex items-center gap-1">
@@ -324,7 +322,7 @@ export default function SetupPage() {
       {/* Footer Space */}
       <footer className="w-full py-12 bg-white border-t border-[#E5E7EB] mt-20">
         <div className="flex flex-col md:flex-row justify-between items-center px-6 md:px-10 w-full max-w-5xl mx-auto gap-4">
-          <div className="text-sm font-bold text-[#434655]">© 2024 درب أكاديمي. جميع الحقوق محفوظة.</div>
+          <div className="text-sm font-bold text-[#434655]">درب أكاديمي.</div>
           <div className="flex gap-8">
             <a href="#" className="text-[#434655] text-xs hover:text-[#004ac6] transition-colors">
               سياسة الخصوصية

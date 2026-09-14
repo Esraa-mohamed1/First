@@ -92,11 +92,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       icon: LayoutDashboard,
       href: '/academic',
     },
-    {
-      label: 'الملف الشخصي',
-      icon: User,
-      href: '/academic/profile',
-    },
+    // {
+    //   label: 'الملف الشخصي',
+    //   icon: User,
+    //   href: '/academic/profile',
+    // },
     {
       label: 'الدورات',
       icon: GraduationCap,
@@ -105,7 +105,16 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         { label: 'دورة مسجلة', href: '/academic/courses/recorded' },
         { label: 'دورة لايف اون لاين', href: '/academic/courses/live-online' },
         { label: 'دورة حضوري', href: '/academic/courses/in-person' },
-        { label: 'التصنيف والصفوف الدراسية', href: '/academic/courses/categories' },
+
+        ...(user?.role === 'teacherSchool'
+          ? [
+            {
+              label: 'التصنيف والصفوف الدراسية',
+              href: '/academic/courses/categories',
+            },
+          ]
+          : []),
+
         { label: 'معاينة كطالب (تجريبي)', href: '/academic/courses/8/student' },
       ],
     },
@@ -182,7 +191,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     {
       label: 'الأعدادات',
       icon: Settings,
-      href: '/academic/settings',
+      href: '/academic/settings/academy',
       subItems: [
         { label: 'بيانات الأكاديمية', href: '/academic/settings/academy' },
       ]

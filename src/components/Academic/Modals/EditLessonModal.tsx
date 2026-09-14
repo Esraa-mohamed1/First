@@ -3,10 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle2, Loader2, Video, FileText, FilePieChart as FilePowerpoint, Link2, Save, CornerUpLeft, Calendar, Type, Eye, Lock, Play } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import { updateLesson } from '@/services/courses';
 import { Lesson } from '@/types/api';
 import LiveLessonForm from './components/LiveLessonForm';
 import { getLessonVideoSrc } from '@/lib/lesson-video-src';
+
+const MySwal = withReactContent(Swal);
 
 interface EditLessonModalProps {
   isOpen: boolean;
@@ -153,6 +157,17 @@ const EditLessonModal = ({ isOpen, onClose, lesson, onLessonUpdated, courseType 
 <!--OFFLINE_METADATA:${JSON.stringify({ locationLink, startDate, endDate })}-->`
         : description;
 
+      const resolvedVideoUrl = isLive
+        ? sessionLink
+        : (
+            lesson.video_url ||
+            (lesson as any).videoUrl ||
+            getLessonVideoSrc(lesson as any) ||
+            (lesson as any).embed_url ||
+            (lesson as any).file_url ||
+            'https://iframe.mediadelivery.net/embed/demo'
+          );
+
       await updateLesson(lesson.id, {
         chapter_id: (lesson as any).chapter_id || (lesson as any).unit_id,
         title,
@@ -165,15 +180,23 @@ const EditLessonModal = ({ isOpen, onClose, lesson, onLessonUpdated, courseType 
         location_link: isLive ? undefined : (locationLink || undefined),
         start_date: isLive ? undefined : (startDate || undefined),
         end_date: isLive ? undefined : (endDate || undefined),
-        video_url: isLive ? sessionLink : lesson.video_url,
-        embed_url: isLive ? sessionLink : lesson.embed_url,
+        video_url: resolvedVideoUrl,
+        embed_url: isLive ? sessionLink : (lesson.embed_url || resolvedVideoUrl),
       });
       toast.success('تم تحديث الدرس بنجاح');
       onLessonUpdated();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error('فشل تحديث الدرس');
+      const errorMsg = error?.message || 'فشل تحديث الدرس';
+      await MySwal.fire({
+        title: 'خطأ في عملية التحديث',
+        text: errorMsg,
+        icon: 'error',
+        confirmButtonText: 'موافق',
+        confirmButtonColor: '#ef4444',
+      });
+      toast.error(errorMsg);
     } finally {
       setIsLoading(false);
     }

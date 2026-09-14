@@ -13,26 +13,14 @@ interface CourseCardProps {
   isSubscribed?: boolean;
 }
 
-export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => {
+export const CourseCard = ({ course, isSubscribed }: CourseCardProps) => {
   const [imgError, setImgError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
 
   const rawSubStatus = course.subscription_status ? String(course.subscription_status).toLowerCase() : null;
   const rawEnrollStatus = course.enrollment_status ? String(course.enrollment_status).toLowerCase() : null;
 
-  const isActuallySubscribed = isSubscribed || 
-    course.is_enrolled === true || 
-    rawEnrollStatus === 'active' || 
-    rawEnrollStatus === 'accepted' || 
-    rawEnrollStatus === 'paid' ||
-    rawEnrollStatus === 'completed' ||
-    rawEnrollStatus === 'subscribed' ||
-    rawSubStatus === 'active' || 
-    rawSubStatus === 'accepted' ||
-    rawSubStatus === 'paid' ||
-    rawSubStatus === 'completed' ||
-    rawSubStatus === 'subscribed';
-
+  const isPlan = rawSubStatus === "plan";
   const isPending = 
     rawSubStatus === 'pending' || 
     rawSubStatus === 'penidng' || 
@@ -53,6 +41,30 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
     rawEnrollStatus === 'cancelled' ||
     rawEnrollStatus === 'canceled';
 
+  const isActuallySubscribed = !isPending && (
+    isPlan ||
+    rawSubStatus === 'active' || 
+    rawSubStatus === 'accepted' || 
+    rawSubStatus === 'paid' ||
+    rawSubStatus === 'completed' ||
+    rawSubStatus === 'subscribed' ||
+    rawEnrollStatus === 'active' || 
+    rawEnrollStatus === 'accepted' || 
+    rawEnrollStatus === 'paid' ||
+    rawEnrollStatus === 'completed' ||
+    rawEnrollStatus === 'subscribed' ||
+    course.is_enrolled === true ||
+    isSubscribed === true
+  );
+
+  const rawCategoryName = typeof course.category === 'object' && course.category !== null
+    ? (course.category as any).name
+    : (typeof course.category === 'string' ? course.category : '');
+
+  const isHiddenCategory = !rawCategoryName || 
+    rawCategoryName.trim().toLowerCase() === 'uncategorized' || 
+    rawCategoryName.trim() === 'غير مصنف';
+
   // Mock payment methods if not provided
   const paymentMethods = course.paymentMethods || [
     { type: 'mobile', methodName: 'Vodafone Cash', value: '01012345678' },
@@ -67,20 +79,22 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
       <div className="relative h-48 w-full overflow-hidden bg-gray-50">
         {/* Category Badge */}
         <div className="absolute top-4 left-4 z-20 flex gap-2 flex-wrap">
-          <span className="bg-blue-50 text-blue-600 text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-lg border border-blue-100/50">
-            {typeof course.category === 'object' && course.category !== null ? (course.category as any).name : (course.category || 'عام')}
-          </span>
-          {isPending && (
-            <span className="text-white text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-lg shadow-sm animate-pulse" style={{ backgroundColor: '#f6c05cff' }}>
-              قيد الانتظار
+          {!isHiddenCategory && (
+            <span className="bg-blue-50 text-blue-600 text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-lg border border-blue-100/50">
+              {rawCategoryName}
             </span>
           )}
-          {(isRejected || isCancelled) && (
+          {isPending && (
+            <span className="text-white text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-lg shadow-sm animate-pulse" style={{ backgroundColor: '#f6c05cff' }}>
+              قيد المراجعة
+            </span>
+          )}
+          {!isPending && (isRejected || isCancelled) && (
             <span className="text-white text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-lg shadow-sm bg-rose-500">
               {isCancelled ? 'ملغي' : 'مرفوض'}
             </span>
           )}
-          {isActuallySubscribed && (
+          {!isPending && isActuallySubscribed && (
             <span className="text-white text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-lg shadow-sm bg-emerald-500">
               تم الاشتراك
             </span>
@@ -140,7 +154,7 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
         </div>
 
         <div className="mt-auto pt-4 border-t border-gray-50">
-          {isActuallySubscribed && (
+          {!isPending && isActuallySubscribed && (
             <div className="mb-4">
               <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-gray-400 mb-2 font-bold">
                 <span className="flex items-center gap-1">
@@ -202,24 +216,15 @@ export const CourseCard = ({ course, isSubscribed = true }: CourseCardProps) => 
           ) : (
             <div className="flex flex-col gap-2">
               {isPending ? (
-                <div className="flex gap-2 w-full">
+                <div className="flex w-full">
                   <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      alert('طلب الاشتراك الخاص بك قيد المراجعة حالياً.');
-                    }}
-                    className="flex-1 flex items-center justify-center gap-2 text-white font-bold py-3 rounded-xl shadow-lg cursor-pointer text-sm"
-                    style={{ backgroundColor: '#f6c05cff', boxShadow: '0 10px 15px -3px rgba(139, 92, 246, 0.3)' }}
+                    disabled
+                    className="flex-1 flex items-center justify-center gap-2 text-white font-bold py-3 rounded-xl shadow-sm cursor-not-allowed text-sm opacity-90"
+                    style={{ backgroundColor: '#f6c05cff' }}
                   >
-                    قيد الانتظار
+                    <Clock size={16} />
+                    <span>قيد المراجعة</span>
                   </button>
-                  <Link
-                    href={`/courses/${course.slug}`}
-                    className="px-4 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold py-3 rounded-xl transition-all duration-300 border border-gray-100"
-                    title="عرض التفاصيل"
-                  >
-                    <Eye size={16} />
-                  </Link>
                 </div>
               ) : (isRejected || isCancelled) ? (
                 <div className="flex flex-col gap-2 w-full">

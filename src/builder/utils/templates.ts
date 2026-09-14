@@ -478,7 +478,7 @@ export const MOCK_TEMPLATES: Record<string, TemplateSchema> = {
         id: 'footer-t2',
         type: 'footer',
         props: {
-          copyright: 'جميع الحقوق محفوظة © درب ٢٠٢٦',
+          copyright: 'جميع الحقوق محفوظة ',
           logoText: 'درب | المنصة',
           bgColor: '#0B2540',
           textColor: '#ffffff',

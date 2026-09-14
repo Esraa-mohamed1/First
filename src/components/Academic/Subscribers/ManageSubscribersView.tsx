@@ -57,6 +57,41 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
         const user = item.user || item.student || item;
         const receiptUrl = item.receipt || item.receipt_url || item.receipt_file || item.attachment || item.file || item.image_url || null;
 
+        // Resolve price/amount from response object
+        const rawPrice =
+          item.price ??
+          item.amount ??
+          item.paid_amount ??
+          item.total_price ??
+          item.course?.final_price ??
+          item.course?.price ??
+          user?.price ??
+          user?.amount ??
+          null;
+
+        let formattedAmount = '—';
+        if (rawPrice !== null && rawPrice !== undefined) {
+          const num = Number(rawPrice);
+          if (rawPrice === 0 || rawPrice === '0' || rawPrice === 'free' || num === 0) {
+            formattedAmount = 'مجاني (0 SAR)';
+          } else if (!isNaN(num)) {
+            const currency = item.currency || item.course?.currency || 'SAR';
+            formattedAmount = `${num} ${currency}`;
+          } else {
+            formattedAmount = String(rawPrice);
+          }
+        }
+
+        // Resolve course name from response object
+        const courseTitle =
+          item.course?.title ||
+          item.course_title ||
+          item.course_name ||
+          item.courseName ||
+          item.course?.name ||
+          item.title ||
+          null;
+
         return {
           id: item.id || user.id,
           subId: item.id,
@@ -66,8 +101,8 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
           status: item.status || user.status || 'active',
           receipt: receiptUrl,
           created_at: item.starts_at || item.created_at || item.subscribed_at || user.created_at || null,
-          amount: item.amount || item.paid_amount || null,
-          course_title: item.course?.title || item.course_title || null,
+          amount: formattedAmount,
+          course_title: courseTitle,
           avatarLetter: (user.name || item.name || '?').charAt(0),
           avatarBg: avatarColors[idx % avatarColors.length],
           rejection_reason: item.rejection_reason || item.message || item.reject_reason || null,
@@ -295,10 +330,11 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
                 <thead className="bg-gray-50 border-b border-outline-variant">
                   <tr>
                     <th className="px-5 py-3.5 text-xs font-black text-on-surface-variant uppercase tracking-wide">المشترك</th>
+                    <th className="px-5 py-3.5 text-xs font-black text-on-surface-variant uppercase tracking-wide">اسم الدورة</th>
                     <th className="px-5 py-3.5 text-xs font-black text-on-surface-variant uppercase tracking-wide">الهاتف / البريد</th>
                     <th className="px-5 py-3.5 text-xs font-black text-on-surface-variant uppercase tracking-wide">إيصال الدفع</th>
                     <th className="px-5 py-3.5 text-xs font-black text-on-surface-variant uppercase tracking-wide">تاريخ الاشتراك</th>
-                    <th className="px-5 py-3.5 text-xs font-black text-on-surface-variant uppercase tracking-wide">المبلغ</th>
+                    <th className="px-5 py-3.5 text-xs font-black text-on-surface-variant uppercase tracking-wide">السعر / المبلغ</th>
                     <th className="px-5 py-3.5 text-xs font-black text-on-surface-variant uppercase tracking-wide">الحالة</th>
                     <th className="px-5 py-3.5 text-xs font-black text-on-surface-variant uppercase tracking-wide">إجراءات Admin</th>
                   </tr>
@@ -315,9 +351,17 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
                             </div>
                             <div>
                               <span className="font-bold text-sm text-on-surface block">{student.name || 'بدون اسم'}</span>
-                              {student.course_title && <span className="text-[11px] text-slate-400 font-medium block">{student.course_title}</span>}
                             </div>
                           </div>
+                        </td>
+                        <td className="px-5 py-4 text-sm font-bold">
+                          {student.course_title ? (
+                            <span className="inline-block font-extrabold text-xs bg-slate-100 text-slate-800 px-3 py-1.5 rounded-xl border border-slate-200/80 max-w-[220px] truncate" title={student.course_title}>
+                              {student.course_title}
+                            </span>
+                          ) : (
+                            <span className="text-on-surface-variant/40">—</span>
+                          )}
                         </td>
                         <td className="px-5 py-4 text-sm text-on-surface-variant">
                           <div className="space-y-0.5">
@@ -349,7 +393,9 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
                             : <span className="text-on-surface-variant/40">—</span>}
                         </td>
                         <td className="px-5 py-4 text-sm font-bold text-on-surface">
-                          {student.amount || <span className="text-on-surface-variant/40">—</span>}
+                          <span className="font-extrabold text-blue-900 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100/60">
+                            {student.amount || '—'}
+                          </span>
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-1.5">
@@ -491,16 +537,23 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-3">
               <div className="p-3 bg-gray-50 rounded-xl border border-outline-variant">
-                <p className="text-xs text-on-surface-variant font-bold">تاريخ الاشتراك</p>
-                <p className="text-sm font-black text-on-surface mt-1">
-                  {drawerStudent.created_at ? new Date(drawerStudent.created_at).toLocaleDateString('ar-EG') : '—'}
-                </p>
+                <p className="text-xs text-on-surface-variant font-bold">اسم الدورة التدريبية</p>
+                <p className="text-sm font-black text-on-surface mt-1">{drawerStudent.course_title || '—'}</p>
               </div>
-              <div className="p-3 bg-gray-50 rounded-xl border border-outline-variant">
-                <p className="text-xs text-on-surface-variant font-bold">المبلغ المدفوع</p>
-                <p className="text-sm font-black text-on-surface mt-1">{drawerStudent.amount || '—'}</p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-gray-50 rounded-xl border border-outline-variant">
+                  <p className="text-xs text-on-surface-variant font-bold">تاريخ الاشتراك</p>
+                  <p className="text-sm font-black text-on-surface mt-1">
+                    {drawerStudent.created_at ? new Date(drawerStudent.created_at).toLocaleDateString('ar-EG') : '—'}
+                  </p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-xl border border-outline-variant">
+                  <p className="text-xs text-on-surface-variant font-bold">السعر / المبلغ</p>
+                  <p className="text-sm font-black text-on-surface mt-1">{drawerStudent.amount || '—'}</p>
+                </div>
               </div>
             </div>
 

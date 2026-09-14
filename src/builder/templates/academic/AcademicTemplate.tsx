@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { getAcademicHtml } from './academicHtml';
 import { getCourses } from '@/services/courses';
 import { getStudentCourses } from '@/services/student-courses';
+import { getBags } from '@/services/bags';
 import { useBuilderStore } from '../../store/builderStore';
 
 interface AcademicTemplateProps {
@@ -79,6 +80,11 @@ const DEFAULT_CONTENT = {
     backgroundColor: '#ffffff',
     textColor: '#1b1b24',
   },
+  bags: {
+    title: 'الحقائب التعليمية والملفات الرقمية',
+    subtitle: 'ملازم ومذكرات دراسية شاملة جاهزة للتحميل والاستفادة المباشرة',
+    items: [],
+  },
   stats: {
     items: [
       { value: '98%', label: 'نسبة رضا الطلاب' },
@@ -131,7 +137,7 @@ const DEFAULT_CONTENT = {
     textColor: '#ffffff',
   },
   footer: {
-    text: '© 2024 إديوكور الأكاديمية. جميع الحقوق محفوظة.',
+    text: ' جميع الحقوق محفوظة.',
     backgroundColor: '#ffffff',
     textColor: '#1b1b24',
     newsletterTitle: 'اشترك في نشرتنا البريدية المعرفية',
@@ -165,7 +171,7 @@ function parseItems(items: any): any[] {
   return Array.isArray(items) ? items : [];
 }
 
-function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, realCourses: any[] = [], isEditing: boolean = false) {
+function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, realCourses: any[] = [], realBags: any[] = [], isEditing: boolean = false) {
   const hasApiData = Array.isArray(nodes) && nodes.length > 0;
 
   if (!hasApiData) {
@@ -175,6 +181,7 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
       about: fallback.about,
       features: fallback.features,
       courses: { ...fallback.courses, items: realCourses.length > 0 ? realCourses : fallback.courses.items },
+      bags: { ...fallback.bags, items: realBags.length > 0 ? realBags : fallback.bags.items },
       stats: fallback.stats,
       pricing: fallback.pricing,
       faq: fallback.faq,
@@ -310,6 +317,19 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
     };
   }
 
+  // Bags
+  const bagsNode = nodes.find(n => n.type === 'bags' || n.type === 'bags-cards' || n.type === 'educational-bags');
+  let bags: any = null;
+  if (bagsNode || (realBags && realBags.length > 0)) {
+    const bp = bagsNode ? parseProps(bagsNode.props) : {};
+    bags = {
+      ...bp,
+      title: bp.title ?? 'الحقائب التعليمية والملفات الرقمية',
+      subtitle: bp.subtitle ?? 'ملازم ومذكرات دراسية شاملة جاهزة للتحميل والاستفادة المباشرة',
+      items: realBags,
+    };
+  }
+
   // Stats
   let stats: any = null;
   if (statsNode) {
@@ -429,6 +449,7 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
     about,
     features,
     courses,
+    bags,
     stats,
     pricing,
     faq,
@@ -438,10 +459,13 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
 }
 
 import { getStoredAuthToken, getDashboardUrl } from '@/lib/auth-storage';
+import { getMyAcademyProfile } from '@/services/student-auth';
 
 export default function AcademicTemplate({ sections: sectionsProp }: AcademicTemplateProps) {
   const [content, setContent] = useState<any>(null);
   const [realCourses, setRealCourses] = useState<any[]>([]);
+  const [realBags, setRealBags] = useState<any[]>([]);
+  const [teacherProfile, setTeacherProfile] = useState<any>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [dashboardUrl, setDashboardUrl] = useState<string>('/student');
   const { isEditing } = useBuilderStore();
@@ -452,6 +476,24 @@ export default function AcademicTemplate({ sections: sectionsProp }: AcademicTem
       setIsLoggedIn(Boolean(token));
       setDashboardUrl(getDashboardUrl());
     }
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchAcademyProfile() {
+      try {
+        const data = await getMyAcademyProfile();
+        if (isMounted && data) {
+          setTeacherProfile(data);
+        }
+      } catch (err) {
+        console.error('[AcademicTemplate] Failed to fetch academy profile:', err);
+      }
+    }
+    fetchAcademyProfile();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -473,20 +515,36 @@ export default function AcademicTemplate({ sections: sectionsProp }: AcademicTem
   }, [isEditing]);
 
   useEffect(() => {
+    let isMounted = true;
+    async function fetchBags() {
+      try {
+        const data = await getBags();
+        if (isMounted && data && Array.isArray(data)) {
+          setRealBags(data);
+        }
+      } catch (err) {
+        console.error('[AcademicTemplate] Failed to fetch bags:', err);
+      }
+    }
+    fetchBags();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
     const fallback = DEFAULT_CONTENT;
-    // Use sections from prop (passed by TenantHomeClient/TemplateRenderer)
-    // If none are provided, fall back to DEFAULT_CONTENT
     const nodes = sectionsProp && sectionsProp.length > 0 ? sectionsProp : [];
-    const parsed = parseSectionsToContent(nodes, fallback, realCourses, isEditing);
+    const parsed = parseSectionsToContent(nodes, fallback, realCourses, realBags, isEditing);
     setContent(parsed);
-  }, [sectionsProp, realCourses, isEditing]);
+  }, [sectionsProp, realCourses, realBags, isEditing]);
 
   if (!content) return null;
 
   return (
     <div className="w-full min-h-screen">
       <iframe
-        srcDoc={getAcademicHtml(content, isEditing, isLoggedIn, dashboardUrl)}
+        srcDoc={getAcademicHtml(content, isEditing, isLoggedIn, dashboardUrl, teacherProfile)}
         className="w-full min-h-screen border-none"
         style={{ width: '100%', minHeight: '100vh', border: 'none' }}
         title="Academic Template"

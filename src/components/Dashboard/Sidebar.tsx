@@ -49,6 +49,14 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       ],
     },
     {
+<<<<<<< HEAD
+=======
+      label: 'ادارة النطاقات',
+      icon: Globe,
+      href: '/dashboard/domain',
+    },
+    {
+>>>>>>> 629e05f7de0a7f710d744201d628a2817371c29a
       label: 'المدفوعات',
       icon: CreditCard,
       href: '/dashboard/academies/subscriptions',
@@ -164,7 +172,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
       {/* Logout */}
       <div className="p-4 border-t border-gray-50">
-        <button 
+        <button
           onClick={() => {
             clearUserSessionAndCache();
             window.location.href = '/auth/login';
