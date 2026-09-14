@@ -25,11 +25,6 @@ export default function CoursesPage() {
           if (!course || !course.title) {
             return null;
           }
-          const enrollmentStatus = enrollment.course ? (enrollment.status || 'active') : 'active';
-          const isAccepted = enrollmentStatus === 'active' || enrollmentStatus === 'accepted';
-          if (!isAccepted) {
-            return null;
-          }
           const courseId = course.id ?? enrollment.course_id ?? enrollment.id;
           const progressVal = enrollment.progress || course.progress || 0;
           return {
@@ -40,10 +35,12 @@ export default function CoursesPage() {
             progress: progressVal,
             image: course.image || course.cover_image || course.thumbnail || '',
             instructor: course.instructor_name || 'Unknown',
-            category: course.category?.name || 'Uncategorized',
+            category: course.category?.name || (typeof course.category === 'string' ? course.category : ''),
             status: (progressVal === 100 ? 'completed' : 'in-progress') as any,
             price_type: course.price_type,
             is_enrolled: true,
+            subscription_status: course.subscription_status ?? enrollment.subscription_status ?? null,
+            enrollment_status: course.enrollment_status ?? enrollment.status ?? null,
           };
         }).filter(Boolean) as Course[];
         setCourses(studentCourses);
@@ -146,7 +143,7 @@ export default function CoursesPage() {
               className="animate-slide-up-fade transition-all duration-500 hover:-translate-y-1"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <CourseCard course={course} isSubscribed={true} />
+              <CourseCard course={course} isSubscribed={course.subscription_status === 'plan'} />
             </div>
           ))}
         </div>
