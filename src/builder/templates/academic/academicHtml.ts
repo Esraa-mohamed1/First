@@ -775,7 +775,8 @@ ${content?.courses ? `
     ` : `
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
         ${coursesList.map((course: any, idx: number) => {
-        const courseHref = `/courses/${course.slug || course.id}`;
+        const isActive = String(course.enrollment_status || '').toLowerCase() === 'active';
+        const courseHref = isActive ? `/student/courses/${course.id}/learn` : `/courses/${course.slug || course.id}`;
         const courseTitle = course.title || 'دورة تدريبية';
         const courseImg = course.image || course.cover_image || 'https://images.unsplash.com/photo-1586717791821-3f44a563de4c?auto=format&fit=crop&q=80&w=600';
         const instructorName = typeof course.instructor === 'object' && course.instructor?.name

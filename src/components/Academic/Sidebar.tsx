@@ -66,7 +66,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               logo: parsed.logo || parsed.avatar,
               email: parsed.email,
             });
-          } catch {}
+          } catch { }
         }
       }
     };
@@ -148,7 +148,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           ]
           : []),
 
-        { label: 'معاينة كطالب (تجريبي)', href: '/academic/courses/8/student' },
+        { label: 'معاينة كطالب  ', href: '/academic/courses/8/student' },
       ],
     },
     {

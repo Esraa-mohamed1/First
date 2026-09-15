@@ -694,6 +694,9 @@ ${!isEditing && isLoggedIn ? `
       const courseImg = course.image || course.cover_image || '';
       const lessonsCount = course.units?.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0);
       const duration = course.duration || (lessonsCount ? `${lessonsCount} درس` : 'محتوى تفاعلي');
+      const isActive = String(course.enrollment_status || '').toLowerCase() === 'active';
+      const buttonText = isActive ? 'قيد الدراسة' : 'احجز مكانك الآن';
+      const buttonHref = isActive ? `/student/courses/${course.id}/learn` : courseHref;
 
       return `
                   <!-- Course Card (card-dark) -->
@@ -733,8 +736,8 @@ ${!isEditing && isLoggedIn ? `
                       </div>
                     </div>
                     <div class="pt-2">
-                      <a href="${courseHref}" target="_top" class="btn-primary block text-center w-full text-xs py-3.5 shadow-md hover:shadow-gold-500/20 font-bold">
-                        احجز مكانك الآن
+                      <a href="${buttonHref}" target="_top" class="btn-primary block text-center w-full text-xs py-3.5 shadow-md hover:shadow-gold-500/20 font-bold">
+                        ${buttonText}
                       </a>
                     </div>
                   </div>
@@ -995,6 +998,9 @@ ${!isEditing && isLoggedIn ? `
                   var lessonsCount = c.units ? c.units.reduce(function(acc, u){ return acc + (u.lessons ? u.lessons.length : 0); }, 0) : 0;
                   var duration = c.duration || (lessonsCount ? lessonsCount + ' درس' : 'محتوى تفاعلي');
                   var studyType = c.type === 'recorded' ? 'مسجل' : (c.type === 'online' ? 'أونلاين تفاعلي' : 'حضوري');
+                  var isActive = String(c.enrollment_status || '').toLowerCase() === 'active';
+                  var btnText = isActive ? 'قيد الدراسة' : 'احجز مكانك الآن';
+                  var btnHref = isActive ? '/student/courses/' + c.id + '/learn' : href;
 
                   html += '<div data-section="courses" data-index="' + i + '" class="card-dark flex flex-col justify-between text-right group overflow-hidden animate-in fade-in duration-300">';
                   html += '<div>';
@@ -1017,7 +1023,7 @@ ${!isEditing && isLoggedIn ? `
                   html += '<div class="flex justify-between items-center text-sm border-b border-navy-700/50 pb-2"><span class="text-gray-400">الدروس والمدة</span><span class="font-bold text-white">' + duration + '</span></div>';
                   html += '<div class="flex justify-between items-center text-sm"><span class="text-gray-400">نظام الدراسة</span><span class="font-bold text-white">' + studyType + '</span></div>';
                   html += '</div></div>';
-                  html += '<div class="pt-2"><a href="' + href + '" target="_top" class="btn-primary block text-center w-full text-xs py-3.5 shadow-md hover:shadow-gold-500/20 font-bold">احجز مكانك الآن</a></div>';
+                  html += '<div class="pt-2"><a href="' + btnHref + '" target="_top" class="btn-primary block text-center w-full text-xs py-3.5 shadow-md hover:shadow-gold-500/20 font-bold">' + btnText + '</a></div>';
                   html += '</div>';
                 }
                 html += '</div>';
