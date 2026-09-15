@@ -12,13 +12,13 @@ export function getLogoUrl(logo?: string | null): string {
     const cleanLogo = logo.startsWith('/') ? logo.substring(1) : logo;
     url = `https://api.darab.academy/${cleanLogo}`;
   }
-  
+
   // If the path contains '/uploads/' but not '/storage/uploads/', rewrite it
   // to insert '/storage' so that the files resolve correctly.
   if (url.includes('/uploads/') && !url.includes('/storage/uploads/')) {
     url = url.replace('/uploads/', '/storage/uploads/');
   }
-  
+
   return url;
 }
 
@@ -38,19 +38,23 @@ export function normalizeProfileImageUrl(image?: string | null): string {
 
 export function formatCourseAccessDuration(course: any): string {
   if (!course) return 'صلاحية مدى الحياة';
-  const type = course.access_duration_type || course.access_type || course.accessDurationType;
-  if (type === 'days') {
-    const days = course.access_days || course.accessDays;
+  const data = course.course && typeof course.course === 'object' ? { ...course.course, ...course } : course;
+  const type = data.access_duration_type || data.access_type || data.accessDurationType;
+  if (type === 'days' || (!type && (data.access_days || data.accessDays))) {
+    const days = data.access_days || data.accessDays;
     if (days) return `وصول لمدة ${days} يوم`;
-    return 'وصول محدود بأيام';
+    if (type === 'days') return 'وصول محدود بأيام';
   }
-  if (type === 'until_date' || type === 'date') {
-    const date = course.access_until_date || course.accessUntilDate;
-    if (date) return `وصول حتى ${date}`;
-    return 'وصول حتى تاريخ محدد';
+  if (type === 'until_date' || type === 'date' || (!type && (data.access_until_date || data.accessUntilDate))) {
+    const date = data.access_until_date || data.accessUntilDate;
+    if (date) {
+      const cleanDate = typeof date === 'string' && date.includes('T') ? date.split('T')[0] : date;
+      return `وصول حتى ${cleanDate}`;
+    }
+    if (type === 'until_date' || type === 'date') return 'وصول حتى تاريخ محدد';
   }
-  if (course.access_period && typeof course.access_period === 'string') {
-    return course.access_period;
+  if (data.access_period && typeof data.access_period === 'string') {
+    return data.access_period;
   }
   return 'صلاحية مدى الحياة';
 }
@@ -110,9 +114,9 @@ export function translateErrorToArabic(msg: string): string {
   if (normalized.includes('password field is required') || normalized.includes('password is required')) return 'كلمة المرور مطلوبة.';
   if (normalized.includes('password must be at least 8')) return 'يجب أن تكون كلمة المرور 8 أحرف على الأقل.';
   if (
-    normalized.includes('password confirmation does not match') || 
-    normalized.includes('password_confirmation confirmation does not match') || 
-    normalized.includes('password confirmation') || 
+    normalized.includes('password confirmation does not match') ||
+    normalized.includes('password_confirmation confirmation does not match') ||
+    normalized.includes('password confirmation') ||
     normalized.includes('password_confirmation')
   ) {
     return 'تأكيد كلمة المرور غير متطابق.';
@@ -134,16 +138,16 @@ export function translateErrorToArabic(msg: string): string {
   if (normalized.includes('short_description') || normalized.includes('short description')) return 'الوصف المختصر مطلوب.';
   if (normalized.includes('description field is required') || normalized.includes('description is required')) return 'وصف الدورة مطلوب.';
   if (
-    normalized.includes('category id field is required') || 
-    normalized.includes('category_id field is required') || 
+    normalized.includes('category id field is required') ||
+    normalized.includes('category_id field is required') ||
     normalized.includes('category_id') ||
     normalized.includes('category is required')
   ) {
     return 'تصنيف الدورة مطلوب.';
   }
   if (
-    normalized.includes('user id field is required') || 
-    normalized.includes('user_id field is required') || 
+    normalized.includes('user id field is required') ||
+    normalized.includes('user_id field is required') ||
     normalized.includes('user_id') ||
     normalized.includes('user is required')
   ) {

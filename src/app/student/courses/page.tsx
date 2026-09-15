@@ -26,21 +26,28 @@ export default function CoursesPage() {
             return null;
           }
           const courseId = course.id ?? enrollment.course_id ?? enrollment.id;
-          const progressVal = enrollment.progress || course.progress || 0;
+          const progressVal = enrollment.progress ?? course.progress ?? 0;
           return {
+            ...course,
+            ...enrollment,
             id: String(courseId),
             title: course.title,
             slug: course.slug,
             description: course.description,
             progress: progressVal,
-            image: course.image || course.cover_image || course.thumbnail || '',
-            instructor: course.instructor_name || 'Unknown',
-            category: course.category?.name || (typeof course.category === 'string' ? course.category : ''),
+            image: course.image || course.cover_image || course.thumbnail || enrollment.image || '',
+            instructor: (course as any).user?.name || course.instructor_name || (typeof course.instructor === 'object' && course.instructor !== null ? (course.instructor as any).name : (course.instructor || enrollment.instructor_name || 'Unknown')),
+            category: course.category?.name || (typeof course.category === 'string' ? course.category : (enrollment.category?.name || (typeof enrollment.category === 'string' ? enrollment.category : ''))),
             status: (progressVal === 100 ? 'completed' : 'in-progress') as any,
-            price_type: course.price_type,
+            price_type: course.price_type || enrollment.price_type,
             is_enrolled: true,
             subscription_status: course.subscription_status ?? enrollment.subscription_status ?? null,
             enrollment_status: course.enrollment_status ?? enrollment.status ?? null,
+            rejection_reason: course.rejection_reason ?? enrollment.rejection_reason ?? null,
+            access_duration_type: course.access_duration_type ?? enrollment.access_duration_type ?? course.access_type ?? enrollment.access_type ?? course.accessDurationType ?? enrollment.accessDurationType ?? null,
+            access_days: course.access_days ?? enrollment.access_days ?? course.accessDays ?? enrollment.accessDays ?? null,
+            access_until_date: course.access_until_date ?? enrollment.access_until_date ?? course.accessUntilDate ?? enrollment.accessUntilDate ?? null,
+            access_period: course.access_period ?? enrollment.access_period ?? null,
           };
         }).filter(Boolean) as Course[];
         setCourses(studentCourses);
@@ -65,7 +72,7 @@ export default function CoursesPage() {
       {/* Header Section */}
       <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-        
+
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold text-gray-900">دوراتي التعليمية</h1>
