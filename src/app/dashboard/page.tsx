@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { GraduationCap, Building2, TrendingUp, AlertCircle, Plus } from 'lucide-react';
+import { GraduationCap, Building2, TrendingUp, AlertCircle } from 'lucide-react';
 import StatCard from '@/components/Dashboard/StatsCard';
 import OverviewChart from '@/components/Dashboard/Charts/OverviewChart';
 import RevenueChart from '@/components/Dashboard/Charts/RevenueChart';
@@ -113,7 +113,7 @@ export default function DashboardPage() {
         <h2 className="text-2xl font-black text-gray-900">لوحة التحكم</h2>
         <div className="flex gap-3">
           <button className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors">
-            <span>تصفية الفترة</span>
+
             <TrendingUp size={16} />
           </button>
         </div>
@@ -127,9 +127,9 @@ export default function DashboardPage() {
           trend={
             statsData
               ? {
-                  value: statsData.active_academies.change_pct,
-                  isPositive: statsData.active_academies.change_pct >= 0,
-                }
+                value: statsData.active_academies.change_pct,
+                isPositive: statsData.active_academies.change_pct >= 0,
+              }
               : undefined
           }
           icon={Building2}
@@ -141,32 +141,23 @@ export default function DashboardPage() {
           trend={
             statsData
               ? {
-                  value: statsData.expired_academies.change_pct,
-                  isPositive: statsData.expired_academies.change_pct >= 0,
-                }
+                value: statsData.expired_academies.change_pct,
+                isPositive: statsData.expired_academies.change_pct >= 0,
+              }
               : undefined
           }
           icon={AlertCircle}
           color="orange"
         />
-
-        {/* Row 2 */}
-        <button className="border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center p-6 text-gray-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition-all group cursor-pointer h-full min-h-[140px]">
-          <div className="w-12 h-12 rounded-full bg-gray-100 group-hover:bg-blue-100 flex items-center justify-center mb-3 transition-colors">
-            <Plus size={24} />
-          </div>
-          <span className="font-bold text-sm">إضافة عنصر جديد</span>
-        </button>
-
         <StatCard
           title="عدد الاشتراكات الجدد هذا الشهر"
           value={statsData ? statsData.new_subscriptions_this_month.value.toLocaleString() : (isLoading ? '...' : '—')}
           trend={
             statsData
               ? {
-                  value: statsData.new_subscriptions_this_month.change_pct,
-                  isPositive: statsData.new_subscriptions_this_month.change_pct >= 0,
-                }
+                value: statsData.new_subscriptions_this_month.change_pct,
+                isPositive: statsData.new_subscriptions_this_month.change_pct >= 0,
+              }
               : undefined
           }
           icon={GraduationCap}
@@ -178,15 +169,14 @@ export default function DashboardPage() {
           trend={
             statsData
               ? {
-                  value: statsData.total_revenue.change_pct,
-                  isPositive: statsData.total_revenue.change_pct >= 0,
-                }
+                value: statsData.total_revenue.change_pct,
+                isPositive: statsData.total_revenue.change_pct >= 0,
+              }
               : undefined
           }
           icon={GraduationCap}
           color="blue"
         />
-
       </div>
 
       {/* Charts Section */}
