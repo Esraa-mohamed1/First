@@ -1,7 +1,8 @@
-node_modules
-.next
+node_modules/
+.next/
 .env
 .env.local
-dist
-build
+.env.*.local
+dist/
+build/
 .next.config.mjs
