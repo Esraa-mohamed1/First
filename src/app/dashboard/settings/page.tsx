@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   User,
   ShieldCheck,
@@ -12,7 +12,10 @@ import {
   Shield,
   CheckCircle2,
   SlidersHorizontal,
-  KeyRound
+  KeyRound,
+  Camera,
+  Upload,
+  X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
@@ -32,6 +35,82 @@ export default function SuperAdminSettingsPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Image Upload Modal State
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCloseImageModal = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl(null);
+    setSelectedFile(null);
+    setIsImageModalOpen(false);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSaveImage = async () => {
+    if (!selectedFile) return;
+
+    try {
+      setIsUploadingImage(true);
+
+      const updatedProfile = await updateSuperAdminProfile({
+        name: adminName.trim(),
+        email: adminEmail.trim(),
+        profile_image: selectedFile,
+      });
+
+      const newImageUrl = updatedProfile.profile_image || null;
+      setProfileImage(newImageUrl);
+      if (updatedProfile.name) setAdminName(updatedProfile.name);
+      if (updatedProfile.email) setAdminEmail(updatedProfile.email);
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('super-admin-profile-updated', {
+            detail: updatedProfile,
+          })
+        );
+      }
+
+      toast.success('تم تحديث الصورة الشخصية بنجاح!', {
+        style: {
+          fontFamily: 'IBM Plex Sans Arabic, sans-serif',
+          fontWeight: 'bold',
+          direction: 'rtl',
+        },
+      });
+
+      handleCloseImageModal();
+    } catch (error) {
+      console.error('Failed to update Super Admin profile image:', error);
+
+      toast.error('حدث خطأ أثناء حفظ الصورة الشخصية', {
+        style: {
+          fontFamily: 'IBM Plex Sans Arabic, sans-serif',
+          fontWeight: 'bold',
+          direction: 'rtl',
+        },
+      });
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -119,19 +198,34 @@ export default function SuperAdminSettingsPage() {
 
         <div className="flex flex-col md:flex-row items-center gap-6 relative z-10 w-full md:w-auto text-center md:text-right">
           <div className="relative">
-            <div className="w-24 h-24 rounded-3xl bg-white/10 border-4 border-white/20 backdrop-blur-md overflow-hidden shadow-inner flex items-center justify-center text-white">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedFile(null);
+                setPreviewUrl(null);
+                setIsImageModalOpen(true);
+              }}
+              title="تغيير الصورة الشخصية"
+              className="w-24 h-24 rounded-3xl bg-white/10 border-4 border-white/20 backdrop-blur-md overflow-hidden shadow-inner flex items-center justify-center text-white relative group cursor-pointer transition-transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/40"
+            >
               {profileImage ? (
                 <img
                   src={profileImage}
                   alt={adminName || 'Super Admin'}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               ) : (
-                <Shield size={44} className="text-white" />
+                <Shield size={44} className="text-white transition-transform duration-300 group-hover:scale-105" />
               )}
-            </div>
 
-            <div className="absolute -bottom-2 -left-2 bg-emerald-400 text-white p-2 rounded-xl border-2 border-white shadow-sm flex items-center justify-center">
+              {/* Hover overlay indicator */}
+              <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1">
+                <Camera size={22} className="text-white drop-shadow" />
+                <span className="text-[10px] font-black tracking-wide">تغيير</span>
+              </div>
+            </button>
+
+            <div className="absolute -bottom-2 -left-2 bg-emerald-400 text-white p-2 rounded-xl border-2 border-white shadow-sm flex items-center justify-center pointer-events-none">
               <CheckCircle2 size={16} />
             </div>
           </div>
@@ -385,6 +479,127 @@ export default function SuperAdminSettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Profile Image Upload Modal */}
+      {isImageModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            className="bg-white rounded-[2rem] p-6 md:p-8 max-w-md w-full shadow-2xl border border-gray-100 space-y-6 relative animate-in zoom-in-95 duration-200"
+            dir="rtl"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-50 text-blue-600 p-2.5 rounded-2xl">
+                  <Camera size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-gray-900">
+                    تغيير الصورة الشخصية
+                  </h3>
+                  <p className="text-xs text-gray-400 font-bold mt-0.5">
+                    اختر صورة جديدة لحساب مدير النظام
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleCloseImageModal}
+                disabled={isUploadingImage}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Image Preview Box */}
+            <div className="flex flex-col items-center justify-center space-y-3 py-2">
+              <div className="w-32 h-32 rounded-3xl bg-[#EAEFEF] border-4 border-blue-100 overflow-hidden relative shadow-inner flex items-center justify-center">
+                {previewUrl ? (
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : profileImage ? (
+                  <img
+                    src={profileImage}
+                    alt="Current"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User size={52} className="text-gray-400" />
+                )}
+              </div>
+
+              <span className="text-xs text-gray-500 font-medium">
+                {previewUrl
+                  ? 'معاينة الصورة الجديدة'
+                  : profileImage
+                  ? 'الصورة الحالية'
+                  : 'لم يتم تعيين صورة بعد'}
+              </span>
+            </div>
+
+            {/* File Input & Selection Button */}
+            <div className="space-y-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp,image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingImage}
+                className="w-full flex items-center justify-center gap-2.5 py-3.5 px-4 bg-blue-50 hover:bg-blue-100/80 text-blue-600 rounded-2xl font-black text-sm border border-blue-200/60 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <Upload size={18} />
+                <span>
+                  {selectedFile ? 'اختيار صورة أخرى' : 'اختيار صورة من الجهاز'}
+                </span>
+              </button>
+
+              {selectedFile && (
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between text-xs">
+                  <span className="text-gray-700 font-bold truncate max-w-[240px]">
+                    {selectedFile.name}
+                  </span>
+                  <span className="text-gray-400 font-medium whitespace-nowrap">
+                    {(selectedFile.size / 1024).toFixed(1)} KB
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={handleCloseImageModal}
+                disabled={isUploadingImage}
+                className="px-5 py-3 rounded-2xl border border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition-colors text-sm disabled:opacity-50 cursor-pointer"
+              >
+                إلغاء
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveImage}
+                disabled={!selectedFile || isUploadingImage}
+                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black transition-all shadow-md shadow-blue-500/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed text-sm cursor-pointer"
+              >
+                {isUploadingImage && <Loader2 size={16} className="animate-spin" />}
+                <span>حفظ الصورة</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

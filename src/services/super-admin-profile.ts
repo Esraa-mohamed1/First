@@ -16,8 +16,9 @@ export interface SuperAdminProfile {
 }
 
 export interface UpdateSuperAdminProfilePayload {
-    name: string;
-    email: string;
+    name?: string;
+    email?: string;
+    profile_image?: File | string | null;
 }
 
 export const getSuperAdminProfile = async (): Promise<SuperAdminProfile> => {
@@ -34,21 +35,35 @@ export const getSuperAdminProfile = async (): Promise<SuperAdminProfile> => {
 };
 
 export const updateSuperAdminProfile = async (
-    payload: UpdateSuperAdminProfilePayload
+    payload: UpdateSuperAdminProfilePayload | FormData
 ): Promise<SuperAdminProfile> => {
     const token = getStoredAuthToken();
+
+    let data: any = payload;
+    const headers: Record<string, string> = {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    if (!(payload instanceof FormData) && payload.profile_image instanceof File) {
+        const formData = new FormData();
+        if (payload.name) formData.append('name', payload.name);
+        if (payload.email) formData.append('email', payload.email);
+        formData.append('profile_image', payload.profile_image);
+        data = formData;
+        headers['Content-Type'] = 'multipart/form-data';
+    } else if (payload instanceof FormData) {
+        headers['Content-Type'] = 'multipart/form-data';
+    }
 
     const response = await api.post<{
         success: boolean;
         status: number;
         message: string;
         data: SuperAdminProfile;
-    }>('/update-profile', payload, {
+    }>('/update-profile', data, {
         baseURL: SUPER_ADMIN_API_URL,
-        headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers,
     });
 
     return response.data.data;
-};
+};
