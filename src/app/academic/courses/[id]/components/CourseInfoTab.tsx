@@ -626,7 +626,10 @@ export const CourseInfoTab: React.FC<CourseInfoTabProps> = ({
           <div className="flex bg-surface-container p-1 rounded-lg w-fit border border-gray-100">
             <button
               type="button"
-              onClick={() => setPricingType('free')}
+              onClick={() => {
+                setPricingType('free');
+                setSelectedPaymentMethods([]);
+              }}
               className={`px-8 py-2 rounded-md text-label-md font-bold transition-all ${pricingType === 'free' ? 'bg-white shadow-sm text-primary font-black' : 'text-on-surface-variant hover:text-gray-900'}`}
             >
               مجانية
@@ -681,7 +684,7 @@ export const CourseInfoTab: React.FC<CourseInfoTabProps> = ({
                   >
                     <option value="SAR">SAR — ريال سعودي</option>
                     <option value="EGP">EGP — جنيه مصري</option>
-                    <option value="USD">USD — دولار أمريكي</option>
+                    <option value="KWD">KWD — دينار كويتي</option>
                   </select>
                 </div>
               </div>
@@ -698,7 +701,9 @@ export const CourseInfoTab: React.FC<CourseInfoTabProps> = ({
             </div>
             <button
               type="button"
+              disabled={pricingType === 'free'}
               onClick={() => {
+                if (pricingType === 'free') return;
                 const countryCode = currency === 'EGP' ? 'EG' : 'SA';
                 const filtered = receiverTemplates.filter(t => t.country_code === countryCode);
                 if (filtered.length > 0) {
@@ -711,17 +716,30 @@ export const CourseInfoTab: React.FC<CourseInfoTabProps> = ({
                 setNewPaymentAccountValue('');
                 setShowAddPaymentModal(true);
               }}
-              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer self-start sm:self-center"
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 self-start sm:self-center ${
+                pricingType === 'free'
+                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-md cursor-pointer'
+              }`}
             >
               <Plus className="w-4 h-4" />
               إضافة وسيلة استقبال جديدة
             </button>
           </div>
 
+          {pricingType === 'free' && (
+            <div className="mb-4 p-3.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-xs font-bold flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px] text-amber-600">info</span>
+              <span>الدورة مجانية — تم تعطيل اختيار وسائل الدفع.</span>
+            </div>
+          )}
+
           <PaymentMethodDropdown
+            disabled={pricingType === 'free'}
             options={activeMethods}
-            selectedValues={selectedPaymentMethods.map(m => m.methodId)}
+            selectedValues={pricingType === 'free' ? [] : selectedPaymentMethods.map(m => m.methodId)}
             onChange={(ids) => {
+              if (pricingType === 'free') return;
               if (ids.length > 3) {
                 MySwal.fire({
                   title: 'الحد الأقصى لوسائل الدفع',

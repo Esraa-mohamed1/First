@@ -445,9 +445,6 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
                             <button onClick={() => setEditingStudent(student)} className="p-1.5 hover:bg-gray-100 rounded-lg text-on-surface-variant transition-colors" title="تعديل">
                               <span className="material-symbols-outlined text-[18px]">edit</span>
                             </button>
-                            <button onClick={e => handleDeleteStudent(e, student.id)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors" title="حذف">
-                              <span className="material-symbols-outlined text-[18px]">delete</span>
-                            </button>
                           </div>
                         </td>
                       </tr>
@@ -600,13 +597,9 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
             )}
 
             <div className="flex gap-2 pt-2">
-              <button onClick={() => setEditingStudent(drawerStudent)} className="flex-1 px-4 py-2 border border-outline-variant rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-gray-50 cursor-pointer transition-all">
+              <button onClick={() => setEditingStudent(drawerStudent)} className="w-full px-4 py-2 border border-outline-variant rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-gray-50 cursor-pointer transition-all">
                 <span className="material-symbols-outlined text-[18px]">edit</span>
                 <span>تعديل</span>
-              </button>
-              <button onClick={async (e) => { await handleDeleteStudent(e as any, drawerStudent.id); }} className="flex-1 px-4 py-2 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-red-100 cursor-pointer transition-all">
-                <span className="material-symbols-outlined text-[18px]">delete</span>
-                <span>حذف</span>
               </button>
             </div>
           </div>

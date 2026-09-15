@@ -205,16 +205,6 @@ export default function StudentsPage() {
                              <Edit size={18} />
                            </button>
                          )}
-                         <button 
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             handleDeleteStudent(student.id);
-                           }}
-                           className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                           title="حذف"
-                         >
-                           <Trash2 size={18} />
-                         </button>
                        </div>
                      </td>
                   </tr>
