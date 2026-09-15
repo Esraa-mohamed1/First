@@ -76,6 +76,14 @@ export default function SuperAdminSettingsPage() {
       setAdminEmail(updatedProfile.email || '');
       setProfileImage(updatedProfile.profile_image || null);
 
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('super-admin-profile-updated', {
+            detail: updatedProfile,
+          })
+        );
+      }
+
       toast.success('تم حفظ الإعدادات بنجاح!', {
         style: {
           fontFamily: 'IBM Plex Sans Arabic, sans-serif',
