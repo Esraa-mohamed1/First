@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { GraduationCap, Building2, TrendingUp, AlertCircle, Plus } from 'lucide-react';
+import { GraduationCap, Building2, TrendingUp, AlertCircle } from 'lucide-react';
 import StatCard from '@/components/Dashboard/StatsCard';
 import OverviewChart from '@/components/Dashboard/Charts/OverviewChart';
 import RevenueChart from '@/components/Dashboard/Charts/RevenueChart';
@@ -149,15 +149,6 @@ export default function DashboardPage() {
           icon={AlertCircle}
           color="orange"
         />
-
-        {/* Row 2 */}
-        <button className="border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center p-6 text-gray-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition-all group cursor-pointer h-full min-h-[140px]">
-          <div className="w-12 h-12 rounded-full bg-gray-100 group-hover:bg-blue-100 flex items-center justify-center mb-3 transition-colors">
-            <Plus size={24} />
-          </div>
-          <span className="font-bold text-sm">إضافة عنصر جديد</span>
-        </button>
-
         <StatCard
           title="عدد الاشتراكات الجدد هذا الشهر"
           value={statsData ? statsData.new_subscriptions_this_month.value.toLocaleString() : (isLoading ? '...' : '—')}
@@ -186,7 +177,6 @@ export default function DashboardPage() {
           icon={GraduationCap}
           color="blue"
         />
-
       </div>
 
       {/* Charts Section */}

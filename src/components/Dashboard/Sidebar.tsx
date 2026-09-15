@@ -53,10 +53,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       label: 'المدفوعات',
       icon: CreditCard,
       href: '/dashboard/academies/subscriptions',
-      subItems: [
-        { label: 'سجل المدفوعات', href: '/dashboard/academies/subscriptions' },
-        { label: 'طرق الدفع', href: '/dashboard/payment-methods' },
-      ],
     },
     {
       label: 'الإعدادات',

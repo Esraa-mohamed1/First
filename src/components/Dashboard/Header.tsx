@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Bell, Menu, User } from 'lucide-react';
+import { Menu, User } from 'lucide-react';
 import {
   getSuperAdminProfile,
   SuperAdminProfile,
@@ -86,14 +86,8 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
         </div>
       </div>
 
-      {/* Left Side (Profile & Notifications) */}
-      <div className="flex items-center gap-4">
-        {/* Notifications */}
-        <button className="relative p-2 hover:bg-gray-50 rounded-xl transition-colors">
-          <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></div>
-          <Bell size={20} className="text-gray-500" />
-        </button>
-      </div>
+      {/* Left Side placeholder to maintain flex spacing */}
+      <div className="flex items-center gap-4" />
     </header>
   );
 };
