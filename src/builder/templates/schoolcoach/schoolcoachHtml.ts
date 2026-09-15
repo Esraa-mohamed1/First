@@ -177,13 +177,27 @@ export const getSchoolCoachHtml = (
   ];
 
   const contactTitle = content?.contact?.title || 'ابدأ رحلة تفوقك اليوم';
-  const contactDesc = content?.contact?.description || 'انضم لأكثر من ١٠,٠٠٠ طالب وطالبة حققوا أحلامهم الدراسية معنا.';
+  const contactDesc = content?.contact?.description || 'انضم لأكثر من ١٠,٠٠0 طالب وطالبة حققوا أحلامهم الدراسية معنا.';
   const contactPhone = content?.contact?.phoneNumber || (content?.contact as any)?.phone_number || '';
   const contactBtnText = content?.contact?.buttonText || (content?.contact as any)?.button_text || 'ابدأ الآن';
   const contactSecondaryBtnText = (content?.contact as any)?.secondaryButtonText || (content?.contact as any)?.secondary_button_text || (content?.contact as any)?.demoButtonText || 'طلب عرض توضيحي';
   const contactSecondaryBtnLink = (content?.contact as any)?.secondaryButtonLink || (content?.contact as any)?.secondary_button_link || (content?.contact as any)?.demoButtonLink || '';
 
   const footerText = content?.footer?.text || ' جميع الحقوق محفوظة.';
+  const footerDesc = content?.footer?.description || (content?.footer as any)?.aboutText || 'مجموعات تقوية ومراجعات شاملة في الرياضيات للمرحلة الثانوية.';
+  const footerWorkingHours = content?.footer?.workingHours || (content?.footer as any)?.timings || 'من السبت إلى الخميس: ١٠:٠٠ ص - ٩:٠٠ م';
+  const footerEmail = content?.footer?.email || realEmail || 'info@ahmedmath.com';
+  const footerPhone = content?.footer?.phone || realPhone || '٩٦٦٥٠٠٠٠٠٠٠٠+';
+  const footerBg = content?.footer?.backgroundColor || (content?.footer as any)?.background_color || '';
+  const footerTextColor = content?.footer?.textColor || (content?.footer as any)?.text_color || '';
+
+  const statsItems = content?.stats?.items || [
+    { value: '١٠+', label: 'سنوات من الخبرة والتميز' },
+    { value: '٥٠٠+', label: 'طالب متميز سنوياً' },
+    { value: '٩٥٪+', label: 'نسبة درجات التفوق' }
+  ];
+  const statsBg = content?.stats?.backgroundColor || (content?.stats as any)?.background_color || '';
+  const statsTextColor = content?.stats?.textColor || (content?.stats as any)?.text_color || '';
 
   const videoTag = (content?.about as any)?.videoTag || 'شاهد وتعلّم';
   const videoTitle = (content?.about as any)?.videoTitle || 'تعرف على فلسفتنا التعليمية في ٣ دقائق';
@@ -807,21 +821,15 @@ ${!isEditing && isLoggedIn ? `
       </div>
     </section>
 
-    <!-- 6. Stats Band -->
-    <section class="py-16 bg-[var(--color-navy-950)] text-white mb-20">
-      <div class="max-w-[1200px] mx-auto grid grid-cols-3 gap-8 text-center">
-        <div>
-          <span class="block text-[36px] font-extrabold text-[var(--color-gold-500)]">١٠+</span>
-          <span class="text-xs font-bold text-gray-400">سنوات من الخبرة والتميز</span>
-        </div>
-        <div>
-          <span class="block text-[36px] font-extrabold text-[var(--color-gold-500)]">٥٠٠+</span>
-          <span class="text-xs font-bold text-gray-400">طالب متميز سنوياً</span>
-        </div>
-        <div>
-          <span class="block text-[36px] font-extrabold text-[var(--color-gold-500)]">٩٥٪+</span>
-          <span class="text-xs font-bold text-gray-400">نسبة درجات التفوق</span>
-        </div>
+    <!-- 6. Stats Band / Experiences -->
+    <section id="stats" data-section="stats" class="py-16 bg-[var(--color-navy-950)] text-white mb-20 section-hover cursor-pointer transition-all duration-300 rounded-3xl" style="${statsBg ? `background-color: ${statsBg};` : ''} ${statsTextColor ? `color: ${statsTextColor};` : ''}">
+      <div class="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center px-margin-mobile md:px-margin-desktop">
+        ${statsItems.map((item: any, idx: number) => `
+          <div data-section="stats" data-stat-index="${idx}" class="p-4">
+            <span class="block text-[36px] font-extrabold text-[var(--color-gold-500)] mb-1" style="${statsTextColor ? `color: ${statsTextColor};` : ''}">${item.value || ''}</span>
+            <span class="text-xs font-bold text-gray-400" style="${statsTextColor ? `color: ${statsTextColor}; opacity: 0.85;` : ''}">${item.label || ''}</span>
+          </div>
+        `).join('')}
       </div>
     </section>
 
@@ -900,22 +908,22 @@ ${!isEditing && isLoggedIn ? `
   </main>
 
   <!-- 9. Footer -->
-  <footer data-section="footer" class="bg-[var(--color-navy-950)] text-gray-400 py-16 border-t border-navy-800 section-hover cursor-pointer">
+  <footer data-section="footer" class="bg-[var(--color-navy-950)] text-gray-400 py-16 border-t border-navy-800 section-hover cursor-pointer" style="${footerBg ? `background-color: ${footerBg};` : ''} ${footerTextColor ? `color: ${footerTextColor};` : ''}">
     <div class="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 px-margin-mobile md:px-margin-desktop mb-12 text-right">
       <div class="space-y-4">
-        <h4 class="text-white font-extrabold text-sm flex items-center gap-2">
+        <h4 class="text-white font-extrabold text-sm flex items-center gap-2" style="${footerTextColor ? `color: ${footerTextColor};` : ''}">
           <span class="material-symbols-outlined text-[var(--color-gold-500)] text-[20px]">school</span> ${navbarTitle}
         </h4>
-        <p class="text-xs leading-relaxed max-w-xs">
-          مجموعات تقوية ومراجعات شاملة في الرياضيات للمرحلة الثانوية.
+        <p data-footer-desc class="text-xs leading-relaxed max-w-xs" style="${footerTextColor ? `color: ${footerTextColor}; opacity: 0.85;` : ''}">
+          ${footerDesc}
         </p>
       </div>
       <div>
-        <h4 class="text-white font-extrabold text-sm mb-4">مواعيد العمل</h4>
-        <p class="text-xs leading-relaxed">من السبت إلى الخميس: ١٠:٠٠ ص - ٩:٠٠ م</p>
+        <h4 class="text-white font-extrabold text-sm mb-4" style="${footerTextColor ? `color: ${footerTextColor};` : ''}">مواعيد العمل</h4>
+        <p data-footer-hours class="text-xs leading-relaxed" style="${footerTextColor ? `color: ${footerTextColor}; opacity: 0.85;` : ''}">${footerWorkingHours}</p>
       </div>
       <div>
-        <h4 class="text-white font-extrabold text-sm mb-4">روابط سريعة</h4>
+        <h4 class="text-white font-extrabold text-sm mb-4" style="${footerTextColor ? `color: ${footerTextColor};` : ''}">روابط سريعة</h4>
         <ul class="space-y-2 text-xs">
           <li><a href="#about" class="hover:text-[var(--color-gold-500)] transition-colors">عن المدرس</a></li>
           <li><a href="#subjects" class="hover:text-[var(--color-gold-500)] transition-colors">المواد الدراسية</a></li>
@@ -923,14 +931,14 @@ ${!isEditing && isLoggedIn ? `
         </ul>
       </div>
       <div>
-        <h4 class="text-white font-extrabold text-sm mb-4">معلومات الاتصال</h4>
-        <p class="text-xs leading-relaxed">البريد: ${realEmail || 'info@ahmedmath.com'}</p>
-        <p class="text-xs leading-relaxed mt-2">الهاتف: ${realPhone || '٩٦٦٥٠٠٠٠٠٠٠٠+'}</p>
+        <h4 class="text-white font-extrabold text-sm mb-4" style="${footerTextColor ? `color: ${footerTextColor};` : ''}">معلومات الاتصال</h4>
+        <p data-footer-email class="text-xs leading-relaxed" style="${footerTextColor ? `color: ${footerTextColor}; opacity: 0.85;` : ''}">البريد: ${footerEmail}</p>
+        <p data-footer-phone class="text-xs leading-relaxed mt-2" style="${footerTextColor ? `color: ${footerTextColor}; opacity: 0.85;` : ''}">الهاتف: ${footerPhone}</p>
       </div>
     </div>
     
     <div class="max-w-[1200px] mx-auto border-t border-navy-800 pt-8 text-center px-margin-mobile md:px-margin-desktop">
-      <p class="text-xs">${footerText}</p>
+      <p data-footer-copyright class="text-xs" style="${footerTextColor ? `color: ${footerTextColor}; opacity: 0.85;` : ''}">${footerText}</p>
     </div>
   </footer>
 

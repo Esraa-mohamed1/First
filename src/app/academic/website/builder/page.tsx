@@ -42,6 +42,12 @@ import { getCourses } from '@/services/courses';
 
 const MySwal = withReactContent(Swal);
 
+// Helper to strip HTML tags from input box values so users edit clean text
+const cleanInputText = (str: string | undefined | null): string => {
+  if (!str) return '';
+  return String(str).replace(/<[^>]*>?/gm, '').trim();
+};
+
 // --- Typings for Website Builder Sections ---
 interface NavbarConfig {
   title: string;
@@ -149,6 +155,10 @@ interface ContactConfig {
 
 interface FooterConfig {
   text: string;
+  description?: string;
+  workingHours?: string;
+  email?: string;
+  phone?: string;
   backgroundColor: string;
   textColor: string;
   newsletterTitle?: string;
@@ -313,13 +323,12 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         },
         stats: {
           items: [
-            { value: '98%', label: 'نسبة رضا الطلاب' },
-            { value: '150+', label: 'منهج دراسي متكامل' },
-            { value: '12k+', label: 'خريج متميز' },
-            { value: '24/7', label: 'دعم أكاديمي مباشر' }
+            { value: '١٠+', label: 'سنوات من الخبرة والتميز' },
+            { value: '٥٠٠+', label: 'طالب متميز سنوياً' },
+            { value: '٩٥٪+', label: 'نسبة درجات التفوق' }
           ],
-          backgroundColor: '',
-          textColor: ''
+          backgroundColor: '#0a1628',
+          textColor: '#ffffff'
         },
         faq: {
           title: 'الأسئلة الشائعة حول المنهج',
@@ -344,7 +353,11 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
           textColor: '#ffffff'
         },
         footer: {
-          text: ' جميع الحقوق محفوظة.',
+          text: 'جميع الحقوق محفوظة © ' + new Date().getFullYear(),
+          description: 'مجموعات تقوية ومراجعات شاملة في الرياضيات للمرحلة الثانوية.',
+          workingHours: 'من السبت إلى الخميس: ١٠:٠٠ ص - ٩:٠٠ م',
+          email: 'info@ahmedmath.com',
+          phone: '+966500000000',
           backgroundColor: '#0a1628',
           textColor: '#ffffff',
           newsletterTitle: 'اشترك في نشرتنا المعرفية',
@@ -1198,10 +1211,24 @@ export default function PageBuilderPage() {
     }
 
     // 9. Footer
-    updateText('#footer-bar span.text-body-md.text-on-surface-variant, #footer-bar .font-body-md.text-on-surface-variant', content.footer.text);
+    updateText('[data-section="footer"] [data-footer-desc]', content.footer.description || (content.footer as any).aboutText || '');
+    updateText('[data-section="footer"] [data-footer-hours]', content.footer.workingHours || (content.footer as any).timings || '');
+    if (content.footer.email) {
+      updateText('[data-section="footer"] [data-footer-email]', `البريد: ${content.footer.email}`);
+    }
+    if (content.footer.phone) {
+      updateText('[data-section="footer"] [data-footer-phone]', `الهاتف: ${content.footer.phone}`);
+    }
+    updateText('[data-section="footer"] [data-footer-copyright], #footer-bar span.text-body-md.text-on-surface-variant, #footer-bar .font-body-md.text-on-surface-variant', content.footer.text || '');
     updateText('#newsletter h2.text-headline-lg, #newsletter h2.text-\\[32px\\]', content.footer.newsletterTitle || '');
     updateText('#newsletter p.text-body-lg.max-w-xl, #newsletter p.leading-relaxed', content.footer.newsletterDesc || '');
     updateText('#newsletter button', content.footer.newsletterBtnText || '');
+    if (content.footer.backgroundColor) {
+      updateStyleAll('footer[data-section="footer"], footer, #footer, #footer-bar', 'background-color', content.footer.backgroundColor);
+    }
+    if (content.footer.textColor) {
+      updateStyleAll('footer[data-section="footer"], footer, #footer, #footer-bar', 'color', content.footer.textColor);
+    }
   }, [content]);
 
   // Handle iframe document load: inject hover outlines and click selections
@@ -1703,6 +1730,10 @@ export default function PageBuilderPage() {
 
               footer: (footerNode?.props ? ({
                 ...mergeSection(footerNode.props, fallback.footer),
+                description: sv(footerNode.props.description ?? footerNode.props.aboutText ?? footerNode.props.about_text, fallback.footer.description || ''),
+                workingHours: sv(footerNode.props.workingHours ?? footerNode.props.timings ?? footerNode.props.working_hours, fallback.footer.workingHours || ''),
+                email: sv(footerNode.props.email, fallback.footer.email || ''),
+                phone: sv(footerNode.props.phone, fallback.footer.phone || ''),
                 backgroundColor: sv(footerNode.props.backgroundColor ?? footerNode.props.background_color ?? footerNode.props.bg_color, fallback.footer.backgroundColor),
                 textColor: sv(footerNode.props.textColor ?? footerNode.props.text_color, fallback.footer.textColor),
                 newsletterTitle: sv(footerNode.props.newsletterTitle ?? footerNode.props.newsletter_title, fallback.footer.newsletterTitle),
@@ -1776,7 +1807,7 @@ export default function PageBuilderPage() {
         { id: 'pricing', type: 'pricing', props: { ...content.pricing, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         { id: 'faq', type: 'faq', props: { ...content.faq, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         { id: 'contact', type: 'contact', props: { ...content.contact, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
-        ...(currentRole !== 'academy' ? [{ id: 'footer', type: 'footer', props: { ...content.footer, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
+        { id: 'footer', type: 'footer', props: { ...content.footer, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
       ];
 
       const apiSections = editorToApi(nodes, activePageId);
@@ -1849,7 +1880,7 @@ export default function PageBuilderPage() {
         { id: 'pricing', type: 'pricing', props: { ...content.pricing, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         { id: 'faq', type: 'faq', props: { ...content.faq, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         { id: 'contact', type: 'contact', props: { ...content.contact, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
-        ...(currentRole !== 'academy' ? [{ id: 'footer', type: 'footer', props: { ...content.footer, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
+        { id: 'footer', type: 'footer', props: { ...content.footer, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
       ];
 
       const apiSections = editorToApi(nodes, activePageId);
@@ -2140,58 +2171,58 @@ export default function PageBuilderPage() {
           </div>
 
           {/* Section Dynamic Editors (Scrollable) */}
-          <div className="flex-1 overflow-y-auto p-5">
-            <div key={activeSection} className="border border-blue-200 bg-blue-50/10 rounded-2xl p-5 space-y-6 shadow-inner ring-2 ring-blue-600/5 animate-in fade-in duration-300">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-5">
+            <div key={activeSection} className="border border-blue-200 bg-blue-50/10 rounded-2xl p-5 space-y-6 shadow-inner ring-2 ring-blue-600/5 animate-in fade-in duration-300 min-w-0">
 
               {/* Navbar Editor */}
               {activeSection === 'navbar' && (
-                <div className="space-y-4">
+                <div className="space-y-4 min-w-0">
                   <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full shrink-0"></span>
                     <h3 className="text-xs font-extrabold text-slate-800">تخصيص شريط التنقل</h3>
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="flex flex-col gap-1">
+                  <div className="space-y-4 min-w-0">
+                    <div className="flex flex-col gap-1 min-w-0">
                       <label className="text-[11px] font-bold text-slate-600">اسم شعار الأكاديمية / المعلم</label>
                       <input
                         type="text"
                         value={content.navbar.title}
                         onChange={(e) => handleUpdateField('navbar', 'title', e.target.value)}
-                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                        className="w-full min-w-0 border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="flex flex-col gap-1">
+                    <div className="grid grid-cols-2 gap-3 min-w-0">
+                      <div className="flex flex-col gap-1 min-w-0">
                         <label className="text-[11px] font-bold text-slate-600">خلفية الشريط</label>
-                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5 min-w-0">
                           <input
                             type="color"
                             value={content.navbar.bgColor}
                             onChange={(e) => handleUpdateField('navbar', 'bgColor', e.target.value)}
                             className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                           />
-                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.navbar.bgColor}</span>
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase truncate">{content.navbar.bgColor}</span>
                         </div>
                       </div>
 
-                      <div className="flex flex-col gap-1">
+                      <div className="flex flex-col gap-1 min-w-0">
                         <label className="text-[11px] font-bold text-slate-600">لون نصوص الشعار</label>
-                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5 min-w-0">
                           <input
                             type="color"
                             value={content.navbar.textColor}
                             onChange={(e) => handleUpdateField('navbar', 'textColor', e.target.value)}
                             className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                           />
-                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.navbar.textColor}</span>
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase truncate">{content.navbar.textColor}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Navbar Links Editor */}
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0">
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-extrabold text-slate-700">روابط التنقل (Nav Links)</span>
                         <button
@@ -2199,7 +2230,7 @@ export default function PageBuilderPage() {
                             const currentLinks: any[] = (content.navbar as any).links || [];
                             handleUpdateField('navbar', 'links', [...currentLinks, { label: 'رابط جديد', href: '/' }]);
                           }}
-                          className="text-[10px] font-bold text-blue-600 border border-blue-200 rounded-lg px-2 py-1 hover:bg-blue-50 transition-colors flex items-center gap-1"
+                          className="text-[10px] font-bold text-blue-600 border border-blue-200 rounded-lg px-2 py-1 hover:bg-blue-50 transition-colors flex items-center gap-1 shrink-0"
                         >
                           <Plus className="w-3 h-3" /> إضافة
                         </button>
@@ -2210,7 +2241,7 @@ export default function PageBuilderPage() {
                         { label: 'الحقائب', href: '/bags' },
                         { label: 'حول', href: '/#about' },
                       ]).map((link: any, idx: number) => (
-                        <div key={idx} className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl p-2">
+                        <div key={idx} className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl p-2 min-w-0">
                           <input
                             type="text"
                             value={link.label}
@@ -2219,7 +2250,7 @@ export default function PageBuilderPage() {
                               links[idx] = { ...links[idx], label: e.target.value };
                               handleUpdateField('navbar', 'links', links);
                             }}
-                            className="flex-1 border border-slate-200 rounded-lg p-1.5 text-[10px] bg-white focus:outline-none focus:border-blue-600"
+                            className="w-1/2 min-w-0 flex-1 border border-slate-200 rounded-lg p-1.5 text-[10px] bg-white focus:outline-none focus:border-blue-600"
                             placeholder="الاسم"
                           />
                           <input
@@ -2231,7 +2262,7 @@ export default function PageBuilderPage() {
                               links[idx] = { ...links[idx], href: e.target.value };
                               handleUpdateField('navbar', 'links', links);
                             }}
-                            className="flex-1 border border-slate-200 rounded-lg p-1.5 text-[10px] bg-white focus:outline-none focus:border-blue-600 font-mono"
+                            className="w-1/2 min-w-0 flex-1 border border-slate-200 rounded-lg p-1.5 text-[10px] bg-white focus:outline-none focus:border-blue-600 font-mono"
                             placeholder="/courses"
                           />
                           <button
@@ -2239,33 +2270,33 @@ export default function PageBuilderPage() {
                               const links = ((content.navbar as any).links || []).filter((_: any, i: number) => i !== idx);
                               handleUpdateField('navbar', 'links', links);
                             }}
-                            className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                            className="text-slate-400 hover:text-red-500 transition-colors p-1 shrink-0"
                           >
-                            <X className="w-3 h-3" />
+                            <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ))}
                     </div>
 
                     {/* Login / Register Buttons */}
-                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2 min-w-0">
                       <span className="text-[10px] font-extrabold text-slate-700 block border-b border-slate-200 pb-1">أزرار تسجيل الدخول والتسجيل</span>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="flex flex-col gap-1">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="flex flex-col gap-1 min-w-0">
                           <label className="text-[9px] font-bold text-slate-500">نص تسجيل الدخول</label>
-                          <input type="text" value={(content.navbar as any).loginText || 'تسجيل الدخول'} onChange={(e) => handleUpdateField('navbar', 'loginText', e.target.value)} className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600" />
+                          <input type="text" value={(content.navbar as any).loginText || 'تسجيل الدخول'} onChange={(e) => handleUpdateField('navbar', 'loginText', e.target.value)} className="w-full min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600" />
                         </div>
-                        <div className="flex flex-col gap-1">
+                        <div className="flex flex-col gap-1 min-w-0">
                           <label className="text-[9px] font-bold text-slate-500">رابط تسجيل الدخول</label>
-                          <input type="text" dir="ltr" value={(content.navbar as any).loginLink || '/auth/login'} onChange={(e) => handleUpdateField('navbar', 'loginLink', e.target.value)} className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono" />
+                          <input type="text" dir="ltr" value={(content.navbar as any).loginLink || '/auth/login'} onChange={(e) => handleUpdateField('navbar', 'loginLink', e.target.value)} className="w-full min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono" />
                         </div>
-                        <div className="flex flex-col gap-1">
+                        <div className="flex flex-col gap-1 min-w-0">
                           <label className="text-[9px] font-bold text-slate-500">نص زر التسجيل</label>
-                          <input type="text" value={(content.navbar as any).registerText || 'ابدأ الآن'} onChange={(e) => handleUpdateField('navbar', 'registerText', e.target.value)} className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600" />
+                          <input type="text" value={(content.navbar as any).registerText || 'ابدأ الآن'} onChange={(e) => handleUpdateField('navbar', 'registerText', e.target.value)} className="w-full min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600" />
                         </div>
-                        <div className="flex flex-col gap-1">
+                        <div className="flex flex-col gap-1 min-w-0">
                           <label className="text-[9px] font-bold text-slate-500">رابط زر التسجيل</label>
-                          <input type="text" dir="ltr" value={(content.navbar as any).registerLink || '/auth/register'} onChange={(e) => handleUpdateField('navbar', 'registerLink', e.target.value)} className="border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono" />
+                          <input type="text" dir="ltr" value={(content.navbar as any).registerLink || '/auth/register'} onChange={(e) => handleUpdateField('navbar', 'registerLink', e.target.value)} className="w-full min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono" />
                         </div>
                       </div>
                     </div>
@@ -2285,7 +2316,7 @@ export default function PageBuilderPage() {
                     <div className="flex flex-col gap-1">
                       <label className="text-[11px] font-bold text-slate-600">العنوان الترحيبي العريض</label>
                       <textarea
-                        value={content.hero.title}
+                        value={cleanInputText(content.hero.title)}
                         onChange={(e) => handleUpdateField('hero', 'title', e.target.value)}
                         className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px] resize-none"
                       />
@@ -2295,7 +2326,7 @@ export default function PageBuilderPage() {
                       <label className="text-[11px] font-bold text-slate-600">العبارة التعريفية الصغيرة (شارة المقدمة)</label>
                       <input
                         type="text"
-                        value={content.hero.subtitle}
+                        value={cleanInputText(content.hero.subtitle)}
                         onChange={(e) => handleUpdateField('hero', 'subtitle', e.target.value)}
                         className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
                       />
@@ -2304,7 +2335,7 @@ export default function PageBuilderPage() {
                     <div className="flex flex-col gap-1">
                       <label className="text-[11px] font-bold text-slate-600">شرح وتفاصيل البانر</label>
                       <textarea
-                        value={content.hero.description}
+                        value={cleanInputText(content.hero.description)}
                         onChange={(e) => handleUpdateField('hero', 'description', e.target.value)}
                         className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[110px]"
                       />
@@ -2426,7 +2457,7 @@ export default function PageBuilderPage() {
                       <label className="text-[11px] font-bold text-slate-600">عنوان قسم النبذة</label>
                       <input
                         type="text"
-                        value={content.about.title}
+                        value={cleanInputText(content.about.title)}
                         onChange={(e) => handleUpdateField('about', 'title', e.target.value)}
                         className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
                       />
@@ -2435,7 +2466,7 @@ export default function PageBuilderPage() {
                     <div className="flex flex-col gap-1">
                       <label className="text-[11px] font-bold text-slate-600">تفاصيل وسيرة ذاتية (محتوى النبذة)</label>
                       <textarea
-                        value={content.about.subtitle}
+                        value={cleanInputText(content.about.subtitle)}
                         onChange={(e) => handleUpdateField('about', 'subtitle', e.target.value)}
                         className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[140px]"
                       />
@@ -2469,59 +2500,73 @@ export default function PageBuilderPage() {
                       </div>
                     </div>
 
-                    {/* Analytics / Vision Chart Controls */}
-                    <div className="border-t border-slate-100 pt-3 mt-3 space-y-3">
-                      <h4 id="about-analytics-editor-header" className="text-[11px] font-extrabold text-slate-700">تخصيص رؤية الأداء المؤسسي والمخطط (Analytics & Vision)</h4>
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[11px] font-bold text-slate-600">عنوان رؤية الأداء المؤسسي</label>
-                        <input
-                          type="text"
-                          value={content.about.analyticsTitle !== undefined ? content.about.analyticsTitle : 'رؤية الأداء المؤسسي'}
-                          onChange={(e) => handleUpdateField('about', 'analyticsTitle', e.target.value)}
-                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                          placeholder="رؤية الأداء المؤسسي"
-                        />
-                      </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">رابط صورة المعلم / النبذة</label>
+                      <input
+                        type="text"
+                        value={content.about.image || ''}
+                        onChange={(e) => handleUpdateField('about', 'image', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                        dir="ltr"
+                        placeholder="https://..."
+                      />
+                    </div>
 
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[11px] font-bold text-slate-600">لون أعمدة التحليلات</label>
-                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                    {/* Analytics / Vision Chart Controls — Only show for Template 1 Academy Role */}
+                    {activeTemplateId === 'template_1' && currentRole === 'academy' && (
+                      <div className="border-t border-slate-100 pt-3 mt-3 space-y-3">
+                        <h4 id="about-analytics-editor-header" className="text-[11px] font-extrabold text-slate-700">تخصيص رؤية الأداء المؤسسي والمخطط (Analytics & Vision)</h4>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] font-bold text-slate-600">عنوان رؤية الأداء المؤسسي</label>
                           <input
-                            type="color"
-                            value={content.about.analyticsColor || '#3525cd'}
-                            onChange={(e) => handleUpdateField('about', 'analyticsColor', e.target.value)}
-                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                            type="text"
+                            value={content.about.analyticsTitle !== undefined ? content.about.analyticsTitle : 'رؤية الأداء المؤسسي'}
+                            onChange={(e) => handleUpdateField('about', 'analyticsTitle', e.target.value)}
+                            className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                            placeholder="رؤية الأداء المؤسسي"
                           />
-                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.analyticsColor || '#3525cd'}</span>
+                        </div>
+
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] font-bold text-slate-600">لون أعمدة التحليلات</label>
+                          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                            <input
+                              type="color"
+                              value={content.about.analyticsColor || '#3525cd'}
+                              onChange={(e) => handleUpdateField('about', 'analyticsColor', e.target.value)}
+                              className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                            />
+                            <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.about.analyticsColor || '#3525cd'}</span>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 pt-1">
+                          <label className="text-[11px] font-bold text-slate-600 block">منحنيات وارتفاعات الأعمدة (الأداء %):</label>
+                          {([0, 1, 2, 3, 4]).map((barIdx) => {
+                            const bars = content.about.analyticsBars || [40, 65, 85, 50, 95];
+                            const val = bars[barIdx] ?? 50;
+                            return (
+                              <div key={barIdx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                                <span className="text-[10px] font-bold text-slate-600 w-14 shrink-0">عمود {barIdx + 1}:</span>
+                                <input
+                                  type="range"
+                                  min="15"
+                                  max="100"
+                                  value={val}
+                                  onChange={(e) => {
+                                    const newBars = [...(content.about.analyticsBars || [40, 65, 85, 50, 95])];
+                                    newBars[barIdx] = parseInt(e.target.value, 10);
+                                    handleUpdateField('about', 'analyticsBars', newBars);
+                                  }}
+                                  className="flex-grow accent-blue-600 cursor-pointer"
+                                />
+                                <span className="text-[10px] font-mono font-extrabold text-blue-600 w-8 text-left">{val}%</span>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-
-                      <div className="space-y-2 pt-1">
-                        <label className="text-[11px] font-bold text-slate-600 block">منحنيات وارتفاعات الأعمدة (الأداء %):</label>
-                        {([0, 1, 2, 3, 4]).map((barIdx) => {
-                          const bars = content.about.analyticsBars || [40, 65, 85, 50, 95];
-                          const val = bars[barIdx] ?? 50;
-                          return (
-                            <div key={barIdx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
-                              <span className="text-[10px] font-bold text-slate-600 w-14 shrink-0">عمود {barIdx + 1}:</span>
-                              <input
-                                type="range"
-                                min="15"
-                                max="100"
-                                value={val}
-                                onChange={(e) => {
-                                  const newBars = [...(content.about.analyticsBars || [40, 65, 85, 50, 95])];
-                                  newBars[barIdx] = parseInt(e.target.value, 10);
-                                  handleUpdateField('about', 'analyticsBars', newBars);
-                                }}
-                                className="flex-grow accent-blue-600 cursor-pointer"
-                              />
-                              <span className="text-[10px] font-mono font-extrabold text-blue-600 w-8 text-left">{val}%</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -3350,7 +3395,7 @@ export default function PageBuilderPage() {
               )}
 
               {/* Footer Editor */}
-              {activeSection === 'footer' && currentRole !== 'academy' && (
+              {activeSection === 'footer' && (
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
                     <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
@@ -3358,6 +3403,53 @@ export default function PageBuilderPage() {
                   </div>
 
                   <div className="space-y-4">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">الوصف التعريفي في الفوتر</label>
+                      <textarea
+                        value={cleanInputText(content.footer.description || (content.footer as any).aboutText || '')}
+                        onChange={(e) => handleUpdateField('footer', 'description', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px]"
+                        placeholder="مجموعات تقوية ومراجعات شاملة..."
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">مواعيد وساعات العمل</label>
+                      <input
+                        type="text"
+                        value={content.footer.workingHours || ''}
+                        onChange={(e) => handleUpdateField('footer', 'workingHours', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                        placeholder="من السبت إلى الخميس: ١٠:٠٠ ص - ٩:٠٠ م"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">البريد الإلكتروني للفوتر</label>
+                        <input
+                          type="email"
+                          value={content.footer.email || ''}
+                          onChange={(e) => handleUpdateField('footer', 'email', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                          dir="ltr"
+                          placeholder="info@ahmedmath.com"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">رقم الهاتف للفوتر</label>
+                        <input
+                          type="text"
+                          value={content.footer.phone || ''}
+                          onChange={(e) => handleUpdateField('footer', 'phone', e.target.value)}
+                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                          dir="ltr"
+                          placeholder="+966500000000"
+                        />
+                      </div>
+                    </div>
+
                     <div className="flex flex-col gap-1">
                       <label className="text-[11px] font-bold text-slate-600">نص حقوق الملكية والنشر</label>
                       <input
@@ -3377,14 +3469,6 @@ export default function PageBuilderPage() {
                           value={content.footer.newsletterTitle || ''}
                           onChange={(e) => handleUpdateField('footer', 'newsletterTitle', e.target.value)}
                           className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[11px] font-bold text-slate-600">وصف النشرة البريدية</label>
-                        <textarea
-                          value={content.footer.newsletterDesc || ''}
-                          onChange={(e) => handleUpdateField('footer', 'newsletterDesc', e.target.value)}
-                          className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[60px]"
                         />
                       </div>
                       <div className="flex flex-col gap-1">
