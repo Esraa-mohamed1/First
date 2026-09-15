@@ -8,7 +8,7 @@ import {
   PlayCircle, FileText, Menu, X, ArrowRight, ArrowLeft, Trophy, Star, Rocket,
   Download, MessageSquare, Info, StickyNote, ThumbsUp, MessageCircle,
   Clock, CheckCircle2, Lock, AlertCircle, Pencil, Trash2, Bell, BookOpen, Video,
-  Heart, CornerDownLeft, Users
+  Heart, CornerDownLeft, Users, User
 } from 'lucide-react';
 import {
   getMyCourseDetails,
@@ -23,6 +23,7 @@ import {
   updateLessonComment,
   deleteLessonComment
 } from '@/services/student-courses';
+import { getStudentProfileStatus, getMyAcademyProfile } from '@/services/student-auth';
 import { getLessonVideoSrc, getLessonVideoIds } from '@/lib/lesson-video-src';
 import {
   canAccessStudentLearning,
@@ -32,7 +33,7 @@ import {
 import { usePlayerStore } from '@/hooks/usePlayerStore';
 import { useBunnyPlayer } from '@/hooks/useBunnyPlayer';
 import { ResumePrompt } from '@/components/Student/Courses/ResumePrompt';
-import { cn } from '@/lib/utils';
+import { cn, getLogoUrl, normalizeProfileImageUrl } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import Lottie from 'lottie-react';
@@ -139,8 +140,59 @@ export default function CoursePlayerPage() {
   const [showResumePrompt, setShowResumePrompt] = useState(false);
   const resumeWatchedSeconds = useRef(0);
   const [rocketData, setRocketData] = useState<any>(null);
-  const [studentName, setStudentName] = useState('أحمد');
-  const [studentAvatar, setStudentAvatar] = useState('');
+  const [studentName, setStudentName] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const storedName = localStorage.getItem('user_name');
+        if (storedName) return storedName.trim();
+        const userInfoStr = localStorage.getItem('user_info');
+        if (userInfoStr) {
+          const userInfo = JSON.parse(userInfoStr);
+          const name = userInfo.name || userInfo.fullname;
+          if (name) return name.trim();
+        }
+      } catch (e) {}
+    }
+    return '';
+  });
+  const [studentAvatar, setStudentAvatar] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const userInfoStr = localStorage.getItem('user_info');
+        if (userInfoStr) {
+          const userInfo = JSON.parse(userInfoStr);
+          const avatar = userInfo.profile_image || userInfo.avatar || userInfo.avatar_url || userInfo.image || '';
+          if (avatar) return normalizeProfileImageUrl(avatar);
+        }
+      } catch (e) {}
+    }
+    return '';
+  });
+  const [academyName, setAcademyName] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('darab_academy_profile');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          const name = parsed?.name || parsed?.site_name || parsed?.academy_name || '';
+          if (name && name !== 'Darrab' && name !== 'درب Darrab') return name;
+        }
+      } catch (e) {}
+    }
+    return '';
+  });
+  const [academyLogo, setAcademyLogo] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('darab_academy_profile');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          return parsed?.logo || parsed?.logo_url || null;
+        }
+      } catch (e) {}
+    }
+    return null;
+  });
 
   useEffect(() => {
     fetch('https://lottie.host/80e15967-b508-410a-8e2b-f8f4116d97c6/g7G8yvN0z6.json')
@@ -150,32 +202,57 @@ export default function CoursePlayerPage() {
   }, []);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedName = localStorage.getItem('user_name');
-      if (storedName) {
-        const firstName = storedName.trim().split(' ')[0];
-        setStudentName(firstName);
-      } else {
-        const userInfoStr = localStorage.getItem('user_info');
-        if (userInfoStr) {
-          try {
-            const userInfo = JSON.parse(userInfoStr);
-            const name = userInfo.name || userInfo.fullname;
-            if (name) {
-              setStudentName(name.trim().split(' ')[0]);
-            }
-          } catch (e) {}
-        }
-      }
+    let isMounted = true;
 
-      const userInfoStr = localStorage.getItem('user_info');
-      if (userInfoStr) {
-        try {
-          const userInfo = JSON.parse(userInfoStr);
-          setStudentAvatar(userInfo.avatar || userInfo.avatar_url || '');
-        } catch (e) {}
+    const fetchStudentProfile = async () => {
+      try {
+        const response = await getStudentProfileStatus();
+        const raw = response?.data || response;
+        if (raw && isMounted) {
+          const name = raw.name || raw.fullName || '';
+          const avatarRaw = raw.profile_image || raw.avatar || raw.image || null;
+          const avatar = avatarRaw ? normalizeProfileImageUrl(avatarRaw) : '';
+
+          if (name) {
+            setStudentName(name);
+            if (typeof window !== 'undefined') {
+              try {
+                localStorage.setItem('user_name', name);
+                const cached = localStorage.getItem('user_info');
+                const u = cached ? JSON.parse(cached) : {};
+                localStorage.setItem('user_info', JSON.stringify({ ...u, ...raw, name, profile_image: avatar }));
+              } catch (e) {}
+            }
+          }
+          if (avatar) {
+            setStudentAvatar(avatar);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to fetch student profile in learn page:', err);
       }
-    }
+    };
+
+    const fetchAcademyProfile = async () => {
+      try {
+        const data = await getMyAcademyProfile();
+        if (data && isMounted) {
+          const name = data.name || data.site_name || data.academy_name || '';
+          const logo = data.logo || data.logo_url || null;
+          if (name) setAcademyName(name);
+          if (logo !== undefined) setAcademyLogo(logo);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch academy profile in learn page:', err);
+      }
+    };
+
+    fetchStudentProfile();
+    fetchAcademyProfile();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const videoContext = useMemo(() => {
@@ -1096,7 +1173,11 @@ export default function CoursePlayerPage() {
             <span className="text-sm">خروج</span>
           </button>
           <div className="h-6 w-px bg-gray-200" />
-          <div className="text-xl font-black text-blue-600">Darrab</div>
+          {academyLogo ? (
+            <img src={getLogoUrl(academyLogo)} alt={academyName || 'Academy'} className="h-7 max-w-[120px] object-contain" />
+          ) : academyName ? (
+            <div className="text-lg font-black text-blue-600 truncate max-w-[150px]">{academyName}</div>
+          ) : null}
         </div>
 
         <div className="hidden md:flex flex-col items-center flex-1 max-w-md mx-8">
@@ -1120,9 +1201,20 @@ export default function CoursePlayerPage() {
             <Bell size={20} />
           </button>
           <div className="flex items-center gap-3">
-            <span className="text-sm font-bold text-gray-700 hidden md:block">أحمد العتيبي</span>
-            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-100">
-              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Ahmed" alt="User" className="w-full h-full object-cover" />
+            {studentName && (
+              <span className="text-sm font-bold text-gray-700 hidden md:block">{studentName}</span>
+            )}
+            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-100 bg-gray-50 flex items-center justify-center">
+              {studentAvatar ? (
+                <img
+                  src={studentAvatar}
+                  alt={studentName || 'Student'}
+                  className="w-full h-full object-cover"
+                  onError={() => setStudentAvatar('')}
+                />
+              ) : (
+                <User size={18} className="text-gray-400" />
+              )}
             </div>
           </div>
         </div>
@@ -1774,7 +1866,7 @@ export default function CoursePlayerPage() {
                     fontFamily: "system-ui, sans-serif"
                   }}
                 >
-                  أحسنت يا {studentName}!
+                  {studentName ? `أحسنت يا ${studentName}!` : 'أحسنت!'}
                 </motion.text>
               </svg>
             </div>
