@@ -2,15 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getProfileStatus, getMyUsageLimit, getMyPackage } from '@/services/auth';
+import { getProfileStatus, getMyUsageLimit } from '@/services/auth';
 import { getDashboard } from '@/services/courses';
-import { 
-  Sparkles, 
-  ArrowLeft, 
-  BookOpen, 
-  HardDrive, 
-  Users, 
-  Clock, 
+import {
+  Sparkles,
+  ArrowLeft,
+  BookOpen,
+  HardDrive,
+  Users,
+  Clock,
   ChevronRight,
   AlertTriangle
 } from 'lucide-react';
@@ -26,10 +26,9 @@ export default function DashboardTopBanners() {
   useEffect(() => {
     const fetchProfileAndLimits = async () => {
       try {
-        const [profileRes, limitsRes, pkgRes, dashRes] = await Promise.all([
+        const [profileRes, limitsRes, dashRes] = await Promise.all([
           getProfileStatus(),
           getMyUsageLimit().catch(() => null),
-          getMyPackage().catch(() => null),
           getDashboard().catch(() => null),
         ]);
 
@@ -42,12 +41,7 @@ export default function DashboardTopBanners() {
         const limits = limitsRes?.data || (Array.isArray(limitsRes) ? limitsRes : []);
         setUsageLimits(limits);
 
-        const pkg = pkgRes?.data || pkgRes;
-        if (pkg?.package_info) {
-          setPackageInfo(pkg.package_info);
-        } else if (pkg) {
-          setPackageInfo(pkg);
-        }
+
 
         if (dashRes) {
           setDashboardData(dashRes);
@@ -72,7 +66,7 @@ export default function DashboardTopBanners() {
   if (packageInfo?.start_date && packageInfo?.end_date) {
     const startMs = new Date(packageInfo.start_date).getTime();
     const endMs = new Date(packageInfo.end_date).getTime();
-    
+
     if (!isNaN(startMs) && !isNaN(endMs)) {
       const totalMs = endMs - startMs;
       if (totalMs > 0) {
@@ -118,10 +112,10 @@ export default function DashboardTopBanners() {
   const coursesUsed = dashboardCoursesCount ?? userData?.courses_count ?? (coursesLimitObj ? parseFloat(coursesLimitObj.used_amount ?? coursesLimitObj.used ?? '0') : 0);
   const coursesLimit = coursesLimitObj ? parseFloat(coursesLimitObj.total_limit ?? coursesLimitObj.limit ?? '5') : 5;
 
-  const rawStorageUsed = storageLimitObj ? parseFloat(storageLimitObj.used_amount ?? storageLimitObj.used ?? '0') : null;
+  const rawStorageUsed = storageLimitObj ? parseFloat(storageLimitObj.used_amount ?? storageLimitObj.used ?? '0') : 0;
   const rawStorageLimit = storageLimitObj ? parseFloat(storageLimitObj.total_limit ?? storageLimitObj.limit ?? '10') : 10;
 
-  let storageUsedGB = '0.5 جيجابايت';
+  let storageUsedGB = '0 جيجابايت';
   if (rawStorageUsed !== null) {
     if (rawStorageUsed > 100) {
       storageUsedGB = `${(rawStorageUsed / 1024).toFixed(2)} جيجابايت`;
@@ -156,7 +150,7 @@ export default function DashboardTopBanners() {
                   <Sparkles className="w-3.5 h-3.5 text-blue-600" />
                   الباقة التجريبية المجانية
                 </span>
-                
+
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold">
                   <Clock className="w-3.5 h-3.5 text-amber-600" />
                   متبقي {remainingDays} يوماً من أصل {totalDays} يوماً

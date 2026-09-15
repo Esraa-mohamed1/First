@@ -48,7 +48,7 @@ export const StudentsTable = ({
             <p className="text-[11px] sm:text-xs font-bold text-gray-400 max-w-xs sm:max-w-sm leading-relaxed mb-4 sm:mb-6">
               ابدأ الآن بإضافة أول طالب وابدأ في متابعة نمو أكاديميتك بسهولة.
             </p>
-            <button 
+            <button
               onClick={() => setIsAddStudentModalOpen(true)}
               className="flex items-center gap-1.5 sm:gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-black shadow-lg shadow-blue-500/10 hover:-translate-y-0.5 active:scale-95 transition-all duration-200"
             >
@@ -83,11 +83,10 @@ export const StudentsTable = ({
                     <td className="py-3 px-2 text-[10px] sm:text-xs font-bold text-gray-500 max-w-[120px] sm:max-w-none truncate">{student.course}</td>
                     <td className="py-3 px-2 text-[10px] sm:text-xs font-bold text-gray-500 whitespace-nowrap">{student.date}</td>
                     <td className="py-3 px-2 text-left">
-                      <span className={`px-2.5 py-1 rounded-lg text-[9px] sm:px-3 sm:py-1.5 sm:rounded-xl sm:text-[10px] font-black inline-block min-w-[70px] sm:min-w-[80px] text-center ${
-                        student.status === 'مدفوع' ? 'bg-green-50 text-emerald-600 border border-green-100' :
-                        student.status === 'انتظار' ? 'bg-orange-50 text-orange-500 border border-orange-100' :
-                        'bg-gray-50 text-gray-500 border border-gray-100'
-                      }`}>
+                      <span className={`px-2.5 py-1 rounded-lg text-[9px] sm:px-3 sm:py-1.5 sm:rounded-xl sm:text-[10px] font-black inline-block min-w-[70px] sm:min-w-[80px] text-center ${student.status === 'مدفوع' ? 'bg-green-50 text-emerald-600 border border-green-100' :
+                          student.status === 'انتظار' ? 'bg-orange-50 text-orange-500 border border-orange-100' :
+                            'bg-gray-50 text-gray-500 border border-gray-100'
+                        }`}>
                         {student.status}
                       </span>
                     </td>

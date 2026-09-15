@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, X, BarChart3, Eye, Plus, Video, Radio, MapPin, Users, CreditCard, Settings2, Link as LinkIcon, Pencil, Clock, ExternalLink, ArrowUpRight, Share2 } from 'lucide-react';
+import { Search, MoreVertical, Download, ChevronRight, ChevronLeft, Loader2, Edit, Trash2, X, BarChart3, Eye, Plus, Video, Radio, MapPin, Users, CreditCard, Settings2, Link as LinkIcon, Pencil, Clock, ExternalLink, ArrowUpRight, Share2, BookOpen } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCourses, deleteCourse } from '@/services/courses';
@@ -312,11 +312,17 @@ export default function CoursesPage() {
                     onClick={() => router.push(`/academic/courses/${course.id}?tab=content`)}
                     className="relative h-48 overflow-hidden cursor-pointer group/img"
                   >
-                    <img
-                      className="w-full h-full object-cover group-hover/img:scale-105 transition-all duration-500"
-                      src={course.image || 'https://images.unsplash.com/photo-1586717791821-3f44a563de4c?auto=format&fit=crop&q=80&w=600'}
-                      alt={course.title}
-                    />
+                    {(course.image || (course as any).image_url || (course as any).cover_image) ? (
+                      <img
+                        className="w-full h-full object-cover group-hover/img:scale-105 transition-all duration-500"
+                        src={course.image || (course as any).image_url || (course as any).cover_image}
+                        alt={course.title || (course as any).name || 'Course Image'}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-slate-100 to-blue-50 flex items-center justify-center">
+                        <BookOpen className="w-12 h-12 text-blue-400/80" />
+                      </div>
+                    )}
                     <div className="absolute top-3 right-3 flex gap-2 z-10">
                       {getCourseStatusBadge(course.status || 'draft')}
                       <span className="bg-black/50 text-white px-2.5 py-1 rounded-md text-[10px] font-bold backdrop-blur-sm flex items-center gap-1">
