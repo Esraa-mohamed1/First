@@ -113,7 +113,7 @@ export default function DashboardPage() {
         <h2 className="text-2xl font-black text-gray-900">لوحة التحكم</h2>
         <div className="flex gap-3">
           <button className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors">
-            <span>تصفية الفترة</span>
+
             <TrendingUp size={16} />
           </button>
         </div>
@@ -127,9 +127,9 @@ export default function DashboardPage() {
           trend={
             statsData
               ? {
-                  value: statsData.active_academies.change_pct,
-                  isPositive: statsData.active_academies.change_pct >= 0,
-                }
+                value: statsData.active_academies.change_pct,
+                isPositive: statsData.active_academies.change_pct >= 0,
+              }
               : undefined
           }
           icon={Building2}
@@ -141,9 +141,9 @@ export default function DashboardPage() {
           trend={
             statsData
               ? {
-                  value: statsData.expired_academies.change_pct,
-                  isPositive: statsData.expired_academies.change_pct >= 0,
-                }
+                value: statsData.expired_academies.change_pct,
+                isPositive: statsData.expired_academies.change_pct >= 0,
+              }
               : undefined
           }
           icon={AlertCircle}
@@ -155,9 +155,9 @@ export default function DashboardPage() {
           trend={
             statsData
               ? {
-                  value: statsData.new_subscriptions_this_month.change_pct,
-                  isPositive: statsData.new_subscriptions_this_month.change_pct >= 0,
-                }
+                value: statsData.new_subscriptions_this_month.change_pct,
+                isPositive: statsData.new_subscriptions_this_month.change_pct >= 0,
+              }
               : undefined
           }
           icon={GraduationCap}
@@ -169,9 +169,9 @@ export default function DashboardPage() {
           trend={
             statsData
               ? {
-                  value: statsData.total_revenue.change_pct,
-                  isPositive: statsData.total_revenue.change_pct >= 0,
-                }
+                value: statsData.total_revenue.change_pct,
+                isPositive: statsData.total_revenue.change_pct >= 0,
+              }
               : undefined
           }
           icon={GraduationCap}
