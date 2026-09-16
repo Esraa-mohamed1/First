@@ -49,14 +49,20 @@ export const CourseLibrary = ({
         
         {displayedCourses.map((course, idx) => (
           <div key={course.id || idx} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-all duration-300">
-            <div className="relative h-36 sm:h-44 w-full bg-slate-50 border-b border-gray-50">
-              <Image
-                src={course.image_url || course.image || "/assets/course3.jpg"}
-                alt={course.name || course.title || "Course Thumbnail"}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 300px"
-              />
+            <div className="relative h-36 sm:h-44 w-full bg-slate-50 border-b border-gray-50 flex items-center justify-center overflow-hidden">
+              {(course.image_url || course.image) ? (
+                <Image
+                  src={course.image_url || course.image}
+                  alt={course.name || course.title || "Course Thumbnail"}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 300px"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-blue-50 to-indigo-100/60 flex items-center justify-center">
+                  <BookOpen className="w-10 h-10 text-blue-500/70" />
+                </div>
+              )}
             </div>
             <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
               <div className="space-y-1">

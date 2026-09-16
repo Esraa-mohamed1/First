@@ -106,17 +106,18 @@ function ProgressRing({ percent, inView }: { percent: number; inView: boolean })
   );
 }
 
-function CourseCard({ tag, title, duration, university, progress, image, href, isEditing }: {
-  tag: string; title: string; duration: string; university: string; progress: number; image?: string; href?: string; isEditing?: boolean;
+function CourseCard({ tag, title, duration, university, progress, image, href, isEditing, isActive }: {
+  tag: string; title: string; duration: string; university: string; progress: number; image?: string; href?: string; isEditing?: boolean; isActive?: boolean;
 }) {
   const { ref, inView } = useInView(0.2);
   const thumbStyle = image ? { backgroundImage: `url(${image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {};
+  const displayTag = isActive ? 'قيد الدراسة' : tag;
   
   const card = (
     <div ref={ref as React.RefObject<HTMLDivElement>} className="lst-course-card group hover:-translate-y-1 transition-all duration-300">
       <div className="lst-course-thumb" style={thumbStyle}>
-        {!image && <span className="lst-course-tag">{tag}</span>}
-        {image && <span className="lst-course-tag" style={{ position: 'absolute', bottom: 10, right: 10 }}>{tag}</span>}
+        {!image && <span className="lst-course-tag">{displayTag}</span>}
+        {image && <span className="lst-course-tag" style={{ position: 'absolute', bottom: 10, right: 10 }}>{displayTag}</span>}
       </div>
       <div className="lst-course-body">
         <h3 className="lst-course-title group-hover:text-purple-600 transition-colors">{title}</h3>
@@ -700,7 +701,8 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
       duration: c.duration || (c.units?.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0) ? `${c.units.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0)} درس` : 'غير محدد'),
       university: c.instructor || c.instructor_name || c.coach || 'المحاضر المعتمد',
       progress: Math.min(100, Math.max(10, parseInt(c.students_count ?? c.students ?? 0) || 50)),
-      image: c.image || c.cover_image || ''
+      image: c.image || c.cover_image || '',
+      enrollment_status: c.enrollment_status,
     }));
   }, [realCourses]);
 
@@ -1026,11 +1028,15 @@ export default function PurpleTemplate({ sections }: TemplateProps) {
                   </div>
                 ) : (
                   <div className="lst-courses-grid">
-                    {courses.slice(0, Number(courseNode.props?.limit) || courses.length).map((c, i: number) => (
-                      <div key={c.id || i} style={{ '--delay': `${i * 90}ms` } as React.CSSProperties}>
-                        <CourseCard {...c} href={`/${c.slug || c.id}`} isEditing={isEditing} />
-                      </div>
-                    ))}
+                    {courses.slice(0, Number(courseNode.props?.limit) || courses.length).map((c, i: number) => {
+                      const isActive = String(c.enrollment_status || '').toLowerCase() === 'active';
+                      const href = isActive ? `/student/courses/${c.id}/learn` : `/courses/${c.slug || c.id}`;
+                      return (
+                        <div key={c.id || i} style={{ '--delay': `${i * 90}ms` } as React.CSSProperties}>
+                          <CourseCard {...c} href={href} isEditing={isEditing} isActive={isActive} />
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

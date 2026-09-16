@@ -31,6 +31,7 @@ interface PaymentMethodDropdownProps {
   selectedValues: string[];
   onChange: (selectedIds: string[]) => void;
   error?: string;
+  disabled?: boolean;
 }
 
 export const PaymentMethodDropdown = ({
@@ -38,9 +39,10 @@ export const PaymentMethodDropdown = ({
   selectedValues,
   onChange,
   error,
+  disabled = false,
 }: PaymentMethodDropdownProps) => {
   return (
-    <div className="space-y-3" dir="rtl">
+    <div className={`space-y-3 ${disabled ? 'opacity-50 pointer-events-none cursor-not-allowed select-none' : ''}`} dir="rtl">
       <div className="flex items-center justify-between">
         <label className="block text-sm font-black text-slate-800 text-right">
           وسائل الدفع المقبولة <span className="text-red-500">*</span>

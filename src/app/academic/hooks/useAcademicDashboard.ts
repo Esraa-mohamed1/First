@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getDashboard } from '@/services/courses';
-import { getMyUsageLimit, getProfileStatus, getMyPackage } from '@/services/auth';
+import { getMyUsageLimit, getProfileStatus } from '@/services/auth';
 import { getStudentPurchaseRequests } from '@/services/finance';
 
 export const useAcademicDashboard = () => {
@@ -17,36 +17,29 @@ export const useAcademicDashboard = () => {
   const [purchaseRequests, setPurchaseRequests] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [usageLimits, setUsageLimits] = useState<any[]>([]);
-  const [packageInfo, setPackageInfo] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [isOnboardingCompleted, setIsOnboardingCompleted] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
   // Fetch data
   const fetchData = async () => {
     try {
-      const [dashboardData, usageResponse, profileResponse, pkgResponse, purchaseReqs] = await Promise.all([
+      const [dashboardData, usageResponse, profileResponse, purchaseReqs] = await Promise.all([
         getDashboard().catch(() => null),
         getMyUsageLimit().catch(() => null),
         getProfileStatus().catch(() => null),
-        getMyPackage().catch(() => null),
         getStudentPurchaseRequests().catch(() => [])
       ]);
 
       const userObj = profileResponse?.data || profileResponse;
       if (userObj) {
+        setUserProfile(userObj);
         const onboardingVal = userObj.onboarding ?? userObj.is_onboarding_completed ?? userObj.onboarding_completed;
         if (onboardingVal === true || onboardingVal === 1 || onboardingVal === '1' || onboardingVal === 'true') {
           setIsOnboardingCompleted(true);
         } else {
           setIsOnboardingCompleted(false);
         }
-      }
-
-      const pkgData = pkgResponse?.data || pkgResponse;
-      if (pkgData?.package_info) {
-        setPackageInfo(pkgData.package_info);
-      } else if (pkgData) {
-        setPackageInfo(pkgData);
       }
 
       const rawReqs: any = purchaseReqs;
@@ -120,7 +113,7 @@ export const useAcademicDashboard = () => {
 
       realActivity.push({
         name: req.user?.name || req.user?.full_name || req.user_name || req.user?.email || 'طالب',
-        course: req.course?.title || req.course?.name || req.course_name || 'دورة تعليمية',
+        course: req.course?.title || req.course?.name || req.course_name || '-',
         date: dateStr,
         status: statusStr
       });
@@ -142,9 +135,9 @@ export const useAcademicDashboard = () => {
 
         realActivity.push({
           name: s.name,
-          course: s.course_name || s.course_title || (courses.length > 0 ? (courses[0].name || courses[0].title) : 'دورة تعليمية'),
+          course: s.course_name || s.course_title || s.course || s.course_id || '-',
           date: dateStr,
-          status: s.payment_status || s.status || 'مدفوع'
+          status: s.payment_status || s.status || '-'
         });
       }
     });
@@ -176,27 +169,35 @@ export const useAcademicDashboard = () => {
     setCarouselIndex((prev) => (prev - 1 + carouselSlides.length) % carouselSlides.length);
   };
 
-  // Dynamic calculations for progress meters & package information
-  const maxStudentsObj = usageLimits.find((i: any) => i.feature_slug === 'max_students' || i.slug === 'max_students' || i.name?.includes('طلاب'));
-  const maxCoursesObj = usageLimits.find((i: any) => i.feature_slug === 'max_courses' || i.slug === 'max_courses' || i.name?.includes('دورات'));
-  const storageLimitObj = usageLimits.find((i: any) => i.feature_slug === 'storage_limit' || i.slug === 'storage_limit' || i.name?.includes('تخزين'));
+  // Dynamic calculations for progress meters & package information directly from /my-usage-limit API
+  const maxStudentsObj = usageLimits.find((i: any) => 
+    i.feature_slug === 'max_students' || i.slug === 'max_students' || i.feature_slug === 'students_limit' || i.slug === 'students_limit' || i.name?.includes('طلاب') || i.lable?.includes('طلاب')
+  );
+  const maxCoursesObj = usageLimits.find((i: any) => 
+    i.feature_slug === 'max_courses' || i.slug === 'max_courses' || i.feature_slug === 'courses_limit' || i.slug === 'courses_limit' || i.name?.includes('دورات') || i.lable?.includes('دورات')
+  );
+  const storageLimitObj = usageLimits.find((i: any) => 
+    i.feature_slug === 'storage_limit' || i.slug === 'storage_limit' || i.name?.includes('تخزين') || i.lable?.includes('تخزين')
+  );
 
-  const packageName = packageInfo?.package_name || packageInfo?.name || '';
-  const packageStatus = packageInfo?.status || 'نشط';
+  const rawPackageName = userProfile?.package_name || userProfile?.package?.name || userProfile?.package?.title || '';
+  const packageName = rawPackageName || (userProfile?.status_payment === 'free_trial' ? 'الباقة التجريبية' : 'الباقة الحالية');
+  const packageStatus = userProfile?.status_payment === 'free_trial' ? 'تجريبية' : (userProfile?.is_active ? 'نشط' : (userProfile?.status_payment || 'نشط'));
 
-  const usedStudents = maxStudentsObj ? parseFloat(maxStudentsObj.used_amount || '0') : (stats?.active_students || students.length || 0);
-  const totalStudentsLimit = maxStudentsObj ? parseFloat(maxStudentsObj.total_limit || '5000') : 5000;
+  const usedStudents = maxStudentsObj ? parseFloat(maxStudentsObj.used_amount ?? maxStudentsObj.used ?? '0') : (stats?.active_students || 0);
+  const totalStudentsLimit = maxStudentsObj ? parseFloat(maxStudentsObj.total_limit ?? maxStudentsObj.limit ?? '50') : 50;
   const remainingStudents = Math.max(totalStudentsLimit - usedStudents, 0);
   const studentProgressPercent = totalStudentsLimit > 0 ? Math.min((usedStudents / totalStudentsLimit) * 100, 100) : 0;
 
-  const usedCourses = maxCoursesObj ? parseFloat(maxCoursesObj.used_amount || '0') : (stats?.published_courses || courses.length || 0);
-  const totalCoursesLimit = maxCoursesObj ? parseFloat(maxCoursesObj.total_limit || '50') : 50;
+  const usedCourses = maxCoursesObj ? parseFloat(maxCoursesObj.used_amount ?? maxCoursesObj.used ?? '0') : (stats?.published_courses || 0);
+  const totalCoursesLimit = maxCoursesObj ? parseFloat(maxCoursesObj.total_limit ?? maxCoursesObj.limit ?? '50') : 50;
   const remainingCourses = Math.max(totalCoursesLimit - usedCourses, 0);
   const courseProgressPercent = totalCoursesLimit > 0 ? Math.min((usedCourses / totalCoursesLimit) * 100, 100) : 0;
 
-  // Storage calculation from API usage limit
-  const storageUsed = storageLimitObj ? parseFloat(storageLimitObj.used_amount || '0') / (parseFloat(storageLimitObj.used_amount || '0') > 100 ? 1024 : 1) : (usedCourses > 0 ? 0.5 * usedCourses : 0);
-  const storageTotal = storageLimitObj ? parseFloat(storageLimitObj.total_limit || '10') : 10;
+  // Storage calculation from API usage limit (converting MB to GB if needed)
+  const rawStorageUsed = storageLimitObj ? parseFloat(storageLimitObj.used_amount ?? storageLimitObj.used ?? '0') : 0;
+  const storageUsed = rawStorageUsed > 100 ? rawStorageUsed / 1024 : rawStorageUsed;
+  const storageTotal = storageLimitObj ? parseFloat(storageLimitObj.total_limit ?? storageLimitObj.limit ?? '10') : 10;
   const storagePercent = storageTotal > 0 ? Math.min(Math.round((storageUsed / storageTotal) * 100), 100) : 0;
 
   return {

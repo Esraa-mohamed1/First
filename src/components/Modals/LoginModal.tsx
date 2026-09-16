@@ -171,25 +171,6 @@ const LoginModal = () => {
                             )}
                         </button>
 
-                        {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
-                            <>
-                                <div className="relative flex items-center justify-center py-2">
-                                    <div className="flex-grow border-t border-[#e2e8f0]"></div>
-                                    <span className="flex-shrink mx-4 text-[10px] text-[#6b7280] font-black uppercase tracking-[0.2em]">أو</span>
-                                    <div className="flex-grow border-t border-[#e2e8f0]"></div>
-                                </div>
-
-                                <button
-                                    onClick={() => handleGoogleLogin()}
-                                    className="w-full py-4 bg-white border border-[#e2e8f0] text-[#1a1a1a] font-black rounded-2xl hover:bg-[#f8faff] hover:border-[#2563eb]/20 transition-all flex items-center justify-center gap-3 text-sm shadow-sm group active:scale-95"
-                                    disabled={isLoading}
-                                >
-                                    <img src="https://www.google.com/favicon.ico" className="w-4 h-4 shadow-sm group-hover:scale-110 transition-transform" alt="google" />
-                                    تسجيل الدخول عن طريق جوجل
-                                </button>
-                            </>
-                        )}
-
                         <p className="text-center text-xs font-bold text-[#6b7280] mt-4">
                             ليس لديك حساب؟{' '}
                             <button

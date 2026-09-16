@@ -8,8 +8,8 @@ interface CreateCourseModalPricingTabProps {
   setPricingType: (type: 'free' | 'paid') => void;
   price: string;
   setPrice: (val: string) => void;
-  currency: 'EGP' | 'SAR' | 'USD';
-  setCurrency: (val: 'EGP' | 'SAR' | 'USD') => void;
+  currency: 'EGP' | 'SAR' | 'KWD';
+  setCurrency: (val: 'EGP' | 'SAR' | 'KWD') => void;
   errors: Record<string, any>;
   setErrors: React.Dispatch<React.SetStateAction<Record<string, any>>>;
   handleSave: () => Promise<void>;
@@ -101,8 +101,8 @@ export const CreateCourseModalPricingTab = ({
                 <option value="EGP" className="text-gray-900">
                   EGP - Egyptian Pound (ج.م)
                 </option>
-                <option value="USD" className="text-gray-900">
-                  USD - United States Dollar ($)
+                <option value="KWD" className="text-gray-900">
+                  KWD - Kuwaiti Dinar (د.ك)
                 </option>
               </select>
               <ChevronDown size={14} className="text-blue-600 pointer-events-none" />

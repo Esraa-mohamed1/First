@@ -47,6 +47,7 @@ export default function CoursesPage() {
             false;
 
           return {
+            ...c,
             id: c.id?.toString() || '',
             title: c.title || '',
             slug: c.slug || '',
@@ -60,6 +61,10 @@ export default function CoursesPage() {
             subscription_status: subStatus || backendEnrollStatus || null,
             enrollment_status: backendEnrollStatus || subStatus || null,
             rejection_reason: c.rejection_reason || (sub ? (sub.message || sub.rejection_reason || sub.rejectionReason) : '') || '',
+            access_duration_type: c.access_duration_type ?? sub?.access_duration_type ?? c.access_type ?? c.accessDurationType ?? null,
+            access_days: c.access_days ?? sub?.access_days ?? c.accessDays ?? null,
+            access_until_date: c.access_until_date ?? sub?.access_until_date ?? c.accessUntilDate ?? null,
+            access_period: c.access_period ?? sub?.access_period ?? null,
           };
         });
 

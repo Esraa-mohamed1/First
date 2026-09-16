@@ -32,7 +32,7 @@ const sidebarGroups = [
   {
     title: 'القائمة الرئيسية',
     items: [
-      { name: 'لوحة التحكم', href: '/', icon: LayoutDashboard },
+      { name: 'صفحة الأكاديمية', href: '/', icon: LayoutDashboard },
     ]
   },
   {

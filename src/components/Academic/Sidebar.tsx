@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutGrid, GraduationCap, Users, FileText, Package, TrendingUp, Settings, LogOut, ChevronLeft, X, LayoutDashboard, Plus, Wallet, Landmark, ReceiptText, Megaphone, Ticket, Award, Star, User, Globe, ShoppingBag } from 'lucide-react';
+import { LayoutGrid, GraduationCap, Users, FileText, Package, TrendingUp, Settings, LogOut, ChevronLeft, X, LayoutDashboard, Plus, Wallet, Landmark, ReceiptText, Megaphone, Ticket, Award, Star, User, Globe, ShoppingBag, KeyRound } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Image from 'next/image';
 import SelectCourseTypeModal from './Modals/SelectCourseTypeModal';
 import { clearUserSessionAndCache } from '@/lib/auth-storage';
+import { getMeProfile } from '@/services/auth';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -20,6 +21,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const router = useRouter();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [user, setUser] = useState<{ name: string, role: string } | null>(null);
+  const [academy, setAcademy] = useState<{ name?: string; logo?: string; email?: string } | null>(null);
   const [isSelectTypeModalOpen, setIsSelectTypeModalOpen] = useState(false);
   const [activeTemplate, setActiveTemplate] = useState('academy-dashboard');
   const [activePage, setActivePage] = useState('1');
@@ -41,6 +43,34 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         console.error("Failed to parse user info:", e);
       }
     }
+
+    // Fetch academy profile from /me endpoint
+    const fetchAcademyProfile = async () => {
+      try {
+        const response = await getMeProfile();
+        const data = response?.data || response;
+        if (data) {
+          setAcademy({
+            name: data.name || data.academy_name || data.title,
+            logo: data.logo || data.avatar || data.image,
+            email: data.email,
+          });
+        }
+      } catch (e) {
+        // Fallback: read from localStorage
+        if (storedUser) {
+          try {
+            const parsed = JSON.parse(storedUser);
+            setAcademy({
+              name: parsed.name || parsed.academy_name,
+              logo: parsed.logo || parsed.avatar,
+              email: parsed.email,
+            });
+          } catch { }
+        }
+      }
+    };
+    fetchAcademyProfile();
 
     // Synchronous sync from localStorage
     const updateActiveTemplateFromStorage = () => {
@@ -73,6 +103,9 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       setExpandedItems(prev => (prev.includes('المتجر') ? prev : [...prev, 'المتجر']));
     }
     if (pathname.startsWith('/academic/settings')) {
+      setExpandedItems(prev => (prev.includes('الأعدادات') ? prev : [...prev, 'الأعدادات']));
+    }
+    if (pathname === '/academic/settings/login-data') {
       setExpandedItems(prev => (prev.includes('الأعدادات') ? prev : [...prev, 'الأعدادات']));
     }
     if (pathname.startsWith('/academic/templates') || pathname.startsWith('/academic/website') || pathname === '/academic/domain') {
@@ -115,7 +148,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           ]
           : []),
 
-        { label: 'معاينة كطالب (تجريبي)', href: '/academic/courses/8/student' },
+        { label: 'معاينة كطالب  ', href: '/academic/courses/8/student' },
       ],
     },
     {
@@ -194,6 +227,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       href: '/academic/settings/academy',
       subItems: [
         { label: 'بيانات الأكاديمية', href: '/academic/settings/academy' },
+        { label: 'بيانات تسجيل الدخول', href: '/academic/settings/login-data' },
       ]
     },
   ];
@@ -205,23 +239,45 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         isOpen ? "translate-x-0" : "translate-x-full"
       )}>
         {/* Branding Section */}
-        <div className="p-8 pb-10 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-blue-100">
-              د
+        <div className="px-6 pt-6 pb-4 flex items-center justify-between border-b border-gray-50">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Academy Logo */}
+            <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0 bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-100">
+              {academy?.logo ? (
+                <Image
+                  src={academy.logo}
+                  alt={academy.name || 'أكاديمية'}
+                  width={44}
+                  height={44}
+                  className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              ) : (
+                <span className="text-white font-black text-xl">
+                  {academy?.name ? academy.name.charAt(0) : 'أ'}
+                </span>
+              )}
             </div>
-            <h1 className="text-3xl font-black text-blue-600 tracking-tight">درب</h1>
+            {/* Academy Name */}
+            <div className="min-w-0">
+              <h1 className="text-base font-black text-gray-900 tracking-tight truncate leading-tight">
+                {academy?.name || 'أكاديميتي'}
+              </h1>
+              {academy?.email && (
+                <p className="text-[11px] text-gray-400 font-medium truncate leading-tight">{academy.email}</p>
+              )}
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-xl transition-all lg:hidden"
+            className="p-2 hover:bg-gray-100 rounded-xl transition-all lg:hidden flex-shrink-0"
           >
             <X size={20} className="text-gray-500" />
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-6 space-y-2 overflow-y-auto max-h-[calc(100vh-250px)] scrollbar-hide">
+        <nav className="flex-1 px-6 pt-4 space-y-2 overflow-y-auto max-h-[calc(100vh-250px)] scrollbar-hide">
           {menuItems.filter(item => {
             if (user?.role === 'academy') {
               if (item.label === 'التقارير' || item.label === 'الباقة والأستخدام' || item.label === 'المبيعات' || item.label === 'الأعدادات' || item.label === 'المدربين' || item.label === 'الطلاب') return false;

@@ -35,7 +35,8 @@ export const getStudentCourses = async (filters?: { grade_id?: any; subject_id?:
 export const getMyEnrolledCourses = async (): Promise<any[]> => {
   try {
     const response = await studentApi.get<ApiResponse<any[]>>('my-courses');
-    return response.data.data;
+    const data = response.data?.data || response.data || [];
+    return Array.isArray(data) ? data : [];
   } catch (error: any) {
     console.error('Failed to get enrolled courses:', error);
     return [];

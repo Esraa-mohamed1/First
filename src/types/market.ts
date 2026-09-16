@@ -22,6 +22,7 @@ export interface BagItem {
   rating: number; // e.g. 4.9
   price: number; // Regular price in SAR
   discountPrice?: number; // Optional discounted price
+  currency?: string; // Currency e.g. SAR, EGP, KWD
   isFree: boolean; // Is it a free product
   paymentMethods: string[]; // Selected payment methods e.g. ['instapay', 'vodafone_cash']
   downloadPolicy: DownloadPolicyType;
@@ -43,6 +44,7 @@ export interface BagFormState {
   isFree: boolean;
   price: number;
   discountPrice: number;
+  currency?: string;
   paymentMethods: string[];
   downloadPolicy: DownloadPolicyType;
   downloadLimit: number;

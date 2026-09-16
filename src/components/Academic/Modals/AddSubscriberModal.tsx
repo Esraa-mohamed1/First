@@ -202,56 +202,39 @@ export default function AddSubscriberModal({ isOpen, onClose, onSubscriberAdded,
       const token = errorData?.token || errorData?.data?.token || errorData?.meta?.token;
 
       if (token) {
-        // Show approval/confirmation modal from the academy
-        const confirmResult = await MySwal.fire({
-          title: 'تنبيه الاشتراك',
-          text: 'هذا الطالب مشترك بالفعل في هذه الدورة. هل ترغب في إعادة تسجيل اشتراكه وتأكيد التفعيل؟',
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: '#2563eb',
-          cancelButtonColor: '#727687',
-          confirmButtonText: 'نعم، أوافق على إعادة الاشتراك',
-          cancelButtonText: 'إلغاء',
-          reverseButtons: true,
-        });
+        // Send renewal token directly in background to subscribe endpoint without showing token alert
+        try {
+          const resubRes = await addCourseSubscriber({
+            course_id: activeCourseId,
+            user_id: targetUserId,
+            email: targetEmail,
+            phone: targetPhone,
+            name: targetName,
+            status: formData.status || 'active',
+            starts_at: todayStr,
+            token: token
+          });
 
-        if (confirmResult.isConfirmed) {
-          setIsSubmitting(true);
-          try {
-            const resubRes = await addCourseSubscriber({
-              course_id: activeCourseId,
-              user_id: targetUserId,
-              email: targetEmail,
-              phone: targetPhone,
-              name: targetName,
-              status: formData.status || 'active',
-              starts_at: todayStr,
-              token: token
-            });
-
-            if (resubRes && (resubRes.status === false || resubRes.success === false)) {
-              throw resubRes;
-            }
-
-            toast.success('تمت إعادة الاشتراك وتأكيد تفعيل الطالب بنجاح');
-            onSubscriberAdded();
-            onClose();
-
-            // Reset form
-            setFormData({
-              name: '',
-              email: '',
-              phone: '',
-              password: '',
-              role: 'student',
-              status: 'active'
-            });
-          } catch (resubError: any) {
-            const resubErrorData = resubError.response?.data || resubError;
-            toast.error(resubErrorData?.message || resubErrorData?.data?.message || 'فشل إعادة الاشتراك');
-          } finally {
-            setIsSubmitting(false);
+          if (resubRes && (resubRes.status === false || resubRes.success === false)) {
+            throw resubRes;
           }
+
+          toast.success('تمت تجديد وتأكيد اشتراك الطالب بنجاح');
+          onSubscriberAdded();
+          onClose();
+
+          // Reset form
+          setFormData({
+            name: '',
+            email: '',
+            phone: '',
+            password: '',
+            role: 'student',
+            status: 'active'
+          });
+        } catch (resubError: any) {
+          const resubErrorData = resubError.response?.data || resubError;
+          toast.error(resubErrorData?.message || resubErrorData?.data?.message || 'فشل تجديد الاشتراك');
         }
       } else {
         toast.error(errorData?.message || errorData?.data?.message || error?.message || 'فشل إضافة المشترك في الدورة');

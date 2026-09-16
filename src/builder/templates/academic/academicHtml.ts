@@ -344,6 +344,10 @@ export const getAcademicHtml = (content: TemplateContent, isEditing: boolean = f
   const contactTextColor = content?.contact?.textColor || (content?.contact as any)?.text_color || '';
 
   const footerText = content?.footer?.text || ' جميع الحقوق محفوظة.';
+  const footerDesc = content?.footer?.description || (content?.footer as any)?.aboutText || 'منصة أكاديمية تعليمية متكاملة مصممة لإدارة المسارات التعليمية، وتسهيل تفاعل الطلاب والمعلمين بأسلوب علمي متطور.';
+  const footerWorkingHours = content?.footer?.workingHours || (content?.footer as any)?.timings || 'من السبت إلى الخميس: ٨:٠٠ ص - ١٠:٠٠ م';
+  const footerEmail = content?.footer?.email || realEmail || 'support@educore.edu.sa';
+  const footerPhone = content?.footer?.phone || realPhone || '+966 50 000 0000';
   const footerBg = content?.footer?.backgroundColor || (content?.footer as any)?.background_color || (content?.footer as any)?.bg_color || '#ffffff';
   const footerTextColor = content?.footer?.textColor || (content?.footer as any)?.text_color || '#1b1b24';
   const newsletterTitle = (content?.footer as any)?.newsletterTitle || (content?.footer as any)?.newsletter_title || 'اشترك في نشرتنا البريدية المعرفية';
@@ -771,7 +775,8 @@ ${content?.courses ? `
     ` : `
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
         ${coursesList.map((course: any, idx: number) => {
-        const courseHref = `/courses/${course.slug || course.id}`;
+        const isActive = String(course.enrollment_status || '').toLowerCase() === 'active';
+        const courseHref = isActive ? `/student/courses/${course.id}/learn` : `/courses/${course.slug || course.id}`;
         const courseTitle = course.title || 'دورة تدريبية';
         const courseImg = course.image || course.cover_image || 'https://images.unsplash.com/photo-1586717791821-3f44a563de4c?auto=format&fit=crop&q=80&w=600';
         const instructorName = typeof course.instructor === 'object' && course.instructor?.name
@@ -1082,8 +1087,8 @@ ${content?.contact && (contactTitle || contactDesc || contactPhone) ? `
         <span class="material-symbols-outlined text-primary text-[32px]">school</span>
         <span class="text-headline-md font-headline-md font-bold text-primary">${navbarTitle}</span>
       </div>
-      <p class="text-body-md text-xs text-on-surface-variant leading-relaxed opacity-80" style="${footerTextColor ? `color: ${footerTextColor}; opacity: 0.8;` : 'color: #464555;'}">
-        منصة أكاديمية تعليمية متكاملة مصممة لإدارة المسارات التعليمية، وتسهيل تفاعل الطلاب والمعلمين بأسلوب علمي متطور.
+      <p data-footer-desc class="text-body-md text-xs text-on-surface-variant leading-relaxed opacity-80" style="${footerTextColor ? `color: ${footerTextColor}; opacity: 0.8;` : 'color: #464555;'}">
+        ${footerDesc}
       </p>
     </div>
 
@@ -1098,28 +1103,26 @@ ${content?.contact && (contactTitle || contactDesc || contactPhone) ? `
     </div>
 
     <div class="space-y-3">
-      <h4 class="text-label-md font-label-md font-extrabold text-on-surface uppercase tracking-wider" style="${footerTextColor ? `color: ${footerTextColor};` : 'color: #1b1b24;'}">الدعم والمساعدة</h4>
-      <ul class="space-y-2 text-xs font-bold text-on-surface-variant">
-        <li><a href="#faq" onclick="scrollToAnchor(event, '#faq')" class="hover:text-primary transition-colors">الأسئلة الشائعة</a></li>
-        <li><a href="#contact" onclick="scrollToAnchor(event, '#contact')" class="hover:text-primary transition-colors">تواصل معنا</a></li>
-        <li><a href="/auth/login" ${isEditing ? '' : 'target="_top"'} class="hover:text-primary transition-colors">تسجيل الدخول</a></li>
-      </ul>
+      <h4 class="text-label-md font-label-md font-extrabold text-on-surface uppercase tracking-wider" style="${footerTextColor ? `color: ${footerTextColor};` : 'color: #1b1b24;'}">مواعيد العمل</h4>
+      <p data-footer-hours class="text-xs font-bold text-on-surface-variant opacity-80" style="${footerTextColor ? `color: ${footerTextColor}; opacity: 0.8;` : 'color: #464555;'}">
+        ${footerWorkingHours}
+      </p>
     </div>
 
     <div class="space-y-3">
       <h4 class="text-label-md font-label-md font-extrabold text-on-surface uppercase tracking-wider" style="${footerTextColor ? `color: ${footerTextColor};` : 'color: #1b1b24;'}">معلومات التواصل</h4>
-      <p class="text-xs font-bold text-on-surface-variant opacity-80" style="${footerTextColor ? `color: ${footerTextColor}; opacity: 0.8;` : 'color: #464555;'}">
-        البريد: ${realEmail}
+      <p data-footer-email class="text-xs font-bold text-on-surface-variant opacity-80" style="${footerTextColor ? `color: ${footerTextColor}; opacity: 0.8;` : 'color: #464555;'}">
+        البريد: ${footerEmail}
       </p>
-      <p class="text-xs font-bold text-on-surface-variant opacity-80" style="${footerTextColor ? `color: ${footerTextColor}; opacity: 0.8;` : 'color: #464555;'}">
-        الهاتف: ${realPhone}
+      <p data-footer-phone class="text-xs font-bold text-on-surface-variant opacity-80" style="${footerTextColor ? `color: ${footerTextColor}; opacity: 0.8;` : 'color: #464555;'}">
+        الهاتف: ${footerPhone}
       </p>
     </div>
   </div>
 
   <!-- Copyright Sub-bar -->
   <div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-6 border-t border-outline-variant/20 flex flex-col md:flex-row items-center justify-between text-xs font-bold opacity-75">
-    <span>${footerText}</span>
+    <span data-footer-copyright>${footerText}</span>
     <span class="mt-2 md:mt-0">تم التطوير بواسطة منصة درب</span>
   </div>
 </footer>

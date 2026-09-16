@@ -94,7 +94,8 @@ export default function CourseCards(props: CourseCardsProps) {
       students: `${course.students_count ?? course.students ?? 0} طالب`,
       duration: formatCourseAccessDuration(course),
       image: course.image || course.cover_image || 'https://images.unsplash.com/photo-1586717791821-3f44a563de4c',
-      description: course.description
+      description: course.description,
+      enrollment_status: course.enrollment_status,
     }));
   }, [realCourses]);
 
@@ -231,7 +232,9 @@ export default function CourseCards(props: CourseCardsProps) {
 
             const isPurpleTheme = buttonBg === '#7c3aed';
 
-            const courseHref = `/courses/${course.slug || course.id}`;
+            const isActive = String(course.enrollment_status || '').toLowerCase() === 'active';
+            const courseHref = isActive ? `/student/courses/${course.id}/learn` : `/courses/${course.slug || course.id}`;
+            const buttonText = isActive ? 'قيد الدراسة' : 'انضم الآن';
             const CardWrapper = ({ children }: { children: React.ReactNode }) =>
               isEditing ? <div>{children}</div> : <Link href={courseHref} className="block">{children}</Link>;
 
@@ -308,7 +311,7 @@ export default function CourseCards(props: CourseCardsProps) {
                       <button 
                         className="text-[var(--t2-gold)] border-[1.5px] border-[var(--t2-gold)] font-bold text-xs px-5 py-2 rounded-full hover:bg-[var(--t2-gold)] hover:text-[var(--t2-ink)] transition-all font-['Inter']"
                       >
-                        انضم الآن
+                        {buttonText}
                       </button>
                     </div>
                   </div>
@@ -363,7 +366,7 @@ export default function CourseCards(props: CourseCardsProps) {
                     
                     <div className="flex justify-between items-center pt-3 border-t border-slate-100">
                       <div className="flex items-center gap-1 text-[11px] font-black text-purple-600 group-hover:gap-2 transition-all">
-                        <span>عرض التفاصيل</span>
+                        <span>{isActive ? 'قيد الدراسة' : 'عرض التفاصيل'}</span>
                         <span className="text-sm font-black">←</span>
                       </div>
                       {showPrice && (
@@ -441,7 +444,7 @@ export default function CourseCards(props: CourseCardsProps) {
                       style={{ backgroundColor: buttonBg }}
                       className="hover:brightness-110 text-white font-black text-[9px] px-3.5 py-2 rounded-lg transition-all shadow-sm shadow-blue-500/10 active:scale-95"
                     >
-                      انضم الآن
+                      {buttonText}
                     </button>
                   </div>
                 </div>
