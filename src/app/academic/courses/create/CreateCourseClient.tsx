@@ -457,7 +457,7 @@ export default function CreateCourseClient() {
       try {
         localStorage.removeItem(DRAFT_CACHE_KEY);
         localStorage.removeItem(`darb_create_course_image_${courseTypeParam || 'recorded'}`);
-      } catch (e) {}
+      } catch (e) { }
       return;
     }
 
@@ -743,41 +743,41 @@ export default function CreateCourseClient() {
   const activeGrades = isTeacher
     ? gradesList
     : (gradesList.length > 0 ? gradesList : [
-        { id: 'first_sec', name: 'أولى ثانوي' },
-        { id: 'second_sec', name: 'ثانية ثانوي' },
-        { id: 'third_sec', name: 'ثالثة ثانوي' }
-      ]);
+      { id: 'first_sec', name: 'أولى ثانوي' },
+      { id: 'second_sec', name: 'ثانية ثانوي' },
+      { id: 'third_sec', name: 'ثالثة ثانوي' }
+    ]);
 
   const activeSemesters = isTeacher
     ? semestersList
-    : (semestersList.length > 0 
-        ? semestersList.filter(item => !gradeLevel || !item.grade_id || String(item.grade_id) === String(gradeLevel))
-        : [
-            { id: 'term_1', name: 'الترم الأول' },
-            { id: 'term_2', name: 'الترم الثاني' },
-            { id: 'full_year', name: 'العام الدراسي كامل' },
-            { id: 'final_review', name: 'مراجعة نهائية' },
-            { id: 'not_linked', name: 'غير مرتبط بترم' }
-          ]);
+    : (semestersList.length > 0
+      ? semestersList.filter(item => !gradeLevel || !item.grade_id || String(item.grade_id) === String(gradeLevel))
+      : [
+        { id: 'term_1', name: 'الترم الأول' },
+        { id: 'term_2', name: 'الترم الثاني' },
+        { id: 'full_year', name: 'العام الدراسي كامل' },
+        { id: 'final_review', name: 'مراجعة نهائية' },
+        { id: 'not_linked', name: 'غير مرتبط بترم' }
+      ]);
 
   const activeSubjects = isTeacher
     ? subjectsList
     : (subjectsList.length > 0
-        ? subjectsList.filter(item => !gradeLevel || !item.grade_id || String(item.grade_id) === String(gradeLevel))
-        : [
-            { id: 'physics', name: 'فيزياء' },
-            { id: 'chemistry', name: 'كيمياء' },
-            { id: 'math', name: 'رياضيات' },
-            { id: 'biology', name: 'أحياء' },
-            { id: 'arabic', name: 'عربي' }
-          ]);
+      ? subjectsList.filter(item => !gradeLevel || !item.grade_id || String(item.grade_id) === String(gradeLevel))
+      : [
+        { id: 'physics', name: 'فيزياء' },
+        { id: 'chemistry', name: 'كيمياء' },
+        { id: 'math', name: 'رياضيات' },
+        { id: 'biology', name: 'أحياء' },
+        { id: 'arabic', name: 'عربي' }
+      ]);
 
   const activeYears = isTeacher
     ? academicYearsList
     : (academicYearsList.length > 0 ? academicYearsList : [
-        { id: '2026/2027', name: '2026 / 2027' },
-        { id: '2025/2026', name: '2025 / 2026' }
-      ]);
+      { id: '2026/2027', name: '2026 / 2027' },
+      { id: '2025/2026', name: '2025 / 2026' }
+    ]);
 
   const mapTypeToBackend = (type: string | null | undefined): string => {
     if (!type) return 'recorded';
@@ -920,8 +920,8 @@ export default function CreateCourseClient() {
       if (effectiveTitle.trim()) {
         try {
           const allCourses = await getCourses(userId, currentUser?.role);
-          const existingCourse = allCourses.find((c: any) => 
-            c.title?.trim().toLowerCase() === effectiveTitle.trim().toLowerCase() && 
+          const existingCourse = allCourses.find((c: any) =>
+            c.title?.trim().toLowerCase() === effectiveTitle.trim().toLowerCase() &&
             (!courseId || Number(c.id) !== Number(courseId))
           );
 
@@ -974,7 +974,7 @@ export default function CreateCourseClient() {
             localStorage.setItem(`darab_course_cache_${courseId}`, JSON.stringify(updated || payload));
             if (returnedSlug) localStorage.setItem(`darab_course_cache_${returnedSlug}`, JSON.stringify(updated || payload));
           }
-        } catch (e) {}
+        } catch (e) { }
         clearDraftCache();
         if (overriddenStatus !== 'published') {
           toast.success('تم تحديث بيانات الدورة بنجاح');
@@ -1039,7 +1039,7 @@ export default function CreateCourseClient() {
             localStorage.setItem(`darab_course_cache_${created.id}`, JSON.stringify(courseObj));
             if (returnedSlug) localStorage.setItem(`darab_course_cache_${returnedSlug}`, JSON.stringify(courseObj));
           }
-        } catch (e) {}
+        } catch (e) { }
         clearDraftCache();
         if (overriddenStatus !== 'published') {
           toast.success('تم حفظ الدورة بنجاح');
@@ -1170,7 +1170,7 @@ export default function CreateCourseClient() {
         currency: result.currency || currency,
         logo: result.logo || '',
       };
-      
+
       setSelectedPaymentMethods((prev) => {
         const next = [...prev, newMethod];
         if (next.length > 3) {
@@ -1215,13 +1215,13 @@ export default function CreateCourseClient() {
       const coursePages = list.filter((item: any) => {
         const isCourseMatch = Number(item.course_id) === Number(courseId);
         const campaignName = item.content?.campaignName || item.campaignName || '';
-        const isDummy = campaignName.includes('حمله إضافيه') || 
-                        campaignName.includes('حملة إضافية') || 
-                        item.slug === 'landing';
+        const isDummy = campaignName.includes('حمله إضافيه') ||
+          campaignName.includes('حملة إضافية') ||
+          item.slug === 'landing';
         return isCourseMatch && !isDummy;
       });
       setLandingPages(coursePages);
-      
+
       // Sync to localStorage
       localStorage.setItem('darab_landing_pages', JSON.stringify(list));
     } catch (e) {
@@ -1234,10 +1234,10 @@ export default function CreateCourseClient() {
   const handleOpenEditor = (page: any) => {
     const mockCourse = getMockCourseObj();
     const store = useLandingStore.getState();
-    
+
     // Set course details for defaults lookup
     store.setCourseData(mockCourse);
-    
+
     store.setLandingPageData({
       id: page.id,
       template_name: page.template_name,
@@ -1327,7 +1327,7 @@ export default function CreateCourseClient() {
       setNewCampaignName('');
       setNewCustomSlug('');
       setNewSelectedTemplate('template_1');
-      
+
       await fetchLandingPages();
 
       if (savedData) {
@@ -1518,33 +1518,29 @@ export default function CreateCourseClient() {
             <div className="flex gap-8">
               <button
                 onClick={() => setActiveTab('info')}
-                className={`relative py-4 text-sm font-bold whitespace-nowrap transition-colors ${
-                  activeTab === 'info' ? 'text-blue-600 tab-active' : 'text-slate-500 hover:text-blue-600'
-                }`}
+                className={`relative py-4 text-sm font-bold whitespace-nowrap transition-colors ${activeTab === 'info' ? 'text-blue-600 tab-active' : 'text-slate-500 hover:text-blue-600'
+                  }`}
               >
                 المعلومات الأساسية
               </button>
               <button
                 onClick={() => setActiveTab('content')}
-                className={`relative py-4 text-sm font-bold whitespace-nowrap transition-colors ${
-                  activeTab === 'content' ? 'text-blue-600 tab-active' : 'text-slate-500 hover:text-blue-600'
-                }`}
+                className={`relative py-4 text-sm font-bold whitespace-nowrap transition-colors ${activeTab === 'content' ? 'text-blue-600 tab-active' : 'text-slate-500 hover:text-blue-600'
+                  }`}
               >
                 محتوى الدورة
               </button>
               <button
                 onClick={() => setActiveTab('landing_pages')}
-                className={`relative py-4 text-sm font-bold whitespace-nowrap transition-colors ${
-                  activeTab === 'landing_pages' ? 'text-blue-600 tab-active' : 'text-slate-500 hover:text-blue-600'
-                }`}
+                className={`relative py-4 text-sm font-bold whitespace-nowrap transition-colors ${activeTab === 'landing_pages' ? 'text-blue-600 tab-active' : 'text-slate-500 hover:text-blue-600'
+                  }`}
               >
                 التسويق والبيع
               </button>
               <button
                 onClick={() => setActiveTab('subscribers')}
-                className={`relative py-4 text-sm font-bold whitespace-nowrap transition-colors ${
-                  activeTab === 'subscribers' ? 'text-blue-600 tab-active' : 'text-slate-500 hover:text-blue-600'
-                }`}
+                className={`relative py-4 text-sm font-bold whitespace-nowrap transition-colors ${activeTab === 'subscribers' ? 'text-blue-600 tab-active' : 'text-slate-500 hover:text-blue-600'
+                  }`}
               >
                 المشتركون والتقارير
               </button>
@@ -1988,18 +1984,16 @@ export default function CreateCourseClient() {
                         <button
                           type="button"
                           onClick={() => setPricingType('free')}
-                          className={`px-8 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                            pricingType === 'free' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'
-                          }`}
+                          className={`px-8 py-2.5 rounded-lg text-sm font-bold transition-all ${pricingType === 'free' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'
+                            }`}
                         >
                           مجانية
                         </button>
                         <button
                           type="button"
                           onClick={() => setPricingType('paid')}
-                          className={`px-8 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                            pricingType === 'paid' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'
-                          }`}
+                          className={`px-8 py-2.5 rounded-lg text-sm font-bold transition-all ${pricingType === 'paid' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'
+                            }`}
                         >
                           مدفوعة
                         </button>
@@ -2089,11 +2083,10 @@ export default function CreateCourseClient() {
                     {/* Option 1: Lifetime */}
                     <label
                       onClick={() => setAccessDurationType('lifetime')}
-                      className={`relative flex items-center gap-4 p-5 sm:p-6 border-2 rounded-2xl cursor-pointer transition-all duration-200 ${
-                        accessDurationType === 'lifetime'
-                          ? 'bg-blue-50/70 border-blue-600 shadow-md ring-2 ring-blue-500/20'
-                          : 'bg-white border-slate-300 hover:border-slate-400 hover:bg-slate-50/80'
-                      }`}
+                      className={`relative flex items-center gap-4 p-5 sm:p-6 border-2 rounded-2xl cursor-pointer transition-all duration-200 ${accessDurationType === 'lifetime'
+                        ? 'bg-blue-50/70 border-blue-600 shadow-md ring-2 ring-blue-500/20'
+                        : 'bg-white border-slate-300 hover:border-slate-400 hover:bg-slate-50/80'
+                        }`}
                     >
                       <input
                         type="radio"
@@ -2111,11 +2104,10 @@ export default function CreateCourseClient() {
                     {/* Option 2: Subscription Days */}
                     <label
                       onClick={() => setAccessDurationType('days')}
-                      className={`relative flex items-center gap-4 p-5 sm:p-6 border-2 rounded-2xl cursor-pointer transition-all duration-200 ${
-                        accessDurationType === 'days'
-                          ? 'bg-blue-50/70 border-blue-600 shadow-md ring-2 ring-blue-500/20'
-                          : 'bg-white border-slate-300 hover:border-slate-400 hover:bg-slate-50/80'
-                      }`}
+                      className={`relative flex items-center gap-4 p-5 sm:p-6 border-2 rounded-2xl cursor-pointer transition-all duration-200 ${accessDurationType === 'days'
+                        ? 'bg-blue-50/70 border-blue-600 shadow-md ring-2 ring-blue-500/20'
+                        : 'bg-white border-slate-300 hover:border-slate-400 hover:bg-slate-50/80'
+                        }`}
                     >
                       <input
                         type="radio"
@@ -2133,11 +2125,10 @@ export default function CreateCourseClient() {
                     {/* Option 3: Until Specific Date */}
                     <label
                       onClick={() => setAccessDurationType('until_date')}
-                      className={`relative flex items-center gap-4 p-5 sm:p-6 border-2 rounded-2xl cursor-pointer transition-all duration-200 ${
-                        accessDurationType === 'until_date'
-                          ? 'bg-blue-50/70 border-blue-600 shadow-md ring-2 ring-blue-500/20'
-                          : 'bg-white border-slate-300 hover:border-slate-400 hover:bg-slate-50/80'
-                      }`}
+                      className={`relative flex items-center gap-4 p-5 sm:p-6 border-2 rounded-2xl cursor-pointer transition-all duration-200 ${accessDurationType === 'until_date'
+                        ? 'bg-blue-50/70 border-blue-600 shadow-md ring-2 ring-blue-500/20'
+                        : 'bg-white border-slate-300 hover:border-slate-400 hover:bg-slate-50/80'
+                        }`}
                     >
                       <input
                         type="radio"
@@ -2442,7 +2433,7 @@ export default function CreateCourseClient() {
                                 الوحدة {idx + 1}: {unit.title}
                               </h3>
                               <p className="text-xs text-slate-500 font-medium mt-0.5">
-                                {lessonsList.length} دروس • مدة إجمالية: {unit.duration || '١:٢٠ ساعة'}
+                                {lessonsList.length}  {unit.duration || ''}
                               </p>
                             </div>
                           </div>
@@ -2572,13 +2563,13 @@ export default function CreateCourseClient() {
                                             {lessonType === 'quiz'
                                               ? 'اختبار'
                                               : lessonType === 'article' || lessonType === 'text'
-                                              ? 'ملف نصي'
-                                              : lessonType === 'task'
-                                              ? 'واجب منزلي'
-                                              : 'فيديو'}
+                                                ? 'ملف نصي'
+                                                : lessonType === 'task'
+                                                  ? 'واجب منزلي'
+                                                  : 'فيديو'}
                                           </span>
                                           <span className="text-[11px] text-slate-500 font-medium">
-                                            {lesson.duration || '١٢:٤٥ دقيقة'}
+                                            {lesson.duration || ''}
                                           </span>
                                         </div>
                                       </div>
@@ -2614,11 +2605,10 @@ export default function CreateCourseClient() {
                                             }
                                           }
                                         }}
-                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all border shadow-2xs cursor-pointer ${
-                                          lesson.is_free === 1 || lesson.is_free === true
-                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 ring-2 ring-emerald-400/20'
-                                            : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
-                                        }`}
+                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all border shadow-2xs cursor-pointer ${lesson.is_free === 1 || lesson.is_free === true
+                                          ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 ring-2 ring-emerald-400/20'
+                                          : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                                          }`}
                                         title="انقر للتغيير بين مجاني ومدفوع"
                                       >
                                         <span className="material-symbols-outlined text-[16px]">
@@ -2716,9 +2706,9 @@ export default function CreateCourseClient() {
                   <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-6 border border-blue-100">
                     <span className="material-symbols-outlined text-3xl">campaign</span>
                   </div>
-                  
+
                   <h3 className="text-xl font-bold mb-3 text-slate-900">إدارة صفحات البيع والحملات</h3>
-                  
+
                   <p className="text-sm font-medium text-slate-500 max-w-md mx-auto leading-relaxed mb-8">
                     يرجى ملء المعلومات الأساسية وحفظ مسودة الدورة أولاً لتتمكن من إنشاء صفحات البيع وإدارة حملاتك التسويقية.
                   </p>
@@ -2747,7 +2737,7 @@ export default function CreateCourseClient() {
                         أنشئ صفحات بيع مختلفة لنفس الدورة واستخدم كل صفحة في حملة أو عرض مختلف، مع بقاء جميع الصفحات مرتبطة بنفس الدورة.
                       </p>
                     </div>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => setIsCreateLandingModalOpen(true)}
                       className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-600/10 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer font-black"
@@ -2874,7 +2864,7 @@ export default function CreateCourseClient() {
                           </div>
                         </div>
                         <div className="flex flex-wrap lg:flex-nowrap items-center gap-3 w-full lg:w-auto shrink-0 pt-4 lg:pt-0">
-                          <button 
+                          <button
                             type="button"
                             onClick={() => {
                               setPreviewLandingPageId(null);
@@ -2885,7 +2875,7 @@ export default function CreateCourseClient() {
                             <span className="material-symbols-outlined text-sm">edit</span>
                             تعديل الصفحة
                           </button>
-                          <button 
+                          <button
                             type="button"
                             onClick={() => {
                               const targetSlug = courseSlug || slug || (courseId ? String(courseId) : 'draft');
@@ -2897,7 +2887,7 @@ export default function CreateCourseClient() {
                             <span className="material-symbols-outlined text-sm">visibility</span>
                             معاينة
                           </button>
-                          <button 
+                          <button
                             type="button"
                             onClick={handleCopyDefaultLink}
                             className="flex-1 lg:flex-none px-4 py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
@@ -2920,7 +2910,7 @@ export default function CreateCourseClient() {
                           أنشئ صفحات بيع مختلفة لنفس الدورة لتناسب الحملات والعروض المختلفة.
                         </p>
                       </div>
-                      <button 
+                      <button
                         type="button"
                         onClick={() => setIsCreateLandingModalOpen(true)}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer shrink-0"
@@ -2944,7 +2934,7 @@ export default function CreateCourseClient() {
                         <p className="text-xs font-bold text-slate-400 max-w-sm mx-auto leading-relaxed mb-5">
                           أنشئ صفحات بيع مخصصة لحملاتك التسويقية مثل (رمضان، الجمعة البيضاء، إلخ) وتتبع نتائج مبيعاتها بشكل منفصل.
                         </p>
-                        <button 
+                        <button
                           type="button"
                           onClick={() => setIsCreateLandingModalOpen(true)}
                           className="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 px-5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer"
@@ -2964,16 +2954,15 @@ export default function CreateCourseClient() {
                               <button
                                 type="button"
                                 onClick={() => handleTogglePublish(page)}
-                                className={`text-[9px] font-bold px-2 py-0.5 rounded cursor-pointer transition-all ${
-                                  page.is_active 
-                                    ? 'bg-green-50 text-green-700 hover:bg-green-100' 
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                }`}
+                                className={`text-[9px] font-bold px-2 py-0.5 rounded cursor-pointer transition-all ${page.is_active
+                                  ? 'bg-green-50 text-green-700 hover:bg-green-100'
+                                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                  }`}
                               >
                                 {page.is_active ? 'منشور' : 'مسودة'}
                               </button>
                             </div>
-                            
+
                             <div className="p-5 grid grid-cols-2 gap-4 flex-1">
                               <div>
                                 <p className="text-xs text-slate-500 font-bold">الزيارات</p>
@@ -2993,44 +2982,44 @@ export default function CreateCourseClient() {
 
                             <div className="p-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
                               <div className="flex items-center gap-1.5">
-                                <button 
+                                <button
                                   type="button"
                                   onClick={() => handleOpenEditor(page)}
-                                  className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-blue-100 flex items-center justify-center" 
+                                  className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-blue-100 flex items-center justify-center"
                                   title="تعديل وتخصيص"
                                 >
                                   <Pencil size={14} />
                                 </button>
-                                <button 
+                                <button
                                   type="button"
                                   onClick={() => {
                                     const targetSlug = page.slug || courseSlug || slug || (courseId ? String(courseId) : 'draft');
                                     window.open(`/landing/${targetSlug}?lp_id=${page.id}`, '_blank');
                                   }}
-                                  className="text-slate-500 hover:bg-slate-100 p-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center" 
+                                  className="text-slate-500 hover:bg-slate-100 p-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center"
                                   title="معاينة كطالب"
                                 >
                                   <Eye size={14} />
                                 </button>
-                                <button 
+                                <button
                                   type="button"
                                   onClick={() => handleCloneLandingPage(page)}
-                                  className="text-slate-500 hover:bg-slate-100 p-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center" 
+                                  className="text-slate-500 hover:bg-slate-100 p-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center"
                                   title="تكرار الصفحة"
                                 >
                                   <Copy size={14} />
                                 </button>
-                                <button 
+                                <button
                                   type="button"
                                   onClick={() => handleCopyCustomLink(page)}
-                                  className="text-slate-500 hover:bg-slate-100 p-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center" 
+                                  className="text-slate-500 hover:bg-slate-100 p-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center"
                                   title="نسخ الرابط"
                                 >
                                   <span className="material-symbols-outlined text-[18px]">link</span>
                                 </button>
                               </div>
-                              
-                              <button 
+
+                              <button
                                 type="button"
                                 onClick={() => handleDeleteLandingPage(page.id)}
                                 className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center"
@@ -3105,7 +3094,7 @@ export default function CreateCourseClient() {
       {/* Template Preview Modal */}
       {previewTemplateId && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" dir="rtl">
-          <div 
+          <div
             className="bg-white rounded-[2.5rem] w-full max-w-7xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
@@ -3113,11 +3102,11 @@ export default function CreateCourseClient() {
             <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100 bg-slate-50/50 shrink-0">
               <div>
                 <h3 className="text-sm font-black text-slate-900">
-                  {previewTemplateId === 'template_1' 
-                    ? 'تخصيص القالب الأول (الكلاسيكي الملكي)' 
+                  {previewTemplateId === 'template_1'
+                    ? 'تخصيص القالب الأول (الكلاسيكي الملكي)'
                     : previewTemplateId === 'template_3'
-                    ? 'تخصيص قالب تصميم تجربة المستخدم (UI/UX)'
-                    : 'تخصيص قالب صفحة الدروس التفاعلية (الافتراضي)'}
+                      ? 'تخصيص قالب تصميم تجربة المستخدم (UI/UX)'
+                      : 'تخصيص قالب صفحة الدروس التفاعلية (الافتراضي)'}
                 </h3>
                 <p className="text-[10px] text-slate-400 font-bold mt-0.5">انقر فوق أي قسم أو أيقونة "تعديل" لتخصيص محتواه مباشرة</p>
               </div>
@@ -3137,7 +3126,7 @@ export default function CreateCourseClient() {
                 >
                   {saving ? 'جاري الحفظ...' : 'حفظ التعديلات'}
                 </button>
-                <button 
+                <button
                   type="button"
                   onClick={() => {
                     setPreviewTemplateId(null);
@@ -3154,7 +3143,7 @@ export default function CreateCourseClient() {
             <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
               {/* Left Column: Editor inspector Panel (350px width) */}
               <div className="w-full md:w-[350px] border-b md:border-b-0 md:border-l border-slate-100 overflow-y-auto p-6 bg-slate-50/50 shrink-0 h-auto md:h-full flex flex-col gap-6">
-                
+
                 {/* Section Quick Selector */}
                 <div className="space-y-2 pb-4 border-b border-slate-200">
                   <label className="text-xs font-black text-slate-500 block">اختر القسم للتعديل:</label>
@@ -3304,15 +3293,15 @@ export default function CreateCourseClient() {
                       }
                     }
 
-                    const key = 
+                    const key =
                       ['hero', 'overview', 'intro', 'banner', 'header', 'main'].includes(sec) ? 'hero' :
-                      ['learning', 'features', 'benefits', 'outcomes', 'about'].includes(sec) ? 'learning' :
-                      ['chapters', 'curriculum', 'syllabus', 'content', 'modules', 'units'].includes(sec) ? 'chapters' :
-                      ['payment', 'pricing', 'packages', 'checkout'].includes(sec) ? 'payment' :
-                      ['faq', 'questions', 'help'].includes(sec) ? 'faq' :
-                      ['reviews', 'testimonials', 'ratings', 'students'].includes(sec) ? 'reviews' :
-                      ['whatsapp', 'contact', 'support', 'chat'].includes(sec) ? 'whatsapp' :
-                      ['footer', 'bottom'].includes(sec) ? 'footer' : (sec ? 'hero' : '');
+                        ['learning', 'features', 'benefits', 'outcomes', 'about'].includes(sec) ? 'learning' :
+                          ['chapters', 'curriculum', 'syllabus', 'content', 'modules', 'units'].includes(sec) ? 'chapters' :
+                            ['payment', 'pricing', 'packages', 'checkout'].includes(sec) ? 'payment' :
+                              ['faq', 'questions', 'help'].includes(sec) ? 'faq' :
+                                ['reviews', 'testimonials', 'ratings', 'students'].includes(sec) ? 'reviews' :
+                                  ['whatsapp', 'contact', 'support', 'chat'].includes(sec) ? 'whatsapp' :
+                                    ['footer', 'bottom'].includes(sec) ? 'footer' : (sec ? 'hero' : '');
 
                     if (key === 'hero') return <HeroEditor />;
                     if (key === 'learning') return <LearningEditor />;
@@ -3351,7 +3340,7 @@ export default function CreateCourseClient() {
       {/* Creation Dialog Modal */}
       {isCreateLandingModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-250" dir="rtl">
-          <div 
+          <div
             className="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl p-8 border border-slate-100 animate-in zoom-in-95 duration-250 relative"
             onClick={(e) => e.stopPropagation()}
           >
@@ -3391,11 +3380,10 @@ export default function CreateCourseClient() {
                     tabIndex={0}
                     onClick={() => setNewSelectedTemplate('template_1')}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setNewSelectedTemplate('template_1'); }}
-                    className={`p-4 border-2 rounded-2xl transition-all duration-300 flex flex-col gap-3 cursor-pointer relative hover:scale-[1.02] hover:shadow-md ${
-                      newSelectedTemplate === 'template_1'
-                        ? 'border-blue-600 bg-blue-50/10 ring-2 ring-blue-600/10'
-                        : 'border-slate-100 hover:border-slate-200 bg-slate-50/40'
-                    }`}
+                    className={`p-4 border-2 rounded-2xl transition-all duration-300 flex flex-col gap-3 cursor-pointer relative hover:scale-[1.02] hover:shadow-md ${newSelectedTemplate === 'template_1'
+                      ? 'border-blue-600 bg-blue-50/10 ring-2 ring-blue-600/10'
+                      : 'border-slate-100 hover:border-slate-200 bg-slate-50/40'
+                      }`}
                   >
                     {newSelectedTemplate === 'template_1' && (
                       <div className="absolute top-2 right-2 z-20 bg-blue-600 text-white rounded-full p-0.5 shadow-md">
@@ -3443,11 +3431,10 @@ export default function CreateCourseClient() {
                     tabIndex={0}
                     onClick={() => setNewSelectedTemplate('template_2')}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setNewSelectedTemplate('template_2'); }}
-                    className={`p-4 border-2 rounded-2xl transition-all duration-300 flex flex-col gap-3 cursor-pointer relative hover:scale-[1.02] hover:shadow-md ${
-                      newSelectedTemplate === 'template_2'
-                        ? 'border-blue-600 bg-blue-50/10 ring-2 ring-blue-600/10'
-                        : 'border-slate-100 hover:border-slate-200 bg-slate-50/40'
-                    }`}
+                    className={`p-4 border-2 rounded-2xl transition-all duration-300 flex flex-col gap-3 cursor-pointer relative hover:scale-[1.02] hover:shadow-md ${newSelectedTemplate === 'template_2'
+                      ? 'border-blue-600 bg-blue-50/10 ring-2 ring-blue-600/10'
+                      : 'border-slate-100 hover:border-slate-200 bg-slate-50/40'
+                      }`}
                   >
                     {newSelectedTemplate === 'template_2' && (
                       <div className="absolute top-2 right-2 z-20 bg-blue-600 text-white rounded-full p-0.5 shadow-md">
@@ -3484,10 +3471,10 @@ export default function CreateCourseClient() {
                     </div>
                     <div>
                       <span className="text-xs font-black text-slate-900 block font-bold text-right">الافتراضي التفاعلي</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
               <div className="space-y-2">
                 <label className="block text-xs font-black text-slate-700">الرابط المخصص (Slug) (اختياري)</label>
@@ -3527,7 +3514,7 @@ export default function CreateCourseClient() {
       {/* Add Payment Method Modal */}
       {showAddPaymentModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-250" dir="rtl">
-          <div 
+          <div
             className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl p-8 border border-slate-100 animate-in zoom-in-95 duration-250 relative"
             onClick={(e) => e.stopPropagation()}
           >

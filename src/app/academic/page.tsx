@@ -191,10 +191,6 @@ export default function AcademicDashboardPage() {
           >
             <span>جولة تعليمية 🔍</span>
           </button>
-          <button className="flex items-center gap-1.5 sm:gap-2 bg-white border border-gray-200 text-gray-600 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm shadow-sm hover:bg-gray-50 transition-colors">
-            <ChevronDown className="text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
-            <span>التاريخ</span>
-          </button>
         </div>
       </div>
 
