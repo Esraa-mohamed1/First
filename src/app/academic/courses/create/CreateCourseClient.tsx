@@ -343,6 +343,10 @@ export default function CreateCourseClient() {
   const [isSavingNewPayment, setIsSavingNewPayment] = useState(false);
   const [receiverTemplates, setReceiverTemplates] = useState<ReceiverAccount[]>([]);
 
+  // Publish Success & Social Share Modal State
+  const [showPublishSuccessModal, setShowPublishSuccessModal] = useState(false);
+  const [publishedCourseData, setPublishedCourseData] = useState<{ id: number | string; slug?: string; title?: string } | null>(null);
+
   const DRAFT_CACHE_KEY = `darb_create_course_draft_cache_${courseTypeParam || 'recorded'}`;
   const DRAFT_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
 
@@ -796,15 +800,7 @@ export default function CreateCourseClient() {
   };
 
   const ensureCourseCreated = async (overriddenStatus?: string) => {
-    if (courseId) {
-      if (overriddenStatus && overriddenStatus !== status) {
-        try {
-          await updateCourse(courseId, { status: overriddenStatus });
-          setStatus(overriddenStatus as any);
-        } catch (e) {
-          console.error('Failed to update status on existing course:', e);
-        }
-      }
+    if (courseId && !overriddenStatus) {
       return courseId;
     }
 
@@ -1114,9 +1110,6 @@ export default function CreateCourseClient() {
         toast.error('لا يمكن نشر الدورة بدون وجود دروس تعليمية. تم حفظ الدورة كمسودة.');
         const createdId = await ensureCourseCreated('draft');
         setStatus('draft');
-        if (createdId && !courseId) {
-          router.push(`/academic/courses/${createdId}`);
-        }
         return;
       }
 
@@ -1124,8 +1117,22 @@ export default function CreateCourseClient() {
       setStatus('published');
       toast.success('تم نشر الدورة بنجاح!');
       clearDraftCache();
-      if (createdId && !courseId) {
-        router.push(`/academic/courses/${createdId}`);
+
+      if (createdId) {
+        const resolvedSlug =
+          (typeof window !== 'undefined'
+            ? localStorage.getItem('createCourseSlug') || localStorage.getItem('darab_last_created_course_slug')
+            : '') ||
+          courseSlug ||
+          slug ||
+          String(createdId);
+
+        setPublishedCourseData({
+          id: createdId,
+          slug: resolvedSlug,
+          title: title || 'دورة تعليمية',
+        });
+        setShowPublishSuccessModal(true);
       }
     } catch (err) {
       // Handled inside
@@ -1396,6 +1403,60 @@ export default function CreateCourseClient() {
       const link = `${window.location.origin}/landing/${targetSlug}`;
       navigator.clipboard.writeText(link);
       toast.success('تم نسخ رابط صفحة البيع الافتراضية بنجاح!');
+    }
+  };
+
+  const handleSharePublishedCourse = () => {
+    if (typeof window !== 'undefined') {
+      const targetSlug =
+        publishedCourseData?.slug ||
+        courseSlug ||
+        slug ||
+        (publishedCourseData?.id ? String(publishedCourseData.id) : (courseId ? String(courseId) : ''));
+      const shareUrl = `${window.location.origin}/courses/${targetSlug}`;
+      const shareTitle = publishedCourseData?.title || title || 'دورة تعليمية';
+      const shareText = (description || shortDescription || '')?.replace(/<[^>]*>/g, '') || '';
+
+      if (navigator.share) {
+        navigator
+          .share({
+            title: shareTitle,
+            text: shareText,
+            url: shareUrl,
+          })
+          .catch(() => {
+            navigator.clipboard.writeText(shareUrl);
+            toast.success('تم نسخ رابط الدورة بنجاح!');
+          });
+      } else {
+        navigator.clipboard.writeText(shareUrl);
+        toast.success('تم نسخ رابط الدورة بنجاح! يمكنك مشاركته على وسائل التواصل الاجتماعي.');
+      }
+    }
+  };
+
+  const handleCopyPublishedCourseLink = () => {
+    if (typeof window !== 'undefined') {
+      const targetSlug =
+        publishedCourseData?.slug ||
+        courseSlug ||
+        slug ||
+        (publishedCourseData?.id ? String(publishedCourseData.id) : (courseId ? String(courseId) : ''));
+      const shareUrl = `${window.location.origin}/courses/${targetSlug}`;
+      navigator.clipboard.writeText(shareUrl);
+      toast.success('تم نسخ رابط الدورة بنجاح!');
+    }
+  };
+
+  const handleOpenPublishedCourse = () => {
+    if (typeof window !== 'undefined') {
+      const targetSlug =
+        publishedCourseData?.slug ||
+        courseSlug ||
+        slug ||
+        (publishedCourseData?.id ? String(publishedCourseData.id) : (courseId ? String(courseId) : ''));
+      const courseUrl = `${window.location.origin}/courses/${targetSlug}`;
+      window.open(courseUrl, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -3725,6 +3786,105 @@ export default function CreateCourseClient() {
         unit={editingUnit}
         onUnitUpdated={() => refreshUnits(courseId)}
       />
+
+      {/* Publish Success & Social Share Popup Modal */}
+      {showPublishSuccessModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200"
+          dir="rtl"
+          onClick={() => setShowPublishSuccessModal(false)}
+        >
+          <div
+            className="bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 sm:p-8 relative border border-slate-200 animate-in zoom-in-95 duration-200 text-right"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header / Icon */}
+            <div className="flex items-start justify-between mb-6">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-black text-2xl shrink-0">
+                  🎉
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-900">تم نشر الدورة بنجاح!</h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    أصبحت الدورة متاحة الآن للطلاب ويمكنك مشاركتها أو زيارة صفحتها مباشرة.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPublishSuccessModal(false)}
+                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-all cursor-pointer"
+                title="إغلاق"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Course Title Preview */}
+            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 mb-6">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full">منشورة</span>
+                <span className="text-xs font-bold text-slate-500">
+                  {courseTypeParam === 'live-online' ? 'بث مباشر' : courseTypeParam === 'in-person' ? 'حضورية' : 'مسجلة'}
+                </span>
+              </div>
+              <h4 className="text-base font-bold text-slate-900 leading-snug line-clamp-1">
+                {publishedCourseData?.title || title || 'دورة تعليمية'}
+              </h4>
+              <p className="text-xs font-mono text-slate-500 mt-1 truncate" dir="ltr">
+                {typeof window !== 'undefined'
+                  ? `${window.location.origin}/courses/${publishedCourseData?.slug || courseSlug || slug || (publishedCourseData?.id ? String(publishedCourseData.id) : (courseId ? String(courseId) : ''))}`
+                  : ''}
+              </p>
+            </div>
+
+            {/* Action Buttons Grid */}
+            <div className="space-y-3 mb-6">
+              {/* Button 1: Share Course */}
+              <button
+                type="button"
+                onClick={handleSharePublishedCourse}
+                className="w-full py-3.5 px-5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-sm transition-all shadow-md shadow-blue-500/20 flex items-center justify-center gap-2.5 active:scale-[0.98] cursor-pointer"
+              >
+                <Share2 size={18} />
+                <span>مشاركة الدورة</span>
+              </button>
+
+              {/* Button 2: Open Public Course Page */}
+              <button
+                type="button"
+                onClick={handleOpenPublishedCourse}
+                className="w-full py-3.5 px-5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2.5 active:scale-[0.98] cursor-pointer"
+              >
+                <ExternalLink size={18} />
+                <span>فتح صفحة الدورة (معاينة مباشرة)</span>
+              </button>
+
+              {/* Button 3: Copy Course Link */}
+              <button
+                type="button"
+                onClick={handleCopyPublishedCourseLink}
+                className="w-full py-3 px-5 border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2.5 active:scale-[0.98] cursor-pointer"
+              >
+                <Copy size={18} />
+                <span>نسخ رابط الدورة</span>
+              </button>
+            </div>
+
+            {/* Footer Close Button */}
+            <div className="flex justify-end pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowPublishSuccessModal(false)}
+                className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                إغلاق
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
