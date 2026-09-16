@@ -442,22 +442,29 @@ export default function UpgradePackagesPage() {
                   setSubmittingId(selectedPackage.id);
 
                   try {
-                    const paymentLink = await subscribeToPackage(
+                    const response = await subscribeToPackage(
                       selectedPackage.id,
                       userEmail,
                       paymentProof
                     );
 
-                    if (paymentLink) {
-                      window.location.href = paymentLink;
+                    if (response?.status || response?.success || response?.data) {
+                      toast.success(
+                        response?.message || 'تم إرسال طلب الترقية بنجاح، وجاري المعالجة'
+                      );
+                      setShowPaymentModal(false);
+                      setPaymentProof(null);
+                      setSelectedPackage(null);
                     } else {
-                      toast.error('لم يتم العثور على رابط الدفع');
+                      toast.error(
+                        response?.message || 'فشل في إرسال طلب الترقية'
+                      );
                     }
                   } catch (err: any) {
                     console.error(err);
 
                     toast.error(
-                      err.message || 'فشل الانتقال لعملية الدفع'
+                      err?.message || 'فشل في إرسال طلب الترقية'
                     );
                   } finally {
                     setSubmittingId(null);

@@ -240,33 +240,46 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       )}>
         {/* Branding Section */}
         <div className="px-6 pt-6 pb-4 flex items-center justify-between border-b border-gray-50">
-          <div className="flex items-center gap-3 min-w-0">
-            {/* Academy Logo */}
-            <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0 bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-100">
-              {academy?.logo ? (
-                <Image
-                  src={academy.logo}
-                  alt={academy.name || 'أكاديمية'}
-                  width={44}
-                  height={44}
-                  className="w-full h-full object-cover"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-              ) : (
-                <span className="text-white font-black text-xl">
-                  {academy?.name ? academy.name.charAt(0) : 'أ'}
-                </span>
-              )}
-            </div>
-            {/* Academy Name */}
-            <div className="min-w-0">
-              <h1 className="text-base font-black text-gray-900 tracking-tight truncate leading-tight">
-                {academy?.name || 'أكاديميتي'}
-              </h1>
-              {academy?.email && (
-                <p className="text-[11px] text-gray-400 font-medium truncate leading-tight">{academy.email}</p>
-              )}
-            </div>
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            {academy?.name ? (
+              <>
+                {/* Academy Logo */}
+                <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0 bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-100">
+                  {academy.logo ? (
+                    <Image
+                      src={academy.logo}
+                      alt={academy.name}
+                      width={44}
+                      height={44}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  ) : (
+                    <span className="text-white font-black text-xl">
+                      {academy.name.charAt(0)}
+                    </span>
+                  )}
+                </div>
+                {/* Academy Name */}
+                <div className="min-w-0">
+                  <h1 className="text-base font-black text-gray-900 tracking-tight truncate leading-tight">
+                    {academy.name}
+                  </h1>
+                  {academy.email && (
+                    <p className="text-[11px] text-gray-400 font-medium truncate leading-tight">{academy.email}</p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Loading Skeleton */}
+                <div className="w-11 h-11 rounded-2xl bg-gray-200 animate-pulse shrink-0"></div>
+                <div className="min-w-0 space-y-1.5 flex-1">
+                  <div className="h-4 w-28 bg-gray-200 rounded-md animate-pulse"></div>
+                  <div className="h-3 w-20 bg-gray-100 rounded-md animate-pulse"></div>
+                </div>
+              </>
+            )}
           </div>
           <button
             onClick={onClose}
