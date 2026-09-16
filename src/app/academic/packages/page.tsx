@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { getProfileStatus, getMyUsageLimit, getMyPackage } from '@/services/auth';
-import { Upload, Download, Search, Link2, Award, MessageSquare, FileText, Cloud, Users, User, BookOpen, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Award, Cloud, Users, BookOpen } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function PackagesPage() {
@@ -10,7 +10,6 @@ export default function PackagesPage() {
   const [usageData, setUsageData] = useState<any>(null);
   const [limitsData, setLimitsData] = useState<any[]>([]);
   const [packageData, setPackageData] = useState<any>(null);
-  const [packageHistory, setPackageHistory] = useState<any[]>([]);
   const [featuresList, setFeaturesList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -53,8 +52,6 @@ export default function PackagesPage() {
             setPackageData(packageDataRaw);
           }
         }
-
-        setPackageHistory(Array.isArray(pkgRes?.data) ? pkgRes.data : (Array.isArray(pkgRes) ? pkgRes : []));
       } catch (err) {
         console.error('Failed to fetch data:', err);
       } finally {
@@ -131,21 +128,6 @@ export default function PackagesPage() {
         progressColor: 'bg-red-500'
       },
     ];
-
-  const historyFallback = [
-    { id: '033215', date: '22/1/2020', name: 'الباقة البريميوم', price: '4,200', method: 'تحويل بنكي' },
-    { id: '033216', date: '3/6/2022', name: 'الباقة البريميوم', price: '4,200', method: 'بطاقة الائتمان' },
-    { id: '033217', date: '8/7/2025', name: 'الباقة البريميوم', price: '4,200', method: 'المحفظة الالكترونية' },
-    { id: '033218', date: '2/3/2021', name: 'الباقة البريميوم', price: '4,200', method: 'بطاقة الائتمان' },
-  ];
-
-  const displayHistory = packageHistory.length > 0 ? packageHistory.map(item => ({
-    id: item.id || '-',
-    date: item.start_date ? new Date(item.start_date).toLocaleDateString('ar-EG') : '-',
-    name: item.package_name || '-',
-    price: item.price || '0',
-    method: item.transaction_id || 'غير محدد'
-  })) : historyFallback;
 
   if (loading) {
     return (
@@ -264,56 +246,6 @@ export default function PackagesPage() {
               </div>
             </div>
           ))}
-        </div>
-      </div>
-
-      {/* History Table */}
-      <div className="bg-white rounded-3xl p-0 border border-gray-100 shadow-sm overflow-hidden">
-        {/* Table Header Controls */}
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-          <h3 className="text-xl font-black text-gray-900">تاريخ الاشتراكات والمدفوعات</h3>
-
-          <div className="flex items-center gap-4">
-            <div className="relative w-72">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="text"
-                placeholder="البحث"
-                className="w-full bg-gray-50 border border-gray-100 rounded-xl pr-10 pl-4 py-2 text-sm outline-none focus:border-blue-500 font-medium text-right text-gray-900"
-              />
-            </div>
-
-            <button className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl font-bold transition-colors text-sm">
-              <Upload size={16} /> {/* Looking closely at the image "تصدير Excel", looks like upload icon */}
-              <span>تصدير Excel</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-right text-sm">
-            <thead className="bg-white text-gray-500 font-bold border-b border-gray-100">
-              <tr>
-                <th className="py-4 px-6 font-bold whitespace-nowrap">رقم العملية</th>
-                <th className="py-4 px-6 font-bold whitespace-nowrap">تاريخ الأشتراك</th>
-                <th className="py-4 px-6 font-bold whitespace-nowrap">اسم الباقة</th>
-                <th className="py-4 px-6 font-bold whitespace-nowrap">قيمة الأشتراك</th>
-                <th className="py-4 px-6 font-bold whitespace-nowrap text-left">طريقة الدفع</th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayHistory.map((item, i) => (
-                <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
-                  <td className="py-4 px-6 font-medium text-gray-500">{item.id}</td>
-                  <td className="py-4 px-6 font-medium text-gray-500">{item.date}</td>
-                  <td className="py-4 px-6 font-medium text-gray-500">{item.name}</td>
-                  <td className="py-4 px-6 font-black text-gray-900">{item.price}</td>
-                  <td className="py-4 px-6 font-medium text-gray-500 text-left">{item.method}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
 
