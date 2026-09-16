@@ -226,7 +226,7 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
   };
 
   // Payment methods from instructor_receiver_accounts API (for Step 3)
-  const [paymentInfos, setPaymentInfos] = useState<Array<{ id: number; name: string; logo?: string }>>([]);
+  const [paymentInfos, setPaymentInfos] = useState<Array<{ id: number; name: string; currency?: string; logo?: string; receiver_account?: any }>>([]);
   const [loadingPaymentInfos, setLoadingPaymentInfos] = useState(false);
 
   useEffect(() => {
@@ -268,6 +268,7 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
             isFree: apiBag.type_price === 'free',
             price: Number(apiBag.price) || 0,
             discountPrice: Number(apiBag.discount_price) || 0,
+            currency: apiBag.currency || 'SAR',
             paymentMethods: (apiBag.payment_info_ids || []).map(String),
             downloadPolicy: isLimited ? 'limited' : 'unlimited',
             downloadLimit: isLimited ? (countDl || 0) : 0,
@@ -293,7 +294,9 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
         setPaymentInfos(infos.map((info: any) => ({
           id: info.id,
           name: info.name || info.receiver_account?.name || '',
+          currency: info.currency || info.receiver_account?.currency || '',
           logo: info.logo || info.receiver_account?.logo || '',
+          receiver_account: info.receiver_account,
         })));
       }
     }).catch(() => { }).finally(() => setLoadingPaymentInfos(false));
@@ -336,6 +339,27 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
   const safeSelectedCourseIds = Array.isArray(formData.selectedCourseIds)
     ? formData.selectedCourseIds
     : [];
+
+  const selectedCurrency = formData.currency || 'SAR';
+  const filteredPaymentInfos = paymentInfos.filter((info) => {
+    if (info.currency && info.currency.toUpperCase() === selectedCurrency.toUpperCase()) {
+      return true;
+    }
+    const targetCountry = selectedCurrency === 'EGP' ? 'EG' : selectedCurrency === 'SAR' ? 'SA' : 'ALL';
+    const lowerName = (info.name || '').toLowerCase();
+    if (targetCountry === 'SA') {
+      if (lowerName.includes('instapay') || lowerName.includes('vodafone') || lowerName.includes('fawry') || lowerName.includes('اتصالات') || lowerName.includes('فودافون')) {
+        return false;
+      }
+      return true;
+    } else if (targetCountry === 'EG') {
+      if (lowerName.includes('urpay') || lowerName.includes('stc') || lowerName.includes('mada') || lowerName.includes('مدى') || lowerName.includes('زين كاش') || lowerName.includes('zain cash') || lowerName.includes('benefit')) {
+        return false;
+      }
+      return true;
+    }
+    return true;
+  });
 
   /** Toggle payment method selection safely */
   const togglePaymentMethod = (method: string) => {
@@ -1158,32 +1182,65 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                   </div>
                 </div>
 
-                {/* Free Product Toggle Switch */}
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-gray-50/70 border border-gray-100">
-                  <div>
-                    <h4 className="text-sm font-black text-gray-900">
-                      منتج مجاني
-                    </h4>
-                    <p className="text-xs font-bold text-gray-400 mt-0.5">
-                      اجعل هذا المنتج متاحا للجميع بدون رسوم
-                    </p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(formData.isFree)}
-                      onChange={(e) =>
-                        setFormData({ ...formData, isFree: e.target.checked })
-                      }
-                      className="sr-only peer"
+                {/* Free Product Toggle */}
+                <div
+                  role="switch"
+                  aria-checked={Boolean(formData.isFree)}
+                  tabIndex={0}
+                  onClick={() => {
+                    const nextIsFree = !formData.isFree;
+                    setFormData((prev) => ({
+                      ...prev,
+                      isFree: nextIsFree,
+                      paymentMethods: nextIsFree ? [] : prev.paymentMethods,
+                    }));
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      const nextIsFree = !formData.isFree;
+                      setFormData((prev) => ({
+                        ...prev,
+                        isFree: nextIsFree,
+                        paymentMethods: nextIsFree ? [] : prev.paymentMethods,
+                      }));
+                    }
+                  }}
+                  className={`flex items-center justify-between gap-4 p-4 rounded-xl border cursor-pointer select-none transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${formData.isFree
+                    ? 'border-emerald-600/40 bg-emerald-50'
+                    : 'border-gray-200 bg-white hover:bg-gray-50'
+                    }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Sparkles
+                      size={18}
+                      className={formData.isFree ? 'text-emerald-600' : 'text-gray-400'}
                     />
-                    <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">منتج مجاني</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {formData.isFree
+                          ? 'متاح للجميع بدون رسوم'
+                          : 'حدد السعر ووسائل الدفع بالأسفل'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* switch — visual only, driven by state, no nested handler */}
+                  <div
+                    className={`relative w-10 h-6 rounded-full flex-shrink-0 transition-colors duration-150 ${formData.isFree ? 'bg-emerald-600' : 'bg-gray-300'
+                      }`}
+                  >
+                    <div
+                      className={`absolute top-0.5 start-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-150 ${formData.isFree ? 'translate-x-4 rtl:-translate-x-4' : 'translate-x-0'
+                        }`}
+                    />
+                  </div>
                 </div>
 
-                {/* Prices */}
+                {/* Prices & Currency Selector */}
                 {!formData.isFree && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in duration-200">
                     <div className="space-y-2">
                       <label className="text-xs font-black text-gray-700 block">
                         سعر المنتج
@@ -1203,9 +1260,30 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                           placeholder="0.00"
                           className="w-full bg-transparent p-3.5 text-sm font-black outline-none text-gray-900"
                         />
-                        <div className="px-4 py-3 bg-gray-100/80 border-r border-gray-200 text-xs font-black text-blue-600 flex items-center gap-1 cursor-pointer">
-                          <span>SAR</span>
-                          <ChevronDown size={14} />
+                        <div className="px-3 py-2 bg-gray-100/90 border-r border-gray-200 text-xs font-black text-blue-600 flex items-center gap-1 cursor-pointer">
+                          <select
+                            value={formData.currency || 'SAR'}
+                            onChange={(e) => {
+                              const newCurr = e.target.value;
+                              setFormData((prev) => ({
+                                ...prev,
+                                currency: newCurr,
+                                paymentMethods: [],
+                              }));
+                            }}
+                            className="bg-transparent font-black text-blue-600 outline-none cursor-pointer text-xs text-gray-900 border-none focus:ring-0"
+                          >
+                            <option value="SAR" className="text-gray-900">
+                              SAR (ر.س)
+                            </option>
+                            <option value="EGP" className="text-gray-900">
+                              EGP (ج.م)
+                            </option>
+                            <option value="KWD" className="text-gray-900">
+                              KWD (د.ك)
+                            </option>
+                          </select>
+                          <ChevronDown size={14} className="text-blue-600 pointer-events-none" />
                         </div>
                       </div>
                     </div>
@@ -1232,36 +1310,58 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                   </div>
                 )}
 
-                {/* Payment Methods Section (Defensive Check) */}
+                {/* Payment Methods Section (Filtered by Currency) */}
                 <div className="space-y-3 pt-1">
-                  <label className="text-xs font-black text-gray-700 block">
-                    اختر طريقة دفع من طرق الدفع الخاصة بك
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-black text-gray-700 block">
+                      اختر طريقة دفع من طرق الدفع الخاصة بك
+                    </label>
+                    {!formData.isFree && (
+                      <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+                        العملة المحددة: {selectedCurrency}
+                      </span>
+                    )}
+                  </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {formData.isFree && (
+                    <div className="p-3.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-xs font-bold flex items-center gap-2 mb-3">
+                      <span className="material-symbols-outlined text-[18px] text-amber-600">info</span>
+                      <span>المنتج مجاني — لا حاجة لاختيار وسائل الدفع.</span>
+                    </div>
+                  )}
+
+                  <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${formData.isFree ? 'opacity-40 pointer-events-none cursor-not-allowed select-none' : ''}`}>
                     {loadingPaymentInfos ? (
                       /* Loading skeleton for payment methods */
                       <div className="col-span-2 flex items-center gap-2 text-gray-400 py-4">
                         <Loader2 size={16} className="animate-spin" />
                         <span className="text-xs font-bold">جاري تحميل طرق الدفع...</span>
                       </div>
-                    ) : paymentInfos.length === 0 ? (
-                      /* Empty state — no payment methods configured */
-                      <div className="col-span-2 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold">
-                        لا توجد طرق دفع مضافة بعد. توجه إلى إعدادات الدفع لإضافة حساباتك.
+                    ) : filteredPaymentInfos.length === 0 ? (
+                      /* Empty state — no payment methods for this currency */
+                      <div className="col-span-2 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold flex flex-col gap-1">
+                        <div className="flex items-center gap-1.5 font-black text-amber-900">
+                          <span className="material-symbols-outlined text-sm">warning</span>
+                          <span>لا توجد وسائل دفع مضافة لعملة ({selectedCurrency})</span>
+                        </div>
+                        <p className="text-amber-700 font-semibold">
+                          يمكنك إضافة حسابات دفع تدعم هذه العملة من خلال صفحة الإعدادات المالية.
+                        </p>
                       </div>
                     ) : (
-                      /* Dynamic payment method cards from instructor_receiver_accounts */
-                      paymentInfos.map((info) => {
+                      /* Dynamic filtered payment method cards */
+                      filteredPaymentInfos.map((info) => {
                         const idStr = String(info.id);
-                        const isSelected = safePaymentMethods.includes(idStr);
+                        const isSelected = !formData.isFree && safePaymentMethods.includes(idStr);
                         return (
                           <div
                             key={info.id}
-                            onClick={() => togglePaymentMethod(idStr)}
-                            className={`p-4 rounded-2xl border-2 cursor-pointer flex items-center justify-between transition-all ${isSelected
-                              ? 'border-blue-600 bg-white shadow-sm'
-                              : 'border-gray-100 bg-gray-50 hover:border-gray-200'
+                            onClick={() => !formData.isFree && togglePaymentMethod(idStr)}
+                            className={`p-4 rounded-2xl border-2 flex items-center justify-between transition-all ${formData.isFree
+                              ? 'border-gray-200 bg-gray-100 cursor-not-allowed'
+                              : isSelected
+                                ? 'border-blue-600 bg-white shadow-sm cursor-pointer'
+                                : 'border-gray-100 bg-gray-50 hover:border-gray-200 cursor-pointer'
                               }`}
                           >
                             <div className="flex items-center gap-3">

@@ -33,6 +33,9 @@ export interface BagApiItem {
   /** Array of instructor_receiver_account IDs for accepted payment methods */
   payment_info_ids?: number[];
   payment_infos?: any[];
+  currency?: string;
+  purchased?: boolean;
+  is_purchased?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -55,6 +58,7 @@ export interface CreateBagPayload {
   type_price?: 'free' | 'paid' | string;
   price?: number | string;
   discount_price?: number | string;
+  currency?: string;
   is_active?: number | boolean;
   count_download?: number | string | null;
   download_type?: 'unlimited' | 'limited' | string;

@@ -7,6 +7,7 @@ import {
   FileCode,
   FileType,
   ExternalLink,
+  Lock,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getBag, BagApiItem, BagItemDetail, purchaseBag } from '@/services/bags';
@@ -324,7 +325,7 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
             </div>
 
             {/* Gallery Thumbnails Carousel Row */}
-            {allGalleryUrls.length > 1 && (
+            {allGalleryUrls.length > 0 && (
               <div className="flex items-center gap-3 overflow-x-auto pb-2 pt-1 scrollbar-thin">
                 {allGalleryUrls.map((imgUrl, idx) => (
                   <button
@@ -332,8 +333,8 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                     type="button"
                     onClick={() => setActiveImage(imgUrl)}
                     className={`w-20 h-20 rounded-2xl overflow-hidden border-2 flex-shrink-0 transition-all cursor-pointer ${currentDisplayImage === imgUrl
-                        ? 'border-blue-600 ring-2 ring-blue-100 scale-105 shadow-md'
-                        : 'border-gray-200 opacity-70 hover:opacity-100'
+                      ? 'border-blue-600 ring-2 ring-blue-100 scale-105 shadow-md'
+                      : 'border-gray-200 opacity-70 hover:opacity-100'
                       }`}
                   >
                     <img src={imgUrl} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
@@ -350,11 +351,11 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                 <FileText size={22} className="text-blue-600" />
                 <span>عن الحقيبة التدريبية</span>
               </h2>
-
+              {/* 
               <div className="flex items-center gap-1.5 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-xl font-bold text-xs">
                 <Star size={15} fill="currentColor" className="text-amber-400" />
                 <span>4.9 (128 تقييم)</span>
-              </div>
+              </div> */}
             </div>
 
             <p className="text-gray-600 text-sm font-medium leading-relaxed whitespace-pre-line">
@@ -383,11 +384,11 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                 <span className="text-sm font-black text-gray-900">مباشر وغير محدود</span>
               </div>
 
-              <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex flex-col items-center text-center space-y-1">
+              {/* <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex flex-col items-center text-center space-y-1">
                 <ShieldCheck size={22} className="text-amber-600" />
                 <span className="text-xs font-bold text-gray-400">الشهادة</span>
                 <span className="text-sm font-black text-gray-900">شهادة إتمام</span>
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -436,15 +437,33 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                       </div>
 
                       <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-200">
-                        <a
-                          href={item.path}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-black text-xs shadow-sm shadow-blue-200 transition-all cursor-pointer"
-                        >
-                          <Download size={15} />
-                          <span>تنزيل / فتح الملف</span>
-                        </a>
+                        {Boolean(
+                          purchaseSuccess ||
+                          bag.purchased === true ||
+                          (bag as any).is_purchased === true ||
+                          bag.type_price === 'free' ||
+                          (!bag.price && !bag.discount_price)
+                        ) ? (
+                          <a
+                            href={item.path}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-black text-xs shadow-sm shadow-blue-200 transition-all cursor-pointer"
+                          >
+                            <Download size={15} />
+                            <span>تنزيل / فتح الملف</span>
+                          </a>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled
+                            className="flex items-center gap-2 bg-gray-100 text-gray-400 px-5 py-2.5 rounded-xl font-black text-xs cursor-not-allowed border border-gray-200"
+                            title="يجب شراء الحقيبة أولاً للتمكن من تحميل الملفات"
+                          >
+                            <Lock size={15} />
+                            <span>التنزيل غير متاح (شراء مطلوب)</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -727,15 +746,15 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                                 key={pm.id}
                                 onClick={() => setSelectedPaymentMethod(pm.id)}
                                 className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${selectedPaymentMethod === pm.id
-                                    ? 'border-blue-600 bg-blue-50/50 shadow-sm'
-                                    : 'border-gray-200 hover:border-gray-300 bg-white'
+                                  ? 'border-blue-600 bg-blue-50/50 shadow-sm'
+                                  : 'border-gray-200 hover:border-gray-300 bg-white'
                                   }`}
                               >
                                 <div className="flex items-center gap-3">
                                   <div
                                     className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPaymentMethod === pm.id
-                                        ? 'border-blue-600 bg-blue-600 text-white'
-                                        : 'border-gray-300'
+                                      ? 'border-blue-600 bg-blue-600 text-white'
+                                      : 'border-gray-300'
                                       }`}
                                   >
                                     {selectedPaymentMethod === pm.id && <Check size={12} strokeWidth={3} />}
@@ -768,9 +787,8 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                         <label className="text-xs font-black text-gray-700 block">2. إرفاق إيصال التحويل / الدفع <span className="text-red-500">*</span>:</label>
                         <div
                           onClick={() => document.getElementById('bag-receipt-input')?.click()}
-                          className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${
-                            receiptFile ? 'border-emerald-500 bg-emerald-50/40' : 'border-gray-200 hover:border-blue-400 bg-gray-50'
-                          }`}
+                          className={`p-4 rounded-2xl border-2 border-dashed text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${receiptFile ? 'border-emerald-500 bg-emerald-50/40' : 'border-gray-200 hover:border-blue-400 bg-gray-50'
+                            }`}
                         >
                           <input
                             id="bag-receipt-input"

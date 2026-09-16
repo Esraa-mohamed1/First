@@ -21,15 +21,29 @@ export default function BagPreviewCard({ formData = {} }: BagPreviewCardProps) {
     'هي لغة تنسيق المواقع التي تجعل الصفحات جميلة CSS ومنظمة وتحكم في ألوانها وأشكالها وتخطيطها بشكل مرن.';
   const instructor = formData.instructorName || 'أحمد محمد';
 
+  const allImages: string[] = [];
+  if (formData.coverImage) allImages.push(formData.coverImage);
+  if (Array.isArray(formData.gallery)) {
+    formData.gallery.forEach((g: any) => {
+      const url = typeof g === 'string' ? g : g?.path || g?.url;
+      if (url && !allImages.includes(url)) {
+        allImages.push(url);
+      }
+    });
+  }
+
+  const [activeImg, setActiveImg] = React.useState<string | null>(null);
+  const currentImg = activeImg || formData.coverImage || (allImages.length > 0 ? allImages[0] : null);
+
   return (
     <div className="bg-white rounded-[28px] border border-gray-100 shadow-xl overflow-hidden w-full max-w-sm sticky top-6">
       {/* Cover Image Header */}
       <div className="relative w-full h-44 bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-950 overflow-hidden">
-        {formData.coverImage ? (
+        {currentImg ? (
           <img
-            src={formData.coverImage}
+            src={currentImg}
             alt={title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-all duration-200"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-white/40">
@@ -37,6 +51,24 @@ export default function BagPreviewCard({ formData = {} }: BagPreviewCardProps) {
           </div>
         )}
       </div>
+
+      {/* Gallery Thumbnails Box */}
+      {allImages.length > 0 && (
+        <div className="flex items-center gap-2 p-2 bg-gray-50 border-b border-gray-100 overflow-x-auto scrollbar-none">
+          {allImages.map((imgUrl, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setActiveImg(imgUrl)}
+              className={`w-12 h-12 rounded-xl overflow-hidden border-2 flex-shrink-0 transition-all ${
+                currentImg === imgUrl ? 'border-blue-600 ring-2 ring-blue-100 scale-105' : 'border-gray-200 opacity-60 hover:opacity-100'
+              }`}
+            >
+              <img src={imgUrl} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Card Content Body */}
       <div className="p-6 space-y-4">

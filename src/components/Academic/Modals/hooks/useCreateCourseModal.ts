@@ -51,7 +51,7 @@ export const useCreateCourseModal = ({
   // Pricing Step States
   const [pricingType, setPricingType] = useState<'free' | 'paid'>('paid');
   const [price, setPrice] = useState('');
-  const [currency, setCurrency] = useState<'EGP' | 'SAR' | 'USD'>('SAR');
+  const [currency, setCurrency] = useState<'EGP' | 'SAR' | 'KWD'>('SAR');
   const [status, setStatus] = useState<'published' | 'draft'>('draft');
 
   const [courseType, setCourseType] = useState<string>('');

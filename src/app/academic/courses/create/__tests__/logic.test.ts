@@ -20,9 +20,9 @@ describe('Course Creation Filtering Logic', () => {
     expect(instructors.every(u => u.role === 'academy')).toBe(true);
   });
 
-  it('should include USD in currency options', () => {
-    const currencies = ['SAR', 'EGP', 'USD'];
-    expect(currencies).toContain('USD');
+  it('should include KWD in currency options', () => {
+    const currencies = ['SAR', 'EGP', 'KWD'];
+    expect(currencies).toContain('KWD');
   });
 
   it('should validate required title field', () => {

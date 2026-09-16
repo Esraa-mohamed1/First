@@ -133,7 +133,7 @@ export interface CreateCoursePayload {
   image?: File;
   category_id?: string | number;
   description: string;
-  currency?: 'EGP' | 'SAR' | 'USD';
+  currency?: 'EGP' | 'SAR' | 'KWD';
   receiverAccounts?: { methodId: number; currency: string }[];
   receiver_accounts?: { method_id: number; currency: string }[];
   coach?: string;
