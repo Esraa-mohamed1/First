@@ -78,7 +78,7 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                 <Plus size={20} strokeWidth={3} />
               </div>
               <span className="bg-white border border-blue-100 text-blue-600 group-hover:bg-blue-50/60 px-3.5 py-2 rounded-xl text-xs font-black shadow-xs whitespace-nowrap hidden sm:inline-block transition-colors">
-                إضافة مسودة دورة
+                إضافة دورة
               </span>
             </button>
 
