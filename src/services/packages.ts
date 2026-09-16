@@ -21,7 +21,7 @@ export const subscribeToPackage = async (
   packageId: number,
   email: string | undefined,
   paymentProof: File
-): Promise<string> => {
+): Promise<ApiResponse<any>> => {
   try {
     const formData = new FormData();
 
@@ -44,18 +44,7 @@ export const subscribeToPackage = async (
       }
     );
 
-    const data = response.data as any;
-
-    const paymentLink =
-      data.paymentLink ||
-      data.data?.paymentLink ||
-      (typeof data.data === 'string' ? data.data : null);
-
-    if (paymentLink) {
-      return paymentLink;
-    }
-
-    throw new Error('رابط الدفع غير موجود في الرد');
+    return response.data;
   } catch (error: any) {
     console.error('Failed to subscribe to package:', error);
     throw error.response?.data || error;

@@ -1983,19 +1983,12 @@ export default function CreateCourseClient() {
                       <div className="flex bg-slate-100 p-1.5 rounded-xl border border-slate-300 w-fit">
                         <button
                           type="button"
-<<<<<<< HEAD
-                          onClick={() => setPricingType('free')}
-                          className={`px-8 py-2.5 rounded-lg text-sm font-bold transition-all ${pricingType === 'free' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'
-                            }`}
-=======
                           onClick={() => {
                             setPricingType('free');
                             setSelectedPaymentMethods([]);
                           }}
-                          className={`px-8 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                            pricingType === 'free' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'
-                          }`}
->>>>>>> f1a3363cc1240045ba4f5d96cdcc55f6218fcaf1
+                          className={`px-8 py-2.5 rounded-lg text-sm font-bold transition-all ${pricingType === 'free' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'
+                            }`}
                         >
                           مجانية
                         </button>
@@ -2211,11 +2204,10 @@ export default function CreateCourseClient() {
                         setNewPaymentAccountValue('');
                         setShowAddPaymentModal(true);
                       }}
-                      className={`px-4 py-2.5 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 self-start sm:self-center ${
-                        pricingType === 'free'
+                      className={`px-4 py-2.5 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 self-start sm:self-center ${pricingType === 'free'
                           ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
                           : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-md cursor-pointer'
-                      }`}
+                        }`}
                     >
                       <Plus className="w-4 h-4" />
                       إضافة وسيلة استقبال جديدة
