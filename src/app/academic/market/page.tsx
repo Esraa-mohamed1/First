@@ -36,6 +36,7 @@ function adaptApiBagToLocal(apiBag: BagApiItem): BagItem {
     rating: 4.9,
     price: Number(apiBag.price) || 0,
     discountPrice: apiBag.discount_price != null ? Number(apiBag.discount_price) : undefined,
+    currency: apiBag.currency || 'SAR',
     isFree: apiBag.type_price === 'free',
     paymentMethods: (apiBag.payment_info_ids || []).map(String),
     downloadPolicy: 'unlimited',

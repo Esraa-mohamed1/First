@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Star, BookOpen, User, Layers, ShoppingCart } from 'lucide-react';
+import { BookOpen, Layers, ShoppingCart } from 'lucide-react';
 import { BagFormState } from '@/types/market';
 
 interface BagPreviewCardProps {
@@ -19,7 +19,6 @@ export default function BagPreviewCard({ formData = {} }: BagPreviewCardProps) {
   const description =
     formData.description ||
     'هي لغة تنسيق المواقع التي تجعل الصفحات جميلة CSS ومنظمة وتحكم في ألوانها وأشكالها وتخطيطها بشكل مرن.';
-  const instructor = formData.instructorName || 'أحمد محمد';
 
   const allImages: string[] = [];
   if (formData.coverImage) allImages.push(formData.coverImage);
@@ -93,24 +92,7 @@ export default function BagPreviewCard({ formData = {} }: BagPreviewCardProps) {
           <span>20 فيديو وملف</span>
         </div>
 
-        {/* Rating and Author Section */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-50">
-          <div className="flex items-center gap-1">
-            <div className="flex text-amber-400">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} size={13} fill="currentColor" />
-              ))}
-            </div>
-            <span className="text-xs font-bold text-gray-700 mr-1">4.9</span>
-          </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-gray-500">{instructor}</span>
-            <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-              <User size={13} />
-            </div>
-          </div>
-        </div>
 
         {/* Action Buttons */}
         <div className="space-y-2.5 pt-2">

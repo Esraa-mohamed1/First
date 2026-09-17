@@ -40,6 +40,9 @@ function buildBagFormData(payload: CreateBagPayload): FormData {
   if (payload.discount_price != null)
     fd.append('discount_price', String(payload.discount_price));
 
+  if (payload.currency != null)
+    fd.append('currency', payload.currency);
+
   if (payload.is_active != null)
     fd.append('is_active', String(payload.is_active));
 
