@@ -211,7 +211,7 @@ export default function CourseDetailsPage() {
   const [discountPrice, setDiscountPrice] = useState('');
   const [discountEndDate, setDiscountEndDate] = useState('');
 
-  const [accessDurationType, setAccessDurationType] = useState<'lifetime' | 'days' | 'date'>('lifetime');
+  const [accessDurationType, setAccessDurationType] = useState<'lifetime' | 'days' | 'until_date'>('lifetime');
   const [accessDays, setAccessDays] = useState('');
   const [accessUntilDate, setAccessUntilDate] = useState('');
 
@@ -479,7 +479,7 @@ export default function CourseDetailsPage() {
         is_discounted: isDiscounted ? 1 : 0,
         access_duration_type: accessDurationType,
         access_days: accessDurationType === 'days' && accessDays ? Number(accessDays) : undefined,
-        access_until_date: (accessDurationType === 'date' || accessDurationType === 'until_date' as any) && accessUntilDate ? accessUntilDate : undefined,
+        access_until_date: accessDurationType === 'until_date' && accessUntilDate ? accessUntilDate : undefined,
       };
 
       if (selectedImage) {
