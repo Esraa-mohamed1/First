@@ -2,8 +2,17 @@
 
 import React, { useEffect, useState } from 'react';
 import { getProfileStatus, getMyUsageLimit, getMyPackage } from '@/services/auth';
-import { Award, Cloud, Users, BookOpen } from 'lucide-react';
+import { Award, Cloud, Users, BookOpen, Globe, CreditCard } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+
+const FEATURE_KEY_TO_SLUG_MAP: Record<string, string> = {
+  max_courses: 'max_courses',
+  count_student: 'max_students',
+  storage_space: 'storage_limit',
+  custom_domain: 'custom_domain',
+  custom_subdomains: 'custom_subdomains',
+  all_payment: 'direct_payment',
+};
 
 export default function PackagesPage() {
   const router = useRouter();
@@ -12,6 +21,26 @@ export default function PackagesPage() {
   const [packageData, setPackageData] = useState<any>(null);
   const [featuresList, setFeaturesList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const getStatConfig = (slugOrKey: string) => {
+    const slug = FEATURE_KEY_TO_SLUG_MAP[slugOrKey] || slugOrKey;
+    switch (slug) {
+      case 'max_courses':
+        return { label: 'عدد الدورات المستخدمة', icon: BookOpen, color: 'bg-indigo-50 text-indigo-500', progressColor: 'bg-indigo-500', isStorage: false };
+      case 'max_students':
+        return { label: 'عدد الطلاب النشطين', icon: Users, color: 'bg-emerald-50 text-emerald-500', progressColor: 'bg-emerald-500', isStorage: false };
+      case 'storage_limit':
+        return { label: 'مساحة التخزين', icon: Cloud, color: 'bg-red-50 text-red-400', progressColor: 'bg-red-500', isStorage: true };
+      case 'custom_domain':
+        return { label: 'الدومين المخصص', icon: Globe, color: 'bg-purple-50 text-purple-500', progressColor: 'bg-purple-500', isStorage: false };
+      case 'custom_subdomains':
+        return { label: 'الصب دومين', icon: Globe, color: 'bg-amber-50 text-amber-500', progressColor: 'bg-amber-500', isStorage: false };
+      case 'direct_payment':
+        return { label: 'طرق الدفع كلها', icon: CreditCard, color: 'bg-blue-50 text-blue-500', progressColor: 'bg-blue-500', isStorage: false };
+      default:
+        return { label: 'ميزة', icon: Award, color: 'bg-gray-50 text-gray-400', progressColor: 'bg-gray-500', isStorage: false };
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,12 +68,20 @@ export default function PackagesPage() {
             const features = packageDataRaw.features;
             if (features) {
               const featuresArray = Array.isArray(features) ? features : [features];
-              const extractedFeatures = featuresArray.map((f: any) => ({
-                label: f.lable || f.name || 'ميزة',
-                available: f.value !== '0',
-                icon: Award,
-                note: f.value === '0' ? (f.lable || 'غير مدعوم') : ''
-              }));
+              const extractedFeatures = featuresArray.map((f: any) => {
+                const isEnabled = f.value !== '0' && f.value !== 0 && f.value !== 'false' && f.value !== false;
+                const mappedSlug = f.key_feature ? (FEATURE_KEY_TO_SLUG_MAP[f.key_feature] || f.key_feature) : null;
+                const statConfig = mappedSlug ? getStatConfig(mappedSlug) : null;
+
+                return {
+                  label: f.label || f.lable || f.name || statConfig?.label || 'ميزة',
+                  available: isEnabled,
+                  key_feature: f.key_feature,
+                  value: f.value,
+                  icon: statConfig?.icon || Award,
+                  note: !isEnabled ? (f.label || f.lable || 'غير مدعوم') : ''
+                };
+              });
               setFeaturesList(extractedFeatures);
             }
           } else {
@@ -61,21 +98,6 @@ export default function PackagesPage() {
     fetchData();
   }, []);
 
-  const isFreePackage = parseFloat(packageData?.price || '0') === 0;
-
-  const getStatConfig = (slug: string) => {
-    switch (slug) {
-      case 'max_courses':
-        return { label: 'عدد الدورات المستخدمة', icon: BookOpen, color: 'bg-indigo-50 text-indigo-500', progressColor: 'bg-indigo-500', isStorage: false };
-      case 'max_students':
-        return { label: 'عدد الطلاب النشطين', icon: Users, color: 'bg-emerald-50 text-emerald-500', progressColor: 'bg-emerald-500', isStorage: false };
-      case 'storage_limit':
-        return { label: 'مساحة التخزين', icon: Cloud, color: 'bg-red-50 text-red-400', progressColor: 'bg-red-500', isStorage: true };
-      default:
-        return { label: 'ميزة', icon: Award, color: 'bg-gray-50 text-gray-400', progressColor: 'bg-gray-500', isStorage: false };
-    }
-  };
-
   const stats = limitsData.length > 0
     ? limitsData.map((item: any) => {
       const config = getStatConfig(item.feature_slug);
@@ -86,11 +108,10 @@ export default function PackagesPage() {
       let valueStr = `${used}/${total}`;
 
       if (config.isStorage) {
-        const usedGB = used / 1024;
-        percentage = total > 0 ? ((usedGB / total) * 100).toFixed(0) : '0';
-        valueStr = `${usedGB.toFixed(2)}/${total.toFixed(2)} GB`;
+        percentage = total > 0 ? Math.min(100, Math.round((used / total) * 100)).toString() : '0';
+        valueStr = `${used}/${total} GB`;
       } else {
-        percentage = total > 0 ? ((used / total) * 100).toFixed(0) : '0';
+        percentage = total > 0 ? Math.min(100, Math.round((used / total) * 100)).toString() : '0';
       }
 
       return {
@@ -160,23 +181,18 @@ export default function PackagesPage() {
               <div className="text-left">
                 <p className="text-gray-400 font-bold mb-1">بدايه الأشتراك</p>
                 <p className="text-gray-900 font-bold" dir="ltr">
-                  {packageData?.end_date ? new Date(packageData.end_date).toLocaleDateString('ar-EG') : 'غير محدد'}
+                  {packageData?.start_date ? new Date(packageData.start_date).toLocaleDateString('ar-EG') : 'غير محدد'}
                 </p>
               </div>
               <div className="text-left">
                 <p className="text-gray-400 font-bold mb-1">نهايه الأشتراك</p>
                 <p className="text-gray-900 font-bold" dir="ltr">
-                  {packageData?.start_date ? new Date(packageData.start_date).toLocaleDateString('ar-EG') : 'غير محدد'}
+                  {packageData?.end_date ? new Date(packageData.end_date).toLocaleDateString('ar-EG') : 'غير محدد'}
                 </p>
               </div>
             </div>
 
             <div className="flex gap-4">
-              {!isFreePackage && (
-                <button className="px-6 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-colors">
-                  تجديد الاشتراك
-                </button>
-              )}
               <button
                 onClick={() => router.push('/academic/packages/upgrade')}
                 className="px-6 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold transition-colors"
