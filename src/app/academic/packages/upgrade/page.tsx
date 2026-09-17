@@ -22,6 +22,7 @@ export default function UpgradePackagesPage() {
   const [submittingId, setSubmittingId] = useState<number | null>(null);
   const [userEmail, setUserEmail] = useState<string>('');
   const [currentPackageId, setCurrentPackageId] = useState<number | null>(null);
+  const [currentPackageInfo, setCurrentPackageInfo] = useState<any>(null);
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
@@ -49,6 +50,7 @@ export default function UpgradePackagesPage() {
           currentPackageData?.data ||
           currentPackageData;
 
+        setCurrentPackageInfo(currentPackage || null);
         setCurrentPackageId(
           currentPackage?.package_id
             ? Number(currentPackage.package_id)
@@ -65,6 +67,7 @@ export default function UpgradePackagesPage() {
   }, []);
 
   const handleSelectPackage = (pkg: Package) => {
+    if (currentPackageId === pkg.id) return;
     setSelectedPackage(pkg);
     setPaymentProof(null);
     setShowPaymentModal(true);
@@ -159,6 +162,31 @@ export default function UpgradePackagesPage() {
     return `لمدة ${m} شهر`;
   };
 
+  // Helper to check if a package is Free based on price
+  const isPackageFree = (pkg: Package) => parseFloat(pkg.price || '0') === 0;
+
+  // Check if current subscription is FreePackage
+  const isCurrentPackageFree =
+    (currentPackageId !== null &&
+      packages.some(
+        (p) => p.id === currentPackageId && isPackageFree(p)
+      )) ||
+    (currentPackageInfo?.price !== undefined &&
+      parseFloat(currentPackageInfo.price || '0') === 0);
+
+  // Filter packages:
+  // - If user is on FreePackage: keep FreePackage visible (marked as current and disabled)
+  // - If user is on Paid Package: completely hide FreePackage from available options
+  const displayedPackages = packages.filter((pkg) => {
+    const isFree = isPackageFree(pkg);
+    if (isFree) {
+      return currentPackageId !== null
+        ? currentPackageId === pkg.id
+        : isCurrentPackageFree;
+    }
+    return true;
+  });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -193,7 +221,7 @@ export default function UpgradePackagesPage() {
 
       {/* Packages Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8 items-stretch">
-        {packages.map((pkg) => {
+        {displayedPackages.map((pkg) => {
           const isRecommended = Boolean(
             pkg.recomnd || pkg.is_popular
           );
@@ -369,7 +397,7 @@ export default function UpgradePackagesPage() {
                     </span>
                   </>
                 ) : currentPackageId === pkg.id ? (
-                  'الباقة الحالية'
+                  'باقتك الحالية'
                 ) : (
                   'ترقية الآن'
                 )}
