@@ -89,6 +89,7 @@ export interface Course {
   title: string;
   slug?: string;
   description: string;
+  short_description?: string | null;
   category?: string; 
   category_id?: number | null;
   instructor?: any; 
@@ -116,6 +117,7 @@ export interface Course {
   learning_points?: string[];
   created_at?: string;
   updated_at?: string;
+  is_discounted?: boolean | number | string;
   access_duration_type?: 'lifetime' | 'days' | 'until_date' | string;
   access_days?: number;
   access_until_date?: string;
@@ -133,6 +135,7 @@ export interface CreateCoursePayload {
   image?: File;
   category_id?: string | number;
   description: string;
+  short_description?: string | null;
   currency?: 'EGP' | 'SAR' | 'KWD';
   receiverAccounts?: { methodId: number; currency: string }[];
   receiver_accounts?: { method_id: number; currency: string }[];

@@ -10,7 +10,7 @@ import QuillEditor from '@/components/Academic/QuillEditor';
 import { SearchableSelect } from '@/components/Academic/Common/SearchableSelect';
 import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdown';
 import { isSchoolTeacherRole } from '@/lib/auth-storage';
-import { getLogoUrl } from '@/lib/utils';
+import { getLogoUrl, getCountryCodeFromCurrency } from '@/lib/utils';
 import { translateErrorToArabic } from '../utils/errorHelpers';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -79,8 +79,8 @@ interface CourseInfoTabProps {
   setPricingType: (val: 'free' | 'paid') => void;
   price: string;
   setPrice: (val: string) => void;
-  currency: 'EGP' | 'SAR';
-  setCurrency: (val: 'EGP' | 'SAR') => void;
+  currency: 'EGP' | 'SAR' | 'KWD';
+  setCurrency: (val: 'EGP' | 'SAR' | 'KWD') => void;
   receiverTemplates: ReceiverAccount[];
   setNewPaymentTemplateId: (val: string) => void;
   setNewPaymentCustomName: (val: string) => void;
@@ -704,7 +704,7 @@ export const CourseInfoTab: React.FC<CourseInfoTabProps> = ({
               disabled={pricingType === 'free'}
               onClick={() => {
                 if (pricingType === 'free') return;
-                const countryCode = currency === 'EGP' ? 'EG' : 'SA';
+                const countryCode = getCountryCodeFromCurrency(currency);
                 const filtered = receiverTemplates.filter(t => t.country_code === countryCode);
                 if (filtered.length > 0) {
                   setNewPaymentTemplateId(filtered[0].id.toString());

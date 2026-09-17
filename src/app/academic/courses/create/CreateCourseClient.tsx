@@ -41,7 +41,7 @@ import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { createCourse, createUnit, deleteUnit, updateLesson, getCategories, getCourse, getCourses, updateCourse, createCategory } from '@/services/courses';
-import { getErrorMessage } from '@/lib/utils';
+import { getErrorMessage, getCountryCodeFromCurrency } from '@/lib/utils';
 import { purgeAllCourseDraftCache, getStoredUserRole, isSchoolTeacherRole } from '@/lib/auth-storage';
 import { getGrades, getTerms, getSubjects, getAcademicYears, ClassificationItem } from '@/services/academic-classification';
 import AddClassificationModal from '@/components/Academic/Modals/AddClassificationModal';
@@ -542,7 +542,7 @@ export default function CreateCourseClient() {
   const activeMethods: PaymentMethod[] = academyPaymentMethods
     .filter((m) => {
       if (m.currency !== currency) return false;
-      const targetCountry = currency === 'EGP' ? 'EG' : 'SA';
+      const targetCountry = getCountryCodeFromCurrency(currency);
       if (m.receiver_account && m.receiver_account.country_code !== targetCountry) {
         return false;
       }
@@ -2253,7 +2253,7 @@ export default function CreateCourseClient() {
                       disabled={pricingType === 'free'}
                       onClick={() => {
                         if (pricingType === 'free') return;
-                        const countryCode = currency === 'EGP' ? 'EG' : 'SA';
+                        const countryCode = getCountryCodeFromCurrency(currency);
                         const filtered = receiverTemplates.filter(t => t.country_code === countryCode);
                         if (filtered.length > 0) {
                           setNewPaymentTemplateId(filtered[0].id.toString());
@@ -3615,7 +3615,7 @@ export default function CreateCourseClient() {
                   value={newPaymentTemplateId}
                   onChange={(e) => {
                     setNewPaymentTemplateId(e.target.value);
-                    const countryCode = currency === 'EGP' ? 'EG' : 'SA';
+                    const countryCode = getCountryCodeFromCurrency(currency);
                     const filtered = receiverTemplates.filter(t => t.country_code === countryCode);
                     const tmpl = filtered.find(t => t.id.toString() === e.target.value);
                     if (tmpl) {
@@ -3627,7 +3627,7 @@ export default function CreateCourseClient() {
                 >
                   <option value="">اختر النوع...</option>
                   {(() => {
-                    const countryCode = currency === 'EGP' ? 'EG' : 'SA';
+                    const countryCode = getCountryCodeFromCurrency(currency);
                     const filtered = receiverTemplates.filter(t => t.country_code === countryCode);
                     return (filtered.length > 0 ? filtered : receiverTemplates).map(tmpl => (
                       <option key={tmpl.id} value={tmpl.id}>{tmpl.name}</option>
