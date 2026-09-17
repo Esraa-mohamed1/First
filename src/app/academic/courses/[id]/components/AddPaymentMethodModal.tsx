@@ -3,11 +3,12 @@
 import React from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { ReceiverAccount } from '@/types/api';
+import { getCountryCodeFromCurrency } from '@/lib/utils';
 
 interface AddPaymentMethodModalProps {
   isOpen: boolean;
   onClose: () => void;
-  currency: 'EGP' | 'SAR';
+  currency: 'EGP' | 'SAR' | 'KWD';
   receiverTemplates: ReceiverAccount[];
   newPaymentTemplateId: string;
   setNewPaymentTemplateId: (id: string) => void;
@@ -60,7 +61,7 @@ export const AddPaymentMethodModal: React.FC<AddPaymentMethodModalProps> = ({
               value={newPaymentTemplateId}
               onChange={(e) => {
                 setNewPaymentTemplateId(e.target.value);
-                const countryCode = currency === 'EGP' ? 'EG' : 'SA';
+                const countryCode = getCountryCodeFromCurrency(currency);
                 const filtered = receiverTemplates.filter(t => t.country_code === countryCode);
                 const tmpl = filtered.find(t => t.id.toString() === e.target.value);
                 if (tmpl) {
@@ -72,7 +73,7 @@ export const AddPaymentMethodModal: React.FC<AddPaymentMethodModalProps> = ({
             >
               <option value="">اختر النوع...</option>
               {(() => {
-                const countryCode = currency === 'EGP' ? 'EG' : 'SA';
+                const countryCode = getCountryCodeFromCurrency(currency);
                 const filtered = receiverTemplates.filter(t => t.country_code === countryCode);
                 return (filtered.length > 0 ? filtered : receiverTemplates).map(tmpl => (
                   <option key={tmpl.id} value={tmpl.id}>{tmpl.name}</option>

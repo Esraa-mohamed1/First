@@ -273,6 +273,13 @@ export default function CourseList({ typeFilter, title, description, createType 
                const currency = course.currency || (course as any).currency || 'ر.س';
                const typeLabel = getCourseTypeAr(course.type || 'registered');
                const durationText = getAccessDurationText(course);
+               const cleanDescription = course.description
+                 ? course.description.replace(/<[^>]*>/g, '').trim()
+                 : '';
+               const displayDescription =
+                 (course as any).short_description?.trim() ||
+                 cleanDescription ||
+                 'تعلم الدورة مع نخبة من كبار المحاضرين.';
               
               return (
                 <div 
@@ -332,14 +339,14 @@ export default function CourseList({ typeFilter, title, description, createType 
                   
                   <div className="p-5 flex-grow flex flex-col">
                     <h3 
-                    onClick={() => router.push(`/academic/courses/${course.id}`)}
-                    className="font-bold text-lg text-on-surface mb-1 group-hover:text-primary transition-colors cursor-pointer line-clamp-1"
-                  >
-                    {course.title}
-                  </h3>
-                  <p className="text-on-surface-variant text-xs mb-4 line-clamp-1 italic font-medium">
-                    {(course as any).short_description || 'تعلم الدورة مع نخبة من كبار المحاضرين.'}
-                  </p>
+                      onClick={() => router.push(`/academic/courses/${course.id}`)}
+                      className="font-bold text-lg text-on-surface mb-1 group-hover:text-primary transition-colors cursor-pointer line-clamp-1"
+                    >
+                      {course.title}
+                    </h3>
+                    <p className="text-on-surface-variant text-xs mb-4 line-clamp-1 italic font-medium">
+                      {displayDescription}
+                    </p>
                   
                   {/* Statistics Container - Clicking navigates to statistics */}
                   <div

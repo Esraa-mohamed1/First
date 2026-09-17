@@ -226,4 +226,8 @@ export function getErrorMessage(error: any, defaultMsg: string = 'حدث خطأ 
   return defaultMsg;
 }
 
-
+export function getCountryCodeFromCurrency(currency?: string): string {
+  if (currency === 'EGP') return 'EG';
+  if (currency === 'KWD') return 'KW';
+  return 'SA';
+}
