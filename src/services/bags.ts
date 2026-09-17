@@ -9,3 +9,4 @@
 export * from './student-bags';
 export * from './academy-bags';
 export type * from '@/types/bags';
+export { getCurrencySymbol } from '@/types/bags';

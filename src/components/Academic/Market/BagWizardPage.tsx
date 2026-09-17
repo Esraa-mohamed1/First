@@ -340,25 +340,75 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
     ? formData.selectedCourseIds
     : [];
 
-  const selectedCurrency = formData.currency || 'SAR';
+  const selectedCurrency = (formData.currency || 'SAR').toUpperCase();
   const filteredPaymentInfos = paymentInfos.filter((info) => {
-    if (info.currency && info.currency.toUpperCase() === selectedCurrency.toUpperCase()) {
-      return true;
+    // 1. Determine target country code based on selected currency
+    const targetCountry = selectedCurrency === 'EGP' ? 'EG' : selectedCurrency === 'KWD' ? 'KW' : 'SA';
+
+    // 2. Check explicit country code on receiver account
+    const accCountry = (
+      info.receiver_account?.country_code ||
+      (info as any).country_code ||
+      ''
+    ).toUpperCase();
+
+    if (accCountry) {
+      return accCountry === targetCountry;
     }
-    const targetCountry = selectedCurrency === 'EGP' ? 'EG' : selectedCurrency === 'SAR' ? 'SA' : 'ALL';
+
+    // 3. Direct currency match
+    const infoCurrency = (info.currency || info.receiver_account?.currency || '').toUpperCase();
+    if (infoCurrency) {
+      return infoCurrency === selectedCurrency;
+    }
+
+    // 4. Fallback heuristics for known payment gateway keys/names
     const lowerName = (info.name || '').toLowerCase();
-    if (targetCountry === 'SA') {
-      if (lowerName.includes('instapay') || lowerName.includes('vodafone') || lowerName.includes('fawry') || lowerName.includes('اتصالات') || lowerName.includes('فودافون')) {
-        return false;
-      }
-      return true;
+    const lowerKey = (info.receiver_account?.key || '').toLowerCase();
+
+    const isKuwaiti =
+      lowerName.includes('knet') ||
+      lowerName.includes('k-net') ||
+      lowerName.includes('كي نت') ||
+      lowerName.includes('boubyan') ||
+      lowerName.includes('nbk') ||
+      lowerName.includes('kuwait') ||
+      lowerName.includes('كويت') ||
+      lowerKey.includes('knet') ||
+      lowerKey.includes('k_net');
+
+    const isEgyptian =
+      lowerName.includes('instapay') ||
+      lowerName.includes('vodafone') ||
+      lowerName.includes('fawry') ||
+      lowerName.includes('اتصالات') ||
+      lowerName.includes('فودافون') ||
+      lowerName.includes('اورنج') ||
+      lowerName.includes('orange') ||
+      lowerKey.includes('vodafone') ||
+      lowerKey.includes('fawry') ||
+      lowerKey.includes('instapay');
+
+    const isSaudi =
+      lowerName.includes('urpay') ||
+      lowerName.includes('stc') ||
+      lowerName.includes('mada') ||
+      lowerName.includes('مدى') ||
+      lowerName.includes('alrajhi') ||
+      lowerName.includes('راجحي') ||
+      lowerKey.includes('stc') ||
+      lowerKey.includes('apple_pay_sa') ||
+      lowerKey.includes('mada');
+
+    if (targetCountry === 'KW') {
+      return isKuwaiti;
     } else if (targetCountry === 'EG') {
-      if (lowerName.includes('urpay') || lowerName.includes('stc') || lowerName.includes('mada') || lowerName.includes('مدى') || lowerName.includes('زين كاش') || lowerName.includes('zain cash') || lowerName.includes('benefit')) {
-        return false;
-      }
-      return true;
+      return isEgyptian && !isSaudi && !isKuwaiti;
+    } else if (targetCountry === 'SA') {
+      return isSaudi && !isEgyptian && !isKuwaiti;
     }
-    return true;
+
+    return false;
   });
 
   /** Toggle payment method selection safely */
@@ -481,6 +531,7 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
         type_price: formData.isFree ? 'free' : 'paid',
         price: formData.isFree ? undefined : formData.price,
         discount_price: formData.isFree ? undefined : (formData.discountPrice || undefined),
+        currency: formData.currency || 'SAR',
         is_active: formData.visibility === 'published' ? 1 : 0,
         count_download: countDownloadPayload,
         download_type: downloadTypePayload,
@@ -882,20 +933,6 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                     <Plus size={22} strokeWidth={3} />
                   </button>
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-black text-gray-700 block">
-                  اسم المدرب
-                </label>
-                <input
-                  type="text"
-                  value={formData.instructorName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, instructorName: e.target.value })
-                  }
-                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:border-blue-500 transition-all text-gray-900"
-                />
               </div>
             </div>
           </div>

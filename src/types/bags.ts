@@ -110,3 +110,15 @@ export interface BagPurchaseItem {
   amount?: number | string;
   notes?: string;
 }
+
+/** Helper to get Arabic currency symbol for bags */
+export function getCurrencySymbol(currency?: string): string {
+  if (!currency) return 'ر.س';
+  const upper = currency.toUpperCase();
+  if (upper === 'KWD' || upper === 'KW') return 'د.ك';
+  if (upper === 'EGP' || upper === 'EG') return 'ج.م';
+  if (upper === 'SAR' || upper === 'SA') return 'ر.س';
+  if (upper === 'USD') return '$';
+  if (upper === 'EUR') return '€';
+  return upper;
+}
