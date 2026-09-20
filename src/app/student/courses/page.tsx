@@ -96,15 +96,6 @@ export default function CoursesPage() {
                 : 'text-gray-400 hover:text-gray-600'
                 }`}
             >
-              قيد الدراسة
-            </button>
-            <button
-              onClick={() => setFilter('completed')}
-              className={`px-6 py-2 rounded-lg font-bold text-xs transition-all duration-300 ${filter === 'completed'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-400 hover:text-gray-600'
-                }`}
-            >
               مكتملة
             </button>
           </div>

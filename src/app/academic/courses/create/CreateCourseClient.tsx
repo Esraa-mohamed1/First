@@ -41,7 +41,7 @@ import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { createCourse, createUnit, deleteUnit, updateLesson, getCategories, getCourse, getCourses, updateCourse, createCategory } from '@/services/courses';
-import { getErrorMessage } from '@/lib/utils';
+import { getErrorMessage, getCountryCodeFromCurrency, translateErrorToArabic } from '@/lib/utils';
 import { purgeAllCourseDraftCache, getStoredUserRole, isSchoolTeacherRole } from '@/lib/auth-storage';
 import { getGrades, getTerms, getSubjects, getAcademicYears, ClassificationItem } from '@/services/academic-classification';
 import AddClassificationModal from '@/components/Academic/Modals/AddClassificationModal';
@@ -316,6 +316,15 @@ export default function CreateCourseClient() {
   const [isEditUnitOpen, setIsEditUnitOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<any | null>(null);
 
+  // Resolved course type — initialized from URL param (create mode), overridden from API data (edit mode)
+  // Inline the mapping here to avoid TDZ since mapTypeToBackend is defined later in this component
+  const [resolvedCourseType, setResolvedCourseType] = useState<string>(() => {
+    const t = (courseTypeParam || '').toLowerCase().trim();
+    if (t === 'live-online' || t === 'online') return 'online';
+    if (t === 'in-person' || t === 'physical' || t === 'offline') return 'physical';
+    return 'recorded';
+  });
+
   // Custom landing pages states
   const [courseSlug, setCourseSlug] = useState<string>('');
   const [landingPages, setLandingPages] = useState<any[]>([]);
@@ -334,6 +343,77 @@ export default function CreateCourseClient() {
   const setActiveSectionId = useLandingStore((state: any) => state.setActiveSectionId);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Inline field-level errors (key = field name, value = Arabic message)
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // Clear a single field error when the user starts typing
+  const clearFieldError = (field: string) => {
+    if (formErrors[field]) {
+      setFormErrors((prev) => { const n = { ...prev }; delete n[field]; return n; });
+    }
+  };
+
+  // Map API error field keys to Arabic labels
+  const apiFieldToArabic: Record<string, string> = {
+    title: 'اسم الدورة',
+    category_id: 'تصنيف الدورة',
+    price: 'السعر',
+    currency: 'العملة',
+    description: 'الوصف الكامل',
+    short_description: 'الوصف المختصر',
+    image: 'صورة الدورة',
+    access_days: 'عدد أيام الوصول',
+    access_until_date: 'تاريخ انتهاء الوصول',
+    grade_id: 'الصف الدراسي',
+    term_id: 'الفصل الدراسي',
+    subject_id: 'المادة الدراسية',
+    academic_year_id: 'العام الدراسي',
+    receiver_accounts: 'وسيلة الدفع',
+    status: 'الحالة',
+    type: 'نوع الدورة',
+  };
+
+  // Parse API errors object into formErrors state
+  const parseApiErrors = (error: any) => {
+    const dataObj = error?.response?.data || error?.data || error || {};
+    const rawErrors = dataObj.errors as Record<string, string | string[]> | undefined;
+    if (rawErrors && typeof rawErrors === 'object') {
+      const mapped: Record<string, string> = {};
+      Object.entries(rawErrors).forEach(([key, val]) => {
+        const raw = Array.isArray(val) ? val[0] : val;
+        const label = apiFieldToArabic[key] || key;
+        mapped[key] = `${label}: ${translateErrorToArabic(String(raw || ''))}` ;
+      });
+      setFormErrors(mapped);
+      return Object.keys(mapped).length > 0;
+    }
+    return false;
+  };
+
+  // Client-side validation — returns true if the form is valid
+  const validateForm = (forPublish = false): boolean => {
+    const errors: Record<string, string> = {};
+    if (!title.trim()) {
+      errors.title = 'اسم الدورة مطلوب';
+    }
+    if (forPublish && pricingType === 'paid') {
+      if (!price || Number(price) <= 0) {
+        errors.price = 'السعر مطلوب ويجب أن يكون أكبر من صفر للدورات المدفوعة';
+      }
+      if (selectedPaymentMethods.length === 0) {
+        errors.receiver_accounts = 'يجب اختيار وسيلة دفع واحدة على الأقل';
+      }
+    }
+    if (accessDurationType === 'days' && (!accessDays || Number(accessDays) <= 0)) {
+      errors.access_days = 'يرجى إدخال عدد أيام الوصول';
+    }
+    if (accessDurationType === 'until_date' && !accessUntilDate) {
+      errors.access_until_date = 'يرجى تحديد تاريخ انتهاء الوصول';
+    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   // Add payment method modal states
   const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
@@ -542,7 +622,7 @@ export default function CreateCourseClient() {
   const activeMethods: PaymentMethod[] = academyPaymentMethods
     .filter((m) => {
       if (m.currency !== currency) return false;
-      const targetCountry = currency === 'EGP' ? 'EG' : 'SA';
+      const targetCountry = getCountryCodeFromCurrency(currency);
       if (m.receiver_account && m.receiver_account.country_code !== targetCountry) {
         return false;
       }
@@ -637,6 +717,8 @@ export default function CreateCourseClient() {
             if (c.status) setStatus(c.status);
             if (c.chapters || c.units) setUnits(c.chapters || c.units);
             if (c.image) setPreviewUrl(c.image);
+            // Resolve course type from the API so AddLessonModal shows the correct form
+            if (c.type) setResolvedCourseType(mapTypeToBackend(c.type));
 
             // Load infos for learning outcomes and target audience
             if (Array.isArray(c.infos) && c.infos.length > 0) {
@@ -808,20 +890,11 @@ export default function CreateCourseClient() {
 
     // Enforce strict validations ONLY when user explicitly publishes the course
     if (targetStatus === 'published') {
-      if (!title.trim()) {
-        toast.error('يرجى إدخال اسم الدورة أولاً في المعلومات الأساسية قبل النشر');
-        throw new Error('Missing course title');
-      }
-
-      if (pricingType === 'paid') {
-        if (!price || Number(price) <= 0) {
-          toast.error('سعر الدورة مطلوب للدورات المدفوعة ويجب أن يكون أكبر من 0');
-          throw new Error('Invalid price');
-        }
-        if (selectedPaymentMethods.length === 0) {
-          toast.error('يرجى اختيار وسيلة دفع واحدة على الأقل للتحصيل');
-          throw new Error('Please select at least one payment method');
-        }
+      const isValid = validateForm(true);
+      if (!isValid) {
+        const firstErrorEl = document.querySelector('[data-field-error]');
+        if (firstErrorEl) firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        throw new Error('Validation failed');
       }
     }
 
@@ -1045,7 +1118,11 @@ export default function CreateCourseClient() {
     } catch (error: any) {
       if (error?.message !== 'User cancelled duplicate course creation') {
         console.error(error);
-        toast.error(getErrorMessage(error, 'حدث خطأ أثناء حفظ الدورة'));
+        // Try to map API validation errors to fields; fall back to toast
+        const hadFieldErrors = parseApiErrors(error);
+        if (!hadFieldErrors) {
+          toast.error(getErrorMessage(error, 'حدث خطأ أثناء حفظ الدورة'));
+        }
       }
       throw error;
     }
@@ -1055,7 +1132,11 @@ export default function CreateCourseClient() {
     if (activeTab === 'info') {
       // Validate payment method when course is paid and moving from info tab
       if (pricingType === 'paid' && selectedPaymentMethods.length === 0) {
-        toast.error('يرجى اختيار وسيلة دفع واحدة على الأقل قبل المتابعة');
+        setFormErrors((prev) => ({ ...prev, receiver_accounts: 'يرجى اختيار وسيلة دفع واحدة على الأقل قبل المتابعة' }));
+        setTimeout(() => {
+          const firstErrorEl = document.querySelector('[data-field-error]');
+          if (firstErrorEl) firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 50);
         return;
       }
       setActiveTab('content');
@@ -1071,15 +1152,17 @@ export default function CreateCourseClient() {
 
   const handleSave = async () => {
     if (isSubmitting) return;
-    // Validate payment method for paid courses
-    if (pricingType === 'paid' && selectedPaymentMethods.length === 0) {
-      toast.error('يرجى اختيار وسيلة دفع واحدة على الأقل للدورات المدفوعة');
+    if (!validateForm(false)) {
+      // Scroll to first error
+      const firstErrorEl = document.querySelector('[data-field-error]');
+      if (firstErrorEl) firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
     setIsSubmitting(true);
     try {
       const createdId = await ensureCourseCreated('draft');
       setStatus('draft');
+      setFormErrors({});
       const totalLessons = units.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0);
       if (totalLessons === 0) {
         toast.success('تم حفظ الدورة كمسودة بنجاح. يرجى إضافة دروس لتتمكن من النشر لاحقاً.');
@@ -1090,7 +1173,7 @@ export default function CreateCourseClient() {
         router.push(`/academic/courses/${createdId}`);
       }
     } catch (err) {
-      // Handled inside
+      // Handled inside ensureCourseCreated
     } finally {
       setIsSubmitting(false);
     }
@@ -1098,9 +1181,9 @@ export default function CreateCourseClient() {
 
   const handlePublish = async () => {
     if (isSubmitting) return;
-    // Validate payment method for paid courses before publishing
-    if (pricingType === 'paid' && selectedPaymentMethods.length === 0) {
-      toast.error('يرجى اختيار وسيلة دفع واحدة على الأقل للدورات المدفوعة قبل النشر');
+    if (!validateForm(true)) {
+      const firstErrorEl = document.querySelector('[data-field-error]');
+      if (firstErrorEl) firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
     setIsSubmitting(true);
@@ -1629,22 +1712,32 @@ export default function CreateCourseClient() {
 
                   <div className="space-y-6">
                     {/* 1. Course Name */}
-                    <div>
+                    <div data-field-error={formErrors.title ? 'title' : undefined}>
                       <label className="block text-sm font-bold mb-2 text-slate-800">
                         اسم الدورة <span className="text-red-500">*</span>
                       </label>
                       <input
-                        className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-slate-900 font-medium"
+                        className={`w-full border rounded-xl px-4 py-3 focus:ring-4 outline-none transition-all text-slate-900 font-medium ${
+                          formErrors.title
+                            ? 'border-red-400 bg-red-50/40 focus:border-red-500 focus:ring-red-500/10'
+                            : 'border-slate-300 focus:ring-blue-500/10 focus:border-blue-600'
+                        }`}
                         type="text"
                         value={title}
                         onChange={(e) => {
                           setTitle(e.target.value);
+                          clearFieldError('title');
                           if (!isEditingSlug) {
                             setSlug(e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, ''));
                           }
                         }}
                         placeholder="أدخل اسم الدورة..."
                       />
+                      {formErrors.title && (
+                        <p className="mt-1.5 text-xs text-red-500 font-bold flex items-center gap-1">
+                          <X size={12} />{formErrors.title}
+                        </p>
+                      )}
                     </div>
 
 
@@ -1732,15 +1825,19 @@ export default function CreateCourseClient() {
 
                     {/* 4. Course Category & Coach / Instructor */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
+                      <div data-field-error={formErrors.category_id ? 'category_id' : undefined}>
                         <label className="block text-sm font-bold mb-2 text-slate-800">
                           تصنيف الدورة <span className="text-red-500">*</span>
                         </label>
                         <div className="flex gap-2.5">
                           <select
                             value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                            className="flex-1 border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-slate-900 text-sm font-medium bg-white cursor-pointer"
+                            onChange={(e) => { setCategory(e.target.value); clearFieldError('category_id'); }}
+                            className={`flex-1 border rounded-xl px-4 py-3 focus:ring-4 outline-none transition-all text-slate-900 text-sm font-medium bg-white cursor-pointer ${
+                              formErrors.category_id
+                                ? 'border-red-400 bg-red-50/40 focus:border-red-500 focus:ring-red-500/10'
+                                : 'border-slate-300 focus:ring-blue-500/10 focus:border-blue-600'
+                            }`}
                           >
                             <option value="">اختر التصنيف...</option>
                             {categories.map((cat: any) => (
@@ -1758,6 +1855,11 @@ export default function CreateCourseClient() {
                             <span className="material-symbols-outlined text-xl">add</span>
                           </button>
                         </div>
+                        {formErrors.category_id && (
+                          <p className="mt-1.5 text-xs text-red-500 font-bold flex items-center gap-1">
+                            <X size={12} />{formErrors.category_id}
+                          </p>
+                        )}
                       </div>
 
                       <div>
@@ -2066,20 +2168,29 @@ export default function CreateCourseClient() {
                       {pricingType === 'paid' && (
                         <div className="space-y-6">
                           <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm font-bold mb-2 text-slate-800">السعر الأساسي</label>
+                            <div data-field-error={formErrors.price ? 'price' : undefined}>
+                              <label className="block text-sm font-bold mb-2 text-slate-800">السعر الأساسي <span className="text-red-500">*</span></label>
                               <div className="relative">
                                 <input
                                   type="number"
                                   value={price}
-                                  onChange={(e) => setPrice(e.target.value)}
+                                  onChange={(e) => { setPrice(e.target.value); clearFieldError('price'); }}
                                   placeholder="0.00"
-                                  className="w-full border border-slate-300 rounded-xl px-4 py-3 pr-16 outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 text-slate-900 font-medium text-sm"
+                                  className={`w-full border rounded-xl px-4 py-3 pr-16 outline-none focus:ring-4 text-slate-900 font-medium text-sm ${
+                                    formErrors.price
+                                      ? 'border-red-400 bg-red-50/40 focus:border-red-500 focus:ring-red-500/10'
+                                      : 'border-slate-300 focus:border-blue-600 focus:ring-blue-500/10'
+                                  }`}
                                 />
                                 <div className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 text-xs pointer-events-none font-bold">
                                   {currency}
                                 </div>
                               </div>
+                              {formErrors.price && (
+                                <p className="mt-1.5 text-xs text-red-500 font-bold flex items-center gap-1">
+                                  <X size={12} />{formErrors.price}
+                                </p>
+                              )}
                             </div>
 
                             <div>
@@ -2209,33 +2320,51 @@ export default function CreateCourseClient() {
                   </div>
 
                   {accessDurationType === 'days' && (
-                    <div className="mt-6 max-w-sm bg-slate-50 p-5 rounded-2xl border border-slate-300 animate-in fade-in duration-300">
+                    <div className="mt-6 max-w-sm bg-slate-50 p-5 rounded-2xl border border-slate-300 animate-in fade-in duration-300" data-field-error={formErrors.access_days ? 'access_days' : undefined}>
                       <label className="block text-sm font-bold mb-2 text-slate-800">عدد الأيام المتاحة للوصول</label>
                       <input
                         type="number"
                         value={accessDays}
-                        onChange={(e) => setAccessDays(e.target.value)}
+                        onChange={(e) => { setAccessDays(e.target.value); clearFieldError('access_days'); }}
                         placeholder="مثال: 365"
-                        className="w-full border-2 border-slate-300 rounded-xl px-4 py-3 text-base outline-none font-bold text-slate-900 bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                        className={`w-full border-2 rounded-xl px-4 py-3 text-base outline-none font-bold text-slate-900 bg-white transition-all ${
+                          formErrors.access_days
+                            ? 'border-red-400 bg-red-50/40 focus:border-red-500 focus:ring-red-500/10'
+                            : 'border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10'
+                        }`}
                       />
+                      {formErrors.access_days && (
+                        <p className="mt-1.5 text-xs text-red-500 font-bold flex items-center gap-1">
+                          <X size={12} />{formErrors.access_days}
+                        </p>
+                      )}
                     </div>
                   )}
 
                   {accessDurationType === 'until_date' && (
-                    <div className="mt-6 max-w-sm bg-slate-50 p-5 rounded-2xl border border-slate-300 animate-in fade-in duration-300">
+                    <div className="mt-6 max-w-sm bg-slate-50 p-5 rounded-2xl border border-slate-300 animate-in fade-in duration-300" data-field-error={formErrors.access_until_date ? 'access_until_date' : undefined}>
                       <label className="block text-sm font-bold mb-2 text-slate-800">التاريخ الأخير للوصول</label>
                       <input
                         type="date"
                         value={accessUntilDate}
-                        onChange={(e) => setAccessUntilDate(e.target.value)}
-                        className="w-full border-2 border-slate-300 rounded-xl px-4 py-3 text-base outline-none font-bold text-slate-900 bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                        onChange={(e) => { setAccessUntilDate(e.target.value); clearFieldError('access_until_date'); }}
+                        className={`w-full border-2 rounded-xl px-4 py-3 text-base outline-none font-bold text-slate-900 bg-white transition-all ${
+                          formErrors.access_until_date
+                            ? 'border-red-400 bg-red-50/40 focus:border-red-500 focus:ring-red-500/10'
+                            : 'border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10'
+                        }`}
                       />
+                      {formErrors.access_until_date && (
+                        <p className="mt-1.5 text-xs text-red-500 font-bold flex items-center gap-1">
+                          <X size={12} />{formErrors.access_until_date}
+                        </p>
+                      )}
                     </div>
                   )}
                 </section>
 
                 {/* Section 5: Payment Methods / Pricing */}
-                <section className="bg-white border border-slate-300 rounded-2xl p-7 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.07)] transition-all duration-300">
+                <section className={`bg-white border rounded-2xl p-7 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.07)] transition-all duration-300 ${formErrors.receiver_accounts ? 'border-red-400 bg-red-50/20' : 'border-slate-300'}`} data-field-error={formErrors.receiver_accounts ? 'receiver_accounts' : undefined}>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200">
@@ -2253,7 +2382,7 @@ export default function CreateCourseClient() {
                       disabled={pricingType === 'free'}
                       onClick={() => {
                         if (pricingType === 'free') return;
-                        const countryCode = currency === 'EGP' ? 'EG' : 'SA';
+                        const countryCode = getCountryCodeFromCurrency(currency);
                         const filtered = receiverTemplates.filter(t => t.country_code === countryCode);
                         if (filtered.length > 0) {
                           setNewPaymentTemplateId(filtered[0].id.toString());
@@ -2287,6 +2416,7 @@ export default function CreateCourseClient() {
                     options={activeMethods}
                     selectedValues={pricingType === 'free' ? [] : selectedPaymentMethods.map((m) => m.methodId)}
                     onChange={(ids) => {
+                      clearFieldError('receiver_accounts');
                       if (pricingType === 'free') return;
                       const newMethods = ids.map((id) => {
                         const existing = selectedPaymentMethods.find((m) => m.methodId === id);
@@ -2302,9 +2432,14 @@ export default function CreateCourseClient() {
                           logo: method?.logo,
                         };
                       });
-                      setSelectedPaymentMethods(newMethods);
+                        setSelectedPaymentMethods(newMethods);
                     }}
                   />
+                  {formErrors.receiver_accounts && (
+                    <p className="mt-2 text-xs text-red-500 font-bold flex items-center gap-1">
+                      <X size={12} />{formErrors.receiver_accounts}
+                    </p>
+                  )}
                 </section>
               </div>
             </div>
@@ -3166,7 +3301,7 @@ export default function CreateCourseClient() {
             await refreshUnits(courseId);
           }
         }}
-        courseType={mapTypeToBackend(courseTypeParam)}
+        courseType={resolvedCourseType}
       />
 
       {/* Template Preview Modal */}
@@ -3615,7 +3750,7 @@ export default function CreateCourseClient() {
                   value={newPaymentTemplateId}
                   onChange={(e) => {
                     setNewPaymentTemplateId(e.target.value);
-                    const countryCode = currency === 'EGP' ? 'EG' : 'SA';
+                    const countryCode = getCountryCodeFromCurrency(currency);
                     const filtered = receiverTemplates.filter(t => t.country_code === countryCode);
                     const tmpl = filtered.find(t => t.id.toString() === e.target.value);
                     if (tmpl) {
@@ -3627,7 +3762,7 @@ export default function CreateCourseClient() {
                 >
                   <option value="">اختر النوع...</option>
                   {(() => {
-                    const countryCode = currency === 'EGP' ? 'EG' : 'SA';
+                    const countryCode = getCountryCodeFromCurrency(currency);
                     const filtered = receiverTemplates.filter(t => t.country_code === countryCode);
                     return (filtered.length > 0 ? filtered : receiverTemplates).map(tmpl => (
                       <option key={tmpl.id} value={tmpl.id}>{tmpl.name}</option>

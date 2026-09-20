@@ -1,7 +1,6 @@
 'use client';
 
-import React from 'react';
-import { Star, Edit, Trash2, BookOpen, User, Layers, Code2 } from 'lucide-react';
+import { Edit, Trash2, BookOpen, Layers, Code2 } from 'lucide-react';
 import { BagItem } from '@/types/market';
 
 interface BagCardProps {
@@ -91,34 +90,9 @@ export default function BagCard({ bag, onEdit, onDelete, onPreview }: BagCardPro
           </div>
         </div>
 
-        {/* Rating and Author Section */}
-        <div className="space-y-4 pt-2 border-t border-gray-50">
-          <div className="flex items-center justify-between">
-            {/* Rating Stars */}
-            <div className="flex items-center gap-1">
-              <div className="flex text-amber-400">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={13} fill="currentColor" />
-                ))}
-              </div>
-              <span className="text-xs font-bold text-gray-700 mr-1">
-                {bag.rating || 4.9}
-              </span>
-            </div>
-
-            {/* Author Info */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-gray-500">
-                {bag.instructorName || 'أحمد محمد'}
-              </span>
-              <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-                <User size={13} />
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons Row */}
-          <div className="flex items-center gap-2 pt-1">
+        {/* Action Buttons Row */}
+        <div className="pt-2 border-t border-gray-50">
+          <div className="flex items-center gap-2">
             {/* Delete Button */}
             <button
               onClick={() => onDelete(bag.id)}

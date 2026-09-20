@@ -10,7 +10,7 @@ import QuillEditor from '@/components/Academic/QuillEditor';
 import { SearchableSelect } from '@/components/Academic/Common/SearchableSelect';
 import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdown';
 import { isSchoolTeacherRole } from '@/lib/auth-storage';
-import { getLogoUrl } from '@/lib/utils';
+import { getLogoUrl, getCountryCodeFromCurrency } from '@/lib/utils';
 import { translateErrorToArabic } from '../utils/errorHelpers';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -69,8 +69,8 @@ interface CourseInfoTabProps {
   handleAddTargetAudience: () => void;
   handleUpdateTargetAudience: (index: number, val: string) => void;
   handleRemoveTargetAudience: (index: number) => void;
-  accessDurationType: 'lifetime' | 'days' | 'date';
-  setAccessDurationType: (val: 'lifetime' | 'days' | 'date') => void;
+  accessDurationType: 'lifetime' | 'days' | 'until_date';
+  setAccessDurationType: (val: 'lifetime' | 'days' | 'until_date') => void;
   accessDays: string;
   setAccessDays: (val: string) => void;
   accessUntilDate: string;
@@ -79,8 +79,8 @@ interface CourseInfoTabProps {
   setPricingType: (val: 'free' | 'paid') => void;
   price: string;
   setPrice: (val: string) => void;
-  currency: 'EGP' | 'SAR';
-  setCurrency: (val: 'EGP' | 'SAR') => void;
+  currency: 'EGP' | 'SAR' | 'KWD';
+  setCurrency: (val: 'EGP' | 'SAR' | 'KWD') => void;
   receiverTemplates: ReceiverAccount[];
   setNewPaymentTemplateId: (val: string) => void;
   setNewPaymentCustomName: (val: string) => void;
@@ -578,12 +578,12 @@ export const CourseInfoTab: React.FC<CourseInfoTabProps> = ({
             />
             <span className="text-label-md font-bold text-gray-900">عدد أيام من الاشتراك</span>
           </label>
-          <label className={`flex-grow flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-colors ${accessDurationType === 'date' ? 'border-primary bg-primary/5' : 'border-outline-variant hover:bg-surface-container-low'}`}>
+          <label className={`flex-grow flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-colors ${accessDurationType === 'until_date' ? 'border-primary bg-primary/5' : 'border-outline-variant hover:bg-surface-container-low'}`}>
             <input
               type="radio"
               name="access_duration"
-              checked={accessDurationType === 'date'}
-              onChange={() => setAccessDurationType('date')}
+              checked={accessDurationType === 'until_date'}
+              onChange={() => setAccessDurationType('until_date')}
               className="w-5 h-5 text-primary focus:ring-primary"
             />
             <span className="text-label-md font-bold text-gray-900">حتى تاريخ محدد</span>
@@ -601,7 +601,7 @@ export const CourseInfoTab: React.FC<CourseInfoTabProps> = ({
             />
           </div>
         )}
-        {accessDurationType === 'date' && (
+        {accessDurationType === 'until_date' && (
           <div className="animate-in fade-in slide-in-from-top-2 duration-200">
             <label className="block text-xs font-bold text-gray-500 mb-1.5">تاريخ انتهاء الوصول</label>
             <input
@@ -704,7 +704,7 @@ export const CourseInfoTab: React.FC<CourseInfoTabProps> = ({
               disabled={pricingType === 'free'}
               onClick={() => {
                 if (pricingType === 'free') return;
-                const countryCode = currency === 'EGP' ? 'EG' : 'SA';
+                const countryCode = getCountryCodeFromCurrency(currency);
                 const filtered = receiverTemplates.filter(t => t.country_code === countryCode);
                 if (filtered.length > 0) {
                   setNewPaymentTemplateId(filtered[0].id.toString());

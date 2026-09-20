@@ -10,7 +10,7 @@ import {
   Lock,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getBag, BagApiItem, BagItemDetail, purchaseBag } from '@/services/bags';
+import { getBag, BagApiItem, BagItemDetail, purchaseBag, getCurrencySymbol } from '@/services/bags';
 import { getStudentCourses } from '@/services/student-courses';
 import { getUserPaymentInfos } from '@/services/finance';
 import { Course } from '@/types/api';
@@ -150,25 +150,52 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
             }
           }
 
-          // Load payment methods directly from bag response (payment_infos)
-          if (Array.isArray(bagData.payment_infos) && bagData.payment_infos.length > 0) {
-            const mapped = bagData.payment_infos.map((info: any, idx: number) => ({
-              id: info.id || info.payment_info_id || (idx + 1),
-              name: info.name || info.account_name || info.payment_info?.name || info.receiver_account?.name || `وسيلة دفع #${idx + 1}`,
-              logo: info.logo || info.payment_info?.logo || info.receiver_account?.logo || '',
-              account_number: info.value || info.account_number || info.payment_info?.account_number || info.receiver_account?.account_number || '',
-            }));
+          // Load payment methods - resolve full details from getUserPaymentInfos
+          try {
+            const allUserAccounts = await getUserPaymentInfos();
+            const bagPaymentIds = Array.isArray(bagData.payment_info_ids)
+              ? bagData.payment_info_ids.map(Number)
+              : Array.isArray(bagData.payment_infos)
+                ? bagData.payment_infos.map((p: any) => Number(p.id || p.payment_info_id))
+                : [];
+
+            let mapped: Array<{ id: number; name: string; logo?: string; account_number?: string }> = [];
+
+            if (bagPaymentIds.length > 0 && Array.isArray(allUserAccounts) && allUserAccounts.length > 0) {
+              const matched = allUserAccounts.filter((acc: any) => bagPaymentIds.includes(Number(acc.id)));
+              if (matched.length > 0) {
+                mapped = matched.map((acc: any) => ({
+                  id: acc.id,
+                  name: acc.receiver_account?.name || acc.name || 'وسيلة دفع',
+                  logo: acc.receiver_account?.logo || acc.logo || '',
+                  account_number: acc.accountValue || acc.account_value || '',
+                }));
+              }
+            }
+
+            if (mapped.length === 0 && Array.isArray(bagData.payment_infos) && bagData.payment_infos.length > 0) {
+              mapped = bagData.payment_infos.map((info: any, idx: number) => ({
+                id: info.id || info.payment_info_id || (idx + 1),
+                name: info.name || info.account_name || info.payment_info?.name || info.receiver_account?.name || `وسيلة دفع #${idx + 1}`,
+                logo: info.logo || info.payment_info?.logo || info.receiver_account?.logo || '',
+                account_number: info.value || info.account_number || info.payment_info?.account_number || info.receiver_account?.account_number || '',
+              }));
+            }
+
             setPaymentMethods(mapped);
             if (mapped.length > 0) setSelectedPaymentMethod(mapped[0].id);
-          } else if (Array.isArray(bagData.payment_info_ids) && bagData.payment_info_ids.length > 0) {
-            const mapped = bagData.payment_info_ids.map((id: any, idx: number) => ({
-              id: Number(id),
-              name: `وسيلة دفع #${idx + 1}`,
-              logo: '',
-              account_number: '',
-            }));
-            setPaymentMethods(mapped);
-            if (mapped.length > 0) setSelectedPaymentMethod(mapped[0].id);
+          } catch (e) {
+            console.error('Failed to resolve payment accounts:', e);
+            if (Array.isArray(bagData.payment_infos) && bagData.payment_infos.length > 0) {
+              const mapped = bagData.payment_infos.map((info: any, idx: number) => ({
+                id: info.id || info.payment_info_id || (idx + 1),
+                name: info.name || info.account_name || info.payment_info?.name || info.receiver_account?.name || `وسيلة دفع #${idx + 1}`,
+                logo: info.logo || info.payment_info?.logo || info.receiver_account?.logo || '',
+                account_number: info.value || info.account_number || info.payment_info?.account_number || info.receiver_account?.account_number || '',
+              }));
+              setPaymentMethods(mapped);
+              if (mapped.length > 0) setSelectedPaymentMethod(mapped[0].id);
+            }
           }
         } else {
           setNotFoundState(true);
@@ -240,6 +267,7 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
 
   const displayPrice = numericDiscount > 0 ? numericDiscount : numericPrice;
   const originalPrice = numericPrice > numericDiscount && numericDiscount > 0 ? numericPrice : null;
+  const currencySymbol = getCurrencySymbol(bag.currency);
 
   const itemsList: BagItemDetail[] = Array.isArray(bag.items)
     ? bag.items.filter((item): item is BagItemDetail => typeof item === 'object' && item !== null && 'path' in item)
@@ -484,8 +512,6 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                         <h4 className="text-base font-black text-gray-900">{course.title}</h4>
                         <div className="flex items-center gap-3 text-xs font-bold text-gray-400">
                           <span>{typeof course.category === 'object' && course.category !== null ? (course.category as any).name : (course.category || 'دورة تدريبية')}</span>
-                          <span>•</span>
-                          <span>{(course as any).user?.name || course.instructor_name || (typeof course.instructor === 'object' && course.instructor !== null ? (course.instructor as any).name : (course.instructor || 'أحمد محمد'))}</span>
                         </div>
                       </div>
                     </div>
@@ -522,10 +548,10 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                 <div className="text-3xl font-black text-emerald-600">مجاناً</div>
               ) : (
                 <div className="flex items-baseline gap-3">
-                  <span className="text-4xl font-black text-gray-900">{displayPrice} ج.م</span>
+                  <span className="text-4xl font-black text-gray-900">{displayPrice} {currencySymbol}</span>
                   {originalPrice && (
                     <span className="text-lg font-bold text-gray-400 line-through">
-                      {originalPrice} ج.م
+                      {originalPrice} {currencySymbol}
                     </span>
                   )}
                 </div>
@@ -578,7 +604,7 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                 </li>
                 <li className="flex items-center gap-2.5">
                   <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
-                  <span>دعم فني وتواصل مباشر مع المدرب</span>
+                  <span>دعم فني وتواصل مباشر</span>
                 </li>
               </ul>
             </div>
@@ -599,17 +625,9 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                     </span>
                   ))
                 ) : (
-                  <>
-                    <span className="bg-gray-100 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-xl border border-gray-200">
-                      فودافون كاش
-                    </span>
-                    <span className="bg-gray-100 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-xl border border-gray-200">
-                      إنستا باي InstaPay
-                    </span>
-                    <span className="bg-gray-100 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-xl border border-gray-200">
-                      بطاقات ائتمان
-                    </span>
-                  </>
+                  <span className="bg-gray-100 text-gray-500 text-xs font-bold px-3 py-1.5 rounded-xl border border-gray-200">
+                    الدفع الإلكتروني عبر الأكاديمية
+                  </span>
                 )}
               </div>
             </div>
@@ -730,7 +748,7 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                     </div>
                     <div className="text-right">
                       <span className="text-base font-black text-blue-600 block">
-                        {isFree ? 'مجاناً' : `${displayPrice} ج.م`}
+                        {isFree ? 'مجاناً' : `${displayPrice} ${currencySymbol}`}
                       </span>
                     </div>
                   </div>

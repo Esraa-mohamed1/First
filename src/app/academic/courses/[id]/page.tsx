@@ -20,7 +20,7 @@ import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { showAlert } from '@/lib/sweetalert';
 import { getUserPaymentInfos, UserPaymentInfo, getReceiverAccounts, createUserPaymentInfo } from '@/services/finance';
-import { getErrorMessage } from '@/lib/utils';
+import { getErrorMessage, getCountryCodeFromCurrency } from '@/lib/utils';
 import { getStoredUserRole, isSchoolTeacherRole } from '@/lib/auth-storage';
 import { useLandingStore } from '@/modules/landing/store/landingStore';
 import TemplatePreviewModal from '@/modules/landing/components/TemplatePreviewModal';
@@ -211,7 +211,7 @@ export default function CourseDetailsPage() {
   const [discountPrice, setDiscountPrice] = useState('');
   const [discountEndDate, setDiscountEndDate] = useState('');
 
-  const [accessDurationType, setAccessDurationType] = useState<'lifetime' | 'days' | 'date'>('lifetime');
+  const [accessDurationType, setAccessDurationType] = useState<'lifetime' | 'days' | 'until_date'>('lifetime');
   const [accessDays, setAccessDays] = useState('');
   const [accessUntilDate, setAccessUntilDate] = useState('');
 
@@ -254,7 +254,7 @@ export default function CourseDetailsPage() {
   // Pricing State
   const [pricingType, setPricingType] = useState<'free' | 'paid'>('paid');
   const [price, setPrice] = useState('');
-  const [currency, setCurrency] = useState<'EGP' | 'SAR'>('SAR');
+  const [currency, setCurrency] = useState<'EGP' | 'SAR' | 'KWD'>('SAR');
   const [isSavingPricing, setIsSavingPricing] = useState(false);
   const [errors, setErrors] = useState<Record<string, any>>({});
   const [receiverTemplates, setReceiverTemplates] = useState<ReceiverAccount[]>([]);
@@ -263,7 +263,7 @@ export default function CourseDetailsPage() {
     .filter((m) => {
       if (m.currency !== currency) return false;
       const template = receiverTemplates.find((t) => t.id === m.receiver_account_id);
-      const targetCountry = currency === 'EGP' ? 'EG' : 'SA';
+      const targetCountry = getCountryCodeFromCurrency(currency);
       if (template) {
         if (template.country_code !== targetCountry) return false;
       } else if (m.receiver_account) {
@@ -271,11 +271,15 @@ export default function CourseDetailsPage() {
       } else {
         const lowerName = m.name.toLowerCase();
         if (targetCountry === 'SA') {
-          if (lowerName.includes('instapay') || lowerName.includes('vodafone') || lowerName.includes('fawry') || lowerName.includes('اتصالات') || lowerName.includes('فودافون')) {
+          if (lowerName.includes('instapay') || lowerName.includes('vodafone') || lowerName.includes('fawry') || lowerName.includes('اتصالات') || lowerName.includes('فودافون') || lowerName.includes('knet') || lowerName.includes('كي نت')) {
             return false;
           }
         } else if (targetCountry === 'EG') {
-          if (lowerName.includes('urpay') || lowerName.includes('stc') || lowerName.includes('mada') || lowerName.includes('مدى')) {
+          if (lowerName.includes('urpay') || lowerName.includes('stc') || lowerName.includes('mada') || lowerName.includes('مدى') || lowerName.includes('knet') || lowerName.includes('كي نت')) {
+            return false;
+          }
+        } else if (targetCountry === 'KW') {
+          if (lowerName.includes('instapay') || lowerName.includes('vodafone') || lowerName.includes('fawry') || lowerName.includes('urpay') || lowerName.includes('stc') || lowerName.includes('mada')) {
             return false;
           }
         }
@@ -438,14 +442,53 @@ export default function CourseDetailsPage() {
     { id: '2025/2026', name: '2025 / 2026' }
   ];
 
+  const buildCoursePayload = (overriddenStatus?: string) => {
+    const targetAudienceStr = targetAudienceList.filter(Boolean).join('، ');
+    const totalLessons = course?.units?.reduce((acc: number, unit: any) => acc + (unit.lessons?.length || 0), 0) || 0;
+    let targetStatus = overriddenStatus || status;
+    if (targetStatus === 'published' && totalLessons === 0) {
+      targetStatus = 'draft';
+    }
+
+    const payload: any = {
+      title: courseInfo.title,
+      description: courseInfo.description,
+      short_description: shortDescription || undefined,
+      target_audience: targetAudienceStr,
+      category_id: courseInfo.category_id ? Number(courseInfo.category_id) : undefined,
+      user_id: courseInfo.user_id ? Number(courseInfo.user_id) : undefined,
+      price: pricingType === 'free' ? 0 : Number(price || 0),
+      final_price: pricingType === 'free' ? 0 : (isDiscounted && discountPrice ? Number(discountPrice) : Number(price || 0)),
+      price_type: pricingType,
+      currency: currency,
+      status: targetStatus,
+      receiver_accounts: selectedPaymentMethods.map(m => Number(m.methodId)).filter(id => !isNaN(id) && id > 0),
+      is_discounted: isDiscounted ? 1 : 0,
+      access_duration_type: accessDurationType,
+      access_days: accessDurationType === 'days' && accessDays ? Number(accessDays) : undefined,
+      access_until_date: accessDurationType === 'until_date' && accessUntilDate ? accessUntilDate : undefined,
+    };
+
+    if (selectedImage) {
+      payload.image = selectedImage;
+    }
+
+    return payload;
+  };
+
   const handleSaveCourseInfo = async (shouldNavigate = false) => {
     setErrors({});
     const newErrors: Record<string, any> = {};
     if (!courseInfo.title.trim()) newErrors.title = 'عنوان الدورة مطلوب';
     if (!courseInfo.description.trim() || courseInfo.description === '<p><br></p>') newErrors.description = 'وصف الدورة مطلوب';
 
-    if (pricingType === 'paid' && selectedPaymentMethods.length === 0) {
-      newErrors.receiver_accounts = 'يرجى اختيار وسيلة دفع واحدة على الأقل للدورات المدفوعة';
+    if (pricingType === 'paid') {
+      if (!price || isNaN(Number(price)) || Number(price) <= 0) {
+        newErrors.price = 'سعر الدورة مطلوب للدورات المدفوعة ويجب أن يكون أكبر من 0';
+      }
+      if (selectedPaymentMethods.length === 0) {
+        newErrors.receiver_accounts = 'يرجى اختيار وسيلة دفع واحدة على الأقل للدورات المدفوعة';
+      }
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -455,36 +498,13 @@ export default function CourseDetailsPage() {
     }
 
     try {
-      const targetAudienceStr = targetAudienceList.filter(Boolean).join('، ');
       const totalLessons = course?.units?.reduce((acc: number, unit: any) => acc + (unit.lessons?.length || 0), 0) || 0;
-      let targetStatus = status;
-      if (targetStatus === 'published' && totalLessons === 0) {
+      if (status === 'published' && totalLessons === 0) {
         toast.error('لا يمكن نشر الدورة بدون وجود دروس تعليمية. تم تحويل الدورة لمسودة.');
-        targetStatus = 'draft';
         setStatus('draft');
       }
 
-      const payload: any = {
-        title: courseInfo.title,
-        description: courseInfo.description,
-        target_audience: targetAudienceStr,
-        category_id: courseInfo.category_id ? Number(courseInfo.category_id) : undefined,
-        user_id: courseInfo.user_id ? Number(courseInfo.user_id) : undefined,
-        price: pricingType === 'free' ? 0 : Number(price),
-        final_price: pricingType === 'free' ? 0 : (isDiscounted && discountPrice ? Number(discountPrice) : Number(price)),
-        price_type: pricingType,
-        currency: currency,
-        status: targetStatus,
-        receiver_accounts: selectedPaymentMethods.map(m => Number(m.methodId)),
-        is_discounted: isDiscounted ? 1 : 0,
-        access_duration_type: accessDurationType,
-        access_days: accessDurationType === 'days' && accessDays ? Number(accessDays) : undefined,
-        access_until_date: (accessDurationType === 'date' || accessDurationType === 'until_date' as any) && accessUntilDate ? accessUntilDate : undefined,
-      };
-
-      if (selectedImage) {
-        payload.image = selectedImage;
-      }
+      const payload = buildCoursePayload();
 
       await updateCourse(Number(id), payload);
       toast.success('تم حفظ بيانات الدورة بنجاح');
@@ -605,17 +625,34 @@ export default function CourseDetailsPage() {
           ...prev,
           title: data.title,
           description: data.description || '',
+          target_audience: (data as any).target_audience || '',
           category_id: data.category_id ? String(data.category_id) : '',
           user_id: data.user_id ? String(data.user_id) : '',
         }));
+      }
+
+      if (data.short_description !== undefined || (data as any).shortDescription !== undefined) {
+        setShortDescription(data.short_description || (data as any).shortDescription || '');
+      }
+
+      if ((data as any).target_audience) {
+        const audienceArr = String((data as any).target_audience).split(/[,،]\s*/).map(s => s.trim()).filter(Boolean);
+        if (audienceArr.length > 0) {
+          setTargetAudienceList(audienceArr);
+        }
       }
 
       if (data.status) {
         setStatus(data.status as any);
       }
 
-      if (data.price !== undefined) {
+      if (data.price !== undefined && data.price !== null) {
         setPrice(String(data.price));
+      }
+
+      if (data.price_type) {
+        setPricingType(data.price_type as 'free' | 'paid');
+      } else if (data.price !== undefined && data.price !== null) {
         setPricingType(Number(data.price) === 0 ? 'free' : 'paid');
       }
 
@@ -623,15 +660,54 @@ export default function CourseDetailsPage() {
         setCurrency(data.currency as any);
       }
 
+      if ((data as any).is_discounted !== undefined && (data as any).is_discounted !== null) {
+        const isDisc = Boolean(
+          (data as any).is_discounted === true ||
+          (data as any).is_discounted === 1 ||
+          (data as any).is_discounted === '1' ||
+          (data as any).is_discounted === 'true'
+        );
+        setIsDiscounted(isDisc);
+      }
+
+      if (data.final_price !== undefined && data.final_price !== null) {
+        setDiscountPrice(String(data.final_price));
+      }
+
+      if (data.access_duration_type) {
+        const normType = data.access_duration_type === 'date' ? 'until_date' : data.access_duration_type;
+        setAccessDurationType(normType as 'lifetime' | 'days' | 'until_date');
+      }
+
+      if (data.access_days !== undefined && data.access_days !== null) {
+        setAccessDays(String(data.access_days));
+      }
+
+      if (data.access_until_date) {
+        let cleanDate = String(data.access_until_date);
+        if (cleanDate.includes('T')) cleanDate = cleanDate.split('T')[0];
+        else if (cleanDate.includes(' ')) cleanDate = cleanDate.split(' ')[0];
+        setAccessUntilDate(cleanDate);
+      }
+
       if ((data as any).receiver_accounts && Array.isArray((data as any).receiver_accounts)) {
-        const mappedAccounts = (data as any).receiver_accounts.map((acc: any) => ({
-          methodId: String(acc.id || acc.methodId),
-          methodName: acc.name || acc.methodName || '',
-          type: 'account_number',
-          value: acc.accountValue || acc.account_value || acc.value || '',
-          currency: acc.currency || 'SAR',
-          logo: acc.logo
-        }));
+        const mappedAccounts = (data as any).receiver_accounts.map((acc: any) => {
+          const resolvedId = acc.instructor_receiver_account_id 
+            || acc.pivot?.instructor_receiver_account_id 
+            || acc.pivot?.receiver_account_id 
+            || acc.id 
+            || acc.methodId 
+            || acc.method_id 
+            || acc.receiver_account_id;
+          return {
+            methodId: String(resolvedId || ''),
+            methodName: acc.name || acc.methodName || '',
+            type: 'account_number' as const,
+            value: acc.accountValue || acc.account_value || acc.value || '',
+            currency: acc.currency || 'SAR',
+            logo: acc.logo
+          };
+        }).filter((m: any) => Boolean(m.methodId));
         setSelectedPaymentMethods(mappedAccounts);
       }
 
@@ -1036,7 +1112,8 @@ export default function CourseDetailsPage() {
                     return;
                   }
                   try {
-                    await updateCourse(Number(id), { status: 'published' });
+                    const payload = buildCoursePayload('published');
+                    await updateCourse(Number(id), payload);
                     setStatus('published');
                     toast.success('تم نشر الدورة بنجاح!');
                     fetchCourse();
@@ -1323,6 +1400,7 @@ export default function CourseDetailsPage() {
         }}
         lesson={editingLesson}
         onLessonUpdated={fetchCourse}
+        courseType={course?.type || (course as any)?.course_type}
       />
 
       {/* Add Lesson Modal */}
@@ -1335,6 +1413,8 @@ export default function CourseDetailsPage() {
           }}
           unitId={selectedUnitId}
           unitTitle={selectedUnitTitle}
+          courseId={course?.id ? Number(course.id) : undefined}
+          courseType={course?.type || (course as any)?.course_type}
           onLessonAdded={fetchCourse}
         />
       )}

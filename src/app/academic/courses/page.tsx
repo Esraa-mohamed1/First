@@ -301,6 +301,13 @@ export default function CoursesPage() {
               const currency = course.currency || (course as any).currency || 'ر.س';
               const typeLabel = getCourseTypeAr(course.type || 'registered');
               const durationText = getAccessDurationText(course);
+              const cleanDescription = course.description
+                ? course.description.replace(/<[^>]*>/g, '').trim()
+                : '';
+              const displayDescription =
+                (course as any).short_description?.trim() ||
+                cleanDescription ||
+                'تعلم الدورة مع نخبة من كبار المحاضرين.';
 
               return (
                 <div
@@ -372,7 +379,7 @@ export default function CoursesPage() {
                       {course.title}
                     </h3>
                     <p className="text-on-surface-variant text-xs mb-4 line-clamp-1 italic font-medium">
-                      {(course as any).short_description || 'تعلم الدورة مع نخبة من كبار المحاضرين.'}
+                      {displayDescription}
                     </p>
 
                     {/* Statistics Container - Clicking navigates to statistics */}

@@ -47,8 +47,9 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle
   const [sessionLink, setSessionLink] = useState('');
   const [sessionDateTime, setSessionDateTime] = useState('');
 
-  const isPhysical = courseType === 'physical' || courseType === 'offline' || courseType === 'in-person';
-  const isLive = courseType === 'online' || courseType === 'live-online';
+  const normalizedCourseType = (courseType || '').toLowerCase().trim();
+  const isPhysical = normalizedCourseType === 'physical' || normalizedCourseType === 'offline' || normalizedCourseType === 'in-person';
+  const isLive = normalizedCourseType === 'online' || normalizedCourseType === 'live-online' || normalizedCourseType === 'live_online' || normalizedCourseType === 'live';
 
   const detectLessonType = (file: File): 'video' | 'pdf' | 'powerpoint' => {
     const name = file.name.toLowerCase();
