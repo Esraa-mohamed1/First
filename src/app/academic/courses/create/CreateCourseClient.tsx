@@ -3953,7 +3953,7 @@ export default function CreateCourseClient() {
         onClose={() => setIsAddCoachModalOpen(false)}
         onSuccess={async (newCoach) => {
           try {
-            const coaches = await getUsers('instructor');
+            const coaches = await getUsers('academy');
             setInstructors(coaches || []);
             if (newCoach?.id) {
               setSelectedInstructor(Number(newCoach.id));
