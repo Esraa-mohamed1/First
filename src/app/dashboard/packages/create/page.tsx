@@ -20,8 +20,9 @@ function CreatePackageForm() {
     const [isInitialLoading, setIsInitialLoading] = useState(isEditMode);
     const [availableFeatures, setAvailableFeatures] = useState<Feature[]>([]);
 
-    // Features with values local state
-    const [selectedFeatures, setSelectedFeatures] = useState<{ id: number, title: string, value: string }[]>([]);
+    // Features state: selected feature IDs and custom numeric values
+    const [selectedFeatureIds, setSelectedFeatureIds] = useState<number[]>([]);
+    const [featureValues, setFeatureValues] = useState<Record<number, string>>({});
 
     // Form State
     const [formData, setFormData] = useState<CreatePackagePayload>({
@@ -69,6 +70,12 @@ function CreatePackageForm() {
                 const parsedDuration = parseDurationMonths(pkg.duration_months ?? (pkg as any).duration);
                 const fetchedFeatures = pkg.package_features || pkg.packageFeatures || pkg.features || [];
 
+                const isBestChoice =
+                    pkg.recomnd === 1 ||
+                    (pkg.recomnd as any) === true ||
+                    String(pkg.recomnd) === '1' ||
+                    pkg.is_popular === true;
+
                 setFormData({
                     titile: pkg.titile || '',
                     description: pkg.desc || pkg.description || '',
@@ -83,14 +90,28 @@ function CreatePackageForm() {
                     features: [],
                     trial_days: pkg.trial_days ?? 7,
                     order: pkg.order ?? 1,
-                    is_popular: pkg.recomnd === 1 || pkg.is_popular || false,
+                    is_popular: isBestChoice,
                 });
 
-                setSelectedFeatures(fetchedFeatures.map((f: any) => ({
-                    id: f.feature_id || f.feature?.id || f.featureId || f.id,
-                    title: f.lable || f.title || f.feature?.title || '',
-                    value: f.value || ''
-                })));
+                const initialSelectedIds: number[] = [];
+                const initialValues: Record<number, string> = {};
+
+                fetchedFeatures.forEach((f: any) => {
+                    const featId = f.feature_id || f.feature?.id || f.featureId || f.id;
+                    const rawVal = f.value;
+                    const strVal = rawVal !== null && rawVal !== undefined ? String(rawVal).trim() : '';
+
+                    if (strVal !== '0' && strVal.toLowerCase() !== 'false') {
+                        const numId = Number(featId);
+                        initialSelectedIds.push(numId);
+                        if (strVal !== '' && strVal !== '1') {
+                            initialValues[numId] = strVal;
+                        }
+                    }
+                });
+
+                setSelectedFeatureIds(initialSelectedIds);
+                setFeatureValues(initialValues);
             } else {
                 toast.error('لم يتم العثور على الباقة');
                 router.push('/dashboard/packages');
@@ -115,20 +136,48 @@ function CreatePackageForm() {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    const toggleFeature = (feature: Feature) => {
-        setSelectedFeatures(prev => {
-            const exists = prev.find(f => f.id === feature.id);
-            if (exists) {
-                return prev.filter(f => f.id !== feature.id);
+    const toggleFeature = (featureId: number) => {
+        setSelectedFeatureIds(prev => {
+            if (prev.includes(featureId)) {
+                return prev.filter(id => id !== featureId);
             } else {
-                return [...prev, { id: feature.id, title: feature.title, value: '' }];
+                return [...prev, featureId];
             }
         });
     };
 
-    const handleFeatureValueChange = (id: number, value: string) => {
-        setSelectedFeatures(prev =>
-            prev.map(f => f.id === id ? { ...f, value } : f)
+    const handleFeatureValueChange = (featureId: number, value: string) => {
+        setFeatureValues(prev => ({
+            ...prev,
+            [featureId]: value
+        }));
+    };
+
+    const isCoursesFeature = (f: Feature) => {
+        const key = (f.key || f.key_feature || '').toLowerCase();
+        const title = (f.title || '').toLowerCase();
+        const label = (f.lable || f.label || '').toLowerCase();
+        return (
+            key === 'count_courses' ||
+            key === 'max_courses' ||
+            key === 'count_course' ||
+            key === 'courses_limit' ||
+            title.includes('course') ||
+            label.includes('دورات')
+        );
+    };
+
+    const isStorageFeature = (f: Feature) => {
+        const key = (f.key || f.key_feature || '').toLowerCase();
+        const title = (f.title || '').toLowerCase();
+        const label = (f.lable || f.label || '').toLowerCase();
+        return (
+            key === 'storage_space' ||
+            key === 'storage_limit' ||
+            key === 'storage' ||
+            title.includes('storage') ||
+            label.includes('مساحة') ||
+            label.includes('تخزين')
         );
     };
 
@@ -138,32 +187,77 @@ function CreatePackageForm() {
             return;
         }
 
-        const invalidFeatures = selectedFeatures.filter(
-            (feature) => !feature.value || feature.value.trim() === ''
-        );
-        if (invalidFeatures.length > 0) {
-            if (invalidFeatures.length === 1) {
-                toast.error(`يرجى إدخال قيمة للميزة "${invalidFeatures[0].title || 'المحددة'}"`);
-            } else {
-                const names = invalidFeatures.map(f => `"${f.title || 'ميزة'}"`).join('، ');
-                toast.error(`يرجى إدخال قيمة للمميزات التالية: ${names}`);
+        // Validate mandatory features (Count Courses and Storage Space)
+        for (const feature of availableFeatures) {
+            const isCourses = isCoursesFeature(feature);
+            const isStorage = isStorageFeature(feature);
+
+            if (isCourses || isStorage) {
+                const isSelected = selectedFeatureIds.includes(feature.id);
+                const val = featureValues[feature.id]?.trim() || '';
+                const num = Number(val);
+                const featureName = feature.lable || feature.label || (isCourses ? 'عدد الدورات' : 'مساحة التخزين');
+
+                if (!isSelected) {
+                    toast.error(`الميزة "${featureName}" إلزامية، يرجى تفعيلها وتحديد قيمة أكبر من 1`);
+                    return;
+                }
+
+                if (!val || isNaN(num) || num <= 1) {
+                    toast.error(`يرجى إدخال قيمة رقمية صحيحة أكبر من 1 لميزة "${featureName}"`);
+                    return;
+                }
+            } else if (selectedFeatureIds.includes(feature.id)) {
+                // Validate other selected features if a custom numeric value is entered
+                const val = featureValues[feature.id]?.trim() || '';
+                if (val !== '') {
+                    const num = Number(val);
+                    if (isNaN(num) || num < 1) {
+                        const featureName = feature.lable || feature.label || feature.title;
+                        toast.error(`القيمة المدخلة لميزة "${featureName}" يجب أن تكون رقماً صحيحاً (1 أو أكبر من 1) أو اترك الحقل فارغاً`);
+                        return;
+                    }
+                }
             }
-            return;
         }
 
         setIsLoading(true);
         try {
             const { description, ...restFormData } = formData;
+
+            // Construct payload with ALL available features:
+            // 1. Unchecked feature: value: "0"
+            // 2. Checked feature + no value entered: value: "1"
+            // 3. Checked feature + user enters 1: value: "1"
+            // 4. Checked feature + user enters a value greater than 1: value: String(number)
+            const payloadFeatures = availableFeatures.map(f => {
+                const isChecked = selectedFeatureIds.includes(f.id);
+                const customVal = featureValues[f.id]?.trim();
+
+                let finalValue = "0";
+                if (!isChecked) {
+                    finalValue = "0";
+                } else if (!customVal || customVal === '' || customVal === '1') {
+                    finalValue = "1";
+                } else {
+                    finalValue = String(customVal);
+                }
+
+                return {
+                    feature_id: f.id,
+                    lable: f.lable || f.label || f.title,
+                    title: f.title,
+                    value: finalValue
+                };
+            });
+
             const payload = {
                 ...restFormData,
+                recomnd: formData.is_popular ? 1 : 0,
+                is_popular: formData.is_popular,
                 desc: description || '',
                 duration_months: Number(formData.duration_months) || 12,
-                features: selectedFeatures.map(f => ({
-                    feature_id: f.id,
-                    lable: f.title,
-                    title: f.title,
-                    value: f.value || ''
-                }))
+                features: payloadFeatures
             };
 
             let response;
@@ -271,81 +365,33 @@ function CreatePackageForm() {
                                 />
                             </div>
                         </div>
-
-                        <div className="bg-[#eff6ff] p-5 rounded-2xl flex items-center justify-between border border-blue-100/50">
-                            <div className="text-left">
-                                <h4 className="font-bold text-right text-gray-900 text-sm">حالة الباقة</h4>
-                                <p className="text-xs text-gray-500 font-medium mt-1">اجعل هذه الباقة مرئية للمشتركين الجدد</p>
-                            </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    className="sr-only peer"
-                                    checked={formData.is_active === 1}
-                                    onChange={(e) => handleInputChange('is_active', e.target.checked ? 1 : 0)}
-                                />
-                                <div className="w-[52px] h-[26px] bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:bg-green-500 transition-all duration-300 after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:rounded-full after:h-[20px] after:w-[20px] after:transition-all after:shadow-sm peer-checked:after:translate-x-[26px]"></div>
-                            </label>
-                        </div>
                     </div>
                 </div>
 
                 {/* Usage Limits */}
                 <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100 space-y-8">
                     <div className="space-y-2 text-right">
-                        <h2 className="block text-lg  text-gray-700">حدود الاستخدام</h2>
+                        <h2 className="block text-lg text-gray-700">حدود الاستخدام</h2>
                     </div>
 
-                    <div className="space-y-6">
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="space-y-2 text-right">
-                                <label className="block text-sm  text-gray-700">الحد الاقصي للطلاب النشطين</label>
-                                <input
-                                    type="number"
-                                    value={formData.max_students ?? ''}
-                                    onChange={(e) => handleInputChange('max_students', e.target.value ? parseInt(e.target.value) : '')}
-                                    className="w-full bg-white border border-gray-200 rounded-xl p-3 text-center font-bold outline-none focus:border-blue-500 transition-all"
-                                />
-                            </div>
-                            <div className="space-y-2 text-right">
-                                <label className="block text-sm  text-gray-700">الحد الاقصي للمدربين</label>
-                                <input
-                                    type="number"
-                                    value={formData.max_instructors ?? ''}
-                                    onChange={(e) => handleInputChange('max_instructors', e.target.value ? parseInt(e.target.value) : '')}
-                                    className="w-full bg-white border border-gray-200 rounded-xl p-3 text-center font-bold outline-none focus:border-blue-500 transition-all"
-                                />
-                            </div>
-                            <div className="space-y-2 text-right">
-                                <label className="block text-sm  text-gray-700">الحد الاقصي للدورات</label>
-                                <input
-                                    type="number"
-                                    value={formData.max_courses ?? ''}
-                                    onChange={(e) => handleInputChange('max_courses', e.target.value ? parseInt(e.target.value) : '')}
-                                    className="w-full bg-white border border-gray-200 rounded-xl p-3 text-center font-bold outline-none focus:border-blue-500 transition-all"
-                                />
-                            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2 text-right">
+                            <label className="block text-sm text-gray-700">الحد الاقصي للمدربين</label>
+                            <input
+                                type="number"
+                                value={formData.max_instructors ?? ''}
+                                onChange={(e) => handleInputChange('max_instructors', e.target.value ? parseInt(e.target.value) : '')}
+                                className="w-full bg-white border border-gray-200 rounded-xl p-3 text-center font-bold outline-none focus:border-blue-500 transition-all"
+                            />
                         </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2 text-right">
-                                <label className="block text-sm text-gray-700">عدد الدومينات المخصصة</label>
-                                <input
-                                    type="number"
-                                    value={formData.custom_domains ?? ''}
-                                    onChange={(e) => handleInputChange('custom_domains', e.target.value ? parseInt(e.target.value) : '')}
-                                    className="w-full bg-white border border-gray-200 rounded-xl p-3 text-center font-bold outline-none focus:border-blue-500 transition-all"
-                                />
-                            </div>
-                            <div className="space-y-2 text-right">
-                                <label className="block text-sm  text-gray-700">الحد الاقصي لساعات الفيديو</label>
-                                <input
-                                    type="number"
-                                    value={formData.video_hours ?? ''}
-                                    onChange={(e) => handleInputChange('video_hours', e.target.value ? parseInt(e.target.value) : '')}
-                                    className="w-full bg-white border border-gray-200 rounded-xl p-3 text-center font-bold outline-none focus:border-blue-500 transition-all"
-                                />
-                            </div>
+                        <div className="space-y-2 text-right">
+                            <label className="block text-sm text-gray-700">الحد الاقصي لساعات الفيديو</label>
+                            <input
+                                type="number"
+                                value={formData.video_hours ?? ''}
+                                onChange={(e) => handleInputChange('video_hours', e.target.value ? parseInt(e.target.value) : '')}
+                                className="w-full bg-white border border-gray-200 rounded-xl p-3 text-center font-bold outline-none focus:border-blue-500 transition-all"
+                            />
                         </div>
                     </div>
                 </div>
@@ -358,8 +404,10 @@ function CreatePackageForm() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {availableFeatures.map((feature, idx) => {
-                            const selectedFeature = selectedFeatures.find(f => f.id === feature.id);
-                            const isChecked = !!selectedFeature;
+                            const isChecked = selectedFeatureIds.includes(feature.id);
+                            const displayName = feature.lable || feature.label || feature.title;
+                            const isMandatory = isCoursesFeature(feature) || isStorageFeature(feature);
+
                             return (
                                 <div key={feature.id || idx} className={twMerge(
                                     "p-6 rounded-[24px] border transition-all duration-300",
@@ -372,22 +420,31 @@ function CreatePackageForm() {
                                         )}>
                                             {isChecked && <Check size={16} className="text-white" strokeWidth={3} />}
                                         </div>
-                                        <span className="font-black text-gray-900">{feature.title}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-black text-gray-900">{displayName}</span>
+                                            {isMandatory && (
+                                                <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-md">
+                                                    إلزامي
+                                                </span>
+                                            )}
+                                        </div>
                                         <input
                                             type="checkbox"
                                             className="hidden"
                                             checked={isChecked}
-                                            onChange={() => toggleFeature(feature)}
+                                            onChange={() => toggleFeature(feature.id)}
                                         />
                                     </label>
 
                                     {isChecked && (
                                         <div className="mt-4 animate-in slide-in-from-top-2 duration-300">
-                                            <label className="block text-[10px] font-black text-blue-600 uppercase mb-2 mr-1">feature value</label>
+                                            <label className="block text-[10px] font-black text-blue-600 uppercase mb-2 mr-1">
+                                                القيمة الرقمية (اختياري، أكبر من 1)
+                                            </label>
                                             <input
-                                                type="text"
-                                                placeholder="مثال: غير محدود"
-                                                value={selectedFeature.value || ''}
+                                                type="number"
+                                                placeholder="يجب أن تكون القيمة أكبر من 1"
+                                                value={featureValues[feature.id] || ''}
                                                 onChange={(e) => handleFeatureValueChange(feature.id, e.target.value)}
                                                 className="w-full bg-white border border-blue-100 rounded-xl px-4 py-3 text-right text-sm font-bold outline-none focus:border-blue-500 transition-all placeholder:text-gray-300"
                                             />
@@ -398,24 +455,14 @@ function CreatePackageForm() {
                         })}
                     </div>
 
-
                     {/* Additional Options */}
                     <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
                         <div className="flex items-center justify-between border-b border-gray-50 pb-6">
                             <h3 className="text-lg font-black text-gray-900">خيارات اضافية</h3>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="block text-xs font-bold text-gray-500">عدد أيام التجربة المجانية</label>
-                                <input
-                                    type="number"
-                                    value={formData.trial_days ?? ''}
-                                    onChange={(e) => handleInputChange('trial_days', e.target.value ? parseInt(e.target.value) : '')}
-                                    className="w-full bg-white border border-gray-200 rounded-xl p-3 text-center font-bold outline-none focus:border-blue-500 transition-all"
-                                />
-                            </div>
-                            <div className="space-y-2">
+                        <div className="space-y-6">
+                            <div className="space-y-2 text-right">
                                 <label className="block text-xs font-bold text-gray-500">ترتيب الباقة</label>
                                 <input
                                     type="number"
@@ -424,22 +471,22 @@ function CreatePackageForm() {
                                     className="w-full bg-white border border-gray-200 rounded-xl p-3 text-center font-bold outline-none focus:border-blue-500 transition-all"
                                 />
                             </div>
-                        </div>
 
-                        <div className="bg-blue-50 p-4 rounded-xl flex items-center justify-between">
-                            <div className="space-y-1">
-                                <h4 className="font-bold text-blue-900">تمييز الباقة بأفضل اختيار</h4>
-                                <p className="text-xs text-blue-600 font-medium">تعيين الباقة كأكثر انتشارا</p>
+                            <div className="bg-blue-50 p-4 rounded-xl flex items-center justify-between">
+                                <div className="space-y-1">
+                                    <h4 className="font-bold text-blue-900">تمييز الباقة بأفضل اختيار</h4>
+                                    <p className="text-xs text-blue-600 font-medium">تعيين الباقة كأكثر انتشارا</p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={formData.is_popular || false}
+                                        onChange={(e) => handleInputChange('is_popular', e.target.checked)}
+                                    />
+                                    <div className="w-14 h-7 bg-blue-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
                             </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    className="sr-only peer"
-                                    checked={formData.is_popular || false}
-                                    onChange={(e) => handleInputChange('is_popular', e.target.checked)}
-                                />
-                                <div className="w-14 h-7 bg-blue-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
-                            </label>
                         </div>
                     </div>
 
