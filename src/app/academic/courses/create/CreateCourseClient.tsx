@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import {
   X,
   Upload,
@@ -40,7 +40,7 @@ import {
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { createCourse, createUnit, deleteUnit, updateLesson, getCategories, getCourse, getCourses, updateCourse, createCategory } from '@/services/courses';
+import { createCourse, createUnit, deleteUnit, updateLesson, deleteLesson, getCategories, getCourse, getCourses, updateCourse, createCategory } from '@/services/courses';
 import { getErrorMessage, getCountryCodeFromCurrency, translateErrorToArabic } from '@/lib/utils';
 import { purgeAllCourseDraftCache, getStoredUserRole, isSchoolTeacherRole } from '@/lib/auth-storage';
 import { getGrades, getTerms, getSubjects, getAcademicYears, ClassificationItem } from '@/services/academic-classification';
@@ -52,6 +52,7 @@ import { getUsers } from '@/services/users';
 import ManageSubscribersView from '@/components/Academic/Subscribers/ManageSubscribersView';
 import { User, ReceiverAccount } from '@/types/api';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
+import EditLessonModal from '@/components/Academic/Modals/EditLessonModal';
 import EditUnitModal from '@/components/Academic/Modals/EditUnitModal';
 import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdown';
 import { AcademyPaymentMethod, PaymentMethod } from '@/types/payment';
@@ -200,6 +201,7 @@ const CategoryFormInline = ({
 export default function CreateCourseClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const params = useParams();
   const courseTypeParam = searchParams.get('type');
 
   // Navigation tab state
@@ -315,6 +317,8 @@ export default function CreateCourseClient() {
   const [collapsedUnits, setCollapsedUnits] = useState<Record<number, boolean>>({});
   const [isEditUnitOpen, setIsEditUnitOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<any | null>(null);
+  const [isEditLessonOpen, setIsEditLessonOpen] = useState(false);
+  const [editingLesson, setEditingLesson] = useState<any | null>(null);
 
   // Resolved course type — initialized from URL param (create mode), overridden from API data (edit mode)
   // Inline the mapping here to avoid TDZ since mapTypeToBackend is defined later in this component
@@ -443,8 +447,20 @@ export default function CreateCourseClient() {
     }
   };
 
+  // Tab sync effect
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['info', 'content', 'pricing', 'landing_pages', 'subscribers'].includes(tabParam)) {
+      setActiveTab(tabParam as any);
+    }
+  }, [searchParams]);
+
   // 1. Load draft from localStorage on mount if within 30 minutes
   useEffect(() => {
+    const routeIdParam = params?.id ? (Array.isArray(params.id) ? params.id[0] : params.id) : null;
+    const isEditing = Boolean(routeIdParam || searchParams.get('id') || searchParams.get('courseId') || searchParams.get('course_id'));
+    if (isEditing) return;
+
     const isNewRequest = searchParams.get('new') === 'true' || searchParams.get('fresh') === 'true';
     if (isNewRequest) {
       purgeAllCourseDraftCache();
@@ -699,7 +715,8 @@ export default function CreateCourseClient() {
 
   // Fetch course details if editing an existing course
   useEffect(() => {
-    const editIdParam = searchParams.get('id') || searchParams.get('courseId') || searchParams.get('course_id');
+    const routeIdParam = params?.id ? (Array.isArray(params.id) ? params.id[0] : params.id) : null;
+    const editIdParam = routeIdParam || searchParams.get('id') || searchParams.get('courseId') || searchParams.get('course_id');
     if (editIdParam) {
       const loadExistingCourse = async () => {
         try {
@@ -708,17 +725,75 @@ export default function CreateCourseClient() {
             setCourseId(c.id);
             if (c.title) setTitle(c.title);
             if (c.slug) setSlug(c.slug);
-            if (c.category_id) setCategory(String(c.category_id));
-            if (c.short_description) setShortDescription(c.short_description);
+            if (c.category_id || c.category?.id) setCategory(String(c.category_id || c.category?.id));
+            if (c.short_description || c.shortDescription) setShortDescription(c.short_description || c.shortDescription);
             if (c.description) setDescription(c.description);
-            if (c.pricing_type || c.price_type) setPricingType(c.pricing_type || c.price_type);
-            if (c.price) setPrice(String(c.price));
+            if (c.pricing_type || c.price_type) {
+              setPricingType(c.pricing_type || c.price_type);
+            } else if (c.price !== undefined && c.price !== null) {
+              setPricingType(Number(c.price) === 0 ? 'free' : 'paid');
+            }
+            if (c.price !== undefined && c.price !== null) setPrice(String(c.price));
             if (c.currency) setCurrency(c.currency);
             if (c.status) setStatus(c.status);
             if (c.chapters || c.units) setUnits(c.chapters || c.units);
-            if (c.image) setPreviewUrl(c.image);
+            if (c.image || c.cover_image) setPreviewUrl(c.image || c.cover_image);
             // Resolve course type from the API so AddLessonModal shows the correct form
             if (c.type) setResolvedCourseType(mapTypeToBackend(c.type));
+
+            // Academic classification
+            const gVal = c.grade_id || c.grade?.id || c.grade_level;
+            if (gVal) setGradeLevel(String(gVal));
+
+            const sVal = c.term_id || c.semester_id || c.term?.id || c.semester;
+            if (sVal) setSemester(String(sVal));
+
+            const subjVal = c.subject_id || c.subject?.id || c.subject;
+            if (subjVal) setSubject(String(subjVal));
+
+            const yearVal = c.academic_year_id || c.academic_year?.id || c.academic_year;
+            if (yearVal) setAcademicYear(String(yearVal));
+
+            // Access Duration
+            const accessType = c.access_duration_type || c.access_type;
+            if (accessType) setAccessDurationType(accessType);
+            if (c.access_days) setAccessDays(String(c.access_days));
+            const untilDate = c.access_until_date || c.access_until || c.access_date;
+            if (untilDate) setAccessUntilDate(untilDate);
+
+            // Instructor & Coach
+            const instId = c.user_id || c.instructor_id || c.coach_id || c.instructor?.id;
+            if (instId) setSelectedInstructor(Number(instId));
+            const coach = c.coach || c.instructor?.name || c.coach_name;
+            if (coach) setCoachName(coach);
+
+            // Payment Methods
+            if (Array.isArray(c.receiver_accounts) && c.receiver_accounts.length > 0) {
+              const pmList: AcademyPaymentMethod[] = c.receiver_accounts.map((acc: any) => {
+                const accId = typeof acc === 'object' ? acc.id : acc;
+                const accName = typeof acc === 'object' ? (acc.name || acc.account_number || `وسيلة ${accId}`) : `وسيلة ${accId}`;
+                return {
+                  methodId: String(accId),
+                  accountName: accName,
+                  accountNumber: typeof acc === 'object' ? (acc.account_number || '') : '',
+                  customName: typeof acc === 'object' ? (acc.custom_name || '') : '',
+                  currency: c.currency || 'EGP',
+                };
+              });
+              setSelectedPaymentMethods(pmList);
+            } else if (Array.isArray(c.payment_methods) && c.payment_methods.length > 0) {
+              const pmList: AcademyPaymentMethod[] = c.payment_methods.map((acc: any) => {
+                const accId = typeof acc === 'object' ? (acc.methodId || acc.id) : acc;
+                return {
+                  methodId: String(accId),
+                  accountName: acc.accountName || acc.name || `وسيلة ${accId}`,
+                  accountNumber: acc.accountNumber || acc.account_number || '',
+                  customName: acc.customName || acc.custom_name || '',
+                  currency: c.currency || 'EGP',
+                };
+              });
+              setSelectedPaymentMethods(pmList);
+            }
 
             // Load infos for learning outcomes and target audience
             if (Array.isArray(c.infos) && c.infos.length > 0) {
@@ -751,7 +826,7 @@ export default function CreateCourseClient() {
       };
       loadExistingCourse();
     }
-  }, [searchParams]);
+  }, [params, searchParams]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1849,7 +1924,7 @@ export default function CreateCourseClient() {
                           <button
                             type="button"
                             onClick={() => setIsAddCategoryModalOpen(true)}
-                            className="p-3 bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center text-slate-700 cursor-pointer"
+                            className="w-11 h-11 shrink-0 flex items-center justify-center bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors text-slate-700 cursor-pointer shadow-2xs"
                             title="إضافة تصنيف جديد"
                           >
                             <span className="material-symbols-outlined text-xl">add</span>
@@ -1889,7 +1964,7 @@ export default function CreateCourseClient() {
                           <button
                             type="button"
                             onClick={() => setIsAddCoachModalOpen(true)}
-                            className="p-3 bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center text-slate-700 cursor-pointer"
+                            className="w-11 h-11 shrink-0 flex items-center justify-center bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors text-slate-700 cursor-pointer shadow-2xs"
                             title="إضافة مدرب جديد"
                           >
                             <span className="material-symbols-outlined text-xl">add</span>
@@ -1925,10 +2000,10 @@ export default function CreateCourseClient() {
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 items-end">
                       <div>
                         <label className="block text-sm font-bold mb-2 text-slate-800">الصف الدراسي</label>
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2 min-w-0 w-full">
                           <select
                             value={gradeLevel}
                             onChange={(e) => {
@@ -1938,7 +2013,7 @@ export default function CreateCourseClient() {
                                 setSubject('');
                               }
                             }}
-                            className="flex-1 border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white cursor-pointer"
+                            className="flex-1 min-w-0 border border-slate-300 rounded-xl px-3 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-xs sm:text-sm text-slate-900 font-bold bg-white cursor-pointer truncate"
                           >
                             <option value="">اختر الصف...</option>
                             {activeGrades.map((g) => (
@@ -1950,7 +2025,7 @@ export default function CreateCourseClient() {
                           <button
                             type="button"
                             onClick={() => setAddClassificationModal({ isOpen: true, type: 'grade' })}
-                            className="p-3 bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center text-slate-700 cursor-pointer"
+                            className="w-11 h-11 shrink-0 flex items-center justify-center bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors text-slate-700 cursor-pointer shadow-2xs"
                             title="إضافة صف دراسي جديد"
                           >
                             <span className="material-symbols-outlined text-xl">add</span>
@@ -1960,11 +2035,11 @@ export default function CreateCourseClient() {
 
                       <div>
                         <label className="block text-sm font-bold mb-2 text-slate-800">الفصل الدراسي</label>
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2 min-w-0 w-full">
                           <select
                             value={semester}
                             onChange={(e) => setSemester(e.target.value)}
-                            className="flex-1 border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white cursor-pointer"
+                            className="flex-1 min-w-0 border border-slate-300 rounded-xl px-3 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-xs sm:text-sm text-slate-900 font-bold bg-white cursor-pointer truncate"
                           >
                             <option value="">اختر الترم...</option>
                             {activeSemesters.map((s) => (
@@ -1976,7 +2051,7 @@ export default function CreateCourseClient() {
                           <button
                             type="button"
                             onClick={() => setAddClassificationModal({ isOpen: true, type: 'semester' })}
-                            className="p-3 bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center text-slate-700 cursor-pointer"
+                            className="w-11 h-11 shrink-0 flex items-center justify-center bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors text-slate-700 cursor-pointer shadow-2xs"
                             title="إضافة فصل دراسي جديد"
                           >
                             <span className="material-symbols-outlined text-xl">add</span>
@@ -1986,11 +2061,11 @@ export default function CreateCourseClient() {
 
                       <div>
                         <label className="block text-sm font-bold mb-2 text-slate-800">المادة</label>
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2 min-w-0 w-full">
                           <select
                             value={subject}
                             onChange={(e) => setSubject(e.target.value)}
-                            className="flex-1 border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white cursor-pointer"
+                            className="flex-1 min-w-0 border border-slate-300 rounded-xl px-3 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-xs sm:text-sm text-slate-900 font-bold bg-white cursor-pointer truncate"
                           >
                             <option value="">اختر المادة...</option>
                             {activeSubjects.map((sub) => (
@@ -2002,7 +2077,7 @@ export default function CreateCourseClient() {
                           <button
                             type="button"
                             onClick={() => setAddClassificationModal({ isOpen: true, type: 'subject' })}
-                            className="p-3 bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center text-slate-700 cursor-pointer"
+                            className="w-11 h-11 shrink-0 flex items-center justify-center bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors text-slate-700 cursor-pointer shadow-2xs"
                             title="إضافة مادة دراسية جديدة"
                           >
                             <span className="material-symbols-outlined text-xl">add</span>
@@ -2012,11 +2087,11 @@ export default function CreateCourseClient() {
 
                       <div>
                         <label className="block text-sm font-bold mb-2 text-slate-800">العام الدراسي</label>
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2 min-w-0 w-full">
                           <select
                             value={academicYear}
                             onChange={(e) => setAcademicYear(e.target.value)}
-                            className="flex-1 border border-slate-300 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-sm text-slate-900 font-medium bg-white cursor-pointer"
+                            className="flex-1 min-w-0 border border-slate-300 rounded-xl px-3 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-xs sm:text-sm text-slate-900 font-bold bg-white cursor-pointer truncate"
                           >
                             <option value="">اختر العام الدراسي...</option>
                             {activeYears.map((y) => (
@@ -2028,7 +2103,7 @@ export default function CreateCourseClient() {
                           <button
                             type="button"
                             onClick={() => setAddClassificationModal({ isOpen: true, type: 'year' })}
-                            className="p-3 bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center text-slate-700 cursor-pointer"
+                            className="w-11 h-11 shrink-0 flex items-center justify-center bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors text-slate-700 cursor-pointer shadow-2xs"
                             title="إضافة عام دراسي جديد"
                           >
                             <span className="material-symbols-outlined text-xl">add</span>
@@ -2846,19 +2921,53 @@ export default function CreateCourseClient() {
                                       <div className="flex items-center gap-1">
                                         <button
                                           type="button"
-                                          onClick={() => {
-                                            setCurrentUnitForLesson(unit.id);
-                                            setIsLessonModalOpen(true);
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setEditingLesson(lesson);
+                                            setIsEditLessonOpen(true);
                                           }}
-                                          className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-full transition-colors"
+                                          className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
                                           title="تعديل الدرس"
                                         >
                                           <span className="material-symbols-outlined text-[20px]">edit</span>
                                         </button>
                                         <button
                                           type="button"
-                                          className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors"
-                                          title="خيارات إضافية"
+                                          onClick={async (e) => {
+                                            e.stopPropagation();
+                                            const result = await MySwal.fire({
+                                              title: 'هل أنت متأكد من حذف الدرس؟',
+                                              text: `سيتم حذف الدرس "${lesson.title}" نهائياً.`,
+                                              icon: 'warning',
+                                              showCancelButton: true,
+                                              confirmButtonColor: '#ef4444',
+                                              cancelButtonColor: '#64748b',
+                                              confirmButtonText: 'نعم، احذف 🗑️',
+                                              cancelButtonText: 'إلغاء',
+                                              reverseButtons: true,
+                                            });
+                                            if (result.isConfirmed) {
+                                              try {
+                                                if (lesson.id && (typeof lesson.id === 'number' || (typeof lesson.id === 'string' && !lesson.id.startsWith('temp_')))) {
+                                                  await deleteLesson(Number(lesson.id));
+                                                }
+                                                setUnits((prevUnits: any[]) =>
+                                                  prevUnits.map((u: any) => {
+                                                    if (u.id !== unit.id) return u;
+                                                    return {
+                                                      ...u,
+                                                      lessons: (u.lessons || []).filter((l: any) => l.id !== lesson.id),
+                                                    };
+                                                  })
+                                                );
+                                                toast.success('تم حذف الدرس بنجاح');
+                                              } catch (err: any) {
+                                                toast.error(getErrorMessage(err, 'فشل حذف الدرس'));
+                                              }
+                                            }
+                                          }}
+                                          className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors cursor-pointer"
+                                          title="حذف الدرس"
                                         >
                                           <span className="material-symbols-outlined text-[20px]">more_vert</span>
                                         </button>
@@ -3920,6 +4029,37 @@ export default function CreateCourseClient() {
         onClose={() => { setIsEditUnitOpen(false); setEditingUnit(null); }}
         unit={editingUnit}
         onUnitUpdated={() => refreshUnits(courseId)}
+      />
+
+      {/* Add Lesson Modal */}
+      <AddLessonModal
+        isOpen={isLessonModalOpen}
+        onClose={() => {
+          setIsLessonModalOpen(false);
+          setCurrentUnitForLesson(null);
+        }}
+        unitId={currentUnitForLesson || 0}
+        courseId={courseId || (params?.id ? Number(params.id) : undefined)}
+        onLessonAdded={() => {
+          const id = courseId || (params?.id ? (Array.isArray(params.id) ? params.id[0] : params.id) : null);
+          if (id) refreshUnits(Number(id));
+        }}
+        courseType={resolvedCourseType}
+      />
+
+      {/* Edit Lesson Modal */}
+      <EditLessonModal
+        isOpen={isEditLessonOpen}
+        onClose={() => {
+          setIsEditLessonOpen(false);
+          setEditingLesson(null);
+        }}
+        lesson={editingLesson}
+        onLessonUpdated={() => {
+          const id = courseId || (params?.id ? (Array.isArray(params.id) ? params.id[0] : params.id) : null);
+          if (id) refreshUnits(Number(id));
+        }}
+        courseType={resolvedCourseType}
       />
 
       {/* Publish Success & Social Share Popup Modal */}
