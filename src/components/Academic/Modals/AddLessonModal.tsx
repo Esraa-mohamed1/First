@@ -611,11 +611,10 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle
                     <button
                       type="button"
                       onClick={() => setIsFree(true)}
-                      className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-extrabold text-sm transition-all duration-200 cursor-pointer ${
-                        isFree
+                      className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-extrabold text-sm transition-all duration-200 cursor-pointer ${isFree
                           ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25 ring-2 ring-emerald-500/40 scale-[1.02]'
                           : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
-                      }`}
+                        }`}
                     >
                       <Eye size={18} />
                       <span>درس مجاني (معاينة)</span>
@@ -625,11 +624,10 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle
                     <button
                       type="button"
                       onClick={() => setIsFree(false)}
-                      className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-extrabold text-sm transition-all duration-200 cursor-pointer ${
-                        !isFree
+                      className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-extrabold text-sm transition-all duration-200 cursor-pointer ${!isFree
                           ? 'bg-slate-800 text-white shadow-md shadow-slate-900/25 ring-2 ring-slate-700/40 scale-[1.02]'
                           : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
-                      }`}
+                        }`}
                     >
                       <Lock size={18} />
                       <span>درس مدفوع</span>
@@ -789,7 +787,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle
               </>
             ) : (
               <>
-                <button type="button" onClick={handleClose} className="px-16 py-4 bg-gray-100 text-gray-900 font-black rounded-full hover:bg-gray-200 transition-all">الغاء</button>
+                <button type="button" onClick={handleClose} className="px-16 py-4 bg-gray-100 text-gray-900 font-black rounded-full hover:bg-gray-200 transition-all">اغلاق</button>
                 <button
                   type="button"
                   onClick={handleUploadLesson}
