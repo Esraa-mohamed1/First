@@ -36,8 +36,9 @@ const EditLessonModal = ({ isOpen, onClose, lesson, onLessonUpdated, courseType 
   const [sessionLink, setSessionLink] = useState('');
   const [sessionDateTime, setSessionDateTime] = useState('');
 
-  const isPhysical = courseType === 'physical' || courseType === 'offline' || courseType === 'in-person';
-  const isLive = courseType === 'online' || courseType === 'live-online';
+  const normalizedCourseType = (courseType || '').toLowerCase().trim();
+  const isPhysical = normalizedCourseType === 'physical' || normalizedCourseType === 'offline' || normalizedCourseType === 'in-person';
+  const isLive = normalizedCourseType === 'online' || normalizedCourseType === 'live-online' || normalizedCourseType === 'live_online' || normalizedCourseType === 'live';
 
   useEffect(() => {
     if (lesson) {
@@ -46,36 +47,90 @@ const EditLessonModal = ({ isOpen, onClose, lesson, onLessonUpdated, courseType 
       const desc = lesson.description || '';
       const match = desc.match(/<!--OFFLINE_METADATA:(.*?)-->/);
       const liveMatch = desc.match(/<!--LIVE_METADATA:(.*?)-->/);
+
+      // 1. Direct API response fields for live sessions
+      const apiSessionLink =
+        (lesson as any).session_url ||
+        (lesson as any).session_link ||
+        (lesson as any).sessionLink ||
+        (lesson as any).zoom_url ||
+        (lesson as any).meeting_url ||
+        (lesson as any).link ||
+        (lesson as any).url ||
+        '';
+
+      let apiSessionDateTime = '';
+      if ((lesson as any).date && (lesson as any).time) {
+        const timeStr = String((lesson as any).time).substring(0, 5);
+        apiSessionDateTime = `${(lesson as any).date}T${timeStr}`;
+      } else if ((lesson as any).date) {
+        apiSessionDateTime = `${(lesson as any).date}T00:00`;
+      } else if ((lesson as any).start_date) {
+        apiSessionDateTime = String((lesson as any).start_date).replace(' ', 'T').substring(0, 16);
+      } else if ((lesson as any).dateTime) {
+        apiSessionDateTime = (lesson as any).dateTime;
+      }
+
+      if (!apiSessionDateTime && (lesson as any).notes) {
+        const notesStr = String((lesson as any).notes);
+        const matchIso = notesStr.match(/(\d{4}-\d{2}-\d{2})/);
+        if (matchIso) {
+          apiSessionDateTime = `${matchIso[1]}T00:00`;
+        }
+      }
+
+      // 2. Direct API response fields for physical/offline courses
+      const apiLocationLink =
+        (lesson as any).location_link ||
+        (lesson as any).location_url ||
+        (lesson as any).locationLink ||
+        (lesson as any).location ||
+        (lesson as any).map_link ||
+        '';
+
+      const apiStartDate =
+        (lesson as any).start_date ||
+        (lesson as any).startDate ||
+        '';
+
+      const apiEndDate =
+        (lesson as any).end_date ||
+        (lesson as any).endDate ||
+        '';
+
       if (liveMatch) {
         try {
           const parsed = JSON.parse(liveMatch[1]);
-          setSessionLink(parsed.sessionLink || '');
-          setSessionDateTime(parsed.dateTime || '');
+          setSessionLink(apiSessionLink || parsed.sessionLink || '');
+          setSessionDateTime(apiSessionDateTime || parsed.dateTime || '');
           setDescription('');
         } catch (e) {
-          console.error(e);
+          setSessionLink(apiSessionLink);
+          setSessionDateTime(apiSessionDateTime);
           setDescription(desc);
         }
       } else if (match) {
         try {
           const parsed = JSON.parse(match[1]);
-          setLocationLink(parsed.locationLink || '');
-          setStartDate(parsed.startDate || '');
-          setEndDate(parsed.endDate || '');
+          setLocationLink(apiLocationLink || parsed.locationLink || '');
+          setStartDate(apiStartDate || parsed.startDate || '');
+          setEndDate(apiEndDate || parsed.endDate || '');
           setUploadFileToggle(!!lesson.file_url || !!lesson.video_id);
           setDescription('');
         } catch (e) {
-          console.error(e);
+          setLocationLink(apiLocationLink);
+          setStartDate(apiStartDate);
+          setEndDate(apiEndDate);
           setDescription(desc);
         }
       } else {
         setDescription(desc);
-        setLocationLink('');
-        setStartDate('');
-        setEndDate('');
+        setSessionLink(apiSessionLink);
+        setSessionDateTime(apiSessionDateTime);
+        setLocationLink(apiLocationLink);
+        setStartDate(apiStartDate);
+        setEndDate(apiEndDate);
         setUploadFileToggle(false);
-        setSessionLink('');
-        setSessionDateTime('');
       }
     }
   }, [lesson]);
@@ -116,11 +171,6 @@ const EditLessonModal = ({ isOpen, onClose, lesson, onLessonUpdated, courseType 
       const selectedDate = new Date(sessionDateTime);
       if (isNaN(selectedDate.getTime())) {
         toast.error('الرجاء اختيار تاريخ ووقت صالح');
-        return;
-      }
-
-      if (selectedDate < new Date()) {
-        toast.error('تاريخ ووقت السيشن يجب أن يكون في المستقبل');
         return;
       }
     }
@@ -168,11 +218,24 @@ const EditLessonModal = ({ isOpen, onClose, lesson, onLessonUpdated, courseType 
             'https://iframe.mediadelivery.net/embed/demo'
           );
 
+      let dateVal = '';
+      let timeVal = '';
+      if (sessionDateTime) {
+        const parts = sessionDateTime.split('T');
+        dateVal = parts[0] || '';
+        timeVal = parts[1] ? (parts[1].length === 5 ? `${parts[1]}:00` : parts[1]) : '00:00:00';
+      }
+
       await updateLesson(lesson.id, {
         chapter_id: (lesson as any).chapter_id || (lesson as any).unit_id,
         title,
         description: finalDescription,
         type: isLive ? 'video' : lesson.type,
+        session_url: isLive ? sessionLink : undefined,
+        session_link: isLive ? sessionLink : undefined,
+        date: isLive ? (dateVal || undefined) : undefined,
+        time: isLive ? (timeVal || undefined) : undefined,
+        notes: isLive ? `عنوان القاعة: ${title} | التاريخ والوقت: ${sessionDateTime}` : undefined,
         video_id: isLive ? undefined : lesson.video_id,
         file_url: isLive ? undefined : lesson.file_url,
         is_free: isFree,

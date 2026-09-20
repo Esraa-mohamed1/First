@@ -1400,6 +1400,7 @@ export default function CourseDetailsPage() {
         }}
         lesson={editingLesson}
         onLessonUpdated={fetchCourse}
+        courseType={course?.type || (course as any)?.course_type}
       />
 
       {/* Add Lesson Modal */}
@@ -1412,6 +1413,8 @@ export default function CourseDetailsPage() {
           }}
           unitId={selectedUnitId}
           unitTitle={selectedUnitTitle}
+          courseId={course?.id ? Number(course.id) : undefined}
+          courseType={course?.type || (course as any)?.course_type}
           onLessonAdded={fetchCourse}
         />
       )}
