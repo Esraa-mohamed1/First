@@ -73,80 +73,52 @@ export default function UpgradePackagesPage() {
     setShowPaymentModal(true);
   };
 
-  const FEATURE_NAMES: Record<number, string> = {
-    1: 'عدد الدورات',
-    2: 'عدد الطلاب',
-    3: 'مساحة التخزين (GB)',
-    4: 'الدعم الفني 24/7',
-    5: 'الشهادات المخصصة',
-    6: 'النطاق المخصص',
-    7: 'الدفع المباشر (Darap)',
-    8: 'بوابة الدفع الإلكتروني',
-    10: 'النطاقات الفرعية المخصصة',
-    11: 'Custom',
-  };
-
-  const getFeatureInfo = (feature: any) => {
-    const featureId = Number(feature.feature_id);
-
-    const rawVal = feature.value;
-
-    const strVal =
-      rawVal !== null && rawVal !== undefined
-        ? String(rawVal).trim()
-        : '';
-
-    const isNegative =
-      strVal === '0' ||
-      strVal.toLowerCase() === 'false' ||
-      strVal === '';
-
-    let formattedValue: string | null = null;
-
-    if (!isNegative) {
-      if (
-        strVal === '1' ||
-        strVal.toLowerCase() === 'true'
-      ) {
-        formattedValue = 'متاح';
-      } else {
-        formattedValue = strVal;
-      }
-    }
-
-    return {
-      label: FEATURE_NAMES[featureId] || 'ميزة',
-      value: formattedValue,
-      isNegative,
-    };
-  };
-
-  const ALL_FEATURE_IDS = [11, 4, 10, 3, 5, 1, 7, 8, 6, 2];
-
   const getPackageFeaturesList = (pkg: any) => {
     const rawFeatures =
-      pkg.package_features ||
       pkg.packageFeatures ||
+      pkg.package_features ||
       pkg.features ||
       [];
 
-    return ALL_FEATURE_IDS.map((featureId) => {
-      const packageFeature = Array.isArray(rawFeatures)
-        ? rawFeatures.find(
-          (feature: any) =>
-            Number(feature.feature_id) === featureId
-        )
-        : null;
+    if (!Array.isArray(rawFeatures)) return [];
 
-      if (!packageFeature) {
-        return {
-          label: FEATURE_NAMES[featureId],
-          value: null,
-          isNegative: true,
-        };
+    return rawFeatures.map((feature: any) => {
+      const label =
+        feature.lable ||
+        feature.label ||
+        feature.title ||
+        'ميزة';
+
+      const rawVal = feature.value;
+
+      const strVal =
+        rawVal !== null && rawVal !== undefined
+          ? String(rawVal).trim()
+          : '';
+
+      const isNegative =
+        strVal === '0' ||
+        strVal.toLowerCase() === 'false' ||
+        strVal === '';
+
+      let formattedValue: string | null = null;
+
+      if (!isNegative) {
+        if (
+          strVal === '1' ||
+          strVal.toLowerCase() === 'true'
+        ) {
+          formattedValue = null;
+        } else {
+          formattedValue = strVal;
+        }
       }
 
-      return getFeatureInfo(packageFeature);
+      return {
+        label,
+        value: formattedValue,
+        isNegative,
+      };
     });
   };
 
