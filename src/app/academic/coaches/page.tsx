@@ -8,7 +8,7 @@ import { User } from '@/types/api';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import AddStudentModal from '@/components/Academic/Modals/AddStudentModal';
+import AddCoachModal from '@/components/Academic/Modals/AddCoachModal';
 import EditUserModal from '@/components/Academic/Modals/EditUserModal';
 
 const MySwal = withReactContent(Swal);
@@ -216,10 +216,10 @@ export default function CoachesPage() {
         )}
       </div>
 
-      <AddStudentModal
+      <AddCoachModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onStudentAdded={(coach) => {
+        onSuccess={(coach) => {
           setCoaches(prev => [coach, ...prev]);
         }}
       />
