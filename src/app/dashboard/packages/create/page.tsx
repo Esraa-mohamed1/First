@@ -245,6 +245,7 @@ function CreatePackageForm() {
 
                 return {
                     feature_id: f.id,
+                    label: f.label || f.lable || f.title,
                     lable: f.lable || f.label || f.title,
                     title: f.title,
                     value: finalValue
