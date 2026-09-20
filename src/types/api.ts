@@ -3,7 +3,11 @@ export type PackageStatus = 'active' | 'inactive';
 export interface Feature {
   id: number;
   title: string;
-  value?: string; 
+  value?: string;
+  key?: string;
+  key_feature?: string;
+  label?: string;
+  lable?: string;
 }
 
 export interface PackageFeatureAssociation {
@@ -20,7 +24,7 @@ export interface Package {
 
   desc?: string | null; 
   duration_months: number;
-  is_active: number; 
+  is_active?: number | boolean | string; 
   max_students: number;
   max_instructors: number;
   max_courses: number;
@@ -31,7 +35,7 @@ export interface Package {
   packageFeatures?: any[];
   trial_days?: number;
   order?: number;
-  recomnd?: number; 
+  recomnd?: number | boolean | string; 
   is_popular?: boolean;
 }
 

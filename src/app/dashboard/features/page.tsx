@@ -3,20 +3,15 @@
 import { useState, useEffect } from 'react';
 import {
     Search,
-    Plus,
     Edit,
-    Trash2,
     Loader2,
-    MoreVertical,
-    ChevronRight,
     Settings2,
     CheckCircle2,
     XCircle
 } from 'lucide-react';
-import { getFeatures, createFeature, updateFeature, deleteFeature } from '@/services/admin-packages';
+import { getFeatures, updateFeature } from '@/services/admin-packages';
 import { Feature } from '@/types/api';
 import toast from 'react-hot-toast';
-import { twMerge } from 'tailwind-merge';
 
 export default function FeaturesPage() {
     const [features, setFeatures] = useState<Feature[]>([]);
@@ -24,7 +19,7 @@ export default function FeaturesPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentFeature, setCurrentFeature] = useState<Feature | null>(null);
-    const [newFeatureTitle, setNewFeatureTitle] = useState('');
+    const [newFeatureLabel, setNewFeatureLabel] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
@@ -43,34 +38,25 @@ export default function FeaturesPage() {
         }
     };
 
-    const handleOpenModal = (feature?: Feature) => {
-        if (feature) {
-            setCurrentFeature(feature);
-            setNewFeatureTitle(feature.title);
-        } else {
-            setCurrentFeature(null);
-            setNewFeatureTitle('');
-        }
+    const handleOpenModal = (feature: Feature) => {
+        setCurrentFeature(feature);
+        setNewFeatureLabel(feature.lable || feature.label || '');
         setIsModalOpen(true);
     };
 
     const handleSave = async () => {
-        if (!newFeatureTitle.trim()) {
-            toast.error('يرجى إدخال عنوان الميزة');
+        if (!currentFeature) return;
+        if (!newFeatureLabel.trim()) {
+            toast.error('يرجى إدخال اسم الميزة المعروض');
             return;
         }
 
         setIsSaving(true);
         try {
-            let response;
-            if (currentFeature) {
-                response = await updateFeature(currentFeature.id, newFeatureTitle);
-            } else {
-                response = await createFeature(newFeatureTitle);
-            }
+            const response = await updateFeature(currentFeature.id, newFeatureLabel.trim());
 
-            if (response.status) {
-                toast.success(currentFeature ? 'تم تحديث الميزة بنجاح' : 'تم إضافة الميزة بنجاح');
+            if (response.status || response.success) {
+                toast.success('تم تحديث الميزة بنجاح');
                 setIsModalOpen(false);
                 fetchFeatures();
             } else {
@@ -83,25 +69,13 @@ export default function FeaturesPage() {
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!window.confirm('هل أنت متأكد من حذف هذه الميزة؟')) return;
-
-        try {
-            const response = await deleteFeature(id);
-            if (response.status) {
-                toast.success('تم حذف الميزة بنجاح');
-                setFeatures(prev => prev.filter(f => f.id !== id));
-            } else {
-                toast.error(response.message || 'حدث خطأ أثناء الحذف');
-            }
-        } catch (error: any) {
-            toast.error(error.message || 'فشل في حذف الميزة');
-        }
-    };
-
-    const filteredFeatures = features.filter(f =>
-        f.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredFeatures = features.filter(f => {
+        const term = searchTerm.toLowerCase();
+        const titleMatch = (f.title || '').toLowerCase().includes(term);
+        const keyMatch = (f.key || f.key_feature || '').toLowerCase().includes(term);
+        const labelMatch = (f.lable || f.label || '').toLowerCase().includes(term);
+        return titleMatch || keyMatch || labelMatch;
+    });
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -162,31 +136,38 @@ export default function FeaturesPage() {
                         <table className="w-full border-collapse">
                             <thead>
                                 <tr className="bg-gray-50/50">
-                                    <th className="px-8 py-5 text-right text-xs font-black text-gray-400 uppercase tracking-wider">عنوان الميزة</th>
+                                    <th className="px-8 py-5 text-right text-xs font-black text-gray-400 uppercase tracking-wider">عنوان الميزة (Title)</th>
+                                    <th className="px-8 py-5 text-right text-xs font-black text-gray-400 uppercase tracking-wider">المفتاح البرمجي (Key)</th>
+                                    <th className="px-8 py-5 text-right text-xs font-black text-gray-400 uppercase tracking-wider">الاسم المعروض (Label)</th>
                                     <th className="px-8 py-5 text-center text-xs font-black text-gray-400 uppercase tracking-wider">الإجراءات</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {filteredFeatures.map((feature, idx) => (
+                                {filteredFeatures.map((feature) => (
                                     <tr key={feature.id} className="hover:bg-blue-50/30 transition-colors group">
                                         <td className="px-8 py-6 whitespace-nowrap font-bold text-gray-900 text-right">
-                                            <div className="flex items-center ">
-                                                {feature.title}
+                                            <div className="flex items-center">
+                                                {feature.title || '—'}
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6 whitespace-nowrap text-right">
+                                            <span className="font-mono text-xs font-bold px-2.5 py-1 bg-gray-100 text-gray-700 rounded-lg" dir="ltr">
+                                                {feature.key || feature.key_feature || '—'}
+                                            </span>
+                                        </td>
+                                        <td className="px-8 py-6 whitespace-nowrap font-bold text-blue-600 text-right">
+                                            <div className="flex items-center">
+                                                {feature.lable || feature.label || '—'}
                                             </div>
                                         </td>
                                         <td className="px-8 py-6 whitespace-nowrap text-center">
-                                            <div className="flex items-center justify-center gap-3">
+                                            <div className="flex items-center justify-center">
                                                 <button
                                                     onClick={() => handleOpenModal(feature)}
                                                     className="p-3 bg-blue-50 hover:bg-blue-100 rounded-xl text-blue-600 transition-all active:scale-90"
+                                                    title="تعديل اسم الميزة"
                                                 >
                                                     <Edit size={18} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(feature.id)}
-                                                    className="p-3 bg-red-50 hover:bg-red-100 rounded-xl text-red-600 transition-all active:scale-90"
-                                                >
-                                                    <Trash2 size={18} />
                                                 </button>
                                             </div>
                                         </td>
@@ -201,7 +182,7 @@ export default function FeaturesPage() {
                             </div>
                             <h3 className="text-xl font-black text-gray-900 mb-2">لا توجد مميزات</h3>
                             <p className="text-gray-400 font-bold max-w-sm">
-                                {searchTerm ? 'لم نتمكن من العثور على أي نتائج لبحثك' : 'ابدأ بإضافة أول ميزة لتظهر هنا في القائمة'}
+                                {searchTerm ? 'لم نتمكن من العثور على أي نتائج لبحثك' : 'لا توجد أي مميزات متاحة حالياً'}
                             </p>
                             {searchTerm && (
                                 <button
@@ -217,7 +198,7 @@ export default function FeaturesPage() {
             </div>
 
             {/* Modal Integration */}
-            {isModalOpen && (
+            {isModalOpen && currentFeature && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setIsModalOpen(false)}></div>
                     <div className="relative w-full max-w-md bg-white rounded-[40px] p-8 md:p-12 shadow-2xl animate-in zoom-in slide-in-from-bottom-8 duration-300 border border-gray-100">
@@ -228,41 +209,67 @@ export default function FeaturesPage() {
                             <XCircle size={24} />
                         </button>
 
-                        <div className="text-center mb-10">
+                        <div className="text-center mb-8">
                             <div className="w-20 h-20 bg-blue-50 rounded-[30px] flex items-center justify-center mx-auto mb-6">
-                                {currentFeature ? <Edit size={32} className="text-blue-600" /> : <Plus size={32} className="text-blue-600" />}
+                                <Edit size={32} className="text-blue-600" />
                             </div>
-                            <h3 className="text-2xl font-black text-gray-900">{currentFeature ? 'تعديل ميزة' : 'إضافة ميزة جديدة'}</h3>
-                            <p className="text-gray-400 font-bold mt-2">يرجى إدخال تفاصيل الميزة أدناه</p>
+                            <h3 className="text-2xl font-black text-gray-900">تعديل الميزة</h3>
+                            <p className="text-gray-400 font-bold mt-2 text-sm">يمكنك تعديل الاسم المعروض للميزة فقط</p>
                         </div>
 
-                        <div className="space-y-6">
-                            <div className="space-y-2 text-right">
-                                <label className="block text-sm font-black text-gray-700 px-1">عنوان الميزة</label>
+                        <div className="space-y-5">
+                            {/* Title (Read-only) */}
+                            <div className="space-y-1.5 text-right">
+                                <label className="block text-xs font-black text-gray-500 px-1">عنوان الميزة (Title) - للقراءة فقط</label>
                                 <input
                                     type="text"
-                                    placeholder="مثال: دومين مخصص مجاني"
-                                    value={newFeatureTitle}
-                                    onChange={(e) => setNewFeatureTitle(e.target.value)}
-                                    className="w-full bg-gray-50 border border-transparent focus:border-blue-500 focus:bg-white rounded-2xl p-5 text-right outline-none transition-all font-bold placeholder:text-gray-300"
+                                    value={currentFeature.title || ''}
+                                    disabled
+                                    readOnly
+                                    className="w-full bg-gray-100 border border-gray-200/80 rounded-2xl p-4 text-right font-bold text-gray-500 cursor-not-allowed select-none"
+                                />
+                            </div>
+
+                            {/* Key (Read-only) */}
+                            <div className="space-y-1.5 text-right">
+                                <label className="block text-xs font-black text-gray-500 px-1">المفتاح البرمجي (Key) - للقراءة فقط</label>
+                                <input
+                                    type="text"
+                                    value={currentFeature.key || currentFeature.key_feature || '—'}
+                                    disabled
+                                    readOnly
+                                    dir="ltr"
+                                    className="w-full bg-gray-100 border border-gray-200/80 rounded-2xl p-4 text-left font-mono font-bold text-gray-500 cursor-not-allowed select-none"
+                                />
+                            </div>
+
+                            {/* Label (Editable) */}
+                            <div className="space-y-1.5 text-right">
+                                <label className="block text-sm font-black text-gray-900 px-1">الاسم المعروض (Label)</label>
+                                <input
+                                    type="text"
+                                    placeholder="مثال: مساحة التخزين بالجيجا"
+                                    value={newFeatureLabel}
+                                    onChange={(e) => setNewFeatureLabel(e.target.value)}
+                                    className="w-full bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white rounded-2xl p-4 text-right outline-none transition-all font-bold placeholder:text-gray-300"
                                     autoFocus
                                 />
                             </div>
 
-                            <div className="flex flex-col gap-3 pt-6">
+                            <div className="flex flex-col gap-3 pt-4">
                                 <button
                                     onClick={handleSave}
-                                    disabled={isSaving || !newFeatureTitle.trim()}
-                                    className="w-full py-5 bg-blue-600 text-white font-black rounded-3xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+                                    disabled={isSaving || !newFeatureLabel.trim()}
+                                    className="w-full py-4 bg-blue-600 text-white font-black rounded-3xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
                                 >
                                     {isSaving && <Loader2 className="animate-spin" size={20} />}
-                                    <span>{currentFeature ? 'تحديث الميزة' : 'إضافة الميزة'}</span>
+                                    <span>تحديث الميزة</span>
                                 </button>
                                 <button
                                     onClick={() => setIsModalOpen(false)}
-                                    className="w-full py-5 bg-gray-100 text-gray-600 font-black rounded-3xl hover:bg-gray-200 transition-all"
+                                    className="w-full py-4 bg-gray-100 text-gray-600 font-black rounded-3xl hover:bg-gray-200 transition-all"
                                 >
-                                    إلغاء التغييرات
+                                    إلغاء
                                 </button>
                             </div>
                         </div>

@@ -112,6 +112,7 @@ export function mapRawSubscriptionToDisplayModel(raw: RawAcademySubscription): A
     price: raw.price !== undefined ? raw.price : (raw.amount !== undefined ? raw.amount : null),
     currency: raw.currency || 'SAR',
     paymentMethod: raw.payment_method || raw.payment_type || null,
+    paymentProof: raw.payment_proof || null,
     receipt: raw.receipt || null,
     createdAt: raw.created_at
   };

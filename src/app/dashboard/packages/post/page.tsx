@@ -60,8 +60,13 @@ export default function PackagesPostPage() {
     }
   };
 
+  const isPackageActive = (pkg: Package): boolean => {
+    const val = pkg.is_active;
+    return val === true || val === 1 || val === '1' || (typeof val === 'string' && val.toLowerCase() === 'true');
+  };
+
   const handleToggleStatus = async (pkg: Package) => {
-    const isCurrentlyActive = pkg.is_active === 1 || (pkg.is_active as any) === true;
+    const isCurrentlyActive = isPackageActive(pkg);
     const newStatus = !isCurrentlyActive;
     try {
       const response = await updatePackage(pkg.id, {
@@ -69,7 +74,7 @@ export default function PackagesPostPage() {
       } as any);
       if (response.status) {
         toast.success(newStatus ? 'تم تفعيل الباقة' : 'تم إخفاء الباقة');
-        setPackages(prev => prev.map(p => p.id === pkg.id ? { ...p, is_active: newStatus ? 1 : 0 } : p));
+        setPackages(prev => prev.map(p => p.id === pkg.id ? { ...p, is_active: newStatus } : p));
       } else {
         toast.error(response.message || 'فشل في تحديث الحالة');
       }
@@ -102,8 +107,8 @@ export default function PackagesPostPage() {
     (pkg.description || pkg.desc || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const activeCount = packages.filter(p => p.is_active === 1).length;
-  const popularCount = packages.filter(p => p.recomnd === 1 || p.is_popular).length;
+  const activeCount = packages.filter(p => isPackageActive(p)).length;
+  const popularCount = packages.filter(p => p.recomnd === 1 || (p.recomnd as any) === true || String(p.recomnd) === '1' || p.is_popular).length;
 
   return (
     <div className="space-y-8 pb-16">
@@ -203,8 +208,14 @@ export default function PackagesPostPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredPackages.map((pkg) => {
-                const isPopular = pkg.recomnd === 1 || pkg.is_popular;
+                const isActive = isPackageActive(pkg);
+                const isPopular = pkg.recomnd === 1 || (pkg.recomnd as any) === true || String(pkg.recomnd) === '1' || pkg.is_popular;
                 const dynamicFeatures = pkg.package_features || pkg.packageFeatures || (Array.isArray(pkg.features) ? pkg.features : []);
+                const includedFeatures = dynamicFeatures.filter((f: any) => {
+                  const val = f.value;
+                  const isZero = val === 0 || val === '0' || (typeof val === 'string' && val.toLowerCase() === 'false');
+                  return !isZero;
+                });
                 const durationText = formatDuration(pkg.duration_months ?? (pkg as any).duration);
                 const formattedPrice = formatPrice(pkg.price);
 
@@ -246,24 +257,24 @@ export default function PackagesPostPage() {
                       {/* Status & Quick Toggle */}
                       <div className="flex items-center justify-between">
                         <span
-                          className={`px-3 py-1 rounded-full text-[11px] font-black inline-flex items-center gap-1.5 ${pkg.is_active === 1
+                          className={`px-3 py-1 rounded-full text-[11px] font-black inline-flex items-center gap-1.5 ${isActive
                               ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
                               : 'bg-gray-100 text-gray-500 border border-gray-200'
                             }`}
                         >
-                          <span className={`w-2 h-2 rounded-full ${pkg.is_active === 1 ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}></span>
-                          {pkg.is_active === 1 ? 'مفعلة' : 'مخفية'}
+                          <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}></span>
+                          {isActive ? 'مفعلة' : 'مخفية'}
                         </span>
 
                         <button
                           type="button"
                           onClick={() => handleToggleStatus(pkg)}
-                          title={pkg.is_active === 1 ? 'إخفاء الباقة' : 'تفعيل الباقة'}
-                          className={`w-11 h-6 rounded-full transition-all duration-300 relative cursor-pointer ${pkg.is_active === 1 ? 'bg-emerald-500' : 'bg-gray-200'
+                          title={isActive ? 'إخفاء الباقة' : 'تفعيل الباقة'}
+                          className={`w-11 h-6 rounded-full transition-all duration-300 relative cursor-pointer ${isActive ? 'bg-emerald-500' : 'bg-gray-200'
                             }`}
                         >
                           <div
-                            className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 shadow-sm ${pkg.is_active === 1 ? 'translate-x-5' : ''
+                            className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 shadow-sm ${isActive ? 'translate-x-5' : ''
                               }`}
                           />
                         </button>
@@ -326,19 +337,28 @@ export default function PackagesPostPage() {
                       <div className="space-y-2 pt-2 border-t border-gray-100 flex-1">
                         <div className="flex items-center justify-between">
                           <p className="text-[11px] font-black text-gray-400">المميزات المضمنة</p>
-                          {dynamicFeatures.length > 0 && (
+                          {includedFeatures.length > 0 && (
                             <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md">
-                              {dynamicFeatures.length} مميزة
+                              {includedFeatures.length} مميزة
                             </span>
                           )}
                         </div>
 
-                        {dynamicFeatures.length > 0 ? (
+                        {includedFeatures.length > 0 ? (
                           <div className="space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
-                            {dynamicFeatures.map((f: any, fIdx: number) => {
-                              const label = f.lable || f.title || f.name || (typeof f === 'string' ? f : '');
+                            {includedFeatures.map((f: any, fIdx: number) => {
+                              const label = f.lable || f.label || f.title || f.name || (typeof f === 'string' ? f : '');
                               const val = f.value;
-                              if (!label && !val) return null;
+                              if (!label) return null;
+
+                              const numericValue = Number(val);
+                              const showValue =
+                                val !== null &&
+                                val !== undefined &&
+                                val !== '' &&
+                                !Number.isNaN(numericValue) &&
+                                numericValue > 1;
+
                               return (
                                 <div
                                   key={f.id || fIdx}
@@ -350,7 +370,7 @@ export default function PackagesPostPage() {
                                     </div>
                                     <span className="truncate text-[11px]">{label}</span>
                                   </div>
-                                  {val && (
+                                  {showValue && (
                                     <span className="text-blue-600 font-black text-[10px] bg-white px-2 py-0.5 rounded-md border border-blue-100 flex-shrink-0 mr-1.5 shadow-2xs">
                                       {val}
                                     </span>

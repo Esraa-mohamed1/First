@@ -55,6 +55,7 @@ export interface RawAcademySubscription {
   currency?: string;
   payment_method?: string;
   payment_type?: string;
+  payment_proof?: string | null;
   receipt?: string;
   created_at?: string;
   updated_at?: string;
@@ -84,6 +85,7 @@ export interface AcademySubscription {
   price?: number | string | null;
   currency: string;
   paymentMethod?: string | null;
+  paymentProof?: string | null;
   receipt?: string | null;
   createdAt?: string;
 }

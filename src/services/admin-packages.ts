@@ -100,10 +100,14 @@ export const deletePackage = async (id: number): Promise<ApiResponse<any>> => {
     throw error.response?.data || error;
   }
 };
-export const updateFeature = async (id: number, title: string): Promise<ApiResponse<Feature>> => {
+export const updateFeature = async (id: number, label: string): Promise<ApiResponse<Feature>> => {
   try {
-    const response = await api.put<ApiResponse<Feature>>(`/features/${id}`, { title }, {
-      baseURL: SUPER_ADMIN_API_URL
+    const token = getStoredAuthToken();
+    const response = await api.put<ApiResponse<Feature>>(`/features/${id}`, { label: label }, {
+      baseURL: SUPER_ADMIN_API_URL,
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
     });
     return response.data;
   } catch (error: any) {

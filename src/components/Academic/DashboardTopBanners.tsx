@@ -174,23 +174,12 @@ export default function DashboardTopBanners() {
     return fallback;
   };
 
-  // Extract real numbers from dashboardData if available
-  let dashboardCoursesCount = undefined;
-  let dashboardStudentsCount = undefined;
-
-  if (dashboardData) {
-    dashboardCoursesCount = (dashboardData.courses && typeof dashboardData.courses === 'object' && !Array.isArray(dashboardData.courses))
-      ? dashboardData.courses.total
-      : (Array.isArray(dashboardData.courses) ? dashboardData.courses.length : (dashboardData.published_courses ?? dashboardData.stats?.published_courses));
-
-    dashboardStudentsCount = dashboardData.new_students?.total ?? dashboardData.active_students ?? dashboardData.stats?.active_students;
-  }
-
-  const coursesUsed = dashboardCoursesCount ?? userData?.courses_count ?? getUsedVal(coursesLimitObj, 0);
-  const coursesLimit = getLimitVal(coursesLimitObj, 5);
+  // Read usage limit values directly and strictly from my-usage-limit API objects
+  const coursesUsed = getUsedVal(coursesLimitObj, 0);
+  const coursesLimit = getLimitVal(coursesLimitObj, 50);
 
   const rawStorageUsed = getUsedVal(storageLimitObj, 0);
-  const rawStorageLimit = getLimitVal(storageLimitObj, 10);
+  const rawStorageLimit = getLimitVal(storageLimitObj, 100);
 
   let storageUsedGB = '0 جيجابايت';
   if (rawStorageUsed !== null) {
@@ -202,7 +191,7 @@ export default function DashboardTopBanners() {
   }
   const storageLimitGB = `${rawStorageLimit} جيجابايت`;
 
-  const studentsUsed = dashboardStudentsCount ?? userData?.students_count ?? getUsedVal(studentsLimitObj, 0);
+  const studentsUsed = getUsedVal(studentsLimitObj, 0);
   const studentsLimit = getLimitVal(studentsLimitObj, 50);
 
   // 3. Verification State
