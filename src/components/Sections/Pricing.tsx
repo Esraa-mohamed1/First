@@ -68,6 +68,10 @@ const Pricing = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch pt-12">
                     {displayPlans.map((plan, index) => {
                         const isPopular = plan.recomnd === 1;
+                        const rawFeatures =
+                            plan.packageFeatures ||
+                            plan.package_features ||
+                            (Array.isArray(plan.features) ? plan.features : []);
 
                         return (
                             <div
@@ -89,18 +93,29 @@ const Pricing = () => {
                                     </div>
                                 </div>
                                 <ul className="list-none p-0 mb-10 flex-grow">
-                                    {(plan.package_features && plan.package_features.length > 0 ? plan.package_features :
-                                        (Array.isArray(plan.features) ? plan.features : [])).slice(0, 5).map((feature: any, idx: number) => (
-                                            <li key={idx} className="flex items-start justify-start gap-3 mb-5 text-[0.95rem] font-bold">
+                                    {rawFeatures.map((feature: any, idx: number) => {
+                                        const label =
+                                            typeof feature === 'string'
+                                                ? feature
+                                                : feature.lable ||
+                                                  feature.label ||
+                                                  feature.title ||
+                                                  '';
+
+                                        if (!label) return null;
+
+                                        return (
+                                            <li key={feature.id || idx} className="flex items-start justify-start gap-3 mb-5 text-[0.95rem] font-bold">
                                                 <div className="w-5 h-5 flex-shrink-0 rounded-full flex items-center justify-center p-1 mt-0.5 bg-[#4F83FF] text-white">
                                                     <Check size={14} strokeWidth={4} />
                                                 </div>
                                                 <span className="text-right leading-snug text-[#4a4a4a]">
-                                                    {typeof feature === 'string' ? feature : feature.lable || feature.title || feature.value}
+                                                    {label}
                                                 </span>
                                             </li>
-                                        ))}
-                                    {(!plan.package_features || plan.package_features.length === 0) && (!plan.features || plan.features.length === 0) && (
+                                        );
+                                    })}
+                                    {rawFeatures.length === 0 && (
                                         <li className="text-center text-gray-400 py-4 ">
                                             لا توجد مميزات إضافية
                                         </li>

@@ -156,25 +156,7 @@ export default function AddStudentModal({ isOpen, onClose, onStudentAdded }: Add
               </div>
             </div>
 
-            {/* Role Dropdown */}
-            <div className="space-y-2">
-              <label className="block text-sm font-black text-gray-900">
-                الدور <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <UserIcon className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  className="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 focus:bg-white font-bold text-sm transition-all appearance-none text-gray-900"
-                >
-                  <option value="student">طالب</option>
-                  <option value="admin">مسؤول</option>
-                  <option value="academy">مدرب</option>
-                </select>
-              </div>
-            </div>
+
           </div>
         </div>
 
