@@ -116,8 +116,14 @@ export default function DashboardTopBanners() {
   const packageName = rawPackageName || (userData?.status_payment === 'free_trial' ? 'الباقة التجريبية المجانية' : 'الباقة الحالية');
 
   // 2. Extract Usage Limits (Courses, Storage, Students) directly from my-usage-limit API
+  const limitsArray = Array.isArray(usageLimits)
+    ? usageLimits
+    : (usageLimits && typeof usageLimits === 'object' && Array.isArray((usageLimits as any).data)
+      ? (usageLimits as any).data
+      : []);
+
   const allLimitItems = [
-    ...(Array.isArray(usageLimits) ? usageLimits : (Array.isArray(usageLimits?.data) ? usageLimits.data : [])),
+    ...limitsArray,
     ...(Array.isArray(packageInfo?.features) ? packageInfo.features : []),
   ];
 
