@@ -3,7 +3,11 @@ export type PackageStatus = 'active' | 'inactive';
 export interface Feature {
   id: number;
   title: string;
-  value?: string; 
+  value?: string;
+  key?: string;
+  key_feature?: string;
+  label?: string;
+  lable?: string;
 }
 
 export interface PackageFeatureAssociation {
