@@ -57,8 +57,8 @@ export default function AcademySubscriptionsPage() {
   const [totalItems, setTotalItems] = useState(0);
   const pageSize = 10;
 
-  // Receipt Modal State
-  const [previewReceiptUrl, setPreviewReceiptUrl] = useState<string | null>(null);
+  // Payment Proof Modal State
+  const [previewPaymentProofUrl, setPreviewPaymentProofUrl] = useState<string | null>(null);
 
   // Action Loading State
   const [approvingId, setApprovingId] = useState<number | string | null>(null);
@@ -69,15 +69,17 @@ export default function AcademySubscriptionsPage() {
     setApprovingId(id);
     try {
       const response = await approveAcademySubscription(id);
-      if (response.status || response.success) {
-        toast.success('تم قبول الاشتراك بنجاح');
-        await fetchSubscriptions();
+      if (response?.status === false || response?.success === false) {
+        toast.error(response?.message || 'فشل في قبول الاشتراك');
       } else {
-        toast.error(response.message || 'فشل في قبول الاشتراك');
+        toast.success('تم قبول وتفعيل الاشتراك بنجاح', {
+          icon: <CheckCircle2 className="text-emerald-500" size={20} />
+        });
+        await fetchSubscriptions();
       }
     } catch (error: any) {
       console.error('Failed to approve subscription:', error);
-      toast.error(error.message || 'حدث خطأ أثناء قبول الاشتراك');
+      toast.error(error?.message || 'حدث خطأ أثناء قبول الاشتراك');
     } finally {
       setApprovingId(null);
     }
@@ -439,18 +441,18 @@ export default function AcademySubscriptionsPage() {
                           </div>
                         </td>
 
-                        {/* 6. Receipt Thumbnail / Placeholder */}
+                        {/* 6. Payment Proof Thumbnail / Placeholder */}
                         <td className="px-6 py-5 whitespace-nowrap text-center">
-                          {sub.receipt ? (
+                          {sub.paymentProof ? (
                             <div className="inline-flex items-center justify-center">
                               <button
                                 type="button"
-                                onClick={() => setPreviewReceiptUrl(sub.receipt || null)}
+                                onClick={() => setPreviewPaymentProofUrl(sub.paymentProof || null)}
                                 className="relative group/receipt w-12 h-12 rounded-xl overflow-hidden border border-gray-200 hover:border-blue-400 shadow-2xs hover:shadow-md transition-all cursor-pointer bg-gray-50 focus:outline-hidden"
-                                title="انقر لتكبير الإيصال"
+                                title="انقر لتكبير إيصال الدفع"
                               >
                                 <img
-                                  src={sub.receipt}
+                                  src={sub.paymentProof}
                                   alt="إيصال الدفع"
                                   className="w-full h-full object-cover transition-transform duration-200 group-hover/receipt:scale-110"
                                   onError={(e) => {
@@ -565,11 +567,11 @@ export default function AcademySubscriptionsPage() {
         )}
       </div>
 
-      {/* 5. Lightbox Modal for Receipt Preview */}
-      {previewReceiptUrl && (
+      {/* 5. Lightbox Modal for Payment Proof Preview */}
+      {previewPaymentProofUrl && (
         <div
           className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200"
-          onClick={() => setPreviewReceiptUrl(null)}
+          onClick={() => setPreviewPaymentProofUrl(null)}
         >
           <div
             className="relative bg-white rounded-3xl p-4 md:p-6 max-w-2xl w-full shadow-2xl border border-gray-100 flex flex-col items-center gap-4 animate-in zoom-in-95 duration-200"
@@ -585,7 +587,7 @@ export default function AcademySubscriptionsPage() {
               </div>
               <div className="flex items-center gap-2">
                 <a
-                  href={previewReceiptUrl}
+                  href={previewPaymentProofUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
@@ -595,7 +597,7 @@ export default function AcademySubscriptionsPage() {
                 </a>
                 <button
                   type="button"
-                  onClick={() => setPreviewReceiptUrl(null)}
+                  onClick={() => setPreviewPaymentProofUrl(null)}
                   className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-all cursor-pointer"
                   title="إغلاق"
                 >
@@ -607,7 +609,7 @@ export default function AcademySubscriptionsPage() {
             {/* Modal Image Body */}
             <div className="w-full max-h-[70vh] flex items-center justify-center bg-gray-50 rounded-2xl overflow-hidden p-2 border border-gray-100">
               <img
-                src={previewReceiptUrl}
+                src={previewPaymentProofUrl}
                 alt="إيصال الدفع بالحجم الكامل"
                 className="max-h-[65vh] w-auto object-contain rounded-xl shadow-xs"
               />
