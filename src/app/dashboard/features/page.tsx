@@ -137,7 +137,7 @@ export default function FeaturesPage() {
                             <thead>
                                 <tr className="bg-gray-50/50">
                                     <th className="px-8 py-5 text-right text-xs font-black text-gray-400 uppercase tracking-wider">عنوان الميزة (Title)</th>
-                                    <th className="px-8 py-5 text-right text-xs font-black text-gray-400 uppercase tracking-wider">المفتاح البرمجي (Key)</th>
+                                    {/* <th className="px-8 py-5 text-right text-xs font-black text-gray-400 uppercase tracking-wider">المفتاح البرمجي (Key)</th> */}
                                     <th className="px-8 py-5 text-right text-xs font-black text-gray-400 uppercase tracking-wider">الاسم المعروض (Label)</th>
                                     <th className="px-8 py-5 text-center text-xs font-black text-gray-400 uppercase tracking-wider">الإجراءات</th>
                                 </tr>
@@ -150,11 +150,11 @@ export default function FeaturesPage() {
                                                 {feature.title || '—'}
                                             </div>
                                         </td>
-                                        <td className="px-8 py-6 whitespace-nowrap text-right">
+                                        {/* <td className="px-8 py-6 whitespace-nowrap text-right">
                                             <span className="font-mono text-xs font-bold px-2.5 py-1 bg-gray-100 text-gray-700 rounded-lg" dir="ltr">
                                                 {feature.key || feature.key_feature || '—'}
                                             </span>
-                                        </td>
+                                        </td> */}
                                         <td className="px-8 py-6 whitespace-nowrap font-bold text-blue-600 text-right">
                                             <div className="flex items-center">
                                                 {feature.lable || feature.label || '—'}
@@ -230,8 +230,8 @@ export default function FeaturesPage() {
                                 />
                             </div>
 
-                            {/* Key (Read-only) */}
-                            <div className="space-y-1.5 text-right">
+                            {/* Key (Read-only) - Hidden */}
+                            {/* <div className="space-y-1.5 text-right">
                                 <label className="block text-xs font-black text-gray-500 px-1">المفتاح البرمجي (Key) - للقراءة فقط</label>
                                 <input
                                     type="text"
@@ -241,7 +241,7 @@ export default function FeaturesPage() {
                                     dir="ltr"
                                     className="w-full bg-gray-100 border border-gray-200/80 rounded-2xl p-4 text-left font-mono font-bold text-gray-500 cursor-not-allowed select-none"
                                 />
-                            </div>
+                            </div> */}
 
                             {/* Label (Editable) */}
                             <div className="space-y-1.5 text-right">

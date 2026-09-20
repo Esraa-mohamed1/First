@@ -293,7 +293,7 @@ export default function AcademiesPage() {
           </h2>
           <p className="text-sm font-bold text-gray-500 mt-1">عرض وإدارة الأكاديميات المسجلة، التحكم في بياناتها وحالتها التشغيلية</p>
         </div>
-        <div className="flex items-center gap-3">
+        {/* <div className="flex items-center gap-3">
           <button
             onClick={() => handleOpenModal()}
             className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3.5 rounded-2xl font-black shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all duration-300 active:scale-95 text-sm"
@@ -301,7 +301,7 @@ export default function AcademiesPage() {
             <Plus size={20} strokeWidth={2.5} />
             <span>إضافة أكاديمية جديدة</span>
           </button>
-        </div>
+        </div> */}
       </div>
 
       {/* Overview Stats (Option A: Global Total + Page-scoped Active/Inactive) */}

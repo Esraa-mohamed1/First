@@ -335,8 +335,8 @@ export default function SuperAdminSettingsPage() {
                     </div>
                   </div>
 
-                  {/* Phone */}
-                  <div className="space-y-2 text-right md:col-span-2">
+                  {/* Phone - Hidden */}
+                  {/* <div className="space-y-2 text-right md:col-span-2">
                     <label className="text-sm font-bold text-gray-700 block pr-1">
                       رقم الهاتف
                     </label>
@@ -355,7 +355,7 @@ export default function SuperAdminSettingsPage() {
                         className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                       />
                     </div>
-                  </div>
+                  </div> */}
                 </div>
 
                 {/* Save Button */}
@@ -397,7 +397,8 @@ export default function SuperAdminSettingsPage() {
               </div>
             </div>
 
-            <div className="space-y-4 pt-2">
+            {/* Change Password Button - Hidden */}
+            {/* <div className="space-y-4 pt-2">
               <button
                 type="button"
                 onClick={() => router.push('/auth/reset-password')}
@@ -424,7 +425,7 @@ export default function SuperAdminSettingsPage() {
                   className="text-gray-400 group-hover:text-blue-600 group-hover:-translate-x-1 transition-all"
                 />
               </button>
-            </div>
+            </div> */}
 
             <div className="p-4 bg-blue-50/60 rounded-2xl border border-blue-100/80 text-right space-y-1">
               <div className="flex items-center gap-2 text-blue-700 font-black text-xs">
