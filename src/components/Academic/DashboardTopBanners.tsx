@@ -115,10 +115,58 @@ export default function DashboardTopBanners() {
 
   const packageName = rawPackageName || (userData?.status_payment === 'free_trial' ? 'الباقة التجريبية المجانية' : 'الباقة الحالية');
 
-  // 2. Extract Usage Limits (Courses, Storage, Students)
-  const coursesLimitObj = usageLimits.find((l: any) => l.feature_slug === 'max_courses' || l.slug === 'courses_limit' || l.name === 'عدد الدورات');
-  const storageLimitObj = usageLimits.find((l: any) => l.feature_slug === 'storage_limit' || l.slug === 'storage_limit' || l.name === 'المساحة');
-  const studentsLimitObj = usageLimits.find((l: any) => l.feature_slug === 'max_students' || l.slug === 'students_limit' || l.name === 'عدد الطلاب');
+  // 2. Extract Usage Limits (Courses, Storage, Students) directly from my-usage-limit API
+  const allLimitItems = [
+    ...(Array.isArray(usageLimits) ? usageLimits : (Array.isArray(usageLimits?.data) ? usageLimits.data : [])),
+    ...(Array.isArray(packageInfo?.features) ? packageInfo.features : []),
+  ];
+
+  const coursesLimitObj = allLimitItems.find((l: any) =>
+    l.key_feature === 'count_course' ||
+    l.key_feature === 'max_courses' ||
+    l.feature_slug === 'max_courses' ||
+    l.slug === 'courses_limit' ||
+    l.name === 'عدد الدورات' ||
+    (l.label && String(l.label).includes('دورات'))
+  );
+
+  const storageLimitObj = allLimitItems.find((l: any) =>
+    l.key_feature === 'storage_space' ||
+    l.key_feature === 'storage_limit' ||
+    l.feature_slug === 'storage_limit' ||
+    l.slug === 'storage_limit' ||
+    l.name === 'المساحة' ||
+    (l.label && (String(l.label).includes('مساحة') || String(l.label).includes('تخزين')))
+  );
+
+  const studentsLimitObj = allLimitItems.find((l: any) =>
+    l.key_feature === 'count_student' ||
+    l.key_feature === 'max_students' ||
+    l.feature_slug === 'max_students' ||
+    l.slug === 'students_limit' ||
+    l.name === 'عدد الطلاب' ||
+    (l.label && String(l.label).includes('طلاب'))
+  );
+
+  const getLimitVal = (obj: any, fallback: number) => {
+    if (!obj) return fallback;
+    const v = obj.value ?? obj.total_limit ?? obj.limit ?? obj.max;
+    if (v !== undefined && v !== null && v !== '') {
+      const num = parseFloat(String(v));
+      if (!isNaN(num)) return num;
+    }
+    return fallback;
+  };
+
+  const getUsedVal = (obj: any, fallback: number) => {
+    if (!obj) return fallback;
+    const v = obj.used_amount ?? obj.used ?? obj.current_usage ?? obj.used_count;
+    if (v !== undefined && v !== null && v !== '') {
+      const num = parseFloat(String(v));
+      if (!isNaN(num)) return num;
+    }
+    return fallback;
+  };
 
   // Extract real numbers from dashboardData if available
   let dashboardCoursesCount = undefined;
@@ -132,11 +180,11 @@ export default function DashboardTopBanners() {
     dashboardStudentsCount = dashboardData.new_students?.total ?? dashboardData.active_students ?? dashboardData.stats?.active_students;
   }
 
-  const coursesUsed = dashboardCoursesCount ?? userData?.courses_count ?? (coursesLimitObj ? parseFloat(coursesLimitObj.used_amount ?? coursesLimitObj.used ?? '0') : 0);
-  const coursesLimit = coursesLimitObj ? parseFloat(coursesLimitObj.total_limit ?? coursesLimitObj.limit ?? '5') : 5;
+  const coursesUsed = dashboardCoursesCount ?? userData?.courses_count ?? getUsedVal(coursesLimitObj, 0);
+  const coursesLimit = getLimitVal(coursesLimitObj, 5);
 
-  const rawStorageUsed = storageLimitObj ? parseFloat(storageLimitObj.used_amount ?? storageLimitObj.used ?? '0') : 0;
-  const rawStorageLimit = storageLimitObj ? parseFloat(storageLimitObj.total_limit ?? storageLimitObj.limit ?? '10') : 10;
+  const rawStorageUsed = getUsedVal(storageLimitObj, 0);
+  const rawStorageLimit = getLimitVal(storageLimitObj, 10);
 
   let storageUsedGB = '0 جيجابايت';
   if (rawStorageUsed !== null) {
@@ -148,8 +196,8 @@ export default function DashboardTopBanners() {
   }
   const storageLimitGB = `${rawStorageLimit} جيجابايت`;
 
-  const studentsUsed = dashboardStudentsCount ?? userData?.students_count ?? (studentsLimitObj ? parseFloat(studentsLimitObj.used_amount ?? studentsLimitObj.used ?? '0') : 0);
-  const studentsLimit = studentsLimitObj ? parseFloat(studentsLimitObj.total_limit ?? studentsLimitObj.limit ?? '50') : 50;
+  const studentsUsed = dashboardStudentsCount ?? userData?.students_count ?? getUsedVal(studentsLimitObj, 0);
+  const studentsLimit = getLimitVal(studentsLimitObj, 50);
 
   // 3. Verification State
   const isEmailVerified = !!userData?.email_verified_at;

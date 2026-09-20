@@ -121,11 +121,16 @@ export const verifyOtp = async (contact: string, otp: string, countryCode?: stri
 
 export const getMyUsageLimit = async (): Promise<any> => {
   try {
-    const response = await api.get<any>('https://api.darab.academy/api/academy/my-usage-limit');
-    return response.data;
+    const response = await academyApi.get<any>('my-usage-limit');
+    return response.data?.data || response.data;
   } catch (error: any) {
-    console.error('Failed to get my usage limit:', error);
-    throw error.response?.data || error;
+    try {
+      const fallback = await api.get<any>('https://api.darab.academy/api/academy/my-usage-limit');
+      return fallback.data?.data || fallback.data;
+    } catch (err: any) {
+      console.error('Failed to get my usage limit:', err);
+      return [];
+    }
   }
 };
 
