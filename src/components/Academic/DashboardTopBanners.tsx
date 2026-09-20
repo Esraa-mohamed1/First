@@ -67,8 +67,22 @@ export default function DashboardTopBanners() {
   let remainingDays = 0;
   let totalDays = 30;
 
-  const startDateStr = packageInfo?.start_date || packageInfo?.package?.start_date || packageInfo?.subscription?.start_date;
-  const endDateStr = packageInfo?.end_date || packageInfo?.package?.end_date || packageInfo?.subscription?.end_date;
+  const pkgDetails =
+    packageInfo?.package_info ||
+    packageInfo?.data?.package_info ||
+    packageInfo?.subscription ||
+    packageInfo?.package ||
+    packageInfo;
+
+  const startDateStr =
+    pkgDetails?.start_date ||
+    pkgDetails?.created_at ||
+    packageInfo?.start_date;
+
+  const endDateStr =
+    pkgDetails?.end_date ||
+    pkgDetails?.expires_at ||
+    packageInfo?.end_date;
 
   if (startDateStr && endDateStr) {
     const startMs = new Date(startDateStr).getTime();
@@ -92,13 +106,14 @@ export default function DashboardTopBanners() {
   }
 
   const rawPackageName =
+    pkgDetails?.package_name ||
+    pkgDetails?.name ||
+    pkgDetails?.title ||
     packageInfo?.package_name ||
     packageInfo?.name ||
-    packageInfo?.package?.name ||
-    packageInfo?.package?.package_name ||
     '';
 
-  const packageName = rawPackageName || (userData?.status_payment === 'free_trial' ? 'الباقة التجريبية المجانية' : 'الباقة التجريبية المجانية');
+  const packageName = rawPackageName || (userData?.status_payment === 'free_trial' ? 'الباقة التجريبية المجانية' : 'الباقة الحالية');
 
   // 2. Extract Usage Limits (Courses, Storage, Students)
   const coursesLimitObj = usageLimits.find((l: any) => l.feature_slug === 'max_courses' || l.slug === 'courses_limit' || l.name === 'عدد الدورات');
