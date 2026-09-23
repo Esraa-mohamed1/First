@@ -239,17 +239,17 @@ export default function CreateCourseClient() {
   const [subjectsList, setSubjectsList] = useState<ClassificationItem[]>([]);
   const [academicYearsList, setAcademicYearsList] = useState<ClassificationItem[]>([]);
 
-  // Modal State for adding Grade/Subject/Term/Year pop-up
+  // Modal State for adding Grade/Subject pop-up
   const [addClassificationModal, setAddClassificationModal] = useState<{
     isOpen: boolean;
-    type: 'grade' | 'semester' | 'subject' | 'year';
+    type: 'grade' | 'subject';
   }>({
     isOpen: false,
     type: 'grade',
   });
   const [previewVideoLesson, setPreviewVideoLesson] = useState<any | null>(null);
 
-  const handleClassificationSuccess = async (type: 'grade' | 'semester' | 'subject' | 'year', newItem: any) => {
+  const handleClassificationSuccess = async (type: 'grade' | 'subject', newItem: any) => {
     try {
       const formatCls = (items: any[], isGrade = false) => {
         return (items || []).map((item: any, i: number) => ({
@@ -2089,7 +2089,7 @@ export default function CreateCourseClient() {
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 items-end">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 items-end">
                       <div>
                         <label className="block text-sm font-bold mb-2 text-slate-800">الصف الدراسي</label>
                         <div className="flex items-center gap-2 min-w-0 w-full">
@@ -2123,32 +2123,6 @@ export default function CreateCourseClient() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-bold mb-2 text-slate-800">الفصل الدراسي</label>
-                        <div className="flex items-center gap-2 min-w-0 w-full">
-                          <select
-                            value={semester}
-                            onChange={(e) => setSemester(e.target.value)}
-                            className="flex-1 min-w-0 border border-slate-300 rounded-xl px-3 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-xs sm:text-sm text-slate-900 font-bold bg-white cursor-pointer truncate"
-                          >
-                            <option value="">اختر الترم...</option>
-                            {activeSemesters.map((s) => (
-                              <option key={s.id} value={s.id}>
-                                {s.name}
-                              </option>
-                            ))}
-                          </select>
-                          <button
-                            type="button"
-                            onClick={() => setAddClassificationModal({ isOpen: true, type: 'semester' })}
-                            className="w-11 h-11 shrink-0 flex items-center justify-center bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors text-slate-700 cursor-pointer shadow-2xs"
-                            title="إضافة فصل دراسي جديد"
-                          >
-                            <span className="material-symbols-outlined text-xl">add</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      <div>
                         <label className="block text-sm font-bold mb-2 text-slate-800">المادة</label>
                         <div className="flex items-center gap-2 min-w-0 w-full">
                           <select
@@ -2168,32 +2142,6 @@ export default function CreateCourseClient() {
                             onClick={() => setAddClassificationModal({ isOpen: true, type: 'subject' })}
                             className="w-11 h-11 shrink-0 flex items-center justify-center bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors text-slate-700 cursor-pointer shadow-2xs"
                             title="إضافة مادة دراسية جديدة"
-                          >
-                            <span className="material-symbols-outlined text-xl">add</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-bold mb-2 text-slate-800">العام الدراسي</label>
-                        <div className="flex items-center gap-2 min-w-0 w-full">
-                          <select
-                            value={academicYear}
-                            onChange={(e) => setAcademicYear(e.target.value)}
-                            className="flex-1 min-w-0 border border-slate-300 rounded-xl px-3 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-xs sm:text-sm text-slate-900 font-bold bg-white cursor-pointer truncate"
-                          >
-                            <option value="">اختر العام الدراسي...</option>
-                            {activeYears.map((y) => (
-                              <option key={y.id} value={y.id}>
-                                {y.name}
-                              </option>
-                            ))}
-                          </select>
-                          <button
-                            type="button"
-                            onClick={() => setAddClassificationModal({ isOpen: true, type: 'year' })}
-                            className="w-11 h-11 shrink-0 flex items-center justify-center bg-slate-100 border border-slate-300 rounded-xl hover:bg-slate-200 transition-colors text-slate-700 cursor-pointer shadow-2xs"
-                            title="إضافة عام دراسي جديد"
                           >
                             <span className="material-symbols-outlined text-xl">add</span>
                           </button>

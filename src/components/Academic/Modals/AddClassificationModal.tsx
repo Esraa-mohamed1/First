@@ -6,8 +6,6 @@ import toast from 'react-hot-toast';
 import {
   createGrade,
   createSubject,
-  createTerm,
-  createAcademicYear,
   getGrades,
   ClassificationItem
 } from '@/services/academic-classification';
@@ -15,11 +13,11 @@ import {
 interface AddClassificationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialType?: 'grade' | 'semester' | 'subject' | 'year';
+  initialType?: 'grade' | 'subject';
   availableGrades?: ClassificationItem[];
   currentGradeId?: string;
   isSchoolTeacher?: boolean;
-  onSuccess: (type: 'grade' | 'semester' | 'subject' | 'year', newItem: any) => void;
+  onSuccess: (type: 'grade' | 'subject', newItem: any) => void;
 }
 
 export default function AddClassificationModal({
@@ -31,7 +29,7 @@ export default function AddClassificationModal({
   isSchoolTeacher = false,
   onSuccess,
 }: AddClassificationModalProps) {
-  const [activeTab, setActiveTab] = useState<'grade' | 'semester' | 'subject' | 'year'>(initialType);
+  const [activeTab, setActiveTab] = useState<'grade' | 'subject'>(initialType);
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
   const [stage, setStage] = useState('المرحلة الثانوية');
@@ -89,18 +87,6 @@ export default function AddClassificationModal({
         payload.grade_id = selectedGradeId;
         created = await createSubject(payload);
         toast.success('تمت إضافة المادة الدراسية بنجاح!');
-      } else if (activeTab === 'semester') {
-        if (!selectedGradeId) {
-          toast.error('يرجى اختيار الصف الدراسي للترم');
-          setLoading(false);
-          return;
-        }
-        payload.grade_id = selectedGradeId;
-        created = await createTerm(payload);
-        toast.success('تمت إضافة الفصل الدراسي بنجاح!');
-      } else if (activeTab === 'year') {
-        created = await createAcademicYear(payload);
-        toast.success('تمت إضافة العام الدراسي بنجاح!');
       }
 
       setName('');
@@ -136,17 +122,13 @@ export default function AddClassificationModal({
               {isSchoolTeacher
                 ? (activeTab === 'grade'
                     ? 'إضافة صف دراسي جديد'
-                    : activeTab === 'subject'
-                    ? 'إضافة مادة دراسية جديدة'
-                    : activeTab === 'semester'
-                    ? 'إضافة ترم دراسي جديد'
-                    : 'إضافة عام دراسي جديد')
+                    : 'إضافة مادة دراسية جديدة')
                 : 'إضافة تصنيف دراسي جديد'}
             </h2>
             <p className="text-xs font-bold text-slate-500">
               {isSchoolTeacher
-                ? `أدخل بيانات ${activeTab === 'subject' ? 'المادة' : activeTab === 'grade' ? 'الصف' : 'العنصر'} المطلوب لإضافته مباشرة`
-                : 'أضف صف دراسي، مادة، أو ترم جديد مباشرة للنظام'}
+                ? `أدخل بيانات ${activeTab === 'subject' ? 'المادة' : 'الصف'} المطلوب لإضافته مباشرة`
+                : 'أضف صف دراسي أو مادة جديدة مباشرة للنظام'}
             </p>
           </div>
         </div>
@@ -172,24 +154,6 @@ export default function AddClassificationModal({
             >
               مادة دراسية
             </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('semester')}
-              className={`flex-1 py-2 px-3 text-xs font-black rounded-xl transition-all cursor-pointer ${
-                activeTab === 'semester' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              ترم دراسي
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('year')}
-              className={`flex-1 py-2 px-3 text-xs font-black rounded-xl transition-all cursor-pointer ${
-                activeTab === 'year' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              عام دراسي
-            </button>
           </div>
         )}
 
@@ -207,16 +171,12 @@ export default function AddClassificationModal({
               placeholder={
                 activeTab === 'grade'
                   ? 'مثال: الصف الثالث الثانوي'
-                  : activeTab === 'subject'
-                  ? 'مثال: الفيزياء'
-                  : activeTab === 'semester'
-                  ? 'مثال: الفصل الدراسي الأول'
-                  : 'مثال: 2025/2026'
+                  : 'مثال: الفيزياء'
               }
             />
           </div>
 
-          {(activeTab === 'subject' || activeTab === 'semester') && (
+          {activeTab === 'subject' && (
             <div>
               <label className="block text-xs font-black mb-1.5 text-slate-800">
                 الصف الدراسي <span className="text-red-500">*</span>
@@ -282,7 +242,7 @@ export default function AddClassificationModal({
               className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black shadow-md shadow-blue-100 transition-all flex items-center gap-2 cursor-pointer"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              <span>{isSchoolTeacher ? `إضافة ${activeTab === 'subject' ? 'المادة' : activeTab === 'grade' ? 'الصف' : 'العنصر'}` : 'إضافة التصنيف'}</span>
+              <span>{isSchoolTeacher ? `إضافة ${activeTab === 'subject' ? 'المادة' : 'الصف'}` : 'إضافة التصنيف'}</span>
             </button>
           </div>
         </form>

@@ -8,7 +8,7 @@ import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Image from 'next/image';
 import SelectCourseTypeModal from './Modals/SelectCourseTypeModal';
-import { clearUserSessionAndCache } from '@/lib/auth-storage';
+import { clearUserSessionAndCache, isSchoolTeacherRole } from '@/lib/auth-storage';
 import { getMeProfile } from '@/services/auth';
 
 interface SidebarProps {
@@ -139,14 +139,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         { label: 'دورة لايف اون لاين', href: '/academic/courses/live-online' },
         { label: 'دورة حضوري', href: '/academic/courses/in-person' },
 
-        ...(user?.role === 'teacherSchool'
-          ? [
-            {
-              label: 'التصنيف والصفوف الدراسية',
-              href: '/academic/courses/categories',
-            },
-          ]
-          : []),
+        {
+          label: 'التصنيف والصفوف الدراسية',
+          href: '/academic/courses/categories',
+        },
 
         { label: 'معاينة كطالب  ', href: '/academic/courses/8/student' },
       ],
