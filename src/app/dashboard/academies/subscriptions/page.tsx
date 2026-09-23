@@ -26,7 +26,7 @@ import {
   ChevronDown,
   Check
 } from 'lucide-react';
-import { getAcademySubscriptions, approveAcademySubscription } from '@/services/academy-subscriptions';
+import { getAcademySubscriptions, getAcademySubscriptionStats, approveAcademySubscription } from '@/services/academy-subscriptions';
 import { getAdminPackages } from '@/services/admin-packages';
 import {
   AcademySubscription,
@@ -84,13 +84,31 @@ export default function AcademySubscriptionsPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Filters & Pagination State
+  // Filters & Pagination State
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [packageFilter, setPackageFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'trial' | 'pending' | 'cancelled'>('all');
+  const [periodFilter, setPeriodFilter] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const pageSize = 10;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(prev => {
+        if (prev !== searchTerm) {
+          setCurrentPage(1);
+          return searchTerm;
+        }
+        return prev;
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Payment Proof Modal State
   const [previewPaymentProofUrl, setPreviewPaymentProofUrl] = useState<string | null>(null);
@@ -123,8 +141,34 @@ export default function AcademySubscriptionsPage() {
   useEffect(() => {
     const loadPackages = async () => {
       try {
-        const pkgs = await getAdminPackages();
-        setPackages(pkgs);
+        let allPackages: Package[] = [];
+        let page = 1;
+        let totalPages = 1;
+
+        do {
+          const pkgs = await getAdminPackages({ page, limit: 100 });
+          const rawList = Array.isArray(pkgs) ? pkgs : (pkgs as any).items || [];
+          allPackages = [...allPackages, ...rawList];
+
+          if (!Array.isArray(pkgs) && (pkgs as any).totalPages) {
+            totalPages = (pkgs as any).totalPages;
+          }
+          page++;
+        } while (page <= totalPages);
+
+        // Keep active packages
+        const validPkgs = allPackages.filter(pkg => {
+          if (!pkg || !pkg.id) return false;
+          if ((pkg as any).deleted_at) return false;
+          const val = pkg.is_active;
+          if (val === false || val === 0 || val === '0' || (typeof val === 'string' && val.toLowerCase() === 'false')) {
+            return false;
+          }
+          return true;
+        });
+
+        const uniquePkgs = Array.from(new Map(validPkgs.map(item => [item.id, item])).values());
+        setPackages(uniquePkgs);
       } catch (e) {
         console.error('Failed to load packages for filter:', e);
       }
@@ -132,20 +176,42 @@ export default function AcademySubscriptionsPage() {
     loadPackages();
   }, []);
 
+  const fetchStats = useCallback(async () => {
+    try {
+      const statsData = await getAcademySubscriptionStats({
+        search: debouncedSearch.trim() || undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        package_id: packageFilter !== 'all' ? packageFilter : undefined,
+        period: periodFilter !== 'all' && periodFilter !== 'custom' ? periodFilter : undefined,
+        date_from: dateFrom || undefined,
+        date_to: dateTo || undefined
+      });
+      setStats(statsData);
+    } catch (error) {
+      console.error('Failed to load subscription stats:', error);
+    }
+  }, [debouncedSearch, statusFilter, packageFilter, periodFilter, dateFrom, dateTo]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
   const fetchSubscriptions = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await getAcademySubscriptions({
-        search: searchTerm.trim() || undefined,
+        search: debouncedSearch.trim() || undefined,
         status: statusFilter !== 'all' ? statusFilter : undefined,
         package_id: packageFilter !== 'all' ? packageFilter : undefined,
+        period: periodFilter !== 'all' && periodFilter !== 'custom' ? periodFilter : undefined,
+        date_from: dateFrom || undefined,
+        date_to: dateTo || undefined,
         page: currentPage,
         limit: pageSize
       });
 
       setSubscriptions(response.items);
-      setStats(response.stats);
       setTotalPages(response.totalPages);
       setTotalItems(response.total);
     } catch (err: any) {
@@ -154,7 +220,7 @@ export default function AcademySubscriptionsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchTerm, statusFilter, packageFilter, currentPage]);
+  }, [debouncedSearch, statusFilter, packageFilter, periodFilter, dateFrom, dateTo, currentPage]);
 
   useEffect(() => {
     fetchSubscriptions();
@@ -325,6 +391,82 @@ export default function AcademySubscriptionsPage() {
               </select>
               <ChevronDown size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
+
+            {/* Period Filter Dropdown */}
+            <div className="relative min-w-[150px]">
+              <select
+                value={periodFilter}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setPeriodFilter(val);
+                  if (val !== 'custom') {
+                    setDateFrom('');
+                    setDateTo('');
+                  }
+                  setCurrentPage(1);
+                }}
+                className="w-full bg-gray-50 border border-gray-200/80 rounded-2xl pr-4 pl-9 py-3 text-sm font-bold text-gray-700 outline-none focus:border-blue-500 focus:bg-white transition-all appearance-none cursor-pointer text-right"
+              >
+                <option value="all">جميع الفترات</option>
+                <option value="today">اليوم</option>
+                <option value="week">هذا الأسبوع</option>
+                <option value="month">هذا الشهر</option>
+                <option value="year">هذه السنة</option>
+                <option value="custom">فترة مخصصة</option>
+              </select>
+              <ChevronDown size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+
+            {/* Custom Date Inputs */}
+            {periodFilter === 'custom' && (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200/80 rounded-2xl px-3 py-2.5">
+                  <span className="text-xs font-bold text-gray-400">من</span>
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => {
+                      setDateFrom(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="bg-transparent text-xs font-bold text-gray-700 outline-none cursor-pointer"
+                  />
+                </div>
+                <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200/80 rounded-2xl px-3 py-2.5">
+                  <span className="text-xs font-bold text-gray-400">إلى</span>
+                  <input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => {
+                      setDateTo(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="bg-transparent text-xs font-bold text-gray-700 outline-none cursor-pointer"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Reset Filters Button */}
+            {(searchTerm || statusFilter !== 'all' || packageFilter !== 'all' || periodFilter !== 'all' || dateFrom || dateTo) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchTerm('');
+                  setStatusFilter('all');
+                  setPackageFilter('all');
+                  setPeriodFilter('all');
+                  setDateFrom('');
+                  setDateTo('');
+                  setCurrentPage(1);
+                }}
+                className="flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-blue-600 bg-gray-100/80 hover:bg-blue-50 border border-gray-200/80 px-4 py-3 rounded-2xl transition-all cursor-pointer whitespace-nowrap"
+                title="إعادة ضبط الفلاتر"
+              >
+                <RotateCcw size={14} />
+                <span>إعادة ضبط</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -358,12 +500,15 @@ export default function AcademySubscriptionsPage() {
               <p className="text-xs text-gray-400 font-bold max-w-sm">
                 لم يتم العثور على أي نتائج وفقاً لمعايير البحث أو التصفية الحالية.
               </p>
-              {(searchTerm || statusFilter !== 'all' || packageFilter !== 'all') && (
+              {(searchTerm || statusFilter !== 'all' || packageFilter !== 'all' || periodFilter !== 'all' || dateFrom || dateTo) && (
                 <button
                   onClick={() => {
                     setSearchTerm('');
                     setStatusFilter('all');
                     setPackageFilter('all');
+                    setPeriodFilter('all');
+                    setDateFrom('');
+                    setDateTo('');
                     setCurrentPage(1);
                   }}
                   className="text-blue-600 font-bold text-sm hover:underline mt-2 cursor-pointer"

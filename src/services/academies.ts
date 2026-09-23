@@ -11,6 +11,7 @@ export interface AcademyQueryParams {
   date_from?: string;
   date_to?: string;
   period?: string;
+  search?: string;
 }
 
 export interface AcademyListResponse {
@@ -106,6 +107,9 @@ export const getAcademies = async (params?: AcademyQueryParams): Promise<Academy
     }
     if (params?.period && params.period !== 'all') {
       queryParams.period = params.period;
+    }
+    if (params?.search) {
+      queryParams.search = params.search;
     }
 
     const response = await api.get<ApiResponse<Academy[]>>('/academies', {

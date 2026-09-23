@@ -87,7 +87,21 @@ export default function AcademiesPage() {
   const [isStatsLoading, setIsStatsLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [packageFilter, setPackageFilter] = useState<string>('all');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(prev => {
+        if (prev !== searchTerm) {
+          setCurrentPage(1);
+          return searchTerm;
+        }
+        return prev;
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
   const [periodFilter, setPeriodFilter] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
@@ -139,10 +153,24 @@ export default function AcademiesPage() {
   useEffect(() => {
     const loadPackages = async () => {
       try {
-        const pkgs = await getAdminPackages();
-        const rawList = Array.isArray(pkgs) ? pkgs : (pkgs as any).items || [];
-        const validPkgs = rawList.filter(isPackageValid);
-        setPackages(validPkgs);
+        let allPackages: Package[] = [];
+        let page = 1;
+        let totalPages = 1;
+
+        do {
+          const pkgs = await getAdminPackages({ page, limit: 100 });
+          const rawList = Array.isArray(pkgs) ? pkgs : (pkgs as any).items || [];
+          allPackages = [...allPackages, ...rawList];
+
+          if (!Array.isArray(pkgs) && (pkgs as any).totalPages) {
+            totalPages = (pkgs as any).totalPages;
+          }
+          page++;
+        } while (page <= totalPages);
+
+        const validPkgs = allPackages.filter(isPackageValid);
+        const uniquePkgs = Array.from(new Map(validPkgs.map(item => [item.id, item])).values());
+        setPackages(uniquePkgs);
       } catch (e) {
         console.error('Failed to load packages:', e);
       }
@@ -159,7 +187,8 @@ export default function AcademiesPage() {
         package_id: packageFilter !== 'all' ? packageFilter : undefined,
         period: periodFilter !== 'all' && periodFilter !== 'custom' ? periodFilter : undefined,
         date_from: dateFrom || undefined,
-        date_to: dateTo || undefined
+        date_to: dateTo || undefined,
+        search: debouncedSearch.trim() !== '' ? debouncedSearch.trim() : undefined
       });
       setAcademies(response.items);
       setTotalPages(response.totalPages);
@@ -170,7 +199,7 @@ export default function AcademiesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, packageFilter, periodFilter, dateFrom, dateTo]);
+  }, [currentPage, packageFilter, periodFilter, dateFrom, dateTo, debouncedSearch]);
 
   useEffect(() => {
     fetchAcademies();
@@ -338,14 +367,6 @@ export default function AcademiesPage() {
   };
 
   const filteredAcademies = academies.filter(academy => {
-    const nameMatch = (academy.academy_name || academy.name || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const emailMatch = (academy.email || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const phoneMatch = (academy.phone || academy.phone_academy || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const linkMatch = (academy.link_academy || academy.subdomain || academy.domain || '').toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesSearch = !searchTerm.trim() || nameMatch || emailMatch || phoneMatch || linkMatch;
-    if (!matchesSearch) return false;
-
     const isActive = academy.is_active === 1 || academy.is_active === true;
     if (statusFilter === 'active' && !isActive) return false;
     if (statusFilter === 'inactive' && isActive) return false;
