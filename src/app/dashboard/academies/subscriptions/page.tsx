@@ -35,6 +35,41 @@ import {
 import { Package } from '@/types/api';
 import toast from 'react-hot-toast';
 
+function getPaginationWindow(
+  current: number,
+  total: number
+): (number | '...')[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  if (current <= 4) {
+    return [1, 2, 3, 4, 5, '...', total];
+  }
+
+  if (current >= total - 3) {
+    return [
+      1,
+      '...',
+      total - 4,
+      total - 3,
+      total - 2,
+      total - 1,
+      total
+    ];
+  }
+
+  return [
+    1,
+    '...',
+    current - 1,
+    current,
+    current + 1,
+    '...',
+    total
+  ];
+}
+
 export default function AcademySubscriptionsPage() {
   const [subscriptions, setSubscriptions] = useState<AcademySubscription[]>([]);
   const [packages, setPackages] = useState<Package[]>([]);
@@ -158,13 +193,7 @@ export default function AcademySubscriptionsPage() {
             <span>{label || 'منتهي'}</span>
           </span>
         );
-      case 'trial':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-xs font-black">
-            <Clock size={12} className="text-blue-500" />
-            <span>{label || 'فترة تجريبية'}</span>
-          </span>
-        );
+
       case 'pending':
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-black">
@@ -224,16 +253,6 @@ export default function AcademySubscriptionsPage() {
           </div>
           <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
             <CheckCircle2 size={24} />
-          </div>
-        </div>
-
-        <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex items-center justify-between">
-          <div className="space-y-1 text-right">
-            <p className="text-xs font-bold text-gray-400">فترة تجريبية</p>
-            <h3 className="text-2xl font-black text-blue-600">{stats.trialCount}</h3>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
-            <Clock size={24} />
           </div>
         </div>
 
@@ -300,7 +319,6 @@ export default function AcademySubscriptionsPage() {
               >
                 <option value="all">جميع الحالات</option>
                 <option value="active">نشطة</option>
-                <option value="trial">فترة تجريبية</option>
                 <option value="expired">منتهية</option>
                 <option value="pending">معلقة</option>
                 <option value="cancelled">ملغية</option>
@@ -539,19 +557,31 @@ export default function AcademySubscriptionsPage() {
               </button>
 
               <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setCurrentPage(p)}
-                    className={`w-8 h-8 rounded-xl font-black text-xs transition-all cursor-pointer ${
-                      currentPage === p
-                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-200'
-                        : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ))}
+                {getPaginationWindow(currentPage, totalPages).map((p, idx) => {
+                  if (p === '...') {
+                    return (
+                      <span
+                        key={`ellipsis-${idx}`}
+                        className="w-8 h-8 flex items-center justify-center text-gray-400 font-bold text-xs select-none"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setCurrentPage(p)}
+                      className={`w-8 h-8 rounded-xl font-black text-xs transition-all cursor-pointer ${
+                        currentPage === p
+                          ? 'bg-blue-600 text-white shadow-sm shadow-blue-200'
+                          : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
               </div>
 
               <button

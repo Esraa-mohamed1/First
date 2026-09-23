@@ -35,7 +35,6 @@ export function mapRawSubscriptionToDisplayModel(raw: RawAcademySubscription): A
   const statusLabels: Record<string, string> = {
     active: 'نشط',
     expired: 'منتهي',
-    trial: 'فترة تجريبية',
     pending: 'معلق',
     cancelled: 'ملغي'
   };
