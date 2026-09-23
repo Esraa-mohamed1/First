@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, User } from 'lucide-react';
+import { Menu, User, X } from 'lucide-react';
 import Image from 'next/image';
 import { getStudentProfileStatus, getMyAcademyProfile } from '@/services/student-auth';
 import { normalizeProfileImageUrl } from '@/lib/utils';
@@ -18,7 +18,12 @@ interface AcademyProfileData {
   logo?: string | null;
 }
 
-export const StudentHeader = () => {
+interface StudentHeaderProps {
+  onMenuClick?: () => void;
+  isMobileMenuOpen?: boolean;
+}
+
+export const StudentHeader = ({ onMenuClick, isMobileMenuOpen = false }: StudentHeaderProps) => {
   const pathname = usePathname() || '';
   const [user, setUser] = useState<StudentHeaderUserData>(() => {
     if (typeof window !== 'undefined') {
@@ -235,8 +240,13 @@ export const StudentHeader = () => {
   return (
     <header className="h-20 bg-white border-b border-gray-200/60 flex items-center justify-between px-6 lg:px-10 sticky top-0 z-40 shadow-sm">
       <div className="flex items-center gap-6">
-        <button className="lg:hidden text-gray-500 hover:text-gray-900 transition-colors">
-          <Menu size={24} />
+        <button
+          type="button"
+          onClick={onMenuClick}
+          className="lg:hidden text-gray-500 hover:text-gray-900 transition-colors p-2 rounded-xl hover:bg-gray-100 cursor-pointer"
+          aria-label="تنسيق القائمة الجانبية"
+        >
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
 
         <Link href="/" className="flex items-center gap-3">

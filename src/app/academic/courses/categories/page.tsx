@@ -16,7 +16,7 @@ import {
 } from '@/services/academic-classification';
 
 export default function AcademicClassificationPage() {
-  const [activeTab, setActiveTab] = useState<'grades' | 'semesters' | 'subjects' | 'years'>('grades');
+  const [activeTab, setActiveTab] = useState<'grades' | 'subjects'>('grades');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -28,9 +28,7 @@ export default function AcademicClassificationPage() {
   const getTabTitle = (tabId: string) => {
     switch (tabId) {
       case 'grades': return 'صف دراسي';
-      case 'semesters': return 'فصل دراسي';
       case 'subjects': return 'مادة دراسية';
-      case 'years': return 'عام دراسي';
       default: return 'عنصر جديد';
     }
   };
@@ -55,9 +53,7 @@ export default function AcademicClassificationPage() {
   // Local state storage per tab
   const [dataStore, setDataStore] = useState<Record<string, ClassificationItem[]>>({
     grades: [],
-    semesters: [],
-    subjects: [],
-    years: []
+    subjects: []
   });
 
   // Fetch items from backend API
@@ -67,10 +63,6 @@ export default function AcademicClassificationPage() {
       let remoteItems: any[] = [];
       if (tab === 'grades') {
         remoteItems = await getGrades();
-      } else if (tab === 'years') {
-        remoteItems = await getAcademicYears();
-      } else if (tab === 'semesters') {
-        remoteItems = await getTerms();
       } else if (tab === 'subjects') {
         remoteItems = await getSubjects();
       }
@@ -160,10 +152,6 @@ export default function AcademicClassificationPage() {
       let createdRemote: any = null;
       if (activeTab === 'grades') {
         createdRemote = await createGrade(payload);
-      } else if (activeTab === 'years') {
-        createdRemote = await createAcademicYear(payload);
-      } else if (activeTab === 'semesters') {
-        createdRemote = await createTerm(payload);
       } else if (activeTab === 'subjects') {
         createdRemote = await createSubject(payload);
       }
@@ -255,10 +243,6 @@ export default function AcademicClassificationPage() {
     try {
       if (activeTab === 'grades') {
         await updateGrade(editItemData.id, payload);
-      } else if (activeTab === 'years') {
-        await updateAcademicYear(editItemData.id, payload);
-      } else if (activeTab === 'semesters') {
-        await updateTerm(editItemData.id, payload);
       } else if (activeTab === 'subjects') {
         await updateSubject(editItemData.id, payload);
       }
@@ -285,10 +269,6 @@ export default function AcademicClassificationPage() {
       try {
         if (activeTab === 'grades') {
           await deleteGrade(id);
-        } else if (activeTab === 'years') {
-          await deleteAcademicYear(id);
-        } else if (activeTab === 'semesters') {
-          await deleteTerm(id);
         } else if (activeTab === 'subjects') {
           await deleteSubject(id);
         }
@@ -356,18 +336,6 @@ export default function AcademicClassificationPage() {
 
           <button
             type="button"
-            onClick={() => setActiveTab('semesters')}
-            className={`px-5 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${activeTab === 'semesters'
-                ? 'border-blue-600 text-blue-600 bg-white shadow-xs'
-                : 'border-transparent text-slate-500 hover:text-slate-900'
-              }`}
-          >
-            <Calendar size={16} />
-            <span>الفصول الدراسية</span>
-          </button>
-
-          <button
-            type="button"
             onClick={() => setActiveTab('subjects')}
             className={`px-5 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${activeTab === 'subjects'
                 ? 'border-blue-600 text-blue-600 bg-white shadow-xs'
@@ -376,18 +344,6 @@ export default function AcademicClassificationPage() {
           >
             <BookOpen size={16} />
             <span>المواد الدراسية</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('years')}
-            className={`px-5 py-4 text-xs font-black transition-all flex items-center gap-2 cursor-pointer border-b-2 ${activeTab === 'years'
-                ? 'border-blue-600 text-blue-600 bg-white shadow-xs'
-                : 'border-transparent text-slate-500 hover:text-slate-900'
-              }`}
-          >
-            <CalendarCheck size={16} />
-            <span>الأعوام الدراسية</span>
           </button>
         </div>
 
@@ -435,7 +391,6 @@ export default function AcademicClassificationPage() {
                     <th className="px-6 py-4 w-16">#</th>
                     <th className="px-6 py-4">الاسم والوصف</th>
                     {activeTab !== 'grades' && <th className="px-6 py-4">الصف الدراسي</th>}
-                    <th className="px-6 py-4">العام الدراسي</th>
                     <th className="px-6 py-4">الحالة</th>
                     <th className="px-6 py-4 text-left">الإجراءات</th>
                   </tr>
@@ -455,7 +410,7 @@ export default function AcademicClassificationPage() {
                           {item.grade_name || availableGrades.find(g => String(g.id) === String(item.grade_id))?.name || 'عام'}
                         </td>
                       )}
-                      <td className="px-6 py-4 text-blue-600 font-bold">{item.academic_year || '2025/2026'}</td>
+
                       <td className="px-6 py-4">
                         <span className={`px-3 py-1 rounded-full text-[10px] font-black inline-flex items-center gap-1.5 ${item.active
                             ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60'
@@ -580,42 +535,24 @@ export default function AcademicClassificationPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* الصف الدراسي (بديلاً عن المرحلة الدراسية) */}
-                {activeTab !== 'grades' ? (
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-black text-slate-700">الصف الدراسي *</label>
-                    <select
-                      value={addGradeId}
-                      onChange={(e) => setAddGradeId(e.target.value)}
-                      required
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"
-                    >
-                      <option value="" disabled>اختر الصف الدراسي...</option>
-                      {availableGrades.map((g) => (
-                        <option key={g.id} value={g.id}>
-                          {g.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ) : null}
-
-                {/* العام الدراسي */}
+              {activeTab !== 'grades' && (
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-black text-slate-700">العام الدراسي</label>
+                  <label className="block text-xs font-black text-slate-700">الصف الدراسي *</label>
                   <select
-                    value={addAcademicYear}
-                    onChange={(e) => setAddAcademicYear(e.target.value)}
+                    value={addGradeId}
+                    onChange={(e) => setAddGradeId(e.target.value)}
+                    required
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"
                   >
-                    <option value="2025/2026">2025/2026</option>
-                    <option value="2024/2025">2024/2025</option>
-                    <option value="2023/2024">2023/2024</option>
-                    <option value="2022/2023">2022/2023</option>
+                    <option value="" disabled>اختر الصف الدراسي...</option>
+                    {availableGrades.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
-              </div>
+              )}
 
               <div className="flex gap-3 pt-2">
                 <button
@@ -668,42 +605,24 @@ export default function AcademicClassificationPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* الصف الدراسي (بديلاً عن المرحلة الدراسية) */}
-                {activeTab !== 'grades' ? (
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-black text-slate-700">الصف الدراسي *</label>
-                    <select
-                      value={editItemData.grade_id || ''}
-                      onChange={(e) => setEditItemData({ ...editItemData, grade_id: e.target.value })}
-                      required
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"
-                    >
-                      <option value="" disabled>اختر الصف الدراسي...</option>
-                      {availableGrades.map((g) => (
-                        <option key={g.id} value={g.id}>
-                          {g.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ) : null}
-
-                {/* العام الدراسي */}
+              {activeTab !== 'grades' && (
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-black text-slate-700">العام الدراسي</label>
+                  <label className="block text-xs font-black text-slate-700">الصف الدراسي *</label>
                   <select
-                    value={editItemData.academic_year || '2025/2026'}
-                    onChange={(e) => setEditItemData({ ...editItemData, academic_year: e.target.value })}
+                    value={editItemData.grade_id || ''}
+                    onChange={(e) => setEditItemData({ ...editItemData, grade_id: e.target.value })}
+                    required
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"
                   >
-                    <option value="2025/2026">2025/2026</option>
-                    <option value="2024/2025">2024/2025</option>
-                    <option value="2023/2024">2023/2024</option>
-                    <option value="2022/2023">2022/2023</option>
+                    <option value="" disabled>اختر الصف الدراسي...</option>
+                    {availableGrades.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
-              </div>
+              )}
 
               <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-200/60">
                 <div className="flex flex-col gap-0.5">
