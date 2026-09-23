@@ -29,8 +29,8 @@ interface AddLessonModalProps {
 const MySwal = withReactContent(Swal);
 
 const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle, courseTitle = '', instructorName = '', onLessonAdded, courseType }: AddLessonModalProps) => {
+  const [lessonType, setLessonType] = useState<'video'>('video');
   const resolvedUnitName = unitName || unitTitle || '';
-  const [lessonType, setLessonType] = useState<'video' | 'pdf' | 'powerpoint'>('video');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [isFree, setIsFree] = useState(false);
@@ -51,23 +51,11 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle
   const isPhysical = normalizedCourseType === 'physical' || normalizedCourseType === 'offline' || normalizedCourseType === 'in-person';
   const isLive = normalizedCourseType === 'online' || normalizedCourseType === 'live-online' || normalizedCourseType === 'live_online' || normalizedCourseType === 'live';
 
-  const detectLessonType = (file: File): 'video' | 'pdf' | 'powerpoint' => {
-    const name = file.name.toLowerCase();
-    if (name.endsWith('.mp4') || name.endsWith('.mkv') || name.endsWith('.mov') || name.endsWith('.avi')) {
-      return 'video';
-    }
-    if (name.endsWith('.pdf')) {
-      return 'pdf';
-    }
-    if (name.endsWith('.ppt') || name.endsWith('.pptx')) {
-      return 'powerpoint';
-    }
-    return 'pdf';
+  const detectLessonType = (file: File): 'video' => {
+    return 'video';
   };
 
-  const activeLessonType = isPhysical
-    ? (selectedFile ? detectLessonType(selectedFile) : 'pdf')
-    : lessonType;
+  const activeLessonType = 'video';
 
   // usestate for upload progress
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -86,7 +74,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle
 
   const handleClose = () => {
     if (isSubmitting || uploadStatus === 'creating' || uploadStatus === 'uploading' || uploadStatus === 'processing') {
-      toast.success('تم إغلاق النافذة وسوف يستمر رفع وتجهيز الدرس في الخلفية حتى الاكتمال');
+      toast.success('يمكنك إغلاق هذا الدرس؛ ستتلقى إشعارًا عند اكتمال رفع الفيديو الخاص بك');
     }
     setTitle('');
     setDescription('');
@@ -109,6 +97,12 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      const name = file.name.toLowerCase();
+      const isVideo = name.endsWith('.mp4') || name.endsWith('.mkv') || name.endsWith('.mov') || name.endsWith('.avi');
+      if (!isVideo) {
+        toast.error('عفواً، يُسمح فقط برفع ملفات الفيديو في هذه المرحلة.');
+        return;
+      }
       setSelectedFile(file);
       setUploadProgress(0);
       setUploadStatus('idle');
@@ -427,19 +421,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle
         <div className="p-10 space-y-10">
           <h2 className="text-2xl font-black text-center text-gray-900">اضافة درس جديد</h2>
 
-          {(isSubmitting || uploadStatus === 'creating' || uploadStatus === 'uploading' || uploadStatus === 'processing') && (
-            <div className="max-w-2xl mx-auto bg-blue-50/90 border border-blue-200 rounded-2xl p-4 flex items-start gap-3 text-blue-900 animate-in fade-in duration-300 shadow-xs">
-              <div className="p-2 bg-blue-600 text-white rounded-xl shrink-0 mt-0.5 shadow-xs">
-                <Upload size={18} className="animate-bounce" />
-              </div>
-              <div className="space-y-1 text-right">
-                <p className="font-extrabold text-blue-950 text-sm">جاري رفع ومعالجة محتوى الدرس...</p>
-                <p className="text-xs text-blue-700 font-bold leading-relaxed">
-                  💡 <strong>تنبيه هام:</strong> يمكنك إغلاق هذه النافذة بأمان الآن، وسوف تستمر عملية رفع ومعالجة الدرس في الخلفية حتى الانتهاء بنجاح.
-                </p>
-              </div>
-            </div>
-          )}
+
 
           <div className="space-y-6 max-w-2xl mx-auto">
             {isLive ? (
@@ -564,43 +546,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle
                   ></textarea>
                 </div>
 
-                <div className="space-y-3">
-                  <label className="block text-sm font-black text-gray-900 text-right">نوع الدرس</label>
-                  <div className="relative flex bg-gray-100 p-1.5 rounded-[20px] shadow-inner">
-                    <div
-                      className="absolute top-1.5 bottom-1.5 bg-white rounded-[16px] shadow-sm transition-all duration-300 ease-in-out z-0"
-                      style={{
-                        width: 'calc(33.333% - 4px)',
-                        right: lessonType === 'powerpoint' ? '4px' : lessonType === 'pdf' ? 'calc(33.333% + 2px)' : 'calc(66.666% - 2px)',
-                      }}
-                    />
 
-                    <button
-                      type="button"
-                      onClick={() => setLessonType('powerpoint')}
-                      className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-[16px] font-bold text-sm transition-colors duration-300 ${lessonType === 'powerpoint' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                    >
-                      <FilePowerpoint size={18} />
-                      <span>ملف Powerpoint</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setLessonType('pdf')}
-                      className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-[16px] font-bold text-sm transition-colors duration-300 ${lessonType === 'pdf' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                    >
-                      <FileText size={18} />
-                      <span>ملف PDF</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setLessonType('video')}
-                      className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-[16px] font-bold text-sm transition-colors duration-300 ${lessonType === 'video' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                    >
-                      <Video size={18} />
-                      <span>فيديو</span>
-                    </button>
-                  </div>
-                </div>
 
                 {/* Clear Free / Paid Access Selection */}
                 <div className="space-y-2 text-right">
@@ -648,8 +594,8 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle
               <div className="space-y-4">
                 <label className="block text-sm font-black text-gray-900 text-right">
                   {isPhysical
-                    ? 'ملف الدرس'
-                    : (lessonType === 'video' ? 'محتوي الدرس' : lessonType === 'pdf' ? 'ملف PDF' : 'ملف Powerpoint')}
+                    ? 'ملف الدرس (فيديو فقط)'
+                    : 'محتوي الدرس (فيديو فقط)'}
                 </label>
                 {!selectedFile ? (
                   <div
@@ -659,7 +605,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept={isPhysical ? 'video/*,.pdf,.ppt,.pptx' : (lessonType === 'video' ? 'video/*' : lessonType === 'pdf' ? '.pdf' : '.ppt,.pptx')}
+                      accept="video/*"
                       className="hidden"
                       onChange={handleFileChange}
                     />
@@ -671,7 +617,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle
                         اضغط للتحميل او اسحب الملف الي هنا
                       </p>
                       <p className="text-sm font-bold text-gray-500 mt-2">
-                        الحجم الاقصي للملف : MP4,PDF,PPTX. 500MB
+                        الحجم الاقصي للملف : MP4, MOV, AVI. 500MB
                       </p>
                     </div>
                   </div>
@@ -680,10 +626,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl shadow-sm">
-                          {isPhysical
-                            ? (detectLessonType(selectedFile) === 'video' ? <Video size={28} /> : detectLessonType(selectedFile) === 'pdf' ? <FileText size={28} /> : <FilePowerpoint size={28} />)
-                            : (lessonType === 'video' ? <Video size={28} /> : lessonType === 'pdf' ? <FileText size={28} /> : <FilePowerpoint size={28} />)
-                          }
+                          <Video size={28} />
                         </div>
                         <div className="text-right">
                           <p className="text-base font-black text-gray-900 line-clamp-1 break-all" dir="ltr">{selectedFile.name}</p>
@@ -703,30 +646,7 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle
                       )}
                     </div>
 
-                    {uploadStatus !== 'idle' && (
-                      <div className="space-y-2 pt-2 border-t border-gray-100">
-                        <div className="flex justify-between items-center text-xs font-bold text-gray-600">
-                          <div className="text-right flex items-center gap-2">
-                            {uploadStatus === 'creating' && 'جاري تحضير الخوادم...'}
-                            {uploadStatus === 'uploading' && (activeLessonType === 'video' ? 'جاري رفع الفيديو للشبكة السحابية' : 'جاري رفع الملف')}
-                            {uploadStatus === 'processing' && (activeLessonType === 'video' ? 'جاري معالجة الفيديو...' : 'جاري معالجة الملف')}
-                            {uploadStatus === 'ready' && (activeLessonType === 'video' ? 'الفيديو جاهز للمشاهدة' : 'الملف جاهز')}
-                            {uploadStatus === 'error' && <span className="text-red-500">حدث خطأ أثناء الرفع</span>}
-                          </div>
-                          {uploadStatus === 'uploading' && (
-                            <div className="text-blue-600 font-black text-sm" dir="ltr">
-                              {uploadProgress.toFixed(0)}%
-                            </div>
-                          )}
-                        </div>
-                        <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-300 ease-out ${uploadStatus === 'error' ? 'bg-red-500' : 'bg-blue-600'}`}
-                            style={{ width: `${uploadProgress}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    )}
+
                   </div>
                 )}
 
@@ -743,6 +663,43 @@ const AddLessonModal = ({ isOpen, onClose, unitId, courseId, unitName, unitTitle
               </div>
             )}
           </div>
+
+          {uploadStatus !== 'idle' && (
+            <div className="max-w-2xl mx-auto bg-white border border-gray-200 rounded-3xl p-6 space-y-4 shadow-sm animate-in fade-in duration-300">
+              <div className="flex items-start gap-3 text-blue-900 bg-blue-50/80 border border-blue-100 rounded-2xl p-4">
+                <div className="p-2 bg-blue-600 text-white rounded-xl shrink-0 shadow-xs">
+                  <Upload size={18} className={uploadStatus === 'uploading' ? 'animate-bounce' : ''} />
+                </div>
+                <div className="space-y-1 text-right">
+                  <p className="font-extrabold text-blue-950 text-sm">
+                    {uploadStatus === 'creating' && 'جاري تحضير الخوادم...'}
+                    {uploadStatus === 'uploading' && 'جاري رفع الفيديو للشبكة السحابية'}
+                    {uploadStatus === 'processing' && 'جاري معالجة الفيديو...'}
+                    {uploadStatus === 'ready' && 'الفيديو جاهز للمشاهدة'}
+                    {uploadStatus === 'error' && <span className="text-red-500">حدث خطأ أثناء الرفع</span>}
+                  </p>
+                  <p className="text-xs text-blue-700 font-bold leading-relaxed">
+                    💡 <strong>تنبيه هام:</strong> يمكنك إغلاق هذا الدرس؛ ستتلقى إشعارًا عند اكتمال رفع الفيديو الخاص بك.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs font-bold text-gray-600">
+                  <span className="text-right">نسبة الاكتمال</span>
+                  <div className="text-blue-600 font-black text-sm" dir="ltr">
+                    {uploadProgress.toFixed(0)}%
+                  </div>
+                </div>
+                <div className="h-3 bg-gray-100 rounded-full overflow-hidden border border-gray-200/60 p-0.5">
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ease-out ${uploadStatus === 'error' ? 'bg-red-500' : 'bg-blue-600'}`}
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-center gap-4 max-w-2xl mx-auto pt-4">
             {isLive ? (
