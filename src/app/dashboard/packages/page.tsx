@@ -16,33 +16,79 @@ import {
   CheckCircle2,
   Gift,
   Package as PackageIcon,
-  Check
+  Check,
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getAdminPackages, deletePackage, updatePackage } from '@/services/admin-packages';
 import { Package } from '@/types/api';
 import toast from 'react-hot-toast';
+
+function getPaginationWindow(
+  current: number,
+  total: number
+): (number | '...')[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  if (current <= 4) {
+    return [1, 2, 3, 4, 5, '...', total];
+  }
+
+  if (current >= total - 3) {
+    return [
+      1,
+      '...',
+      total - 4,
+      total - 3,
+      total - 2,
+      total - 1,
+      total
+    ];
+  }
+
+  return [
+    1,
+    '...',
+    current - 1,
+    current,
+    current + 1,
+    '...',
+    total
+  ];
+}
 
 export default function PackagesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [packages, setPackages] = useState<Package[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const pageSize = 10;
 
-  useEffect(() => {
-    fetchPackages();
-  }, []);
-
-  const fetchPackages = async () => {
+  const fetchPackages = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await getAdminPackages();
-      setPackages(data);
+      const response = await getAdminPackages({
+        page: currentPage,
+        limit: pageSize
+      });
+      setPackages(response.items);
+      setTotalPages(response.totalPages);
+      setTotalItems(response.total);
     } catch (error) {
       toast.error('فشل في تحميل الباقات');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage]);
+
+  useEffect(() => {
+    fetchPackages();
+  }, [fetchPackages]);
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('هل أنت متأكد من حذف هذه الباقة؟')) return;
@@ -134,7 +180,7 @@ export default function PackagesPage() {
         <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex items-center justify-between">
           <div className="space-y-1 text-right">
             <p className="text-xs font-bold text-gray-400">إجمالي الباقات</p>
-            <h3 className="text-2xl font-black text-gray-900">{packages.length}</h3>
+            <h3 className="text-2xl font-black text-gray-900">{totalItems || packages.length}</h3>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
             <PackageIcon size={24} />
@@ -170,7 +216,7 @@ export default function PackagesPage() {
             <div className="w-3 h-3 rounded-full bg-blue-600"></div>
             <h3 className="text-xl font-black text-gray-900">قائمة الباقات</h3>
             <span className="text-xs font-bold px-3 py-1 bg-gray-100 text-gray-600 rounded-full">
-              {filteredPackages.length} باقة
+              {totalItems ? `${totalItems} باقة` : `${filteredPackages.length} باقة`}
             </span>
           </div>
 
@@ -412,6 +458,63 @@ export default function PackagesPage() {
             </div>
           )}
         </div>
+
+        {/* Pagination Bar (if totalPages > 1) */}
+        {!isLoading && totalPages > 1 && (
+          <div className="p-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold text-gray-500">
+            <div>
+              عرض {filteredPackages.length} من أصل {totalItems} باقة
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                title="الصفحة السابقة"
+              >
+                <ChevronRight size={16} />
+              </button>
+
+              <div className="flex items-center gap-1">
+                {getPaginationWindow(currentPage, totalPages).map((p, idx) => {
+                  if (p === '...') {
+                    return (
+                      <span
+                        key={`ellipsis-${idx}`}
+                        className="w-8 h-8 flex items-center justify-center text-gray-400 font-bold text-xs select-none"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setCurrentPage(p)}
+                      className={`w-8 h-8 rounded-xl font-black text-xs transition-all cursor-pointer ${
+                        currentPage === p
+                          ? 'bg-blue-600 text-white shadow-sm shadow-blue-200'
+                          : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                title="الصفحة التالية"
+              >
+                <ChevronLeft size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

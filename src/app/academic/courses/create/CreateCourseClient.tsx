@@ -401,12 +401,15 @@ export default function CreateCourseClient() {
     if (!title.trim()) {
       errors.title = 'اسم الدورة مطلوب';
     }
+    // Validate payment method for paid courses on both save AND publish
+    if (pricingType === 'paid' && selectedPaymentMethods.length === 0) {
+      errors.receiver_accounts = forPublish
+        ? 'يجب اختيار وسيلة دفع واحدة على الأقل لنشر الدورة'
+        : 'يجب اختيار وسيلة دفع واحدة على الأقل قبل الحفظ';
+    }
     if (forPublish && pricingType === 'paid') {
       if (!price || Number(price) <= 0) {
         errors.price = 'السعر مطلوب ويجب أن يكون أكبر من صفر للدورات المدفوعة';
-      }
-      if (selectedPaymentMethods.length === 0) {
-        errors.receiver_accounts = 'يجب اختيار وسيلة دفع واحدة على الأقل';
       }
     }
     if (accessDurationType === 'days' && (!accessDays || Number(accessDays) <= 0)) {
@@ -429,6 +432,7 @@ export default function CreateCourseClient() {
 
   // Publish Success & Social Share Modal State
   const [showPublishSuccessModal, setShowPublishSuccessModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [publishedCourseData, setPublishedCourseData] = useState<{ id: number | string; slug?: string; title?: string } | null>(null);
 
   const DRAFT_CACHE_KEY = `darb_create_course_draft_cache_${courseTypeParam || 'recorded'}`;
@@ -770,26 +774,38 @@ export default function CreateCourseClient() {
             // Payment Methods
             if (Array.isArray(c.receiver_accounts) && c.receiver_accounts.length > 0) {
               const pmList: AcademyPaymentMethod[] = c.receiver_accounts.map((acc: any) => {
-                const accId = typeof acc === 'object' ? acc.id : acc;
-                const accName = typeof acc === 'object' ? (acc.name || acc.account_number || `وسيلة ${accId}`) : `وسيلة ${accId}`;
+                const receiver = acc.receiver_account || acc;
+                // Prefer instructor_receiver_account_id or pivot ID over global template ID
+                // to match with academyPaymentMethods IDs
+                const accId = acc.instructor_receiver_account_id || 
+                             acc.pivot?.instructor_receiver_account_id || 
+                             acc.id || 
+                             receiver.id;
+                const accName = receiver.name || receiver.account_number || `وسيلة ${accId}`;
                 return {
                   methodId: String(accId),
                   accountName: accName,
-                  accountNumber: typeof acc === 'object' ? (acc.account_number || '') : '',
-                  customName: typeof acc === 'object' ? (acc.custom_name || '') : '',
-                  currency: c.currency || 'EGP',
+                  accountNumber: receiver.account_number || '',
+                  customName: receiver.custom_name || '',
+                  currency: receiver.currency || c.currency || 'EGP',
+                  logo: receiver.logo,
+                  type: receiver.type || 'account_number',
+                  value: receiver.value || receiver.account_value || '',
                 };
               });
               setSelectedPaymentMethods(pmList);
             } else if (Array.isArray(c.payment_methods) && c.payment_methods.length > 0) {
               const pmList: AcademyPaymentMethod[] = c.payment_methods.map((acc: any) => {
-                const accId = typeof acc === 'object' ? (acc.methodId || acc.id) : acc;
+                const accId = acc.instructor_receiver_account_id || acc.methodId || acc.id;
                 return {
                   methodId: String(accId),
                   accountName: acc.accountName || acc.name || `وسيلة ${accId}`,
                   accountNumber: acc.accountNumber || acc.account_number || '',
                   customName: acc.customName || acc.custom_name || '',
-                  currency: c.currency || 'EGP',
+                  currency: acc.currency || c.currency || 'EGP',
+                  logo: acc.logo,
+                  type: acc.type || 'account_number',
+                  value: acc.value || acc.account_value || '',
                 };
               });
               setSelectedPaymentMethods(pmList);
@@ -1203,9 +1219,9 @@ export default function CreateCourseClient() {
     }
   };
 
-  const handleNextTab = () => {
-    if (activeTab === 'info') {
-      // Validate payment method when course is paid and moving from info tab
+  const changeTabWithValidation = (targetTab: 'info' | 'content' | 'pricing' | 'landing_pages' | 'subscribers') => {
+    if (activeTab === 'info' && targetTab !== 'info') {
+      // Validate payment method when course is paid and moving away from info tab
       if (pricingType === 'paid' && selectedPaymentMethods.length === 0) {
         setFormErrors((prev) => ({ ...prev, receiver_accounts: 'يرجى اختيار وسيلة دفع واحدة على الأقل قبل المتابعة' }));
         setTimeout(() => {
@@ -1214,9 +1230,15 @@ export default function CreateCourseClient() {
         }, 50);
         return;
       }
-      setActiveTab('content');
-    } else if (activeTab === 'content') setActiveTab('landing_pages');
-    else if (activeTab === 'landing_pages') setActiveTab('subscribers');
+    }
+    setActiveTab(targetTab);
+  };
+
+  const handleNextTab = () => {
+    if (activeTab === 'info') {
+      changeTabWithValidation('content');
+    } else if (activeTab === 'content') changeTabWithValidation('landing_pages');
+    else if (activeTab === 'landing_pages') changeTabWithValidation('subscribers');
   };
 
   const handleBackTab = () => {
@@ -1227,12 +1249,33 @@ export default function CreateCourseClient() {
 
   const handleSave = async () => {
     if (isSubmitting) return;
-    if (!validateForm(false)) {
-      // Scroll to first error
-      const firstErrorEl = document.querySelector('[data-field-error]');
-      if (firstErrorEl) firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Perform validation and get errors immediately
+    const errors: Record<string, string> = {};
+    if (!title.trim()) errors.title = 'اسم الدورة مطلوب';
+    if (pricingType === 'paid' && selectedPaymentMethods.length === 0) {
+      errors.receiver_accounts = 'يجب اختيار وسيلة دفع واحدة على الأقل قبل الحفظ';
+    }
+    if (accessDurationType === 'days' && (!accessDays || Number(accessDays) <= 0)) {
+      errors.access_days = 'يرجى إدخال عدد أيام الوصول';
+    }
+    if (accessDurationType === 'until_date' && !accessUntilDate) {
+      errors.access_until_date = 'يرجى تحديد تاريخ انتهاء الوصول';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      // Switch to info tab if any of these errors exist
+      if (errors.title || errors.receiver_accounts || errors.price || errors.access_days || errors.access_until_date) {
+        setActiveTab('info');
+      }
+      setTimeout(() => {
+        const firstErrorEl = document.querySelector('[data-field-error]');
+        if (firstErrorEl) firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
       return;
     }
+
     setIsSubmitting(true);
     try {
       const createdId = await ensureCourseCreated('draft');
@@ -1256,11 +1299,36 @@ export default function CreateCourseClient() {
 
   const handlePublish = async () => {
     if (isSubmitting) return;
-    if (!validateForm(true)) {
-      const firstErrorEl = document.querySelector('[data-field-error]');
-      if (firstErrorEl) firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Perform validation and get errors immediately
+    const errors: Record<string, string> = {};
+    if (!title.trim()) errors.title = 'اسم الدورة مطلوب';
+    if (pricingType === 'paid' && selectedPaymentMethods.length === 0) {
+      errors.receiver_accounts = 'يجب اختيار وسيلة دفع واحدة على الأقل لنشر الدورة';
+    }
+    if (pricingType === 'paid' && (!price || Number(price) <= 0)) {
+      errors.price = 'السعر مطلوب ويجب أن يكون أكبر من صفر للدورات المدفوعة';
+    }
+    if (accessDurationType === 'days' && (!accessDays || Number(accessDays) <= 0)) {
+      errors.access_days = 'يرجى إدخال عدد أيام الوصول';
+    }
+    if (accessDurationType === 'until_date' && !accessUntilDate) {
+      errors.access_until_date = 'يرجى تحديد تاريخ انتهاء الوصول';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      // Switch to info tab if any of these errors exist
+      if (errors.title || errors.receiver_accounts || errors.price || errors.access_days || errors.access_until_date) {
+        setActiveTab('info');
+      }
+      setTimeout(() => {
+        const firstErrorEl = document.querySelector('[data-field-error]');
+        if (firstErrorEl) firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
       return;
     }
+
     setIsSubmitting(true);
     try {
       const totalLessons = units.reduce((acc: number, u: any) => acc + (u.lessons?.length || 0), 0);
@@ -1583,12 +1651,10 @@ export default function CreateCourseClient() {
             url: shareUrl,
           })
           .catch(() => {
-            navigator.clipboard.writeText(shareUrl);
-            toast.success('تم نسخ رابط الدورة بنجاح!');
+            setShowShareModal(true);
           });
       } else {
-        navigator.clipboard.writeText(shareUrl);
-        toast.success('تم نسخ رابط الدورة بنجاح! يمكنك مشاركته على وسائل التواصل الاجتماعي.');
+        setShowShareModal(true);
       }
     }
   };
@@ -1713,6 +1779,29 @@ export default function CreateCourseClient() {
             </div>
 
             <div className="flex items-center gap-2.5 flex-wrap">
+              {/* Share button — shown when course is created and we have an ID/slug */}
+              {courseId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const targetSlug = courseSlug || slug || String(courseId);
+                    const shareUrl = `${window.location.origin}/courses/${targetSlug}`;
+                    setPublishedCourseData({ id: courseId, slug: targetSlug, title: title });
+                    if (navigator.share) {
+                      navigator.share({ title: title || 'دورة تعليمية', url: shareUrl }).catch(() => {
+                        setShowShareModal(true);
+                      });
+                    } else {
+                      setShowShareModal(true);
+                    }
+                  }}
+                  className="px-4 py-2.5 text-sm border border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl transition-all font-bold flex items-center gap-2 shadow-xs active:scale-[0.98]"
+                  title="مشاركة رابط الدورة"
+                >
+                  <Share2 size={16} />
+                  مشاركة الدورة
+                </button>
+              )}
               <button
                 onClick={handleSave}
                 disabled={isSubmitting}
@@ -1736,28 +1825,28 @@ export default function CreateCourseClient() {
           <div className="max-w-7xl mx-auto px-6 overflow-x-auto">
             <div className="flex gap-8">
               <button
-                onClick={() => setActiveTab('info')}
+                onClick={() => changeTabWithValidation('info')}
                 className={`relative py-4 text-sm font-bold whitespace-nowrap transition-colors ${activeTab === 'info' ? 'text-blue-600 tab-active' : 'text-slate-500 hover:text-blue-600'
                   }`}
               >
                 المعلومات الأساسية
               </button>
               <button
-                onClick={() => setActiveTab('content')}
+                onClick={() => changeTabWithValidation('content')}
                 className={`relative py-4 text-sm font-bold whitespace-nowrap transition-colors ${activeTab === 'content' ? 'text-blue-600 tab-active' : 'text-slate-500 hover:text-blue-600'
                   }`}
               >
                 محتوى الدورة
               </button>
               <button
-                onClick={() => setActiveTab('landing_pages')}
+                onClick={() => changeTabWithValidation('landing_pages')}
                 className={`relative py-4 text-sm font-bold whitespace-nowrap transition-colors ${activeTab === 'landing_pages' ? 'text-blue-600 tab-active' : 'text-slate-500 hover:text-blue-600'
                   }`}
               >
                 التسويق والبيع
               </button>
               <button
-                onClick={() => setActiveTab('subscribers')}
+                onClick={() => changeTabWithValidation('subscribers')}
                 className={`relative py-4 text-sm font-bold whitespace-nowrap transition-colors ${activeTab === 'subscribers' ? 'text-blue-600 tab-active' : 'text-slate-500 hover:text-blue-600'
                   }`}
               >
@@ -4153,6 +4242,100 @@ export default function CreateCourseClient() {
                 type="button"
                 onClick={() => setShowPublishSuccessModal(false)}
                 className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                إغلاق
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showShareModal && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200" dir="rtl" onClick={() => setShowShareModal(false)}>
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl p-6 sm:p-8 relative border border-slate-200 animate-in zoom-in-95 duration-200 text-right" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-black text-slate-900 mb-2">مشاركة الدورة</h3>
+            <p className="text-slate-500 text-xs mb-6">اختر المنصة لمشاركة رابط الدورة مباشرة أو انسخ الرابط:</p>
+
+            {(() => {
+              const targetSlug = publishedCourseData?.slug || courseSlug || slug || (publishedCourseData?.id ? String(publishedCourseData.id) : (courseId ? String(courseId) : ''));
+              const fullUrl = typeof window !== 'undefined' ? `${window.location.origin}/courses/${targetSlug}` : '';
+              const encodedUrl = encodeURIComponent(fullUrl);
+              const encodedText = encodeURIComponent(publishedCourseData?.title || title || 'دورة تدريبية');
+
+              return (
+                <div className="grid grid-cols-4 gap-3 mb-6">
+                  {/* WhatsApp */}
+                  <a
+                    href={`https://api.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-all text-xs font-bold border border-emerald-100"
+                  >
+                    <span className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm">W</span>
+                    <span>واتساب</span>
+                  </a>
+
+                  {/* Telegram */}
+                  <a
+                    href={`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-sky-50 hover:bg-sky-100 text-sky-700 transition-all text-xs font-bold border border-sky-100"
+                  >
+                    <span className="w-8 h-8 rounded-full bg-sky-500 text-white flex items-center justify-center font-bold text-sm">T</span>
+                    <span>تلجرام</span>
+                  </a>
+
+                  {/* Facebook */}
+                  <a
+                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-700 transition-all text-xs font-bold border border-blue-100"
+                  >
+                    <span className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">F</span>
+                    <span>فيسبوك</span>
+                  </a>
+
+                  {/* Twitter / X */}
+                  <a
+                    href={`https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-all text-xs font-bold border border-slate-200"
+                  >
+                    <span className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs">X</span>
+                    <span>تويتر</span>
+                  </a>
+                </div>
+              );
+            })()}
+
+            <div className="flex items-center gap-2 bg-[#f3f4f5] p-3 rounded-2xl border border-slate-100 mb-6">
+              <button
+                onClick={() => {
+                  const targetSlug = publishedCourseData?.slug || courseSlug || slug || (publishedCourseData?.id ? String(publishedCourseData.id) : (courseId ? String(courseId) : ''));
+                  const fullUrl = typeof window !== 'undefined' ? `${window.location.origin}/courses/${targetSlug}` : '';
+                  navigator.clipboard.writeText(fullUrl);
+                  toast.success('تم نسخ رابط الدورة بنجاح!');
+                }}
+                className="p-2 bg-white text-blue-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm flex items-center justify-center cursor-pointer"
+                title="نسخ الرابط"
+              >
+                <Copy size={18} />
+              </button>
+              <input
+                type="text"
+                readOnly
+                value={typeof window !== 'undefined' ? `${window.location.origin}/courses/${publishedCourseData?.slug || courseSlug || slug || (publishedCourseData?.id ? String(publishedCourseData.id) : (courseId ? String(courseId) : ''))}` : ''}
+                className="bg-transparent border-none focus:ring-0 text-xs text-left w-full outline-none font-mono text-slate-600 select-all"
+              />
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors cursor-pointer"
               >
                 إغلاق
               </button>
