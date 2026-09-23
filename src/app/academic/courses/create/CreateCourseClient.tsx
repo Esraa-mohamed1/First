@@ -2760,6 +2760,11 @@ export default function CreateCourseClient() {
                               <p className="text-xs text-slate-500 font-medium mt-0.5">
                                 {lessonsList.length}  {unit.duration || ''}
                               </p>
+                              {unit.description && (
+                                <p className="text-xs text-slate-400 font-medium mt-1 max-w-sm leading-relaxed line-clamp-2">
+                                  {unit.description}
+                                </p>
+                              )}
                             </div>
                           </div>
 

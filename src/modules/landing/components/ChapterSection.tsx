@@ -126,9 +126,16 @@ export default function ChapterSection({
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <h3 style={{ color: unit.isLocked ? `rgba(${textRgb}, 0.4)` : localText }} className="text-sm md:text-base font-black">
-                        {unit.title}
-                      </h3>
+                      <div className="flex flex-col text-right">
+                        <h3 style={{ color: unit.isLocked ? `rgba(${textRgb}, 0.4)` : localText }} className="text-sm md:text-base font-black">
+                          {unit.title}
+                        </h3>
+                        {unit.description && (
+                          <p style={{ color: `rgba(${textRgb}, 0.65)` }} className="text-xs font-normal mt-1 leading-relaxed break-words">
+                            {unit.description.replace(/<[^>]*>/g, '')}
+                          </p>
+                        )}
+                      </div>
                       {unit.isLocked && <Lock size={16} className="text-slate-400" />}
                     </div>
                   </button>
@@ -143,39 +150,49 @@ export default function ChapterSection({
                           const isFree = isLessonFree(lesson);
                           return (
                             <div 
-                              key={lesson.id || lIdx} 
+                              key={lesson.id || lIdx}
                               style={{ borderBottomColor: `rgba(${textRgb}, 0.06)` }}
-                              onClick={() => {
-                                if (isFree) {
-                                  setActivePreviewLesson(lesson);
-                                }
-                              }}
-                              className={twMerge(
-                                "p-4 px-6 flex items-center justify-between border-b last:border-none transition-all",
-                                isFree ? "cursor-pointer hover:bg-emerald-50/50" : "opacity-80"
-                              )}
+                              className="flex flex-col border-b last:border-none"
                             >
-                              <div className="flex items-center gap-3">
-                                <span className="text-xs font-semibold text-slate-400">{lesson.duration || '10:00'}</span>
-                                {isFree && (
-                                  <span 
-                                    style={{ backgroundColor: `rgba(${primaryRgbTriplet}, 0.1)`, color: `rgb(${primaryRgbTriplet})` }}
-                                    className="text-[9px] px-2.5 py-0.5 rounded-full font-black flex items-center gap-1"
-                                  >
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                                    معاينة مجانية
-                                  </span>
+                              <div
+                                onClick={() => {
+                                  if (isFree) {
+                                    setActivePreviewLesson(lesson);
+                                  }
+                                }}
+                                className={twMerge(
+                                  "p-4 px-6 flex items-center justify-between transition-all",
+                                  isFree ? "cursor-pointer hover:bg-emerald-50/50" : "opacity-80"
                                 )}
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <span style={{ color: `rgba(${textRgb}, 0.85)` }} className="font-bold text-xs md:text-sm">{lesson.title}</span>
-                                <div 
-                                  style={{ backgroundColor: `rgba(${textRgb}, 0.05)`, color: isFree ? '#059669' : localText }}
-                                  className="w-7 h-7 rounded-full flex items-center justify-center shadow-xs"
-                                >
-                                  <PlayCircle size={16} />
+                              >
+                                <div className="flex items-center gap-3">
+                                  <span className="text-xs font-semibold text-slate-400">{lesson.duration || '10:00'}</span>
+                                  {isFree && (
+                                    <span 
+                                      style={{ backgroundColor: `rgba(${primaryRgbTriplet}, 0.1)`, color: `rgb(${primaryRgbTriplet})` }}
+                                      className="text-[9px] px-2.5 py-0.5 rounded-full font-black flex items-center gap-1"
+                                    >
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                                      معاينة مجانية
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <span style={{ color: `rgba(${textRgb}, 0.85)` }} className="font-bold text-xs md:text-sm">{lesson.title}</span>
+                                  <div 
+                                    style={{ backgroundColor: `rgba(${textRgb}, 0.05)`, color: isFree ? '#059669' : localText }}
+                                    className="w-7 h-7 rounded-full flex items-center justify-center shadow-xs"
+                                  >
+                                    <PlayCircle size={16} />
+                                  </div>
                                 </div>
                               </div>
+
+                              {lesson.description && (
+                                <div style={{ color: `rgba(${textRgb}, 0.65)` }} className="px-14 pb-3 pt-0 text-xs font-normal leading-relaxed text-right break-words">
+                                  {lesson.description.replace(/<[^>]*>/g, '')}
+                                </div>
+                              )}
                             </div>
                           );
                         })
@@ -260,9 +277,16 @@ export default function ChapterSection({
                     </span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <h3 style={{ color: unit.isLocked ? `rgba(${textRgb}, 0.4)` : localText }} className="text-base md:text-lg font-black">
-                      {unit.title}
-                    </h3>
+                    <div className="flex flex-col text-right">
+                      <h3 style={{ color: unit.isLocked ? `rgba(${textRgb}, 0.4)` : localText }} className="text-base md:text-lg font-black">
+                        {unit.title}
+                      </h3>
+                      {unit.description && (
+                        <p style={{ color: `rgba(${textRgb}, 0.65)` }} className="text-xs font-normal mt-1 leading-relaxed break-words">
+                          {unit.description.replace(/<[^>]*>/g, '')}
+                        </p>
+                      )}
+                    </div>
                     {unit.isLocked && <Lock size={16} className="text-slate-400" />}
                   </div>
                 </button>
@@ -274,31 +298,41 @@ export default function ChapterSection({
                   >
                     {lessons.length > 0 ? (
                       lessons.map((lesson: any) => (
-                        <div 
-                          key={lesson.id} 
+                        <div
+                          key={lesson.id}
                           style={{ borderBottomColor: `rgba(${textRgb}, 0.06)` }}
-                          className="flex items-center justify-between p-4 px-6 md:px-8 hover:bg-slate-50 transition-all group cursor-pointer border-b last:border-none"
+                          className="flex flex-col border-b last:border-none"
                         >
-                          <div className="flex items-center gap-4">
-                            <span className="text-xs font-bold text-slate-400">{lesson.duration || '10:00'}</span>
-                            {lesson.isPreview && (
-                              <span 
-                                style={{ backgroundColor: `rgba(${primaryRgbTriplet}, 0.1)`, color: `rgb(${primaryRgbTriplet})` }}
-                                className="text-[9px] px-2 py-0.5 rounded-full font-black"
+                          <div 
+                            className="flex items-center justify-between p-4 px-6 md:px-8 hover:bg-slate-50 transition-all group cursor-pointer"
+                          >
+                            <div className="flex items-center gap-4">
+                              <span className="text-xs font-bold text-slate-400">{lesson.duration || '10:00'}</span>
+                              {lesson.isPreview && (
+                                <span 
+                                  style={{ backgroundColor: `rgba(${primaryRgbTriplet}, 0.1)`, color: `rgb(${primaryRgbTriplet})` }}
+                                  className="text-[9px] px-2 py-0.5 rounded-full font-black"
+                                >
+                                  معاينة مجانية
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span style={{ color: `rgba(${textRgb}, 0.85)` }} className="font-bold text-sm md:text-base">{lesson.title}</span>
+                              <div 
+                                style={{ backgroundColor: `rgb(${primaryRgbTriplet})` }}
+                                className="w-8 h-8 rounded-full text-white flex items-center justify-center"
                               >
-                                معاينة مجانية
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <span style={{ color: `rgba(${textRgb}, 0.85)` }} className="font-bold text-sm md:text-base">{lesson.title}</span>
-                            <div 
-                              style={{ backgroundColor: `rgb(${primaryRgbTriplet})` }}
-                              className="w-8 h-8 rounded-full text-white flex items-center justify-center"
-                            >
-                              <Play size={12} fill="currentColor" className="mr-0.5" />
+                                <Play size={12} fill="currentColor" className="mr-0.5" />
+                              </div>
                             </div>
                           </div>
+
+                          {lesson.description && (
+                            <div style={{ color: `rgba(${textRgb}, 0.65)` }} className="px-14 pb-3 pt-0 text-xs font-normal leading-relaxed text-right break-words">
+                              {lesson.description.replace(/<[^>]*>/g, '')}
+                            </div>
+                          )}
                         </div>
                       ))
                     ) : (

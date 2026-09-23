@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useModal } from '@/context/ModalContext';
-import { superAdminLogin } from '@/services/auth';
+import { login } from '@/services/auth';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useCountry } from '@/hooks/useCountry';
@@ -145,7 +145,7 @@ export function useLoginModalState() {
                 ? { email: formData.email, password: formData.password }
                 : { phone: formData.phone, password: formData.password, country_code: selectedCountry?.isoCode };
 
-            const response = await superAdminLogin(payload);
+            const response = await login(payload);
             const res = response as any;
 
             const token = res?.meta?.access_token || res?.token || res?.access_token || res?.data?.token || res?.data?.access_token;
@@ -155,24 +155,78 @@ export function useLoginModalState() {
                 localStorage.setItem('token', token);
                 
                 const user = res?.data?.user || res?.data || res?.user || {};
-                
+                const userRole = user.role || 'student';
+
                 localStorage.setItem('user_info', JSON.stringify({
-                    name: user.name || 'Admin',
+                    name: user.name || 'User',
                     email: user.email || formData.email,
                     phone: user.phone || formData.phone,
-                    role: 'الادمن'
+                    role: userRole
                 }));
                 
                 toast.success('تم تسجيل الدخول بنجاح');
                 closeModal();
-                triggerPageLoader(true);
-                window.location.href = '/dashboard';
+
+                if (typeof window !== 'undefined') {
+                    // Dispatch student-logged-in event so single course UI and subscription flow proceed immediately
+                    window.dispatchEvent(new CustomEvent('student-logged-in'));
+
+                    const pathname = window.location.pathname;
+                    const isCoursePage = pathname.includes('/course') || pathname.includes('/bags') || pathname.startsWith('/[slug]');
+                    if (!isCoursePage) {
+                        triggerPageLoader(true);
+                        if (userRole === 'admin' || userRole === 'academy') {
+                            window.location.href = '/academic';
+                        } else {
+                            window.location.href = '/student';
+                        }
+                    }
+                }
             } else {
-                toast.error('فشل تسجيل الدخول: استجابة غير صالحة');
+                toast.error('فشل تسجيل الدخول: استجابة غير صالحة من الخادم');
             }
         } catch (error: any) {
             console.error('Login error:', error);
-            const errorMessage = error.message || error.error || 'حدث خطأ أثناء تسجيل الدخول';
+            let errorMessage = error.message || error.error || 'حدث خطأ أثناء تسجيل الدخول';
+
+            if (error?.errors && typeof error.errors === 'object') {
+                const firstKey = Object.keys(error.errors)[0];
+                const firstVal = error.errors[firstKey];
+                if (firstVal) {
+                    errorMessage = Array.isArray(firstVal) ? firstVal[0] : firstVal;
+                }
+            } else if (error?.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error?.response?.data?.error) {
+                errorMessage = error.response.data.error;
+            }
+
+            if (
+                errorMessage === 'Invalid credentials' ||
+                errorMessage === 'Unauthorized' ||
+                errorMessage.toLowerCase().includes('credential') ||
+                errorMessage.toLowerCase().includes('unauthorized')
+            ) {
+                errorMessage = 'بيانات الدخول غير صحيحة (البريد الإلكتروني أو كلمة المرور غير صحيحة)';
+            } else if (errorMessage === 'User not found' || errorMessage.toLowerCase().includes('user not found')) {
+                errorMessage = 'المستخدم غير موجود، يرجى التأكد من البيانات أو إنشاء حساب جديد';
+            } else if (errorMessage.toLowerCase().includes('network error')) {
+                errorMessage = 'حدث خطأ في الاتصال، يرجى التحقق من الشبكة';
+            }
+
+            if (loginMethod === 'email') {
+                setErrors(prev => ({
+                    ...prev,
+                    email: errorMessage,
+                    password: errorMessage
+                }));
+            } else {
+                setErrors(prev => ({
+                    ...prev,
+                    phone: errorMessage,
+                    password: errorMessage
+                }));
+            }
             toast.error(errorMessage);
         } finally {
             setIsLoading(false);
