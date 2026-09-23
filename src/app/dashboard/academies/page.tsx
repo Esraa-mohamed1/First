@@ -26,19 +26,85 @@ import {
   Filter,
   ChevronDown,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  Calendar,
+  RotateCcw
 } from 'lucide-react';
-import { getAcademies, createAcademy, updateAcademy, deleteAcademy } from '@/services/academies';
+import { getAcademies, getAcademyStats, AcademyStats, createAcademy, updateAcademy, deleteAcademy } from '@/services/academies';
 import { getAdminPackages } from '@/services/admin-packages';
 import { Academy, Package, CreateAcademyPayload, UpdateAcademyPayload } from '@/types/api';
 import toast from 'react-hot-toast';
 
+function getPaginationWindow(
+  current: number,
+  total: number
+): (number | '...')[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  if (current <= 4) {
+    return [1, 2, 3, 4, 5, '...', total];
+  }
+
+  if (current >= total - 3) {
+    return [
+      1,
+      '...',
+      total - 4,
+      total - 3,
+      total - 2,
+      total - 1,
+      total
+    ];
+  }
+
+  return [
+    1,
+    '...',
+    current - 1,
+    current,
+    current + 1,
+    '...',
+    total
+  ];
+}
+
+const isPackageValid = (pkg: Package): boolean => {
+  if (!pkg || !pkg.id) return false;
+  if ((pkg as any).deleted_at) return false;
+  const val = pkg.is_active;
+  if (val === false || val === 0 || val === '0' || (typeof val === 'string' && val.toLowerCase() === 'false')) {
+    return false;
+  }
+  return true;
+};
+
 export default function AcademiesPage() {
   const [academies, setAcademies] = useState<Academy[]>([]);
   const [packages, setPackages] = useState<Package[]>([]);
+  const [stats, setStats] = useState<AcademyStats>({ active: 0, inactive: 0, total: 0 });
+  const [isStatsLoading, setIsStatsLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [packageFilter, setPackageFilter] = useState<string>('all');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(prev => {
+        if (prev !== searchTerm) {
+          setCurrentPage(1);
+          return searchTerm;
+        }
+        return prev;
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+  const [periodFilter, setPeriodFilter] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -63,11 +129,48 @@ export default function AcademiesPage() {
     is_active: 1
   });
 
+  const fetchStats = useCallback(async () => {
+    setIsStatsLoading(true);
+    try {
+      const statsData = await getAcademyStats({
+        package_id: packageFilter !== 'all' ? packageFilter : undefined,
+        period: periodFilter !== 'all' && periodFilter !== 'custom' ? periodFilter : undefined,
+        date_from: dateFrom || undefined,
+        date_to: dateTo || undefined
+      });
+      setStats(statsData);
+    } catch (error) {
+      console.error('Failed to load academy stats:', error);
+    } finally {
+      setIsStatsLoading(false);
+    }
+  }, [packageFilter, periodFilter, dateFrom, dateTo]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
   useEffect(() => {
     const loadPackages = async () => {
       try {
-        const pkgs = await getAdminPackages();
-        setPackages(pkgs);
+        let allPackages: Package[] = [];
+        let page = 1;
+        let totalPages = 1;
+
+        do {
+          const pkgs = await getAdminPackages({ page, limit: 100 });
+          const rawList = Array.isArray(pkgs) ? pkgs : (pkgs as any).items || [];
+          allPackages = [...allPackages, ...rawList];
+
+          if (!Array.isArray(pkgs) && (pkgs as any).totalPages) {
+            totalPages = (pkgs as any).totalPages;
+          }
+          page++;
+        } while (page <= totalPages);
+
+        const validPkgs = allPackages.filter(isPackageValid);
+        const uniquePkgs = Array.from(new Map(validPkgs.map(item => [item.id, item])).values());
+        setPackages(uniquePkgs);
       } catch (e) {
         console.error('Failed to load packages:', e);
       }
@@ -80,7 +183,12 @@ export default function AcademiesPage() {
     try {
       const response = await getAcademies({
         page: currentPage,
-        limit: pageSize
+        limit: pageSize,
+        package_id: packageFilter !== 'all' ? packageFilter : undefined,
+        period: periodFilter !== 'all' && periodFilter !== 'custom' ? periodFilter : undefined,
+        date_from: dateFrom || undefined,
+        date_to: dateTo || undefined,
+        search: debouncedSearch.trim() !== '' ? debouncedSearch.trim() : undefined
       });
       setAcademies(response.items);
       setTotalPages(response.totalPages);
@@ -91,7 +199,7 @@ export default function AcademiesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage]);
+  }, [currentPage, packageFilter, periodFilter, dateFrom, dateTo, debouncedSearch]);
 
   useEffect(() => {
     fetchAcademies();
@@ -178,6 +286,7 @@ export default function AcademiesPage() {
         if (response.status || response.success) {
           toast.success('تم تحديث بيانات الأكاديمية بنجاح');
           handleCloseModal();
+          await fetchStats();
           await fetchAcademies();
         } else {
           toast.error(response.message || 'فشل في تحديث الأكاديمية');
@@ -202,6 +311,7 @@ export default function AcademiesPage() {
         if (response.status || response.success) {
           toast.success('تم إضافة الأكاديمية بنجاح');
           handleCloseModal();
+          await fetchStats();
           await fetchAcademies();
         } else {
           toast.error(response.message || 'فشل في إضافة الأكاديمية');
@@ -224,6 +334,7 @@ export default function AcademiesPage() {
         toast.success('تم حذف الأكاديمية بنجاح');
         setAcademies(prev => prev.filter(a => a.id !== id));
         setTotalItems(prev => Math.max(0, prev - 1));
+        await fetchStats();
       } else {
         toast.error(response.message || 'فشل في حذف الأكاديمية');
       }
@@ -245,6 +356,7 @@ export default function AcademiesPage() {
       if (response.status || response.success) {
         toast.success(newStatus ? 'تم تفعيل الأكاديمية' : 'تم تعطيل الأكاديمية');
         setAcademies(prev => prev.map(a => a.id === academy.id ? { ...a, is_active: newStatus ? 1 : 0 } : a));
+        await fetchStats();
       } else {
         toast.error(response.message || 'فشل في تحديث حالة الأكاديمية');
       }
@@ -255,30 +367,30 @@ export default function AcademiesPage() {
   };
 
   const filteredAcademies = academies.filter(academy => {
-    const nameMatch = (academy.academy_name || academy.name || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const emailMatch = (academy.email || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const phoneMatch = (academy.phone || academy.phone_academy || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const linkMatch = (academy.link_academy || academy.subdomain || academy.domain || '').toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesSearch = nameMatch || emailMatch || phoneMatch || linkMatch;
-    if (!matchesSearch) return false;
-
     const isActive = academy.is_active === 1 || academy.is_active === true;
     if (statusFilter === 'active' && !isActive) return false;
     if (statusFilter === 'inactive' && isActive) return false;
 
-    if (packageFilter !== 'all') {
-      const academyPackageId = academy.package_id ?? academy.package?.id;
-      if (String(academyPackageId) !== String(packageFilter)) {
-        return false;
-      }
-    }
-
     return true;
   });
 
-  const activeCount = academies.filter(a => a.is_active === 1 || a.is_active === true).length;
-  const inactiveCount = academies.length - activeCount;
+  const hasActiveFilters =
+    packageFilter !== 'all' ||
+    periodFilter !== 'all' ||
+    dateFrom !== '' ||
+    dateTo !== '' ||
+    statusFilter !== 'all' ||
+    searchTerm.trim() !== '';
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setPackageFilter('all');
+    setPeriodFilter('all');
+    setDateFrom('');
+    setDateTo('');
+    setStatusFilter('all');
+    setCurrentPage(1);
+  };
 
   return (
     <div className="space-y-8 pb-16">
@@ -293,23 +405,16 @@ export default function AcademiesPage() {
           </h2>
           <p className="text-sm font-bold text-gray-500 mt-1">عرض وإدارة الأكاديميات المسجلة، التحكم في بياناتها وحالتها التشغيلية</p>
         </div>
-        {/* <div className="flex items-center gap-3">
-          <button
-            onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3.5 rounded-2xl font-black shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all duration-300 active:scale-95 text-sm"
-          >
-            <Plus size={20} strokeWidth={2.5} />
-            <span>إضافة أكاديمية جديدة</span>
-          </button>
-        </div> */}
       </div>
 
-      {/* Overview Stats (Option A: Global Total + Page-scoped Active/Inactive) */}
+      {/* Overview Stats (Global stats from /api/superAdmin/academies/stats) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex items-center justify-between">
           <div className="space-y-1 text-right">
             <p className="text-xs font-bold text-gray-400">إجمالي الأكاديميات</p>
-            <h3 className="text-2xl font-black text-gray-900">{totalItems}</h3>
+            <h3 className="text-2xl font-black text-gray-900">
+              {isStatsLoading ? '...' : stats.total.toLocaleString()}
+            </h3>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
             <Building2 size={24} />
@@ -318,8 +423,10 @@ export default function AcademiesPage() {
 
         <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex items-center justify-between">
           <div className="space-y-1 text-right">
-            <p className="text-xs font-bold text-gray-400">المفعلة (الصفحة الحالية)</p>
-            <h3 className="text-2xl font-black text-green-600">{activeCount}</h3>
+            <p className="text-xs font-bold text-gray-400">الأكاديميات المفعلة</p>
+            <h3 className="text-2xl font-black text-green-600">
+              {isStatsLoading ? '...' : stats.active.toLocaleString()}
+            </h3>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center">
             <CheckCircle2 size={24} />
@@ -328,8 +435,10 @@ export default function AcademiesPage() {
 
         <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex items-center justify-between">
           <div className="space-y-1 text-right">
-            <p className="text-xs font-bold text-gray-400">المعطلة (الصفحة الحالية)</p>
-            <h3 className="text-2xl font-black text-gray-400">{inactiveCount}</h3>
+            <p className="text-xs font-bold text-gray-400">الأكاديميات المعطلة</p>
+            <h3 className="text-2xl font-black text-gray-400">
+              {isStatsLoading ? '...' : stats.inactive.toLocaleString()}
+            </h3>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-gray-50 text-gray-400 flex items-center justify-center">
             <XCircle size={24} />
@@ -340,25 +449,28 @@ export default function AcademiesPage() {
       {/* Main Content Box */}
       <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden">
         {/* Search & Filter Bar */}
-        <div className="p-6 md:p-8 border-b border-gray-100 flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
+        <div className="p-6 md:p-8 border-b border-gray-100 flex flex-col justify-between items-stretch gap-4">
+          <div className="flex flex-wrap items-center gap-3 w-full">
             {/* Search Input */}
-            <div className="relative flex-1 min-w-[200px]">
+            <div className="relative flex-1 min-w-[220px]">
               <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
                 type="text"
-                placeholder="بحث في الصفحة الحالية (الاسم، البريد، الرابط)..."
+                placeholder="بحث (الاسم، البريد، الرابط)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-gray-50 border border-gray-200/80 rounded-2xl pr-11 pl-4 py-3 text-sm outline-none focus:border-blue-500 focus:bg-white transition-all font-bold text-right placeholder:text-gray-400"
               />
             </div>
 
-            {/* Package Filter Dropdown */}
-            <div className="relative min-w-[170px]">
+            {/* Package Filter Dropdown (Backend package_id) */}
+            <div className="relative min-w-[160px]">
               <select
                 value={packageFilter}
-                onChange={(e) => setPackageFilter(e.target.value)}
+                onChange={(e) => {
+                  setPackageFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="w-full bg-gray-50 border border-gray-200/80 rounded-2xl pr-4 pl-9 py-3 text-sm font-bold text-gray-700 outline-none focus:border-blue-500 focus:bg-white transition-all appearance-none cursor-pointer text-right"
               >
                 <option value="all">جميع الباقات</option>
@@ -371,19 +483,87 @@ export default function AcademiesPage() {
               <ChevronDown size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
 
-            {/* Status Filter Dropdown */}
+            {/* Period Filter Dropdown (Backend period) */}
             <div className="relative min-w-[150px]">
+              <select
+                value={periodFilter}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setPeriodFilter(val);
+                  if (val !== 'custom') {
+                    setDateFrom('');
+                    setDateTo('');
+                  }
+                  setCurrentPage(1);
+                }}
+                className="w-full bg-gray-50 border border-gray-200/80 rounded-2xl pr-4 pl-9 py-3 text-sm font-bold text-gray-700 outline-none focus:border-blue-500 focus:bg-white transition-all appearance-none cursor-pointer text-right"
+              >
+                <option value="all">جميع الفترات</option>
+                <option value="today">اليوم</option>
+                <option value="week">هذا الأسبوع</option>
+                <option value="month">هذا الشهر</option>
+                <option value="year">هذه السنة</option>
+                <option value="custom">فترة مخصصة</option>
+              </select>
+              <ChevronDown size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+
+            {/* Custom Date Inputs (Backend date_from & date_to) */}
+            {periodFilter === 'custom' && (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200/80 rounded-2xl px-3 py-2.5">
+                  <span className="text-xs font-bold text-gray-400">من</span>
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => {
+                      setDateFrom(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="bg-transparent text-xs font-bold text-gray-700 outline-none cursor-pointer"
+                  />
+                </div>
+                <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200/80 rounded-2xl px-3 py-2.5">
+                  <span className="text-xs font-bold text-gray-400">إلى</span>
+                  <input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => {
+                      setDateTo(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="bg-transparent text-xs font-bold text-gray-700 outline-none cursor-pointer"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Status Filter Dropdown */}
+            <div className="relative min-w-[140px]">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
                 className="w-full bg-gray-50 border border-gray-200/80 rounded-2xl pr-4 pl-9 py-3 text-sm font-bold text-gray-700 outline-none focus:border-blue-500 focus:bg-white transition-all appearance-none cursor-pointer text-right"
               >
-                <option value="all">جميع الحالات (الصفحة الحالية)</option>
-                <option value="active">مفعلة ({activeCount})</option>
-                <option value="inactive">معطلة ({inactiveCount})</option>
+                <option value="all">جميع الحالات</option>
+                <option value="active">مفعلة</option>
+                <option value="inactive">معطلة</option>
               </select>
               <ChevronDown size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
+
+            {/* Reset Filters Button */}
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-blue-600 bg-gray-100/80 hover:bg-blue-50 border border-gray-200/80 px-4 py-3 rounded-2xl transition-all cursor-pointer whitespace-nowrap"
+                title="إعادة ضبط الفلاتر"
+              >
+                <RotateCcw size={14} />
+                <span>إعادة ضبط</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -399,14 +579,11 @@ export default function AcademiesPage() {
               <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400">
                 <GraduationCap size={32} />
               </div>
-              <p className="text-gray-600 font-black text-lg">لا توجد أكاديميات مطابقة للبحث في هذه الصفحة</p>
-              {(searchTerm || statusFilter !== 'all' || packageFilter !== 'all') && (
+              <p className="text-gray-600 font-black text-lg">لا توجد أكاديميات مطابقة للبحث أو التصفية الحالية</p>
+              {hasActiveFilters && (
                 <button
-                  onClick={() => {
-                    setSearchTerm('');
-                    setStatusFilter('all');
-                    setPackageFilter('all');
-                  }}
+                  type="button"
+                  onClick={handleResetFilters}
                   className="text-blue-600 font-bold hover:underline text-sm cursor-pointer mt-1"
                 >
                   إعادة ضبط البحث والتصفية
@@ -559,19 +736,31 @@ export default function AcademiesPage() {
               </button>
 
               <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setCurrentPage(p)}
-                    className={`w-8 h-8 rounded-xl font-black text-xs transition-all cursor-pointer ${
-                      currentPage === p
-                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-200'
-                        : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ))}
+                {getPaginationWindow(currentPage, totalPages).map((p, idx) => {
+                  if (p === '...') {
+                    return (
+                      <span
+                        key={`ellipsis-${idx}`}
+                        className="w-8 h-8 flex items-center justify-center text-gray-400 font-bold text-xs select-none"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setCurrentPage(p)}
+                      className={`w-8 h-8 rounded-xl font-black text-xs transition-all cursor-pointer ${
+                        currentPage === p
+                          ? 'bg-blue-600 text-white shadow-sm shadow-blue-200'
+                          : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
               </div>
 
               <button

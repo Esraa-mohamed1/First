@@ -2,22 +2,106 @@ import api from '@/lib/api';
 import { ApiResponse, Package, CreatePackagePayload, Feature } from '@/types/api';
 import { getStoredAuthToken } from '@/lib/auth-storage';
 
-const SUPER_ADMIN_API_URL = 'https://api.darab.academy/api/superAdmin/';
+const SUPER_ADMIN_API_URL = 'https://api.darab.academy/api/superAdmin';
 
-export const getAdminPackages = async (): Promise<Package[]> => {
+export interface AdminPackageQueryParams {
+  page?: number;
+  limit?: number;
+}
+
+export interface AdminPackageListResponse {
+  items: Package[];
+  total: number;
+  page: number;
+  totalPages: number;
+  limit: number;
+}
+
+export async function getAdminPackages(params: AdminPackageQueryParams): Promise<AdminPackageListResponse>;
+export async function getAdminPackages(): Promise<Package[]>;
+export async function getAdminPackages(params?: AdminPackageQueryParams): Promise<AdminPackageListResponse | Package[]> {
   try {
+    const token = getStoredAuthToken();
+    const page = params?.page || 1;
+    const limit = params?.limit || 10;
     const response = await api.get<ApiResponse<Package[]>>('/packages', {
-      baseURL: SUPER_ADMIN_API_URL
+      baseURL: SUPER_ADMIN_API_URL,
+      params: params ? {
+        page: params.page ?? 1,
+        limit: params.limit ?? 10,
+        per_page: params.limit ?? 10
+      } : undefined,
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
     });
-    if (response.data.status) {
-      return response.data.data;
+
+    const resBody = response.data as any;
+
+    let rawData: Package[] = [];
+    if (Array.isArray(resBody)) {
+      rawData = resBody;
+    } else if (Array.isArray(resBody?.data)) {
+      rawData = resBody.data;
+    } else if (resBody?.data && Array.isArray(resBody.data.data)) {
+      rawData = resBody.data.data;
+    } else if (Array.isArray(resBody?.items)) {
+      rawData = resBody.items;
     }
-    return [];
+
+    const metaObj =
+      resBody?.meta ||
+      resBody?.pagination ||
+      (resBody?.data && typeof resBody.data === 'object' && !Array.isArray(resBody.data) ? resBody.data : null) ||
+      resBody;
+
+    const total =
+      metaObj?.total !== undefined && typeof metaObj.total === 'number'
+        ? metaObj.total
+        : (resBody?.total !== undefined && typeof resBody.total === 'number' ? resBody.total : rawData.length);
+
+    const currentPage =
+      metaObj?.current_page !== undefined
+        ? Number(metaObj.current_page)
+        : (resBody?.current_page !== undefined ? Number(resBody.current_page) : page);
+
+    const perPage =
+      metaObj?.per_page !== undefined
+        ? Number(metaObj.per_page)
+        : (resBody?.per_page !== undefined ? Number(resBody.per_page) : limit);
+
+    const lastPageFromMeta =
+      metaObj?.last_page !== undefined
+        ? Number(metaObj.last_page)
+        : (resBody?.last_page !== undefined ? Number(resBody.last_page) : undefined);
+
+    const totalPages = lastPageFromMeta !== undefined ? lastPageFromMeta : Math.max(1, Math.ceil(total / perPage));
+
+    if (params) {
+      return {
+        items: rawData,
+        total,
+        page: currentPage,
+        totalPages,
+        limit: perPage
+      };
+    }
+
+    return rawData;
   } catch (error) {
     console.error('Failed to fetch packages:', error);
+    if (params) {
+      return {
+        items: [],
+        total: 0,
+        page: 1,
+        totalPages: 1,
+        limit: 10
+      };
+    }
     return [];
   }
-};
+}
 
 export const createPackage = async (payload: CreatePackagePayload): Promise<ApiResponse<Package>> => {
   try {

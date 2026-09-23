@@ -3,11 +3,37 @@ import { getStoredAuthToken } from '@/lib/auth-storage';
 import { ApiResponse } from '@/types/api';
 import {
   AcademySubscription,
-  RawAcademySubscription,
-  AcademySubscriptionQueryParams,
-  AcademySubscriptionListResponse,
-  SubscriptionStats
+  RawAcademySubscription
 } from '@/types/academy-subscription';
+
+export interface AcademySubscriptionQueryParams {
+  page?: number;
+  limit?: number;
+  package_id?: number | string;
+  status?: string;
+  search?: string;
+  date_from?: string;
+  date_to?: string;
+  period?: string;
+}
+
+export interface SubscriptionStats {
+  totalCount: number;
+  activeCount: number;
+  expiredCount: number;
+  trialCount: number;
+  pendingCount: number;
+  cancelledCount: number;
+}
+
+export interface AcademySubscriptionListResponse {
+  items: AcademySubscription[];
+  stats?: SubscriptionStats; // Optional since we get it from a separate endpoint now
+  total: number;
+  page: number;
+  totalPages: number;
+  limit: number;
+}
 
 const SUPER_ADMIN_API_URL = 'https://api.darab.academy/api/superAdmin';
 
@@ -35,7 +61,6 @@ export function mapRawSubscriptionToDisplayModel(raw: RawAcademySubscription): A
   const statusLabels: Record<string, string> = {
     active: 'نشط',
     expired: 'منتهي',
-    trial: 'فترة تجريبية',
     pending: 'معلق',
     cancelled: 'ملغي'
   };
@@ -118,6 +143,53 @@ export function mapRawSubscriptionToDisplayModel(raw: RawAcademySubscription): A
   };
 }
 
+export const getAcademySubscriptionStats = async (params?: Omit<AcademySubscriptionQueryParams, 'page' | 'limit'>): Promise<SubscriptionStats> => {
+  try {
+    const token = getStoredAuthToken();
+    const queryParams: Record<string, any> = {};
+
+    if (params?.search) queryParams.search = params.search;
+    if (params?.status && params.status !== 'all') queryParams.status = params.status;
+    if (params?.package_id && params.package_id !== 'all') queryParams.package_id = params.package_id;
+    if (params?.date_from) queryParams.date_from = params.date_from;
+    if (params?.date_to) queryParams.date_to = params.date_to;
+    if (params?.period && params.period !== 'all') queryParams.period = params.period;
+
+    const response = await api.get<{
+      success?: boolean;
+      status?: number;
+      message?: string;
+      data?: {
+        total?: number;
+        active?: number;
+        expired?: number;
+        pending?: number;
+        trial?: number;
+        cancelled?: number;
+      };
+    }>('/academy-packages/stats', {
+      baseURL: SUPER_ADMIN_API_URL,
+      params: Object.keys(queryParams).length > 0 ? queryParams : undefined,
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+
+    const data = response.data?.data;
+    return {
+      totalCount: Number(data?.total) || 0,
+      activeCount: Number(data?.active) || 0,
+      expiredCount: Number(data?.expired) || 0,
+      pendingCount: Number(data?.pending) || 0,
+      trialCount: Number(data?.trial) || 0,
+      cancelledCount: Number(data?.cancelled) || 0
+    };
+  } catch (error) {
+    console.error('Failed to fetch academy subscription stats:', error);
+    return { totalCount: 0, activeCount: 0, expiredCount: 0, pendingCount: 0, trialCount: 0, cancelledCount: 0 };
+  }
+};
+
 /**
  * Fetch Academy Subscriptions from Real Super Admin Backend API (/superAdmin/academy-packages)
  */
@@ -132,6 +204,9 @@ export async function getAcademySubscriptions(
         ...(params?.search ? { search: params.search } : {}),
         ...(params?.status && params.status !== 'all' ? { status: params.status } : {}),
         ...(params?.package_id && params.package_id !== 'all' ? { package_id: params.package_id } : {}),
+        ...(params?.date_from ? { date_from: params.date_from } : {}),
+        ...(params?.date_to ? { date_to: params.date_to } : {}),
+        ...(params?.period && params.period !== 'all' ? { period: params.period } : {}),
         ...(params?.page ? { page: params.page } : {}),
         ...(params?.limit ? { limit: params.limit } : {})
       },
@@ -151,16 +226,6 @@ export async function getAcademySubscriptions(
 
     const allMapped = (rawData || []).map(mapRawSubscriptionToDisplayModel);
 
-    // Compute stats from returned data
-    const stats: SubscriptionStats = {
-      totalCount: allMapped.length,
-      activeCount: allMapped.filter((i) => i.status === 'active').length,
-      expiredCount: allMapped.filter((i) => i.status === 'expired').length,
-      trialCount: allMapped.filter((i) => i.status === 'trial').length,
-      pendingCount: allMapped.filter((i) => i.status === 'pending').length,
-      cancelledCount: allMapped.filter((i) => i.status === 'cancelled').length
-    };
-
     const meta = response.data?.meta || (response.data as any)?.pagination;
     const total = meta?.total !== undefined ? meta.total : allMapped.length;
     const page = meta?.current_page !== undefined ? meta.current_page : (params?.page || 1);
@@ -169,7 +234,6 @@ export async function getAcademySubscriptions(
 
     return {
       items: allMapped,
-      stats,
       total,
       page,
       totalPages,
