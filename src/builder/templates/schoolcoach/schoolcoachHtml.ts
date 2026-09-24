@@ -1,5 +1,808 @@
 import { TemplateContent, renderVideoPlayer } from '../academic/academicHtml';
 
+const escapeHtml = (value: any): string => {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
+
+const normalizeImage = (value: any, fallback: string) => {
+  if (!value || typeof value !== 'string') return fallback;
+  return value.trim() || fallback;
+};
+
+const toTitleCase = (value: string) => value
+  .split(' ')
+  .filter(Boolean)
+  .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+  .join(' ');
+
+const getSafeValue = (obj: any, keys: string[], fallback: any = '') => {
+  for (const key of keys) {
+    const value = obj?.[key];
+    if (value !== undefined && value !== null && value !== '') return value;
+  }
+  return fallback;
+};
+
+export const getSchoolCoachNewDesignHtml = (
+  content: TemplateContent,
+  isEditing: boolean = false,
+  isLoggedIn: boolean = false,
+  dashboardUrl: string = '/student',
+  grades: any[] = [],
+  subjects: any[] = [],
+  selectedGrade: string = '',
+  selectedSubject: string = '',
+  realCourses: any[] = [],
+  realBags: any[] = [],
+  teacherProfile: any = null
+) => {
+  const cachedProfile = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('darab_academy_profile') || '{}') : {};
+  const teacherName = getSafeValue((content as any)?.profile, ['teacherName', 'name'], getSafeValue((content as any)?.navbar, ['teacherName', 'name'], getSafeValue(teacherProfile, ['teacher_name', 'teacherName', 'name'], getSafeValue(cachedProfile, ['teacher_name', 'name'], ''))));
+  const teacherTitle = getSafeValue((content as any)?.profile, ['teacherTitle', 'jobTitle', 'title', 'profession', 'headline'], getSafeValue((content as any)?.navbar, ['teacherTitle', 'teacher_title', 'jobTitle'], getSafeValue(teacherProfile, ['job_title', 'title', 'profession'], getSafeValue(cachedProfile, ['job_title', 'title', 'profession'], ''))));
+  const profileName = teacherName;
+  const profileEmail = getSafeValue(teacherProfile, ['site_email', 'email'], getSafeValue(cachedProfile, ['site_email', 'email'], ''));
+  const profilePhone = getSafeValue((content as any)?.navbar, ['phoneNumber', 'phone_number', 'phone'], getSafeValue(teacherProfile, ['site_phone', 'academy_phone', 'phone'], getSafeValue(cachedProfile, ['site_phone', 'academy_phone', 'phone'], '')));
+  const profileHeadline = teacherTitle;
+  const profileBio = getSafeValue((content as any)?.profile, ['description', 'bio', 'about', 'summary'], getSafeValue(content, ['description', 'bio', 'about', 'summary'], ''));
+  const profileGoal = getSafeValue((content as any)?.profile, ['goal', 'mission', 'learningGoal'], getSafeValue(content, ['goal', 'mission', 'learningGoal'], ''));
+  const coverImage = normalizeImage(getSafeValue((content as any)?.profile, ['cover', 'coverImage', 'cover_image'], getSafeValue(content, ['coverImage', 'cover_image', 'cover', 'backgroundImage'], undefined)), '');
+  const avatarImage = normalizeImage(getSafeValue((content as any)?.profile, ['avatar', 'avatarImage', 'image', 'profileImage'], getSafeValue(content, ['avatar', 'avatarImage', 'image', 'profileImage'], undefined)), '');
+  const loginButtonText = getSafeValue((content as any)?.navbar, ['loginText', 'login_text'], 'تسجيل الدخول');
+  const videoButtonLabel = getSafeValue((content as any)?.navbar, ['videoButtonLabel', 'video_button_label'], 'شاهد الفيديوهات');
+  const startLearningLabel = getSafeValue((content as any)?.profile, ['ctaPrimaryText', 'primaryButtonText', 'startLearningText'], 'ابدأ التعلم');
+  const watchVideosLabel = getSafeValue((content as any)?.profile, ['ctaSecondaryText', 'secondaryButtonText', 'watchVideosText'], 'شاهد الفيديوهات');
+  const contactModalTitle = getSafeValue((content as any)?.navbar, ['contactModalTitle', 'contact_title'], 'تواصل مع الفريق');
+  const contactModalDescription = getSafeValue((content as any)?.navbar, ['contactModalDescription', 'contact_description'], 'للحجز والاستفسار، يمكنكم التواصل مباشرة مع الفريق.');
+  const whatsappUrl = getSafeValue((content as any)?.navbar, ['whatsappUrl', 'whatsapp_url', 'whatsapp', 'whatsappLink'], '');
+  const phoneNumber = getSafeValue((content as any)?.navbar, ['phoneNumber', 'phone_number', 'phone'], '');
+  const whatsappLabel = getSafeValue((content as any)?.navbar, ['whatsappButtonLabel', 'whatsapp_button_label'], 'واتساب');
+  const phoneLabel = getSafeValue((content as any)?.navbar, ['phoneButtonLabel', 'phone_button_label'], 'اتصال');
+  const verifiedVisible = (content as any)?.profile?.verified !== false;
+  const verifiedText = getSafeValue((content as any)?.profile, ['verifiedText', 'verified_text'], 'موثّق');
+  const stats = Array.isArray((content as any)?.stats?.items) ? (content as any).stats.items : [];
+  const courseItems = Array.isArray(realCourses) ? realCourses : [];
+  const bagItems = Array.isArray(realBags) ? realBags : [];
+  const testimonialItems = Array.isArray((content as any)?.testimonials?.items) ? (content as any).testimonials.items : [];
+  const faqItems = Array.isArray((content as any)?.faq?.items) ? (content as any).faq.items : [];
+  const galleryItems = Array.isArray((content as any)?.gallery?.items) ? (content as any).gallery.items : [];
+  const videoItems = Array.isArray((content as any)?.video?.items) ? (content as any).video.items : [];
+  const navLinks = Array.isArray((content as any)?.navbar?.links) ? (content as any).navbar.links : [];
+
+  const renderStatCards = stats.map((item: any, index: number) => `
+    <div class="stat-card" data-section="stats" data-stat-index="${index}">
+      <strong>${escapeHtml(item.value || item.count || item.number || '')}</strong>
+      <span>${escapeHtml(item.label || item.title || '')}</span>
+    </div>
+  `).join('');
+
+  const renderCourseCards = courseItems.map((item: any, index: number) => {
+    const title = escapeHtml(item.title || item.name || '');
+    const price = escapeHtml(item.final_price ?? item.price ?? '');
+    const description = escapeHtml(item.short_description || item.description || '');
+    const image = normalizeImage(item.image || item.img || item.thumbnail, '');
+    return `
+      <article class="mini-card course-card" data-section="courses" data-index="${index}">
+        <div class="thumb" style="background-image:url('${image}')"></div>
+        <div class="card-body">
+          <span class="chip">${escapeHtml(item.type || '')}</span>
+          <h3>${title}</h3>
+          <p>${description}</p>
+          <div class="course-meta">
+            <span class="price">${price}</span>
+            <button type="button" class="small-btn" data-open="course-modal" data-course="${escapeHtml(item.title || item.name || '')}">${escapeHtml((content as any)?.courses?.buttonText || '')}</button>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  const renderVideoCards = videoItems.map((item: any, index: number) => `
+    <article class="mini-card video-card" data-section="video" data-index="${index}">
+      <div class="video-thumb" style="background-image:url('${normalizeImage(item.thumbnail || item.image || item.img, '')}')">
+        <span class="play-badge">▶</span>
+        <span class="video-time">${escapeHtml(item.duration || '')}</span>
+      </div>
+      <div class="card-body tight">
+        <h3>${escapeHtml(item.title || item.name || '')}</h3>
+      </div>
+    </article>
+  `).join('');
+
+  const renderBagCards = bagItems.map((item: any, index: number) => `
+    <article class="mini-card resource-card" data-section="bags" data-index="${index}">
+      <div class="thumb" style="background-image:url('${normalizeImage(item.image || item.img || item.thumbnail, '')}')"></div>
+      <div class="card-body">
+        <h3>${escapeHtml(item.title || item.name || '')}</h3>
+        <p>${escapeHtml(item.description || item.short_description || '')}</p>
+        <a href="${escapeHtml(item.file_url || item.url || '')}" class="small-btn" target="_blank" rel="noreferrer">${escapeHtml((content as any)?.bags?.downloadText || '')}</a>
+      </div>
+    </article>
+  `).join('');
+
+  const renderGallery = galleryItems.map((item: any, index: number) => `
+    <figure class="gallery-item" data-section="gallery" data-index="${index}"><img src="${normalizeImage(item?.image_url || item?.image || item?.url || item, '')}" alt="gallery" /></figure>
+  `).join('');
+
+  const renderTestimonials = testimonialItems.map((item: any, index: number) => `
+    <article class="quote-card" data-section="testimonials" data-index="${index}">
+      <div class="quote-mark">“</div>
+      <p>${escapeHtml(item.text || item.comment || item.quote || '')}</p>
+      <div class="quote-author">
+        <strong>${escapeHtml(item.name || item.author || '')}</strong>
+        <span>${escapeHtml(item.role || '')}</span>
+      </div>
+    </article>
+  `).join('');
+
+  const renderFaq = faqItems.map((item: any, index: number) => `
+    <div class="faq-item" data-section="faq" data-index="${index}">
+      <button type="button" class="faq-question">
+        <span>${escapeHtml(item.question || '')}</span>
+        <span class="plus">+</span>
+      </button>
+      <div class="faq-answer"><p>${escapeHtml(item.answer || '')}</p></div>
+    </div>
+  `).join('');
+
+  return `<!doctype html>
+  <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+      <meta name="theme-color" content="#0f67ff" />
+      <title>${escapeHtml(profileName)} | البروفايل التعليمي</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <style>
+        :root { --bg:#f5f7fb; --surface:#fff; --text:#151922; --muted:#667085; --line:#e6ebf2; --brand:#0f67ff; --brand2:#4f8cff; --success:#12a66a; --danger:#e5484d; --radius:20px; --shadow:0 12px 32px rgba(16,24,40,.08); --max:1180px; }
+        * { box-sizing:border-box; }
+        html { scroll-behavior:smooth; }
+        body { margin:0; font-family:"IBM Plex Sans Arabic",system-ui,sans-serif; background:var(--bg); color:var(--text); line-height:1.7; }
+        button,input,a { font:inherit; }
+        img { display:block; width:100%; }
+        a { color:inherit; text-decoration:none; }
+        button { cursor:pointer; }
+        .container { width:min(var(--max), calc(100% - 28px)); margin:auto; }
+        .card { background:#fff; border:1px solid var(--line); border-radius:var(--radius); box-shadow:0 6px 20px rgba(16,24,40,.05); }
+        .section { padding:24px 0; }
+        .eyebrow { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; background:#eaf2ff; color:var(--brand); font-size:12px; font-weight:700; }
+        .topbar { position:sticky; top:0; z-index:60; background:rgba(255,255,255,.94); backdrop-filter:blur(14px); border-bottom:1px solid rgba(230,235,242,.9); }
+        .topbar-inner { height:68px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+        .brand { display:flex; align-items:center; gap:10px; font-weight:800; }
+        .brand-mark { width:38px; height:38px; border-radius:12px; display:grid; place-items:center; background:linear-gradient(135deg,var(--brand),var(--brand2)); color:#fff; font-weight:800; }
+        .nav { display:flex; align-items:center; gap:18px; color:var(--muted); font-size:14px; font-weight:600; }
+        .nav a { padding:8px 10px; border-radius:10px; }
+        .nav a:hover { background:#f3f7ff; color:var(--brand); }
+        .header-actions { display:flex; align-items:center; gap:12px; }
+        .primary-btn, .secondary-btn, .small-btn { border:none; border-radius:12px; transition:.2s; }
+        .primary-btn { background:linear-gradient(135deg,var(--brand),var(--brand2)); color:white; font-weight:700; padding:12px 18px; box-shadow:0 10px 18px rgba(15,103,255,.24); }
+        .secondary-btn { background:#eef4ff; color:var(--brand); font-weight:700; padding:12px 18px; }
+        .small-btn { background:#edf3ff; color:var(--brand); font-weight:700; padding:9px 12px; font-size:12px; }
+        .hero { padding:30px 0 18px; }
+        .hero-shell { background:linear-gradient(180deg,#edf4ff 0%,#ffffff 100%); border:1px solid var(--line); border-radius:28px; overflow:hidden; box-shadow:0 8px 20px rgba(15,103,255,.06); }
+        .hero-cover { height:220px; position:relative; background-size:cover; background-position:center; }
+        .hero-cover::after { content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(17,24,39,.18),rgba(17,24,39,.48)); }
+        .hero-content { position:relative; padding:0 20px 26px; margin-top:-52px; }
+        .profile-row { display:flex; align-items:flex-end; gap:18px; justify-content:space-between; }
+        .profile-meta { display:flex; align-items:flex-end; gap:18px; }
+        .avatar { width:120px; height:120px; border-radius:24px; border:4px solid #fff; background:#fff; background-size:cover; background-position:center; box-shadow:var(--shadow); }
+        .profile-name h1 { margin:0; font-size:clamp(28px,4vw,40px); }
+        .profile-name p { margin:6px 0 0; color:var(--muted); }
+        .verified { display:inline-flex; align-items:center; gap:6px; background:#ecfff7; color:var(--success); padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; margin-top:10px; }
+        .hero-actions { display:flex; flex-wrap:wrap; gap:12px; }
+        .bio-box { margin-top:20px; background:#fff; border:1px solid var(--line); border-radius:22px; padding:18px 20px; }
+        .bio-box p { margin:0; color:var(--muted); font-size:15px; }
+        .stats { display:grid; grid-template-columns:repeat(3,minmax(140px,1fr)); gap:12px; margin-top:16px; }
+        .stat-card { background:#fff; border:1px solid var(--line); border-radius:18px; padding:18px 16px; text-align:center; }
+        .stat-card strong { display:block; font-size:28px; font-weight:800; color:var(--text); }
+        .stat-card span { display:block; color:var(--muted); font-size:13px; margin-top:4px; }
+        .section-header { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:16px; }
+        .section-header h2 { margin:0; font-size:clamp(22px,3vw,32px); }
+        .section-header p { margin:0; color:var(--muted); }
+        .mini-grid { display:grid; grid-template-columns:repeat(3, minmax(240px,1fr)); gap:18px; }
+        .mini-card { overflow:hidden; background:#fff; border:1px solid var(--line); border-radius:22px; box-shadow:0 6px 20px rgba(16,24,40,.04); }
+        .thumb { height:180px; background-size:cover; background-position:center; }
+        .card-body { padding:18px; }
+        .card-body.tight { padding:14px; }
+        .chip { display:inline-block; background:#eef4ff; color:var(--brand); border-radius:999px; padding:7px 10px; font-size:11px; font-weight:700; }
+        .mini-card h3 { margin:12px 0 8px; font-size:20px; }
+        .mini-card p { margin:0; color:var(--muted); font-size:14px; }
+        .course-meta { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:16px; }
+        .price { font-weight:800; color:var(--text); }
+        .video-thumb { position:relative; height:180px; background-size:cover; background-position:center; }
+        .play-badge { position:absolute; left:16px; bottom:16px; width:42px; height:42px; display:grid; place-items:center; background:rgba(15,103,255,.88); color:#fff; border-radius:50%; font-size:20px; }
+        .video-time { position:absolute; right:12px; bottom:12px; background:rgba(17,24,39,.72); color:#fff; border-radius:999px; padding:6px 10px; font-size:12px; }
+        .resource-grid { display:grid; grid-template-columns:repeat(2,minmax(250px,1fr)); gap:18px; }
+        .results-panel { background:linear-gradient(135deg,#0f172a,#1c2d52); color:#fff; border-radius:28px; padding:20px; }
+        .results-grid { display:grid; grid-template-columns:repeat(3,minmax(160px,1fr)); gap:14px; margin-top:14px; }
+        .result-box { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); border-radius:18px; padding:18px 14px; }
+        .result-box strong { display:block; font-size:26px; }
+        .gallery-grid { display:grid; grid-template-columns:repeat(3,minmax(160px,1fr)); gap:14px; }
+        .gallery-item { overflow:hidden; border-radius:18px; border:1px solid var(--line); }
+        .gallery-item img { height:220px; object-fit:cover; }
+        .quote-grid { display:grid; grid-template-columns:repeat(2,minmax(240px,1fr)); gap:18px; }
+        .quote-card { background:#fff; border:1px solid var(--line); border-radius:20px; padding:18px; }
+        .quote-mark { font-size:46px; line-height:1; color:var(--brand); opacity:.5; }
+        .quote-card p { margin:0; color:var(--muted); }
+        .quote-author { display:flex; flex-direction:column; margin-top:12px; }
+        .quote-author span { color:var(--muted); font-size:13px; }
+        .faq-wrap { display:grid; gap:10px; }
+        .faq-item { background:#fff; border:1px solid var(--line); border-radius:16px; overflow:hidden; }
+        .faq-question { width:100%; background:transparent; border:none; padding:16px 18px; display:flex; align-items:center; justify-content:space-between; font-weight:700; color:var(--text); }
+        .faq-answer { max-height:0; overflow:hidden; transition:max-height .2s ease; }
+        .faq-answer p { margin:0; padding:0 18px 16px; color:var(--muted); }
+        .faq-item.open .faq-answer { max-height:140px; }
+        .faq-item.open .plus { transform:rotate(45deg); }
+        .cta-box { display:flex; align-items:center; justify-content:space-between; gap:16px; background:linear-gradient(135deg,#0f172a,#1d3d78); color:#fff; border-radius:28px; padding:24px 22px; }
+        .cta-box h3 { margin:0 0 8px; font-size:clamp(22px,2vw,30px); }
+        .cta-box p { margin:0; color:rgba(255,255,255,.8); }
+        .profile-tabs { margin-top:16px; margin-bottom:10px; }
+        .tab-strip { display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:10px; }
+        .tab-button { border:none; background:transparent; padding:8px 14px; border-radius:999px; font-size:14px; color:var(--muted); font-weight:700; }
+        .tab-button.active { background:#eaf2ff; color:var(--brand); }
+        .steps-grid { display:grid; grid-template-columns:repeat(3,minmax(180px,1fr)); gap:18px; }
+        .step-card { background:#fff; border:1px solid var(--line); border-radius:18px; padding:18px 16px; box-shadow:0 8px 18px rgba(16,24,40,.04); }
+        .step-number { display:inline-flex; width:28px; height:28px; border-radius:50%; background:#eef4ff; color:var(--brand); font-weight:800; align-items:center; justify-content:center; margin-bottom:10px; }
+        .step-card h3 { margin:0 0 8px; font-size:18px; }
+        .step-card p { margin:0; color:var(--muted); font-size:14px; }
+        .about-two-col { display:grid; grid-template-columns:1.1fr 1.3fr; gap:24px; align-items:stretch; }
+        .about-copy { background:#fff; border:1px solid var(--line); border-radius:20px; padding:22px; }
+        .about-copy h2 { margin:10px 0 12px; font-size:clamp(24px,3vw,32px); }
+        .about-copy p { margin:0; color:var(--muted); }
+        .check-list { list-style:none; padding:0; margin:18px 0 0; display:grid; gap:10px; }
+        .check-list li { position:relative; padding-right:22px; color:var(--text); font-weight:600; }
+        .check-list li::before { content:"✓"; position:absolute; right:0; top:0; color:var(--brand); font-weight:800; }
+        .timeline-card { background:#fff; border:1px solid var(--line); border-radius:20px; padding:18px 18px 8px; }
+        .timeline-head { font-weight:800; font-size:20px; margin-bottom:12px; }
+        .timeline-item { display:grid; grid-template-columns:58px 1fr; gap:12px; align-items:flex-start; padding:12px 0; border-bottom:1px solid var(--line); }
+        .timeline-item:last-child { border-bottom:none; }
+        .timeline-item span { display:inline-block; background:#edf4ff; color:var(--brand); border-radius:999px; font-size:12px; font-weight:700; padding:8px 10px; }
+        .timeline-item strong { display:block; font-size:16px; margin-bottom:2px; }
+        .timeline-item p { margin:0; color:var(--muted); font-size:13px; }
+        .ghost-btn { border:1px solid var(--line); background:#fff; color:var(--brand); border-radius:999px; padding:8px 14px; font-weight:700; }
+        .ghost-btn.light { background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.18); color:#fff; }
+        footer { padding:24px 0 44px; }
+        .footer-box { border-top:1px solid var(--line); padding-top:20px; display:flex; align-items:center; justify-content:space-between; gap:10px; color:var(--muted); }
+        .bottom-nav { position:sticky; bottom:0; z-index:30; display:none; background:rgba(255,255,255,.96); backdrop-filter:blur(10px); border-top:1px solid var(--line); padding:10px 12px 12px; gap:8px; }
+        .bottom-nav-item { flex:1; border:none; background:#edf3ff; color:var(--brand); border-radius:12px; min-height:44px; font-weight:700; }
+        .bottom-nav-item.active { background:var(--brand); color:#fff; }
+        .screen-layer { position:fixed; inset:0; background:rgba(11,18,32,.42); display:none; z-index:80; padding:24px 16px 90px; overflow:auto; }
+        .screen-layer.show { display:block; }
+        .screen-header { max-width:760px; margin:0 auto 12px; display:flex; align-items:center; justify-content:space-between; gap:12px; background:#fff; border-radius:18px 18px 0 0; padding:16px 16px; border:1px solid var(--line); border-bottom:none; }
+        .screen-header h3 { margin:0; font-size:20px; }
+        .screen-back, .screen-close { width:34px; height:34px; border-radius:50%; border:none; background:#eef4ff; color:var(--brand); font-size:20px; font-weight:800; }
+        .screen-body { max-width:760px; margin:0 auto; background:#fff; border:1px solid var(--line); border-radius:0 0 18px 18px; padding:16px; }
+        .search-box { margin-bottom:12px; }
+        .search-input { width:100%; border:1px solid var(--line); border-radius:12px; min-height:42px; padding:10px 12px; font-size:14px; }
+        .screen-grid { display:grid; grid-template-columns:repeat(2,minmax(180px,1fr)); gap:14px; }
+        .detail-card { background:#f8fafc; border:1px solid var(--line); border-radius:18px; padding:18px; }
+        .detail-list { margin-top:16px; }
+        .detail-list strong { display:block; margin-bottom:8px; }
+        .detail-list ul { margin:0; padding-right:18px; color:var(--muted); }
+        .detail-thumb { height:180px; border-radius:16px; background-size:cover; background-position:center; margin-bottom:12px; }
+        .detail-card h4 { margin:0 0 8px; font-size:24px; }
+        .detail-card p, .detail-card li { color:var(--muted); }
+        .modal-backdrop { position:fixed; inset:0; background:rgba(11,18,32,.56); display:none; z-index:120; align-items:center; justify-content:center; padding:16px; }
+        .modal-backdrop.show { display:flex; }
+        .modal-box { background:#fff; border-radius:22px; width:min(460px, 100%); position:relative; box-shadow:0 20px 44px rgba(15,23,42,.24); }
+        .modal-close { position:absolute; top:12px; left:12px; border:none; background:#f1f5f9; width:32px; height:32px; border-radius:50%; font-size:20px; }
+        .modal-body { padding:22px 18px 18px; }
+        .modal-body h4 { margin:0 0 8px; text-align:center; font-size:24px; }
+        .modal-body p { text-align:center; color:var(--muted); margin:0 0 18px; }
+        .modal-actions { display:flex; justify-content:center; gap:10px; }
+        .secondary-link { display:inline-flex; align-items:center; justify-content:center; min-width:120px; }
+        .full-width { width:100%; }
+        .toast { position:fixed; left:50%; bottom:88px; transform:translateX(-50%) translateY(18px); background:#111827; color:#fff; border-radius:999px; padding:10px 16px; font-size:13px; opacity:0; pointer-events:none; transition:.2s; z-index:130; }
+        .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+        .mobile-toggle { display:none; }
+        @media (max-width: 860px) {
+          .nav { display:none; }
+          .mobile-toggle { display:inline-flex; width:42px; height:42px; border-radius:12px; background:#edf3ff; border:none; color:var(--brand); align-items:center; justify-content:center; font-size:22px; }
+          .mini-grid, .resource-grid, .quote-grid, .results-grid, .gallery-grid, .stats, .steps-grid, .about-two-col, .screen-grid { grid-template-columns:1fr; }
+          .profile-row { align-items:flex-start; flex-direction:column; }
+          .cta-box { flex-direction:column; align-items:flex-start; }
+          .header-actions { display:none; }
+          .bottom-nav { display:flex; }
+        }
+      </style>
+    </head>
+    <body id="top">
+      <header class="topbar" data-section="navbar">
+        <div class="container topbar-inner">
+          <div class="brand">
+            <div class="brand-mark">${escapeHtml((teacherName || profileName || 'أ').trim().charAt(0) || '')}</div>
+            <div class="brand-text">
+              <span class="brand-name">${escapeHtml(teacherName || profileName || 'أ/ محمد أحمد')}</span>
+              <span class="brand-title">${escapeHtml(profileHeadline || teacherTitle || 'مدرس الفيزياء')}</span>
+            </div>
+          </div>
+          <nav class="nav">
+            ${navLinks.map((link: any) => `<a href="${escapeHtml(link.href)}">${escapeHtml(link.label)}</a>`).join('')}
+          </nav>
+          <div class="header-actions">
+            ${(content as any)?.navbar?.videoIconVisible !== false ? `<button type="button" class="icon-btn" data-open-screen="video-library" aria-label="${escapeHtml(videoButtonLabel)}">◉</button>` : ''}
+            ${(content as any)?.navbar?.contactIconVisible !== false ? `<button type="button" class="icon-btn" data-contact-action="true" aria-label="تواصل">▣</button>` : ''}
+            <a href="/auth/login" class="primary-btn">${escapeHtml(loginButtonText || 'تسجيل الدخول')}</a>
+          </div>
+          <button type="button" class="mobile-toggle" aria-label="menu">☰</button>
+        </div>
+      </header>
+
+      <main>
+        <section class="hero section" data-section="profile" data-index="0">
+          <div class="container hero-shell">
+            <div class="hero-cover" style="background-image:url('${coverImage || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80'}')"></div>
+            <div class="hero-content">
+              <div class="profile-row">
+                <div class="profile-meta">
+                  <div class="avatar" style="background-image:url('${avatarImage || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=80'}')"></div>
+                  <div class="profile-name">
+                    <h1 class="teacher-name">${escapeHtml(teacherName || profileName || 'أحمد محمد')}</h1>
+                    <p class="teacher-title">${escapeHtml(profileHeadline || teacherTitle || 'معلم التربية الإسلامية واللغة العربية')}</p>
+                    ${verifiedVisible ? `<div class="verified">✔ ${escapeHtml(verifiedText || 'موثّق')}</div>` : ''}
+                  </div>
+                </div>
+                <div class="hero-actions">
+                  <button type="button" class="secondary-btn" data-open-screen="video-library">${escapeHtml(watchVideosLabel || (content as any)?.profile?.ctaSecondaryText || 'شاهد الفيديوهات')}</button>
+                  <button type="button" class="primary-btn" data-open-screen="course-library">${escapeHtml(startLearningLabel || (content as any)?.profile?.ctaPrimaryText || 'ابدأ التعلم')}</button>
+                </div>
+              </div>
+              <div class="bio-box" data-section="about" data-index="0">
+                <p class="teacher-description">${escapeHtml(profileBio || 'أساعد الطلاب على الفهم العميق، بناء الثقة، وتحقيق نتائج أكاديمية مستمرة عبر شرح مبسط، أسئلة تطبيقية، ومراجعة عملية منتظمة.')}</p>
+                ${profileGoal ? `<p class="teacher-goal"><strong>الهدف:</strong> ${escapeHtml(profileGoal)}</p>` : ''}
+              </div>
+              <div class="stats">${renderStatCards || '<div class="stat-card"><strong>95%</strong><span>معدل النجاح</span></div><div class="stat-card"><strong>1200+</strong><span>طالب متابع</span></div><div class="stat-card"><strong>10+</strong><span>سنوات خبرة</span></div>'}</div>
+            </div>
+          </div>
+        </section>
+
+        <nav class="profile-tabs container" aria-label="Profile tabs" data-section="tabs" data-index="0">
+          <div class="tab-strip">
+            <button type="button" class="tab-button active" data-scroll-target="#overview">الرئيسية</button>
+            <button type="button" class="tab-button" data-scroll-target="#courses">الدورات</button>
+            <button type="button" class="tab-button" data-scroll-target="#videos">الفيديوهات</button>
+            <button type="button" class="tab-button" data-scroll-target="#resources">الموارد</button>
+            <button type="button" class="tab-button" data-scroll-target="#about-panel">نبذة</button>
+          </div>
+        </nav>
+
+        <section class="section" id="courses" data-section="courses" data-index="0">
+          <div class="container">
+            <div class="section-header">
+              <div>
+                <div class="eyebrow">${escapeHtml((content as any)?.courses?.title || 'الدورات المتاحة')}</div>
+                <h2>${escapeHtml((content as any)?.courses?.subtitle || 'اختر المسار الذي يناسبك')}</h2>
+              </div>
+              <button type="button" class="ghost-btn" data-open-screen="course-library">عرض الكل</button>
+            </div>
+            <div class="mini-grid">${renderCourseCards || '<article class="mini-card course-card"><div class="thumb" style="background-image:url(https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80)"></div><div class="card-body"><span class="chip">المرحلة الثانوية</span><h3>دورة الرياضيات الأساسية</h3><p>شرح مبسط، تدريب عملي، ومراجعة أسبوعية عبر منهج متكامل.</p><div class="course-meta"><span class="price">299 ر.س</span><button type="button" class="small-btn" data-open-course-detail="true">عرض التفاصيل</button></div></div></article>'}</div>
+          </div>
+        </section>
+
+        <section class="section" data-section="steps" data-index="0">
+          <div class="container">
+            <div class="section-header">
+              <div>
+                <div class="eyebrow">ابدأ الآن</div>
+                <h2>خطواتك الأولى مع المنصة</h2>
+              </div>
+            </div>
+            <div class="steps-grid">
+              <div class="step-card">
+                <span class="step-number">01</span>
+                <h3>اختر المسار</h3>
+                <p>تصفّح الدورات المتاحة وحدد ما يلائم مستواك وهدفك الدراسي.</p>
+              </div>
+              <div class="step-card">
+                <span class="step-number">02</span>
+                <h3>تابع الفيديوهات</h3>
+                <p>المحاضرات قصيرة وفعالة مع شرح عملي وتطبيقات مباشرة في كل درس.</p>
+              </div>
+              <div class="step-card">
+                <span class="step-number">03</span>
+                <h3>طبّق وراجع</h3>
+                <p>استفد من الموارد المجانية والاختبارات لتقوية مستواك تدريجيًا.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="videos" data-section="videos" data-index="0">
+          <div class="container">
+            <div class="section-header">
+              <div>
+                <div class="eyebrow">${escapeHtml((content as any)?.about?.videoTag || 'فيديوهات')}</div>
+                <h2>${escapeHtml((content as any)?.about?.videoTitle || 'مكتبة الفيديو')}</h2>
+              </div>
+              <button type="button" class="ghost-btn" data-open-screen="video-library">عرض الجميع</button>
+            </div>
+            <div class="mini-grid">${renderVideoCards || '<article class="mini-card video-card"><div class="video-thumb" style="background-image:url(https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80)"><span class="play-badge">▶</span><span class="video-time">08:42</span></div><div class="card-body tight"><h3>شرح الوحدة الأولى</h3></div></article>'}</div>
+          </div>
+        </section>
+
+        <section class="section" id="resources" data-section="resources" data-index="0">
+          <div class="container">
+            <div class="section-header">
+              <div>
+                <div class="eyebrow">${escapeHtml((content as any)?.bags?.title || 'مصادر مجانية')}</div>
+                <h2>${escapeHtml((content as any)?.bags?.subtitle || 'مراجعة سريعة ومصادر داعمة')}</h2>
+              </div>
+              <button type="button" class="ghost-btn" data-open-screen="resource-library">عرض الكل</button>
+            </div>
+            <div class="resource-grid">${renderBagCards || '<article class="mini-card resource-card"><div class="thumb" style="background-image:url(https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80)"></div><div class="card-body"><h3>ملف المراجعة النهائية</h3><p>ملخصات، أسئلة متنوعة، وملاحظات مراجعة للدرس.</p><a href="#" class="small-btn" target="_blank" rel="noreferrer">تحميل</a></div></article>'}</div>
+          </div>
+        </section>
+
+        <section class="section" id="results" data-section="results" data-index="0">
+          <div class="container">
+            <div class="results-panel">
+              <div class="section-header" style="margin-bottom:0; color:#fff;">
+                <div>
+                  <div class="eyebrow" style="background:rgba(255,255,255,.12); color:#fff;">${escapeHtml((content as any)?.stats?.title || 'نتائج الطلاب')}</div>
+                  <h2 style="color:#fff;">${escapeHtml((content as any)?.stats?.subtitle || 'نتائج ملموسة في كل مرحلة')}</h2>
+                </div>
+                <button type="button" class="ghost-btn light" data-open-review="true">عرض مراجعات</button>
+              </div>
+              <div class="results-grid">
+                <div class="result-box"><strong>٩٥%</strong><span>معدل النجاح</span></div>
+                <div class="result-box"><strong>١٢٨</strong><span>طالبًا في المراجعات</span></div>
+                <div class="result-box"><strong>٤.٨/٥</strong><span>تقييم الطلاب</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="about-panel" data-section="about" data-index="1">
+          <div class="container about-two-col">
+            <div class="about-copy">
+              <div class="eyebrow">نبذة المعلم</div>
+              <h2>${escapeHtml((content as any)?.about?.title || 'معلوماتك التعليمية في سطر واحد')}</h2>
+              <p>${escapeHtml((content as any)?.about?.subtitle || 'أعتمد على أسلوب تدريسي عملي ومباشر يركز على الفهم، التطبيق، والثقة في الأداء.')}</p>
+              <ul class="check-list">
+                <li>شرح مبسط ومباشر لكل درس</li>
+                <li>خطط مراجعة أسبوعية مع متابعة</li>
+                <li>اختبارات قصيرة وتقييم مستمر</li>
+              </ul>
+            </div>
+            <div class="timeline-card" data-section="timeline" data-index="0">
+              <div class="timeline-head">الخبرات والمؤهلات</div>
+              <div class="timeline-item"><span>2024</span><div><strong>ماجستير العلوم التربوية</strong><p>تطوير مناهج تعليمية ومراجعة تفاعلية.</p></div></div>
+              <div class="timeline-item"><span>2020</span><div><strong>مدرس متميز</strong><p>أكثر من 1000 ساعة تدريب مباشر مع طلاب المرحلة الثانوية.</p></div></div>
+              <div class="timeline-item"><span>2016</span><div><strong>خبير صفوف الثانوية</strong><p>مشاريع تدريبية ومؤتمرات تعليمية متخصصة في التحصيل.</p></div></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="gallery" data-section="gallery" data-index="0">
+          <div class="container">
+            <div class="section-header">
+              <div>
+                <div class="eyebrow">${escapeHtml((content as any)?.gallery?.title || 'معرض الصف')}</div>
+                <h2>${escapeHtml((content as any)?.gallery?.subtitle || 'رحلة التعلم عبر الصور والأنشطة')}</h2>
+              </div>
+            </div>
+            <div class="gallery-grid">${renderGallery || '<figure class="gallery-item" data-open-gallery="true"><img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=900&q=80" alt="gallery" /></figure><figure class="gallery-item" data-open-gallery="true"><img src="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=900&q=80" alt="gallery" /></figure><figure class="gallery-item" data-open-gallery="true"><img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=900&q=80" alt="gallery" /></figure>'}</div>
+          </div>
+        </section>
+
+        <section class="section" id="testimonials" data-section="testimonials" data-index="0">
+          <div class="container">
+            <div class="section-header">
+              <div>
+                <div class="eyebrow">${escapeHtml((content as any)?.testimonials?.title || 'آراء الطلاب')}</div>
+                <h2>${escapeHtml((content as any)?.testimonials?.subtitle || 'قصص نجاح حقيقية من المتابعين')}</h2>
+              </div>
+            </div>
+            <div class="quote-grid">${renderTestimonials || '<article class="quote-card" data-open-review="true"><div class="quote-mark">“</div><p>الشرح مبسط جدًا، وكنت أظن مادة الرياضيات صعبة، لكنني أصبحت أتمكن منها بثقة.</p><div class="quote-author"><strong>سارة م.</strong><span>طالبة</span></div></article><article class="quote-card" data-open-review="true"><div class="quote-mark">“</div><p>المراجعة الأسبوعية والبطاقات المساندة ساعدتني كثيرًا على رفع المستوى قبل الامتحانات.</p><div class="quote-author"><strong>أحمد ح.</strong><span>طالب</span></div></article>'}</div>
+          </div>
+        </section>
+
+        <section class="section" id="faq" data-section="faq" data-index="0">
+          <div class="container">
+            <div class="section-header">
+              <div>
+                <div class="eyebrow">${escapeHtml((content as any)?.faq?.title || 'الأسئلة الشائعة')}</div>
+                <h2>${escapeHtml((content as any)?.faq?.subtitle || 'كل ما تريد معرفته قبل الانضمام')}</h2>
+              </div>
+            </div>
+            <div class="faq-wrap">${renderFaq || '<div class="faq-item open"><button type="button" class="faq-question"><span>هل الدروس مسجلة؟</span><span class="plus">+</span></button><div class="faq-answer"><p>نعم، يتم تزويد الطلاب بدروس مسجلة ومدعومة بملخصات ومراجعات.</p></div></div><div class="faq-item"><button type="button" class="faq-question"><span>هل يوجد دعم شخصي؟</span><span class="plus">+</span></button><div class="faq-answer"><p>نعم، هناك متابعة مناسبة عبر الرسائل والتواصل المباشر في ساعات محددة.</p></div></div>'}</div>
+          </div>
+        </section>
+
+        <section class="section" data-section="cta" data-index="0">
+          <div class="container">
+            <div class="cta-box">
+              <div>
+                <h3>${escapeHtml((content as any)?.contact?.title || 'ابدأ رحلتك اليوم')}</h3>
+                <p>${escapeHtml((content as any)?.contact?.description || 'انضم إلى المجموعة الآن وابدأ في تحقيق هدفك الدراسي بثقة واضحة.')}</p>
+              </div>
+              <div class="hero-actions">
+                <button type="button" class="secondary-btn" style="background:rgba(255,255,255,.12); color:#fff;" data-contact-action="true">${escapeHtml((content as any)?.contact?.secondaryButtonText || 'تواصل معنا')}</button>
+                <button type="button" class="primary-btn" data-open-screen="course-library">${escapeHtml((content as any)?.contact?.buttonText || 'احجز جلسة')}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer data-section="footer" data-index="0">
+        <div class="container footer-box">
+          <div>${escapeHtml((content as any)?.footer?.text || '© 2025 جميع الحقوق محفوظة')}</div>
+          <div>${escapeHtml(profileEmail || profilePhone || 'contact@schoolcoach.com')}</div>
+        </div>
+      </footer>
+
+      <nav class="bottom-nav" aria-label="Mobile bottom navigation">
+        <button type="button" class="bottom-nav-item active" data-scroll-target="#top">الرئيسية</button>
+        <button type="button" class="bottom-nav-item" data-open-screen="course-library">الدورات</button>
+        <button type="button" class="bottom-nav-item" data-open-screen="video-library">فيديو</button>
+        <button type="button" class="bottom-nav-item" data-open-screen="resource-library">مصادر</button>
+        <button type="button" class="bottom-nav-item" data-contact-action="true">تواصل</button>
+      </nav>
+
+      <div class="screen-layer" id="course-library" aria-hidden="true">
+        <div class="screen-header">
+          <button type="button" class="screen-back" data-close-screen="course-library">‹</button>
+          <h3>مكتبة الدورات</h3>
+          <button type="button" class="screen-close" data-close-screen="course-library">×</button>
+        </div>
+        <div class="screen-body">
+          <div class="search-box">
+            <input type="search" class="search-input" data-search-target="course-library" placeholder="ابحث عن دورة..." />
+          </div>
+          <div class="screen-grid" data-screen-list="course-library">
+            ${renderCourseCards || '<article class="mini-card course-card" data-open-course-detail="true"><div class="thumb" style="background-image:url(https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80)"></div><div class="card-body"><span class="chip">مشاهدة</span><h3>مراجعة الرياضيات</h3><p>تعلم البنية الأساسية لقواعد وحلول التمارين.</p></div></article>'}
+          </div>
+        </div>
+      </div>
+
+      <div class="screen-layer" id="video-library" aria-hidden="true">
+        <div class="screen-header">
+          <button type="button" class="screen-back" data-close-screen="video-library">‹</button>
+          <h3>مكتبة الفيديوهات</h3>
+          <button type="button" class="screen-close" data-close-screen="video-library">×</button>
+        </div>
+        <div class="screen-body">
+          <div class="search-box">
+            <input type="search" class="search-input" data-search-target="video-library" placeholder="ابحث عن فيديو..." />
+          </div>
+          <div class="screen-grid" data-screen-list="video-library">
+            ${renderVideoCards || '<article class="mini-card video-card"><div class="video-thumb" style="background-image:url(https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80)"><span class="play-badge">▶</span><span class="video-time">07:20</span></div><div class="card-body tight"><h3>عرض مراجعة سريعة</h3></div></article>'}
+          </div>
+        </div>
+      </div>
+
+      <div class="screen-layer" id="resource-library" aria-hidden="true">
+        <div class="screen-header">
+          <button type="button" class="screen-back" data-close-screen="resource-library">‹</button>
+          <h3>مكتبة الموارد</h3>
+          <button type="button" class="screen-close" data-close-screen="resource-library">×</button>
+        </div>
+        <div class="screen-body">
+          <div class="search-box">
+            <input type="search" class="search-input" data-search-target="resource-library" placeholder="ابحث عن مورد..." />
+          </div>
+          <div class="screen-grid" data-screen-list="resource-library">
+            ${renderBagCards || '<article class="mini-card resource-card"><div class="thumb" style="background-image:url(https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80)"></div><div class="card-body"><h3>اختبارات سريعة</h3><p>ملف أسئلة تطبيقية مكثفة مع حلول.</p></div></article>'}
+          </div>
+        </div>
+      </div>
+
+      <div class="screen-layer" id="about-screen" aria-hidden="true">
+        <div class="screen-header">
+          <button type="button" class="screen-back" data-close-screen="about-screen">‹</button>
+          <h3>نبذة المعلم</h3>
+          <button type="button" class="screen-close" data-close-screen="about-screen">×</button>
+        </div>
+        <div class="screen-body">
+          <div class="detail-card">
+            <p>${escapeHtml(profileBio || 'أعتمد على أسلوب تدريسي يركز على الفهم العميق، التطبيق المنهجي، والثقة في الأداء العام للطلاب.')}</p>
+            <div class="detail-list">
+              <strong>المؤهلات</strong>
+              <ul>
+                <li>ماجستير في العلوم التربوية</li>
+                <li>مؤهل تعليم عالي</li>
+                <li>خبرة أكثر من 10 سنوات</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen-layer" id="course-detail-screen" aria-hidden="true">
+        <div class="screen-header">
+          <button type="button" class="screen-back" data-close-screen="course-detail-screen">‹</button>
+          <h3>تفاصيل الدورة</h3>
+          <button type="button" class="screen-close" data-close-screen="course-detail-screen">×</button>
+        </div>
+        <div class="screen-body">
+          <div class="detail-card" id="course-detail-content">
+            <div class="detail-thumb"></div>
+            <h4>اسم الدورة</h4>
+            <p>وصف الدورة</p>
+            <ul>
+              <li>شرح المنهج</li>
+              <li>تمارين تطبيقية</li>
+              <li>مراجعة أسبوعية</li>
+            </ul>
+            <button type="button" class="primary-btn full-width" data-contact-action="true">احجز الآن</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-backdrop" id="generic-modal" aria-hidden="true">
+        <div class="modal-box">
+          <button type="button" class="modal-close" data-close-modal="generic-modal">×</button>
+          <div class="modal-body">
+            <h4>${escapeHtml(contactModalTitle || 'تواصل مع الفريق')}</h4>
+            <p>${escapeHtml(contactModalDescription || 'للحجز والاستفسار، يمكنك التواصل مباشرة مع الفريق.')}</p>
+            <div class="modal-actions">
+              ${whatsappUrl ? `<a href="${escapeHtml(whatsappUrl)}" target="_blank" rel="noreferrer" class="primary-btn secondary-link">${escapeHtml(whatsappLabel || 'واتساب')}</a>` : ''}
+              ${phoneNumber ? `<a href="tel:${escapeHtml(phoneNumber.trim().replace(/\s+/g, ''))}" class="secondary-btn secondary-link">${escapeHtml(phoneLabel || 'اتصال')}</a>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="toast" id="schoolcoach-toast" aria-live="polite">تمت العملية بنجاح</div>
+
+      <script>
+        const faqItems = document.querySelectorAll('.faq-item');
+        faqItems.forEach((item) => {
+          const button = item.querySelector('.faq-question');
+          if (button) {
+            button.addEventListener('click', () => {
+              item.classList.toggle('open');
+            });
+          }
+        });
+
+        const mobileToggle = document.querySelector('.mobile-toggle');
+        const nav = document.querySelector('.nav');
+        if (mobileToggle && nav) {
+          mobileToggle.addEventListener('click', () => {
+            const visible = nav.style.display === 'flex';
+            nav.style.display = visible ? 'none' : 'flex';
+            nav.style.position = visible ? 'static' : 'absolute';
+            nav.style.top = visible ? 'auto' : '68px';
+            nav.style.left = '12px';
+            nav.style.right = '12px';
+            nav.style.flexDirection = 'column';
+            nav.style.padding = '12px';
+            nav.style.background = '#fff';
+            nav.style.border = '1px solid #e6ebf2';
+            nav.style.borderRadius = '14px';
+            nav.style.boxShadow = '0 10px 22px rgba(16,24,40,.08)';
+          });
+        }
+
+        const showToast = (message) => {
+          const toast = document.getElementById('schoolcoach-toast');
+          if (!toast) return;
+          toast.textContent = message;
+          toast.classList.add('show');
+          clearTimeout(showToast.timer);
+          showToast.timer = setTimeout(() => toast.classList.remove('show'), 2200);
+        };
+
+        const openScreen = (screenId) => {
+          const screen = document.getElementById(screenId);
+          if (!screen) return;
+          document.querySelectorAll('.screen-layer').forEach((item) => item.classList.remove('show'));
+          screen.classList.add('show');
+          screen.setAttribute('aria-hidden', 'false');
+        };
+
+        const closeScreen = (screenId) => {
+          const screen = document.getElementById(screenId);
+          if (!screen) return;
+          screen.classList.remove('show');
+          screen.setAttribute('aria-hidden', 'true');
+        };
+
+        const openModal = (modalId) => {
+          const modal = document.getElementById(modalId);
+          if (!modal) return;
+          modal.classList.add('show');
+          modal.setAttribute('aria-hidden', 'false');
+        };
+
+        const closeModal = (modalId) => {
+          const modal = document.getElementById(modalId);
+          if (!modal) return;
+          modal.classList.remove('show');
+          modal.setAttribute('aria-hidden', 'true');
+        };
+
+        document.addEventListener('click', (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLElement)) return;
+
+          if (target.matches('[data-scroll-target]')) {
+            const selector = target.getAttribute('data-scroll-target');
+            const section = selector ? document.querySelector(selector) : null;
+            if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+
+          if (target.matches('[data-open-screen]')) {
+            const screenId = target.getAttribute('data-open-screen');
+            openScreen(screenId);
+          }
+
+          if (target.matches('[data-close-screen]')) {
+            const screenId = target.getAttribute('data-close-screen');
+            closeScreen(screenId);
+          }
+
+          if (target.matches('[data-contact-action]')) {
+            openModal('generic-modal');
+            showToast('تم فتح رسالة التواصل');
+          }
+
+          if (target.matches('[data-open-review]')) {
+            openModal('generic-modal');
+            showToast('تم فتح مراجعة الطالب');
+          }
+
+          if (target.matches('[data-open-gallery]')) {
+            openModal('generic-modal');
+            showToast('تم فتح المعرض');
+          }
+
+          if (target.matches('[data-close-modal]')) {
+            const modalId = target.getAttribute('data-close-modal');
+            closeModal(modalId);
+          }
+
+          if (target.matches('[data-open-course-detail]')) {
+            const detailScreen = document.getElementById('course-detail-screen');
+            if (detailScreen) {
+              const card = target.closest('.course-card, .mini-card');
+              const title = card?.querySelector('h3')?.textContent || 'دورة جديدة';
+              const thumb = card?.querySelector('.thumb, .video-thumb')?.style?.backgroundImage || 'url(https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80)';
+              const detailContent = document.getElementById('course-detail-content');
+              if (detailContent) {
+                detailContent.querySelector('.detail-thumb').style.backgroundImage = thumb;
+                detailContent.querySelector('h4').textContent = title;
+              }
+              openScreen('course-detail-screen');
+              showToast('تم فتح تفاصيل الدورة');
+            }
+          }
+        });
+
+        document.querySelectorAll('.search-input').forEach((input) => {
+          input.addEventListener('input', (event) => {
+            const searchValue = event.target.value.trim().toLowerCase();
+            const targetName = event.target.getAttribute('data-search-target');
+            const list = document.querySelector('[data-screen-list="' + targetName + '"]');
+            if (!list) return;
+            const cards = list.querySelectorAll('.mini-card, .resource-card, .course-card, .video-card');
+            cards.forEach((card) => {
+              const text = (card.textContent || '').toLowerCase();
+              card.style.display = text.includes(searchValue) ? 'block' : 'none';
+            });
+          });
+        });
+
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape') {
+            document.querySelectorAll('.screen-layer.show').forEach((screen) => screen.classList.remove('show'));
+            document.querySelectorAll('.modal-backdrop.show').forEach((modal) => modal.classList.remove('show'));
+          }
+        });
+      </script>
+    </body>
+  </html>`;
+};
+
 export const getSchoolCoachHtml = (
   content: TemplateContent,
   isEditing: boolean = false,

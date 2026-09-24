@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getSchoolCoachHtml } from './schoolcoachHtml';
+import { getSchoolCoachHtml, getSchoolCoachNewDesignHtml } from './schoolcoachHtml';
 import { getPublicPages, getPublicSections, apiToEditor } from '@/services/pages';
 import { getCourses } from '@/services/courses';
 import { getStudentCourses } from '@/services/student-courses';
@@ -19,6 +19,8 @@ interface SchoolCoachTemplateProps {
 const DEFAULT_CONTENT = {
   navbar: {
     title: 'الأستاذ أحمد محمد',
+    teacherName: 'أ/ محمد أحمد',
+    teacherTitle: 'مدرس الفيزياء',
     logo: '',
     bgColor: '#0a1628',
     textColor: '#ffffff',
@@ -30,6 +32,14 @@ const DEFAULT_CONTENT = {
     ],
     loginText: 'تسجيل الدخول',
     loginLink: '/auth/login',
+    videoIconVisible: true,
+    contactIconVisible: true,
+    contactModalTitle: 'تواصل مع الفريق',
+    contactModalDescription: 'للحجز والاستفسار، يمكنك التواصل مباشرة مع الفريق.',
+    whatsappUrl: '',
+    phoneNumber: '',
+    whatsappButtonLabel: 'واتساب',
+    phoneButtonLabel: 'اتصال',
     registerText: 'احجز مكانك',
     registerLink: '/auth/register',
   },
@@ -44,6 +54,20 @@ const DEFAULT_CONTENT = {
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDdn5I4iyCWiaDe9m4F8v8n_X00tPqBgqXH4hbDxxtEpcQGhs3Iv7ye36iLKGCPaYsSeLuQ6Q56ZRbKBk10dy_efgKLS3zHuPJjJmYL6JtPlCiByhhruLtE_z5QnQirZ362M0sgpMps7B8icOJUUVS6t_6GJ1K0xma8arDq0yEal-eRoeAXPmexe9Vlvhif39sPxgQQGgyuqPwrz1R2REpb3TQmQAfrbC-2IMbqMBAUhDDImR-r8q5cEQ',
     backgroundColor: '#0a1628',
     textColor: '#ffffff',
+  },
+  profile: {
+    teacherName: 'أ/ محمد أحمد',
+    teacherTitle: 'مدرس الفيزياء',
+    description: 'أساعد الطلاب على الفهم العميق، بناء الثقة، وتحقيق نتائج أكاديمية مستمرة عبر شرح مبسط، أسئلة تطبيقية، ومراجعة عملية منتظمة.',
+    goal: 'تمكين الطلاب من فهم الرياضيات بثقة وتحويل التحديات إلى نقاط قوة.',
+    avatar: '',
+    cover: '',
+    verified: true,
+    verifiedText: 'موثّق',
+    ctaPrimaryText: 'ابدأ التعلم',
+    ctaPrimaryLink: '#courses',
+    ctaSecondaryText: 'شاهد الفيديوهات',
+    ctaSecondaryLink: '#videos',
   },
   about: {
     title: 'عن الأستاذ أحمد',
@@ -183,16 +207,19 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
 
   if (!hasApiData) {
     return {
-      navbar: fallback.navbar,
-      hero: fallback.hero,
-      about: fallback.about,
-      features: fallback.features,
-      courses: { ...fallback.courses, items: realCourses.length > 0 ? realCourses : [] },
-      bags: { ...fallback.bags, items: realBags.length > 0 ? realBags : [] },
-      pricing: fallback.pricing,
-      faq: fallback.faq,
-      contact: fallback.contact,
-      footer: fallback.footer,
+      navbar: { title: '', logo: '', bgColor: '#0a1628', textColor: '#ffffff', links: [], loginText: '', loginLink: '', registerText: '', registerLink: '' },
+      hero: { title: '', subtitle: '', description: '', buttonText: '', buttonLink: '', secondaryButtonText: '', secondaryButtonLink: '', image: '', backgroundColor: '#0a1628', textColor: '#ffffff' },
+      about: { title: '', subtitle: '', image: '', backgroundColor: '#ffffff', textColor: '#1a1f29', videoTag: '', videoTitle: '', videoDesc: '', videoLink: '' },
+      features: { title: '', subtitle: '', items: [], backgroundColor: '#eef0f3', textColor: '#1a1f29' },
+      courses: { title: '', subtitle: '', items: realCourses.length > 0 ? realCourses : [], limit: 6, showPrice: true, showStudentsCount: true, buttonBg: '#3525cd', cardBg: '#ffffff', titleColor: '#1a1f29', backgroundColor: '#ffffff', textColor: '#1a1f29' },
+      stats: { items: [], backgroundColor: '#0a1628', textColor: '#ffffff' },
+      gallery: { title: '', subtitle: '', items: [], backgroundColor: '#ffffff', textColor: '#1a1f29' },
+      testimonials: { title: '', subtitle: '', items: [], backgroundColor: '#f7f8fa', textColor: '#1a1f29' },
+      bags: { title: '', subtitle: '', items: realBags.length > 0 ? realBags : [] },
+      pricing: { title: '', subtitle: '', items: [], backgroundColor: '#ffffff', textColor: '#1a1f29' },
+      faq: { title: '', items: [], backgroundColor: '#f7f8fa', textColor: '#1a1f29', testimonialsTitle: '', testimonialsSubtitle: '' },
+      contact: { title: '', description: '', phoneNumber: '', buttonText: '', secondaryButtonText: '', secondaryButtonLink: '', backgroundColor: '#0a1628', textColor: '#ffffff' },
+      footer: { text: '', backgroundColor: '#0a1628', textColor: '#ffffff', newsletterTitle: '', newsletterDesc: '', newsletterBtnText: '' },
     };
   }
 
@@ -202,6 +229,8 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
   const featuresNode = nodes.find(n => n.type === 'features' || n.type === 'features_section');
   const courseNode = nodes.find(n => n.type === 'course-cards' || n.type === 'courses');
   const bagsNode = nodes.find(n => n.type === 'bags' || n.type === 'bags-cards' || n.type === 'educational-bags');
+  const galleryNode = nodes.find(n => n.type === 'gallery_section');
+  const testimonialsNode = nodes.find(n => n.type === 'testimonials_section');
   const pricingNode = nodes.find(n => n.type === 'pricing');
   const faqNode = nodes.find(n => n.type === 'faq');
   const contactNode = nodes.find(n => n.type === 'contact');
@@ -302,8 +331,8 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
     const cp = courseNode ? parseProps(courseNode.props) : {};
     courses = {
       ...cp,
-      title: cp.title ?? 'أحدث الدورات والمراجعات الدراسية',
-      subtitle: cp.subtitle ?? 'دروس تفاعلية ومراجعات مكثفة للدرجات النهائية',
+      title: cp.title ?? '',
+      subtitle: cp.subtitle ?? '',
       items: realCourses,
       limit: cp.limit || 6,
       showPrice: cp.showPrice ?? cp.show_price ?? true,
@@ -318,9 +347,54 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
     const bp = bagsNode ? parseProps(bagsNode.props) : {};
     bags = {
       ...bp,
-      title: bp.title ?? fallback.bags?.title ?? 'الحقائب التعليمية والملفات الرقمية',
-      subtitle: bp.subtitle ?? fallback.bags?.subtitle ?? 'ملازم ومذكرات دراسية شاملة جاهزة للتحميل والاستفادة',
+      title: bp.title ?? fallback.bags?.title ?? '',
+      subtitle: bp.subtitle ?? fallback.bags?.subtitle ?? '',
       items: realBags,
+    };
+  }
+
+  // Gallery
+  let gallery: any = null;
+  if (galleryNode) {
+    const gp = parseProps(galleryNode.props);
+    const rawItems = parseItems(gp.items || galleryNode.items);
+    const items = rawItems.map((it: any) => {
+      const p = parseProps(it?.props || it);
+      return {
+        image_url: p.image_url || p.image || p.url || '',
+        caption: p.caption || it?.caption || '',
+      };
+    });
+    gallery = {
+      ...gp,
+      title: gp.title ?? '',
+      subtitle: gp.subtitle ?? '',
+      items,
+      backgroundColor: gp.backgroundColor ?? gp.background_color ?? gp.bg_color ?? '#ffffff',
+      textColor: gp.textColor ?? gp.text_color ?? '#1a1f29',
+    };
+  }
+
+  // Testimonials
+  let testimonials: any = null;
+  if (testimonialsNode) {
+    const tp = parseProps(testimonialsNode.props);
+    const rawItems = parseItems(tp.items || testimonialsNode.items);
+    const items = rawItems.map((it: any) => {
+      const p = parseProps(it?.props || it);
+      return {
+        text: p.quote || p.text || it?.quote || it?.text || '',
+        name: p.author || p.name || it?.author || it?.name || '',
+        role: p.role || it?.role || '',
+      };
+    });
+    testimonials = {
+      ...tp,
+      title: tp.title ?? '',
+      subtitle: tp.subtitle ?? '',
+      items,
+      backgroundColor: tp.backgroundColor ?? tp.background_color ?? tp.bg_color ?? '#f7f8fa',
+      textColor: tp.textColor ?? tp.text_color ?? '#1a1f29',
     };
   }
 
@@ -411,6 +485,8 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
     features,
     courses,
     bags,
+    gallery,
+    testimonials,
     pricing,
     faq,
     contact,
@@ -589,7 +665,22 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
   // Load template structure
   useEffect(() => {
     async function load() {
-      const fallback = DEFAULT_CONTENT;
+      const fallback = {
+        navbar: { title: '', teacherName: '', teacherTitle: '', logo: '', bgColor: '#0a1628', textColor: '#ffffff', links: [], loginText: '', loginLink: '', videoIconVisible: true, contactIconVisible: true, contactModalTitle: '', contactModalDescription: '', whatsappUrl: '', phoneNumber: '', whatsappButtonLabel: 'واتساب', phoneButtonLabel: 'اتصال', registerText: '', registerLink: '' },
+        hero: { title: '', subtitle: '', description: '', buttonText: '', buttonLink: '', secondaryButtonText: '', secondaryButtonLink: '', image: '', backgroundColor: '#0a1628', textColor: '#ffffff' },
+        profile: { teacherName: '', teacherTitle: '', description: '', goal: '', avatar: '', cover: '', verified: true, verifiedText: 'موثّق', ctaPrimaryText: 'ابدأ التعلم', ctaPrimaryLink: '#courses', ctaSecondaryText: 'شاهد الفيديوهات', ctaSecondaryLink: '#videos' },
+        about: { title: '', subtitle: '', image: '', backgroundColor: '#ffffff', textColor: '#1a1f29', videoTag: '', videoTitle: '', videoDesc: '', videoLink: '' },
+        features: { title: '', subtitle: '', items: [], backgroundColor: '#eef0f3', textColor: '#1a1f29' },
+        courses: { title: '', subtitle: '', limit: 6, showPrice: true, showStudentsCount: true, buttonBg: '#3525cd', cardBg: '#ffffff', titleColor: '#1a1f29', backgroundColor: '#ffffff', textColor: '#1a1f29', items: [] },
+        stats: { items: [], backgroundColor: '#0a1628', textColor: '#ffffff' },
+        gallery: { title: '', subtitle: '', items: [], backgroundColor: '#ffffff', textColor: '#1a1f29' },
+        testimonials: { title: '', subtitle: '', items: [], backgroundColor: '#f7f8fa', textColor: '#1a1f29' },
+        bags: { title: '', subtitle: '', items: [] },
+        pricing: { title: '', subtitle: '', items: [], backgroundColor: '#ffffff', textColor: '#1a1f29' },
+        faq: { title: '', items: [], backgroundColor: '#f7f8fa', textColor: '#1a1f29', testimonialsTitle: '', testimonialsSubtitle: '' },
+        contact: { title: '', description: '', phoneNumber: '', buttonText: '', secondaryButtonText: '', secondaryButtonLink: '', backgroundColor: '#0a1628', textColor: '#ffffff' },
+        footer: { text: '', backgroundColor: '#0a1628', textColor: '#ffffff', newsletterTitle: '', newsletterDesc: '', newsletterBtnText: '' },
+      } as typeof DEFAULT_CONTENT;
 
       if (sectionsProp && sectionsProp.length > 0) {
         const parsed = parseSectionsToContent(sectionsProp, fallback, realCourses, realBags, isEditing);
@@ -675,7 +766,7 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
   // Memoize initial HTML
   const initialHtml = React.useMemo(() => {
     if (!content) return '';
-    return getSchoolCoachHtml(
+    return getSchoolCoachNewDesignHtml(
       content,
       isEditing,
       isLoggedIn,

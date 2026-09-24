@@ -37,10 +37,58 @@ import { getPages, getSections, saveSections, createPage, updatePage, apiToEdito
 import { syncHomepageCache } from '@/lib/homepage-cache';
 import { getAcademicHtml, renderVideoPlayer } from '@/builder/templates/academic/academicHtml';
 import { getCoachHtml } from '@/builder/templates/coach/coachHtml';
-import { getSchoolCoachHtml } from '@/builder/templates/schoolcoach/schoolcoachHtml';
+import { getSchoolCoachHtml, getSchoolCoachNewDesignHtml } from '@/builder/templates/schoolcoach/schoolcoachHtml';
 import { getCourses } from '@/services/courses';
 
 const MySwal = withReactContent(Swal);
+
+const SCHOOLCOACH_NEW_EDITOR_SECTION_TYPES = [
+  'navbar',
+  'profile',
+  'tabs',
+  'courses',
+  'steps',
+  'videos',
+  'resources',
+  'results',
+  'about',
+  'timeline',
+  'gallery',
+  'testimonials',
+  'faq',
+  'cta',
+  'footer',
+  'mobileNav',
+  'courseLibrary',
+  'videoLibrary',
+  'resourceLibrary',
+  'aboutScreen',
+  'courseDetail'
+];
+
+const SCHOOLCOACH_NEW_SECTION_LABELS: Record<string, string> = {
+  navbar: 'شريط التنقل العلوي',
+  profile: 'بروفايل المعلم',
+  tabs: 'علامات التصفح / Tabs',
+  courses: 'الدورات',
+  steps: 'خطوات البدء',
+  videos: 'مكتبة الفيديو',
+  resources: 'الموارد المجانية',
+  results: 'نتائج الطلاب',
+  about: 'نبذة المعلم',
+  timeline: 'الخبرات والمؤهلات',
+  gallery: 'معرض الصف',
+  testimonials: 'آراء الطلاب',
+  faq: 'الأسئلة الشائعة',
+  cta: 'دعوة نهائية / تواصل',
+  footer: 'التذييل',
+  mobileNav: 'التنقل الجوال',
+  courseLibrary: 'مكتبة الدورات',
+  videoLibrary: 'مكتبة الفيديوهات',
+  resourceLibrary: 'مكتبة الموارد',
+  aboutScreen: 'شاشة نبذة المعلم',
+  courseDetail: 'تفاصيل الدورة'
+};
 
 // Helper to strip HTML tags from input box values so users edit clean text
 const cleanInputText = (str: string | undefined | null): string => {
@@ -201,560 +249,116 @@ interface TemplateContent {
   features: FeaturesConfig;
   courses?: CoursesConfig;
   stats?: StatsConfig;
+  gallery?: any;
   pricing: PricingConfig;
   testimonials?: any;
   faq: FAQConfig;
   contact: ContactConfig;
   footer: FooterConfig;
+  profile?: any;
+  tabs?: any;
+  steps?: any;
+  videos?: any;
+  resources?: any;
+  results?: any;
+  timeline?: any;
+  cta?: any;
+  mobileNav?: any;
+  courseLibrary?: any;
+  videoLibrary?: any;
+  resourceLibrary?: any;
+  aboutScreen?: any;
+  courseDetail?: any;
 }
 
 // --- Default Content Data Generator ---
 const getDefaultContent = (role: string, templateId: string): TemplateContent => {
   if (role === 'schoolcoach') {
-    if (templateId === 'template_1') {
-      return {
-        navbar: {
-          title: 'الأستاذ أحمد محمد',
-          logo: '',
-          bgColor: '#0a1628',
-          textColor: '#ffffff',
-          links: [
-            { label: 'الرئيسية', href: '/' },
-            { label: 'الدورات', href: '/courses' },
-            { label: 'الحقائب', href: '/bags' },
-            { label: 'حول', href: '/#about' }
-          ],
-          loginText: 'تسجيل الدخول',
-          loginLink: '/auth/login',
-          registerText: 'ابدأ الآن',
-          registerLink: '/auth/register',
-        },
-        hero: {
-          title: 'تعلم بذكاء. <br/><span class="text-[var(--color-gold-500)]">اضمن تفوقك الدراسي.</span>',
-          subtitle: 'معلم الرياضيات القدير',
-          description: 'مناهج دراسية مبسطة وأساليب تعليمية حديثة تساعدك على فهم المادة بعمق وتحقيق الدرجة الكاملة في امتحاناتك.',
-          buttonText: 'احجز مكانك الآن',
-          buttonLink: '#contact',
-          secondaryButtonText: 'اعرف المزيد عنا',
-          secondaryButtonLink: '#about',
-          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDdn5I4iyCWiaDe9m4F8v8n_X00tPqBgqXH4hbDxxtEpcQGhs3Iv7ye36iLKGCPaYsSeLuQ6Q56ZRbKBk10dy_efgKLS3zHuPJjJmYL6JtPlCiByhhruLtE_z5QnQirZ362M0sgpMps7B8icOJUUVS6t_6GJ1K0xma8arDq0yEal-eRoeAXPmexe9Vlvhif39sPxgQQGgyuqPwrz1R2REpb3TQmQAfrbC-2IMbqMBAUhDDImR-r8q5cEQ',
-          backgroundColor: '#0a1628',
-          textColor: '#ffffff'
-        },
-        about: {
-          title: 'عن الأستاذ أحمد',
-          subtitle: 'خبرة تزيد عن ١٠ سنوات في تدريس مناهج الرياضيات للمرحلة الثانوية. نعتمد على الفهم والتحليل وتدريب الطالب على أنماط الامتحانات المختلفة لضمان الثقة والتميز.',
-          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBsvCKkFFgnTqd7h7Fw_WOHLv_-bXegAz36jnJ-dSBDWKiA81BP1TWumr1WnjULNWm_0CcbVBTge22QX2XN-cBPri3M3xbxSbAGqLIcFlI4XbbEacN9CKm1uRjQqkRnAfjumbe4cbh_txOhsTy_-6Eph6WwWNqlfr7j35tkwUU103Z7NEEpLCcfSvulZ4QoKpglkx4KRxtXU9TRhBm3eChxdvC43k04A-fnMk-IjFugUk9FdZ1nyfYQsA',
-          backgroundColor: '#ffffff',
-          textColor: '#1a1f29',
-          videoTag: 'شاهد وتعلّم',
-          videoTitle: 'تعرف على فلسفتنا التعليمية في ٣ دقائق',
-          videoDesc: 'نقدم لك جولة سريعة داخل مجموعاتنا التفاعلية المباشرة، ونوضح طريقة المتابعة والتقييمات الدورية للطلاب.',
-          videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
-          videoBg: '',
-          videoTextColor: ''
-        },
-        features: {
-          title: 'المواد الدراسية',
-          subtitle: 'شرح وافٍ وتطبيقات عملية لكل فرع من فروع الرياضيات لضمان الاستيعاب الشامل.',
-          items: [
-            {
-              icon: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&auto=format&fit=crop',
-              title: 'الرياضيات البحتة',
-              description: 'الجبر، التفاضل والتكامل، وحساب المثلثات للمرحلة الثانوية.'
-            },
-            {
-              icon: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=800&auto=format&fit=crop',
-              title: 'الرياضيات التطبيقية',
-              description: 'الاستاتيكا والديناميكا لفهم التطبيقات الفيزيائية للرياضيات.'
-            },
-            {
-              icon: 'https://images.unsplash.com/photo-1453733190148-c44698c26588?w=800&auto=format&fit=crop',
-              title: 'الإحصاء والاحتمالات',
-              description: 'تحليل البيانات والاحتمالات وتطبيقاتها الحيوية.'
-            },
-            {
-              icon: 'https://images.unsplash.com/photo-1635070040807-fbe0f3dbe005cb?w=800&auto=format&fit=crop',
-              title: 'القدرات والتحصيلي',
-              description: 'دورات مكثفة لاجتياز اختبارات القياس بكفاءة عالية.'
-            }
-          ],
-          backgroundColor: '#eef0f3',
-          textColor: '#1a1f29'
-        },
-        courses: {
-          title: 'المواد والدروس التعليمية',
-          subtitle: 'اختر مادتك وابدأ التفوق الدراسي فوراً مع شروحات وتطبيقات شاملة.',
-          limit: 6,
-          showPrice: true,
-          showStudentsCount: true,
-          gridCols: '3',
-          buttonBg: '#3525cd',
-          cardBg: '#ffffff',
-          titleColor: '#1a1f29',
-          backgroundColor: '#ffffff',
-          textColor: '#1a1f29',
-          items: [],
-        },
-        pricing: {
-          title: 'المجموعات الدراسية المتاحة',
-          subtitle: 'احجز مكانك في إحدى مجموعاتنا التفاعلية المباشرة.',
-          items: [
-            {
-              title: 'مجموعة الصف الثالث الثانوي',
-              price: 'متاحة للتسجيل',
-              features: ['الأيام: الأحد والثلاثاء', 'الوقت: ٦:٠٠ مساءً', 'نوع الدراسة: أونلاين تفاعلي']
-            },
-            {
-              title: 'مجموعة الصف الثاني الثانوي',
-              price: 'متاحة للتسجيل',
-              features: ['الأيام: الإثنين والأربعاء', 'الوقت: ٥:٠٠ مساءً', 'نوع الدراسة: حضور في المركز']
-            },
-            {
-              title: 'مجموعة التحضير للقدرات',
-              price: 'متاحة للتسجيل',
-              features: ['الأيام: السبت فقط', 'الوقت: ١٠:٠٠ صباحاً', 'نوع الدراسة: أونلاين مسجل']
-            }
-          ],
-          backgroundColor: '#ffffff',
-          textColor: '#1a1f29',
-          testimonialsBg: '#f5f2ff',
-          testimonialsTextColor: '#1b1b24',
-        },
-        stats: {
-          items: [
-            { value: '١٠+', label: 'سنوات من الخبرة والتميز' },
-            { value: '٥٠٠+', label: 'طالب متميز سنوياً' },
-            { value: '٩٥٪+', label: 'نسبة درجات التفوق' }
-          ],
-          backgroundColor: '#0a1628',
-          textColor: '#ffffff'
-        },
-        faq: {
-          title: 'الأسئلة الشائعة حول المنهج',
-          items: [
-            { question: 'أ.د. محمد الشمري - ولي أمر طالبتين', answer: 'الأستاذ أحمد يبسط الرياضيات بطريقة رائعة، ابنتي حصلت على الدرجة النهائية بفضله.' },
-            { question: 'رنا عبدالله - طالبة طب هندسي', answer: 'التمارين والامتحانات المكثفة ساعدتني جداً في التحصيلي والقدرات.' },
-            { question: 'م. علي عمر - طالب سابق', answer: 'تأسست في الرياضيات على يد الأستاذ أحمد، والآن أدرس هندسة البرمجيات بسهولة.' }
-          ],
-          backgroundColor: '#f7f8fa',
-          textColor: '#1a1f29',
-          testimonialsTitle: 'آراء وقصص نجاح الطلاب',
-          testimonialsSubtitle: 'ماذا يقول أولياء الأمور وطلابنا بعد تحقيق الدرجة الكاملة والتفوق في امتحاناتهم.'
-        },
-        contact: {
-          title: 'ابدأ رحلة تفوقك اليوم',
-          description: 'انضم لأكثر من ١٠,٠٠٠ طالب وطالبة حققوا أحلامهم الدراسية معنا.',
-          phoneNumber: '01012345678',
-          buttonText: 'احجز مكانك الآن',
-          secondaryButtonText: 'طلب عرض توضيحي',
-          secondaryButtonLink: 'https://example.com/demo',
-          backgroundColor: '#0a1628',
-          textColor: '#ffffff'
-        },
-        footer: {
-          text: 'جميع الحقوق محفوظة © ' + new Date().getFullYear(),
-          description: 'مجموعات تقوية ومراجعات شاملة في الرياضيات للمرحلة الثانوية.',
-          workingHours: 'من السبت إلى الخميس: ١٠:٠٠ ص - ٩:٠٠ م',
-          email: 'info@ahmedmath.com',
-          phone: '+966500000000',
-          backgroundColor: '#0a1628',
-          textColor: '#ffffff',
-          newsletterTitle: 'اشترك في نشرتنا المعرفية',
-          newsletterDesc: 'احصل على نماذج امتحانات، ملخصات ومذكرات للمراجعة مباشرة في بريدك الإلكتروني.',
-          newsletterBtnText: 'اشترك الآن'
-        }
-      };
-    } else {
-      // School Coach Template 2
-      return {
-        navbar: {
-          title: 'بوابة المتفوق الأكاديمية',
-          logo: '',
-          bgColor: '#0f172a',
-          textColor: '#ffffff',
-          links: [
-            { label: 'الرئيسية', href: '/' },
-            { label: 'الدورات', href: '/courses' },
-            { label: 'الحقائب', href: '/bags' },
-            { label: 'حول', href: '/#about' }
-          ],
-          loginText: 'تسجيل الدخول',
-          loginLink: '/auth/login',
-          registerText: 'ابدأ الآن',
-          registerLink: '/auth/register',
-        },
-        hero: {
-          title: 'تعلّم المناهج الدراسية بأسلوب تفاعلي متطور يناسب جيلك',
-          subtitle: 'تعليم إلكتروني بمعايير حديثة ⚡',
-          description: 'تغلب على تحديات الدراسة والامتحانات من خلال الفيديوهات القصيرة المركزة وخرائط الذهن والامتحانات التفاعلية الذكية.',
-          buttonText: 'ابدأ دراستك فوراً',
-          buttonLink: '#courses',
-          secondaryButtonText: 'اعرف المزيد عنا',
-          secondaryButtonLink: '#about',
-          image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
-          backgroundColor: '#0f172a',
-          textColor: '#ffffff'
-        },
-        about: {
-          title: 'فلسفتنا التعليمية',
-          subtitle: 'نحن لا نلقن، بل نساعدك على الفهم العميق والربط بين المفاهيم. نستخدم تكنولوجيا التعليم المبتكرة لجعل تجربة المذاكرة شيقة وسريعة.',
-          image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&auto=format&fit=crop',
-          backgroundColor: '#1e293b',
-          textColor: '#cbd5e1',
-          videoTag: 'شاهد وتعلّم',
-          videoTitle: 'تعرف على فلسفتنا التعليمية في ٣ دقائق',
-          videoDesc: 'نقدم لك جولة سريعة داخل مجموعاتنا التفاعلية المباشرة، ونوضح طريقة المتابعة والتقييمات الدورية للطلاب.',
-          videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop'
-        },
-        features: {
-          title: 'لماذا يفضلنا الطلاب الأوائل؟',
-          subtitle: 'نغير الطريقة التقليدية للمذاكرة لتوفر نصف الوقت وتحقق أعلى الدرجات.',
-          items: [
-            { icon: 'Sparkles', title: 'فيديوهات كبسولة قصيرة', description: 'شرح مبسط لكل فكرة في ١٠ دقائق بدون حشو وملل.' },
-            { icon: 'Plus', title: 'خرائط ذهنية رقمية', description: 'ملخصات بصرية تفاعلية تساعدك على تذكر المنهج بسرعة.' },
-            { icon: 'Award', title: 'مجتمع دراسي للأسئلة', description: 'تبادل النقاشات مع زملائك وتحت إشراف مباشر للمدرس.' }
-          ],
-          backgroundColor: '#0f172a',
-          textColor: '#ffffff'
-        },
-        pricing: {
-          title: 'خطط دراسة متكاملة للجميع',
-          subtitle: 'باقات دفع مرنة تناسب احتياجات الطلاب خلال السنة الدراسية.',
-          items: [
-            { title: 'الاشتراك الدراسي الشهري', price: '١٨٠ جنيه / شهرياً', features: ['الوصول لكافة الشروحات النشطة', 'اختبارات تقييم ذكية للمستويات', 'مراجعة المخرجات الأسبوعية'] },
-            { title: 'الاشتراك الدراسي السنوي المفتوح', price: '٩٠0 جنيه / للعام', features: ['توفير هائل لكامل العام الدراسي', 'وصول حصري لمعسكر المراجعة الختامي', 'ملفات إجابات تفصيلية ونماذج سابقة'] }
-          ],
-          backgroundColor: '#1e293b',
-          textColor: '#ffffff',
-          testimonialsBg: '#1e293b',
-          testimonialsTextColor: '#ffffff',
-        },
-        stats: {
-          items: [
-            { value: '98%', label: 'نسبة رضا الطلاب' },
-            { value: '150+', label: 'منهج دراسي متكامل' },
-            { value: '12k+', label: 'خريج متميز' },
-            { value: '24/7', label: 'دعم أكاديمي مباشر' }
-          ],
-          backgroundColor: '',
-          textColor: ''
-        },
-        faq: {
-          title: 'أسئلة يتكرر طرحها',
-          items: [
-            { question: 'هل المناهج مطابقة لوزارة التربية والتعليم؟', answer: 'بالتأكيد، مناهجنا محدثة أسبوعياً ومطابقة لأحدث التعديلات والأنظمة والامتحانات الجديدة.' },
-            { question: 'كيف يمكن تفعيل الاشتراك الورقي؟', answer: 'يمكنك إدخال كود التفعيل المستلم من المدرسة أو الوكيل ليفتح المحتوى فوراً.' }
-          ],
-          backgroundColor: '#0f172a',
-          textColor: '#ffffff',
-          testimonialsTitle: 'آراء وقصص نجاح الطلاب',
-          testimonialsSubtitle: 'ماذا يقول أولياء الأمور وطلابنا بعد تحقيق الدرجة الكاملة والتفوق في امتحاناتهم.'
-        },
-        contact: {
-          title: 'تواصل مباشر مع مشرفي الدعم',
-          description: 'إذا واجهت أي عقبة تقنية أو ترغب في تفعيل كود، تواصل معنا فوراً.',
-          phoneNumber: '201100000000',
-          buttonText: 'دعمنا الفني واتساب',
-          backgroundColor: '#f59e0b',
-          textColor: '#0f172a'
-        },
-        footer: {
-          text: 'بوابة المتفوق الأكاديمية © جميع الحقوق محفوظة لعام ٢٠٢٦',
-          backgroundColor: '#0f172a',
-          textColor: '#94a3b8',
-          newsletterTitle: 'اشترك في نشرتنا المعرفية',
-          newsletterDesc: 'احصل على نماذج امتحانات، ملخصات ومذكرات للمراجعة مباشرة في بريدك الإلكتروني.',
-          newsletterBtnText: 'اشترك الآن'
-        }
-      };
-    }
-  } else if (role === 'coach') {
     return {
-      navbar: {
-        title: 'Deep Knowledge',
-        logo: '',
-        bgColor: '#fbfafc',
-        textColor: '#6750a4',
-        links: [
-          { label: 'الرئيسية', href: '/' },
-          { label: 'الدورات', href: '/courses' },
-          { label: 'الحقائب', href: '/bags' },
-          { label: 'حول', href: '/#about' }
-        ],
-        loginText: 'تسجيل الدخول',
-        loginLink: '/auth/login',
-        registerText: 'ابدأ الآن',
-        registerLink: '/auth/register',
-      },
-      hero: {
-        title: 'تعمق في المعرفة. <br/> تعلم من الصفوة.',
-        subtitle: 'أكاديمية النخبة',
-        description: 'مساحة حصرية مصممة للمفكرين والقادة. استكشف مناهج متقدمة وتواصل مع خبراء عالميين في بيئة دراسية مصممة للتركيز العميق والتميز الأكاديمي.',
-        buttonText: 'ابدأ رحلتك',
-        buttonLink: '#courses',
-        secondaryButtonText: 'استكشف المناهج',
-        secondaryButtonLink: '#faq',
-        image: '',
-        backgroundColor: '#fbfafc',
-        textColor: '#1c1a22'
-      },
-      about: {
-        title: 'المرشدون الخبراء',
-        subtitle: 'نخبة من الأكاديميين والباحثين يرافقونك في رحلتك المعرفية.',
-        image: '',
-        backgroundColor: '#ffffff',
-        textColor: '#1c1a22',
-        videoTag: 'شاهد وتعلّم',
-        videoTitle: 'تعرف على فلسفتنا التعليمية في ٣ دقائق',
-        videoDesc: 'نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.',
-        videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
-        videoBg: '',
-        videoTextColor: ''
-      },
-      features: {
-        title: 'المرشدون الخبراء',
-        subtitle: 'نخبة من الأكاديميين والباحثين يرافقونك في رحلتك المعرفية.',
-        items: [
-          {
-            icon: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD6JzKcQHDDohUQuzB8PNfXLDbsl7kf35bgCuG0sQW1h8cNdtvfatA7YI3HqNz6hiRLYcE6oU_P8qcDQyq1S4EDQdGdl3PraTpby8mme9L-kHXgx0kdcdb_pfIEdse9RcYvfBa3_gBCg2QIPqKv9LzEDqHVC0s2nGHMpRBNZve1OBkEhV00ehX4zl5HDvssuq8qkK-Yh14G6Udjd1e6e9VB3D5sX_35J7UvItIiInMbSaBA3ALb7g58eg',
-            title: 'د. طارق الحكيم - أستاذ الفلسفة المتقدمة',
-            description: 'خبير عالمي في الفلسفة التحليلية والمنطق الرياضي. يقدم رؤى معمقة تتحدى التفكير التقليدي وتبني أسساً معرفية متينة.'
-          },
-          {
-            icon: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDdn5I4iyCWiaDe9m4F8v8n_X00tPqBgqXH4hbDxxtEpcQGhs3Iv7ye36iLKGCPaYsSeLuQ6Q56ZRbKBk10dy_efgKLS3zHuPJjJmYL6JtPlCiByhhruLtE_z5QnQirZ362M0sgpMps7B8icOJUUVS6t_6GJ1K0xma8arDq0yEal-eRoeAXPmexe9Vlvhif39sPxgQQGgyuqPwrz1R2REpb3TQmQAfrbC-2IMbqMBAUhDDImR-r8q5cEQ',
-            title: 'د. ليلى المنصور - باحثة في الذكاء المعرفي',
-            description: 'رائدة في تقاطع علوم الحاسوب وعلم الأعصاب. تركز أبحاثها على محاكاة الإدراك البشري وتطوير خوارزميات التعلم العميق.'
-          },
-          {
-            icon: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBsvCKkFFgnTqd7h7Fw_WOHLv_-bXegAz36jnJ-dSBDWKiA81BP1TWumr1WnjULNWm_0CcbVBTge22QX2XN-cBPri3M3xbxSbAGqLIcFlI4XbbEacN9CKm1uRjQqkRnAfjumbe4cbh_txOhsTy_-6Eph6WwWNqlfr7j35tkwUU103Z7NEEpLCcfSvulZ4QoKpglkx4KRxtXU9TRhBm3eChxdvC43k04A-fnMk-IjFugUk9FdZ1nyfYQsA',
-            title: 'البروفيسور عمر زيدان - خبير الاقتصاد الكلي',
-            description: 'مستشار استراتيجي دولي. يحلل الأنظمة الاقتصادية المعقدة ويقدم استراتيجيات تنبؤية للأسواق العالمية الناشئة.'
-          }
-        ],
-        backgroundColor: '#fbfafc',
-        textColor: '#1c1a22'
-      },
-      courses: {
-        title: 'المسارات والماستركلاسز المتقدمة',
-        subtitle: 'محاضرات تدريبية وورش عمل مصممة لبناء المهارات القيادية والمعرفية.',
-        limit: 6,
-        showPrice: true,
-        showStudentsCount: true,
-        gridCols: '3',
-        buttonBg: '#6750a4',
-        cardBg: '#ffffff',
-        titleColor: '#1c1a22',
-        backgroundColor: '#fbfafc',
-        textColor: '#1c1a22',
-        items: [],
-      },
-      stats: {
-        items: [
-          { value: '98%', label: 'نسبة رضا الطلاب' },
-          { value: '150+', label: 'منهج دراسي متكامل' },
-          { value: '12k+', label: 'خريج متميز' },
-          { value: '24/7', label: 'دعم أكاديمي مباشر' }
-        ],
-        backgroundColor: '',
-        textColor: ''
-      },
-      pricing: {
-        title: 'سلسلة الماستركلاس',
-        subtitle: 'محاضرات مكثفة مسجلة بأعلى جودة سينمائية.',
-        items: [
-          {
-            title: 'بنية التفكير الاستراتيجي',
-            price: 'الحلقة 1',
-            features: ['45 دقيقة', 'https://lh3.googleusercontent.com/aida-public/AB6AXuAXpJX3q5uXYRCJ0P26aOiHCO6ssai534WXEH0acZCxxJWwAnux91BzP3cVQ-I09Yp_BnJZkboDuI3HhAYQROL-qkAZHMuhuMkclUAG-iB_eMV9KhTwCOLORHsHaWcy9cV25oZBqek1WcyH-K5R9Y718rEX4UUTfbLh5s77ovJzp3pdBAXWt2iJtJ7CIN8dP45tCVIqTuiZ_f4GpC49lyi0XC3oxtV9sBrBy2oxubJ8LNQY_adythzF8g']
-          },
-          {
-            title: 'تحليل الأنظمة المعقدة',
-            price: 'الحلقة 2',
-            features: ['52 دقيقة', 'https://lh3.googleusercontent.com/aida-public/AB6AXuDRQTwjFjHqFPLwD4Ia1wHj8tW3Aj0xcQvOR1DdS8lD0jwvVo4Z8mOsjlKrP3zjMBswfUBWkhBM7T1CXK0oMbhlSEYqRFRZrp_4NhP1Zy9u-pnmyE39rj7yU6Fb2ozxaVqoJWdESCHFLQXXywsipGmx4tDJoL-L9l7NFt-LiKT6Dq2A0wbgL4tV4fNVKNjmKmQk8WBlM30SKcRVu-bBJ4ulrQXnxK0_AFMOWOKxv3zOn3pnp0S1N-d-wA']
-          }
-        ],
-        backgroundColor: '#ffffff',
-        textColor: '#1c1a22',
-        testimonialsBg: '#fbfafc',
-        testimonialsTextColor: '#1c1a22',
-        testimonialsTitle: 'ماذا يقول النخبة؟',
-        testimonialsSubtitle: 'تجارب حقيقية ورؤى ملهمة من طلابنا وقادتنا الذين غيروا مسارهم الأكاديمي والمهني.',
-        testimonial1Text: 'الماستركلاسز والدروس الفلسفية المعمقة أعادت صياغة طريقتي في التفكير واتخاذ القرارات الاستراتيجية. تجربة دراسية استثنائية ونخبوية حقاً.',
-        testimonial1Author: 'خالد منصور',
-        testimonial1Role: 'مستشار إداري وتطوير أعمال',
-        testimonial2Text: 'من أفضل القرارات المعرفية التي اتخذتها. منهجية التدريب والتحليل بالبيانات لا تدع مجالاً للعشوائية أو التخمين.',
-        testimonial2Author: 'سارة العلي',
-        testimonial2Role: 'رائدة أعمال تكنولوجية',
-        testimonial3Text: 'المحتوى الأكاديمي والتحليل العميق وفر لي رؤى لم أجدها في المراجع التقليدية. التوجيه الشخصي مع د. طارق كان فارقاً في مساري العلمي.',
-        testimonial3Author: 'أحمد حماد',
-        testimonial3Role: 'باحث أكاديمي في الفلسفة'
-      },
-      faq: {
-        title: 'مسارات المناهج المتقدمة',
-        items: [
-          { question: 'الأسس المعرفية', answer: 'المستوى الأول' },
-          { question: 'المنطق التحليلي', answer: 'التفكير النقدي المتقدم' },
-          { question: 'فلسفة العلوم', answer: 'الابستيمولوجيا التطبيقية' }
-        ],
-        backgroundColor: '#fbfafc',
-        textColor: '#1c1a22'
-      },
-      contact: {
-        title: 'Deep Knowledge',
-        description: 'أكاديمية النخبة للتعليم العالي المستقل. نبني قادة الفكر للمستقبل من خلال مناهج صارمة وعميقة.',
-        phoneNumber: '01012345678',
-        buttonText: 'ابدأ الآن',
-        secondaryButtonText: 'طلب عرض توضيحي',
-        secondaryButtonLink: 'https://example.com/demo',
-        backgroundColor: '#6750a4',
-        textColor: '#ffffff'
-      },
-      footer: {
-        text: '© 2024 Deep Knowledge Academy. All rights reserved.',
-        backgroundColor: '#fbfafc',
-        textColor: '#1c1a22',
-        newsletterTitle: 'اشترك في نشرتنا البريدية المعرفية',
-        newsletterDesc: 'احصل على أحدث المقالات التحليلية، والمناهج الجديدة، والماستركلاسز الحصرية مباشرة في بريدك الإلكتروني أسبوعياً.',
-        newsletterBtnText: 'اشترك الآن'
-      }
-    };
-  } else {
-    // Academy Role ('academy')
-    return {
-      navbar: {
-        title: 'إديوكور',
-        logo: '',
-        bgColor: '#ffffff',
-        textColor: '#3525cd',
-        links: [
-          { label: 'الرئيسية', href: '/' },
-          { label: 'الدورات', href: '/courses' },
-          { label: 'الحقائب', href: '/bags' },
-          { label: 'حول', href: '/#about' }
-        ],
-        loginText: 'تسجيل الدخول',
-        loginLink: '/auth/login',
-        registerText: 'ابدأ الآن',
-        registerLink: '/auth/register',
-      },
-      hero: {
-        title: 'بناء تجربة أكاديمية أكثر ذكاءً.',
-        subtitle: 'حل مؤسسي متقدم',
-        description: 'اربط الطلاب، والمعلمين، والإداريين على منصة مؤسسية موحدة مصممة لتحقيق التميز القابل للقياس وسير العمل المبسط بكفاءة عالية.',
-        buttonText: 'استكشف المنصة',
-        buttonLink: '#courses',
-        secondaryButtonText: 'طلب عرض توضيحي',
-        secondaryButtonLink: '#contact',
-        image: 'https://tse4.mm.bing.net/th/id/OIP.CGEfBMBIYoz4Syk_3B8DawHaEK?r=0&rs=1&pid=ImgDetMain&o=7&rm=3',
-        backgroundColor: '#fcf8ff',
-        textColor: '#1b1b24'
-      },
-      about: {
-        title: 'تحليلات ذكية لاتخاذ قرارات أفضل',
-        subtitle: 'راقب الأداء الأكاديمي، وحدد الاتجاهات، وقم بتحسين المخرجات التعليمية من خلال لوحات تحكم تحليلية متقدمة توفر رؤى في الوقت الفعلي.',
-        image: '',
-        backgroundColor: '#ffffff',
-        textColor: '#1b1b24',
-        analyticsTitle: 'رؤية الأداء المؤسسي',
-        analyticsColor: '#3525cd',
-        analyticsBars: [40, 65, 85, 50, 95],
-        videoTag: 'شاهد وتعلّم',
-        videoTitle: 'تعرف على فلسفتنا التعليمية في ٣ دقائق',
-        videoDesc: 'نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.',
-        videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
-        videoBg: '',
-        videoTextColor: ''
-      },
-      features: {
-        title: 'نظام بيئي أكاديمي متكامل',
-        subtitle: 'مجموعة شاملة ومتطورة من الأدوات لإدارة كل جانب من جوانب رحلة التعلم المؤسسية.',
-        items: [
-          { icon: 'groups', title: 'مركز الطلاب الشامل', description: 'تمكين المتعلمين بلوحات تحكم مخصصة، وتتبع دقيق للتقدم، وأدوات تواصل تعاونية سلسة لبيئة تعليمية محفزة.' },
-          { icon: 'assignment_ind', title: 'بوابة المعلمين', description: 'تبسيط تخطيط الدروس، وإدارة الدرجات، وتعزيز تفاعل الطلاب بأدوات متقدمة.' },
-          { icon: 'quiz', title: 'محرك التقييم', description: 'اختبارات آمنة وقابلة للتطوير مع تصحيح آلي وتحليلات أداء مفصلة ودقيقة.' },
-          { icon: 'insights', title: 'المخرجات والنتائج', description: 'تقارير مؤسسية شاملة لتتبع الفعالية الأكاديمية وإتقان الطلاب للمهارات المطلوبة.' }
-        ],
-        backgroundColor: '#f5f2ff',
-        textColor: '#1b1b24'
-      },
-      courses: {
-        title: 'أحدث الدورات والبرامج الأكاديمية',
-        subtitle: 'استكشف مساراتنا التدريبية المتخصصة لتطوير مهاراتك والارتقاء بمسيرتك المهنية.',
-        limit: 6,
-        showPrice: true,
-        showStudentsCount: true,
-        gridCols: '3',
-        buttonBg: '#3525cd',
-        cardBg: '#ffffff',
-        titleColor: '#1b1b24',
-        backgroundColor: '#ffffff',
-        textColor: '#1b1b24',
-        items: [],
-      },
-      stats: {
-        items: [
-          { value: '98%', label: 'نسبة رضا الطلاب' },
-          { value: '150+', label: 'مناهج شاملة' },
-          { value: '12k+', label: 'خريج متميز' },
-          { value: '24/7', label: 'دعم أكاديمي مباشر' }
-        ],
-        backgroundColor: '',
-        textColor: ''
-      },
-      pricing: {
-        title: 'المخرجات والنتائج الإحصائية',
-        subtitle: 'معدلات تقدم وتحليلات رقمية للفصول الدراسية',
-        items: [
-          { title: 'طلاب نشطون', price: '12.4k', features: ['بوابات تفاعلية', 'تتبع التقدم'] },
-          { title: 'دورات مدارة', price: '320', features: ['فصول مسجلة', 'محاضرات بث مباشر'] },
-          { title: 'معدل الإنجاز', price: '87%', features: ['نسبة إتمام مرتفعة', 'التزام أكاديمي'] }
-        ],
-        backgroundColor: '#fcf8ff',
-        textColor: '#1b1b24',
-        testimonialsBg: '#f5f2ff',
-        testimonialsTextColor: '#1b1b24',
-        testimonialsTitle: 'ماذا يقول شركاؤنا وطلابنا؟',
-        testimonialsSubtitle: 'قصص نجاح ملهمة وتجارب واقعية يعبر عنها شركاؤنا الأكاديميون وطلابنا المتميزون.',
-        testimonial1Text: 'سهولة إدارة المحتوى التعليمي والتحليلات الدقيقة المتاحة مكنتنا كإدارة من تتبع الأداء وتحسين المخرجات التعليمية بشكل ملموس وسريع.',
-        testimonial1Author: 'أ.د. محمد الشمري',
-        testimonial1Role: 'عميد القبول والتسجيل',
-        testimonial2Text: 'سهولة التصفح، والوصول الفوري للمقررات والامتحانات التفاعلية، أتاح لي تنظيم وقتي والمذاكرة بذكاء وبدون تشتت تماماً.',
-        testimonial2Author: 'رنا عبدالله',
-        testimonial2Role: 'طالبة هندسة برمجيات',
-        testimonial3Text: 'كأستاذ، مكنتني بوابة المعلم من متابعة الواجبات وإعطاء تقييمات تفصيلية فورية لكل طالب وطالبة بسهولة مطلقة ووقت قياسي.',
-        testimonial3Author: 'م. عاصم العتيبي',
-        testimonial3Role: 'عضو هيئة التدريس'
-      },
-      faq: {
-        title: 'الأسئلة الشائعة حول إديوكور',
-        items: [
-          { question: 'هل الحصص البث المباشر مسجلة؟', answer: 'نعم، يتم تسجيل جميع اللقاءات المباشرة ورفعها للمنصة لتعيد مشاهدتها في أي وقت.' },
-          { question: 'كيف يساهم إديوكور في تحسين الأداء الأكاديمي؟', answer: 'يوفر النظام تحليلات شاملة تمكن الإداريين والمعلمين من مراقبة التقدم واتخاذ قرارات فورية مدعومة بالبيانات.' }
-        ],
-        backgroundColor: '#f5f2ff',
-        textColor: '#1b1b24'
-      },
-      contact: {
-        title: '',
+      navbar: { title: '', teacherName: '', teacherTitle: '', logo: '', bgColor: '#0f172a', textColor: '#ffffff', links: [], loginText: 'تسجيل الدخول', loginLink: '/auth/login', videoIconVisible: true, contactIconVisible: true, contactModalTitle: 'تواصل مع الفريق', contactModalDescription: 'للحجز والاستفسار، يمكنكم التواصل مباشرة مع الفريق.', whatsappUrl: '', phoneNumber: '', whatsappButtonLabel: 'واتساب', phoneButtonLabel: 'اتصال', registerText: 'ابدأ الآن', registerLink: '/auth/register' },
+      hero: { title: '', subtitle: '', description: '', buttonText: '', buttonLink: '', secondaryButtonText: '', secondaryButtonLink: '', image: '', backgroundColor: '#0f172a', textColor: '#ffffff' },
+      about: { title: '', subtitle: '', image: '', backgroundColor: '#ffffff', textColor: '#1a1f29', videoTag: '', videoTitle: '', videoDesc: '', videoLink: '' },
+      features: { title: '', subtitle: '', items: [], backgroundColor: '#eef2ff', textColor: '#1a1f29' },
+      courses: { title: '', subtitle: '', limit: 6, showPrice: true, showStudentsCount: true, gridCols: '3', buttonBg: '#2563eb', cardBg: '#ffffff', titleColor: '#0f172a', backgroundColor: '#ffffff', textColor: '#0f172a', items: [] },
+      stats: { items: [], backgroundColor: '#0f172a', textColor: '#ffffff' },
+      gallery: { title: 'معرض الصف', subtitle: '', items: [], backgroundColor: '#ffffff', textColor: '#1a1f29' },
+      pricing: { title: '', subtitle: '', items: [], backgroundColor: '#ffffff', textColor: '#1a1f29' },
+      testimonials: { title: 'آراء الطلاب', subtitle: '', items: [], backgroundColor: '#f8fafc', textColor: '#1a1f29' },
+      faq: { title: 'الأسئلة الشائعة', items: [], backgroundColor: '#f8fafc', textColor: '#1a1f29', testimonialsTitle: '', testimonialsSubtitle: '' },
+      contact: { title: '', description: '', phoneNumber: '', buttonText: '', secondaryButtonText: '', secondaryButtonLink: '', backgroundColor: '#0f172a', textColor: '#ffffff' },
+      footer: { text: '', description: '', workingHours: '', email: '', phone: '', backgroundColor: '#0f172a', textColor: '#ffffff', newsletterTitle: '', newsletterDesc: '', newsletterBtnText: '' },
+      profile: {
+        teacherName: '',
+        name: '',
+        teacherTitle: '',
+        headline: '',
         description: '',
-        phoneNumber: '',
-        buttonText: 'ابدأ الآن',
-        secondaryButtonText: '',
-        secondaryButtonLink: '',
-        backgroundColor: '',
-        textColor: ''
+        bio: '',
+        goal: '',
+        mission: '',
+        avatar: '',
+        cover: '',
+        verified: true,
+        verifiedText: 'موثّق',
+        stats: [],
+        ctaPrimaryText: 'ابدأ التعلم',
+        ctaPrimaryLink: '#courses',
+        ctaSecondaryText: 'شاهد الفيديوهات',
+        ctaSecondaryLink: '#videos',
       },
-      footer: {
-        text: '© 2024 إديوكور الأكاديمية. جميع الحقوق محفوظة.',
-        backgroundColor: '#ffffff',
-        textColor: '#1b1b24',
-        newsletterTitle: 'اشترك في نشرتنا البريدية المعرفية',
-        newsletterDesc: 'احصل على أحدث المقالات التحليلية، والمناهج الجديدة، والماستركلاسز الحصرية مباشرة في بريدك الإلكتروني أسبوعياً.',
-        newsletterBtnText: 'اشترك الآن'
-      }
+      tabs: [
+        { label: 'الرئيسية', key: 'overview' },
+        { label: 'الدورات', key: 'courses' },
+        { label: 'الفيديوهات', key: 'videos' },
+        { label: 'الموارد', key: 'resources' },
+        { label: 'نبذة', key: 'about' },
+      ],
+      steps: { title: 'ابدأ الآن', items: [] },
+      videos: { title: 'فيديوهات تعليمية', searchPlaceholder: 'ابحث عن فيديو...', items: [] },
+      resources: { title: 'الموارد المجانية', searchPlaceholder: 'ابحث عن مورد...', items: [] },
+      results: { title: 'نتائج الطلاب', items: [] },
+      timeline: { title: 'الخبرات والمؤهلات', items: [] },
+      cta: { title: '', description: '', primaryButtonText: '', primaryButtonLink: '#', secondaryButtonText: '', secondaryButtonLink: '#', backgroundColor: '#0f172a', textColor: '#ffffff' },
+      mobileNav: { items: [] },
+      courseLibrary: { title: 'مكتبة الدورات', searchPlaceholder: 'ابحث عن دورة...', items: [] },
+      videoLibrary: { title: 'مكتبة الفيديوهات', searchPlaceholder: 'ابحث عن فيديو...', items: [] },
+      resourceLibrary: { title: 'مكتبة الموارد', searchPlaceholder: 'ابحث عن مورد...', items: [] },
+      aboutScreen: { title: 'نبذة المعلم', aboutText: '', experience: '', qualifications: [], contactText: '', contactLink: '#' },
+      courseDetail: { title: '', subtitle: '', description: '', price: '', badge: '', syllabus: [], learningOutcomes: [], ctaText: '', ctaLink: '#' },
     };
   }
+
+  if (role === 'coach') {
+    return {
+      navbar: { title: '', logo: '', bgColor: '#fbfafc', textColor: '#6750a4', links: [], loginText: 'تسجيل الدخول', loginLink: '/auth/login', registerText: 'ابدأ الآن', registerLink: '/auth/register' },
+      hero: { title: '', subtitle: '', description: '', buttonText: '', buttonLink: '', secondaryButtonText: '', secondaryButtonLink: '', image: '', backgroundColor: '#fbfafc', textColor: '#1b1b24' },
+      about: { title: '', subtitle: '', image: '', backgroundColor: '#ffffff', textColor: '#1b1b24', videoTag: '', videoTitle: '', videoDesc: '', videoLink: '' },
+      features: { title: '', subtitle: '', items: [], backgroundColor: '#f6f2ff', textColor: '#1b1b24' },
+      courses: { title: '', subtitle: '', limit: 6, showPrice: true, showStudentsCount: true, gridCols: '3', buttonBg: '#8b5cf6', cardBg: '#ffffff', titleColor: '#1b1b24', backgroundColor: '#ffffff', textColor: '#1b1b24', items: [] },
+      stats: { items: [], backgroundColor: '#f6f2ff', textColor: '#1b1b24' },
+      gallery: { title: '', subtitle: '', items: [], backgroundColor: '#ffffff', textColor: '#1b1b24' },
+      pricing: { title: '', subtitle: '', items: [], backgroundColor: '#ffffff', textColor: '#1b1b24' },
+      testimonials: { title: '', subtitle: '', items: [], backgroundColor: '#f8fafc', textColor: '#1b1b24' },
+      faq: { title: '', items: [], backgroundColor: '#f8fafc', textColor: '#1b1b24', testimonialsTitle: '', testimonialsSubtitle: '' },
+      contact: { title: '', description: '', phoneNumber: '', buttonText: '', secondaryButtonText: '', secondaryButtonLink: '', backgroundColor: '#fbfafc', textColor: '#1b1b24' },
+      footer: { text: '', description: '', workingHours: '', email: '', phone: '', backgroundColor: '#fbfafc', textColor: '#1b1b24', newsletterTitle: '', newsletterDesc: '', newsletterBtnText: '' },
+    };
+  }
+
+  return {
+    navbar: { title: '', logo: '', bgColor: '#0a1628', textColor: '#ffffff', links: [], loginText: '', loginLink: '', registerText: '', registerLink: '' },
+    hero: { title: '', subtitle: '', description: '', buttonText: '', buttonLink: '', secondaryButtonText: '', secondaryButtonLink: '', image: '', backgroundColor: '#0a1628', textColor: '#ffffff' },
+    about: { title: '', subtitle: '', image: '', backgroundColor: '#ffffff', textColor: '#1a1f29', videoTag: '', videoTitle: '', videoDesc: '', videoLink: '' },
+    features: { title: '', subtitle: '', items: [], backgroundColor: '#eef0f3', textColor: '#1a1f29' },
+    courses: { title: '', subtitle: '', limit: 6, showPrice: true, showStudentsCount: true, gridCols: '3', buttonBg: '#3525cd', cardBg: '#ffffff', titleColor: '#1a1f29', backgroundColor: '#ffffff', textColor: '#1a1f29', items: [] },
+    stats: { items: [], backgroundColor: '#0a1628', textColor: '#ffffff' },
+    gallery: { title: '', subtitle: '', items: [], backgroundColor: '#ffffff', textColor: '#1a1f29' },
+    pricing: { title: '', subtitle: '', items: [], backgroundColor: '#ffffff', textColor: '#1a1f29' },
+    testimonials: { title: '', subtitle: '', items: [], backgroundColor: '#f7f8fa', textColor: '#1a1f29' },
+    faq: { title: '', items: [], backgroundColor: '#f7f8fa', textColor: '#1a1f29', testimonialsTitle: '', testimonialsSubtitle: '' },
+    contact: { title: '', description: '', phoneNumber: '', buttonText: '', secondaryButtonText: '', secondaryButtonLink: '', backgroundColor: '#0a1628', textColor: '#ffffff' },
+    footer: { text: '', description: '', workingHours: '', email: '', phone: '', backgroundColor: '#0a1628', textColor: '#ffffff', newsletterTitle: '', newsletterDesc: '', newsletterBtnText: '' },
+  };
 };
 
 export default function PageBuilderPage() {
@@ -766,7 +370,7 @@ export default function PageBuilderPage() {
   const getHtmlForRole = (role: string, c: TemplateContent) => {
     if (role === 'academy') return getAcademicHtml(c as any);
     if (role === 'coach') return getCoachHtml(c as any);
-    if (role === 'schoolcoach') return getSchoolCoachHtml(c as any);
+    if (role === 'schoolcoach') return getSchoolCoachNewDesignHtml(c as any);
     return '';
   };
 
@@ -780,9 +384,18 @@ export default function PageBuilderPage() {
   const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
   const [openIconPickerIdx, setOpenIconPickerIdx] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [sectionsList, setSectionsList] = useState<string[]>(['navbar', 'hero', 'about', 'video', 'features', 'courses', 'stats', 'pricing', 'testimonials', 'faq', 'contact']);
+  const [sectionsList, setSectionsList] = useState<string[]>(SCHOOLCOACH_NEW_EDITOR_SECTION_TYPES);
   const [saving, setSaving] = useState<boolean>(false);
   const lastScrollYRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (currentRole === 'schoolcoach') {
+      setSectionsList(SCHOOLCOACH_NEW_EDITOR_SECTION_TYPES);
+      setActiveSection((current) => (current === 'hero' || current === 'features' || current === 'pricing' ? 'profile' : current));
+    } else {
+      setSectionsList(['navbar', 'hero', 'about', 'video', 'features', 'courses', 'stats', 'pricing', 'testimonials', 'faq', 'contact', 'footer']);
+    }
+  }, [currentRole, activeTemplateId, templateIdParam]);
 
   // Dynamic template content configurations
   const [content, setContent] = useState<TemplateContent | null>(null);
@@ -1557,14 +1170,14 @@ export default function PageBuilderPage() {
           if (apiSections && apiSections.length > 0) {
             const editorNodes = apiToEditor(apiSections);
 
-            // Drive sidebar dropdown from the actual API section order
-            const KNOWN_SECTION_TYPES = currentRole === 'academy'
-              ? ['navbar', 'hero', 'about', 'video', 'features', 'courses', 'stats', 'pricing', 'testimonials', 'faq', 'contact']
-              : ['navbar', 'hero', 'about', 'video', 'features', 'courses', 'stats', 'pricing', 'testimonials', 'faq', 'contact', 'footer'];
+            const KNOWN_SECTION_TYPES = currentRole === 'schoolcoach'
+              ? SCHOOLCOACH_NEW_EDITOR_SECTION_TYPES
+              : currentRole === 'academy'
+                ? ['navbar', 'hero', 'about', 'video', 'features', 'courses', 'stats', 'gallery_section', 'testimonials_section', 'pricing', 'faq', 'contact']
+                : ['navbar', 'hero', 'about', 'video', 'features', 'courses', 'stats', 'gallery_section', 'testimonials_section', 'pricing', 'faq', 'contact', 'footer'];
             const apiSectionTypes = editorNodes
               .map(n => (n.type === 'course-cards' || n.type === 'courses') ? 'courses' : n.type)
               .filter(t => KNOWN_SECTION_TYPES.includes(t));
-            // Merge so we always show all sections; API order wins for sections present
             const merged = [
               ...apiSectionTypes,
               ...KNOWN_SECTION_TYPES.filter(t => !apiSectionTypes.includes(t))
@@ -1590,9 +1203,11 @@ export default function PageBuilderPage() {
             const navbarNode = editorNodes.find(n => n.type === 'navbar');
             const heroNode = editorNodes.find(n => n.type === 'hero');
             const aboutNode = editorNodes.find(n => n.type === 'about');
-            const featuresNode = editorNodes.find(n => n.type === 'features');
+            const featuresNode = editorNodes.find(n => n.type === 'features' || n.type === 'features_section');
             const courseNode = editorNodes.find(n => n.type === 'course-cards' || n.type === 'courses');
             const statsNode = editorNodes.find(n => n.type === 'stats' || n.type === 'kpi-cards');
+            const galleryNode = editorNodes.find(n => n.type === 'gallery_section');
+            const testimonialsNode = editorNodes.find(n => n.type === 'testimonials_section');
             const pricingNode = editorNodes.find(n => n.type === 'pricing');
             const faqNode = editorNodes.find(n => n.type === 'faq');
             const contactNode = editorNodes.find(n => n.type === 'contact');
@@ -1688,6 +1303,20 @@ export default function PageBuilderPage() {
                 backgroundColor: sv(statsNode.props.backgroundColor ?? statsNode.props.background_color ?? statsNode.props.bg_color, fallback.stats?.backgroundColor || ''),
                 textColor: sv(statsNode.props.textColor ?? statsNode.props.text_color, fallback.stats?.textColor || ''),
               }) : fallback.stats) as any,
+
+              gallery: (galleryNode?.props ? ({
+                ...mergeSection(galleryNode.props, fallback.gallery || {}),
+                items: safeItems(galleryNode.props.items, fallback.gallery?.items || []),
+                backgroundColor: sv(galleryNode.props.backgroundColor ?? galleryNode.props.background_color ?? galleryNode.props.bg_color, fallback.gallery?.backgroundColor || '#ffffff'),
+                textColor: sv(galleryNode.props.textColor ?? galleryNode.props.text_color, fallback.gallery?.textColor || '#1a1f29'),
+              }) : fallback.gallery) as any,
+
+              testimonials: (testimonialsNode?.props ? ({
+                ...mergeSection(testimonialsNode.props, fallback.testimonials || {}),
+                items: safeItems(testimonialsNode.props.items, fallback.testimonials?.items || []),
+                backgroundColor: sv(testimonialsNode.props.backgroundColor ?? testimonialsNode.props.background_color ?? testimonialsNode.props.bg_color, fallback.testimonials?.backgroundColor || '#f7f8fa'),
+                textColor: sv(testimonialsNode.props.textColor ?? testimonialsNode.props.text_color, fallback.testimonials?.textColor || '#1a1f29'),
+              }) : fallback.testimonials) as any,
 
               pricing: (pricingNode?.props ? ({
                 ...mergeSection(pricingNode.props, fallback.pricing),
@@ -1804,6 +1433,8 @@ export default function PageBuilderPage() {
         { id: 'features', type: 'features', props: { ...content.features, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         ...(content.courses ? [{ id: 'courses', type: 'course-cards', props: { ...content.courses, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         ...(content.stats ? [{ id: 'stats', type: 'stats', props: { ...content.stats, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
+        ...(content.gallery ? [{ id: 'gallery', type: 'gallery_section', props: { ...content.gallery, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
+        ...(content.testimonials ? [{ id: 'testimonials', type: 'testimonials_section', props: { ...content.testimonials, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         { id: 'pricing', type: 'pricing', props: { ...content.pricing, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         { id: 'faq', type: 'faq', props: { ...content.faq, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         { id: 'contact', type: 'contact', props: { ...content.contact, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
@@ -1877,6 +1508,8 @@ export default function PageBuilderPage() {
         { id: 'features', type: 'features', props: { ...content.features, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         ...(content.courses ? [{ id: 'courses', type: 'course-cards', props: { ...content.courses, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         ...(content.stats ? [{ id: 'stats', type: 'stats', props: { ...content.stats, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
+        ...(content.gallery ? [{ id: 'gallery', type: 'gallery_section', props: { ...content.gallery, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
+        ...(content.testimonials ? [{ id: 'testimonials', type: 'testimonials_section', props: { ...content.testimonials, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         { id: 'pricing', type: 'pricing', props: { ...content.pricing, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         { id: 'faq', type: 'faq', props: { ...content.faq, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         { id: 'contact', type: 'contact', props: { ...content.contact, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
@@ -2103,7 +1736,6 @@ export default function PageBuilderPage() {
               القالب الثاني
             </button>
           </div>
-
           <button
             onClick={handleSaveDraft}
             disabled={saving}
@@ -2143,20 +1775,22 @@ export default function PageBuilderPage() {
                 className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-white font-extrabold focus:outline-none focus:border-blue-600 cursor-pointer pr-8 text-slate-800"
               >
                 {sectionsList.map((sectionType) => {
-                  const SECTION_LABELS: Record<string, string> = {
-                    navbar: 'شريط التنقل العلوي (Navbar)',
-                    hero: 'البانر الترحيبي (Hero Banner)',
-                    about: 'النبذة والتعريف (About Section)',
-                    video: 'فيديو العرض التعريفي (Video Intro)',
-                    features: 'مميزات الأكاديمية (Features)',
-                    courses: 'الدورات والبرامج التدريبية (Courses)',
-                    stats: 'إحصائيات ورضا الطلاب (Stats & Benefits)',
-                    pricing: 'المخرجات والنتائج الإحصائية (Outcomes & Statistics)',
-                    testimonials: 'آراء العملاء والتقييمات (Testimonials)',
-                    faq: 'الأسئلة الشائعة (FAQ Accordions)',
-                    contact: 'أزرار التواصل (Contact/WhatsApp)',
-                    footer: 'تذييل الصفحة (Footer Bar)',
-                  };
+                  const SECTION_LABELS: Record<string, string> = currentRole === 'schoolcoach'
+                    ? SCHOOLCOACH_NEW_SECTION_LABELS
+                    : {
+                        navbar: 'شريط التنقل العلوي (Navbar)',
+                        hero: 'البانر الترحيبي (Hero Banner)',
+                        about: 'النبذة والتعريف (About Section)',
+                        video: 'فيديو العرض التعريفي (Video Intro)',
+                        features: 'مميزات الأكاديمية (Features)',
+                        courses: 'الدورات والبرامج التدريبية (Courses)',
+                        stats: 'إحصائيات ورضا الطلاب (Stats & Benefits)',
+                        pricing: 'المخرجات والنتائج الإحصائية (Outcomes & Statistics)',
+                        testimonials: 'آراء العملاء والتقييمات (Testimonials)',
+                        faq: 'الأسئلة الشائعة (FAQ Accordions)',
+                        contact: 'أزرار التواصل (Contact/WhatsApp)',
+                        footer: 'تذييل الصفحة (Footer Bar)',
+                      };
                   return (
                     <option key={sectionType} value={sectionType}>
                       {SECTION_LABELS[sectionType] ?? sectionType}
