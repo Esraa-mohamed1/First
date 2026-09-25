@@ -18,18 +18,24 @@ interface SchoolCoachTemplateProps {
 
 const DEFAULT_CONTENT = {
   navbar: {
-    title: 'الأستاذ أحمد محمد',
-    teacherName: 'أ/ محمد أحمد',
-    teacherTitle: 'مدرس الفيزياء',
+    title: '',
+    teacherName: '',
+    teacherTitle: '',
     logo: '',
-    bgColor: '#0a1628',
-    textColor: '#ffffff',
+    bgColor: '#ffffff',
+    textColor: '#0f172a',
     links: [
-      { label: 'الرئيسية', href: '/' },
-      { label: 'الحصص', href: '#courses' },
-      { label: 'الحقائب', href: '#bags' },
-      { label: 'تواصل معنا', href: '#contact' },
+      { key: 'courses', target: 'courses', label: 'الكورسات', href: '#courses' },
+      { key: 'videos', target: 'videos', label: 'الفيديوهات', href: '#videos' },
+      { key: 'resources', target: 'resources', label: 'المذكرات', href: '#resources' },
+      { key: 'results', target: 'results', label: 'النتائج', href: '#results' },
+      { key: 'about', target: 'about', label: 'عني', href: '#about' },
     ],
+    coursesLabel: 'الكورسات',
+    videosLabel: 'الفيديوهات',
+    resourcesLabel: 'المذكرات',
+    resultsLabel: 'النتائج',
+    aboutLabel: 'عني',
     loginText: 'تسجيل الدخول',
     loginLink: '/auth/login',
     videoIconVisible: true,
@@ -44,41 +50,51 @@ const DEFAULT_CONTENT = {
     registerLink: '/auth/register',
   },
   hero: {
-    title: 'تعلم بذكاء. <br/><span class="text-[var(--color-gold-500)]">اضمن تفوقك الدراسي.</span>',
-    subtitle: 'معلم الرياضيات القدير',
-    description: 'مناهج دراسية مبسطة وأساليب تعليمية حديثة تساعدك على فهم المادة بعمق وتحقيق الدرجة الكاملة في امتحاناتك.',
-    buttonText: 'احجز مكانك الآن',
-    buttonLink: '#',
-    secondaryButtonText: 'اعرف المزيد عنا',
-    secondaryButtonLink: '#about',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDdn5I4iyCWiaDe9m4F8v8n_X00tPqBgqXH4hbDxxtEpcQGhs3Iv7ye36iLKGCPaYsSeLuQ6Q56ZRbKBk10dy_efgKLS3zHuPJjJmYL6JtPlCiByhhruLtE_z5QnQirZ362M0sgpMps7B8icOJUUVS6t_6GJ1K0xma8arDq0yEal-eRoeAXPmexe9Vlvhif39sPxgQQGgyuqPwrz1R2REpb3TQmQAfrbC-2IMbqMBAUhDDImR-r8q5cEQ',
+    title: '',
+    subtitle: '',
+    description: '',
+    buttonText: 'ابدأ التعلم',
+    buttonLink: '#courses',
+    secondaryButtonText: 'شاهد الفيديوهات',
+    secondaryButtonLink: '#videos',
+    image: '',
     backgroundColor: '#0a1628',
     textColor: '#ffffff',
   },
   profile: {
-    teacherName: 'أ/ محمد أحمد',
-    teacherTitle: 'مدرس الفيزياء',
-    description: 'أساعد الطلاب على الفهم العميق، بناء الثقة، وتحقيق نتائج أكاديمية مستمرة عبر شرح مبسط، أسئلة تطبيقية، ومراجعة عملية منتظمة.',
-    goal: 'تمكين الطلاب من فهم الرياضيات بثقة وتحويل التحديات إلى نقاط قوة.',
+    teacherName: '',
+    teacherTitle: '',
+    description: '',
+    goal: '',
     avatar: '',
     cover: '',
     verified: true,
     verifiedText: 'موثّق',
+    stats: [
+      { value: '8000+', label: 'طالب متفوق', enabled: true },
+      { value: '12+', label: 'سنوات خبرة', enabled: true },
+      { value: '350+', label: 'فيديو تعليمي', enabled: true },
+      { value: '4.9', label: 'تقييم عام', enabled: true },
+    ],
     ctaPrimaryText: 'ابدأ التعلم',
     ctaPrimaryLink: '#courses',
+    ctaPrimaryBg: '',
+    ctaPrimaryColor: '',
     ctaSecondaryText: 'شاهد الفيديوهات',
     ctaSecondaryLink: '#videos',
+    ctaSecondaryBg: '',
+    ctaSecondaryColor: '',
   },
   about: {
-    title: 'عن الأستاذ أحمد',
-    subtitle: 'خبرة تزيد عن ١٠ سنوات في تدريس مناهج الرياضيات للمرحلة الثانوية.',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBsvCKkFFgnTqd7h7Fw_WOHLv_-bXegAz36jnJ-dSBDWKiA81BP1TWumr1WnjULNWm_0CcbVBTge22QX2XN-cBPri3M3xbxSbAGqLIcFlI4XbbEacN9CKm1uRjQqkRnAfjumbe4cbh_txOhsTy_-6Eph6WwWNqlfr7j35tkwUU103Z7NEEpLCcfSvulZ4QoKpglkx4KRxtXU9TRhBm3eChxdvC43k04A-fnMk-IjFugUk9FdZ1nyfYQsA',
+    title: '',
+    subtitle: '',
+    image: '',
     backgroundColor: '#ffffff',
     textColor: '#1a1f29',
     videoTag: 'شاهد وتعلّم',
-    videoTitle: 'تعرف على فلسفتنا التعليمية في ٣ دقائق',
-    videoDesc: 'نقدم لك جولة سريعة داخل منصتنا التعليمية. نوضح فيها طريقة تتبع الدروس المتقدمة، والتفاعل مع المرشدين، والوصول لأوراق العمل والامتحانات الذكية.',
-    videoLink: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
+    videoTitle: '',
+    videoDesc: '',
+    videoLink: '',
   },
   features: {
     title: 'المواد الدراسية',
@@ -144,9 +160,9 @@ const DEFAULT_CONTENT = {
     testimonialsSubtitle: 'تجارب واقعية وقصص نجاح يرويها شركاء النجاح من الطلاب المتميزين وعائلاتهم الداعمة.',
   },
   contact: {
-    title: 'ابدأ رحلة تفوقك اليوم',
-    description: 'انضم لأكثر من ١٠,٠٠٠ طالب وطالبة حققوا أحلامهم الدراسية معنا.',
-    phoneNumber: '201000000000',
+    title: '',
+    description: '',
+    phoneNumber: '',
     buttonText: 'احجز مكانك الآن',
     secondaryButtonText: 'طلب عرض توضيحي',
     secondaryButtonLink: '#about',
@@ -154,13 +170,63 @@ const DEFAULT_CONTENT = {
     textColor: '#ffffff',
   },
   courses: {
-    title: 'أحدث الدورات والمراجعات الدراسية',
-    subtitle: 'دروس تفاعلية ومراجعات مكثفة للدرجات النهائية',
+    title: 'الكورسات المتاحة',
+    subtitle: 'اختار الكورس المناسب ليك وابدأ رحلتك التعليمية.',
+    emptyText: 'لا توجد كورسات متاحة حالياً',
     items: [],
     limit: 6,
     showPrice: true,
     showStudentsCount: false,
-    buttonBg: '#f0b429',
+    buttonBg: '#0f67ff',
+    backgroundColor: '',
+    textColor: '',
+    fontFamily: '',
+    selectedCourseIds: [],
+  },
+  steps: {
+    title: 'لسه أول مرة تذاكر معايا؟',
+    subtitle: 'ابدأ بالخطوات دي، وفي دقائق هتعرف أنسب مكان ليك.',
+    backgroundColor: '',
+    textColor: '',
+    fontFamily: '',
+    items: [
+      { number: '1', title: 'شاهد درس تجريبي', description: 'اعرف أسلوب الشرح قبل الاشتراك.', enabled: true },
+      { number: '2', title: 'اختار صفك الدراسي', description: 'هنرشح لك المحتوى المناسب فقط.', enabled: true },
+      { number: '3', title: 'ابدأ الكورس المناسب', description: 'ابدأ رحلتك التعليمية بالطريقة المناسبة ليك.', enabled: true },
+    ],
+  },
+  videos: {
+    title: 'أحدث الفيديوهات',
+    subtitle: 'شاهد أحدث الشروحات والدروس المصورة.',
+    emptyText: 'لا توجد فيديوهات متاحة حالياً',
+    viewAllLabel: 'عرض الجميع',
+    backgroundColor: '',
+    textColor: '',
+    fontFamily: '',
+    items: [],
+  },
+  resources: {
+    title: 'المذكرات والمصادر',
+    subtitle: 'حمل مذكرات الشرح والمراجعات الشاملة لجميع الدروس.',
+    emptyText: 'لا توجد مذكرات أو موارد متاحة حالياً',
+    viewAllLabel: 'عرض الكل',
+    backgroundColor: '',
+    textColor: '',
+    fontFamily: '',
+    items: [],
+  },
+  results: {
+    title: 'نتائج الطلاب المتفوقين',
+    subtitle: 'فخورون بنتائج وتفوق طلابنا في كل مرحلة دراسية.',
+    emptyText: 'سيتم إضافة نتائج وتكريمات الطلاب قريباً',
+    viewAllLabel: 'عرض جميع النتائج',
+    modalTitle: 'لوحة شرف ونتائج الطلاب',
+    modalDescription: 'جميع نتائج ودرجات الطلاب المتفوقين في الاختبارات والمراحل المختلفة.',
+    previewCount: 4,
+    backgroundColor: '',
+    textColor: '',
+    fontFamily: '',
+    items: [],
   },
   bags: {
     title: 'الحقائب التعليمية والملفات الرقمية',
@@ -207,27 +273,36 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
 
   if (!hasApiData) {
     return {
-      navbar: { title: '', logo: '', bgColor: '#0a1628', textColor: '#ffffff', links: [], loginText: '', loginLink: '', registerText: '', registerLink: '' },
-      hero: { title: '', subtitle: '', description: '', buttonText: '', buttonLink: '', secondaryButtonText: '', secondaryButtonLink: '', image: '', backgroundColor: '#0a1628', textColor: '#ffffff' },
-      about: { title: '', subtitle: '', image: '', backgroundColor: '#ffffff', textColor: '#1a1f29', videoTag: '', videoTitle: '', videoDesc: '', videoLink: '' },
-      features: { title: '', subtitle: '', items: [], backgroundColor: '#eef0f3', textColor: '#1a1f29' },
-      courses: { title: '', subtitle: '', items: realCourses.length > 0 ? realCourses : [], limit: 6, showPrice: true, showStudentsCount: true, buttonBg: '#3525cd', cardBg: '#ffffff', titleColor: '#1a1f29', backgroundColor: '#ffffff', textColor: '#1a1f29' },
-      stats: { items: [], backgroundColor: '#0a1628', textColor: '#ffffff' },
-      gallery: { title: '', subtitle: '', items: [], backgroundColor: '#ffffff', textColor: '#1a1f29' },
-      testimonials: { title: '', subtitle: '', items: [], backgroundColor: '#f7f8fa', textColor: '#1a1f29' },
-      bags: { title: '', subtitle: '', items: realBags.length > 0 ? realBags : [] },
-      pricing: { title: '', subtitle: '', items: [], backgroundColor: '#ffffff', textColor: '#1a1f29' },
-      faq: { title: '', items: [], backgroundColor: '#f7f8fa', textColor: '#1a1f29', testimonialsTitle: '', testimonialsSubtitle: '' },
-      contact: { title: '', description: '', phoneNumber: '', buttonText: '', secondaryButtonText: '', secondaryButtonLink: '', backgroundColor: '#0a1628', textColor: '#ffffff' },
-      footer: { text: '', backgroundColor: '#0a1628', textColor: '#ffffff', newsletterTitle: '', newsletterDesc: '', newsletterBtnText: '' },
-    };
+      navbar: fallback.navbar,
+      profile: fallback.profile,
+      hero: fallback.hero,
+      about: fallback.about,
+      features: fallback.features,
+      courses: { ...fallback.courses, items: realCourses.length > 0 ? realCourses : [] },
+      steps: fallback.steps,
+      videos: fallback.videos,
+      resources: { ...fallback.resources, items: realBags.length > 0 ? realBags : [] },
+      results: fallback.results,
+      bags: { ...fallback.bags, items: realBags.length > 0 ? realBags : [] },
+      gallery: (fallback as any).gallery || null,
+      testimonials: (fallback as any).testimonials || null,
+      pricing: fallback.pricing,
+      faq: fallback.faq,
+      contact: fallback.contact,
+      footer: fallback.footer,
+    } as any;
   }
 
   const navbarNode = nodes.find(n => n.type === 'navbar');
-  const heroNode = nodes.find(n => n.type === 'hero');
+  const profileNode = nodes.find(n => n.type === 'profile' || n.type === 'hero');
+  const heroNode = nodes.find(n => n.type === 'hero' || n.type === 'profile');
   const aboutNode = nodes.find(n => n.type === 'about');
   const featuresNode = nodes.find(n => n.type === 'features' || n.type === 'features_section');
   const courseNode = nodes.find(n => n.type === 'course-cards' || n.type === 'courses');
+  const stepsNode = nodes.find(n => n.type === 'steps' || n.type === 'getting-started' || n.type === 'first-time');
+  const videosNode = nodes.find(n => n.type === 'videos' || n.type === 'video-library');
+  const resourcesNode = nodes.find(n => n.type === 'resources' || n.type === 'resource-library' || n.type === 'bags' || n.type === 'bags-cards');
+  const resultsNode = nodes.find(n => n.type === 'results' || n.type === 'student-results');
   const bagsNode = nodes.find(n => n.type === 'bags' || n.type === 'bags-cards' || n.type === 'educational-bags');
   const galleryNode = nodes.find(n => n.type === 'gallery_section');
   const testimonialsNode = nodes.find(n => n.type === 'testimonials_section');
@@ -236,29 +311,88 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
   const contactNode = nodes.find(n => n.type === 'contact');
   const footerNode = nodes.find(n => n.type === 'footer');
 
+  // Parse Profile
+  let profile: any = null;
+  const pp = profileNode ? parseProps(profileNode.props) : {};
+  const np = navbarNode ? parseProps(navbarNode.props) : {};
+
+  // Canonical Teacher Identity: single source of truth
+  const canonicalTeacherName = pp.teacherName ?? pp.name ?? np.teacherName ?? np.title ?? fallback.profile?.teacherName ?? '';
+  const canonicalTeacherTitle = pp.teacherTitle ?? pp.jobTitle ?? pp.title ?? np.teacherTitle ?? np.teacher_title ?? fallback.profile?.teacherTitle ?? '';
+
+  const statsNode = nodes.find(n => n.type === 'stats' || n.type === 'kpi-cards');
+  let parsedStats = fallback.profile?.stats || [];
+  if (pp.stats && Array.isArray(pp.stats)) {
+    parsedStats = pp.stats;
+  } else if (pp.achievements && Array.isArray(pp.achievements)) {
+    parsedStats = pp.achievements;
+  } else if (statsNode) {
+    const sp = parseProps(statsNode.props);
+    const sItems = parseItems(sp.items || sp.cards || statsNode.items);
+    if (sItems.length > 0) parsedStats = sItems;
+  }
+
+  profile = {
+    ...fallback.profile,
+    ...pp,
+    teacherName: canonicalTeacherName,
+    teacherTitle: canonicalTeacherTitle,
+    description: pp.description ?? pp.bio ?? fallback.profile?.description ?? '',
+    goal: pp.goal ?? pp.mission ?? fallback.profile?.goal ?? '',
+    avatar: pp.avatar ?? pp.avatarImage ?? pp.image ?? pp.img ?? fallback.profile?.avatar ?? '',
+    cover: pp.cover ?? pp.coverImage ?? pp.backgroundImage ?? fallback.profile?.cover ?? '',
+    verified: pp.verified !== undefined ? Boolean(pp.verified) : (fallback.profile?.verified ?? true),
+    verifiedText: pp.verifiedText ?? pp.verified_text ?? fallback.profile?.verifiedText ?? 'موثّق',
+    stats: parsedStats,
+    ctaPrimaryText: pp.ctaPrimaryText ?? pp.cta_primary_text ?? pp.buttonText ?? pp.button_text ?? fallback.profile?.ctaPrimaryText ?? 'ابدأ التعلم',
+    ctaPrimaryLink: pp.ctaPrimaryLink ?? pp.cta_primary_link ?? pp.buttonLink ?? pp.button_link ?? '#courses',
+    ctaPrimaryBg: pp.ctaPrimaryBg ?? pp.buttonBg ?? fallback.profile?.ctaPrimaryBg ?? '',
+    ctaPrimaryColor: pp.ctaPrimaryColor ?? pp.buttonTextColor ?? fallback.profile?.ctaPrimaryColor ?? '',
+    ctaSecondaryText: pp.ctaSecondaryText ?? pp.cta_secondary_text ?? pp.secondaryButtonText ?? fallback.profile?.ctaSecondaryText ?? 'شاهد الفيديوهات',
+    ctaSecondaryLink: pp.ctaSecondaryLink ?? pp.cta_secondary_link ?? pp.secondaryButtonLink ?? '#videos',
+    ctaSecondaryBg: pp.ctaSecondaryBg ?? pp.secondaryButtonBg ?? fallback.profile?.ctaSecondaryBg ?? '',
+    ctaSecondaryColor: pp.ctaSecondaryColor ?? pp.secondaryButtonTextColor ?? fallback.profile?.ctaSecondaryColor ?? '',
+  };
+
   // Navbar
   let navbar: any = null;
   if (navbarNode) {
-    const np = parseProps(navbarNode.props);
     const linksList = parseItems(np.links || navbarNode.items);
     navbar = {
+      ...fallback.navbar,
       ...np,
-      title: np.title ?? np.name ?? fallback.navbar.title,
+      teacherName: canonicalTeacherName,
+      teacherTitle: canonicalTeacherTitle,
+      title: np.title ?? canonicalTeacherName ?? fallback.navbar.title,
       logo: np.logo ?? fallback.navbar.logo,
       bgColor: np.bgColor ?? np.bg_color ?? np.background_color ?? fallback.navbar.bgColor,
       textColor: np.textColor ?? np.text_color ?? fallback.navbar.textColor,
       loginText: np.loginText ?? np.login_text ?? fallback.navbar.loginText,
-      loginLink: np.loginLink ?? np.login_link ?? fallback.navbar.loginLink,
-      loginBgColor: np.loginBgColor ?? np.login_bg_color ?? np.loginBg ?? np.login_bg ?? '',
-      loginTextColor: np.loginTextColor ?? np.login_text_color ?? np.loginColor ?? np.login_color ?? '',
+      loginLink: np.loginLink ?? np.login_link ?? '/auth/login',
+      videoIconVisible: np.videoIconVisible !== undefined ? Boolean(np.videoIconVisible) : (fallback.navbar.videoIconVisible ?? true),
+      contactIconVisible: np.contactIconVisible !== undefined ? Boolean(np.contactIconVisible) : (fallback.navbar.contactIconVisible ?? true),
+      contactModalTitle: np.contactModalTitle ?? np.contact_title ?? np.modalTitle ?? fallback.navbar.contactModalTitle,
+      contactModalDescription: np.contactModalDescription ?? np.contact_description ?? np.modalDescription ?? fallback.navbar.contactModalDescription,
+      whatsappUrl: np.whatsappUrl ?? np.whatsapp_url ?? np.whatsapp ?? fallback.navbar.whatsappUrl,
+      phoneNumber: np.phoneNumber ?? np.phone_number ?? np.phone ?? fallback.navbar.phoneNumber,
+      whatsappButtonLabel: np.whatsappButtonLabel ?? np.whatsapp_button_label ?? np.whatsappLabel ?? fallback.navbar.whatsappButtonLabel,
+      phoneButtonLabel: np.phoneButtonLabel ?? np.phone_button_label ?? np.phoneLabel ?? fallback.navbar.phoneButtonLabel,
+      coursesLabel: np.coursesLabel ?? np.courses_label ?? fallback.navbar.coursesLabel,
+      videosLabel: np.videosLabel ?? np.videos_label ?? fallback.navbar.videosLabel,
+      resourcesLabel: np.resourcesLabel ?? np.resources_label ?? fallback.navbar.resourcesLabel,
+      resultsLabel: np.resultsLabel ?? np.results_label ?? fallback.navbar.resultsLabel,
+      aboutLabel: np.aboutLabel ?? np.about_label ?? fallback.navbar.aboutLabel,
       registerText: np.registerText ?? np.register_text ?? fallback.navbar.registerText,
       registerLink: np.registerLink ?? np.register_link ?? fallback.navbar.registerLink,
-      registerBgColor: np.registerBgColor ?? np.register_bg_color ?? np.registerBg ?? np.register_bg ?? '',
-      registerTextColor: np.registerTextColor ?? np.register_text_color ?? np.registerColor ?? np.register_color ?? '',
       links: linksList.length > 0 ? linksList : fallback.navbar.links,
     };
   } else {
-    navbar = fallback.navbar;
+    navbar = {
+      ...fallback.navbar,
+      teacherName: canonicalTeacherName,
+      teacherTitle: canonicalTeacherTitle,
+      title: canonicalTeacherName || fallback.navbar.title,
+    };
   }
 
   // Hero
@@ -282,6 +416,8 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
       backgroundColor: hp.backgroundColor ?? hp.background_color ?? hp.bg_color ?? fallback.hero.backgroundColor,
       textColor: hp.textColor ?? hp.text_color ?? fallback.hero.textColor,
     };
+  } else {
+    hero = fallback.hero;
   }
 
   // About
@@ -330,15 +466,129 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
   if (courseNode || realCourses.length > 0) {
     const cp = courseNode ? parseProps(courseNode.props) : {};
     courses = {
+      ...fallback.courses,
       ...cp,
-      title: cp.title ?? '',
-      subtitle: cp.subtitle ?? '',
+      title: cp.title ?? fallback.courses?.title ?? 'الكورسات المتاحة',
+      subtitle: cp.subtitle ?? cp.description ?? fallback.courses?.subtitle ?? 'اختار الكورس المناسب ليك وابدأ رحلتك التعليمية.',
+      emptyText: cp.emptyText ?? cp.empty_text ?? fallback.courses?.emptyText ?? 'لا توجد كورسات متاحة حالياً',
       items: realCourses,
       limit: cp.limit || 6,
       showPrice: cp.showPrice ?? cp.show_price ?? true,
       showStudentsCount: cp.showStudentsCount ?? cp.show_students_count ?? false,
-      buttonBg: cp.buttonBg ?? cp.button_bg ?? '#f0b429',
+      buttonBg: cp.buttonBg ?? cp.button_bg ?? '#0f67ff',
+      backgroundColor: cp.backgroundColor ?? cp.background_color ?? cp.bgColor ?? cp.bg_color ?? '',
+      textColor: cp.textColor ?? cp.text_color ?? '',
+      fontFamily: cp.fontFamily ?? cp.font_family ?? '',
+      selectedCourseIds: Array.isArray(cp.selectedCourseIds) ? cp.selectedCourseIds : [],
     };
+  } else {
+    courses = fallback.courses;
+  }
+
+  // Steps
+  let steps: any = null;
+  if (stepsNode) {
+    const sp = parseProps(stepsNode.props);
+    const rawStepItems = parseItems(sp.items || stepsNode.items);
+    const parsedStepItems = rawStepItems.length > 0 ? rawStepItems.map((it: any) => {
+      const p = parseProps(it?.props || it);
+      return {
+        number: p.number ?? it.number ?? '1',
+        title: p.title ?? it.title ?? '',
+        description: p.description ?? it.description ?? '',
+        enabled: p.enabled !== undefined ? Boolean(p.enabled) : true,
+      };
+    }) : fallback.steps.items;
+
+    steps = {
+      ...fallback.steps,
+      ...sp,
+      title: sp.title ?? fallback.steps?.title ?? 'لسه أول مرة تذاكر معايا؟',
+      subtitle: sp.subtitle ?? sp.description ?? fallback.steps?.subtitle ?? 'ابدأ بالخطوات دي، وفي دقائق هتعرف أنسب مكان ليك.',
+      backgroundColor: sp.backgroundColor ?? sp.background_color ?? sp.bgColor ?? sp.bg_color ?? '',
+      textColor: sp.textColor ?? sp.text_color ?? '',
+      fontFamily: sp.fontFamily ?? sp.font_family ?? '',
+      items: parsedStepItems,
+    };
+  } else {
+    steps = fallback.steps;
+  }
+
+  // Videos
+  let videos: any = null;
+  if (videosNode) {
+    const vp = parseProps(videosNode.props);
+    videos = {
+      ...fallback.videos,
+      ...vp,
+      title: vp.title ?? fallback.videos?.title ?? 'أحدث الفيديوهات',
+      subtitle: vp.subtitle ?? vp.caption ?? vp.description ?? fallback.videos?.subtitle ?? 'شاهد أحدث الشروحات والدروس المصورة.',
+      emptyText: vp.emptyText ?? vp.empty_text ?? fallback.videos?.emptyText ?? 'لا توجد فيديوهات متاحة حالياً',
+      viewAllLabel: vp.viewAllLabel ?? vp.view_all_label ?? fallback.videos?.viewAllLabel ?? 'عرض الجميع',
+      backgroundColor: vp.backgroundColor ?? vp.background_color ?? vp.bgColor ?? vp.bg_color ?? '',
+      textColor: vp.textColor ?? vp.text_color ?? '',
+      fontFamily: vp.fontFamily ?? vp.font_family ?? '',
+      items: parseItems(vp.items || videosNode.items),
+    };
+  } else {
+    videos = fallback.videos;
+  }
+
+  // Resources
+  let resources: any = null;
+  if (resourcesNode || realBags.length > 0) {
+    const rp = resourcesNode ? parseProps(resourcesNode.props) : {};
+    const rawItems = parseItems(rp.items || resourcesNode?.items || realBags);
+    resources = {
+      ...fallback.resources,
+      ...rp,
+      title: rp.title ?? fallback.resources?.title ?? 'المذكرات والمصادر',
+      subtitle: rp.subtitle ?? rp.caption ?? rp.description ?? fallback.resources?.subtitle ?? 'حمل مذكرات الشرح والمراجعات الشاملة لجميع الدروس.',
+      emptyText: rp.emptyText ?? rp.empty_text ?? fallback.resources?.emptyText ?? 'لا توجد مذكرات أو موارد متاحة حالياً',
+      viewAllLabel: rp.viewAllLabel ?? rp.view_all_label ?? fallback.resources?.viewAllLabel ?? 'عرض الكل',
+      backgroundColor: rp.backgroundColor ?? rp.background_color ?? rp.bgColor ?? rp.bg_color ?? '',
+      textColor: rp.textColor ?? rp.text_color ?? '',
+      fontFamily: rp.fontFamily ?? rp.font_family ?? '',
+      items: rawItems.length > 0 ? rawItems : (realBags.length > 0 ? realBags : []),
+    };
+  } else {
+    resources = fallback.resources;
+  }
+
+  // Results
+  let results: any = null;
+  if (resultsNode) {
+    const resp = parseProps(resultsNode.props);
+    const rawResultItems = parseItems(resp.items || resultsNode.items);
+    const parsedResultItems = rawResultItems.map((it: any) => {
+      const p = parseProps(it?.props || it);
+      return {
+        name: p.name ?? p.studentName ?? it.name ?? '',
+        batch: p.batch ?? p.year ?? it.batch ?? '',
+        score: p.score ?? p.result ?? it.score ?? '',
+        course: p.course ?? p.courseName ?? it.course ?? '',
+        image: p.image ?? p.avatar ?? it.image ?? '',
+        enabled: p.enabled !== undefined ? Boolean(p.enabled) : true,
+      };
+    });
+
+    results = {
+      ...fallback.results,
+      ...resp,
+      title: resp.title ?? fallback.results?.title ?? 'نتائج الطلاب المتفوقين',
+      subtitle: resp.subtitle ?? resp.caption ?? resp.description ?? fallback.results?.subtitle ?? 'فخورون بنتائج وتفوق طلابنا في كل مرحلة دراسية.',
+      emptyText: resp.emptyText ?? resp.empty_text ?? fallback.results?.emptyText ?? 'سيتم إضافة نتائج وتكريمات الطلاب قريباً',
+      viewAllLabel: resp.viewAllLabel ?? resp.view_all_label ?? fallback.results?.viewAllLabel ?? 'عرض جميع النتائج',
+      modalTitle: resp.modalTitle ?? resp.modal_title ?? fallback.results?.modalTitle ?? 'لوحة شرف ونتائج الطلاب',
+      modalDescription: resp.modalDescription ?? resp.modal_description ?? fallback.results?.modalDescription ?? 'جميع نتائج ودرجات الطلاب المتفوقين في الاختبارات والمراحل المختلفة.',
+      previewCount: Number(resp.previewCount ?? resp.preview_count ?? fallback.results?.previewCount ?? 4),
+      backgroundColor: resp.backgroundColor ?? resp.background_color ?? resp.bgColor ?? resp.bg_color ?? '',
+      textColor: resp.textColor ?? resp.text_color ?? '',
+      fontFamily: resp.fontFamily ?? resp.font_family ?? '',
+      items: parsedResultItems,
+    };
+  } else {
+    results = fallback.results;
   }
 
   // Bags
@@ -480,10 +730,15 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
 
   return {
     navbar,
+    profile,
     hero,
     about,
     features,
     courses,
+    steps,
+    videos,
+    resources,
+    results,
     bags,
     gallery,
     testimonials,
@@ -666,12 +921,44 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
   useEffect(() => {
     async function load() {
       const fallback = {
-        navbar: { title: '', teacherName: '', teacherTitle: '', logo: '', bgColor: '#0a1628', textColor: '#ffffff', links: [], loginText: '', loginLink: '', videoIconVisible: true, contactIconVisible: true, contactModalTitle: '', contactModalDescription: '', whatsappUrl: '', phoneNumber: '', whatsappButtonLabel: 'واتساب', phoneButtonLabel: 'اتصال', registerText: '', registerLink: '' },
+        navbar: {
+          title: '',
+          teacherName: '',
+          teacherTitle: '',
+          logo: '',
+          bgColor: '#0a1628',
+          textColor: '#ffffff',
+          links: [
+            { key: 'courses', target: 'courses', label: 'الكورسات', href: '#courses' },
+            { key: 'videos', target: 'videos', label: 'الفيديوهات', href: '#videos' },
+            { key: 'resources', target: 'resources', label: 'المذكرات', href: '#resources' },
+            { key: 'results', target: 'results', label: 'النتائج', href: '#results' },
+            { key: 'about', target: 'about', label: 'عني', href: '#about' },
+          ],
+          coursesLabel: 'الكورسات',
+          videosLabel: 'الفيديوهات',
+          resourcesLabel: 'المذكرات',
+          resultsLabel: 'النتائج',
+          aboutLabel: 'عني',
+          loginText: 'تسجيل الدخول',
+          loginLink: '/auth/login',
+          videoIconVisible: true,
+          contactIconVisible: true,
+          contactModalTitle: 'تواصل مع الفريق',
+          contactModalDescription: 'للحجز والاستفسار، يمكنك التواصل مباشرة مع الفريق.',
+          whatsappUrl: '',
+          phoneNumber: '',
+          whatsappButtonLabel: 'واتساب',
+          phoneButtonLabel: 'اتصال',
+          registerText: '',
+          registerLink: ''
+        },
         hero: { title: '', subtitle: '', description: '', buttonText: '', buttonLink: '', secondaryButtonText: '', secondaryButtonLink: '', image: '', backgroundColor: '#0a1628', textColor: '#ffffff' },
-        profile: { teacherName: '', teacherTitle: '', description: '', goal: '', avatar: '', cover: '', verified: true, verifiedText: 'موثّق', ctaPrimaryText: 'ابدأ التعلم', ctaPrimaryLink: '#courses', ctaSecondaryText: 'شاهد الفيديوهات', ctaSecondaryLink: '#videos' },
+        profile: { teacherName: '', teacherTitle: '', description: '', goal: '', avatar: '', cover: '', verified: true, verifiedText: 'موثّق', ctaPrimaryText: 'ابدأ التعلم', ctaPrimaryLink: '#courses', ctaPrimaryBg: '', ctaPrimaryColor: '', ctaSecondaryText: 'شاهد الفيديوهات', ctaSecondaryLink: '#videos', ctaSecondaryBg: '', ctaSecondaryColor: '' },
         about: { title: '', subtitle: '', image: '', backgroundColor: '#ffffff', textColor: '#1a1f29', videoTag: '', videoTitle: '', videoDesc: '', videoLink: '' },
         features: { title: '', subtitle: '', items: [], backgroundColor: '#eef0f3', textColor: '#1a1f29' },
-        courses: { title: '', subtitle: '', limit: 6, showPrice: true, showStudentsCount: true, buttonBg: '#3525cd', cardBg: '#ffffff', titleColor: '#1a1f29', backgroundColor: '#ffffff', textColor: '#1a1f29', items: [] },
+        courses: DEFAULT_CONTENT.courses,
+        steps: DEFAULT_CONTENT.steps,
         stats: { items: [], backgroundColor: '#0a1628', textColor: '#ffffff' },
         gallery: { title: '', subtitle: '', items: [], backgroundColor: '#ffffff', textColor: '#1a1f29' },
         testimonials: { title: '', subtitle: '', items: [], backgroundColor: '#f7f8fa', textColor: '#1a1f29' },
@@ -680,7 +967,7 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
         faq: { title: '', items: [], backgroundColor: '#f7f8fa', textColor: '#1a1f29', testimonialsTitle: '', testimonialsSubtitle: '' },
         contact: { title: '', description: '', phoneNumber: '', buttonText: '', secondaryButtonText: '', secondaryButtonLink: '', backgroundColor: '#0a1628', textColor: '#ffffff' },
         footer: { text: '', backgroundColor: '#0a1628', textColor: '#ffffff', newsletterTitle: '', newsletterDesc: '', newsletterBtnText: '' },
-      } as typeof DEFAULT_CONTENT;
+      } as any as typeof DEFAULT_CONTENT;
 
       if (sectionsProp && sectionsProp.length > 0) {
         const parsed = parseSectionsToContent(sectionsProp, fallback, realCourses, realBags, isEditing);

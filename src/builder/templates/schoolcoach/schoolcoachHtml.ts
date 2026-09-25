@@ -15,12 +15,6 @@ const normalizeImage = (value: any, fallback: string) => {
   return value.trim() || fallback;
 };
 
-const toTitleCase = (value: string) => value
-  .split(' ')
-  .filter(Boolean)
-  .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-  .join(' ');
-
 const getSafeValue = (obj: any, keys: string[], fallback: any = '') => {
   for (const key of keys) {
     const value = obj?.[key];
@@ -28,6 +22,52 @@ const getSafeValue = (obj: any, keys: string[], fallback: any = '') => {
   }
   return fallback;
 };
+
+const normalizeWhatsappUrl = (val: string): string => {
+  if (!val || typeof val !== 'string') return '';
+  const trimmed = val.trim();
+  if (!trimmed) return '';
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  const digits = trimmed.replace(/\D/g, '');
+  if (!digits) return '';
+  return `https://wa.me/${digits}`;
+};
+
+const normalizePhoneTel = (val: string): string => {
+  if (!val || typeof val !== 'string') return '';
+  const trimmed = val.trim();
+  if (!trimmed) return '';
+  const sanitized = trimmed.replace(/[^\d+]/g, '');
+  if (!sanitized) return '';
+  return `tel:${sanitized}`;
+};
+
+/**
+ * SchoolCoach Navbar Navigation Contract:
+ * Exact mapping of Navbar items to future section IDs:
+ * 1. الكورسات (Courses)    -> target: "courses"   (Future Section: id="courses")
+ * 2. الفيديوهات (Videos)   -> target: "videos"    (Future Section: id="videos")
+ * 3. المذكرات (Resources)  -> target: "resources" (Future Section: id="resources")
+ * 4. النتائج (Results)     -> target: "results"   (Future Section: id="results")
+ * 5. عني (About)           -> target: "about"     (Future Section: id="about")
+ * 
+ * Target IDs are immutable semantic contracts.
+ * User can edit labels from the Builder, but the target ID remains fixed.
+ */
+export interface SchoolCoachNavItem {
+  key: string;
+  target: string;
+  label: string;
+  href: string;
+}
+
+export const DEFAULT_SCHOOLCOACH_NAV_ITEMS: SchoolCoachNavItem[] = [
+  { key: 'courses', target: 'courses', label: 'الكورسات', href: '#courses' },
+  { key: 'videos', target: 'videos', label: 'الفيديوهات', href: '#videos' },
+  { key: 'resources', target: 'resources', label: 'المذكرات', href: '#resources' },
+  { key: 'results', target: 'results', label: 'النتائج', href: '#results' },
+  { key: 'about', target: 'about', label: 'عني', href: '#about' },
+];
 
 export const getSchoolCoachNewDesignHtml = (
   content: TemplateContent,
@@ -42,91 +82,359 @@ export const getSchoolCoachNewDesignHtml = (
   realBags: any[] = [],
   teacherProfile: any = null
 ) => {
-  const cachedProfile = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('darab_academy_profile') || '{}') : {};
-  const teacherName = getSafeValue((content as any)?.profile, ['teacherName', 'name'], getSafeValue((content as any)?.navbar, ['teacherName', 'name'], getSafeValue(teacherProfile, ['teacher_name', 'teacherName', 'name'], getSafeValue(cachedProfile, ['teacher_name', 'name'], ''))));
-  const teacherTitle = getSafeValue((content as any)?.profile, ['teacherTitle', 'jobTitle', 'title', 'profession', 'headline'], getSafeValue((content as any)?.navbar, ['teacherTitle', 'teacher_title', 'jobTitle'], getSafeValue(teacherProfile, ['job_title', 'title', 'profession'], getSafeValue(cachedProfile, ['job_title', 'title', 'profession'], ''))));
-  const profileName = teacherName;
-  const profileEmail = getSafeValue(teacherProfile, ['site_email', 'email'], getSafeValue(cachedProfile, ['site_email', 'email'], ''));
-  const profilePhone = getSafeValue((content as any)?.navbar, ['phoneNumber', 'phone_number', 'phone'], getSafeValue(teacherProfile, ['site_phone', 'academy_phone', 'phone'], getSafeValue(cachedProfile, ['site_phone', 'academy_phone', 'phone'], '')));
-  const profileHeadline = teacherTitle;
-  const profileBio = getSafeValue((content as any)?.profile, ['description', 'bio', 'about', 'summary'], getSafeValue(content, ['description', 'bio', 'about', 'summary'], ''));
-  const profileGoal = getSafeValue((content as any)?.profile, ['goal', 'mission', 'learningGoal'], getSafeValue(content, ['goal', 'mission', 'learningGoal'], ''));
-  const coverImage = normalizeImage(getSafeValue((content as any)?.profile, ['cover', 'coverImage', 'cover_image'], getSafeValue(content, ['coverImage', 'cover_image', 'cover', 'backgroundImage'], undefined)), '');
-  const avatarImage = normalizeImage(getSafeValue((content as any)?.profile, ['avatar', 'avatarImage', 'image', 'profileImage'], getSafeValue(content, ['avatar', 'avatarImage', 'image', 'profileImage'], undefined)), '');
-  const loginButtonText = getSafeValue((content as any)?.navbar, ['loginText', 'login_text'], 'تسجيل الدخول');
-  const videoButtonLabel = getSafeValue((content as any)?.navbar, ['videoButtonLabel', 'video_button_label'], 'شاهد الفيديوهات');
-  const startLearningLabel = getSafeValue((content as any)?.profile, ['ctaPrimaryText', 'primaryButtonText', 'startLearningText'], 'ابدأ التعلم');
-  const watchVideosLabel = getSafeValue((content as any)?.profile, ['ctaSecondaryText', 'secondaryButtonText', 'watchVideosText'], 'شاهد الفيديوهات');
-  const contactModalTitle = getSafeValue((content as any)?.navbar, ['contactModalTitle', 'contact_title'], 'تواصل مع الفريق');
-  const contactModalDescription = getSafeValue((content as any)?.navbar, ['contactModalDescription', 'contact_description'], 'للحجز والاستفسار، يمكنكم التواصل مباشرة مع الفريق.');
-  const whatsappUrl = getSafeValue((content as any)?.navbar, ['whatsappUrl', 'whatsapp_url', 'whatsapp', 'whatsappLink'], '');
-  const phoneNumber = getSafeValue((content as any)?.navbar, ['phoneNumber', 'phone_number', 'phone'], '');
-  const whatsappLabel = getSafeValue((content as any)?.navbar, ['whatsappButtonLabel', 'whatsapp_button_label'], 'واتساب');
-  const phoneLabel = getSafeValue((content as any)?.navbar, ['phoneButtonLabel', 'phone_button_label'], 'اتصال');
+  // Shared Canonical Teacher Identity
+  const teacherName = getSafeValue((content as any)?.profile, ['teacherName'], getSafeValue((content as any)?.navbar, ['teacherName', 'title'], ''));
+  const teacherTitle = getSafeValue((content as any)?.profile, ['teacherTitle', 'jobTitle', 'title', 'headline'], getSafeValue((content as any)?.navbar, ['teacherTitle', 'teacher_title', 'jobTitle'], ''));
+  const profileEmail = getSafeValue((content as any)?.footer, ['email'], teacherProfile?.email || '');
+  const profilePhone = getSafeValue((content as any)?.footer, ['phone'], teacherProfile?.phone || '');
+
+  // Hero Profile props
+  const profileBio = getSafeValue((content as any)?.profile, ['description', 'bio', 'about', 'summary'], '');
+  const profileGoal = getSafeValue((content as any)?.profile, ['goal', 'mission', 'learningGoal'], '');
+  const coverImage = normalizeImage(getSafeValue((content as any)?.profile, ['cover', 'coverImage', 'cover_image'], ''), '');
+  const avatarImage = normalizeImage(getSafeValue((content as any)?.profile, ['avatar', 'avatarImage', 'image', 'profileImage'], ''), '');
   const verifiedVisible = (content as any)?.profile?.verified !== false;
   const verifiedText = getSafeValue((content as any)?.profile, ['verifiedText', 'verified_text'], 'موثّق');
-  const stats = Array.isArray((content as any)?.stats?.items) ? (content as any).stats.items : [];
-  const courseItems = Array.isArray(realCourses) ? realCourses : [];
-  const bagItems = Array.isArray(realBags) ? realBags : [];
+  const startLearningLabel = getSafeValue((content as any)?.profile, ['ctaPrimaryText', 'startLearningText', 'primaryButtonText'], 'ابدأ التعلم');
+  const watchVideosLabel = getSafeValue((content as any)?.profile, ['ctaSecondaryText', 'watchVideosText', 'secondaryButtonText'], 'شاهد الفيديوهات');
+  const ctaPrimaryBg = getSafeValue((content as any)?.profile, ['ctaPrimaryBg', 'primaryButtonBg', 'buttonBg'], '');
+  const ctaPrimaryTextColor = getSafeValue((content as any)?.profile, ['ctaPrimaryTextColor', 'primaryButtonTextColor', 'buttonTextColor'], '');
+  const ctaSecondaryBg = getSafeValue((content as any)?.profile, ['ctaSecondaryBg', 'secondaryButtonBg'], '');
+  const ctaSecondaryTextColor = getSafeValue((content as any)?.profile, ['ctaSecondaryTextColor', 'secondaryButtonTextColor'], '');
+  
+  // 4 Achievement / Stat Cards
+  const rawStats = Array.isArray((content as any)?.profile?.stats)
+    ? (content as any).profile.stats
+    : (Array.isArray((content as any)?.stats?.items) ? (content as any).stats.items : []);
+
+  const defaultStats = [
+    { value: '8000+', label: 'طالب متفوق', enabled: true },
+    { value: '12+', label: 'سنوات خبرة', enabled: true },
+    { value: '350+', label: 'فيديو تعليمي', enabled: true },
+    { value: '4.9', label: 'تقييم عام', enabled: true },
+  ];
+
+  const statItems = rawStats.length > 0 ? rawStats : defaultStats;
+  const activeStats = statItems.filter((item: any) => item && item.enabled !== false && (item.value || item.label));
+
+  // Navbar Configuration
+  const loginButtonText = getSafeValue((content as any)?.navbar, ['loginText', 'login_text'], 'تسجيل الدخول');
+  const videoIconVisible = (content as any)?.navbar?.videoIconVisible !== false && (content as any)?.navbar?.videoEnabled !== false;
+  const contactIconVisible = (content as any)?.navbar?.contactIconVisible !== false && (content as any)?.navbar?.contactEnabled !== false;
+
+  // Contact Modal Configuration (Builder Editable)
+  const contactModalTitle = getSafeValue((content as any)?.navbar, ['contactModalTitle', 'contact_title', 'modalTitle'], 'تواصل مع الفريق');
+  const contactModalDescription = getSafeValue((content as any)?.navbar, ['contactModalDescription', 'contact_description', 'modalDescription'], 'للحجز والاستفسار، يمكنك التواصل مباشرة مع الفريق.');
+  const rawWhatsapp = getSafeValue((content as any)?.navbar, ['whatsappUrl', 'whatsapp_url', 'whatsappNumber', 'whatsapp_number', 'whatsapp'], '');
+  const rawPhone = getSafeValue((content as any)?.navbar, ['phoneNumber', 'phone_number', 'phone'], '');
+  const whatsappLabel = getSafeValue((content as any)?.navbar, ['whatsappButtonLabel', 'whatsapp_button_label', 'whatsappLabel'], 'واتساب');
+  const phoneLabel = getSafeValue((content as any)?.navbar, ['phoneButtonLabel', 'phone_button_label', 'phoneLabel'], 'اتصال');
+
+  const whatsappUrl = normalizeWhatsappUrl(rawWhatsapp);
+  const phoneTel = normalizePhoneTel(rawPhone);
+
+  // 5 Canonical Navbar Navigation Items (Labels editable, Targets stable)
+  const coursesLabel = getSafeValue((content as any)?.navbar, ['coursesLabel', 'courses_label'], '');
+  const videosLabel = getSafeValue((content as any)?.navbar, ['videosLabel', 'videos_label'], '');
+  const resourcesLabel = getSafeValue((content as any)?.navbar, ['resourcesLabel', 'resources_label', 'bagsLabel', 'bags_label'], '');
+  const resultsLabel = getSafeValue((content as any)?.navbar, ['resultsLabel', 'results_label', 'statsLabel'], '');
+  const aboutLabel = getSafeValue((content as any)?.navbar, ['aboutLabel', 'about_label'], '');
+
+  const rawLinks = Array.isArray((content as any)?.navbar?.links) ? (content as any).navbar.links : [];
+
+  const navItems: SchoolCoachNavItem[] = DEFAULT_SCHOOLCOACH_NAV_ITEMS.map((defaultItem) => {
+    let customLabel = '';
+    if (defaultItem.key === 'courses' && coursesLabel) customLabel = coursesLabel;
+    else if (defaultItem.key === 'videos' && videosLabel) customLabel = videosLabel;
+    else if (defaultItem.key === 'resources' && resourcesLabel) customLabel = resourcesLabel;
+    else if (defaultItem.key === 'results' && resultsLabel) customLabel = resultsLabel;
+    else if (defaultItem.key === 'about' && aboutLabel) customLabel = aboutLabel;
+
+    if (!customLabel && rawLinks.length > 0) {
+      const match = rawLinks.find((l: any) => l?.key === defaultItem.key || l?.target === defaultItem.target || l?.href === `#${defaultItem.target}`);
+      if (match?.label) customLabel = match.label;
+    }
+
+    return {
+      key: defaultItem.key,
+      target: defaultItem.target,
+      label: customLabel || defaultItem.label,
+      href: `#${defaultItem.target}`,
+    };
+  });
+
+  // Section 3 (Courses) Configuration
+  const coursesTitle = getSafeValue((content as any)?.courses, ['title'], 'الكورسات المتاحة');
+  const coursesSubtitle = getSafeValue((content as any)?.courses, ['subtitle', 'description'], 'اختار الكورس المناسب ليك وابدأ رحلتك التعليمية.');
+  const coursesEmptyText = getSafeValue((content as any)?.courses, ['emptyText', 'empty_text'], 'لا توجد كورسات متاحة حالياً');
+  const coursesBg = getSafeValue((content as any)?.courses, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], '');
+  const coursesTextColor = getSafeValue((content as any)?.courses, ['textColor', 'text_color', 'titleColor', 'title_color'], '');
+  const coursesFontFamily = getSafeValue((content as any)?.courses, ['fontFamily', 'font_family'], '');
+  const selectedCourseIds: string[] = Array.isArray((content as any)?.courses?.selectedCourseIds)
+    ? (content as any).courses.selectedCourseIds.map((id: any) => String(id))
+    : [];
+
+  // Section 4 (Steps / Getting Started) Configuration
+  const stepsTitle = getSafeValue((content as any)?.steps, ['title'], 'لسه أول مرة تذاكر معايا؟');
+  const stepsSubtitle = getSafeValue((content as any)?.steps, ['subtitle', 'description'], 'ابدأ بالخطوات دي، وفي دقائق هتعرف أنسب مكان ليك.');
+  const stepsBg = getSafeValue((content as any)?.steps, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], '');
+  const stepsTextColor = getSafeValue((content as any)?.steps, ['textColor', 'text_color'], '');
+  const stepsFontFamily = getSafeValue((content as any)?.steps, ['fontFamily', 'font_family'], '');
+
+  const rawSteps = Array.isArray((content as any)?.steps?.items) ? (content as any).steps.items : [];
+  const defaultSteps = [
+    { number: '1', title: 'شاهد درس تجريبي', description: 'اعرف أسلوب الشرح قبل الاشتراك.', actionText: 'شاهد الفيديوهات', actionLink: 'video-library', enabled: true },
+    { number: '2', title: 'اختار صفك الدراسي', description: 'هنرشح لك المحتوى المناسب فقط.', actionText: 'تصفح الكورسات', actionLink: 'course-library', enabled: true },
+    { number: '3', title: 'ابدأ الكورس المناسب', description: 'ابدأ رحلتك التعليمية واستمتع بأفضل تجربة تعليمية.', actionText: 'ابدأ الآن', actionLink: 'course-library', enabled: true },
+  ];
+  const stepItems = rawSteps.length > 0 ? rawSteps : defaultSteps;
+
+  // Section 5 (Videos) Configuration
+  const videosTitle = getSafeValue((content as any)?.videos, ['title'], (content as any)?.about?.videoTitle || 'أحدث الفيديوهات');
+  const videosSubtitle = getSafeValue((content as any)?.videos, ['subtitle', 'caption', 'description'], 'شاهد أحدث الشروحات والدروس المصورة.');
+  const videosEmptyText = getSafeValue((content as any)?.videos, ['emptyText', 'empty_text'], 'لا توجد فيديوهات متاحة حالياً');
+  const videosViewAllLabel = getSafeValue((content as any)?.videos, ['viewAllLabel', 'view_all_label', 'buttonText'], 'عرض الجميع');
+  const videosBg = getSafeValue((content as any)?.videos, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], '');
+  const videosTextColor = getSafeValue((content as any)?.videos, ['textColor', 'text_color'], '');
+  const videosFontFamily = getSafeValue((content as any)?.videos, ['fontFamily', 'font_family'], '');
+
+  // Section 6 (Resources / Notes) Configuration
+  const resourcesTitle = getSafeValue((content as any)?.resources, ['title'], (content as any)?.bags?.title || 'المذكرات والمصادر');
+  const resourcesSubtitle = getSafeValue((content as any)?.resources, ['subtitle', 'caption', 'description'], (content as any)?.bags?.subtitle || 'حمل مذكرات الشرح والمراجعات الشاملة لجميع الدروس.');
+  const resourcesEmptyText = getSafeValue((content as any)?.resources, ['emptyText', 'empty_text'], (content as any)?.bags?.emptyText || 'لا توجد مذكرات أو موارد متاحة حالياً');
+  const resourcesViewAllLabel = getSafeValue((content as any)?.resources, ['viewAllLabel', 'view_all_label', 'buttonText'], 'عرض الكل');
+  const resourcesBg = getSafeValue((content as any)?.resources, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], (content as any)?.bags?.backgroundColor || '');
+  const resourcesTextColor = getSafeValue((content as any)?.resources, ['textColor', 'text_color'], (content as any)?.bags?.textColor || '');
+  const resourcesFontFamily = getSafeValue((content as any)?.resources, ['fontFamily', 'font_family'], (content as any)?.bags?.fontFamily || '');
+
+  // Section 7 (Student Results) Configuration
+  const resultsTitle = getSafeValue((content as any)?.results, ['title'], 'نتائج الطلاب المتفوقين');
+  const resultsSubtitle = getSafeValue((content as any)?.results, ['subtitle', 'caption', 'description'], 'فخورون بنتائج وتفوق طلابنا في كل مرحلة دراسية.');
+  const resultsEmptyText = getSafeValue((content as any)?.results, ['emptyText', 'empty_text'], 'سيتم إضافة نتائج وتكريمات الطلاب قريباً');
+  const resultsViewAllLabel = getSafeValue((content as any)?.results, ['viewAllLabel', 'view_all_label', 'buttonText'], 'عرض جميع النتائج');
+  const resultsModalTitle = getSafeValue((content as any)?.results, ['modalTitle', 'modal_title'], 'لوحة شرف ونتائج الطلاب');
+  const resultsModalDescription = getSafeValue((content as any)?.results, ['modalDescription', 'modal_description'], 'جميع نتائج ودرجات الطلاب المتفوقين في الاختبارات والمراحل المختلفة.');
+  const resultsPreviewCount = Number(getSafeValue((content as any)?.results, ['previewCount', 'preview_count', 'limit'], 4));
+  const resultsBg = getSafeValue((content as any)?.results, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], '');
+  const resultsTextColor = getSafeValue((content as any)?.results, ['textColor', 'text_color'], '');
+  const resultsFontFamily = getSafeValue((content as any)?.results, ['fontFamily', 'font_family'], '');
+
+  // Dynamic Content Collections
+  const rawCourseItems = Array.isArray(realCourses) && realCourses.length > 0 ? realCourses : (Array.isArray((content as any)?.courses?.items) ? (content as any).courses.items : []);
+  const displayedCourses = selectedCourseIds.length > 0
+    ? rawCourseItems.filter((c: any) => selectedCourseIds.includes(String(c.id ?? c.course_id ?? c._id)))
+    : rawCourseItems;
+
+  const rawResourceItems = Array.isArray((content as any)?.resources?.items)
+    ? (content as any).resources.items
+    : (Array.isArray(realBags) && realBags.length > 0 ? realBags : (Array.isArray((content as any)?.bags?.items) ? (content as any).bags.items : []));
+  const resourceItems = rawResourceItems.filter((r: any) => r && (r.enabled !== false));
+
+  const rawVideoItems = Array.isArray((content as any)?.videos?.items) ? (content as any).videos.items : (Array.isArray((content as any)?.video?.items) ? (content as any).video.items : []);
+  const videoItems = rawVideoItems.filter((v: any) => v && (v.enabled !== false));
+
+  const rawResultItems = Array.isArray((content as any)?.results?.items)
+    ? (content as any).results.items
+    : [];
+  const activeResults = rawResultItems.filter((r: any) => r && (r.enabled !== false));
+
   const testimonialItems = Array.isArray((content as any)?.testimonials?.items) ? (content as any).testimonials.items : [];
   const faqItems = Array.isArray((content as any)?.faq?.items) ? (content as any).faq.items : [];
   const galleryItems = Array.isArray((content as any)?.gallery?.items) ? (content as any).gallery.items : [];
-  const videoItems = Array.isArray((content as any)?.video?.items) ? (content as any).video.items : [];
-  const navLinks = Array.isArray((content as any)?.navbar?.links) ? (content as any).navbar.links : [];
 
-  const renderStatCards = stats.map((item: any, index: number) => `
-    <div class="stat-card" data-section="stats" data-stat-index="${index}">
+  const renderStatCards = activeStats.map((item: any, index: number) => `
+    <div class="stat-card" data-section="profile" data-stat-index="${index}">
       <strong>${escapeHtml(item.value || item.count || item.number || '')}</strong>
       <span>${escapeHtml(item.label || item.title || '')}</span>
     </div>
   `).join('');
 
-  const renderCourseCards = courseItems.map((item: any, index: number) => {
+  const renderCourseCards = displayedCourses.map((item: any, index: number) => {
     const title = escapeHtml(item.title || item.name || '');
-    const price = escapeHtml(item.final_price ?? item.price ?? '');
+    const price = item.final_price ?? item.price;
+    const priceText = (price !== null && price !== undefined && price !== '') ? `${price} ر.س` : 'متاح للتسجيل';
     const description = escapeHtml(item.short_description || item.description || '');
-    const image = normalizeImage(item.image || item.img || item.thumbnail, '');
+    const image = normalizeImage(item.image || item.img || item.thumbnail || item.cover, 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80');
+    const gradeName = escapeHtml(item.grade_name || item.grade || item.level || item.type || 'كورس تعليمي');
+    const courseId = escapeHtml(String(item.id || item.course_id || index));
+
     return `
-      <article class="mini-card course-card" data-section="courses" data-index="${index}">
+      <article class="mini-card course-card" data-section="courses" data-index="${index}" data-course-id="${courseId}">
         <div class="thumb" style="background-image:url('${image}')"></div>
         <div class="card-body">
-          <span class="chip">${escapeHtml(item.type || '')}</span>
-          <h3>${title}</h3>
-          <p>${description}</p>
+          <span class="chip">${gradeName}</span>
+          <h3 class="course-card-title">${title}</h3>
+          ${description ? `<p class="course-card-desc">${description}</p>` : ''}
           <div class="course-meta">
-            <span class="price">${price}</span>
-            <button type="button" class="small-btn" data-open="course-modal" data-course="${escapeHtml(item.title || item.name || '')}">${escapeHtml((content as any)?.courses?.buttonText || '')}</button>
+            <span class="price">${escapeHtml(priceText)}</span>
+            <button type="button" class="small-btn" data-open-course-detail="true" data-course="${title}">عرض التفاصيل</button>
           </div>
         </div>
       </article>
     `;
   }).join('');
 
-  const renderVideoCards = videoItems.map((item: any, index: number) => `
-    <article class="mini-card video-card" data-section="video" data-index="${index}">
-      <div class="video-thumb" style="background-image:url('${normalizeImage(item.thumbnail || item.image || item.img, '')}')">
-        <span class="play-badge">▶</span>
-        <span class="video-time">${escapeHtml(item.duration || '')}</span>
+  const renderEmptyCoursesState = `
+    <div class="courses-empty-state" data-section="courses">
+      <div class="empty-icon-shell">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
       </div>
-      <div class="card-body tight">
-        <h3>${escapeHtml(item.title || item.name || '')}</h3>
-      </div>
-    </article>
-  `).join('');
+      <h3 class="empty-title">${escapeHtml(coursesEmptyText || 'لا توجد كورسات متاحة حالياً')}</h3>
+      <p class="empty-desc">${escapeHtml(coursesSubtitle || 'سيتم إضافة الكورسات والمجموعات الدراسية قريباً.')}</p>
+    </div>
+  `;
 
-  const renderBagCards = bagItems.map((item: any, index: number) => `
-    <article class="mini-card resource-card" data-section="bags" data-index="${index}">
-      <div class="thumb" style="background-image:url('${normalizeImage(item.image || item.img || item.thumbnail, '')}')"></div>
-      <div class="card-body">
-        <h3>${escapeHtml(item.title || item.name || '')}</h3>
-        <p>${escapeHtml(item.description || item.short_description || '')}</p>
-        <a href="${escapeHtml(item.file_url || item.url || '')}" class="small-btn" target="_blank" rel="noreferrer">${escapeHtml((content as any)?.bags?.downloadText || '')}</a>
+  const renderStepItems = stepItems.filter((item: any) => item && item.enabled !== false).map((item: any, index: number) => {
+    const num = escapeHtml(String(item.number ?? item.stepNumber ?? (index + 1)));
+    const title = escapeHtml(item.title || '');
+    const desc = escapeHtml(item.description || item.desc || '');
+
+    return `
+      <div class="step-item" data-section="steps" data-index="${index}">
+        <div class="step-badge">${num}</div>
+        <div class="step-content">
+          <h3 class="step-title" style="${stepsTextColor ? `color: ${stepsTextColor};` : ''}">${title}</h3>
+          ${desc ? `<p class="step-description" style="${stepsTextColor ? `color: ${stepsTextColor}; opacity: 0.85;` : ''}">${desc}</p>` : ''}
+        </div>
       </div>
-    </article>
-  `).join('');
+    `;
+  }).join('');
+
+  const renderVideoCards = videoItems.map((item: any, index: number) => {
+    const title = escapeHtml(item.title || item.name || 'فيديو تعليمي');
+    const duration = escapeHtml(item.duration || item.time || '');
+    const thumb = normalizeImage(item.thumbnail || item.image || item.img || item.cover, '');
+    const videoId = escapeHtml(String(item.id || index));
+
+    return `
+      <article class="mini-card video-card" data-section="videos" data-index="${index}" data-video-id="${videoId}">
+        <div class="video-thumb ${!thumb ? 'video-thumb-default' : ''}" style="${thumb ? `background-image:url('${thumb}')` : ''}">
+          <span class="play-badge">▶</span>
+          ${duration ? `<span class="video-time">${duration}</span>` : ''}
+        </div>
+        <div class="card-body tight">
+          <h3 class="video-card-title">${title}</h3>
+          ${item.description ? `<p class="video-card-desc">${escapeHtml(item.description)}</p>` : ''}
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  const renderEmptyVideosState = `
+    <div class="videos-empty-state" data-section="videos">
+      <div class="empty-icon-shell">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+      </div>
+      <h3 class="empty-title">${escapeHtml(videosEmptyText || 'لا توجد فيديوهات متاحة حالياً')}</h3>
+      <p class="empty-desc">${escapeHtml(videosSubtitle || 'سيتم إضافة الدروس والفيديوهات التعليمية قريباً.')}</p>
+    </div>
+  `;
+
+  const renderResourceCards = resourceItems.map((item: any, index: number) => {
+    const title = escapeHtml(item.title || item.name || 'ملف دراسي');
+    const desc = escapeHtml(item.description || item.short_description || item.desc || '');
+    const thumb = normalizeImage(item.image || item.img || item.thumbnail || item.cover, '');
+    const fileUrl = (item.file_url || item.url || item.link || '').trim();
+    const fileType = escapeHtml(item.file_type || item.type || item.badge || 'PDF');
+    const resId = escapeHtml(String(item.id || index));
+
+    return `
+      <article class="mini-card resource-card" data-section="resources" data-index="${index}" data-resource-id="${resId}">
+        <div class="thumb ${!thumb ? 'resource-thumb-default' : ''}" style="${thumb ? `background-image:url('${thumb}')` : ''}">
+          ${!thumb ? `
+            <div class="resource-icon-badge">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+            </div>
+          ` : ''}
+        </div>
+        <div class="card-body">
+          <span class="chip">${fileType}</span>
+          <h3 class="resource-card-title">${title}</h3>
+          ${desc ? `<p class="resource-card-desc">${desc}</p>` : ''}
+          <div class="resource-meta">
+            ${fileUrl ? `
+              <a href="${escapeHtml(fileUrl)}" class="small-btn" target="_blank" rel="noreferrer">تحميل المذكرة</a>
+            ` : `
+              <span class="small-btn disabled" style="opacity:0.6; cursor:default;">متاح قريباً</span>
+            `}
+          </div>
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  const renderEmptyResourcesState = `
+    <div class="resources-empty-state" data-section="resources">
+      <div class="empty-icon-shell">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+      </div>
+      <h3 class="empty-title">${escapeHtml(resourcesEmptyText || 'لا توجد مذكرات أو موارد متاحة حالياً')}</h3>
+      <p class="empty-desc">${escapeHtml(resourcesSubtitle || 'سيتم إضافة المذكرات والملفات التعليمية قريباً.')}</p>
+    </div>
+  `;
+
+  const buildResultCardHtml = (item: any, index: number, isModal: boolean = false) => {
+    const name = escapeHtml(item.name || item.studentName || item.title || 'طالب متميز');
+    const batch = escapeHtml(item.batch || item.year || item.grade || '');
+    const score = escapeHtml(item.score || item.grade_score || item.result || '100%');
+    const course = escapeHtml(item.course || item.courseName || item.subject || '');
+    const image = normalizeImage(item.image || item.avatar || item.img || item.photo, '');
+    const initial = (name || 'ط').trim().charAt(0) || 'ط';
+
+    return `
+      <article class="result-card" data-section="results" data-index="${index}">
+        <div class="result-card-inner">
+          <div class="result-avatar ${!image ? 'result-avatar-default' : ''}" style="${image ? `background-image:url('${image}')` : ''}">
+            ${!image ? `<span class="result-avatar-initial">${escapeHtml(initial)}</span>` : ''}
+          </div>
+          <div class="result-info">
+            <div class="result-header-row">
+              <h3 class="result-student-name" style="${resultsTextColor ? `color: ${resultsTextColor};` : ''}">${name}</h3>
+              <span class="result-score-badge">${score}</span>
+            </div>
+            <div class="result-meta-row">
+              ${course ? `<span class="result-course-tag">${course}</span>` : ''}
+              ${batch ? `<span class="result-batch-tag">${batch}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      </article>
+    `;
+  };
+
+  const visibleResults = activeResults.slice(0, resultsPreviewCount);
+  const renderResultsPreviewCards = visibleResults.map((item: any, index: number) => buildResultCardHtml(item, index, false)).join('');
+  const renderAllResultsCards = activeResults.map((item: any, index: number) => buildResultCardHtml(item, index, true)).join('');
+
+  const renderEmptyResultsState = `
+    <div class="results-empty-state" data-section="results">
+      <div class="empty-icon-shell">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="7"></circle>
+          <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+        </svg>
+      </div>
+      <h3 class="empty-title">${escapeHtml(resultsEmptyText)}</h3>
+      <p class="empty-desc">${escapeHtml(resultsSubtitle)}</p>
+    </div>
+  `;
 
   const renderGallery = galleryItems.map((item: any, index: number) => `
-    <figure class="gallery-item" data-section="gallery" data-index="${index}"><img src="${normalizeImage(item?.image_url || item?.image || item?.url || item, '')}" alt="gallery" /></figure>
+    <figure class="gallery-item" data-section="gallery" data-index="${index}"><img src="${normalizeImage(item?.image_url || item?.image || item?.url || item, '')}" alt="معرض الصف" /></figure>
   `).join('');
 
   const renderTestimonials = testimonialItems.map((item: any, index: number) => `
@@ -156,390 +464,1416 @@ export const getSchoolCoachNewDesignHtml = (
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
       <meta name="theme-color" content="#0f67ff" />
-      <title>${escapeHtml(profileName)} | البروفايل التعليمي</title>
+      <title>${escapeHtml(teacherName || 'البروفايل التعليمي')} | منصة المعلم</title>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-      <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;600;700;800&family=Almarai:wght@400;700;800&family=Cairo:wght@400;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&family=Readex+Pro:wght@400;600;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
       <style>
-        :root { --bg:#f5f7fb; --surface:#fff; --text:#151922; --muted:#667085; --line:#e6ebf2; --brand:#0f67ff; --brand2:#4f8cff; --success:#12a66a; --danger:#e5484d; --radius:20px; --shadow:0 12px 32px rgba(16,24,40,.08); --max:1180px; }
-        * { box-sizing:border-box; }
-        html { scroll-behavior:smooth; }
-        body { margin:0; font-family:"IBM Plex Sans Arabic",system-ui,sans-serif; background:var(--bg); color:var(--text); line-height:1.7; }
-        button,input,a { font:inherit; }
-        img { display:block; width:100%; }
-        a { color:inherit; text-decoration:none; }
-        button { cursor:pointer; }
-        .container { width:min(var(--max), calc(100% - 28px)); margin:auto; }
-        .card { background:#fff; border:1px solid var(--line); border-radius:var(--radius); box-shadow:0 6px 20px rgba(16,24,40,.05); }
-        .section { padding:24px 0; }
-        .eyebrow { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; background:#eaf2ff; color:var(--brand); font-size:12px; font-weight:700; }
-        .topbar { position:sticky; top:0; z-index:60; background:rgba(255,255,255,.94); backdrop-filter:blur(14px); border-bottom:1px solid rgba(230,235,242,.9); }
-        .topbar-inner { height:68px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
-        .brand { display:flex; align-items:center; gap:10px; font-weight:800; }
-        .brand-mark { width:38px; height:38px; border-radius:12px; display:grid; place-items:center; background:linear-gradient(135deg,var(--brand),var(--brand2)); color:#fff; font-weight:800; }
-        .nav { display:flex; align-items:center; gap:18px; color:var(--muted); font-size:14px; font-weight:600; }
-        .nav a { padding:8px 10px; border-radius:10px; }
-        .nav a:hover { background:#f3f7ff; color:var(--brand); }
-        .header-actions { display:flex; align-items:center; gap:12px; }
-        .primary-btn, .secondary-btn, .small-btn { border:none; border-radius:12px; transition:.2s; }
-        .primary-btn { background:linear-gradient(135deg,var(--brand),var(--brand2)); color:white; font-weight:700; padding:12px 18px; box-shadow:0 10px 18px rgba(15,103,255,.24); }
-        .secondary-btn { background:#eef4ff; color:var(--brand); font-weight:700; padding:12px 18px; }
-        .small-btn { background:#edf3ff; color:var(--brand); font-weight:700; padding:9px 12px; font-size:12px; }
-        .hero { padding:30px 0 18px; }
-        .hero-shell { background:linear-gradient(180deg,#edf4ff 0%,#ffffff 100%); border:1px solid var(--line); border-radius:28px; overflow:hidden; box-shadow:0 8px 20px rgba(15,103,255,.06); }
-        .hero-cover { height:220px; position:relative; background-size:cover; background-position:center; }
-        .hero-cover::after { content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(17,24,39,.18),rgba(17,24,39,.48)); }
-        .hero-content { position:relative; padding:0 20px 26px; margin-top:-52px; }
-        .profile-row { display:flex; align-items:flex-end; gap:18px; justify-content:space-between; }
-        .profile-meta { display:flex; align-items:flex-end; gap:18px; }
-        .avatar { width:120px; height:120px; border-radius:24px; border:4px solid #fff; background:#fff; background-size:cover; background-position:center; box-shadow:var(--shadow); }
-        .profile-name h1 { margin:0; font-size:clamp(28px,4vw,40px); }
-        .profile-name p { margin:6px 0 0; color:var(--muted); }
-        .verified { display:inline-flex; align-items:center; gap:6px; background:#ecfff7; color:var(--success); padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; margin-top:10px; }
-        .hero-actions { display:flex; flex-wrap:wrap; gap:12px; }
-        .bio-box { margin-top:20px; background:#fff; border:1px solid var(--line); border-radius:22px; padding:18px 20px; }
-        .bio-box p { margin:0; color:var(--muted); font-size:15px; }
-        .stats { display:grid; grid-template-columns:repeat(3,minmax(140px,1fr)); gap:12px; margin-top:16px; }
-        .stat-card { background:#fff; border:1px solid var(--line); border-radius:18px; padding:18px 16px; text-align:center; }
-        .stat-card strong { display:block; font-size:28px; font-weight:800; color:var(--text); }
-        .stat-card span { display:block; color:var(--muted); font-size:13px; margin-top:4px; }
-        .section-header { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:16px; }
-        .section-header h2 { margin:0; font-size:clamp(22px,3vw,32px); }
-        .section-header p { margin:0; color:var(--muted); }
-        .mini-grid { display:grid; grid-template-columns:repeat(3, minmax(240px,1fr)); gap:18px; }
-        .mini-card { overflow:hidden; background:#fff; border:1px solid var(--line); border-radius:22px; box-shadow:0 6px 20px rgba(16,24,40,.04); }
-        .thumb { height:180px; background-size:cover; background-position:center; }
-        .card-body { padding:18px; }
-        .card-body.tight { padding:14px; }
-        .chip { display:inline-block; background:#eef4ff; color:var(--brand); border-radius:999px; padding:7px 10px; font-size:11px; font-weight:700; }
-        .mini-card h3 { margin:12px 0 8px; font-size:20px; }
-        .mini-card p { margin:0; color:var(--muted); font-size:14px; }
-        .course-meta { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:16px; }
-        .price { font-weight:800; color:var(--text); }
-        .video-thumb { position:relative; height:180px; background-size:cover; background-position:center; }
-        .play-badge { position:absolute; left:16px; bottom:16px; width:42px; height:42px; display:grid; place-items:center; background:rgba(15,103,255,.88); color:#fff; border-radius:50%; font-size:20px; }
-        .video-time { position:absolute; right:12px; bottom:12px; background:rgba(17,24,39,.72); color:#fff; border-radius:999px; padding:6px 10px; font-size:12px; }
-        .resource-grid { display:grid; grid-template-columns:repeat(2,minmax(250px,1fr)); gap:18px; }
-        .results-panel { background:linear-gradient(135deg,#0f172a,#1c2d52); color:#fff; border-radius:28px; padding:20px; }
-        .results-grid { display:grid; grid-template-columns:repeat(3,minmax(160px,1fr)); gap:14px; margin-top:14px; }
-        .result-box { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); border-radius:18px; padding:18px 14px; }
-        .result-box strong { display:block; font-size:26px; }
-        .gallery-grid { display:grid; grid-template-columns:repeat(3,minmax(160px,1fr)); gap:14px; }
-        .gallery-item { overflow:hidden; border-radius:18px; border:1px solid var(--line); }
-        .gallery-item img { height:220px; object-fit:cover; }
-        .quote-grid { display:grid; grid-template-columns:repeat(2,minmax(240px,1fr)); gap:18px; }
-        .quote-card { background:#fff; border:1px solid var(--line); border-radius:20px; padding:18px; }
-        .quote-mark { font-size:46px; line-height:1; color:var(--brand); opacity:.5; }
-        .quote-card p { margin:0; color:var(--muted); }
-        .quote-author { display:flex; flex-direction:column; margin-top:12px; }
-        .quote-author span { color:var(--muted); font-size:13px; }
-        .faq-wrap { display:grid; gap:10px; }
-        .faq-item { background:#fff; border:1px solid var(--line); border-radius:16px; overflow:hidden; }
-        .faq-question { width:100%; background:transparent; border:none; padding:16px 18px; display:flex; align-items:center; justify-content:space-between; font-weight:700; color:var(--text); }
-        .faq-answer { max-height:0; overflow:hidden; transition:max-height .2s ease; }
-        .faq-answer p { margin:0; padding:0 18px 16px; color:var(--muted); }
-        .faq-item.open .faq-answer { max-height:140px; }
-        .faq-item.open .plus { transform:rotate(45deg); }
-        .cta-box { display:flex; align-items:center; justify-content:space-between; gap:16px; background:linear-gradient(135deg,#0f172a,#1d3d78); color:#fff; border-radius:28px; padding:24px 22px; }
-        .cta-box h3 { margin:0 0 8px; font-size:clamp(22px,2vw,30px); }
-        .cta-box p { margin:0; color:rgba(255,255,255,.8); }
-        .profile-tabs { margin-top:16px; margin-bottom:10px; }
-        .tab-strip { display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:10px; }
-        .tab-button { border:none; background:transparent; padding:8px 14px; border-radius:999px; font-size:14px; color:var(--muted); font-weight:700; }
-        .tab-button.active { background:#eaf2ff; color:var(--brand); }
-        .steps-grid { display:grid; grid-template-columns:repeat(3,minmax(180px,1fr)); gap:18px; }
-        .step-card { background:#fff; border:1px solid var(--line); border-radius:18px; padding:18px 16px; box-shadow:0 8px 18px rgba(16,24,40,.04); }
-        .step-number { display:inline-flex; width:28px; height:28px; border-radius:50%; background:#eef4ff; color:var(--brand); font-weight:800; align-items:center; justify-content:center; margin-bottom:10px; }
-        .step-card h3 { margin:0 0 8px; font-size:18px; }
-        .step-card p { margin:0; color:var(--muted); font-size:14px; }
-        .about-two-col { display:grid; grid-template-columns:1.1fr 1.3fr; gap:24px; align-items:stretch; }
-        .about-copy { background:#fff; border:1px solid var(--line); border-radius:20px; padding:22px; }
-        .about-copy h2 { margin:10px 0 12px; font-size:clamp(24px,3vw,32px); }
-        .about-copy p { margin:0; color:var(--muted); }
-        .check-list { list-style:none; padding:0; margin:18px 0 0; display:grid; gap:10px; }
-        .check-list li { position:relative; padding-right:22px; color:var(--text); font-weight:600; }
-        .check-list li::before { content:"✓"; position:absolute; right:0; top:0; color:var(--brand); font-weight:800; }
-        .timeline-card { background:#fff; border:1px solid var(--line); border-radius:20px; padding:18px 18px 8px; }
-        .timeline-head { font-weight:800; font-size:20px; margin-bottom:12px; }
-        .timeline-item { display:grid; grid-template-columns:58px 1fr; gap:12px; align-items:flex-start; padding:12px 0; border-bottom:1px solid var(--line); }
-        .timeline-item:last-child { border-bottom:none; }
-        .timeline-item span { display:inline-block; background:#edf4ff; color:var(--brand); border-radius:999px; font-size:12px; font-weight:700; padding:8px 10px; }
-        .timeline-item strong { display:block; font-size:16px; margin-bottom:2px; }
-        .timeline-item p { margin:0; color:var(--muted); font-size:13px; }
-        .ghost-btn { border:1px solid var(--line); background:#fff; color:var(--brand); border-radius:999px; padding:8px 14px; font-weight:700; }
-        .ghost-btn.light { background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.18); color:#fff; }
-        footer { padding:24px 0 44px; }
-        .footer-box { border-top:1px solid var(--line); padding-top:20px; display:flex; align-items:center; justify-content:space-between; gap:10px; color:var(--muted); }
-        .bottom-nav { position:sticky; bottom:0; z-index:30; display:none; background:rgba(255,255,255,.96); backdrop-filter:blur(10px); border-top:1px solid var(--line); padding:10px 12px 12px; gap:8px; }
-        .bottom-nav-item { flex:1; border:none; background:#edf3ff; color:var(--brand); border-radius:12px; min-height:44px; font-weight:700; }
-        .bottom-nav-item.active { background:var(--brand); color:#fff; }
-        .screen-layer { position:fixed; inset:0; background:rgba(11,18,32,.42); display:none; z-index:80; padding:24px 16px 90px; overflow:auto; }
-        .screen-layer.show { display:block; }
-        .screen-header { max-width:760px; margin:0 auto 12px; display:flex; align-items:center; justify-content:space-between; gap:12px; background:#fff; border-radius:18px 18px 0 0; padding:16px 16px; border:1px solid var(--line); border-bottom:none; }
-        .screen-header h3 { margin:0; font-size:20px; }
-        .screen-back, .screen-close { width:34px; height:34px; border-radius:50%; border:none; background:#eef4ff; color:var(--brand); font-size:20px; font-weight:800; }
-        .screen-body { max-width:760px; margin:0 auto; background:#fff; border:1px solid var(--line); border-radius:0 0 18px 18px; padding:16px; }
-        .search-box { margin-bottom:12px; }
-        .search-input { width:100%; border:1px solid var(--line); border-radius:12px; min-height:42px; padding:10px 12px; font-size:14px; }
-        .screen-grid { display:grid; grid-template-columns:repeat(2,minmax(180px,1fr)); gap:14px; }
-        .detail-card { background:#f8fafc; border:1px solid var(--line); border-radius:18px; padding:18px; }
-        .detail-list { margin-top:16px; }
-        .detail-list strong { display:block; margin-bottom:8px; }
-        .detail-list ul { margin:0; padding-right:18px; color:var(--muted); }
-        .detail-thumb { height:180px; border-radius:16px; background-size:cover; background-position:center; margin-bottom:12px; }
-        .detail-card h4 { margin:0 0 8px; font-size:24px; }
-        .detail-card p, .detail-card li { color:var(--muted); }
-        .modal-backdrop { position:fixed; inset:0; background:rgba(11,18,32,.56); display:none; z-index:120; align-items:center; justify-content:center; padding:16px; }
-        .modal-backdrop.show { display:flex; }
-        .modal-box { background:#fff; border-radius:22px; width:min(460px, 100%); position:relative; box-shadow:0 20px 44px rgba(15,23,42,.24); }
-        .modal-close { position:absolute; top:12px; left:12px; border:none; background:#f1f5f9; width:32px; height:32px; border-radius:50%; font-size:20px; }
-        .modal-body { padding:22px 18px 18px; }
-        .modal-body h4 { margin:0 0 8px; text-align:center; font-size:24px; }
-        .modal-body p { text-align:center; color:var(--muted); margin:0 0 18px; }
-        .modal-actions { display:flex; justify-content:center; gap:10px; }
-        .secondary-link { display:inline-flex; align-items:center; justify-content:center; min-width:120px; }
-        .full-width { width:100%; }
-        .toast { position:fixed; left:50%; bottom:88px; transform:translateX(-50%) translateY(18px); background:#111827; color:#fff; border-radius:999px; padding:10px 16px; font-size:13px; opacity:0; pointer-events:none; transition:.2s; z-index:130; }
-        .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-        .mobile-toggle { display:none; }
+        :root {
+          --bg: #f8fafc;
+          --surface: #ffffff;
+          --text: #0f172a;
+          --muted: #64748b;
+          --line: #e2e8f0;
+          --brand: #0f67ff;
+          --brand2: #0052cc;
+          --success: #059669;
+          --radius: 20px;
+          --shadow: 0 12px 32px rgba(15,23,42,.08);
+          --max: 1180px;
+        }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+          margin: 0;
+          font-family: "IBM Plex Sans Arabic", system-ui, -apple-system, sans-serif;
+          background: var(--bg);
+          color: var(--text);
+          line-height: 1.7;
+          overflow-x: hidden;
+        }
+        button, input, a { font: inherit; }
+        img { display: block; width: 100%; }
+        a { color: inherit; text-decoration: none; }
+        button { cursor: pointer; }
+        .container { width: min(var(--max), calc(100% - 32px)); margin: auto; }
+        .card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 20px rgba(15,23,42,.05); }
+        .section { padding: 28px 0; }
+        .section-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+        .section-header h2 { margin: 4px 0 0; font-size: clamp(20px, 3vw, 26px); font-weight: 800; color: var(--text); }
+        .eyebrow { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: #eaf2ff; color: var(--brand); font-size: 12px; font-weight: 700; }
+
+        /* Topbar & Navbar */
+        .topbar {
+          position: sticky;
+          top: 0;
+          z-index: 60;
+          background: rgba(255, 255, 255, 0.96);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border-bottom: 1px solid var(--line);
+          transition: all 0.2s ease;
+        }
+        .topbar-inner {
+          height: 72px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+        }
+        .brand {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-weight: 800;
+          min-width: 0;
+          flex-shrink: 1;
+        }
+        .brand-mark {
+          width: 42px;
+          height: 42px;
+          border-radius: 14px;
+          display: grid;
+          place-items: center;
+          background: linear-gradient(135deg, var(--brand), var(--brand2));
+          color: #fff;
+          font-weight: 800;
+          font-size: 18px;
+          box-shadow: 0 4px 12px rgba(15, 103, 255, 0.24);
+          flex-shrink: 0;
+        }
+        .brand-text {
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+        }
+        .brand-name {
+          font-size: 15px;
+          font-weight: 800;
+          color: var(--text);
+          line-height: 1.25;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .brand-title {
+          font-size: 12px;
+          font-weight: 600;
+          color: var(--muted);
+          line-height: 1.25;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          margin-top: 2px;
+        }
+        .nav {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: var(--muted);
+          font-size: 14px;
+          font-weight: 600;
+          margin: 0 8px;
+        }
+        .nav-item {
+          padding: 8px 14px;
+          border-radius: 10px;
+          transition: 0.15s ease;
+          white-space: nowrap;
+          cursor: pointer;
+        }
+        .nav-item:hover {
+          background: #f1f5f9;
+          color: var(--brand);
+        }
+        .header-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-shrink: 0;
+        }
+        .action-icon-btn {
+          width: 42px;
+          height: 42px;
+          border-radius: 12px;
+          border: 1px solid var(--line);
+          background: #f8fafc;
+          color: #334155;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          transition: 0.2s ease;
+          cursor: pointer;
+          flex-shrink: 0;
+        }
+        .action-icon-btn:hover {
+          background: #edf3ff;
+          color: var(--brand);
+          border-color: #bfdbfe;
+          transform: translateY(-1px);
+        }
+        .action-icon-btn:active {
+          transform: scale(0.96);
+        }
+        .primary-btn, .secondary-btn {
+          border: none;
+          border-radius: 12px;
+          transition: 0.2s ease;
+          cursor: pointer;
+        }
+        .primary-btn {
+          background: linear-gradient(135deg, var(--brand), var(--brand2));
+          color: white;
+          font-weight: 700;
+          padding: 11px 20px;
+          box-shadow: 0 4px 14px rgba(15, 103, 255, 0.24);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          white-space: nowrap;
+        }
+        .primary-btn:hover {
+          box-shadow: 0 6px 20px rgba(15, 103, 255, 0.32);
+          transform: translateY(-1px);
+        }
+        .primary-btn:active { transform: scale(0.98); }
+        .secondary-btn {
+          background: #eff6ff;
+          color: #1d4ed8;
+          font-weight: 700;
+          padding: 11px 18px;
+          border: 1px solid #bfdbfe;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          white-space: nowrap;
+        }
+        .secondary-btn:hover {
+          background: #dbeafe;
+          transform: translateY(-1px);
+        }
+        .secondary-btn:active { transform: scale(0.98); }
+        .nav-login-btn {
+          font-size: 13.5px;
+          padding: 10px 18px;
+        }
+        .mobile-toggle {
+          display: none;
+          width: 40px;
+          height: 40px;
+          border-radius: 12px;
+          background: #edf3ff;
+          border: 1px solid #bfdbfe;
+          color: var(--brand);
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          flex-shrink: 0;
+        }
+        .mobile-nav-dropdown {
+          position: absolute;
+          top: 74px;
+          left: 12px;
+          right: 12px;
+          background: #ffffff;
+          border: 1px solid var(--line);
+          border-radius: 16px;
+          box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
+          padding: 10px;
+          flex-direction: column;
+          gap: 4px;
+          z-index: 70;
+        }
+        .mobile-nav-link {
+          padding: 10px 14px;
+          border-radius: 10px;
+          font-size: 14px;
+          font-weight: 700;
+          color: var(--text);
+          display: block;
+          transition: background 0.15s ease;
+        }
+        .mobile-nav-link:hover {
+          background: #f1f5f9;
+          color: var(--brand);
+        }
+
+        /* Hero Profile Section */
+        .hero { padding: 24px 0 16px; }
+        .hero-shell {
+          background: #ffffff;
+          border: 1px solid var(--line);
+          border-radius: 28px;
+          overflow: hidden;
+          box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.06);
+        }
+        .hero-cover {
+          height: 200px;
+          position: relative;
+          background-size: cover;
+          background-position: center;
+          background-color: #0f172a;
+        }
+        .hero-cover.hero-cover-default {
+          background: linear-gradient(135deg, #0b1329 0%, #1e3a8a 50%, #0f172a 100%);
+        }
+        .hero-cover::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(15, 23, 42, 0.1) 0%, rgba(15, 23, 42, 0.45) 100%);
+        }
+        .hero-content {
+          position: relative;
+          padding: 0 28px 26px;
+          margin-top: -56px;
+        }
+        .profile-header-area {
+          display: flex;
+          align-items: flex-end;
+          gap: 20px;
+          flex-wrap: wrap;
+        }
+        .avatar {
+          width: 114px;
+          height: 114px;
+          border-radius: 50%;
+          border: 4px solid #fff;
+          background: #fff;
+          background-size: cover;
+          background-position: center;
+          box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+          flex-shrink: 0;
+          overflow: hidden;
+        }
+        .avatar.avatar-default {
+          background: linear-gradient(135deg, #2563eb, #1d4ed8);
+          display: grid;
+          place-items: center;
+        }
+        .avatar-initial {
+          font-size: 42px;
+          font-weight: 800;
+          color: #ffffff;
+          user-select: none;
+        }
+        .profile-identity {
+          min-width: 0;
+          flex: 1;
+        }
+        .profile-name-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+        .teacher-name {
+          margin: 0;
+          font-size: clamp(24px, 3.5vw, 34px);
+          font-weight: 800;
+          color: var(--text);
+          line-height: 1.2;
+        }
+        .teacher-title {
+          margin: 4px 0 0;
+          color: var(--muted);
+          font-size: 15px;
+          font-weight: 600;
+        }
+        .verified {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          background: #ecfdf5;
+          color: var(--success);
+          border: 1px solid #a7f3d0;
+          padding: 4px 10px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 700;
+        }
+        .bio-box {
+          margin-top: 20px;
+          background: #f8fafc;
+          border: 1px solid var(--line);
+          border-radius: 20px;
+          padding: 18px 22px;
+        }
+        .teacher-description {
+          margin: 0;
+          color: #334155;
+          font-size: 14.5px;
+          line-height: 1.75;
+        }
+        .teacher-goal {
+          margin-top: 10px;
+          padding-top: 10px;
+          border-top: 1px dashed var(--line);
+          font-size: 13.5px;
+          color: var(--text);
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+        .goal-tag {
+          background: #dbeafe;
+          color: #1e40af;
+          padding: 2px 8px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 700;
+        }
+        .stats {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+          gap: 12px;
+          margin-top: 20px;
+        }
+        .stat-card {
+          background: #fff;
+          border: 1px solid var(--line);
+          border-radius: 18px;
+          padding: 16px 14px;
+          text-align: center;
+          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+          transition: all 0.2s ease;
+        }
+        .stat-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07);
+        }
+        .stat-card strong {
+          display: block;
+          font-size: 26px;
+          font-weight: 800;
+          color: var(--text);
+          line-height: 1.2;
+        }
+        .stat-card span {
+          display: block;
+          color: var(--muted);
+          font-size: 12.5px;
+          font-weight: 600;
+          margin-top: 4px;
+        }
+        .hero-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-top: 22px;
+          align-items: center;
+        }
+
+        /* Profile Tabs */
+        .profile-tabs { padding: 12px 0 20px; }
+        .tab-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; }
+        .tab-button {
+          background: #fff;
+          border: 1px solid var(--line);
+          border-radius: 12px;
+          padding: 10px 18px;
+          font-size: 14px;
+          font-weight: 700;
+          color: var(--muted);
+          white-space: nowrap;
+          transition: all 0.15s ease;
+        }
+        .tab-button:hover { background: #edf4ff; color: var(--brand); }
+        .tab-button.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+
+        /* Grids & Cards */
+        .mini-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+        .mini-card { background: #fff; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; transition: all 0.2s ease; }
+        .mini-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(15,23,42,.08); }
+        .thumb { height: 160px; background-size: cover; background-position: center; }
+        .video-thumb { height: 160px; background-size: cover; background-position: center; position: relative; display: flex; align-items: center; justify-content: center; }
+        .play-badge { width: 44px; height: 44px; border-radius: 50%; background: rgba(15,23,42,.75); color: #fff; display: grid; place-items: center; font-size: 16px; }
+        .video-time { position: absolute; bottom: 8px; left: 8px; background: rgba(15,23,42,.8); color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 6px; }
+        .card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
+        .card-body.tight { padding: 12px; }
+        .card-body h3 { margin: 6px 0; font-size: 16px; font-weight: 800; color: var(--text); }
+        .card-body p { margin: 0 0 12px; font-size: 13px; color: var(--muted); line-height: 1.6; flex: 1; }
+        .chip { display: inline-block; align-self: flex-start; padding: 3px 8px; border-radius: 6px; background: #edf4ff; color: var(--brand); font-size: 11px; font-weight: 700; }
+        .course-meta { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 12px; margin-top: auto; }
+        .price { font-weight: 800; color: var(--brand); font-size: 16px; }
+        .small-btn { background: #edf4ff; color: var(--brand); border: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; transition: all 0.15s ease; }
+        .small-btn:hover { background: var(--brand); color: #fff; }
+
+        /* Steps - Clean Vertical Educational Flow */
+        .steps-wrapper {
+          max-width: 760px;
+          margin: 0 auto;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
+        .step-item {
+          background: #ffffff;
+          border: 1px solid var(--line);
+          border-radius: 18px;
+          padding: 20px 24px;
+          display: flex;
+          align-items: flex-start;
+          gap: 18px;
+          transition: all 0.2s ease;
+          box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+        }
+        .step-item:hover {
+          border-color: #cbd5e1;
+          box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+          transform: translateY(-1px);
+        }
+        .step-badge {
+          width: 44px;
+          height: 44px;
+          border-radius: 14px;
+          background: #edf4ff;
+          color: var(--brand);
+          display: grid;
+          place-items: center;
+          font-weight: 800;
+          font-size: 18px;
+          flex-shrink: 0;
+          box-shadow: 0 2px 8px rgba(15, 103, 255, 0.12);
+        }
+        .step-content {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          min-width: 0;
+        }
+        .step-content h3.step-title {
+          margin: 0 0 6px;
+          font-size: 16.5px;
+          font-weight: 800;
+          color: var(--text);
+          line-height: 1.4;
+        }
+        .step-content p.step-description {
+          margin: 0;
+          font-size: 14px;
+          color: var(--muted);
+          line-height: 1.65;
+        }
+
+        /* Courses Empty State */
+        .courses-empty-state {
+          grid-column: 1 / -1;
+          background: #ffffff;
+          border: 2px dashed var(--line);
+          border-radius: var(--radius);
+          padding: 48px 24px;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          margin: 10px 0;
+        }
+        .courses-empty-state .empty-icon-shell {
+          width: 64px;
+          height: 64px;
+          border-radius: 20px;
+          background: #f1f5f9;
+          color: #64748b;
+          display: grid;
+          place-items: center;
+          margin-bottom: 16px;
+        }
+        .courses-empty-state .empty-title {
+          font-size: 18px;
+          font-weight: 800;
+          color: var(--text);
+          margin: 0 0 6px;
+        }
+        .courses-empty-state .empty-desc {
+          font-size: 14px;
+          color: var(--muted);
+          margin: 0;
+          max-width: 440px;
+        }
+
+        /* Videos, Resources & Results Styles */
+        .videos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+        .videos-empty-state, .resources-empty-state, .results-empty-state {
+          grid-column: 1 / -1;
+          background: #ffffff;
+          border: 2px dashed var(--line);
+          border-radius: var(--radius);
+          padding: 48px 24px;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          margin: 10px 0;
+        }
+        .videos-empty-state .empty-icon-shell,
+        .resources-empty-state .empty-icon-shell,
+        .results-empty-state .empty-icon-shell {
+          width: 64px;
+          height: 64px;
+          border-radius: 20px;
+          background: #f1f5f9;
+          color: #64748b;
+          display: grid;
+          place-items: center;
+          margin-bottom: 16px;
+        }
+        .videos-empty-state .empty-title,
+        .resources-empty-state .empty-title,
+        .results-empty-state .empty-title {
+          font-size: 18px;
+          font-weight: 800;
+          color: var(--text);
+          margin: 0 0 6px;
+        }
+        .videos-empty-state .empty-desc,
+        .resources-empty-state .empty-desc,
+        .results-empty-state .empty-desc {
+          font-size: 14px;
+          color: var(--muted);
+          margin: 0;
+          max-width: 440px;
+        }
+
+        .resource-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+        .resource-thumb-default {
+          background: linear-gradient(135deg, #eff6ff, #dbeafe);
+          display: grid;
+          place-items: center;
+        }
+        .resource-icon-badge {
+          width: 52px;
+          height: 52px;
+          border-radius: 14px;
+          background: #ffffff;
+          color: var(--brand);
+          display: grid;
+          place-items: center;
+          box-shadow: 0 4px 12px rgba(15, 103, 255, 0.12);
+        }
+        .resource-card-title { margin: 6px 0; font-size: 16px; font-weight: 800; color: var(--text); }
+        .resource-card-desc { margin: 0 0 12px; font-size: 13px; color: var(--muted); line-height: 1.6; flex: 1; }
+        .resource-meta { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 12px; margin-top: auto; }
+
+        .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+        .result-card {
+          background: #ffffff;
+          border: 1px solid var(--line);
+          border-radius: 18px;
+          padding: 18px 20px;
+          transition: all 0.2s ease;
+          box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+        }
+        .result-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+          border-color: #cbd5e1;
+        }
+        .result-card-inner {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+        .result-avatar {
+          width: 64px;
+          height: 64px;
+          border-radius: 50%;
+          background-size: cover;
+          background-position: center;
+          border: 2px solid #ffffff;
+          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+          flex-shrink: 0;
+          overflow: hidden;
+        }
+        .result-avatar-default {
+          background: linear-gradient(135deg, #0f67ff, #0052cc);
+          display: grid;
+          place-items: center;
+        }
+        .result-avatar-initial {
+          color: #ffffff;
+          font-size: 22px;
+          font-weight: 800;
+          user-select: none;
+        }
+        .result-info {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .result-header-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+        }
+        .result-student-name {
+          margin: 0;
+          font-size: 15.5px;
+          font-weight: 800;
+          color: var(--text);
+          line-height: 1.3;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .result-score-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 3px 10px;
+          border-radius: 999px;
+          background: #ecfdf5;
+          color: #059669;
+          font-weight: 800;
+          font-size: 13px;
+          border: 1px solid #a7f3d0;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+        .result-meta-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+        .result-course-tag {
+          font-size: 12px;
+          font-weight: 600;
+          color: var(--muted);
+          background: #f1f5f9;
+          padding: 2px 8px;
+          border-radius: 6px;
+        }
+        .result-batch-tag {
+          font-size: 11.5px;
+          font-weight: 700;
+          color: var(--brand);
+          background: #edf4ff;
+          padding: 2px 8px;
+          border-radius: 6px;
+        }
+
+        /* Results Modal Specific Styles */
+        .results-modal-box {
+          width: min(840px, calc(100% - 32px));
+          max-height: 88vh;
+          display: flex;
+          flex-direction: column;
+          padding: 28px 24px 20px;
+          text-align: right;
+        }
+        .results-modal-header {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          margin-bottom: 20px;
+          padding-bottom: 16px;
+          border-bottom: 1px solid var(--line);
+        }
+        .results-modal-header-icon {
+          width: 48px;
+          height: 48px;
+          border-radius: 14px;
+          background: #eff6ff;
+          color: var(--brand);
+          display: grid;
+          place-items: center;
+          border: 1px solid #bfdbfe;
+          flex-shrink: 0;
+        }
+        .results-modal-header-info {
+          flex: 1;
+          min-width: 0;
+        }
+        .results-modal-header-info h4 {
+          margin: 0 0 4px;
+          font-size: 20px;
+          font-weight: 800;
+          color: var(--text);
+        }
+        .results-modal-header-info p {
+          margin: 0;
+          font-size: 13.5px;
+          color: var(--muted);
+        }
+        .results-modal-body {
+          overflow-y: auto;
+          max-height: calc(88vh - 120px);
+          padding-left: 4px;
+          padding-right: 4px;
+          -webkit-overflow-scrolling: touch;
+        }
+        .results-modal-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 14px;
+          padding-bottom: 8px;
+        }
+
+        @media (max-width: 640px) {
+          .results-modal-box {
+            padding: 20px 16px 16px;
+          }
+          .results-modal-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        /* About & Timeline */
+        .about-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .about-card { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 24px; }
+        .bio-text { font-size: 14px; color: #334155; line-height: 1.7; margin: 12px 0 16px; }
+        .check-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+        .check-list li { position: relative; padding-right: 22px; color: var(--text); font-weight: 600; font-size: 13.5px; }
+        .check-list li::before { content: "✓"; position: absolute; right: 0; top: 0; color: var(--brand); font-weight: 800; }
+        .timeline-card { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 22px 22px 10px; }
+        .timeline-head { font-weight: 800; font-size: 18px; margin-bottom: 12px; color: var(--text); }
+        .timeline-item { display: grid; grid-template-columns: 58px 1fr; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--line); }
+        .timeline-item:last-child { border-bottom: none; }
+        .timeline-item span { display: inline-block; background: #edf4ff; color: var(--brand); border-radius: 999px; font-size: 12px; font-weight: 700; padding: 6px 10px; text-align: center; }
+        .timeline-item strong { display: block; font-size: 15px; margin-bottom: 2px; color: var(--text); }
+        .timeline-item p { margin: 0; color: var(--muted); font-size: 13px; }
+
+        /* Gallery & Quotes */
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+        .gallery-item { margin: 0; border-radius: 16px; overflow: hidden; height: 180px; border: 1px solid var(--line); }
+        .gallery-item img { width: 100%; height: 100%; object-cover: cover; }
+        .quote-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+        .quote-card { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 22px; display: flex; flex-direction: column; }
+        .quote-mark { font-size: 32px; font-weight: 800; color: var(--brand); line-height: 1; margin-bottom: 8px; }
+        .quote-card p { margin: 0 0 16px; font-size: 13.5px; color: #334155; line-height: 1.65; flex: 1; }
+        .quote-author strong { display: block; font-size: 14px; font-weight: 800; color: var(--text); }
+        .quote-author span { font-size: 12px; color: var(--muted); }
+
+        /* FAQ */
+        .faq-list { display: flex; flex-direction: column; gap: 10px; }
+        .faq-item { background: #fff; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; transition: all 0.2s ease; }
+        .faq-question { width: 100%; background: none; border: none; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; text-align: right; font-weight: 700; font-size: 15px; color: var(--text); }
+        .faq-question .plus { font-size: 20px; color: var(--brand); transition: transform 0.2s ease; }
+        .faq-answer { display: none; padding: 0 18px 16px; }
+        .faq-answer p { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.65; }
+        .faq-item.open .faq-answer { display: block; }
+        .faq-item.open .faq-question .plus { transform: rotate(45deg); }
+
+        /* CTA Box */
+        .cta-box { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); border-radius: 24px; padding: 32px 28px; color: #fff; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+        .cta-box h2 { margin: 6px 0; font-size: clamp(22px, 3vw, 28px); font-weight: 800; color: #fff; }
+        .cta-box p { margin: 0; color: #cbd5e1; font-size: 14px; }
+
+        /* Footer */
+        footer { padding: 28px 0 48px; }
+        .footer-box { border-top: 1px solid var(--line); padding-top: 20px; display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 13.5px; }
+
+        /* Bottom Nav */
+        .bottom-nav { position: sticky; bottom: 0; z-index: 30; display: none; background: rgba(255,255,255,.96); backdrop-filter: blur(12px); border-top: 1px solid var(--line); padding: 10px 12px 12px; gap: 8px; }
+        .bottom-nav-item { flex: 1; border: none; background: #edf3ff; color: var(--brand); border-radius: 12px; min-height: 44px; font-weight: 700; font-size: 13px; }
+        .bottom-nav-item.active { background: var(--brand); color: #fff; }
+
+        .ghost-btn { border: 1px solid var(--line); background: #fff; color: var(--brand); border-radius: 999px; padding: 8px 16px; font-weight: 700; font-size: 13px; }
+        .ghost-btn.light { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.18); color: #fff; }
+
+        /* Screen Layer (Video Library / Course Library / Resource Library / About Screen) */
+        .screen-layer {
+          position: fixed;
+          inset: 0;
+          background: rgba(11, 18, 32, 0.45);
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
+          display: none;
+          z-index: 90;
+          padding: 24px 16px 90px;
+          overflow-y: auto;
+        }
+        .screen-layer.show { display: block; }
+        .screen-header {
+          max-width: 760px;
+          margin: 0 auto 12px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          background: #fff;
+          border-radius: 18px 18px 0 0;
+          padding: 16px;
+          border: 1px solid var(--line);
+          border-bottom: none;
+        }
+        .screen-header h3 { margin: 0; font-size: 20px; font-weight: 800; }
+        .screen-back, .screen-close {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          border: none;
+          background: #eef4ff;
+          color: var(--brand);
+          font-size: 20px;
+          font-weight: 800;
+          display: grid;
+          place-items: center;
+          cursor: pointer;
+        }
+        .screen-body {
+          max-width: 760px;
+          margin: 0 auto;
+          background: #fff;
+          border: 1px solid var(--line);
+          border-radius: 0 0 18px 18px;
+          padding: 20px;
+        }
+        .search-box { margin-bottom: 12px; }
+        .search-input {
+          width: 100%;
+          border: 1px solid var(--line);
+          border-radius: 12px;
+          min-height: 42px;
+          padding: 10px 14px;
+          font-size: 14px;
+          outline: none;
+        }
+        .search-input:focus { border-color: var(--brand); }
+        .screen-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(180px, 1fr));
+          gap: 14px;
+        }
+        .detail-card { background: #f8fafc; border: 1px solid var(--line); border-radius: 18px; padding: 20px; }
+        .detail-list { margin-top: 16px; }
+        .detail-list strong { display: block; margin-bottom: 8px; }
+        .detail-list ul { margin: 0; padding-right: 18px; color: var(--muted); }
+        .detail-thumb { height: 180px; border-radius: 16px; background-size: cover; background-position: center; margin-bottom: 12px; }
+
+        /* Contact Modal Styles */
+        .modal-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(15, 23, 42, 0.65);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          display: none;
+          z-index: 120;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+        }
+        .modal-backdrop.show { display: flex; }
+        .modal-box {
+          background: #ffffff;
+          border-radius: 24px;
+          width: min(420px, 100%);
+          position: relative;
+          box-shadow: 0 20px 48px rgba(15, 23, 42, 0.22);
+          border: 1px solid var(--line);
+          padding: 32px 24px 24px;
+          text-align: center;
+          animation: modalScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes modalScaleIn {
+          from { opacity: 0; transform: scale(0.95) translateY(8px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-close {
+          position: absolute;
+          top: 14px;
+          left: 14px;
+          border: none;
+          background: #f1f5f9;
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          font-size: 15px;
+          color: var(--muted);
+          cursor: pointer;
+          display: grid;
+          place-items: center;
+          transition: all 0.15s ease;
+        }
+        .modal-close:hover {
+          background: #e2e8f0;
+          color: var(--text);
+        }
+        .modal-header-icon {
+          width: 56px;
+          height: 56px;
+          border-radius: 18px;
+          background: #eff6ff;
+          color: #0f67ff;
+          display: grid;
+          place-items: center;
+          margin: 0 auto 16px;
+          border: 1px solid #bfdbfe;
+        }
+        .modal-body h4 {
+          margin: 0 0 8px;
+          font-size: 20px;
+          font-weight: 800;
+          color: var(--text);
+        }
+        .modal-body p {
+          color: var(--muted);
+          margin: 0 0 22px;
+          font-size: 14px;
+          line-height: 1.6;
+        }
+        .modal-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .contact-action-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          width: 100%;
+          padding: 13px 20px;
+          border-radius: 14px;
+          font-weight: 700;
+          font-size: 15px;
+          text-decoration: none;
+          transition: all 0.2s ease;
+          border: none;
+          cursor: pointer;
+        }
+        .whatsapp-btn {
+          background: #25D366;
+          color: #ffffff;
+          box-shadow: 0 6px 18px rgba(37, 211, 102, 0.28);
+        }
+        .whatsapp-btn:hover {
+          background: #20ba5a;
+          box-shadow: 0 8px 22px rgba(37, 211, 102, 0.36);
+          transform: translateY(-1px);
+        }
+        .phone-btn {
+          background: #0f172a;
+          color: #ffffff;
+          box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18);
+        }
+        .phone-btn:hover {
+          background: #1e293b;
+          transform: translateY(-1px);
+        }
+        .empty-contact-note {
+          color: var(--muted);
+          font-size: 13px;
+          padding: 12px;
+          background: #f8fafc;
+          border-radius: 12px;
+          border: 1px dashed var(--line);
+        }
+        .toast {
+          position: fixed;
+          left: 50%;
+          bottom: 88px;
+          transform: translateX(-50%) translateY(18px);
+          background: #111827;
+          color: #fff;
+          border-radius: 999px;
+          padding: 10px 18px;
+          font-size: 13.5px;
+          opacity: 0;
+          pointer-events: none;
+          transition: 0.2s ease;
+          z-index: 130;
+          box-shadow: 0 10px 25px rgba(0,0,0,.2);
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* Responsive Breakpoints (320px, 375px, 430px, Desktop) */
         @media (max-width: 860px) {
-          .nav { display:none; }
-          .mobile-toggle { display:inline-flex; width:42px; height:42px; border-radius:12px; background:#edf3ff; border:none; color:var(--brand); align-items:center; justify-content:center; font-size:22px; }
-          .mini-grid, .resource-grid, .quote-grid, .results-grid, .gallery-grid, .stats, .steps-grid, .about-two-col, .screen-grid { grid-template-columns:1fr; }
-          .profile-row { align-items:flex-start; flex-direction:column; }
-          .cta-box { flex-direction:column; align-items:flex-start; }
-          .header-actions { display:none; }
-          .bottom-nav { display:flex; }
+          .nav { display: none; }
+          .mobile-toggle { display: inline-flex; }
+          .header-actions { gap: 6px; }
+          .action-icon-btn { width: 38px; height: 38px; }
+          .nav-login-btn { padding: 8px 14px; font-size: 12px; }
+          .brand-name { max-width: 120px; }
+          .brand-title { max-width: 120px; }
+          .profile-header-area { align-items: flex-start; flex-direction: column; gap: 14px; }
+          .stats { grid-template-columns: repeat(2, 1fr); }
+          .hero-actions { width: 100%; }
+          .hero-actions button { flex: 1; }
+          .about-two-col { grid-template-columns: 1fr; }
+          .screen-grid { grid-template-columns: 1fr; }
+          .cta-box { flex-direction: column; align-items: flex-start; }
+          .bottom-nav { display: flex; }
+        }
+
+        @media (max-width: 440px) {
+          .container { width: calc(100% - 20px); }
+          .brand { gap: 8px; }
+          .brand-mark { width: 36px; height: 36px; font-size: 15px; border-radius: 10px; }
+          .brand-name { font-size: 13px; max-width: 80px; }
+          .brand-title { font-size: 10.5px; max-width: 80px; }
+          .header-actions { gap: 5px; }
+          .action-icon-btn { width: 35px; height: 35px; border-radius: 10px; }
+          .action-icon-btn svg { width: 16px; height: 16px; }
+          .nav-login-btn { padding: 7px 11px; font-size: 11.5px; border-radius: 10px; }
+          .mobile-toggle { width: 35px; height: 35px; border-radius: 10px; }
+          .stats { grid-template-columns: 1fr; }
+          .hero-actions button { width: 100%; }
+          .step-item { padding: 15px 16px; gap: 14px; border-radius: 14px; }
+          .step-badge { width: 38px; height: 38px; font-size: 16px; border-radius: 11px; }
+          .step-content h3.step-title { font-size: 15px; }
+          .step-content p.step-description { font-size: 13px; }
         }
       </style>
     </head>
     <body id="top">
+      <!-- Section 1: Topbar Navbar -->
       <header class="topbar" data-section="navbar">
         <div class="container topbar-inner">
           <div class="brand">
-            <div class="brand-mark">${escapeHtml((teacherName || profileName || 'أ').trim().charAt(0) || '')}</div>
+            <div class="brand-mark">${escapeHtml((teacherName || 'م').trim().charAt(0) || 'م')}</div>
             <div class="brand-text">
-              <span class="brand-name">${escapeHtml(teacherName || profileName || 'أ/ محمد أحمد')}</span>
-              <span class="brand-title">${escapeHtml(profileHeadline || teacherTitle || 'مدرس الفيزياء')}</span>
+              <span class="brand-name">${escapeHtml(teacherName || 'اسم المعلم')}</span>
+              <span class="brand-title">${escapeHtml(teacherTitle || 'مدرس المادة')}</span>
             </div>
           </div>
-          <nav class="nav">
-            ${navLinks.map((link: any) => `<a href="${escapeHtml(link.href)}">${escapeHtml(link.label)}</a>`).join('')}
+          
+          <nav class="nav" aria-label="Main Navigation">
+            ${navItems.map((item) => `
+              <a href="#${escapeHtml(item.target)}" data-scroll="${escapeHtml(item.target)}" data-scroll-target="#${escapeHtml(item.target)}" class="nav-item">
+                ${escapeHtml(item.label)}
+              </a>
+            `).join('')}
           </nav>
+
           <div class="header-actions">
-            ${(content as any)?.navbar?.videoIconVisible !== false ? `<button type="button" class="icon-btn" data-open-screen="video-library" aria-label="${escapeHtml(videoButtonLabel)}">◉</button>` : ''}
-            ${(content as any)?.navbar?.contactIconVisible !== false ? `<button type="button" class="icon-btn" data-contact-action="true" aria-label="تواصل">▣</button>` : ''}
-            <a href="/auth/login" class="primary-btn">${escapeHtml(loginButtonText || 'تسجيل الدخول')}</a>
+            ${videoIconVisible ? `
+              <button type="button" class="action-icon-btn" data-open-screen="video-library" title="مكتبة الفيديوهات" aria-label="مكتبة الفيديوهات">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+              </button>
+            ` : ''}
+            ${contactIconVisible ? `
+              <button type="button" class="action-icon-btn" data-contact-action="true" title="${escapeHtml(contactModalTitle || 'تواصل مع الفريق')}" aria-label="تواصل مع الفريق">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+              </button>
+            ` : ''}
+            <a href="/auth/login" class="primary-btn nav-login-btn">${escapeHtml(loginButtonText || 'تسجيل الدخول')}</a>
           </div>
-          <button type="button" class="mobile-toggle" aria-label="menu">☰</button>
+
+          <button type="button" class="mobile-toggle" aria-label="قائمة التنقل">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Mobile Navigation Dropdown -->
+        <div class="mobile-nav-dropdown" id="mobile-nav-menu" style="display:none;">
+          ${navItems.map((item) => `
+            <a href="#${escapeHtml(item.target)}" data-scroll="${escapeHtml(item.target)}" data-scroll-target="#${escapeHtml(item.target)}" class="mobile-nav-link">
+              ${escapeHtml(item.label)}
+            </a>
+          `).join('')}
         </div>
       </header>
 
       <main>
+        <!-- Section 2: Hero Profile -->
         <section class="hero section" data-section="profile" data-index="0">
           <div class="container hero-shell">
-            <div class="hero-cover" style="background-image:url('${coverImage || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80'}')"></div>
+            <div class="hero-cover ${coverImage ? '' : 'hero-cover-default'}" style="${coverImage ? `background-image:url('${coverImage}')` : ''}"></div>
             <div class="hero-content">
-              <div class="profile-row">
-                <div class="profile-meta">
-                  <div class="avatar" style="background-image:url('${avatarImage || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=80'}')"></div>
-                  <div class="profile-name">
-                    <h1 class="teacher-name">${escapeHtml(teacherName || profileName || 'أحمد محمد')}</h1>
-                    <p class="teacher-title">${escapeHtml(profileHeadline || teacherTitle || 'معلم التربية الإسلامية واللغة العربية')}</p>
-                    ${verifiedVisible ? `<div class="verified">✔ ${escapeHtml(verifiedText || 'موثّق')}</div>` : ''}
+              <!-- 1. Teacher Image (Circular Avatar) -->
+              <div class="profile-header-area">
+                <div class="avatar ${avatarImage ? '' : 'avatar-default'}" style="${avatarImage ? `background-image:url('${avatarImage}')` : ''}">
+                  ${!avatarImage ? `<div class="avatar-initial">${escapeHtml((teacherName || 'م').trim().charAt(0) || 'م')}</div>` : ''}
+                </div>
+                
+                <!-- 2. Teacher Name, Verified Badge, 3. Job Title -->
+                <div class="profile-identity">
+                  <div class="profile-name-row">
+                    <h1 class="teacher-name">${escapeHtml(teacherName || 'اسم المعلم')}</h1>
+                    ${verifiedVisible ? `
+                      <div class="verified">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span>${escapeHtml(verifiedText || 'موثّق')}</span>
+                      </div>
+                    ` : ''}
                   </div>
-                </div>
-                <div class="hero-actions">
-                  <button type="button" class="secondary-btn" data-open-screen="video-library">${escapeHtml(watchVideosLabel || (content as any)?.profile?.ctaSecondaryText || 'شاهد الفيديوهات')}</button>
-                  <button type="button" class="primary-btn" data-open-screen="course-library">${escapeHtml(startLearningLabel || (content as any)?.profile?.ctaPrimaryText || 'ابدأ التعلم')}</button>
+                  <p class="teacher-title">${escapeHtml(teacherTitle || 'مدرس المادة')}</p>
                 </div>
               </div>
-              <div class="bio-box" data-section="about" data-index="0">
-                <p class="teacher-description">${escapeHtml(profileBio || 'أساعد الطلاب على الفهم العميق، بناء الثقة، وتحقيق نتائج أكاديمية مستمرة عبر شرح مبسط، أسئلة تطبيقية، ومراجعة عملية منتظمة.')}</p>
-                ${profileGoal ? `<p class="teacher-goal"><strong>الهدف:</strong> ${escapeHtml(profileGoal)}</p>` : ''}
+
+              <!-- 4. Teacher Description & 5. Teacher Goal / Mission -->
+              ${(profileBio || profileGoal) ? `
+                <div class="bio-box" data-section="profile">
+                  ${profileBio ? `<p class="teacher-description">${escapeHtml(profileBio)}</p>` : ''}
+                  ${profileGoal ? `<div class="teacher-goal"><span class="goal-tag">الهدف</span> <span class="goal-text">${escapeHtml(profileGoal)}</span></div>` : ''}
+                </div>
+              ` : ''}
+
+              <!-- 7. Achievement Cards (0 to 4 cards) -->
+              ${renderStatCards ? `<div class="stats">${renderStatCards}</div>` : ''}
+
+              <!-- 8. CTA Buttons -->
+              <div class="hero-actions">
+                <button type="button" class="primary-btn" data-hero-btn="primary" data-open-screen="course-library" style="${ctaPrimaryBg ? `background: ${ctaPrimaryBg};` : ''} ${ctaPrimaryTextColor ? `color: ${ctaPrimaryTextColor};` : ''}">
+                  <span>${escapeHtml(startLearningLabel || 'ابدأ التعلم')}</span>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:6px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </button>
+                <button type="button" class="secondary-btn" data-hero-btn="secondary" data-open-screen="video-library" style="${ctaSecondaryBg ? `background-color: ${ctaSecondaryBg};` : ''} ${ctaSecondaryTextColor ? `color: ${ctaSecondaryTextColor};` : ''}">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block; vertical-align:middle; margin-left:6px;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  <span>${escapeHtml(watchVideosLabel || 'شاهد الفيديوهات')}</span>
+                </button>
               </div>
-              <div class="stats">${renderStatCards || '<div class="stat-card"><strong>95%</strong><span>معدل النجاح</span></div><div class="stat-card"><strong>1200+</strong><span>طالب متابع</span></div><div class="stat-card"><strong>10+</strong><span>سنوات خبرة</span></div>'}</div>
             </div>
           </div>
         </section>
 
+        <!-- Section 3: Profile Tabs -->
         <nav class="profile-tabs container" aria-label="Profile tabs" data-section="tabs" data-index="0">
           <div class="tab-strip">
-            <button type="button" class="tab-button active" data-scroll-target="#overview">الرئيسية</button>
+            <button type="button" class="tab-button active" data-scroll-target="#top">الرئيسية</button>
             <button type="button" class="tab-button" data-scroll-target="#courses">الدورات</button>
             <button type="button" class="tab-button" data-scroll-target="#videos">الفيديوهات</button>
             <button type="button" class="tab-button" data-scroll-target="#resources">الموارد</button>
-            <button type="button" class="tab-button" data-scroll-target="#about-panel">نبذة</button>
+            <button type="button" class="tab-button" data-scroll-target="#about">نبذة</button>
           </div>
         </nav>
 
-        <section class="section" id="courses" data-section="courses" data-index="0">
+        <!-- Section 4: Courses Section -->
+        <section class="section" id="courses" data-section="courses" data-index="0" style="${coursesBg ? `background-color: ${coursesBg};` : ''} ${coursesTextColor ? `color: ${coursesTextColor};` : ''}">
           <div class="container">
-            <div class="section-header">
+            <div class="section-header" style="${coursesFontFamily ? `font-family: '${coursesFontFamily}', system-ui, sans-serif;` : ''}">
               <div>
-                <div class="eyebrow">${escapeHtml((content as any)?.courses?.title || 'الدورات المتاحة')}</div>
-                <h2>${escapeHtml((content as any)?.courses?.subtitle || 'اختر المسار الذي يناسبك')}</h2>
+                <h2 class="courses-heading" style="${coursesTextColor ? `color: ${coursesTextColor};` : ''} ${coursesFontFamily ? `font-family: '${coursesFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(coursesTitle || 'الكورسات المتاحة')}</h2>
+                <p class="courses-caption" style="${coursesTextColor ? `color: ${coursesTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${coursesFontFamily ? `font-family: '${coursesFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(coursesSubtitle || 'اختار الكورس المناسب ليك وابدأ رحلتك التعليمية.')}</p>
               </div>
               <button type="button" class="ghost-btn" data-open-screen="course-library">عرض الكل</button>
             </div>
-            <div class="mini-grid">${renderCourseCards || '<article class="mini-card course-card"><div class="thumb" style="background-image:url(https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80)"></div><div class="card-body"><span class="chip">المرحلة الثانوية</span><h3>دورة الرياضيات الأساسية</h3><p>شرح مبسط، تدريب عملي، ومراجعة أسبوعية عبر منهج متكامل.</p><div class="course-meta"><span class="price">299 ر.س</span><button type="button" class="small-btn" data-open-course-detail="true">عرض التفاصيل</button></div></div></article>'}</div>
+            <div class="mini-grid courses-grid">
+              ${displayedCourses.length > 0 ? renderCourseCards : renderEmptyCoursesState}
+            </div>
           </div>
         </section>
 
-        <section class="section" data-section="steps" data-index="0">
+        <!-- Section 5: Steps Section -->
+        <section class="section" id="steps" data-section="steps" data-index="0" style="${stepsBg ? `background-color: ${stepsBg};` : ''} ${stepsTextColor ? `color: ${stepsTextColor};` : ''}">
           <div class="container">
-            <div class="section-header">
+            <div class="steps-header" style="max-width: 760px; margin: 0 auto 28px; text-align: center; ${stepsFontFamily ? `font-family: '${stepsFontFamily}', system-ui, sans-serif;` : ''}">
+              <h2 class="steps-heading" style="${stepsTextColor ? `color: ${stepsTextColor};` : ''} ${stepsFontFamily ? `font-family: '${stepsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(stepsTitle || 'لسه أول مرة تذاكر معايا؟')}</h2>
+              <p class="steps-caption" style="${stepsTextColor ? `color: ${stepsTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 8px 0 0; font-size: 14.5px; ${stepsFontFamily ? `font-family: '${stepsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(stepsSubtitle || 'ابدأ بالخطوات دي، وفي دقائق هتعرف أنسب مكان ليك.')}</p>
+            </div>
+            <div class="steps-wrapper" style="${stepsFontFamily ? `font-family: '${stepsFontFamily}', system-ui, sans-serif;` : ''}">
+              ${renderStepItems}
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 5: Videos Section -->
+        <section class="section" id="videos" data-section="videos" data-index="0" style="${videosBg ? `background-color: ${videosBg};` : ''} ${videosTextColor ? `color: ${videosTextColor};` : ''}">
+          <div class="container">
+            <div class="section-header" style="${videosFontFamily ? `font-family: '${videosFontFamily}', system-ui, sans-serif;` : ''}">
               <div>
-                <div class="eyebrow">ابدأ الآن</div>
-                <h2>خطواتك الأولى مع المنصة</h2>
+                <h2 class="videos-heading" style="${videosTextColor ? `color: ${videosTextColor};` : ''} ${videosFontFamily ? `font-family: '${videosFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(videosTitle || 'أحدث الفيديوهات')}</h2>
+                <p class="videos-caption" style="${videosTextColor ? `color: ${videosTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${videosFontFamily ? `font-family: '${videosFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(videosSubtitle || 'شاهد أحدث الشروحات والدروس المصورة.')}</p>
               </div>
+              ${videoItems.length > 0 ? `
+                <button type="button" class="ghost-btn" data-open-screen="video-library">${escapeHtml(videosViewAllLabel || 'عرض الجميع')}</button>
+              ` : ''}
             </div>
-            <div class="steps-grid">
-              <div class="step-card">
-                <span class="step-number">01</span>
-                <h3>اختر المسار</h3>
-                <p>تصفّح الدورات المتاحة وحدد ما يلائم مستواك وهدفك الدراسي.</p>
-              </div>
-              <div class="step-card">
-                <span class="step-number">02</span>
-                <h3>تابع الفيديوهات</h3>
-                <p>المحاضرات قصيرة وفعالة مع شرح عملي وتطبيقات مباشرة في كل درس.</p>
-              </div>
-              <div class="step-card">
-                <span class="step-number">03</span>
-                <h3>طبّق وراجع</h3>
-                <p>استفد من الموارد المجانية والاختبارات لتقوية مستواك تدريجيًا.</p>
-              </div>
+            <div class="mini-grid videos-grid">
+              ${videoItems.length > 0 ? renderVideoCards : renderEmptyVideosState}
             </div>
           </div>
         </section>
 
-        <section class="section" id="videos" data-section="videos" data-index="0">
+        <!-- Section 6: Resources Section -->
+        <section class="section" id="resources" data-section="resources" data-index="0" style="${resourcesBg ? `background-color: ${resourcesBg};` : ''} ${resourcesTextColor ? `color: ${resourcesTextColor};` : ''}">
           <div class="container">
-            <div class="section-header">
+            <div class="section-header" style="${resourcesFontFamily ? `font-family: '${resourcesFontFamily}', system-ui, sans-serif;` : ''}">
               <div>
-                <div class="eyebrow">${escapeHtml((content as any)?.about?.videoTag || 'فيديوهات')}</div>
-                <h2>${escapeHtml((content as any)?.about?.videoTitle || 'مكتبة الفيديو')}</h2>
+                <h2 class="resources-heading" style="${resourcesTextColor ? `color: ${resourcesTextColor};` : ''} ${resourcesFontFamily ? `font-family: '${resourcesFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(resourcesTitle || 'المذكرات والمصادر')}</h2>
+                <p class="resources-caption" style="${resourcesTextColor ? `color: ${resourcesTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${resourcesFontFamily ? `font-family: '${resourcesFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(resourcesSubtitle || 'حمل مذكرات الشرح والمراجعات الشاملة لجميع الدروس.')}</p>
               </div>
-              <button type="button" class="ghost-btn" data-open-screen="video-library">عرض الجميع</button>
+              ${resourceItems.length > 0 ? `
+                <button type="button" class="ghost-btn" data-open-screen="resource-library">${escapeHtml(resourcesViewAllLabel || 'عرض الكل')}</button>
+              ` : ''}
             </div>
-            <div class="mini-grid">${renderVideoCards || '<article class="mini-card video-card"><div class="video-thumb" style="background-image:url(https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80)"><span class="play-badge">▶</span><span class="video-time">08:42</span></div><div class="card-body tight"><h3>شرح الوحدة الأولى</h3></div></article>'}</div>
+            <div class="resource-grid">
+              ${resourceItems.length > 0 ? renderResourceCards : renderEmptyResourcesState}
+            </div>
           </div>
         </section>
 
-        <section class="section" id="resources" data-section="resources" data-index="0">
+        <!-- Section 7: Results Section -->
+        <section class="section" id="results" data-section="results" data-index="0" style="${resultsBg ? `background-color: ${resultsBg};` : ''} ${resultsTextColor ? `color: ${resultsTextColor};` : ''}">
           <div class="container">
-            <div class="section-header">
+            <div class="section-header" style="${resultsFontFamily ? `font-family: '${resultsFontFamily}', system-ui, sans-serif;` : ''}">
               <div>
-                <div class="eyebrow">${escapeHtml((content as any)?.bags?.title || 'مصادر مجانية')}</div>
-                <h2>${escapeHtml((content as any)?.bags?.subtitle || 'مراجعة سريعة ومصادر داعمة')}</h2>
+                <h2 class="results-heading" style="${resultsTextColor ? `color: ${resultsTextColor};` : ''} ${resultsFontFamily ? `font-family: '${resultsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(resultsTitle || 'نتائج الطلاب المتفوقين')}</h2>
+                <p class="results-caption" style="${resultsTextColor ? `color: ${resultsTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${resultsFontFamily ? `font-family: '${resultsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(resultsSubtitle || 'فخورون بنتائج وتفوق طلابنا في كل مرحلة دراسية.')}</p>
               </div>
-              <button type="button" class="ghost-btn" data-open-screen="resource-library">عرض الكل</button>
+              ${activeResults.length > resultsPreviewCount ? `
+                <button type="button" class="ghost-btn" data-open-modal="results-modal">${escapeHtml(resultsViewAllLabel || 'عرض جميع النتائج')}</button>
+              ` : ''}
             </div>
-            <div class="resource-grid">${renderBagCards || '<article class="mini-card resource-card"><div class="thumb" style="background-image:url(https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80)"></div><div class="card-body"><h3>ملف المراجعة النهائية</h3><p>ملخصات، أسئلة متنوعة، وملاحظات مراجعة للدرس.</p><a href="#" class="small-btn" target="_blank" rel="noreferrer">تحميل</a></div></article>'}</div>
-          </div>
-        </section>
-
-        <section class="section" id="results" data-section="results" data-index="0">
-          <div class="container">
-            <div class="results-panel">
-              <div class="section-header" style="margin-bottom:0; color:#fff;">
-                <div>
-                  <div class="eyebrow" style="background:rgba(255,255,255,.12); color:#fff;">${escapeHtml((content as any)?.stats?.title || 'نتائج الطلاب')}</div>
-                  <h2 style="color:#fff;">${escapeHtml((content as any)?.stats?.subtitle || 'نتائج ملموسة في كل مرحلة')}</h2>
-                </div>
-                <button type="button" class="ghost-btn light" data-open-review="true">عرض مراجعات</button>
-              </div>
+            ${activeResults.length > 0 ? `
               <div class="results-grid">
-                <div class="result-box"><strong>٩٥%</strong><span>معدل النجاح</span></div>
-                <div class="result-box"><strong>١٢٨</strong><span>طالبًا في المراجعات</span></div>
-                <div class="result-box"><strong>٤.٨/٥</strong><span>تقييم الطلاب</span></div>
+                ${renderResultsPreviewCards}
+              </div>
+            ` : renderEmptyResultsState}
+          </div>
+        </section>
+
+        <!-- Section 9: About Section -->
+        <section class="section" id="about" data-section="about" data-index="0">
+          <div class="container">
+            <div class="about-two-col">
+              <div class="about-card">
+                <div class="eyebrow">${escapeHtml((content as any)?.about?.title || 'نبذة عن المعلم')}</div>
+                <h2>${escapeHtml((content as any)?.about?.subtitle || 'منهجية واضحة تركز على بناء الفهم قبل الحفظ')}</h2>
+                <p class="bio-text">${escapeHtml(profileBio || 'أعتمد على أسلوب تدريسي يجمع بين الشرح المبسط، التطبيق المكثف، والتقييم المستمر لضمان أعلى مستوى من الاستيعاب والتفوق.')}</p>
+                <ul class="check-list">
+                  <li>شرح تفصيلي لكل درس مع أمثلة واقعية.</li>
+                  <li>اختبارات دورية ومراجعات مستمرة قبل الامتحانات.</li>
+                  <li>متابعة فردية وإجابة على أسئلة الطلاب أولاً بأول.</li>
+                </ul>
+              </div>
+              <div class="timeline-card" data-section="timeline" data-index="0">
+                <div class="timeline-head">المؤهلات والخبرات</div>
+                <div class="timeline-item">
+                  <span>2024</span>
+                  <div>
+                    <strong>تطوير المناهج الرقمية التفاعلية</strong>
+                    <p>إعداد حقائب تعليمية وفيديوهات تطبيقية للمرحلة الثانوية.</p>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <span>2020</span>
+                  <div>
+                    <strong>معلم أول معتمد</strong>
+                    <p>تدريس أكثر من 1500 طالب وتحقيق نتائج استثنائية.</p>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <span>2015</span>
+                  <div>
+                    <strong>بكالوريوس التربية والتعليم</strong>
+                    <p>تخصص المناهج وطرق التدريس الحديثة.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section class="section" id="about-panel" data-section="about" data-index="1">
-          <div class="container about-two-col">
-            <div class="about-copy">
-              <div class="eyebrow">نبذة المعلم</div>
-              <h2>${escapeHtml((content as any)?.about?.title || 'معلوماتك التعليمية في سطر واحد')}</h2>
-              <p>${escapeHtml((content as any)?.about?.subtitle || 'أعتمد على أسلوب تدريسي عملي ومباشر يركز على الفهم، التطبيق، والثقة في الأداء.')}</p>
-              <ul class="check-list">
-                <li>شرح مبسط ومباشر لكل درس</li>
-                <li>خطط مراجعة أسبوعية مع متابعة</li>
-                <li>اختبارات قصيرة وتقييم مستمر</li>
-              </ul>
-            </div>
-            <div class="timeline-card" data-section="timeline" data-index="0">
-              <div class="timeline-head">الخبرات والمؤهلات</div>
-              <div class="timeline-item"><span>2024</span><div><strong>ماجستير العلوم التربوية</strong><p>تطوير مناهج تعليمية ومراجعة تفاعلية.</p></div></div>
-              <div class="timeline-item"><span>2020</span><div><strong>مدرس متميز</strong><p>أكثر من 1000 ساعة تدريب مباشر مع طلاب المرحلة الثانوية.</p></div></div>
-              <div class="timeline-item"><span>2016</span><div><strong>خبير صفوف الثانوية</strong><p>مشاريع تدريبية ومؤتمرات تعليمية متخصصة في التحصيل.</p></div></div>
-            </div>
-          </div>
-        </section>
-
-        <section class="section" id="gallery" data-section="gallery" data-index="0">
+        <!-- Section 10: Gallery Section -->
+        <section class="section" data-section="gallery" data-index="0">
           <div class="container">
             <div class="section-header">
               <div>
                 <div class="eyebrow">${escapeHtml((content as any)?.gallery?.title || 'معرض الصف')}</div>
-                <h2>${escapeHtml((content as any)?.gallery?.subtitle || 'رحلة التعلم عبر الصور والأنشطة')}</h2>
+                <h2>${escapeHtml((content as any)?.gallery?.subtitle || 'لقطات من البيئة التعليمية')}</h2>
               </div>
             </div>
-            <div class="gallery-grid">${renderGallery || '<figure class="gallery-item" data-open-gallery="true"><img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=900&q=80" alt="gallery" /></figure><figure class="gallery-item" data-open-gallery="true"><img src="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=900&q=80" alt="gallery" /></figure><figure class="gallery-item" data-open-gallery="true"><img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=900&q=80" alt="gallery" /></figure>'}</div>
+            <div class="gallery-grid">
+              ${renderGallery || `
+                <figure class="gallery-item"><img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=900&q=80" alt="معرض الصف" /></figure>
+                <figure class="gallery-item"><img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=900&q=80" alt="معرض الصف" /></figure>
+                <figure class="gallery-item"><img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&w=900&q=80" alt="معرض الصف" /></figure>
+              `}
+            </div>
           </div>
         </section>
 
-        <section class="section" id="testimonials" data-section="testimonials" data-index="0">
+        <!-- Section 11: Testimonials Section -->
+        <section class="section" data-section="testimonials" data-index="0">
           <div class="container">
             <div class="section-header">
               <div>
-                <div class="eyebrow">${escapeHtml((content as any)?.testimonials?.title || 'آراء الطلاب')}</div>
-                <h2>${escapeHtml((content as any)?.testimonials?.subtitle || 'قصص نجاح حقيقية من المتابعين')}</h2>
+                <div class="eyebrow">${escapeHtml((content as any)?.faq?.testimonialsTitle || (content as any)?.testimonials?.title || 'آراء الطلاب وأولياء الأمور')}</div>
+                <h2>${escapeHtml((content as any)?.faq?.testimonialsSubtitle || (content as any)?.testimonials?.subtitle || 'قصص نجاح وتجارب ملهمة')}</h2>
               </div>
             </div>
-            <div class="quote-grid">${renderTestimonials || '<article class="quote-card" data-open-review="true"><div class="quote-mark">“</div><p>الشرح مبسط جدًا، وكنت أظن مادة الرياضيات صعبة، لكنني أصبحت أتمكن منها بثقة.</p><div class="quote-author"><strong>سارة م.</strong><span>طالبة</span></div></article><article class="quote-card" data-open-review="true"><div class="quote-mark">“</div><p>المراجعة الأسبوعية والبطاقات المساندة ساعدتني كثيرًا على رفع المستوى قبل الامتحانات.</p><div class="quote-author"><strong>أحمد ح.</strong><span>طالب</span></div></article>'}</div>
+            <div class="quote-grid">
+              ${renderTestimonials || `
+                <article class="quote-card">
+                  <div class="quote-mark">“</div>
+                  <p>شرح رائع ومبسط ساعدني في فهم أصعب المسائل بسهولة تامة.</p>
+                  <div class="quote-author"><strong>أحمد خالد</strong><span>طالب ثانوية عامة</span></div>
+                </article>
+                <article class="quote-card">
+                  <div class="quote-mark">“</div>
+                  <p>المتابعة والامتحانات الدورية جعلتني مستعداً تماماً للامتحان النهائي.</p>
+                  <div class="quote-author"><strong>سارة محمد</strong><span>طالبة متفوقة</span></div>
+                </article>
+              `}
+            </div>
           </div>
         </section>
 
+        <!-- Section 12: FAQ Section -->
         <section class="section" id="faq" data-section="faq" data-index="0">
           <div class="container">
             <div class="section-header">
               <div>
                 <div class="eyebrow">${escapeHtml((content as any)?.faq?.title || 'الأسئلة الشائعة')}</div>
-                <h2>${escapeHtml((content as any)?.faq?.subtitle || 'كل ما تريد معرفته قبل الانضمام')}</h2>
+                <h2>كل ما تود معرفته عن طريقة الدراسة والمتابعة</h2>
               </div>
             </div>
-            <div class="faq-wrap">${renderFaq || '<div class="faq-item open"><button type="button" class="faq-question"><span>هل الدروس مسجلة؟</span><span class="plus">+</span></button><div class="faq-answer"><p>نعم، يتم تزويد الطلاب بدروس مسجلة ومدعومة بملخصات ومراجعات.</p></div></div><div class="faq-item"><button type="button" class="faq-question"><span>هل يوجد دعم شخصي؟</span><span class="plus">+</span></button><div class="faq-answer"><p>نعم، هناك متابعة مناسبة عبر الرسائل والتواصل المباشر في ساعات محددة.</p></div></div>'}</div>
+            <div class="faq-list">
+              ${renderFaq || `
+                <div class="faq-item open">
+                  <button type="button" class="faq-question"><span>كيف يمكنني الاشتراك في الدورات؟</span><span class="plus">+</span></button>
+                  <div class="faq-answer"><p>يمكنك تصفح الدورات واختيار المناسب منها ثم الضغط على زر الحجز أو التواصل مباشرة معنا.</p></div>
+                </div>
+                <div class="faq-item">
+                  <button type="button" class="faq-question"><span>هل تتوفر مذكرات ومصادر مجانية للتحميل؟</span><span class="plus">+</span></button>
+                  <div class="faq-answer"><p>نعم، تتوفر مجموعة من الحقائب والمذكرات المجانية في قسم الموارد لتساعدك في المراجعة.</p></div>
+                </div>
+              `}
+            </div>
           </div>
         </section>
 
+        <!-- Section 13: CTA Section -->
         <section class="section" data-section="cta" data-index="0">
           <div class="container">
             <div class="cta-box">
               <div>
-                <h3>${escapeHtml((content as any)?.contact?.title || 'ابدأ رحلتك اليوم')}</h3>
-                <p>${escapeHtml((content as any)?.contact?.description || 'انضم إلى المجموعة الآن وابدأ في تحقيق هدفك الدراسي بثقة واضحة.')}</p>
+                <div class="eyebrow" style="background:rgba(255,255,255,.14); color:#fff;">جاهز للبدء؟</div>
+                <h2>${escapeHtml((content as any)?.contact?.title || 'احجز مكانك في مجموعاتنا التعليمية الآن')}</h2>
+                <p>${escapeHtml((content as any)?.contact?.description || 'انضم إلينا وابدأ رحلة التفوق مع أسلوب تعليمي متميز ومتابعة دقيقة.')}</p>
               </div>
               <div class="hero-actions">
-                <button type="button" class="secondary-btn" style="background:rgba(255,255,255,.12); color:#fff;" data-contact-action="true">${escapeHtml((content as any)?.contact?.secondaryButtonText || 'تواصل معنا')}</button>
-                <button type="button" class="primary-btn" data-open-screen="course-library">${escapeHtml((content as any)?.contact?.buttonText || 'احجز جلسة')}</button>
+                <button type="button" class="secondary-btn" style="background:rgba(255,255,255,.14); color:#fff;" data-contact-action="true">${escapeHtml((content as any)?.contact?.secondaryButtonText || 'تواصل معنا')}</button>
+                <button type="button" class="primary-btn" data-open-screen="course-library">${escapeHtml((content as any)?.contact?.buttonText || 'احجز الآن')}</button>
               </div>
             </div>
           </div>
         </section>
       </main>
 
+      <!-- Footer -->
       <footer data-section="footer" data-index="0">
         <div class="container footer-box">
           <div>${escapeHtml((content as any)?.footer?.text || '© 2025 جميع الحقوق محفوظة')}</div>
-          <div>${escapeHtml(profileEmail || profilePhone || 'contact@schoolcoach.com')}</div>
+          <div>${escapeHtml(profileEmail || profilePhone || '')}</div>
         </div>
       </footer>
 
-      <nav class="bottom-nav" aria-label="Mobile bottom navigation">
+      <!-- Mobile Bottom Navigation -->
+      <nav class="bottom-nav" aria-label="Mobile bottom navigation" data-section="mobileNav" data-index="0">
         <button type="button" class="bottom-nav-item active" data-scroll-target="#top">الرئيسية</button>
         <button type="button" class="bottom-nav-item" data-open-screen="course-library">الدورات</button>
         <button type="button" class="bottom-nav-item" data-open-screen="video-library">فيديو</button>
@@ -547,6 +1881,7 @@ export const getSchoolCoachNewDesignHtml = (
         <button type="button" class="bottom-nav-item" data-contact-action="true">تواصل</button>
       </nav>
 
+      <!-- Screen Layers -->
       <div class="screen-layer" id="course-library" aria-hidden="true">
         <div class="screen-header">
           <button type="button" class="screen-back" data-close-screen="course-library">‹</button>
@@ -558,7 +1893,7 @@ export const getSchoolCoachNewDesignHtml = (
             <input type="search" class="search-input" data-search-target="course-library" placeholder="ابحث عن دورة..." />
           </div>
           <div class="screen-grid" data-screen-list="course-library">
-            ${renderCourseCards || '<article class="mini-card course-card" data-open-course-detail="true"><div class="thumb" style="background-image:url(https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80)"></div><div class="card-body"><span class="chip">مشاهدة</span><h3>مراجعة الرياضيات</h3><p>تعلم البنية الأساسية لقواعد وحلول التمارين.</p></div></article>'}
+            ${renderCourseCards || renderEmptyCoursesState}
           </div>
         </div>
       </div>
@@ -574,7 +1909,7 @@ export const getSchoolCoachNewDesignHtml = (
             <input type="search" class="search-input" data-search-target="video-library" placeholder="ابحث عن فيديو..." />
           </div>
           <div class="screen-grid" data-screen-list="video-library">
-            ${renderVideoCards || '<article class="mini-card video-card"><div class="video-thumb" style="background-image:url(https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80)"><span class="play-badge">▶</span><span class="video-time">07:20</span></div><div class="card-body tight"><h3>عرض مراجعة سريعة</h3></div></article>'}
+            ${renderVideoCards || renderEmptyVideosState}
           </div>
         </div>
       </div>
@@ -590,7 +1925,7 @@ export const getSchoolCoachNewDesignHtml = (
             <input type="search" class="search-input" data-search-target="resource-library" placeholder="ابحث عن مورد..." />
           </div>
           <div class="screen-grid" data-screen-list="resource-library">
-            ${renderBagCards || '<article class="mini-card resource-card"><div class="thumb" style="background-image:url(https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80)"></div><div class="card-body"><h3>اختبارات سريعة</h3><p>ملف أسئلة تطبيقية مكثفة مع حلول.</p></div></article>'}
+            ${renderResourceCards || renderEmptyResourcesState}
           </div>
         </div>
       </div>
@@ -637,15 +1972,62 @@ export const getSchoolCoachNewDesignHtml = (
         </div>
       </div>
 
-      <div class="modal-backdrop" id="generic-modal" aria-hidden="true">
+      <!-- Results Modal (Shows ALL saved student results) -->
+      <div class="modal-backdrop" id="results-modal" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-box results-modal-box">
+          <button type="button" class="modal-close" data-close-modal="results-modal" aria-label="إغلاق">✕</button>
+          <div class="results-modal-header">
+            <div class="results-modal-header-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="7"></circle>
+                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+              </svg>
+            </div>
+            <div class="results-modal-header-info">
+              <h4>${escapeHtml(resultsModalTitle || 'لوحة شرف ونتائج الطلاب')}</h4>
+              <p>${escapeHtml(resultsModalDescription || 'جميع نتائج ودرجات الطلاب المتفوقين في الاختبارات والمراحل المختلفة.')}</p>
+            </div>
+          </div>
+          <div class="results-modal-body">
+            <div class="results-modal-grid">
+              ${renderAllResultsCards}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Modal (Wired to Navbar Contact Icon) -->
+      <div class="modal-backdrop" id="generic-modal" aria-hidden="true" role="dialog" aria-modal="true">
         <div class="modal-box">
-          <button type="button" class="modal-close" data-close-modal="generic-modal">×</button>
+          <button type="button" class="modal-close" data-close-modal="generic-modal" aria-label="إغلاق">✕</button>
+          <div class="modal-header-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            </svg>
+          </div>
           <div class="modal-body">
             <h4>${escapeHtml(contactModalTitle || 'تواصل مع الفريق')}</h4>
             <p>${escapeHtml(contactModalDescription || 'للحجز والاستفسار، يمكنك التواصل مباشرة مع الفريق.')}</p>
             <div class="modal-actions">
-              ${whatsappUrl ? `<a href="${escapeHtml(whatsappUrl)}" target="_blank" rel="noreferrer" class="primary-btn secondary-link">${escapeHtml(whatsappLabel || 'واتساب')}</a>` : ''}
-              ${phoneNumber ? `<a href="tel:${escapeHtml(phoneNumber.trim().replace(/\s+/g, ''))}" class="secondary-btn secondary-link">${escapeHtml(phoneLabel || 'اتصال')}</a>` : ''}
+              ${whatsappUrl ? `
+                <a href="${escapeHtml(whatsappUrl)}" target="_blank" rel="noopener noreferrer" class="contact-action-btn whatsapp-btn">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                  </svg>
+                  <span>${escapeHtml(whatsappLabel || 'واتساب')}</span>
+                </a>
+              ` : ''}
+              ${phoneTel ? `
+                <a href="${escapeHtml(phoneTel)}" class="contact-action-btn phone-btn">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                  </svg>
+                  <span>${escapeHtml(phoneLabel || 'اتصال')}</span>
+                </a>
+              ` : ''}
+              ${(!whatsappUrl && !phoneTel) ? `
+                <div class="empty-contact-note">لم يتم تعيين أرقام تواصل بعد</div>
+              ` : ''}
             </div>
           </div>
         </div>
@@ -663,25 +2045,6 @@ export const getSchoolCoachNewDesignHtml = (
             });
           }
         });
-
-        const mobileToggle = document.querySelector('.mobile-toggle');
-        const nav = document.querySelector('.nav');
-        if (mobileToggle && nav) {
-          mobileToggle.addEventListener('click', () => {
-            const visible = nav.style.display === 'flex';
-            nav.style.display = visible ? 'none' : 'flex';
-            nav.style.position = visible ? 'static' : 'absolute';
-            nav.style.top = visible ? 'auto' : '68px';
-            nav.style.left = '12px';
-            nav.style.right = '12px';
-            nav.style.flexDirection = 'column';
-            nav.style.padding = '12px';
-            nav.style.background = '#fff';
-            nav.style.border = '1px solid #e6ebf2';
-            nav.style.borderRadius = '14px';
-            nav.style.boxShadow = '0 10px 22px rgba(16,24,40,.08)';
-          });
-        }
 
         const showToast = (message) => {
           const toast = document.getElementById('schoolcoach-toast');
@@ -721,63 +2084,100 @@ export const getSchoolCoachNewDesignHtml = (
           modal.setAttribute('aria-hidden', 'true');
         };
 
+        // Mobile menu toggle
+        const mobileToggle = document.querySelector('.mobile-toggle');
+        const mobileNavMenu = document.getElementById('mobile-nav-menu');
+        if (mobileToggle && mobileNavMenu) {
+          mobileToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = mobileNavMenu.style.display === 'flex';
+            mobileNavMenu.style.display = isOpen ? 'none' : 'flex';
+          });
+        }
+
+        // Click event listener
         document.addEventListener('click', (event) => {
           const target = event.target;
-          if (!(target instanceof HTMLElement)) return;
+          if (!(target instanceof Element)) return;
 
-          if (target.matches('[data-scroll-target]')) {
-            const selector = target.getAttribute('data-scroll-target');
-            const section = selector ? document.querySelector(selector) : null;
-            if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // Open modal trigger
+          if (target.closest('[data-open-modal]')) {
+            event.preventDefault();
+            const modalId = target.closest('[data-open-modal]').getAttribute('data-open-modal');
+            if (modalId) openModal(modalId);
+            return;
           }
 
-          if (target.matches('[data-open-screen]')) {
-            const screenId = target.getAttribute('data-open-screen');
-            openScreen(screenId);
-          }
-
-          if (target.matches('[data-close-screen]')) {
-            const screenId = target.getAttribute('data-close-screen');
-            closeScreen(screenId);
-          }
-
-          if (target.matches('[data-contact-action]')) {
+          // Contact modal action
+          if (target.closest('[data-contact-action="true"]')) {
+            event.preventDefault();
             openModal('generic-modal');
-            showToast('تم فتح رسالة التواصل');
+            return;
           }
 
-          if (target.matches('[data-open-review]')) {
-            openModal('generic-modal');
-            showToast('تم فتح مراجعة الطالب');
-          }
-
-          if (target.matches('[data-open-gallery]')) {
-            openModal('generic-modal');
-            showToast('تم فتح المعرض');
-          }
-
-          if (target.matches('[data-close-modal]')) {
-            const modalId = target.getAttribute('data-close-modal');
+          // Modal close
+          if (target.closest('[data-close-modal]')) {
+            event.preventDefault();
+            const modalId = target.closest('[data-close-modal]').getAttribute('data-close-modal') || 'generic-modal';
             closeModal(modalId);
+            return;
           }
 
-          if (target.matches('[data-open-course-detail]')) {
-            const detailScreen = document.getElementById('course-detail-screen');
-            if (detailScreen) {
-              const card = target.closest('.course-card, .mini-card');
-              const title = card?.querySelector('h3')?.textContent || 'دورة جديدة';
-              const thumb = card?.querySelector('.thumb, .video-thumb')?.style?.backgroundImage || 'url(https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80)';
-              const detailContent = document.getElementById('course-detail-content');
-              if (detailContent) {
-                detailContent.querySelector('.detail-thumb').style.backgroundImage = thumb;
-                detailContent.querySelector('h4').textContent = title;
-              }
-              openScreen('course-detail-screen');
-              showToast('تم فتح تفاصيل الدورة');
+          // Backdrop click
+          if (target.classList.contains('modal-backdrop')) {
+            target.classList.remove('show');
+            target.setAttribute('aria-hidden', 'true');
+            return;
+          }
+
+          // Open screen
+          if (target.closest('[data-open-screen]')) {
+            event.preventDefault();
+            const screenId = target.closest('[data-open-screen]').getAttribute('data-open-screen');
+            if (screenId) openScreen(screenId);
+            return;
+          }
+
+          // Close screen
+          if (target.closest('[data-close-screen]')) {
+            event.preventDefault();
+            const screenId = target.closest('[data-close-screen]').getAttribute('data-close-screen');
+            if (screenId) closeScreen(screenId);
+            return;
+          }
+
+          // Open course detail
+          if (target.closest('[data-open-course-detail]')) {
+            const card = target.closest('.course-card, .mini-card');
+            const title = card?.querySelector('h3')?.textContent || 'دورة جديدة';
+            const thumb = card?.querySelector('.thumb, .video-thumb')?.style?.backgroundImage || 'url(https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80)';
+            const detailContent = document.getElementById('course-detail-content');
+            if (detailContent) {
+              const dThumb = detailContent.querySelector('.detail-thumb');
+              if (dThumb) dThumb.style.backgroundImage = thumb;
+              const dTitle = detailContent.querySelector('h4');
+              if (dTitle) dTitle.textContent = title;
             }
+            openScreen('course-detail-screen');
+            return;
+          }
+
+          // Navigation scroll target
+          const navLink = target.closest('[data-scroll], [data-scroll-target], a[href^="#"]');
+          if (navLink) {
+            const scrollKey = navLink.getAttribute('data-scroll') || navLink.getAttribute('data-scroll-target')?.replace('#', '') || navLink.getAttribute('href')?.replace('#', '');
+            if (scrollKey) {
+              const targetEl = document.getElementById(scrollKey);
+              if (targetEl) {
+                event.preventDefault();
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }
+            if (mobileNavMenu) mobileNavMenu.style.display = 'none';
           }
         });
 
+        // Search filtering in screen layers
         document.querySelectorAll('.search-input').forEach((input) => {
           input.addEventListener('input', (event) => {
             const searchValue = event.target.value.trim().toLowerCase();
@@ -792,10 +2192,25 @@ export const getSchoolCoachNewDesignHtml = (
           });
         });
 
+        // Post messages to parent editor on section clicks for easy inspector selection
+        document.addEventListener('click', (e) => {
+          const el = e.target.closest('[data-section]');
+          if (el) {
+            const section = el.getAttribute('data-section');
+            const index = el.getAttribute('data-index');
+            window.parent.postMessage({
+              type: 'SELECT_SECTION',
+              section: section,
+              index: index ? parseInt(index, 10) : null
+            }, '*');
+          }
+        });
+
         document.addEventListener('keydown', (event) => {
           if (event.key === 'Escape') {
             document.querySelectorAll('.screen-layer.show').forEach((screen) => screen.classList.remove('show'));
             document.querySelectorAll('.modal-backdrop.show').forEach((modal) => modal.classList.remove('show'));
+            if (mobileNavMenu) mobileNavMenu.style.display = 'none';
           }
         });
       </script>
