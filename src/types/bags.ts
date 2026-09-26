@@ -33,6 +33,8 @@ export interface BagApiItem {
   /** Array of instructor_receiver_account IDs for accepted payment methods */
   payment_info_ids?: number[];
   payment_infos?: any[];
+  payment_methods?: any[];
+  receiver_accounts?: any[];
   currency?: string;
   purchased?: boolean;
   is_purchased?: boolean;

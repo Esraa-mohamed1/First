@@ -18,6 +18,7 @@ const MySwal = withReactContent(Swal);
 interface Lesson {
   id: number;
   title: string;
+  description?: string;
   type?: string;
   duration?: string;
   is_preview?: boolean | number | string;
@@ -34,6 +35,7 @@ interface Lesson {
 interface Unit {
   id: number;
   title: string;
+  description?: string;
   isLocked?: boolean;
   lessons?: Lesson[];
 }
@@ -522,17 +524,24 @@ export default function CourseDetailTemplate({
                     >
                       <button
                         onClick={() => toggleUnit(unit.id)}
-                        className="w-full flex items-center justify-between p-5 bg-[#f3f4f5] outline-none"
+                        className="w-full flex items-center justify-between p-5 bg-[#f3f4f5] hover:bg-[#edf0f2] transition-colors outline-none text-right"
                       >
-                        <div className="flex items-center gap-3">
-                          <span className="material-symbols-outlined text-[#005c86]">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <span className="material-symbols-outlined text-[#005c86] shrink-0 mt-0.5">
                             {isUnitExpanded ? 'expand_more' : 'chevron_left'}
                           </span>
-                          <span className="font-bold text-on-surface text-right">
-                            {unit.title}
-                          </span>
+                          <div className="flex flex-col text-right flex-1 min-w-0">
+                            <span className="font-bold text-on-surface text-sm md:text-base leading-snug">
+                              {unit.title}
+                            </span>
+                            {unit.description && (
+                              <p className="text-xs text-[#4c616c] font-medium mt-1 leading-relaxed break-words">
+                                {unit.description.replace(/<[^>]*>/g, '')}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <span className="text-xs text-[#4c616c]">
+                        <span className="text-xs text-[#4c616c] shrink-0 mr-3">
                           {unit.lessons?.length || 0} دروس
                         </span>
                       </button>
@@ -546,63 +555,70 @@ export default function CourseDetailTemplate({
                               const isPlayingThis = playingPreviewLesson?.id === lesson.id;
 
                               return (
-                                <div
-                                  key={lesson.id}
-                                  onClick={() => {
-                                    if (isEnrolled || isOwnerReview) {
-                                      if (onLearnClick) onLearnClick();
-                                    } else if (isFree) {
-                                      const videoSrc = getLessonVideoSrc(lesson) || lesson.video_url || lesson.embed_url || lesson.file_url || lesson.url || '';
-                                      if (!videoSrc) {
-                                        toast.error('رابط الفيديو غير متوفر لهذا الدرس المجاني');
-                                        return;
+                                <div key={lesson.id} className="flex flex-col">
+                                  <div
+                                    onClick={() => {
+                                      if (isEnrolled || isOwnerReview) {
+                                        if (onLearnClick) onLearnClick();
+                                      } else if (isFree) {
+                                        const videoSrc = getLessonVideoSrc(lesson) || lesson.video_url || lesson.embed_url || lesson.file_url || lesson.url || '';
+                                        if (!videoSrc) {
+                                          toast.error('رابط الفيديو غير متوفر لهذا الدرس المجاني');
+                                          return;
+                                        }
+                                        setPlayingPreviewLesson(lesson);
+                                        toast.success(`جاري تشغيل المعاينة المجانية: ${lesson.title}`);
+                                        const playerEl = document.getElementById('course-video-player');
+                                        if (playerEl) {
+                                          playerEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        }
+                                      } else {
+                                        toast.error('هذا الدرس يتطلب الاشتراك في الدورة لمشاهدته');
                                       }
-                                      setPlayingPreviewLesson(lesson);
-                                      toast.success(`جاري تشغيل المعاينة المجانية: ${lesson.title}`);
-                                      const playerEl = document.getElementById('course-video-player');
-                                      if (playerEl) {
-                                        playerEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                      }
-                                    } else {
-                                      toast.error('هذا الدرس يتطلب الاشتراك في الدورة لمشاهدته');
-                                    }
-                                  }}
-                                  className={`flex items-center justify-between p-4 rounded-xl transition-all ${
-                                    isPlayingThis
-                                      ? 'bg-emerald-50 border border-emerald-200 shadow-sm'
-                                      : canWatch
-                                      ? 'hover:bg-[#f3f4f5] cursor-pointer'
-                                      : 'opacity-70 cursor-not-allowed'
-                                  }`}
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <span
-                                      className={`material-symbols-outlined ${
-                                        isPlayingThis
-                                          ? 'text-emerald-600 animate-pulse'
-                                          : canWatch
-                                          ? 'text-[#005c86]'
-                                          : 'text-slate-400'
-                                      }`}
-                                      style={{ fontVariationSettings: "'FILL' 1" }}
-                                    >
-                                      {isPlayingThis ? 'play_circle' : canWatch ? 'play_circle' : 'lock'}
-                                    </span>
-                                    <span className={`text-right text-sm font-bold ${isPlayingThis ? 'text-emerald-900 font-extrabold' : 'text-on-surface'}`}>
-                                      {lesson.title}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-4">
-                                    {isFree && !isEnrolled && (
-                                      <span className="text-xs bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-ping" />
-                                        معاينة مجانية
+                                    }}
+                                    className={`flex items-center justify-between p-4 rounded-xl transition-all ${
+                                      isPlayingThis
+                                        ? 'bg-emerald-50 border border-emerald-200 shadow-sm'
+                                        : canWatch
+                                        ? 'hover:bg-[#f3f4f5] cursor-pointer'
+                                        : 'opacity-70 cursor-not-allowed'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <span
+                                        className={`material-symbols-outlined shrink-0 ${
+                                          isPlayingThis
+                                            ? 'text-emerald-600 animate-pulse'
+                                            : canWatch
+                                            ? 'text-[#005c86]'
+                                            : 'text-slate-400'
+                                        }`}
+                                        style={{ fontVariationSettings: "'FILL' 1" }}
+                                      >
+                                        {isPlayingThis ? 'play_circle' : canWatch ? 'play_circle' : 'lock'}
                                       </span>
-                                    )}
-                                    <span className="text-sm text-[#4c616c]">
-                                      {lesson.duration || '05:00'}
-                                    </span>
+                                      <span className={`text-right text-sm font-bold ${isPlayingThis ? 'text-emerald-900 font-extrabold' : 'text-on-surface'}`}>
+                                        {lesson.title}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-4 shrink-0">
+                                      {isFree && !isEnrolled && (
+                                        <span className="text-xs bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-ping" />
+                                          معاينة مجانية
+                                        </span>
+                                      )}
+                                      <span className="text-sm text-[#4c616c]">
+                                        {lesson.duration || '05:00'}
+                                      </span>
+                                    </div>
                                   </div>
+
+                                  {lesson.description && (
+                                    <div className="px-11 pb-3 pt-0 text-xs md:text-sm text-[#5f6d7a] font-normal leading-relaxed text-right break-words">
+                                      {lesson.description.replace(/<[^>]*>/g, '')}
+                                    </div>
+                                  )}
                                 </div>
                               );
                             })

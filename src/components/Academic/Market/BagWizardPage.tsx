@@ -30,6 +30,7 @@ import {
   Sparkles,
   Star,
   Plus,
+  AlertCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import BagPreviewCard from './BagPreviewCard';
@@ -73,6 +74,8 @@ export interface BagPhotoItem {
   url: string;
   file?: File;
   isMain: boolean;
+  /** API-side gallery item id (present when image was loaded from edit-mode API response) */
+  apiId?: number;
 }
 
 export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
@@ -82,6 +85,7 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [formData, setFormData] = useState<BagFormState>(initialFormState);
   const [isSaving, setIsSaving] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   // Bag Photos State (Main Cover + Gallery Photos)
   const [bagPhotos, setBagPhotos] = useState<BagPhotoItem[]>([]);
@@ -235,6 +239,8 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
       getAcademyBag(editBagId).then((apiBag: BagApiItem | null) => {
         if (apiBag) {
           const loadedPhotos: BagPhotoItem[] = [];
+
+          // 1. Add main cover image if returned
           if (apiBag.image) {
             loadedPhotos.push({
               id: 'main-' + Date.now(),
@@ -242,34 +248,75 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
               isMain: true,
             });
           }
-          if (Array.isArray(apiBag.gallery)) {
-            apiBag.gallery.forEach((g: any, i: number) => {
-              const gUrl = typeof g === 'string' ? g : g?.path || g?.url;
-              if (gUrl && gUrl !== apiBag.image) {
+
+          // 2. Extract and parse gallery images from response (supports array, JSON string, or object properties)
+          let rawGallery: any = apiBag.gallery ?? (apiBag as any).galleries ?? (apiBag as any).bag_galleries ?? (apiBag as any).images ?? [];
+          if (typeof rawGallery === 'string') {
+            try {
+              rawGallery = JSON.parse(rawGallery);
+            } catch (e) {
+              if (rawGallery.includes(',')) {
+                rawGallery = rawGallery.split(',').map((s: string) => s.trim());
+              } else if (rawGallery.trim()) {
+                rawGallery = [rawGallery.trim()];
+              } else {
+                rawGallery = [];
+              }
+            }
+          }
+
+          if (Array.isArray(rawGallery)) {
+            rawGallery.forEach((g: any, i: number) => {
+              const gUrl = typeof g === 'string'
+                ? g
+                : (g?.url || g?.path || g?.file_url || g?.file || g?.image || g?.image_url || g?.photo || g?.photo_url || g?.full_url || g?.attachment);
+
+              if (gUrl && !loadedPhotos.some((p) => p.url === gUrl)) {
                 loadedPhotos.push({
-                  id: `gallery-${i}-${Date.now()}`,
+                  id: `gallery-${i}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
                   url: gUrl,
-                  isMain: false,
+                  isMain: loadedPhotos.length === 0,
+                  apiId: typeof g === 'object' && g?.id ? Number(g.id) : undefined,
                 });
               }
             });
           }
+
+          // Ensure at least one photo is marked as isMain if photos exist
+          if (loadedPhotos.length > 0 && !loadedPhotos.some((p) => p.isMain)) {
+            loadedPhotos[0].isMain = true;
+          }
+
           setBagPhotos(loadedPhotos);
 
           const countDl = apiBag.count_download != null ? Number(apiBag.count_download) : null;
           const isLimited = countDl !== null && countDl > 0;
 
+          // Parse payment methods safely from all possible response keys
+          let loadedPaymentMethods: string[] = [];
+          if (Array.isArray(apiBag.payment_info_ids) && apiBag.payment_info_ids.length > 0) {
+            loadedPaymentMethods = apiBag.payment_info_ids.map(String);
+          } else if (Array.isArray(apiBag.payment_methods) && apiBag.payment_methods.length > 0) {
+            loadedPaymentMethods = apiBag.payment_methods.map((pm: any) => String(pm.id || pm.payment_info_id || pm.methodId || pm));
+          } else if (Array.isArray(apiBag.receiver_accounts) && apiBag.receiver_accounts.length > 0) {
+            loadedPaymentMethods = apiBag.receiver_accounts.map((ra: any) => String(ra.id || ra.receiver_account_id || ra));
+          } else if (Array.isArray((apiBag as any).payment_infos) && (apiBag as any).payment_infos.length > 0) {
+            loadedPaymentMethods = (apiBag as any).payment_infos.map((pi: any) => String(pi.id || pi));
+          }
+
+          const mainCoverUrl = loadedPhotos.find((p) => p.isMain)?.url || apiBag.image || '';
+
           setFormData({
             title: apiBag.title || '',
             description: apiBag.description || apiBag.short_description || '',
-            coverImage: apiBag.image || '',
+            coverImage: mainCoverUrl,
             category: apiBag.category_name || 'عام',
             instructorName: '',
             isFree: apiBag.type_price === 'free',
             price: Number(apiBag.price) || 0,
             discountPrice: Number(apiBag.discount_price) || 0,
             currency: apiBag.currency || 'SAR',
-            paymentMethods: (apiBag.payment_info_ids || []).map(String),
+            paymentMethods: loadedPaymentMethods,
             downloadPolicy: isLimited ? 'limited' : 'unlimited',
             downloadLimit: isLimited ? (countDl || 0) : 0,
             downloadExpiry: 'never',
@@ -413,6 +460,7 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
 
   /** Toggle payment method selection safely */
   const togglePaymentMethod = (method: string) => {
+    setPaymentError(null);
     const isSelected = safePaymentMethods.includes(method);
     if (!isSelected && safePaymentMethods.length >= 3) {
       toast.error('يمكنك اختيار ٣ وسائل دفع كحد أقصى');
@@ -469,8 +517,16 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
 
     // Require at least one payment method if bag is paid
     if (!formData.isFree && validPaymentIds.length === 0) {
-      toast.error('يرجى تحديد وسيلة دفع واحدة على الأقل للحقيبة المدفوعة');
+      const errorMsg = 'يرجى تحديد وسيلة دفع واحدة على الأقل للحقيبة المدفوعة';
+      setPaymentError(errorMsg);
+      toast.error(errorMsg);
       setCurrentStep(3);
+      if (typeof window !== 'undefined') {
+        setTimeout(() => {
+          const el = document.getElementById('payment-methods-selection-container');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      }
       return;
     }
 
@@ -877,7 +933,11 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                         {/* Footer Details */}
                         <div className="p-2.5 bg-white border-t border-gray-100 flex items-center justify-between text-[11px] font-bold text-gray-500">
                           <span className="truncate max-w-[100px]">
-                            {photo.file ? photo.file.name : 'صورة'}
+                            {photo.file
+                              ? photo.file.name
+                              : photo.apiId
+                                ? `صورة #${photo.apiId}`
+                                : 'صورة'}
                           </span>
                           {!photo.isMain && (
                             <button
@@ -1231,6 +1291,7 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                       isFree: nextIsFree,
                       paymentMethods: nextIsFree ? [] : prev.paymentMethods,
                     }));
+                    if (nextIsFree) setPaymentError(null);
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
@@ -1241,6 +1302,7 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                         isFree: nextIsFree,
                         paymentMethods: nextIsFree ? [] : prev.paymentMethods,
                       }));
+                      if (nextIsFree) setPaymentError(null);
                     }
                   }}
                   className={`flex items-center justify-between gap-4 p-4 rounded-xl border cursor-pointer select-none transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${formData.isFree
@@ -1307,6 +1369,7 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                                 currency: newCurr,
                                 paymentMethods: [],
                               }));
+                              setPaymentError(null);
                             }}
                             className="bg-transparent font-black text-blue-600 outline-none cursor-pointer text-xs text-gray-900 border-none focus:ring-0"
                           >
@@ -1348,10 +1411,11 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                 )}
 
                 {/* Payment Methods Section (Filtered by Currency) */}
-                <div className="space-y-3 pt-1">
+                <div id="payment-methods-selection-container" className="space-y-3 pt-1 scroll-mt-24">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-black text-gray-700 block">
-                      اختر طريقة دفع من طرق الدفع الخاصة بك
+                    <label className="text-xs font-black text-gray-700 flex items-center gap-1.5">
+                      <span>اختر طريقة دفع من طرق الدفع الخاصة بك</span>
+                      {!formData.isFree && <span className="text-red-500 font-black text-sm">*</span>}
                     </label>
                     {!formData.isFree && (
                       <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
@@ -1360,6 +1424,13 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                     )}
                   </div>
 
+                  {paymentError && !formData.isFree && (
+                    <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-bold flex items-center gap-2 mb-2 animate-in fade-in duration-200">
+                      <AlertCircle size={16} className="text-red-500 shrink-0" />
+                      <span>{paymentError}</span>
+                    </div>
+                  )}
+
                   {formData.isFree && (
                     <div className="p-3.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-xs font-bold flex items-center gap-2 mb-3">
                       <span className="material-symbols-outlined text-[18px] text-amber-600">info</span>
@@ -1367,7 +1438,13 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                     </div>
                   )}
 
-                  <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${formData.isFree ? 'opacity-40 pointer-events-none cursor-not-allowed select-none' : ''}`}>
+                  <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 p-2 rounded-2xl transition-all ${
+                    formData.isFree
+                      ? 'opacity-40 pointer-events-none cursor-not-allowed select-none'
+                      : paymentError && safePaymentMethods.length === 0
+                        ? 'border-2 border-red-300 bg-red-50/20 ring-2 ring-red-100'
+                        : ''
+                  }`}>
                     {loadingPaymentInfos ? (
                       /* Loading skeleton for payment methods */
                       <div className="col-span-2 flex items-center gap-2 text-gray-400 py-4">

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { notFound } from 'next/navigation';
 import { getPublicPages, getPublicSections, apiToEditor } from '@/services/pages';
 import { getTemplateById } from '@/builder/utils/templates';
 import TemplateRenderer from '@/builder/templates/renderer/TemplateRenderer';
@@ -53,6 +54,7 @@ export default function TenantHomeClient({
   const [tenantRole, setTenantRole] = useState<string | null>(null);
   const [sections, setSections] = useState<any[]>(initialSections);
   const [loading, setLoading] = useState<boolean>(true);
+  const [notFoundState, setNotFoundState] = useState<boolean>(false);
   const [tenantKey, setTenantKey] = useState<string | null>(null);
 
   // Resolve tenant key on client side
@@ -81,6 +83,9 @@ export default function TenantHomeClient({
             return [];
           }),
           getMyAcademyProfile().catch((err) => {
+            if (err?.isNotFound || err?.status === 404 || err?.response?.status === 404) {
+              setNotFoundState(true);
+            }
             console.error('Failed to load my academy profile in TenantHomeClient:', err);
             return null;
           }),
@@ -162,6 +167,10 @@ export default function TenantHomeClient({
         </div>
       </div>
     );
+  }
+
+  if (notFoundState) {
+    return notFound();
   }
 
   return (

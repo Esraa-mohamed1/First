@@ -130,8 +130,14 @@ export const getMyAcademyProfile = async (): Promise<any> => {
           window.dispatchEvent(new CustomEvent('academy-profile-updated', { detail: info }));
         }
         return data;
-      } catch (e) {
+      } catch (e: any) {
         console.error('Failed to get my academy profile under user base URL:', error);
+        if (error?.response?.status === 404 || error?.status === 404 || e?.response?.status === 404 || e?.status === 404) {
+          const notFoundError: any = new Error('Academy endpoint returned 404 Not Found');
+          notFoundError.status = 404;
+          notFoundError.isNotFound = true;
+          throw notFoundError;
+        }
         return null;
       }
     } finally {
