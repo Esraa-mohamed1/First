@@ -238,9 +238,66 @@ export const getSchoolCoachNewDesignHtml = (
     : [];
   const activeResults = rawResultItems.filter((r: any) => r && (r.enabled !== false));
 
-  const testimonialItems = Array.isArray((content as any)?.testimonials?.items) ? (content as any).testimonials.items : [];
-  const faqItems = Array.isArray((content as any)?.faq?.items) ? (content as any).faq.items : [];
-  const galleryItems = Array.isArray((content as any)?.gallery?.items) ? (content as any).gallery.items : [];
+  // Section 8 (About & Qualifications Timeline) Configuration
+  const aboutCaption = getSafeValue((content as any)?.about, ['caption', 'eyebrow', 'badge'], 'نبذة عن المعلم');
+  const aboutTitle = getSafeValue((content as any)?.about, ['title'], 'الخبرة والمنهجية التعليمية');
+  const aboutDescription = getSafeValue((content as any)?.about, ['description', 'bio', 'subtitle'], profileBio || 'أعتمد على أسلوب تدريسي يجمع بين الشرح المبسط، التطبيق المكثف، والتقييم المستمر لضمان أعلى مستوى من الاستيعاب والتفوق.');
+  const aboutTimelineTitle = getSafeValue((content as any)?.about, ['timelineTitle', 'timeline_title'], (content as any)?.timeline?.title || 'المؤهلات والمسيرة المهنية');
+  const aboutBg = getSafeValue((content as any)?.about, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], '');
+  const aboutTextColor = getSafeValue((content as any)?.about, ['textColor', 'text_color'], '');
+  const aboutFontFamily = getSafeValue((content as any)?.about, ['fontFamily', 'font_family'], '');
+  const rawAboutItems = Array.isArray((content as any)?.about?.items)
+    ? (content as any).about.items
+    : (Array.isArray((content as any)?.timeline?.items) ? (content as any).timeline.items : []);
+  const aboutItems = rawAboutItems.filter((it: any) => it && it.enabled !== false && (it.title || it.stage || it.year || it.description));
+
+  // Section 9 (Classroom Gallery) Configuration
+  const galleryCaption = getSafeValue((content as any)?.gallery, ['caption', 'eyebrow', 'badge'], 'معرض الصف');
+  const galleryTitle = getSafeValue((content as any)?.gallery, ['title'], 'لقطات من البيئة التعليمية');
+  const gallerySubtitle = getSafeValue((content as any)?.gallery, ['subtitle', 'description', 'caption_desc'], 'أنشطة وتجارب تفاعلية في القاعات الدراسية.');
+  const galleryEmptyText = getSafeValue((content as any)?.gallery, ['emptyText', 'empty_text'], 'لا توجد صور في المعرض حالياً');
+  const galleryBg = getSafeValue((content as any)?.gallery, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], '');
+  const galleryTextColor = getSafeValue((content as any)?.gallery, ['textColor', 'text_color'], '');
+  const galleryFontFamily = getSafeValue((content as any)?.gallery, ['fontFamily', 'font_family'], '');
+  const rawGalleryItems = Array.isArray((content as any)?.gallery?.items) ? (content as any).gallery.items : [];
+  const galleryItems = rawGalleryItems.filter((it: any) => it && it.enabled !== false && (it.image_url || it.image || it.url || (typeof it === 'string' && it.trim())));
+
+  // Section 10 (Student Testimonials) Configuration
+  const testimonialsCaption = getSafeValue((content as any)?.testimonials, ['caption', 'eyebrow', 'badge'], (content as any)?.faq?.testimonialsCaption || 'آراء الطلاب');
+  const testimonialsTitle = getSafeValue((content as any)?.testimonials, ['title'], (content as any)?.faq?.testimonialsTitle || 'ماذا يقول طلابنا المتفوقون؟');
+  const testimonialsSubtitle = getSafeValue((content as any)?.testimonials, ['subtitle', 'description'], (content as any)?.faq?.testimonialsSubtitle || 'تجارب واقعية وقصص نجاح يرويها شركاء النجاح من الطلاب المتفوقين.');
+  const testimonialsEmptyText = getSafeValue((content as any)?.testimonials, ['emptyText', 'empty_text'], 'سيتم إضافة آراء وتجارب الطلاب قريباً');
+  const testimonialsBg = getSafeValue((content as any)?.testimonials, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], '');
+  const testimonialsTextColor = getSafeValue((content as any)?.testimonials, ['textColor', 'text_color'], '');
+  const testimonialsFontFamily = getSafeValue((content as any)?.testimonials, ['fontFamily', 'font_family'], '');
+  const rawTestimonialItems = Array.isArray((content as any)?.testimonials?.items)
+    ? (content as any).testimonials.items
+    : (Array.isArray((content as any)?.faq?.testimonials) ? (content as any).faq.testimonials : []);
+  const testimonialItems = rawTestimonialItems.filter((it: any) => it && it.enabled !== false && (it.text || it.quote || it.name || it.author));
+
+  // Section 11 (FAQ) Configuration
+  const faqCaption = getSafeValue((content as any)?.faq, ['caption', 'eyebrow', 'badge'], 'الأسئلة الشائعة');
+  const faqTitle = getSafeValue((content as any)?.faq, ['title'], 'كل ما تود معرفته عن طريقة الدراسة والمتابعة');
+  const faqSubtitle = getSafeValue((content as any)?.faq, ['subtitle', 'description'], 'إجابات واضحة ومباشرة على أكثر الاستفسارات تكراراً.');
+  const faqEmptyText = getSafeValue((content as any)?.faq, ['emptyText', 'empty_text'], 'لا توجد أسئلة شائعة مضافة حالياً');
+  const faqBg = getSafeValue((content as any)?.faq, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], '');
+  const faqTextColor = getSafeValue((content as any)?.faq, ['textColor', 'text_color'], '');
+  const faqFontFamily = getSafeValue((content as any)?.faq, ['fontFamily', 'font_family'], '');
+  const rawFaqItems = Array.isArray((content as any)?.faq?.items) ? (content as any).faq.items : [];
+  const faqItems = rawFaqItems.filter((it: any) => it && it.enabled !== false && (it.question || it.q));
+
+  // Section 12 (Final CTA / Contact) Configuration
+  const ctaCaption = getSafeValue((content as any)?.cta, ['caption', 'eyebrow', 'badge'], (content as any)?.contact?.caption || 'جاهز للبدء والتفوق؟');
+  const ctaTitle = getSafeValue((content as any)?.cta, ['title'], (content as any)?.contact?.title || 'احجز مكانك في مجموعاتنا التعليمية الآن');
+  const ctaDescription = getSafeValue((content as any)?.cta, ['description', 'subtitle'], (content as any)?.contact?.description || 'انضم إلينا وابدأ رحلة التفوق مع أسلوب تعليمي متميز ومتابعة دقيقة.');
+  const ctaPrimaryLabel = getSafeValue((content as any)?.cta, ['primaryButtonText', 'buttonText', 'primaryLabel'], (content as any)?.contact?.buttonText || 'ابدأ التعلم');
+  const ctaPrimaryLink = getSafeValue((content as any)?.cta, ['primaryButtonLink', 'buttonLink', 'primaryLink'], (content as any)?.contact?.buttonLink || '#courses');
+  const ctaWhatsappLabel = getSafeValue((content as any)?.cta, ['whatsappButtonLabel', 'whatsappLabel'], (content as any)?.contact?.whatsappButtonLabel || 'كلمنا على الواتساب');
+  const rawCtaWhatsapp = getSafeValue((content as any)?.cta, ['whatsappUrl', 'whatsapp_url', 'whatsappNumber', 'whatsapp_number', 'phoneNumber', 'phone_number', 'whatsapp'], rawWhatsapp || rawPhone || '');
+  const ctaWhatsappUrl = normalizeWhatsappUrl(rawCtaWhatsapp);
+  const ctaBg = getSafeValue((content as any)?.cta, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], (content as any)?.contact?.backgroundColor || '');
+  const ctaTextColor = getSafeValue((content as any)?.cta, ['textColor', 'text_color'], (content as any)?.contact?.textColor || '');
+  const ctaFontFamily = getSafeValue((content as any)?.cta, ['fontFamily', 'font_family'], (content as any)?.contact?.fontFamily || '');
 
   const renderStatCards = activeStats.map((item: any, index: number) => `
     <div class="stat-card" data-section="profile" data-stat-index="${index}">
@@ -433,30 +490,128 @@ export const getSchoolCoachNewDesignHtml = (
     </div>
   `;
 
-  const renderGallery = galleryItems.map((item: any, index: number) => `
-    <figure class="gallery-item" data-section="gallery" data-index="${index}"><img src="${normalizeImage(item?.image_url || item?.image || item?.url || item, '')}" alt="معرض الصف" /></figure>
-  `).join('');
-
-  const renderTestimonials = testimonialItems.map((item: any, index: number) => `
-    <article class="quote-card" data-section="testimonials" data-index="${index}">
-      <div class="quote-mark">“</div>
-      <p>${escapeHtml(item.text || item.comment || item.quote || '')}</p>
-      <div class="quote-author">
-        <strong>${escapeHtml(item.name || item.author || '')}</strong>
-        <span>${escapeHtml(item.role || '')}</span>
+  // Section 8: Timeline Items
+  const renderTimelineItems = aboutItems.map((item: any, index: number) => {
+    const stage = escapeHtml(item.stage || item.year || item.number || String(index + 1));
+    const title = escapeHtml(item.title || '');
+    const description = escapeHtml(item.description || item.desc || '');
+    return `
+      <div class="timeline-item" data-section="about" data-index="${index}">
+        <span class="timeline-badge">${stage}</span>
+        <div class="timeline-content">
+          ${title ? `<strong class="timeline-title" style="${aboutTextColor ? `color: ${aboutTextColor};` : ''}">${title}</strong>` : ''}
+          ${description ? `<p class="timeline-desc" style="${aboutTextColor ? `color: ${aboutTextColor}; opacity: 0.8;` : ''}">${description}</p>` : ''}
+        </div>
       </div>
-    </article>
-  `).join('');
+    `;
+  }).join('');
 
-  const renderFaq = faqItems.map((item: any, index: number) => `
-    <div class="faq-item" data-section="faq" data-index="${index}">
-      <button type="button" class="faq-question">
-        <span>${escapeHtml(item.question || '')}</span>
-        <span class="plus">+</span>
-      </button>
-      <div class="faq-answer"><p>${escapeHtml(item.answer || '')}</p></div>
+  const renderEmptyTimelineState = `
+    <div class="timeline-empty-state" data-section="about">
+      <p class="empty-desc">لم تتم إضافة بنود خبرة أو مؤهلات بعد</p>
     </div>
-  `).join('');
+  `;
+
+  // Section 9: Gallery Cards
+  const renderGalleryCards = galleryItems.map((item: any, index: number) => {
+    const imgUrl = normalizeImage(item?.image_url || item?.image || item?.url || item, '');
+    const caption = escapeHtml(item?.caption || item?.alt || item?.title || '');
+    return `
+      <figure class="gallery-item" data-section="gallery" data-index="${index}">
+        <img src="${imgUrl}" alt="${caption || 'معرض الصف'}" loading="lazy" />
+        ${caption ? `<figcaption class="gallery-caption">${caption}</figcaption>` : ''}
+      </figure>
+    `;
+  }).join('');
+
+  const renderEmptyGalleryState = `
+    <div class="gallery-empty-state" data-section="gallery">
+      <div class="empty-icon-shell">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+      </div>
+      <h3 class="empty-title">${escapeHtml(galleryEmptyText)}</h3>
+      <p class="empty-desc">${escapeHtml(gallerySubtitle)}</p>
+    </div>
+  `;
+
+  // Section 10: Testimonials & Rating Stars
+  const renderStarsSvg = (rating: number = 5) => {
+    const r = Math.max(1, Math.min(5, Math.round(Number(rating) || 5)));
+    let stars = '';
+    for (let i = 1; i <= 5; i++) {
+      const isFilled = i <= r;
+      stars += `<svg width="16" height="16" viewBox="0 0 24 24" fill="${isFilled ? '#f59e0b' : '#cbd5e1'}" stroke="${isFilled ? '#f59e0b' : '#cbd5e1'}" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="star-icon"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+    }
+    return `<div class="quote-stars" aria-label="تقييم ${r} من 5">${stars}</div>`;
+  };
+
+  const renderTestimonialsCards = testimonialItems.map((item: any, index: number) => {
+    const name = escapeHtml(item.name || item.author || item.studentName || '');
+    const course = escapeHtml(item.course || item.courseName || item.role || '');
+    const text = escapeHtml(item.text || item.quote || item.review || item.comment || '');
+    const rating = Number(item.rating ?? 5);
+
+    return `
+      <article class="quote-card" data-section="testimonials" data-index="${index}">
+        <div class="quote-top-row">
+          ${renderStarsSvg(rating)}
+          <div class="quote-mark">“</div>
+        </div>
+        <p class="quote-text" style="${testimonialsTextColor ? `color: ${testimonialsTextColor};` : ''}">${text}</p>
+        <div class="quote-author">
+          <strong style="${testimonialsTextColor ? `color: ${testimonialsTextColor};` : ''}">${name || 'طالب متميز'}</strong>
+          ${course ? `<span class="quote-course">${course}</span>` : ''}
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  const renderEmptyTestimonialsState = `
+    <div class="testimonials-empty-state" data-section="testimonials">
+      <div class="empty-icon-shell">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+      </div>
+      <h3 class="empty-title">${escapeHtml(testimonialsEmptyText)}</h3>
+      <p class="empty-desc">${escapeHtml(testimonialsSubtitle)}</p>
+    </div>
+  `;
+
+  // Section 11: FAQ Accordion Items
+  const renderFaqAccordion = faqItems.map((item: any, index: number) => {
+    const question = escapeHtml(item.question || item.q || '');
+    const answer = escapeHtml(item.answer || item.a || '');
+    return `
+      <div class="faq-item" data-section="faq" data-index="${index}">
+        <button type="button" class="faq-question" aria-expanded="false">
+          <span style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${question}</span>
+          <span class="plus" aria-hidden="true">+</span>
+        </button>
+        <div class="faq-answer">
+          <p style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.85;` : ''}">${answer}</p>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const renderEmptyFaqState = `
+    <div class="faq-empty-state" data-section="faq">
+      <div class="empty-icon-shell">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </div>
+      <h3 class="empty-title">${escapeHtml(faqEmptyText)}</h3>
+      <p class="empty-desc">${escapeHtml(faqSubtitle)}</p>
+    </div>
+  `;
 
   return `<!doctype html>
   <html lang="ar" dir="rtl">
@@ -1228,46 +1383,70 @@ export const getSchoolCoachNewDesignHtml = (
           }
         }
 
-        /* About & Timeline */
-        .about-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .about-card { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 24px; }
-        .bio-text { font-size: 14px; color: #334155; line-height: 1.7; margin: 12px 0 16px; }
-        .check-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
-        .check-list li { position: relative; padding-right: 22px; color: var(--text); font-weight: 600; font-size: 13.5px; }
-        .check-list li::before { content: "✓"; position: absolute; right: 0; top: 0; color: var(--brand); font-weight: 800; }
-        .timeline-card { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 22px 22px 10px; }
-        .timeline-head { font-weight: 800; font-size: 18px; margin-bottom: 12px; color: var(--text); }
-        .timeline-item { display: grid; grid-template-columns: 58px 1fr; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--line); }
-        .timeline-item:last-child { border-bottom: none; }
-        .timeline-item span { display: inline-block; background: #edf4ff; color: var(--brand); border-radius: 999px; font-size: 12px; font-weight: 700; padding: 6px 10px; text-align: center; }
-        .timeline-item strong { display: block; font-size: 15px; margin-bottom: 2px; color: var(--text); }
-        .timeline-item p { margin: 0; color: var(--muted); font-size: 13px; }
+        /* Section 8: About & Qualifications Timeline */
+        .about-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: stretch; }
+        .about-card { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 28px; box-shadow: 0 6px 20px rgba(15,23,42,.04); display: flex; flex-direction: column; }
+        .about-card .eyebrow { margin-bottom: 12px; }
+        .about-heading { margin: 0 0 14px; font-size: clamp(20px, 3vw, 26px); font-weight: 800; color: var(--text); line-height: 1.4; }
+        .about-description { font-size: 15px; color: #334155; line-height: 1.8; margin: 0; white-space: pre-line; }
+        
+        .timeline-card { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 28px; box-shadow: 0 6px 20px rgba(15,23,42,.04); display: flex; flex-direction: column; }
+        .timeline-head { font-weight: 800; font-size: 18px; margin-bottom: 18px; color: var(--text); border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+        .timeline-list { display: flex; flex-direction: column; gap: 14px; }
+        .timeline-item { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: flex-start; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+        .timeline-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .timeline-badge { display: inline-flex; align-items: center; justify-content: center; background: #edf4ff; color: var(--brand); border-radius: 999px; font-size: 12px; font-weight: 800; padding: 6px 12px; white-space: nowrap; height: fit-content; }
+        .timeline-content { min-width: 0; }
+        .timeline-title { display: block; font-size: 15px; font-weight: 800; margin-bottom: 4px; color: var(--text); }
+        .timeline-desc { margin: 0; color: var(--muted); font-size: 13.5px; line-height: 1.6; }
+        .timeline-empty-state { padding: 24px 16px; text-align: center; background: #f8fafc; border: 1px dashed var(--line); border-radius: 14px; color: var(--muted); font-size: 13.5px; }
 
-        /* Gallery & Quotes */
-        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
-        .gallery-item { margin: 0; border-radius: 16px; overflow: hidden; height: 180px; border: 1px solid var(--line); }
-        .gallery-item img { width: 100%; height: 100%; object-cover: cover; }
-        .quote-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
-        .quote-card { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 22px; display: flex; flex-direction: column; }
-        .quote-mark { font-size: 32px; font-weight: 800; color: var(--brand); line-height: 1; margin-bottom: 8px; }
-        .quote-card p { margin: 0 0 16px; font-size: 13.5px; color: #334155; line-height: 1.65; flex: 1; }
-        .quote-author strong { display: block; font-size: 14px; font-weight: 800; color: var(--text); }
-        .quote-author span { font-size: 12px; color: var(--muted); }
+        /* Section 9: Gallery & Empty State */
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+        .gallery-item { margin: 0; border-radius: 16px; overflow: hidden; height: 200px; border: 1px solid var(--line); background: #f1f5f9; position: relative; box-shadow: 0 4px 14px rgba(15,23,42,0.04); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .gallery-item:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(15,23,42,0.08); }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+        .gallery-caption { position: absolute; bottom: 0; inset-inline: 0; background: linear-gradient(to top, rgba(15,23,42,0.85), transparent); color: #fff; padding: 20px 12px 10px; font-size: 12.5px; font-weight: 700; text-align: center; }
+        .gallery-empty-state { padding: 36px 20px; text-align: center; background: #fff; border: 1px dashed var(--line); border-radius: 20px; }
 
-        /* FAQ */
-        .faq-list { display: flex; flex-direction: column; gap: 10px; }
-        .faq-item { background: #fff; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; transition: all 0.2s ease; }
-        .faq-question { width: 100%; background: none; border: none; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; text-align: right; font-weight: 700; font-size: 15px; color: var(--text); }
-        .faq-question .plus { font-size: 20px; color: var(--brand); transition: transform 0.2s ease; }
-        .faq-answer { display: none; padding: 0 18px 16px; }
-        .faq-answer p { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.65; }
-        .faq-item.open .faq-answer { display: block; }
-        .faq-item.open .faq-question .plus { transform: rotate(45deg); }
+        /* Section 10: Testimonials & Rating Stars */
+        .quote-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
+        .quote-card { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 14px rgba(15,23,42,0.04); border-top: 3px solid var(--brand); }
+        .quote-top-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+        .quote-stars { display: flex; align-items: center; gap: 3px; }
+        .quote-stars svg { width: 16px; height: 16px; }
+        .quote-mark { font-size: 28px; font-weight: 800; color: var(--brand); line-height: 1; opacity: 0.8; }
+        .quote-text { margin: 0 0 16px; font-size: 14px; color: #334155; line-height: 1.7; flex: 1; }
+        .quote-author { border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 2px; }
+        .quote-author strong { display: block; font-size: 14.5px; font-weight: 800; color: var(--text); }
+        .quote-course { font-size: 12px; color: var(--brand); font-weight: 600; }
+        .testimonials-empty-state { padding: 36px 20px; text-align: center; background: #fff; border: 1px dashed var(--line); border-radius: 20px; }
 
-        /* CTA Box */
-        .cta-box { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); border-radius: 24px; padding: 32px 28px; color: #fff; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
-        .cta-box h2 { margin: 6px 0; font-size: clamp(22px, 3vw, 28px); font-weight: 800; color: #fff; }
-        .cta-box p { margin: 0; color: #cbd5e1; font-size: 14px; }
+        /* Section 11: FAQ Accordion */
+        .faq-list { display: flex; flex-direction: column; gap: 12px; max-width: 880px; margin: 0 auto; }
+        .faq-item { background: #fff; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(15,23,42,0.02); }
+        .faq-item:hover { border-color: #cbd5e1; }
+        .faq-question { width: 100%; background: none; border: none; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; text-align: right; font-weight: 700; font-size: 15px; color: var(--text); cursor: pointer; gap: 14px; }
+        .faq-question .plus { font-size: 22px; font-weight: 700; color: var(--brand); transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); line-height: 1; flex-shrink: 0; }
+        .faq-answer { display: none; padding: 0 20px 18px; }
+        .faq-answer p { margin: 0; font-size: 14px; color: #475569; line-height: 1.75; }
+        .faq-item.open { border-color: #bfdbfe; box-shadow: 0 6px 20px rgba(15, 103, 255, 0.08); }
+        .faq-item.open .faq-answer { display: block; border-top: 1px solid #f1f5f9; padding-top: 14px; }
+        .faq-item.open .faq-question .plus { transform: rotate(45deg); color: #dc2626; }
+        .faq-empty-state { padding: 36px 20px; text-align: center; background: #fff; border: 1px dashed var(--line); border-radius: 20px; }
+
+        /* Section 12: Final CTA */
+        .cta-box { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); border-radius: 24px; padding: 40px 36px; color: #fff; display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; box-shadow: 0 16px 36px rgba(15,23,42,0.14); }
+        .cta-info { flex: 1; min-width: 280px; }
+        .cta-box h2.cta-title { margin: 8px 0; font-size: clamp(22px, 3vw, 30px); font-weight: 800; color: #fff; }
+        .cta-box p.cta-desc { margin: 0; color: #cbd5e1; font-size: 14.5px; line-height: 1.7; max-width: 580px; }
+        .cta-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .cta-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 24px; border-radius: 14px; font-weight: 800; font-size: 14.5px; text-decoration: none; transition: all 0.2s ease; border: none; cursor: pointer; }
+        .primary-cta-btn { background: var(--brand); color: #fff; box-shadow: 0 6px 18px rgba(15, 103, 255, 0.35); }
+        .primary-cta-btn:hover { background: var(--brand2); transform: translateY(-1px); }
+        .whatsapp-cta-btn { background: #25D366; color: #fff; box-shadow: 0 6px 18px rgba(37, 211, 102, 0.3); }
+        .whatsapp-cta-btn:hover { background: #20ba5a; transform: translateY(-1px); }
+        .eyebrow-light { background: rgba(255,255,255,0.14); color: #fff; }
 
         /* Footer */
         footer { padding: 28px 0 48px; }
@@ -1735,129 +1914,112 @@ export const getSchoolCoachNewDesignHtml = (
           </div>
         </section>
 
-        <!-- Section 9: About Section -->
-        <section class="section" id="about" data-section="about" data-index="0">
+        <!-- Section 8: About & Qualifications Section -->
+        <section class="section" id="about" data-section="about" data-index="0" style="${aboutBg ? `background-color: ${aboutBg};` : ''} ${aboutTextColor ? `color: ${aboutTextColor};` : ''}">
           <div class="container">
-            <div class="about-two-col">
+            <div class="about-two-col" style="${aboutFontFamily ? `font-family: '${aboutFontFamily}', system-ui, sans-serif;` : ''}">
+              <!-- Part A: Teacher Description -->
               <div class="about-card">
-                <div class="eyebrow">${escapeHtml((content as any)?.about?.title || 'نبذة عن المعلم')}</div>
-                <h2>${escapeHtml((content as any)?.about?.subtitle || 'منهجية واضحة تركز على بناء الفهم قبل الحفظ')}</h2>
-                <p class="bio-text">${escapeHtml(profileBio || 'أعتمد على أسلوب تدريسي يجمع بين الشرح المبسط، التطبيق المكثف، والتقييم المستمر لضمان أعلى مستوى من الاستيعاب والتفوق.')}</p>
-                <ul class="check-list">
-                  <li>شرح تفصيلي لكل درس مع أمثلة واقعية.</li>
-                  <li>اختبارات دورية ومراجعات مستمرة قبل الامتحانات.</li>
-                  <li>متابعة فردية وإجابة على أسئلة الطلاب أولاً بأول.</li>
-                </ul>
+                ${aboutCaption ? `<div class="eyebrow">${escapeHtml(aboutCaption)}</div>` : ''}
+                <h2 class="about-heading" style="${aboutTextColor ? `color: ${aboutTextColor};` : ''} ${aboutFontFamily ? `font-family: '${aboutFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(aboutTitle || 'الخبرة والمنهجية التعليمية')}</h2>
+                <p class="about-description" style="${aboutTextColor ? `color: ${aboutTextColor};` : ''}">${escapeHtml(aboutDescription || profileBio || 'أعتمد على أسلوب تدريسي يجمع بين الشرح المبسط، التطبيق المكثف، والتقييم المستمر لضمان أعلى مستوى من الاستيعاب والتفوق.')}</p>
               </div>
-              <div class="timeline-card" data-section="timeline" data-index="0">
-                <div class="timeline-head">المؤهلات والخبرات</div>
-                <div class="timeline-item">
-                  <span>2024</span>
-                  <div>
-                    <strong>تطوير المناهج الرقمية التفاعلية</strong>
-                    <p>إعداد حقائب تعليمية وفيديوهات تطبيقية للمرحلة الثانوية.</p>
+
+              <!-- Part B: Experience & Qualifications Timeline -->
+              <div class="timeline-card">
+                <div class="timeline-head" style="${aboutTextColor ? `color: ${aboutTextColor};` : ''}">${escapeHtml(aboutTimelineTitle || 'المؤهلات والمسيرة المهنية')}</div>
+                ${aboutItems.length > 0 ? `
+                  <div class="timeline-list">
+                    ${renderTimelineItems}
                   </div>
-                </div>
-                <div class="timeline-item">
-                  <span>2020</span>
-                  <div>
-                    <strong>معلم أول معتمد</strong>
-                    <p>تدريس أكثر من 1500 طالب وتحقيق نتائج استثنائية.</p>
-                  </div>
-                </div>
-                <div class="timeline-item">
-                  <span>2015</span>
-                  <div>
-                    <strong>بكالوريوس التربية والتعليم</strong>
-                    <p>تخصص المناهج وطرق التدريس الحديثة.</p>
-                  </div>
-                </div>
+                ` : renderEmptyTimelineState}
               </div>
             </div>
           </div>
         </section>
 
-        <!-- Section 10: Gallery Section -->
-        <section class="section" data-section="gallery" data-index="0">
+        <!-- Section 9: Gallery Section -->
+        <section class="section" id="gallery" data-section="gallery" data-index="0" style="${galleryBg ? `background-color: ${galleryBg};` : ''} ${galleryTextColor ? `color: ${galleryTextColor};` : ''}">
           <div class="container">
-            <div class="section-header">
+            <div class="section-header" style="${galleryFontFamily ? `font-family: '${galleryFontFamily}', system-ui, sans-serif;` : ''}">
               <div>
-                <div class="eyebrow">${escapeHtml((content as any)?.gallery?.title || 'معرض الصف')}</div>
-                <h2>${escapeHtml((content as any)?.gallery?.subtitle || 'لقطات من البيئة التعليمية')}</h2>
+                ${galleryCaption ? `<div class="eyebrow">${escapeHtml(galleryCaption)}</div>` : ''}
+                <h2 style="${galleryTextColor ? `color: ${galleryTextColor};` : ''} ${galleryFontFamily ? `font-family: '${galleryFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(galleryTitle || 'لقطات من البيئة التعليمية')}</h2>
+                ${gallerySubtitle ? `<p style="${galleryTextColor ? `color: ${galleryTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${galleryFontFamily ? `font-family: '${galleryFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(gallerySubtitle)}</p>` : ''}
               </div>
             </div>
-            <div class="gallery-grid">
-              ${renderGallery || `
-                <figure class="gallery-item"><img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=900&q=80" alt="معرض الصف" /></figure>
-                <figure class="gallery-item"><img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=900&q=80" alt="معرض الصف" /></figure>
-                <figure class="gallery-item"><img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&w=900&q=80" alt="معرض الصف" /></figure>
-              `}
-            </div>
+            ${galleryItems.length > 0 ? `
+              <div class="gallery-grid">
+                ${renderGalleryCards}
+              </div>
+            ` : renderEmptyGalleryState}
           </div>
         </section>
 
-        <!-- Section 11: Testimonials Section -->
-        <section class="section" data-section="testimonials" data-index="0">
+        <!-- Section 10: Testimonials Section -->
+        <section class="section" id="testimonials" data-section="testimonials" data-index="0" style="${testimonialsBg ? `background-color: ${testimonialsBg};` : ''} ${testimonialsTextColor ? `color: ${testimonialsTextColor};` : ''}">
           <div class="container">
-            <div class="section-header">
+            <div class="section-header" style="${testimonialsFontFamily ? `font-family: '${testimonialsFontFamily}', system-ui, sans-serif;` : ''}">
               <div>
-                <div class="eyebrow">${escapeHtml((content as any)?.faq?.testimonialsTitle || (content as any)?.testimonials?.title || 'آراء الطلاب وأولياء الأمور')}</div>
-                <h2>${escapeHtml((content as any)?.faq?.testimonialsSubtitle || (content as any)?.testimonials?.subtitle || 'قصص نجاح وتجارب ملهمة')}</h2>
+                ${testimonialsCaption ? `<div class="eyebrow">${escapeHtml(testimonialsCaption)}</div>` : ''}
+                <h2 style="${testimonialsTextColor ? `color: ${testimonialsTextColor};` : ''} ${testimonialsFontFamily ? `font-family: '${testimonialsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(testimonialsTitle || 'ماذا يقول طلابنا المتفوقون؟')}</h2>
+                ${testimonialsSubtitle ? `<p style="${testimonialsTextColor ? `color: ${testimonialsTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${testimonialsFontFamily ? `font-family: '${testimonialsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(testimonialsSubtitle)}</p>` : ''}
               </div>
             </div>
-            <div class="quote-grid">
-              ${renderTestimonials || `
-                <article class="quote-card">
-                  <div class="quote-mark">“</div>
-                  <p>شرح رائع ومبسط ساعدني في فهم أصعب المسائل بسهولة تامة.</p>
-                  <div class="quote-author"><strong>أحمد خالد</strong><span>طالب ثانوية عامة</span></div>
-                </article>
-                <article class="quote-card">
-                  <div class="quote-mark">“</div>
-                  <p>المتابعة والامتحانات الدورية جعلتني مستعداً تماماً للامتحان النهائي.</p>
-                  <div class="quote-author"><strong>سارة محمد</strong><span>طالبة متفوقة</span></div>
-                </article>
-              `}
-            </div>
+            ${testimonialItems.length > 0 ? `
+              <div class="quote-grid">
+                ${renderTestimonialsCards}
+              </div>
+            ` : renderEmptyTestimonialsState}
           </div>
         </section>
 
-        <!-- Section 12: FAQ Section -->
-        <section class="section" id="faq" data-section="faq" data-index="0">
+        <!-- Section 11: FAQ Section -->
+        <section class="section" id="faq" data-section="faq" data-index="0" style="${faqBg ? `background-color: ${faqBg};` : ''} ${faqTextColor ? `color: ${faqTextColor};` : ''}">
           <div class="container">
-            <div class="section-header">
-              <div>
-                <div class="eyebrow">${escapeHtml((content as any)?.faq?.title || 'الأسئلة الشائعة')}</div>
-                <h2>كل ما تود معرفته عن طريقة الدراسة والمتابعة</h2>
+            <div class="section-header" style="text-align: center; justify-content: center; flex-direction: column; align-items: center; margin-bottom: 28px; ${faqFontFamily ? `font-family: '${faqFontFamily}', system-ui, sans-serif;` : ''}">
+              ${faqCaption ? `<div class="eyebrow" style="margin-bottom: 8px;">${escapeHtml(faqCaption)}</div>` : ''}
+              <h2 style="${faqTextColor ? `color: ${faqTextColor};` : ''} ${faqFontFamily ? `font-family: '${faqFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(faqTitle || 'كل ما تود معرفته عن طريقة الدراسة والمتابعة')}</h2>
+              ${faqSubtitle ? `<p style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${faqFontFamily ? `font-family: '${faqFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(faqSubtitle)}</p>` : ''}
+            </div>
+            ${faqItems.length > 0 ? `
+              <div class="faq-list">
+                ${renderFaqAccordion}
               </div>
-            </div>
-            <div class="faq-list">
-              ${renderFaq || `
-                <div class="faq-item open">
-                  <button type="button" class="faq-question"><span>كيف يمكنني الاشتراك في الدورات؟</span><span class="plus">+</span></button>
-                  <div class="faq-answer"><p>يمكنك تصفح الدورات واختيار المناسب منها ثم الضغط على زر الحجز أو التواصل مباشرة معنا.</p></div>
-                </div>
-                <div class="faq-item">
-                  <button type="button" class="faq-question"><span>هل تتوفر مذكرات ومصادر مجانية للتحميل؟</span><span class="plus">+</span></button>
-                  <div class="faq-answer"><p>نعم، تتوفر مجموعة من الحقائب والمذكرات المجانية في قسم الموارد لتساعدك في المراجعة.</p></div>
-                </div>
-              `}
-            </div>
+            ` : renderEmptyFaqState}
           </div>
         </section>
 
-        <!-- Section 13: CTA Section -->
-        <section class="section" data-section="cta" data-index="0">
+        <!-- Section 12: Final CTA Section -->
+        <section class="section" id="cta" data-section="cta" data-index="0" style="${ctaBg ? `background-color: ${ctaBg};` : ''} ${ctaTextColor ? `color: ${ctaTextColor};` : ''}">
           <div class="container">
-            <div class="cta-box">
-              <div>
-                <div class="eyebrow" style="background:rgba(255,255,255,.14); color:#fff;">جاهز للبدء؟</div>
-                <h2>${escapeHtml((content as any)?.contact?.title || 'احجز مكانك في مجموعاتنا التعليمية الآن')}</h2>
-                <p>${escapeHtml((content as any)?.contact?.description || 'انضم إلينا وابدأ رحلة التفوق مع أسلوب تعليمي متميز ومتابعة دقيقة.')}</p>
+            <div class="cta-box" style="${ctaBg ? `background: ${ctaBg};` : ''} ${ctaTextColor ? `color: ${ctaTextColor};` : ''} ${ctaFontFamily ? `font-family: '${ctaFontFamily}', system-ui, sans-serif;` : ''}">
+              <div class="cta-info">
+                ${ctaCaption ? `<div class="eyebrow eyebrow-light">${escapeHtml(ctaCaption)}</div>` : ''}
+                <h2 class="cta-title" style="${ctaTextColor ? `color: ${ctaTextColor};` : ''} ${ctaFontFamily ? `font-family: '${ctaFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(ctaTitle || 'احجز مكانك في مجموعاتنا التعليمية الآن')}</h2>
+                <p class="cta-desc" style="${ctaTextColor ? `color: ${ctaTextColor}; opacity: 0.9;` : ''}">${escapeHtml(ctaDescription || 'انضم إلينا وابدأ رحلة التفوق مع أسلوب تعليمي متميز ومتابعة دقيقة.')}</p>
               </div>
-              <div class="hero-actions">
-                <button type="button" class="secondary-btn" style="background:rgba(255,255,255,.14); color:#fff;" data-contact-action="true">${escapeHtml((content as any)?.contact?.secondaryButtonText || 'تواصل معنا')}</button>
-                <button type="button" class="primary-btn" data-open-screen="course-library">${escapeHtml((content as any)?.contact?.buttonText || 'احجز الآن')}</button>
+              <div class="cta-actions">
+                ${ctaWhatsappUrl ? `
+                  <a href="${escapeHtml(ctaWhatsappUrl)}" target="_blank" rel="noopener noreferrer" class="cta-btn whatsapp-cta-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                    </svg>
+                    <span>${escapeHtml(ctaWhatsappLabel || 'كلمنا على الواتساب')}</span>
+                  </a>
+                ` : `
+                  <button type="button" class="cta-btn whatsapp-cta-btn" data-contact-action="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                    </svg>
+                    <span>${escapeHtml(ctaWhatsappLabel || 'كلمنا على الواتساب')}</span>
+                  </button>
+                `}
+                ${ctaPrimaryLink.startsWith('#') ? `
+                  <a href="${escapeHtml(ctaPrimaryLink)}" data-scroll="${escapeHtml(ctaPrimaryLink.replace('#', ''))}" class="cta-btn primary-cta-btn">${escapeHtml(ctaPrimaryLabel || 'ابدأ التعلم')}</a>
+                ` : `
+                  <a href="${escapeHtml(ctaPrimaryLink)}" class="cta-btn primary-cta-btn">${escapeHtml(ctaPrimaryLabel || 'ابدأ التعلم')}</a>
+                `}
               </div>
             </div>
           </div>
@@ -2099,6 +2261,19 @@ export const getSchoolCoachNewDesignHtml = (
         document.addEventListener('click', (event) => {
           const target = event.target;
           if (!(target instanceof Element)) return;
+
+          // FAQ Accordion click
+          const faqBtn = target.closest('.faq-question');
+          if (faqBtn) {
+            event.preventDefault();
+            const faqItem = faqBtn.closest('.faq-item');
+            if (faqItem) {
+              const isOpen = faqItem.classList.contains('open');
+              faqItem.classList.toggle('open');
+              faqBtn.setAttribute('aria-expanded', !isOpen ? 'true' : 'false');
+            }
+            return;
+          }
 
           // Open modal trigger
           if (target.closest('[data-open-modal]')) {
