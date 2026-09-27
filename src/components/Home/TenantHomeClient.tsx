@@ -78,7 +78,7 @@ export default function TenantHomeClient({
 
         // Fetch pages and academy profile in parallel to resolve template and role together
         const [pagesList, academyProfile] = await Promise.all([
-          getPublicPages('academic').catch((err) => {
+          getPublicPages().catch((err) => {
             console.error('Failed to load public pages in TenantHomeClient:', err);
             return [];
           }),
@@ -91,22 +91,45 @@ export default function TenantHomeClient({
           }),
         ]);
 
+        let resolvedTargetTemplate = initialTemplateId;
         if (academyProfile) {
           const role = academyProfile.role || academyProfile.type || academyProfile.account_type || academyProfile.user_type;
           if (role) {
             setTenantRole(role);
+            const roleStr = String(role).toLowerCase().trim();
+            if (roleStr === 'schoolcoach' || roleStr === 'school_teacher' || roleStr === 'teacher' || roleStr === 'instructor_school' || roleStr === 'school') {
+              resolvedTargetTemplate = 'template_1';
+            } else if (roleStr === 'coach' || roleStr === 'instructor') {
+              resolvedTargetTemplate = 'template_courses_1';
+            } else if (roleStr === 'academy' || roleStr === 'academic' || roleStr === 'organization') {
+              resolvedTargetTemplate = 'academic-dashboard';
+            }
           }
         }
 
-        let activePage = pagesList.find(
-          (p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true'
-        );
+        // 1. First identify pages matching the current/resolved template
+        const matchingTemplatePages = pagesList.filter((p: any) => {
+          const tmpl = p.template || p.template_name || p.title || p.template_id;
+          return tmpl === resolvedTargetTemplate || (resolvedTargetTemplate === 'template_1' && (tmpl === 'template_1' || tmpl === 'schoolcoach'));
+        });
+
+        // 2. From matching template pages, select the active/published page
+        let activePage = matchingTemplatePages.find(
+          (p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true' || p.status === 'published'
+        ) || matchingTemplatePages[0];
+
+        // 3. Fallback to generic search ONLY if no matching-template page exists
+        if (!activePage) {
+          activePage = pagesList.find(
+            (p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true'
+          );
+        }
 
         if (!activePage) {
           const templatePages = pagesList.filter((p: any) =>
             TEMPLATE_SLUGS.includes(p.template_name || p.template || p.title)
           );
-          activePage = templatePages.sort((a: any, b: any) => Number(b.id || 0) - Number(a.id || 0))[0];
+          activePage = templatePages.find((p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true) || templatePages[0];
         }
 
         if (!activePage) {

@@ -229,6 +229,7 @@ export const saveSections = async (
   pageId: string | number,
   sections: ApiSection[]
 ): Promise<any> => {
+  clearPagesCache();
   const numericPageId = isNaN(Number(pageId)) ? pageId : Number(pageId);
 
   const payload = {
@@ -409,6 +410,26 @@ export function normalizeSectionProps(type: string, rawProps: any): Record<strin
     merged.buttonLink = val;
     merged.button_link = val;
   }
+  if (merged.primary_button_text || merged.primaryButtonText) {
+    const val = merged.primaryButtonText || merged.primary_button_text;
+    merged.primaryButtonText = val;
+    merged.primary_button_text = val;
+  }
+  if (merged.primary_button_link || merged.primaryButtonLink) {
+    const val = merged.primaryButtonLink || merged.primary_button_link;
+    merged.primaryButtonLink = val;
+    merged.primary_button_link = val;
+  }
+  if (merged.whatsapp_button_label || merged.whatsappButtonLabel) {
+    const val = merged.whatsappButtonLabel || merged.whatsapp_button_label;
+    merged.whatsappButtonLabel = val;
+    merged.whatsapp_button_label = val;
+  }
+  if (merged.whatsapp_url || merged.whatsappUrl) {
+    const val = merged.whatsappUrl || merged.whatsapp_url;
+    merged.whatsappUrl = val;
+    merged.whatsapp_url = val;
+  }
   if (merged.phone_number || merged.phoneNumber) {
     const val = merged.phoneNumber || merged.phone_number;
     merged.phoneNumber = val;
@@ -524,10 +545,18 @@ export function normalizeSectionProps(type: string, rawProps: any): Record<strin
     merged.buttonBg = val;
     merged.button_bg = val;
   }
-  if (merged.card_bg || merged.cardBg) {
-    const val = merged.cardBg || merged.card_bg;
+  if (merged.card_bg || merged.cardBg || merged.box_bg || merged.boxBg) {
+    const val = merged.cardBg || merged.card_bg || merged.boxBg || merged.box_bg;
     merged.cardBg = val;
     merged.card_bg = val;
+    merged.boxBg = val;
+    merged.box_bg = val;
+  }
+  if (merged.caption || merged.badge || merged.eyebrow) {
+    const val = merged.caption || merged.badge || merged.eyebrow;
+    merged.caption = val;
+    merged.badge = val;
+    merged.eyebrow = val;
   }
   if (merged.title_color || merged.titleColor) {
     const val = merged.titleColor || merged.title_color;
@@ -559,10 +588,69 @@ export function normalizeSectionProps(type: string, rawProps: any): Record<strin
     merged.testimonialsTextColor = val;
     merged.testimonials_text_color = val;
   }
+  if (merged.timeline_title || merged.timelineTitle) {
+    const val = merged.timelineTitle || merged.timeline_title;
+    merged.timelineTitle = val;
+    merged.timeline_title = val;
+  }
+  if (merged.modal_title || merged.modalTitle) {
+    const val = merged.modalTitle || merged.modal_title;
+    merged.modalTitle = val;
+    merged.modal_title = val;
+  }
+  if (merged.modal_description || merged.modalDescription) {
+    const val = merged.modalDescription || merged.modal_description;
+    merged.modalDescription = val;
+    merged.modal_description = val;
+  }
+  if (merged.preview_count !== undefined || merged.previewCount !== undefined) {
+    const val = merged.previewCount !== undefined ? merged.previewCount : merged.preview_count;
+    merged.previewCount = Number(val);
+    merged.preview_count = Number(val);
+  }
+  if (merged.empty_text || merged.emptyText) {
+    const val = merged.emptyText || merged.empty_text;
+    merged.emptyText = val;
+    merged.empty_text = val;
+  }
+  if (merged.view_all_text || merged.viewAllText || merged.view_all_label || merged.viewAllLabel) {
+    const val = merged.viewAllText || merged.view_all_text || merged.viewAllLabel || merged.view_all_label;
+    merged.viewAllText = val;
+    merged.view_all_text = val;
+    merged.viewAllLabel = val;
+    merged.view_all_label = val;
+  }
+  if (merged.font_family || merged.fontFamily) {
+    const val = merged.fontFamily || merged.font_family;
+    merged.fontFamily = val;
+    merged.font_family = val;
+  }
+  if (merged.image_url || merged.imageUrl) {
+    const val = merged.imageUrl || merged.image_url;
+    merged.imageUrl = val;
+    merged.image_url = val;
+  }
+  if (merged.student_name || merged.studentName) {
+    const val = merged.studentName || merged.student_name;
+    merged.studentName = val;
+    merged.student_name = val;
+  }
+  if (merged.course_name || merged.courseName) {
+    const val = merged.courseName || merged.course_name;
+    merged.courseName = val;
+    merged.course_name = val;
+  }
   if (merged.template_id || merged.templateId) {
     const val = merged.templateId || merged.template_id;
     merged.templateId = val;
     merged.template_id = val;
+  }
+  if (merged.visible !== undefined || merged.isVisible !== undefined || merged.is_visible !== undefined) {
+    const val = merged.visible !== undefined ? merged.visible : (merged.isVisible !== undefined ? merged.isVisible : merged.is_visible);
+    const boolVal = typeof val === 'string' ? val === 'true' || val === '1' : Boolean(val);
+    merged.visible = boolVal;
+    merged.isVisible = boolVal;
+    merged.is_visible = boolVal;
   }
   return merged;
 }
@@ -611,7 +699,8 @@ export function apiToEditor(sections: ApiSection[]): BuilderNode[] {
     }
 
     const rawHide = rawProps.hide_on_mobile !== undefined ? rawProps.hide_on_mobile : rawProps.hideOnMobile;
-    const finalItems = (editorItems && editorItems.length > 0) ? editorItems : (rawProps.items || props.items);
+    const rawVisible = rawProps.visible !== undefined ? rawProps.visible : (rawProps.isVisible !== undefined ? rawProps.isVisible : rawProps.is_visible);
+    const finalItems = (editorItems !== undefined) ? editorItems : (rawProps.items !== undefined ? rawProps.items : props.items);
 
     return {
       id: sec.id?.toString() || `${sec.type}-${Math.random().toString(36).substr(2, 9)}`,
@@ -620,6 +709,7 @@ export function apiToEditor(sections: ApiSection[]): BuilderNode[] {
         ...rawProps,
         ...props,
         ...(rawHide !== undefined ? { hide_on_mobile: !!rawHide, hideOnMobile: !!rawHide } : {}),
+        ...(rawVisible !== undefined ? { visible: !!rawVisible, isVisible: !!rawVisible, is_visible: !!rawVisible } : {}),
         ...(finalItems !== undefined ? { items: finalItems } : {}),
       },
     };
@@ -648,15 +738,22 @@ export function editorToApi(nodes: BuilderNode[], pageId: string | number): ApiS
       apiProps.hideOnMobile = !!rawHide;
     }
 
+    const rawVisible = propsWithoutItems.visible !== undefined ? propsWithoutItems.visible : (propsWithoutItems.isVisible !== undefined ? propsWithoutItems.isVisible : propsWithoutItems.is_visible);
+    if (rawVisible !== undefined) {
+      apiProps.visible = !!rawVisible;
+      apiProps.isVisible = !!rawVisible;
+      apiProps.is_visible = !!rawVisible;
+    }
+
     const finalProps =
       Object.keys(apiProps).length > 0 ? apiProps : { initialized: true };
 
-    if (Array.isArray(items) && items.length > 0) {
+    if (Array.isArray(items)) {
       finalProps.items = items;
     }
 
     let apiItems: ApiSectionItem[] | undefined = undefined;
-    if (Array.isArray(items) && items.length > 0) {
+    if (Array.isArray(items)) {
       apiItems = items.map((item, itemIdx) => {
         const rawItemProps = safeParseProps(item.props || item);
         const itemProps = keysToSnake(rawItemProps);
@@ -667,7 +764,7 @@ export function editorToApi(nodes: BuilderNode[], pageId: string | number): ApiS
         return {
           ...(itemId !== undefined ? { id: itemId } : {}),
           order: item.order || itemIdx + 1,
-          props: itemProps,
+          props: { ...rawItemProps, ...itemProps },
         };
       });
     }

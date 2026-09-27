@@ -16,9 +16,12 @@ const normalizeImage = (value: any, fallback: string) => {
 };
 
 const getSafeValue = (obj: any, keys: string[], fallback: any = '') => {
+  if (!obj) return fallback;
   for (const key of keys) {
-    const value = obj?.[key];
-    if (value !== undefined && value !== null && value !== '') return value;
+    if (key in obj) {
+      const value = obj[key];
+      if (value !== undefined && value !== null) return value;
+    }
   }
   return fallback;
 };
@@ -82,11 +85,54 @@ export const getSchoolCoachNewDesignHtml = (
   realBags: any[] = [],
   teacherProfile: any = null
 ) => {
-  // Shared Canonical Teacher Identity
-  const teacherName = getSafeValue((content as any)?.profile, ['teacherName'], getSafeValue((content as any)?.navbar, ['teacherName', 'title'], ''));
+  // Shared Canonical Teacher Identity: single source of truth from my-academy (key: site_name)
+  const canonicalTeacherName =
+    teacherProfile?.site_name ||
+    (Array.isArray(teacherProfile) ? teacherProfile.find((x: any) => x?.key === 'site_name')?.value : '') ||
+    (typeof window !== 'undefined' ? (() => {
+      try {
+        const full = JSON.parse(localStorage.getItem('darab_academy_profile_full') || '{}');
+        if (full?.site_name) return full.site_name;
+        const simple = JSON.parse(localStorage.getItem('darab_academy_profile') || '{}');
+        if (simple?.site_name || simple?.name) return simple.site_name || simple.name;
+      } catch (e) {
+        return '';
+      }
+      return '';
+    })() : '') ||
+    getSafeValue((content as any)?.profile, ['teacherName'], '') ||
+    getSafeValue((content as any)?.navbar, ['teacherName', 'title'], '') ||
+    '';
+  const teacherName = canonicalTeacherName;
   const teacherTitle = getSafeValue((content as any)?.profile, ['teacherTitle', 'jobTitle', 'title', 'headline'], getSafeValue((content as any)?.navbar, ['teacherTitle', 'teacher_title', 'jobTitle'], ''));
   const profileEmail = getSafeValue((content as any)?.footer, ['email'], teacherProfile?.email || '');
   const profilePhone = getSafeValue((content as any)?.footer, ['phone'], teacherProfile?.phone || '');
+
+  // Section Visibility
+  const isSectionVisible = (secName: string, defaultVisible = true): boolean => {
+    const sec = (content as any)?.[secName];
+    if (!sec) return defaultVisible;
+    if (sec.visible !== undefined) return Boolean(sec.visible);
+    if (sec.isVisible !== undefined) return Boolean(sec.isVisible);
+    if (sec.is_visible !== undefined) return Boolean(sec.is_visible);
+    return defaultVisible;
+  };
+
+  const isNavbarVisible = isSectionVisible('navbar');
+  const isProfileVisible = isSectionVisible('profile');
+  const isTabsVisible = isSectionVisible('tabs');
+  const isCoursesVisible = isSectionVisible('courses');
+  const isStepsVisible = isSectionVisible('steps');
+  const isVideosVisible = isSectionVisible('videos');
+  const isResourcesVisible = isSectionVisible('resources');
+  const isBagsVisible = isSectionVisible('bags');
+  const isResultsVisible = isSectionVisible('results');
+  const isAboutVisible = isSectionVisible('about');
+  const isGalleryVisible = isSectionVisible('gallery');
+  const isTestimonialsVisible = isSectionVisible('testimonials');
+  const isFaqVisible = isSectionVisible('faq');
+  const isCtaVisible = (content as any)?.cta?.visible !== undefined ? Boolean((content as any)?.cta?.visible) : isSectionVisible('contact', true);
+  const isFooterVisible = isSectionVisible('footer');
 
   // Hero Profile props
   const profileBio = getSafeValue((content as any)?.profile, ['description', 'bio', 'about', 'summary'], '');
@@ -119,6 +165,7 @@ export const getSchoolCoachNewDesignHtml = (
 
   // Navbar Configuration
   const loginButtonText = getSafeValue((content as any)?.navbar, ['loginText', 'login_text'], 'تسجيل الدخول');
+  const loginLink = getSafeValue((content as any)?.navbar, ['loginLink', 'login_link'], '/auth/login');
   const videoIconVisible = (content as any)?.navbar?.videoIconVisible !== false && (content as any)?.navbar?.videoEnabled !== false;
   const contactIconVisible = (content as any)?.navbar?.contactIconVisible !== false && (content as any)?.navbar?.contactEnabled !== false;
 
@@ -133,7 +180,7 @@ export const getSchoolCoachNewDesignHtml = (
   const whatsappUrl = normalizeWhatsappUrl(rawWhatsapp);
   const phoneTel = normalizePhoneTel(rawPhone);
 
-  // 5 Canonical Navbar Navigation Items (Labels editable, Targets stable)
+  // 5 Canonical Navbar Navigation Items (Filtered by section visibility)
   const coursesLabel = getSafeValue((content as any)?.navbar, ['coursesLabel', 'courses_label'], '');
   const videosLabel = getSafeValue((content as any)?.navbar, ['videosLabel', 'videos_label'], '');
   const resourcesLabel = getSafeValue((content as any)?.navbar, ['resourcesLabel', 'resources_label', 'bagsLabel', 'bags_label'], '');
@@ -142,7 +189,14 @@ export const getSchoolCoachNewDesignHtml = (
 
   const rawLinks = Array.isArray((content as any)?.navbar?.links) ? (content as any).navbar.links : [];
 
-  const navItems: SchoolCoachNavItem[] = DEFAULT_SCHOOLCOACH_NAV_ITEMS.map((defaultItem) => {
+  const navItems: SchoolCoachNavItem[] = DEFAULT_SCHOOLCOACH_NAV_ITEMS.filter((item) => {
+    if (item.key === 'courses' && !isCoursesVisible) return false;
+    if (item.key === 'videos' && !isVideosVisible) return false;
+    if (item.key === 'resources' && !isResourcesVisible && !isBagsVisible) return false;
+    if (item.key === 'results' && !isResultsVisible) return false;
+    if (item.key === 'about' && !isAboutVisible) return false;
+    return true;
+  }).map((defaultItem) => {
     let customLabel = '';
     if (defaultItem.key === 'courses' && coursesLabel) customLabel = coursesLabel;
     else if (defaultItem.key === 'videos' && videosLabel) customLabel = videosLabel;
@@ -193,27 +247,37 @@ export const getSchoolCoachNewDesignHtml = (
   const videosTitle = getSafeValue((content as any)?.videos, ['title'], (content as any)?.about?.videoTitle || 'أحدث الفيديوهات');
   const videosSubtitle = getSafeValue((content as any)?.videos, ['subtitle', 'caption', 'description'], 'شاهد أحدث الشروحات والدروس المصورة.');
   const videosEmptyText = getSafeValue((content as any)?.videos, ['emptyText', 'empty_text'], 'لا توجد فيديوهات متاحة حالياً');
-  const videosViewAllLabel = getSafeValue((content as any)?.videos, ['viewAllLabel', 'view_all_label', 'buttonText'], 'عرض الجميع');
+  const videosViewAllLabel = getSafeValue((content as any)?.videos, ['viewAllLabel', 'view_all_label', 'viewAllText', 'view_all_text', 'buttonText'], 'عرض جميع الفيديوهات');
   const videosBg = getSafeValue((content as any)?.videos, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], '');
   const videosTextColor = getSafeValue((content as any)?.videos, ['textColor', 'text_color'], '');
   const videosFontFamily = getSafeValue((content as any)?.videos, ['fontFamily', 'font_family'], '');
 
-  // Section 6 (Resources / Notes) Configuration
-  const resourcesTitle = getSafeValue((content as any)?.resources, ['title'], (content as any)?.bags?.title || 'المذكرات والمصادر');
-  const resourcesSubtitle = getSafeValue((content as any)?.resources, ['subtitle', 'caption', 'description'], (content as any)?.bags?.subtitle || 'حمل مذكرات الشرح والمراجعات الشاملة لجميع الدروس.');
-  const resourcesEmptyText = getSafeValue((content as any)?.resources, ['emptyText', 'empty_text'], (content as any)?.bags?.emptyText || 'لا توجد مذكرات أو موارد متاحة حالياً');
-  const resourcesViewAllLabel = getSafeValue((content as any)?.resources, ['viewAllLabel', 'view_all_label', 'buttonText'], 'عرض الكل');
-  const resourcesBg = getSafeValue((content as any)?.resources, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], (content as any)?.bags?.backgroundColor || '');
-  const resourcesTextColor = getSafeValue((content as any)?.resources, ['textColor', 'text_color'], (content as any)?.bags?.textColor || '');
-  const resourcesFontFamily = getSafeValue((content as any)?.resources, ['fontFamily', 'font_family'], (content as any)?.bags?.fontFamily || '');
+  // Section 6 (Resources / Notes) Configuration - Pure resources, no Bags fallback
+  const resourcesTitle = getSafeValue((content as any)?.resources, ['title'], 'المذكرات والموارد التعليمية');
+  const resourcesSubtitle = getSafeValue((content as any)?.resources, ['subtitle', 'caption', 'description'], 'حمل أحدث المذكرات، ملخصات الدروس، وبنوك الأسئلة المعتمدة.');
+  const resourcesEmptyText = getSafeValue((content as any)?.resources, ['emptyText', 'empty_text'], 'لا توجد مذكرات أو موارد متاحة حالياً');
+  const resourcesViewAllLabel = getSafeValue((content as any)?.resources, ['viewAllLabel', 'view_all_label', 'viewAllText', 'view_all_text', 'buttonText'], 'عرض جميع المذكرات');
+  const resourcesBg = getSafeValue((content as any)?.resources, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], '');
+  const resourcesTextColor = getSafeValue((content as any)?.resources, ['textColor', 'text_color'], '');
+  const resourcesFontFamily = getSafeValue((content as any)?.resources, ['fontFamily', 'font_family'], '');
+
+  // Bags Section Configuration
+  const bagsTitle = getSafeValue((content as any)?.bags, ['title'], 'الحقائب التعليمية');
+  const bagsSubtitle = getSafeValue((content as any)?.bags, ['subtitle', 'description', 'caption'], 'مجموعات وباقات تعليمية شاملة ومصممة لضمان تفوقك الدراسي.');
+  const bagsEmptyText = getSafeValue((content as any)?.bags, ['emptyText', 'empty_text'], 'لا توجد حقائب تعليمية متاحة حالياً');
+  const bagsButtonText = getSafeValue((content as any)?.bags, ['buttonText', 'button_text', 'viewAllText', 'view_all_text'], 'تفاصيل الحقيبة');
+  const bagsBg = getSafeValue((content as any)?.bags, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], '');
+  const bagsTextColor = getSafeValue((content as any)?.bags, ['textColor', 'text_color'], '');
+  const bagsFontFamily = getSafeValue((content as any)?.bags, ['fontFamily', 'font_family'], '');
+  const selectedBagIds: string[] = Array.isArray((content as any)?.bags?.selectedBagIds) ? (content as any).bags.selectedBagIds.map(String) : [];
 
   // Section 7 (Student Results) Configuration
-  const resultsTitle = getSafeValue((content as any)?.results, ['title'], 'نتائج الطلاب المتفوقين');
-  const resultsSubtitle = getSafeValue((content as any)?.results, ['subtitle', 'caption', 'description'], 'فخورون بنتائج وتفوق طلابنا في كل مرحلة دراسية.');
-  const resultsEmptyText = getSafeValue((content as any)?.results, ['emptyText', 'empty_text'], 'سيتم إضافة نتائج وتكريمات الطلاب قريباً');
-  const resultsViewAllLabel = getSafeValue((content as any)?.results, ['viewAllLabel', 'view_all_label', 'buttonText'], 'عرض جميع النتائج');
-  const resultsModalTitle = getSafeValue((content as any)?.results, ['modalTitle', 'modal_title'], 'لوحة شرف ونتائج الطلاب');
-  const resultsModalDescription = getSafeValue((content as any)?.results, ['modalDescription', 'modal_description'], 'جميع نتائج ودرجات الطلاب المتفوقين في الاختبارات والمراحل المختلفة.');
+  const resultsTitle = getSafeValue((content as any)?.results, ['title'], 'لوحة شرف الأوائل والنتائج');
+  const resultsSubtitle = getSafeValue((content as any)?.results, ['subtitle', 'caption', 'description'], 'فخورون بما حققه أبطالنا وطلابنا من درجات نهائية وتفوق مستمر.');
+  const resultsEmptyText = getSafeValue((content as any)?.results, ['emptyText', 'empty_text'], 'لا توجد نتائج مضافة حالياً');
+  const resultsViewAllLabel = getSafeValue((content as any)?.results, ['viewAllLabel', 'view_all_label', 'viewAllText', 'view_all_text', 'buttonText'], 'عرض جميع النتائج');
+  const resultsModalTitle = getSafeValue((content as any)?.results, ['modalTitle', 'modal_title'], 'لوحة شرف ونتائج الطلاب المتفوقين');
+  const resultsModalDescription = getSafeValue((content as any)?.results, ['modalDescription', 'modal_description'], 'قائمة بجميع أبطالنا ونتائجهم المشرفة في الدورات والاختبارات.');
   const resultsPreviewCount = Number(getSafeValue((content as any)?.results, ['previewCount', 'preview_count', 'limit'], 4));
   const resultsBg = getSafeValue((content as any)?.results, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], '');
   const resultsTextColor = getSafeValue((content as any)?.results, ['textColor', 'text_color'], '');
@@ -227,8 +291,13 @@ export const getSchoolCoachNewDesignHtml = (
 
   const rawResourceItems = Array.isArray((content as any)?.resources?.items)
     ? (content as any).resources.items
-    : (Array.isArray(realBags) && realBags.length > 0 ? realBags : (Array.isArray((content as any)?.bags?.items) ? (content as any).bags.items : []));
+    : [];
   const resourceItems = rawResourceItems.filter((r: any) => r && (r.enabled !== false));
+
+  const rawBagItems = Array.isArray(realBags) && realBags.length > 0 ? realBags : (Array.isArray((content as any)?.bags?.items) ? (content as any).bags.items : []);
+  const displayedBags = (selectedBagIds.length > 0
+    ? rawBagItems.filter((b: any) => selectedBagIds.includes(String(b.id ?? b.bag_id ?? b._id)))
+    : rawBagItems).filter((b: any) => b && (b.enabled !== false));
 
   const rawVideoItems = Array.isArray((content as any)?.videos?.items) ? (content as any).videos.items : (Array.isArray((content as any)?.video?.items) ? (content as any).video.items : []);
   const videoItems = rawVideoItems.filter((v: any) => v && (v.enabled !== false));
@@ -241,7 +310,7 @@ export const getSchoolCoachNewDesignHtml = (
   // Section 8 (About & Qualifications Timeline) Configuration
   const aboutCaption = getSafeValue((content as any)?.about, ['caption', 'eyebrow', 'badge'], 'نبذة عن المعلم');
   const aboutTitle = getSafeValue((content as any)?.about, ['title'], 'الخبرة والمنهجية التعليمية');
-  const aboutDescription = getSafeValue((content as any)?.about, ['description', 'bio', 'subtitle'], profileBio || 'أعتمد على أسلوب تدريسي يجمع بين الشرح المبسط، التطبيق المكثف، والتقييم المستمر لضمان أعلى مستوى من الاستيعاب والتفوق.');
+  const aboutDescription = getSafeValue((content as any)?.about, ['description', 'bio', 'subtitle'], '');
   const aboutTimelineTitle = getSafeValue((content as any)?.about, ['timelineTitle', 'timeline_title'], (content as any)?.timeline?.title || 'المؤهلات والمسيرة المهنية');
   const aboutBg = getSafeValue((content as any)?.about, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], '');
   const aboutTextColor = getSafeValue((content as any)?.about, ['textColor', 'text_color'], '');
@@ -296,8 +365,11 @@ export const getSchoolCoachNewDesignHtml = (
   const rawCtaWhatsapp = getSafeValue((content as any)?.cta, ['whatsappUrl', 'whatsapp_url', 'whatsappNumber', 'whatsapp_number', 'phoneNumber', 'phone_number', 'whatsapp'], rawWhatsapp || rawPhone || '');
   const ctaWhatsappUrl = normalizeWhatsappUrl(rawCtaWhatsapp);
   const ctaBg = getSafeValue((content as any)?.cta, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], (content as any)?.contact?.backgroundColor || '');
+  const ctaBoxBg = getSafeValue((content as any)?.cta, ['cardBg', 'card_bg', 'boxBg', 'box_bg', 'containerBg', 'textBg'], (content as any)?.contact?.cardBg || (content as any)?.contact?.boxBg || '');
   const ctaTextColor = getSafeValue((content as any)?.cta, ['textColor', 'text_color'], (content as any)?.contact?.textColor || '');
   const ctaFontFamily = getSafeValue((content as any)?.cta, ['fontFamily', 'font_family'], (content as any)?.contact?.fontFamily || '');
+  const footerBg = getSafeValue((content as any)?.footer, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], '');
+  const footerTextColor = getSafeValue((content as any)?.footer, ['textColor', 'text_color'], '');
 
   const renderStatCards = activeStats.map((item: any, index: number) => `
     <div class="stat-card" data-section="profile" data-stat-index="${index}">
@@ -309,22 +381,26 @@ export const getSchoolCoachNewDesignHtml = (
   const renderCourseCards = displayedCourses.map((item: any, index: number) => {
     const title = escapeHtml(item.title || item.name || '');
     const price = item.final_price ?? item.price;
-    const priceText = (price !== null && price !== undefined && price !== '') ? `${price} ر.س` : 'متاح للتسجيل';
+    const isFree = Number(price) === 0 || item.price_type === 'free';
+    const priceText = isFree ? 'مجانًا' : ((price !== null && price !== undefined && price !== '') ? `${price} ر.س` : 'متاح للتسجيل');
     const description = escapeHtml(item.short_description || item.description || '');
     const image = normalizeImage(item.image || item.img || item.thumbnail || item.cover, 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80');
     const gradeName = escapeHtml(item.grade_name || item.grade || item.level || item.type || 'كورس تعليمي');
-    const courseId = escapeHtml(String(item.id || item.course_id || index));
+    const courseId = escapeHtml(String(item.slug || item.id || item.course_id || index));
+    const courseHref = `/courses/${item.slug || item.id || item.course_id}`;
 
     return `
       <article class="mini-card course-card" data-section="courses" data-index="${index}" data-course-id="${courseId}">
-        <div class="thumb" style="background-image:url('${image}')"></div>
+        <a href="${courseHref}" target="_top" class="card-thumb-link">
+          <div class="thumb" style="background-image:url('${image}')"></div>
+        </a>
         <div class="card-body">
           <span class="chip">${gradeName}</span>
-          <h3 class="course-card-title">${title}</h3>
+          <h3 class="course-card-title"><a href="${courseHref}" target="_top" style="text-decoration:none; color:inherit;">${title}</a></h3>
           ${description ? `<p class="course-card-desc">${description}</p>` : ''}
           <div class="course-meta">
             <span class="price">${escapeHtml(priceText)}</span>
-            <button type="button" class="small-btn" data-open-course-detail="true" data-course="${title}">عرض التفاصيل</button>
+            <a href="${courseHref}" target="_top" class="small-btn course-cta-btn" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">عرض التفاصيل</a>
           </div>
         </div>
       </article>
@@ -344,8 +420,46 @@ export const getSchoolCoachNewDesignHtml = (
     </div>
   `;
 
+  const renderBagCards = displayedBags.map((item: any, index: number) => {
+    const title = escapeHtml(item.title || item.name || 'حقيبة تعليمية');
+    const isFree = Number(item.price) === 0 || item.type_price === 'free';
+    const priceText = isFree ? 'مجانًا' : (item.price ? `${item.price} ر.س` : 'متاحة للتحميل');
+    const description = escapeHtml(item.short_description || item.description || '');
+    const image = normalizeImage(item.image || item.cover_image || item.thumbnail, 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=900&q=80');
+    const bagHref = `/bags/${item.id}`;
+
+    return `
+      <article class="mini-card bag-card" data-section="bags" data-index="${index}">
+        <a href="${bagHref}" target="_top" class="card-thumb-link">
+          <div class="thumb" style="background-image:url('${image}')"></div>
+        </a>
+        <div class="card-body">
+          <span class="chip">حقيبة تعليمية</span>
+          <h3 class="course-card-title"><a href="${bagHref}" target="_top" style="text-decoration:none; color:inherit;">${title}</a></h3>
+          ${description ? `<p class="course-card-desc">${description}</p>` : ''}
+          <div class="course-meta">
+            <span class="price">${escapeHtml(priceText)}</span>
+            <a href="${bagHref}" target="_top" class="small-btn" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">${escapeHtml(bagsButtonText || 'تفاصيل الحقيبة')}</a>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  const renderEmptyBagsState = `
+    <div class="courses-empty-state" data-section="bags">
+      <div class="empty-icon-shell">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+      </div>
+      <h3 class="empty-title">${escapeHtml(bagsEmptyText || 'لا توجد حقائب تعليمية متاحة حالياً')}</h3>
+      <p class="empty-desc">${escapeHtml(bagsSubtitle || 'سيتم إضافة الحقائب والمذكرات الرقمية قريباً.')}</p>
+    </div>
+  `;
+
   const renderStepItems = stepItems.filter((item: any) => item && item.enabled !== false).map((item: any, index: number) => {
-    const num = escapeHtml(String(item.number ?? item.stepNumber ?? (index + 1)));
+    const num = escapeHtml(String(index + 1).padStart(2, '0'));
     const title = escapeHtml(item.title || '');
     const desc = escapeHtml(item.description || item.desc || '');
 
@@ -448,8 +562,8 @@ export const getSchoolCoachNewDesignHtml = (
     const name = escapeHtml(item.name || item.studentName || item.title || 'طالب متميز');
     const batch = escapeHtml(item.batch || item.year || item.grade || '');
     const score = escapeHtml(item.score || item.grade_score || item.result || '100%');
-    const course = escapeHtml(item.course || item.courseName || item.subject || '');
-    const image = normalizeImage(item.image || item.avatar || item.img || item.photo, '');
+    const course = escapeHtml(item.course || item.courseName || item.course_name || item.subject || '');
+    const image = normalizeImage(item.image || item.avatar || item.img || item.photo || item.image_url || item.imageUrl, '');
     const initial = (name || 'ط').trim().charAt(0) || 'ط';
 
     return `
@@ -550,8 +664,8 @@ export const getSchoolCoachNewDesignHtml = (
   };
 
   const renderTestimonialsCards = testimonialItems.map((item: any, index: number) => {
-    const name = escapeHtml(item.name || item.author || item.studentName || '');
-    const course = escapeHtml(item.course || item.courseName || item.role || '');
+    const name = escapeHtml(item.name || item.studentName || item.student_name || item.author || '');
+    const course = escapeHtml(item.course || item.courseName || item.course_name || item.role || '');
     const text = escapeHtml(item.text || item.quote || item.review || item.comment || '');
     const rating = Number(item.rating ?? 5);
 
@@ -1708,7 +1822,7 @@ export const getSchoolCoachNewDesignHtml = (
     </head>
     <body id="top">
       <!-- Section 1: Topbar Navbar -->
-      <header class="topbar" data-section="navbar">
+      <header class="topbar" data-section="navbar" style="${!isNavbarVisible ? 'display:none;' : ''}">
         <div class="container topbar-inner">
           <div class="brand">
             <div class="brand-mark">${escapeHtml((teacherName || 'م').trim().charAt(0) || 'م')}</div>
@@ -1741,7 +1855,11 @@ export const getSchoolCoachNewDesignHtml = (
                 </svg>
               </button>
             ` : ''}
-            <a href="/auth/login" class="primary-btn nav-login-btn">${escapeHtml(loginButtonText || 'تسجيل الدخول')}</a>
+            ${isLoggedIn ? `
+              <a href="${escapeHtml(dashboardUrl || '/student')}" target="_top" class="primary-btn nav-login-btn">لوحة التحكم</a>
+            ` : `
+              <a href="${escapeHtml(loginLink || '/auth/login')}" target="_top" class="primary-btn nav-login-btn">${escapeHtml(loginButtonText || 'تسجيل الدخول')}</a>
+            `}
           </div>
 
           <button type="button" class="mobile-toggle" aria-label="قائمة التنقل">
@@ -1765,7 +1883,7 @@ export const getSchoolCoachNewDesignHtml = (
 
       <main>
         <!-- Section 2: Hero Profile -->
-        <section class="hero section" data-section="profile" data-index="0">
+        <section class="hero section" data-section="profile" data-index="0" style="${!isProfileVisible ? 'display:none;' : ''}">
           <div class="container hero-shell">
             <div class="hero-cover ${coverImage ? '' : 'hero-cover-default'}" style="${coverImage ? `background-image:url('${coverImage}')` : ''}"></div>
             <div class="hero-content">
@@ -1779,7 +1897,7 @@ export const getSchoolCoachNewDesignHtml = (
                 <div class="profile-identity">
                   <div class="profile-name-row">
                     <h1 class="teacher-name">${escapeHtml(teacherName || 'اسم المعلم')}</h1>
-                    ${verifiedVisible ? `
+                    ${(verifiedVisible && verifiedText !== '') ? `
                       <div class="verified">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                           <polyline points="20 6 9 17 4 12"></polyline>
@@ -1793,52 +1911,66 @@ export const getSchoolCoachNewDesignHtml = (
               </div>
 
               <!-- 4. Teacher Description & 5. Teacher Goal / Mission -->
-              ${(profileBio || profileGoal) ? `
-                <div class="bio-box" data-section="profile">
-                  ${profileBio ? `<p class="teacher-description">${escapeHtml(profileBio)}</p>` : ''}
-                  ${profileGoal ? `<div class="teacher-goal"><span class="goal-tag">الهدف</span> <span class="goal-text">${escapeHtml(profileGoal)}</span></div>` : ''}
+              ${isEditing ? `
+                <div class="bio-box" data-section="profile" style="${(!profileBio && !profileGoal) ? 'display:none;' : ''}">
+                  <p class="teacher-description" style="${!profileBio ? 'display:none;' : ''}">${escapeHtml(profileBio)}</p>
+                  <div class="teacher-goal" style="${!profileGoal ? 'display:none;' : ''}"><span class="goal-tag">الهدف</span> <span class="goal-text">${escapeHtml(profileGoal)}</span></div>
                 </div>
-              ` : ''}
+              ` : `
+                ${(profileBio || profileGoal) ? `
+                  <div class="bio-box" data-section="profile">
+                    ${profileBio ? `<p class="teacher-description">${escapeHtml(profileBio)}</p>` : ''}
+                    ${profileGoal ? `<div class="teacher-goal"><span class="goal-tag">الهدف</span> <span class="goal-text">${escapeHtml(profileGoal)}</span></div>` : ''}
+                  </div>
+                ` : ''}
+              `}
 
               <!-- 7. Achievement Cards (0 to 4 cards) -->
               ${renderStatCards ? `<div class="stats">${renderStatCards}</div>` : ''}
 
               <!-- 8. CTA Buttons -->
               <div class="hero-actions">
-                <button type="button" class="primary-btn" data-hero-btn="primary" data-open-screen="course-library" style="${ctaPrimaryBg ? `background: ${ctaPrimaryBg};` : ''} ${ctaPrimaryTextColor ? `color: ${ctaPrimaryTextColor};` : ''}">
-                  <span>${escapeHtml(startLearningLabel || 'ابدأ التعلم')}</span>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:6px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                </button>
-                <button type="button" class="secondary-btn" data-hero-btn="secondary" data-open-screen="video-library" style="${ctaSecondaryBg ? `background-color: ${ctaSecondaryBg};` : ''} ${ctaSecondaryTextColor ? `color: ${ctaSecondaryTextColor};` : ''}">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block; vertical-align:middle; margin-left:6px;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                  <span>${escapeHtml(watchVideosLabel || 'شاهد الفيديوهات')}</span>
-                </button>
+                ${startLearningLabel !== '' ? `
+                  <button type="button" class="primary-btn" data-hero-btn="primary" data-open-screen="course-library" style="${ctaPrimaryBg ? `background: ${ctaPrimaryBg};` : ''} ${ctaPrimaryTextColor ? `color: ${ctaPrimaryTextColor};` : ''}">
+                    <span>${escapeHtml(startLearningLabel)}</span>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:6px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                  </button>
+                ` : ''}
+                ${watchVideosLabel !== '' ? `
+                  <button type="button" class="secondary-btn" data-hero-btn="secondary" data-open-screen="video-library" style="${ctaSecondaryBg ? `background-color: ${ctaSecondaryBg};` : ''} ${ctaSecondaryTextColor ? `color: ${ctaSecondaryTextColor};` : ''}">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block; vertical-align:middle; margin-left:6px;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    <span>${escapeHtml(watchVideosLabel)}</span>
+                  </button>
+                ` : ''}
               </div>
             </div>
           </div>
         </section>
 
         <!-- Section 3: Profile Tabs -->
-        <nav class="profile-tabs container" aria-label="Profile tabs" data-section="tabs" data-index="0">
+        <nav class="profile-tabs container" aria-label="Profile tabs" data-section="tabs" data-index="0" style="${!isTabsVisible ? 'display:none;' : ''}">
           <div class="tab-strip">
             <button type="button" class="tab-button active" data-scroll-target="#top">الرئيسية</button>
-            <button type="button" class="tab-button" data-scroll-target="#courses">الدورات</button>
-            <button type="button" class="tab-button" data-scroll-target="#videos">الفيديوهات</button>
-            <button type="button" class="tab-button" data-scroll-target="#resources">الموارد</button>
-            <button type="button" class="tab-button" data-scroll-target="#about">نبذة</button>
+            ${isCoursesVisible ? `<button type="button" class="tab-button" data-scroll-target="#courses">الدورات</button>` : ''}
+            ${isVideosVisible ? `<button type="button" class="tab-button" data-scroll-target="#videos">الفيديوهات</button>` : ''}
+            ${isResourcesVisible ? `<button type="button" class="tab-button" data-scroll-target="#resources">الموارد</button>` : ''}
+            ${isBagsVisible ? `<button type="button" class="tab-button" data-scroll-target="#bags">الحقائب</button>` : ''}
+            ${isAboutVisible ? `<button type="button" class="tab-button" data-scroll-target="#about">نبذة</button>` : ''}
           </div>
         </nav>
 
         <!-- Section 4: Courses Section -->
-        <section class="section" id="courses" data-section="courses" data-index="0" style="${coursesBg ? `background-color: ${coursesBg};` : ''} ${coursesTextColor ? `color: ${coursesTextColor};` : ''}">
+        <section class="section" id="courses" data-section="courses" data-index="0" style="${!isCoursesVisible ? 'display:none;' : ''} ${coursesBg ? `background-color: ${coursesBg};` : ''} ${coursesTextColor ? `color: ${coursesTextColor};` : ''}">
           <div class="container">
-            <div class="section-header" style="${coursesFontFamily ? `font-family: '${coursesFontFamily}', system-ui, sans-serif;` : ''}">
-              <div>
-                <h2 class="courses-heading" style="${coursesTextColor ? `color: ${coursesTextColor};` : ''} ${coursesFontFamily ? `font-family: '${coursesFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(coursesTitle || 'الكورسات المتاحة')}</h2>
-                <p class="courses-caption" style="${coursesTextColor ? `color: ${coursesTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${coursesFontFamily ? `font-family: '${coursesFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(coursesSubtitle || 'اختار الكورس المناسب ليك وابدأ رحلتك التعليمية.')}</p>
+            ${(coursesTitle !== '' || coursesSubtitle !== '') ? `
+              <div class="section-header" style="${coursesFontFamily ? `font-family: '${coursesFontFamily}', system-ui, sans-serif;` : ''}">
+                <div>
+                  ${coursesTitle !== '' ? `<h2 class="courses-heading" style="${coursesTextColor ? `color: ${coursesTextColor};` : ''} ${coursesFontFamily ? `font-family: '${coursesFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(coursesTitle)}</h2>` : ''}
+                  ${coursesSubtitle !== '' ? `<p class="courses-caption" style="${coursesTextColor ? `color: ${coursesTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${coursesFontFamily ? `font-family: '${coursesFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(coursesSubtitle)}</p>` : ''}
+                </div>
+                <button type="button" class="ghost-btn" data-open-screen="course-library">عرض الكل</button>
               </div>
-              <button type="button" class="ghost-btn" data-open-screen="course-library">عرض الكل</button>
-            </div>
+            ` : ''}
             <div class="mini-grid courses-grid">
               ${displayedCourses.length > 0 ? renderCourseCards : renderEmptyCoursesState}
             </div>
@@ -1846,66 +1978,91 @@ export const getSchoolCoachNewDesignHtml = (
         </section>
 
         <!-- Section 5: Steps Section -->
-        <section class="section" id="steps" data-section="steps" data-index="0" style="${stepsBg ? `background-color: ${stepsBg};` : ''} ${stepsTextColor ? `color: ${stepsTextColor};` : ''}">
+        <section class="section" id="steps" data-section="steps" data-index="0" style="${!isStepsVisible ? 'display:none;' : ''} ${stepsBg ? `background-color: ${stepsBg};` : ''} ${stepsTextColor ? `color: ${stepsTextColor};` : ''}">
           <div class="container">
-            <div class="steps-header" style="max-width: 760px; margin: 0 auto 28px; text-align: center; ${stepsFontFamily ? `font-family: '${stepsFontFamily}', system-ui, sans-serif;` : ''}">
-              <h2 class="steps-heading" style="${stepsTextColor ? `color: ${stepsTextColor};` : ''} ${stepsFontFamily ? `font-family: '${stepsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(stepsTitle || 'لسه أول مرة تذاكر معايا؟')}</h2>
-              <p class="steps-caption" style="${stepsTextColor ? `color: ${stepsTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 8px 0 0; font-size: 14.5px; ${stepsFontFamily ? `font-family: '${stepsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(stepsSubtitle || 'ابدأ بالخطوات دي، وفي دقائق هتعرف أنسب مكان ليك.')}</p>
-            </div>
+            ${(stepsTitle !== '' || stepsSubtitle !== '') ? `
+              <div class="steps-header" style="max-width: 760px; margin: 0 auto 28px; text-align: center; ${stepsFontFamily ? `font-family: '${stepsFontFamily}', system-ui, sans-serif;` : ''}">
+                ${stepsTitle !== '' ? `<h2 class="steps-heading" style="${stepsTextColor ? `color: ${stepsTextColor};` : ''} ${stepsFontFamily ? `font-family: '${stepsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(stepsTitle)}</h2>` : ''}
+                ${stepsSubtitle !== '' ? `<p class="steps-caption" style="${stepsTextColor ? `color: ${stepsTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 8px 0 0; font-size: 14.5px; ${stepsFontFamily ? `font-family: '${stepsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(stepsSubtitle)}</p>` : ''}
+              </div>
+            ` : ''}
             <div class="steps-wrapper" style="${stepsFontFamily ? `font-family: '${stepsFontFamily}', system-ui, sans-serif;` : ''}">
               ${renderStepItems}
             </div>
           </div>
         </section>
 
-        <!-- Section 5: Videos Section -->
-        <section class="section" id="videos" data-section="videos" data-index="0" style="${videosBg ? `background-color: ${videosBg};` : ''} ${videosTextColor ? `color: ${videosTextColor};` : ''}">
+        <!-- Section 6: Videos Section -->
+        <section class="section" id="videos" data-section="videos" data-index="0" style="${!isVideosVisible ? 'display:none;' : ''} ${videosBg ? `background-color: ${videosBg};` : ''} ${videosTextColor ? `color: ${videosTextColor};` : ''}">
           <div class="container">
-            <div class="section-header" style="${videosFontFamily ? `font-family: '${videosFontFamily}', system-ui, sans-serif;` : ''}">
-              <div>
-                <h2 class="videos-heading" style="${videosTextColor ? `color: ${videosTextColor};` : ''} ${videosFontFamily ? `font-family: '${videosFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(videosTitle || 'أحدث الفيديوهات')}</h2>
-                <p class="videos-caption" style="${videosTextColor ? `color: ${videosTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${videosFontFamily ? `font-family: '${videosFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(videosSubtitle || 'شاهد أحدث الشروحات والدروس المصورة.')}</p>
+            ${(videosTitle !== '' || videosSubtitle !== '') ? `
+              <div class="section-header" style="${videosFontFamily ? `font-family: '${videosFontFamily}', system-ui, sans-serif;` : ''}">
+                <div>
+                  ${videosTitle !== '' ? `<h2 class="videos-heading" style="${videosTextColor ? `color: ${videosTextColor};` : ''} ${videosFontFamily ? `font-family: '${videosFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(videosTitle)}</h2>` : ''}
+                  ${videosSubtitle !== '' ? `<p class="videos-caption" style="${videosTextColor ? `color: ${videosTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${videosFontFamily ? `font-family: '${videosFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(videosSubtitle)}</p>` : ''}
+                </div>
+                ${(videosViewAllLabel && (isEditing || videoItems.length > 0)) ? `
+                  <button type="button" class="ghost-btn" data-open-screen="video-library">${escapeHtml(videosViewAllLabel || 'عرض جميع الفيديوهات')}</button>
+                ` : ''}
               </div>
-              ${videoItems.length > 0 ? `
-                <button type="button" class="ghost-btn" data-open-screen="video-library">${escapeHtml(videosViewAllLabel || 'عرض الجميع')}</button>
-              ` : ''}
-            </div>
+            ` : ''}
             <div class="mini-grid videos-grid">
               ${videoItems.length > 0 ? renderVideoCards : renderEmptyVideosState}
             </div>
           </div>
         </section>
 
-        <!-- Section 6: Resources Section -->
-        <section class="section" id="resources" data-section="resources" data-index="0" style="${resourcesBg ? `background-color: ${resourcesBg};` : ''} ${resourcesTextColor ? `color: ${resourcesTextColor};` : ''}">
+        <!-- Section 7: Resources Section -->
+        <section class="section" id="resources" data-section="resources" data-index="0" style="${!isResourcesVisible ? 'display:none;' : ''} ${resourcesBg ? `background-color: ${resourcesBg};` : ''} ${resourcesTextColor ? `color: ${resourcesTextColor};` : ''}">
           <div class="container">
-            <div class="section-header" style="${resourcesFontFamily ? `font-family: '${resourcesFontFamily}', system-ui, sans-serif;` : ''}">
-              <div>
-                <h2 class="resources-heading" style="${resourcesTextColor ? `color: ${resourcesTextColor};` : ''} ${resourcesFontFamily ? `font-family: '${resourcesFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(resourcesTitle || 'المذكرات والمصادر')}</h2>
-                <p class="resources-caption" style="${resourcesTextColor ? `color: ${resourcesTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${resourcesFontFamily ? `font-family: '${resourcesFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(resourcesSubtitle || 'حمل مذكرات الشرح والمراجعات الشاملة لجميع الدروس.')}</p>
+            ${(resourcesTitle !== '' || resourcesSubtitle !== '') ? `
+              <div class="section-header" style="${resourcesFontFamily ? `font-family: '${resourcesFontFamily}', system-ui, sans-serif;` : ''}">
+                <div>
+                  ${resourcesTitle !== '' ? `<h2 class="resources-heading" style="${resourcesTextColor ? `color: ${resourcesTextColor};` : ''} ${resourcesFontFamily ? `font-family: '${resourcesFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(resourcesTitle)}</h2>` : ''}
+                  ${resourcesSubtitle !== '' ? `<p class="resources-caption" style="${resourcesTextColor ? `color: ${resourcesTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${resourcesFontFamily ? `font-family: '${resourcesFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(resourcesSubtitle)}</p>` : ''}
+                </div>
+                ${(resourcesViewAllLabel && (isEditing || resourceItems.length > 0)) ? `
+                  <button type="button" class="ghost-btn" data-open-screen="resource-library">${escapeHtml(resourcesViewAllLabel || 'عرض جميع المذكرات')}</button>
+                ` : ''}
               </div>
-              ${resourceItems.length > 0 ? `
-                <button type="button" class="ghost-btn" data-open-screen="resource-library">${escapeHtml(resourcesViewAllLabel || 'عرض الكل')}</button>
-              ` : ''}
-            </div>
+            ` : ''}
             <div class="resource-grid">
               ${resourceItems.length > 0 ? renderResourceCards : renderEmptyResourcesState}
             </div>
           </div>
         </section>
 
-        <!-- Section 7: Results Section -->
-        <section class="section" id="results" data-section="results" data-index="0" style="${resultsBg ? `background-color: ${resultsBg};` : ''} ${resultsTextColor ? `color: ${resultsTextColor};` : ''}">
+        <!-- Section 8: Dedicated Educational Bags Section -->
+        <section class="section" id="bags" data-section="bags" data-index="0" style="${!isBagsVisible ? 'display:none;' : ''} ${bagsBg ? `background-color: ${bagsBg};` : ''} ${bagsTextColor ? `color: ${bagsTextColor};` : ''}">
           <div class="container">
-            <div class="section-header" style="${resultsFontFamily ? `font-family: '${resultsFontFamily}', system-ui, sans-serif;` : ''}">
-              <div>
-                <h2 class="results-heading" style="${resultsTextColor ? `color: ${resultsTextColor};` : ''} ${resultsFontFamily ? `font-family: '${resultsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(resultsTitle || 'نتائج الطلاب المتفوقين')}</h2>
-                <p class="results-caption" style="${resultsTextColor ? `color: ${resultsTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${resultsFontFamily ? `font-family: '${resultsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(resultsSubtitle || 'فخورون بنتائج وتفوق طلابنا في كل مرحلة دراسية.')}</p>
+            ${(bagsTitle !== '' || bagsSubtitle !== '') ? `
+              <div class="section-header" style="${bagsFontFamily ? `font-family: '${bagsFontFamily}', system-ui, sans-serif;` : ''}">
+                <div>
+                  ${bagsTitle !== '' ? `<h2 class="courses-heading bags-heading" style="${bagsTextColor ? `color: ${bagsTextColor};` : ''} ${bagsFontFamily ? `font-family: '${bagsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(bagsTitle)}</h2>` : ''}
+                  ${bagsSubtitle !== '' ? `<p class="courses-caption bags-caption" style="${bagsTextColor ? `color: ${bagsTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${bagsFontFamily ? `font-family: '${bagsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(bagsSubtitle)}</p>` : ''}
+                </div>
               </div>
-              ${activeResults.length > resultsPreviewCount ? `
-                <button type="button" class="ghost-btn" data-open-modal="results-modal">${escapeHtml(resultsViewAllLabel || 'عرض جميع النتائج')}</button>
-              ` : ''}
+            ` : ''}
+            <div class="mini-grid bags-grid">
+              ${displayedBags.length > 0 ? renderBagCards : renderEmptyBagsState}
             </div>
+          </div>
+        </section>
+
+        <!-- Section 9: Results Section -->
+        <section class="section" id="results" data-section="results" data-index="0" style="${!isResultsVisible ? 'display:none;' : ''} ${resultsBg ? `background-color: ${resultsBg};` : ''} ${resultsTextColor ? `color: ${resultsTextColor};` : ''}">
+          <div class="container">
+            ${(resultsTitle !== '' || resultsSubtitle !== '') ? `
+              <div class="section-header" style="${resultsFontFamily ? `font-family: '${resultsFontFamily}', system-ui, sans-serif;` : ''}">
+                <div>
+                  ${resultsTitle !== '' ? `<h2 class="results-heading" style="${resultsTextColor ? `color: ${resultsTextColor};` : ''} ${resultsFontFamily ? `font-family: '${resultsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(resultsTitle)}</h2>` : ''}
+                  ${resultsSubtitle !== '' ? `<p class="results-caption" style="${resultsTextColor ? `color: ${resultsTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${resultsFontFamily ? `font-family: '${resultsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(resultsSubtitle)}</p>` : ''}
+                </div>
+                ${(resultsViewAllLabel && (isEditing || activeResults.length > resultsPreviewCount || activeResults.length > 0)) ? `
+                  <button type="button" class="ghost-btn" data-open-modal="results-modal">${escapeHtml(resultsViewAllLabel || 'عرض جميع النتائج')}</button>
+                ` : ''}
+              </div>
+            ` : ''}
             ${activeResults.length > 0 ? `
               <div class="results-grid">
                 ${renderResultsPreviewCards}
@@ -1914,20 +2071,24 @@ export const getSchoolCoachNewDesignHtml = (
           </div>
         </section>
 
-        <!-- Section 8: About & Qualifications Section -->
-        <section class="section" id="about" data-section="about" data-index="0" style="${aboutBg ? `background-color: ${aboutBg};` : ''} ${aboutTextColor ? `color: ${aboutTextColor};` : ''}">
+        <!-- Section 10: About & Qualifications Section -->
+        <section class="section" id="about" data-section="about" data-index="0" style="${!isAboutVisible ? 'display:none;' : ''} ${aboutBg ? `background-color: ${aboutBg};` : ''} ${aboutTextColor ? `color: ${aboutTextColor};` : ''}">
           <div class="container">
             <div class="about-two-col" style="${aboutFontFamily ? `font-family: '${aboutFontFamily}', system-ui, sans-serif;` : ''}">
               <!-- Part A: Teacher Description -->
               <div class="about-card">
                 ${aboutCaption ? `<div class="eyebrow">${escapeHtml(aboutCaption)}</div>` : ''}
-                <h2 class="about-heading" style="${aboutTextColor ? `color: ${aboutTextColor};` : ''} ${aboutFontFamily ? `font-family: '${aboutFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(aboutTitle || 'الخبرة والمنهجية التعليمية')}</h2>
-                <p class="about-description" style="${aboutTextColor ? `color: ${aboutTextColor};` : ''}">${escapeHtml(aboutDescription || profileBio || 'أعتمد على أسلوب تدريسي يجمع بين الشرح المبسط، التطبيق المكثف، والتقييم المستمر لضمان أعلى مستوى من الاستيعاب والتفوق.')}</p>
+                ${aboutTitle !== '' ? `<h2 class="about-heading" style="${aboutTextColor ? `color: ${aboutTextColor};` : ''} ${aboutFontFamily ? `font-family: '${aboutFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(aboutTitle)}</h2>` : ''}
+                ${isEditing ? `
+                  <p class="about-description" style="${aboutTextColor ? `color: ${aboutTextColor};` : ''} ${!aboutDescription.trim() ? 'display:none;' : ''}">${escapeHtml(aboutDescription)}</p>
+                ` : `
+                  ${aboutDescription.trim() ? `<p class="about-description" style="${aboutTextColor ? `color: ${aboutTextColor};` : ''}">${escapeHtml(aboutDescription)}</p>` : ''}
+                `}
               </div>
 
               <!-- Part B: Experience & Qualifications Timeline -->
               <div class="timeline-card">
-                <div class="timeline-head" style="${aboutTextColor ? `color: ${aboutTextColor};` : ''}">${escapeHtml(aboutTimelineTitle || 'المؤهلات والمسيرة المهنية')}</div>
+                <div class="timeline-head" style="${aboutTextColor ? `color: ${aboutTextColor};` : ''}"><h3 class="timeline-head-title" style="margin:0; font-size:inherit; font-weight:inherit; color:inherit;">${escapeHtml(aboutTimelineTitle || 'المؤهلات والمسيرة المهنية')}</h3></div>
                 ${aboutItems.length > 0 ? `
                   <div class="timeline-list">
                     ${renderTimelineItems}
@@ -1938,16 +2099,18 @@ export const getSchoolCoachNewDesignHtml = (
           </div>
         </section>
 
-        <!-- Section 9: Gallery Section -->
-        <section class="section" id="gallery" data-section="gallery" data-index="0" style="${galleryBg ? `background-color: ${galleryBg};` : ''} ${galleryTextColor ? `color: ${galleryTextColor};` : ''}">
+        <!-- Section 11: Gallery Section -->
+        <section class="section" id="gallery" data-section="gallery" data-index="0" style="${!isGalleryVisible ? 'display:none;' : ''} ${galleryBg ? `background-color: ${galleryBg};` : ''} ${galleryTextColor ? `color: ${galleryTextColor};` : ''}">
           <div class="container">
-            <div class="section-header" style="${galleryFontFamily ? `font-family: '${galleryFontFamily}', system-ui, sans-serif;` : ''}">
-              <div>
-                ${galleryCaption ? `<div class="eyebrow">${escapeHtml(galleryCaption)}</div>` : ''}
-                <h2 style="${galleryTextColor ? `color: ${galleryTextColor};` : ''} ${galleryFontFamily ? `font-family: '${galleryFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(galleryTitle || 'لقطات من البيئة التعليمية')}</h2>
-                ${gallerySubtitle ? `<p style="${galleryTextColor ? `color: ${galleryTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${galleryFontFamily ? `font-family: '${galleryFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(gallerySubtitle)}</p>` : ''}
+            ${(galleryTitle !== '' || gallerySubtitle !== '' || galleryCaption) ? `
+              <div class="section-header" style="${galleryFontFamily ? `font-family: '${galleryFontFamily}', system-ui, sans-serif;` : ''}">
+                <div>
+                  ${galleryCaption ? `<div class="eyebrow">${escapeHtml(galleryCaption)}</div>` : ''}
+                  ${galleryTitle !== '' ? `<h2 style="${galleryTextColor ? `color: ${galleryTextColor};` : ''} ${galleryFontFamily ? `font-family: '${galleryFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(galleryTitle)}</h2>` : ''}
+                  ${gallerySubtitle !== '' ? `<p style="${galleryTextColor ? `color: ${galleryTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${galleryFontFamily ? `font-family: '${galleryFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(gallerySubtitle)}</p>` : ''}
+                </div>
               </div>
-            </div>
+            ` : ''}
             ${galleryItems.length > 0 ? `
               <div class="gallery-grid">
                 ${renderGalleryCards}
@@ -1956,16 +2119,18 @@ export const getSchoolCoachNewDesignHtml = (
           </div>
         </section>
 
-        <!-- Section 10: Testimonials Section -->
-        <section class="section" id="testimonials" data-section="testimonials" data-index="0" style="${testimonialsBg ? `background-color: ${testimonialsBg};` : ''} ${testimonialsTextColor ? `color: ${testimonialsTextColor};` : ''}">
+        <!-- Section 12: Testimonials Section -->
+        <section class="section" id="testimonials" data-section="testimonials" data-index="0" style="${!isTestimonialsVisible ? 'display:none;' : ''} ${testimonialsBg ? `background-color: ${testimonialsBg};` : ''} ${testimonialsTextColor ? `color: ${testimonialsTextColor};` : ''}">
           <div class="container">
-            <div class="section-header" style="${testimonialsFontFamily ? `font-family: '${testimonialsFontFamily}', system-ui, sans-serif;` : ''}">
-              <div>
-                ${testimonialsCaption ? `<div class="eyebrow">${escapeHtml(testimonialsCaption)}</div>` : ''}
-                <h2 style="${testimonialsTextColor ? `color: ${testimonialsTextColor};` : ''} ${testimonialsFontFamily ? `font-family: '${testimonialsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(testimonialsTitle || 'ماذا يقول طلابنا المتفوقون؟')}</h2>
-                ${testimonialsSubtitle ? `<p style="${testimonialsTextColor ? `color: ${testimonialsTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${testimonialsFontFamily ? `font-family: '${testimonialsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(testimonialsSubtitle)}</p>` : ''}
+            ${(testimonialsTitle !== '' || testimonialsSubtitle !== '' || testimonialsCaption) ? `
+              <div class="section-header" style="${testimonialsFontFamily ? `font-family: '${testimonialsFontFamily}', system-ui, sans-serif;` : ''}">
+                <div>
+                  ${testimonialsCaption ? `<div class="eyebrow">${escapeHtml(testimonialsCaption)}</div>` : ''}
+                  ${testimonialsTitle !== '' ? `<h2 style="${testimonialsTextColor ? `color: ${testimonialsTextColor};` : ''} ${testimonialsFontFamily ? `font-family: '${testimonialsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(testimonialsTitle)}</h2>` : ''}
+                  ${testimonialsSubtitle !== '' ? `<p style="${testimonialsTextColor ? `color: ${testimonialsTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${testimonialsFontFamily ? `font-family: '${testimonialsFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(testimonialsSubtitle)}</p>` : ''}
+                </div>
               </div>
-            </div>
+            ` : ''}
             ${testimonialItems.length > 0 ? `
               <div class="quote-grid">
                 ${renderTestimonialsCards}
@@ -1974,14 +2139,16 @@ export const getSchoolCoachNewDesignHtml = (
           </div>
         </section>
 
-        <!-- Section 11: FAQ Section -->
-        <section class="section" id="faq" data-section="faq" data-index="0" style="${faqBg ? `background-color: ${faqBg};` : ''} ${faqTextColor ? `color: ${faqTextColor};` : ''}">
+        <!-- Section 13: FAQ Section -->
+        <section class="section" id="faq" data-section="faq" data-index="0" style="${!isFaqVisible ? 'display:none;' : ''} ${faqBg ? `background-color: ${faqBg};` : ''} ${faqTextColor ? `color: ${faqTextColor};` : ''}">
           <div class="container">
-            <div class="section-header" style="text-align: center; justify-content: center; flex-direction: column; align-items: center; margin-bottom: 28px; ${faqFontFamily ? `font-family: '${faqFontFamily}', system-ui, sans-serif;` : ''}">
-              ${faqCaption ? `<div class="eyebrow" style="margin-bottom: 8px;">${escapeHtml(faqCaption)}</div>` : ''}
-              <h2 style="${faqTextColor ? `color: ${faqTextColor};` : ''} ${faqFontFamily ? `font-family: '${faqFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(faqTitle || 'كل ما تود معرفته عن طريقة الدراسة والمتابعة')}</h2>
-              ${faqSubtitle ? `<p style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${faqFontFamily ? `font-family: '${faqFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(faqSubtitle)}</p>` : ''}
-            </div>
+            ${(faqTitle !== '' || faqSubtitle !== '' || faqCaption) ? `
+              <div class="section-header" style="text-align: center; justify-content: center; flex-direction: column; align-items: center; margin-bottom: 28px; ${faqFontFamily ? `font-family: '${faqFontFamily}', system-ui, sans-serif;` : ''}">
+                ${faqCaption ? `<div class="eyebrow" style="margin-bottom: 8px;">${escapeHtml(faqCaption)}</div>` : ''}
+                ${faqTitle !== '' ? `<h2 style="${faqTextColor ? `color: ${faqTextColor};` : ''} ${faqFontFamily ? `font-family: '${faqFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(faqTitle)}</h2>` : ''}
+                ${faqSubtitle !== '' ? `<p style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.85;` : 'color: var(--muted);'} margin: 6px 0 0; font-size: 14px; ${faqFontFamily ? `font-family: '${faqFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(faqSubtitle)}</p>` : ''}
+              </div>
+            ` : ''}
             ${faqItems.length > 0 ? `
               <div class="faq-list">
                 ${renderFaqAccordion}
@@ -1990,36 +2157,40 @@ export const getSchoolCoachNewDesignHtml = (
           </div>
         </section>
 
-        <!-- Section 12: Final CTA Section -->
-        <section class="section" id="cta" data-section="cta" data-index="0" style="${ctaBg ? `background-color: ${ctaBg};` : ''} ${ctaTextColor ? `color: ${ctaTextColor};` : ''}">
+        <!-- Section 14: Final CTA Section -->
+        <section class="section cta-section" id="cta" data-section="cta" data-index="0" style="${!isCtaVisible ? 'display:none;' : ''} ${ctaBg ? `background-color: ${ctaBg};` : ''} ${ctaTextColor ? `color: ${ctaTextColor};` : ''}">
           <div class="container">
-            <div class="cta-box" style="${ctaBg ? `background: ${ctaBg};` : ''} ${ctaTextColor ? `color: ${ctaTextColor};` : ''} ${ctaFontFamily ? `font-family: '${ctaFontFamily}', system-ui, sans-serif;` : ''}">
+            <div class="cta-box" style="${ctaBoxBg ? `background: ${ctaBoxBg};` : (ctaBg ? `background: ${ctaBg};` : '')} ${ctaTextColor ? `color: ${ctaTextColor};` : ''} ${ctaFontFamily ? `font-family: '${ctaFontFamily}', system-ui, sans-serif;` : ''}">
               <div class="cta-info">
                 ${ctaCaption ? `<div class="eyebrow eyebrow-light">${escapeHtml(ctaCaption)}</div>` : ''}
-                <h2 class="cta-title" style="${ctaTextColor ? `color: ${ctaTextColor};` : ''} ${ctaFontFamily ? `font-family: '${ctaFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(ctaTitle || 'احجز مكانك في مجموعاتنا التعليمية الآن')}</h2>
-                <p class="cta-desc" style="${ctaTextColor ? `color: ${ctaTextColor}; opacity: 0.9;` : ''}">${escapeHtml(ctaDescription || 'انضم إلينا وابدأ رحلة التفوق مع أسلوب تعليمي متميز ومتابعة دقيقة.')}</p>
+                ${ctaTitle !== '' ? `<h2 class="cta-title" style="${ctaTextColor ? `color: ${ctaTextColor};` : ''} ${ctaFontFamily ? `font-family: '${ctaFontFamily}', system-ui, sans-serif;` : ''}">${escapeHtml(ctaTitle)}</h2>` : ''}
+                ${ctaDescription !== '' ? `<p class="cta-desc" style="${ctaTextColor ? `color: ${ctaTextColor}; opacity: 0.9;` : ''}">${escapeHtml(ctaDescription)}</p>` : ''}
               </div>
               <div class="cta-actions">
-                ${ctaWhatsappUrl ? `
-                  <a href="${escapeHtml(ctaWhatsappUrl)}" target="_blank" rel="noopener noreferrer" class="cta-btn whatsapp-cta-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
-                    </svg>
-                    <span>${escapeHtml(ctaWhatsappLabel || 'كلمنا على الواتساب')}</span>
-                  </a>
-                ` : `
-                  <button type="button" class="cta-btn whatsapp-cta-btn" data-contact-action="true">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
-                    </svg>
-                    <span>${escapeHtml(ctaWhatsappLabel || 'كلمنا على الواتساب')}</span>
-                  </button>
-                `}
-                ${ctaPrimaryLink.startsWith('#') ? `
-                  <a href="${escapeHtml(ctaPrimaryLink)}" data-scroll="${escapeHtml(ctaPrimaryLink.replace('#', ''))}" class="cta-btn primary-cta-btn">${escapeHtml(ctaPrimaryLabel || 'ابدأ التعلم')}</a>
-                ` : `
-                  <a href="${escapeHtml(ctaPrimaryLink)}" class="cta-btn primary-cta-btn">${escapeHtml(ctaPrimaryLabel || 'ابدأ التعلم')}</a>
-                `}
+                ${ctaPrimaryLabel !== '' ? `
+                  ${ctaPrimaryLink.startsWith('#') ? `
+                    <a href="${escapeHtml(ctaPrimaryLink)}" data-scroll="${escapeHtml(ctaPrimaryLink.replace('#', ''))}" class="cta-btn primary-cta-btn">${escapeHtml(ctaPrimaryLabel)}</a>
+                  ` : `
+                    <a href="${escapeHtml(ctaPrimaryLink)}" class="cta-btn primary-cta-btn">${escapeHtml(ctaPrimaryLabel)}</a>
+                  `}
+                ` : ''}
+                ${ctaWhatsappLabel !== '' ? `
+                  ${ctaWhatsappUrl ? `
+                    <a href="${escapeHtml(ctaWhatsappUrl)}" target="_blank" rel="noopener noreferrer" class="cta-btn whatsapp-cta-btn">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                      </svg>
+                      <span>${escapeHtml(ctaWhatsappLabel)}</span>
+                    </a>
+                  ` : `
+                    <button type="button" class="cta-btn whatsapp-cta-btn" data-contact-action="true">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                      </svg>
+                      <span>${escapeHtml(ctaWhatsappLabel)}</span>
+                    </button>
+                  `}
+                ` : ''}
               </div>
             </div>
           </div>
@@ -2027,7 +2198,7 @@ export const getSchoolCoachNewDesignHtml = (
       </main>
 
       <!-- Footer -->
-      <footer data-section="footer" data-index="0">
+      <footer data-section="footer" data-index="0" style="${!isFooterVisible ? 'display:none;' : ''} ${footerBg ? `background-color: ${footerBg};` : ''} ${footerTextColor ? `color: ${footerTextColor};` : ''}">
         <div class="container footer-box">
           <div>${escapeHtml((content as any)?.footer?.text || '© 2025 جميع الحقوق محفوظة')}</div>
           <div>${escapeHtml(profileEmail || profilePhone || '')}</div>

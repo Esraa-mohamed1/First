@@ -26,6 +26,7 @@ import {
   Laptop,
   CheckCircle2,
   Eye,
+  EyeOff,
   Settings
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -39,6 +40,8 @@ import { getAcademicHtml, renderVideoPlayer } from '@/builder/templates/academic
 import { getCoachHtml } from '@/builder/templates/coach/coachHtml';
 import { getSchoolCoachHtml, getSchoolCoachNewDesignHtml } from '@/builder/templates/schoolcoach/schoolcoachHtml';
 import { getCourses } from '@/services/courses';
+import { getBags } from '@/services/bags';
+import { getMyAcademyProfile } from '@/services/student-auth';
 
 const MySwal = withReactContent(Swal);
 
@@ -47,6 +50,7 @@ const SCHOOLCOACH_NEW_EDITOR_SECTION_TYPES = [
   'profile',
   'tabs',
   'courses',
+  'bags',
   'steps',
   'videos',
   'resources',
@@ -57,7 +61,6 @@ const SCHOOLCOACH_NEW_EDITOR_SECTION_TYPES = [
   'testimonials',
   'faq',
   'cta',
-  'footer',
   'mobileNav',
   'courseLibrary',
   'videoLibrary',
@@ -71,6 +74,7 @@ const SCHOOLCOACH_NEW_SECTION_LABELS: Record<string, string> = {
   profile: 'بروفايل المعلم',
   tabs: 'علامات التصفح / Tabs',
   courses: 'الدورات',
+  bags: 'الحقائب التعليمية',
   steps: 'خطوات البدء',
   videos: 'مكتبة الفيديو',
   resources: 'الموارد المجانية',
@@ -81,7 +85,6 @@ const SCHOOLCOACH_NEW_SECTION_LABELS: Record<string, string> = {
   testimonials: 'آراء الطلاب',
   faq: 'الأسئلة الشائعة',
   cta: 'دعوة نهائية / تواصل',
-  footer: 'التذييل',
   mobileNav: 'التنقل الجوال',
   courseLibrary: 'مكتبة الدورات',
   videoLibrary: 'مكتبة الفيديوهات',
@@ -102,6 +105,7 @@ interface NavbarConfig {
   logo: string;
   bgColor: string;
   textColor: string;
+  visible?: boolean;
   [key: string]: any;
 }
 
@@ -116,6 +120,7 @@ interface HeroConfig {
   image: string;
   backgroundColor: string;
   textColor: string;
+  visible?: boolean;
 }
 
 interface TimelineItemConfig {
@@ -145,6 +150,7 @@ interface AboutConfig {
   analyticsTitle?: string;
   analyticsBars?: number[];
   analyticsColor?: string;
+  visible?: boolean;
 }
 
 interface FeatureItem {
@@ -159,6 +165,7 @@ interface FeaturesConfig {
   items: FeatureItem[];
   backgroundColor: string;
   textColor: string;
+  visible?: boolean;
 }
 
 interface PricingItem {
@@ -186,6 +193,7 @@ interface PricingConfig {
   testimonial3Text?: string;
   testimonial3Author?: string;
   testimonial3Role?: string;
+  visible?: boolean;
 }
 
 interface GalleryItemConfig {
@@ -203,6 +211,7 @@ interface GalleryConfig {
   textColor?: string;
   fontFamily?: string;
   items: GalleryItemConfig[];
+  visible?: boolean;
 }
 
 interface TestimonialItemConfig {
@@ -222,6 +231,7 @@ interface TestimonialsConfig {
   textColor?: string;
   fontFamily?: string;
   items: TestimonialItemConfig[];
+  visible?: boolean;
 }
 
 interface FAQItem {
@@ -241,6 +251,7 @@ interface FAQConfig {
   items: FAQItem[];
   testimonialsTitle?: string;
   testimonialsSubtitle?: string;
+  visible?: boolean;
 }
 
 interface CTAConfig {
@@ -255,8 +266,11 @@ interface CTAConfig {
   secondaryButtonText?: string;
   secondaryButtonLink?: string;
   backgroundColor?: string;
+  cardBg?: string;
+  boxBg?: string;
   textColor?: string;
   fontFamily?: string;
+  visible?: boolean;
 }
 
 interface ContactConfig {
@@ -272,8 +286,11 @@ interface ContactConfig {
   whatsappButtonLabel?: string;
   whatsappUrl?: string;
   backgroundColor: string;
+  cardBg?: string;
+  boxBg?: string;
   textColor: string;
   fontFamily?: string;
+  visible?: boolean;
 }
 
 interface FooterConfig {
@@ -287,6 +304,7 @@ interface FooterConfig {
   newsletterTitle?: string;
   newsletterDesc?: string;
   newsletterBtnText?: string;
+  visible?: boolean;
 }
 
 const ARABIC_FONT_OPTIONS = [
@@ -316,6 +334,7 @@ interface CoursesConfig {
   selectedCourseIds?: string[];
   courses?: any[];
   items?: any[];
+  visible?: boolean;
 }
 
 interface StepItemConfig {
@@ -332,6 +351,7 @@ interface StepsConfig {
   textColor?: string;
   fontFamily?: string;
   items: StepItemConfig[];
+  visible?: boolean;
 }
 
 interface StatsItemConfig {
@@ -343,6 +363,7 @@ interface StatsConfig {
   items: StatsItemConfig[];
   backgroundColor?: string;
   textColor?: string;
+  visible?: boolean;
 }
 
 interface VideosConfig {
@@ -353,6 +374,7 @@ interface VideosConfig {
   backgroundColor?: string;
   textColor?: string;
   fontFamily?: string;
+  visible?: boolean;
 }
 
 interface ResourcesConfig {
@@ -363,6 +385,7 @@ interface ResourcesConfig {
   backgroundColor?: string;
   textColor?: string;
   fontFamily?: string;
+  visible?: boolean;
 }
 
 interface ResultItemConfig {
@@ -386,6 +409,7 @@ interface ResultsConfig {
   textColor?: string;
   fontFamily?: string;
   items: ResultItemConfig[];
+  visible?: boolean;
 }
 
 interface TemplateContent {
@@ -409,6 +433,7 @@ interface TemplateContent {
   videos?: VideosConfig;
   resources?: ResourcesConfig;
   results?: ResultsConfig;
+  bags?: any;
   timeline?: any;
   mobileNav?: any;
   courseLibrary?: any;
@@ -423,6 +448,7 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
   if (role === 'schoolcoach') {
     return {
       navbar: {
+        visible: true,
         title: '',
         teacherName: '',
         teacherTitle: '',
@@ -454,8 +480,9 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         registerText: 'ابدأ الآن',
         registerLink: '/auth/register'
       },
-      hero: { title: '', subtitle: '', description: '', buttonText: 'ابدأ التعلم', buttonLink: '#courses', secondaryButtonText: 'شاهد الفيديوهات', secondaryButtonLink: '#videos', image: '', backgroundColor: '#0f172a', textColor: '#ffffff' },
+      hero: { visible: true, title: '', subtitle: '', description: '', buttonText: 'ابدأ التعلم', buttonLink: '#courses', secondaryButtonText: 'شاهد الفيديوهات', secondaryButtonLink: '#videos', image: '', backgroundColor: '#0f172a', textColor: '#ffffff' },
       about: {
+        visible: true,
         caption: 'نبذة عن المعلم',
         title: 'الخبرة والمنهجية التعليمية',
         subtitle: '',
@@ -471,8 +498,9 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
           { stage: '2015', title: 'بكالوريوس التربية والتعليم', description: 'تخصص المناهج وطرق التدريس الحديثة.', enabled: true },
         ],
       },
-      features: { title: '', subtitle: '', items: [], backgroundColor: '#eef2ff', textColor: '#1a1f29' },
+      features: { visible: true, title: '', subtitle: '', items: [], backgroundColor: '#eef2ff', textColor: '#1a1f29' },
       courses: {
+        visible: true,
         title: 'الكورسات المتاحة',
         subtitle: 'اختار الكورس المناسب ليك وابدأ رحلتك التعليمية.',
         emptyText: 'لا توجد كورسات متاحة حالياً',
@@ -489,8 +517,19 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         selectedCourseIds: [],
         items: [],
       },
-      stats: { items: [], backgroundColor: '#0f172a', textColor: '#ffffff' },
+      bags: {
+        visible: true,
+        title: 'الحقائب التعليمية والملفات الرقمية',
+        subtitle: 'ملازم ومذكرات دراسية شاملة جاهزة للتحميل والاستفادة',
+        emptyText: 'لا توجد حقائب تعليمية متاحة حالياً',
+        backgroundColor: '',
+        textColor: '',
+        fontFamily: '',
+        items: [],
+      },
+      stats: { visible: true, items: [], backgroundColor: '#0f172a', textColor: '#ffffff' },
       gallery: {
+        visible: true,
         caption: 'معرض الصف',
         title: 'لقطات من البيئة التعليمية',
         subtitle: 'أنشطة وتجارب تفاعلية في القاعات الدراسية.',
@@ -500,8 +539,9 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         fontFamily: '',
         items: [],
       },
-      pricing: { title: '', subtitle: '', items: [], backgroundColor: '#ffffff', textColor: '#1a1f29' },
+      pricing: { visible: true, title: '', subtitle: '', items: [], backgroundColor: '#ffffff', textColor: '#1a1f29' },
       testimonials: {
+        visible: true,
         caption: 'آراء الطلاب',
         title: 'ماذا يقول طلابنا المتفوقون؟',
         subtitle: 'تجارب واقعية وقصص نجاح يرويها شركاء النجاح من الطلاب المتفوقين.',
@@ -512,6 +552,7 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         items: [],
       },
       faq: {
+        visible: true,
         caption: 'الأسئلة الشائعة',
         title: 'كل ما تود معرفته عن طريقة الدراسة والمتابعة',
         subtitle: 'إجابات واضحة ومباشرة على أكثر الاستفسارات تكراراً.',
@@ -527,6 +568,7 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         testimonialsSubtitle: '',
       },
       contact: {
+        visible: true,
         caption: 'جاهز للبدء والتفوق؟',
         title: 'احجز مكانك في مجموعاتنا التعليمية الآن',
         description: 'انضم إلينا وابدأ رحلة التفوق مع أسلوب تعليمي متميز ومتابعة دقيقة.',
@@ -537,10 +579,12 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         whatsappButtonLabel: 'كلمنا على الواتساب',
         whatsappUrl: '',
         backgroundColor: '',
+        cardBg: '',
         textColor: '',
         fontFamily: '',
       },
       cta: {
+        visible: true,
         caption: 'جاهز للبدء والتفوق؟',
         title: 'احجز مكانك في مجموعاتنا التعليمية الآن',
         description: 'انضم إلينا وابدأ رحلة التفوق مع أسلوب تعليمي متميز ومتابعة دقيقة.',
@@ -550,11 +594,13 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         whatsappUrl: '',
         phoneNumber: '',
         backgroundColor: '',
+        cardBg: '',
         textColor: '',
         fontFamily: '',
       },
-      footer: { text: '', description: '', workingHours: '', email: '', phone: '', backgroundColor: '#0f172a', textColor: '#ffffff', newsletterTitle: '', newsletterDesc: '', newsletterBtnText: '' },
+      footer: { visible: true, text: '', description: '', workingHours: '', email: '', phone: '', backgroundColor: '#0f172a', textColor: '#ffffff', newsletterTitle: '', newsletterDesc: '', newsletterBtnText: '' },
       profile: {
+        visible: true,
         teacherName: '',
         name: '',
         teacherTitle: '',
@@ -585,11 +631,13 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
       tabs: [
         { label: 'الرئيسية', key: 'overview' },
         { label: 'الدورات', key: 'courses' },
+        { label: 'الحقائب', key: 'bags' },
         { label: 'الفيديوهات', key: 'videos' },
         { label: 'الموارد', key: 'resources' },
         { label: 'نبذة', key: 'about' },
       ],
       steps: {
+        visible: true,
         title: 'لسه أول مرة تذاكر معايا؟',
         subtitle: 'ابدأ بالخطوات دي، وفي دقائق هتعرف أنسب مكان ليك.',
         backgroundColor: '',
@@ -602,6 +650,7 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         ],
       },
       videos: {
+        visible: true,
         title: 'أحدث الفيديوهات',
         subtitle: 'شاهد أحدث الدروس والشروحات المصورة بجودة عالية.',
         emptyText: 'لا توجد فيديوهات متاحة حالياً',
@@ -611,6 +660,7 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         fontFamily: '',
       },
       resources: {
+        visible: true,
         title: 'المذكرات والموارد التعليمية',
         subtitle: 'حمل أحدث المذكرات، ملخصات الدروس، وبنوك الأسئلة المعتمدة.',
         emptyText: 'لا توجد مذكرات أو موارد متاحة حالياً',
@@ -620,6 +670,7 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         fontFamily: '',
       },
       results: {
+        visible: true,
         title: 'لوحة شرف الأوائل والنتائج',
         subtitle: 'فخورون بما حققه أبطالنا وطلابنا من درجات نهائية وتفوق مستمر.',
         emptyText: 'لا توجد نتائج مضافة حالياً',
@@ -684,7 +735,7 @@ export default function PageBuilderPage() {
   const getHtmlForRole = (role: string, c: TemplateContent) => {
     if (role === 'academy') return getAcademicHtml(c as any);
     if (role === 'coach') return getCoachHtml(c as any);
-    if (role === 'schoolcoach') return getSchoolCoachNewDesignHtml(c as any, true, false, '/student', [], [], '', '', availableCourses, [], null);
+    if (role === 'schoolcoach') return getSchoolCoachNewDesignHtml(c as any, true, false, '/student', [], [], '', '', availableCourses, availableBags, teacherProfile);
     return '';
   };
 
@@ -699,6 +750,18 @@ export default function PageBuilderPage() {
   const [openIconPickerIdx, setOpenIconPickerIdx] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [availableCourses, setAvailableCourses] = useState<any[]>([]);
+  const [availableBags, setAvailableBags] = useState<any[]>([]);
+  const [teacherProfile, setTeacherProfile] = useState<any>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const full = localStorage.getItem('darab_academy_profile_full');
+        if (full) return JSON.parse(full);
+        const simple = localStorage.getItem('darab_academy_profile');
+        if (simple) return JSON.parse(simple);
+      } catch (e) { }
+    }
+    return null;
+  });
   const [sectionsList, setSectionsList] = useState<string[]>(SCHOOLCOACH_NEW_EDITOR_SECTION_TYPES);
   const [saving, setSaving] = useState<boolean>(false);
   const lastScrollYRef = useRef<number>(0);
@@ -1149,11 +1212,33 @@ export default function PageBuilderPage() {
       updateText('[data-section="footer"] [data-footer-phone]', `الهاتف: ${content.footer.phone}`);
     }
     updateText('[data-section="footer"] [data-footer-copyright], #footer-bar span.text-body-md.text-on-surface-variant, #footer-bar .font-body-md.text-on-surface-variant', content.footer.text || '');
-    // SchoolCoach Special Live Updates (Topbar & Hero Profile)
+    // SchoolCoach Special Live Updates (Topbar & Hero Profile & Sections)
     if (currentRole === 'schoolcoach') {
       const teacherName = content.profile?.teacherName || content.navbar?.teacherName || '';
       const teacherTitle = content.profile?.teacherTitle || content.navbar?.teacherTitle || '';
       const initialChar = (teacherName.trim().charAt(0) || 'م');
+
+      // 0. Section Visibility Live Updates in iframe DOM
+      const toggleSecVis = (selector: string, isVis: boolean) => {
+        const el = doc.querySelector(selector) as HTMLElement;
+        if (el) {
+          el.style.display = isVis ? '' : 'none';
+        }
+      };
+      toggleSecVis('.navbar, [data-section="navbar"]', content.navbar?.visible !== false);
+      toggleSecVis('.hero, [data-section="profile"], [data-section="hero"]', content.profile?.visible !== false && content.hero?.visible !== false);
+      toggleSecVis('#courses, [data-section="courses"]', content.courses?.visible !== false);
+      toggleSecVis('#bags, [data-section="bags"]', content.bags?.visible !== false);
+      toggleSecVis('#steps, [data-section="steps"]', content.steps?.visible !== false);
+      toggleSecVis('#videos, [data-section="videos"]', content.videos?.visible !== false);
+      toggleSecVis('#resources, [data-section="resources"]', content.resources?.visible !== false);
+      toggleSecVis('#results, [data-section="results"]', content.results?.visible !== false);
+      toggleSecVis('#about, [data-section="about"]', content.about?.visible !== false);
+      toggleSecVis('#gallery, [data-section="gallery"]', content.gallery?.visible !== false);
+      toggleSecVis('#testimonials, [data-section="testimonials"]', content.testimonials?.visible !== false);
+      toggleSecVis('#faq, [data-section="faq"]', content.faq?.visible !== false);
+      toggleSecVis('#cta, [data-section="cta"]', content.cta?.visible !== false && content.contact?.visible !== false);
+      toggleSecVis('.footer, [data-section="footer"]', content.footer?.visible !== false);
 
       // 1. Topbar Live Updates
       updateText('.brand-name', teacherName || 'اسم المعلم');
@@ -1190,8 +1275,31 @@ export default function PageBuilderPage() {
       updateText('.teacher-name', teacherName || 'اسم المعلم');
       updateText('.teacher-title', teacherTitle || 'مدرس المادة');
       updateText('.avatar-initial', initialChar);
-      updateText('.teacher-description', content.profile?.description || '');
-      updateText('.teacher-goal .goal-text, .teacher-goal span:last-child', content.profile?.goal || '');
+
+      const descVal = (content.profile?.description ?? '').trim();
+      const descEl = doc.querySelector('.teacher-description') as HTMLElement;
+      if (descEl) {
+        descEl.textContent = descVal;
+        descEl.style.display = descVal ? '' : 'none';
+      }
+
+      const goalVal = (content.profile?.goal ?? '').trim();
+      const goalEl = doc.querySelector('.teacher-goal') as HTMLElement;
+      if (goalEl) {
+        if (goalVal) {
+          goalEl.style.display = 'inline-flex';
+          const goalTextEl = goalEl.querySelector('.goal-text') || goalEl.querySelector('span:last-child');
+          if (goalTextEl) goalTextEl.textContent = goalVal;
+        } else {
+          goalEl.style.display = 'none';
+        }
+      }
+
+      const bioBox = doc.querySelector('.bio-box') as HTMLElement;
+      if (bioBox) {
+        const hasBio = Boolean(descVal || goalVal);
+        bioBox.style.display = hasBio ? '' : 'none';
+      }
 
       // Hero Cover
       const heroCover = doc.querySelector('.hero-cover') as HTMLElement;
@@ -1224,9 +1332,12 @@ export default function PageBuilderPage() {
       // Verified Badge
       const verifiedEl = doc.querySelector('.verified') as HTMLElement;
       if (verifiedEl) {
-        const isVerified = content.profile?.verified !== false;
+        const verifiedText = content.profile?.verifiedText ?? 'موثّق';
+        const isVerified = content.profile?.verified !== false && verifiedText.trim() !== '';
         verifiedEl.style.display = isVerified ? 'inline-flex' : 'none';
-        updateText('.verified span', content.profile?.verifiedText || 'موثّق');
+        if (isVerified) {
+          updateText('.verified span', verifiedText);
+        }
       }
 
       // Hero Stat Cards Live Update
@@ -1235,11 +1346,11 @@ export default function PageBuilderPage() {
         const rawStats = (Array.isArray(content.profile?.stats) && content.profile.stats.length > 0)
           ? content.profile.stats
           : [
-              { value: '8000+', label: 'طالب متفوق', enabled: true },
-              { value: '12+', label: 'سنوات خبرة', enabled: true },
-              { value: '350+', label: 'فيديو تعليمي', enabled: true },
-              { value: '4.9', label: 'تقييم عام', enabled: true },
-            ];
+            { value: '8000+', label: 'طالب متفوق', enabled: true },
+            { value: '12+', label: 'سنوات خبرة', enabled: true },
+            { value: '350+', label: 'فيديو تعليمي', enabled: true },
+            { value: '4.9', label: 'تقييم عام', enabled: true },
+          ];
         const activeStats = rawStats.filter((item: any) => {
           if (!item) return false;
           if (item.enabled === false || item.visible === false || item.hide === true) return false;
@@ -1265,26 +1376,38 @@ export default function PageBuilderPage() {
       // Button 1 (Start Learning -> Course Library)
       const btn1 = doc.querySelector('[data-hero-btn="primary"]') as HTMLElement;
       if (btn1) {
-        const spanText = btn1.querySelector('span');
-        if (spanText) spanText.textContent = content.profile?.ctaPrimaryText || 'ابدأ التعلم';
-        if (content.profile?.ctaPrimaryBg) btn1.style.background = content.profile.ctaPrimaryBg;
-        if (content.profile?.ctaPrimaryColor) btn1.style.color = content.profile.ctaPrimaryColor;
+        const primaryText = content.profile?.ctaPrimaryText ?? 'ابدأ التعلم';
+        if (!primaryText.trim()) {
+          btn1.style.display = 'none';
+        } else {
+          btn1.style.display = 'inline-flex';
+          const spanText = btn1.querySelector('span');
+          if (spanText) spanText.textContent = primaryText;
+          if (content.profile?.ctaPrimaryBg) btn1.style.background = content.profile.ctaPrimaryBg;
+          if (content.profile?.ctaPrimaryColor) btn1.style.color = content.profile.ctaPrimaryColor;
+        }
       }
 
       // Button 2 (Watch Videos -> Video Library)
       const btn2 = doc.querySelector('[data-hero-btn="secondary"]') as HTMLElement;
       if (btn2) {
-        const spanText = btn2.querySelector('span');
-        if (spanText) spanText.textContent = content.profile?.ctaSecondaryText || 'شاهد الفيديوهات';
-        if (content.profile?.ctaSecondaryBg) btn2.style.backgroundColor = content.profile.ctaSecondaryBg;
-        if (content.profile?.ctaSecondaryColor) btn2.style.color = content.profile.ctaSecondaryColor;
+        const secondaryText = content.profile?.ctaSecondaryText ?? 'شاهد الفيديوهات';
+        if (!secondaryText.trim()) {
+          btn2.style.display = 'none';
+        } else {
+          btn2.style.display = 'inline-flex';
+          const spanText = btn2.querySelector('span');
+          if (spanText) spanText.textContent = secondaryText;
+          if (content.profile?.ctaSecondaryBg) btn2.style.backgroundColor = content.profile.ctaSecondaryBg;
+          if (content.profile?.ctaSecondaryColor) btn2.style.color = content.profile.ctaSecondaryColor;
+        }
       }
 
       // 3. Courses Section Live Updates (#courses)
       if (content.courses) {
-        updateText('#courses .courses-heading, #courses h2', content.courses.title || 'الكورسات المتاحة');
-        updateText('#courses .courses-caption, #courses .section-header p', content.courses.subtitle || 'اختار الكورس المناسب ليك وابدأ رحلتك التعليمية.');
-        updateText('#courses .courses-empty-state .empty-title', content.courses.emptyText || 'لا توجد كورسات متاحة حالياً');
+        updateText('#courses .courses-heading, #courses h2', content.courses.title ?? 'الكورسات المتاحة');
+        updateText('#courses .courses-caption, #courses .section-header p', content.courses.subtitle ?? 'اختار الكورس المناسب ليك وابدأ رحلتك التعليمية.');
+        updateText('#courses .courses-empty-state .empty-title', content.courses.emptyText ?? 'لا توجد كورسات متاحة حالياً');
 
         const coursesSec = doc.querySelector('#courses, [data-section="courses"]') as HTMLElement;
         if (coursesSec) {
@@ -1307,10 +1430,39 @@ export default function PageBuilderPage() {
         }
       }
 
+      // 3.5 Bags Section Live Updates (#bags)
+      // 3.5 Bags Section Live Updates (#bags)
+      if (content.bags) {
+        updateText('#bags .bags-heading, #bags .courses-heading, #bags h2', content.bags.title ?? 'الحقائب التعليمية');
+        updateText('#bags .bags-caption, #bags .courses-caption, #bags .section-header p', content.bags.subtitle ?? 'مجموعات وباقات تعليمية شاملة ومصممة لضمان تفوقك الدراسي.');
+        updateText('#bags .courses-empty-state .empty-title, #bags .bags-empty-state .empty-title', content.bags.emptyText ?? 'لا توجد حقائب تعليمية متاحة حالياً');
+        updateText('#bags .small-btn', content.bags.buttonText ?? 'تفاصيل الحقيبة');
+
+        const bagsSec = doc.querySelector('#bags, [data-section="bags"]') as HTMLElement;
+        if (bagsSec) {
+          if (content.bags.backgroundColor) bagsSec.style.backgroundColor = content.bags.backgroundColor;
+          else bagsSec.style.backgroundColor = '';
+          if (content.bags.textColor) {
+            bagsSec.style.color = content.bags.textColor;
+            const heading = bagsSec.querySelector('.bags-heading, .courses-heading, h2') as HTMLElement;
+            if (heading) heading.style.color = content.bags.textColor;
+          }
+        }
+
+        const bagsHeader = doc.querySelector('#bags .section-header') as HTMLElement;
+        if (bagsHeader) {
+          if (content.bags.fontFamily) {
+            bagsHeader.style.fontFamily = `'${content.bags.fontFamily}', system-ui, sans-serif`;
+          } else {
+            bagsHeader.style.fontFamily = '';
+          }
+        }
+      }
+
       // 4. Steps Section Live Updates (#steps)
       if (content.steps) {
-        updateText('#steps .steps-heading, #steps h2', content.steps.title || 'لسه أول مرة تذاكر معايا؟');
-        updateText('#steps .steps-caption, #steps .steps-header p, #steps .section-header p', content.steps.subtitle || 'ابدأ بالخطوات دي، وفي دقائق هتعرف أنسب مكان ليك.');
+        updateText('#steps .steps-heading, #steps h2', content.steps.title ?? 'لسه أول مرة تذاكر معايا؟');
+        updateText('#steps .steps-caption, #steps .steps-header p, #steps .section-header p', content.steps.subtitle ?? 'ابدأ بالخطوات دي، وفي دقائق هتعرف أنسب مكان ليك.');
 
         const stepsSec = doc.querySelector('#steps, [data-section="steps"]') as HTMLElement;
         if (stepsSec) {
@@ -1342,7 +1494,7 @@ export default function PageBuilderPage() {
             const itemEl = doc.querySelector(`[data-section="steps"][data-index="${idx}"], #steps .step-item:nth-child(${idx + 1}), #steps .step-card:nth-child(${idx + 1})`);
             if (itemEl) {
               const numEl = itemEl.querySelector('.step-badge, .step-number');
-              if (numEl) numEl.textContent = String(st.number ?? (idx + 1));
+              if (numEl) numEl.textContent = String(idx + 1).padStart(2, '0');
               const titleEl = itemEl.querySelector('.step-title');
               if (titleEl) titleEl.textContent = st.title || '';
               const descEl = itemEl.querySelector('.step-description');
@@ -1354,10 +1506,10 @@ export default function PageBuilderPage() {
 
       // 5. Videos Section Live Updates (#videos)
       if (content.videos) {
-        updateText('#videos .videos-heading, #videos h2', content.videos.title || 'أحدث الفيديوهات');
-        updateText('#videos .videos-caption, #videos .section-header p', content.videos.subtitle || 'شاهد أحدث الدروس والشروحات المصورة بجودة عالية.');
-        updateText('#videos .videos-empty-state .empty-title', content.videos.emptyText || 'لا توجد فيديوهات متاحة حالياً');
-        updateText('#videos [data-open-screen="video-library"]', content.videos.viewAllText || 'عرض جميع الفيديوهات');
+        updateText('#videos .videos-heading, #videos h2', content.videos.title ?? 'أحدث الفيديوهات');
+        updateText('#videos .videos-caption, #videos .section-header p', content.videos.subtitle ?? 'شاهد أحدث الدروس والشروحات المصورة بجودة عالية.');
+        updateText('#videos .videos-empty-state .empty-title', content.videos.emptyText ?? 'لا توجد فيديوهات متاحة حالياً');
+        updateText('#videos [data-open-screen="video-library"]', content.videos.viewAllText ?? 'عرض جميع الفيديوهات');
 
         const videosSec = doc.querySelector('#videos, [data-section="videos"]') as HTMLElement;
         if (videosSec) {
@@ -1382,10 +1534,10 @@ export default function PageBuilderPage() {
 
       // 6. Resources Section Live Updates (#resources)
       if (content.resources) {
-        updateText('#resources .resources-heading, #resources h2', content.resources.title || 'المذكرات والموارد التعليمية');
-        updateText('#resources .resources-caption, #resources .section-header p', content.resources.subtitle || 'حمل أحدث المذكرات، ملخصات الدروس، وبنوك الأسئلة المعتمدة.');
-        updateText('#resources .resources-empty-state .empty-title', content.resources.emptyText || 'لا توجد مذكرات أو موارد متاحة حالياً');
-        updateText('#resources [data-open-screen="resource-library"]', content.resources.viewAllText || 'عرض جميع المذكرات');
+        updateText('#resources .resources-heading, #resources h2', content.resources.title ?? 'المذكرات والموارد التعليمية');
+        updateText('#resources .resources-caption, #resources .section-header p', content.resources.subtitle ?? 'حمل أحدث المذكرات، ملخصات الدروس، وبنوك الأسئلة المعتمدة.');
+        updateText('#resources .resources-empty-state .empty-title', content.resources.emptyText ?? 'لا توجد مذكرات أو موارد متاحة حالياً');
+        updateText('#resources [data-open-screen="resource-library"]', content.resources.viewAllText ?? 'عرض جميع المذكرات');
 
         const resourcesSec = doc.querySelector('#resources, [data-section="resources"]') as HTMLElement;
         if (resourcesSec) {
@@ -1410,12 +1562,12 @@ export default function PageBuilderPage() {
 
       // 7. Results Section Live Updates (#results)
       if (content.results) {
-        updateText('#results .results-heading, #results h2', content.results.title || 'لوحة شرف الأوائل والنتائج');
-        updateText('#results .results-caption, #results .section-header p', content.results.subtitle || 'فخورون بما حققه أبطالنا وطلابنا من درجات نهائية وتفوق مستمر.');
-        updateText('#results .results-empty-state .empty-title', content.results.emptyText || 'لا توجد نتائج مضافة حالياً');
-        updateText('#results [data-open-modal="results-modal"]', content.results.viewAllText || 'عرض جميع النتائج');
-        updateText('#results-modal .modal-title', content.results.modalTitle || 'لوحة شرف ونتائج الطلاب المتفوقين');
-        updateText('#results-modal .modal-description', content.results.modalDescription || 'قائمة بجميع أبطالنا ونتائجهم المشرفة في الدورات والاختبارات.');
+        updateText('#results .results-heading, #results h2', content.results.title ?? 'لوحة شرف الأوائل والنتائج');
+        updateText('#results .results-caption, #results .section-header p', content.results.subtitle ?? 'فخورون بما حققه أبطالنا وطلابنا من درجات نهائية وتفوق مستمر.');
+        updateText('#results .results-empty-state .empty-title', content.results.emptyText ?? 'لا توجد نتائج مضافة حالياً');
+        updateText('#results [data-open-modal="results-modal"]', content.results.viewAllText ?? 'عرض جميع النتائج');
+        updateText('#results-modal .results-modal-header-info h4, #results-modal .modal-title', content.results.modalTitle ?? 'لوحة شرف ونتائج الطلاب المتفوقين');
+        updateText('#results-modal .results-modal-header-info p, #results-modal .modal-description', content.results.modalDescription ?? 'قائمة بجميع أبطالنا ونتائجهم المشرفة في الدورات والاختبارات.');
 
         const resultsSec = doc.querySelector('#results, [data-section="results"]') as HTMLElement;
         if (resultsSec) {
@@ -1423,7 +1575,7 @@ export default function PageBuilderPage() {
           else resultsSec.style.backgroundColor = '';
           if (content.results.textColor) {
             resultsSec.style.color = content.results.textColor;
-            const heading = resultsSec.querySelector('.results-heading') as HTMLElement;
+            const heading = resultsSec.querySelector('.results-heading, h2') as HTMLElement;
             if (heading) heading.style.color = content.results.textColor;
           }
         }
@@ -1436,14 +1588,61 @@ export default function PageBuilderPage() {
             resultsHeader.style.fontFamily = '';
           }
         }
+
+        if (Array.isArray(content.results.items)) {
+          content.results.items.forEach((res: any, idx: number) => {
+            const itemEls = doc.querySelectorAll(`[data-section="results"][data-index="${idx}"]`);
+            itemEls.forEach((itemEl) => {
+              const nameEl = itemEl.querySelector('.result-student-name, h3');
+              if (nameEl) nameEl.textContent = res.name || 'طالب متميز';
+              const scoreEl = itemEl.querySelector('.result-score-badge');
+              if (scoreEl) scoreEl.textContent = res.score || '';
+              const courseEl = itemEl.querySelector('.result-course-tag');
+              if (courseEl) courseEl.textContent = res.course || '';
+              const batchEl = itemEl.querySelector('.result-batch-tag');
+              if (batchEl) batchEl.textContent = res.batch || '';
+              const avatarEl = itemEl.querySelector('.result-avatar') as HTMLElement | null;
+              if (avatarEl) {
+                if (res.image) {
+                  avatarEl.style.backgroundImage = `url('${res.image}')`;
+                  avatarEl.classList.remove('result-avatar-default');
+                  const initEl = avatarEl.querySelector('.result-avatar-initial');
+                  if (initEl) initEl.remove();
+                } else {
+                  avatarEl.style.backgroundImage = '';
+                  avatarEl.classList.add('result-avatar-default');
+                  let initEl = avatarEl.querySelector('.result-avatar-initial');
+                  const initial = (res.name || 'ط').trim().charAt(0) || 'ط';
+                  if (!initEl) {
+                    initEl = doc.createElement('span');
+                    initEl.className = 'result-avatar-initial';
+                    avatarEl.appendChild(initEl);
+                  }
+                  initEl.textContent = initial;
+                }
+              }
+            });
+          });
+        }
       }
 
       // 8. About Section Live Updates (#about)
       if (content.about) {
-        updateText('#about .eyebrow, #about .section-header .eyebrow', content.about.caption || 'نبذة عن المعلم');
-        updateText('#about .about-heading, #about h2', content.about.title || 'الخبرة والمنهجية التعليمية');
-        updateText('#about .about-card p, #about .about-description', content.about.description || content.about.subtitle || 'أعتمد على أسلوب تدريسي يجمع بين الشرح المبسط، التطبيق المكثف، والتقييم المستمر لضمان أعلى مستوى من الاستيعاب والتفوق.');
-        updateText('#about .timeline-card h3', content.about.timelineTitle || 'المؤهلات والمسيرة المهنية');
+        updateText('#about .eyebrow, #about .section-header .eyebrow', content.about.caption ?? 'نبذة عن المعلم');
+        updateText('#about .about-heading, #about h2', content.about.title ?? 'الخبرة والمنهجية التعليمية');
+        updateText('#about .timeline-head-title, #about .timeline-head h3, #about .timeline-card h3', content.about.timelineTitle ?? 'المؤهلات والمسيرة المهنية');
+
+        const aboutDescEl = doc.querySelector('#about .about-card p, #about .about-description') as HTMLElement | null;
+        if (aboutDescEl) {
+          const dVal = content.about.description !== undefined ? content.about.description : (content.about.subtitle || '');
+          if (!dVal.trim()) {
+            aboutDescEl.style.display = 'none';
+            aboutDescEl.textContent = '';
+          } else {
+            aboutDescEl.style.display = '';
+            aboutDescEl.textContent = dVal;
+          }
+        }
 
         const aboutSec = doc.querySelector('#about, [data-section="about"]') as HTMLElement;
         if (aboutSec) {
@@ -1456,7 +1655,7 @@ export default function PageBuilderPage() {
           }
         }
 
-        const aboutHeader = doc.querySelector('#about .section-header') as HTMLElement;
+        const aboutHeader = doc.querySelector('#about .section-header, #about .about-two-col') as HTMLElement;
         if (aboutHeader) {
           if (content.about.fontFamily) {
             aboutHeader.style.fontFamily = `'${content.about.fontFamily}', system-ui, sans-serif`;
@@ -1464,14 +1663,51 @@ export default function PageBuilderPage() {
             aboutHeader.style.fontFamily = '';
           }
         }
+
+        if (Array.isArray(content.about.items)) {
+          const timelineCardEl = doc.querySelector('#about .timeline-card') as HTMLElement | null;
+          if (timelineCardEl) {
+            const activeItems = content.about.items.filter((item: any) => item.enabled !== false);
+            const existingList = timelineCardEl.querySelector('.timeline-list');
+            const existingEmpty = timelineCardEl.querySelector('.timeline-empty-state');
+
+            if (activeItems.length === 0) {
+              if (existingList) existingList.remove();
+              if (!existingEmpty) {
+                const newEmpty = doc.createElement('div');
+                newEmpty.className = 'timeline-empty-state';
+                newEmpty.setAttribute('data-section', 'about');
+                newEmpty.innerHTML = '<p class="empty-desc">لم تتم إضافة بنود خبرة أو مؤهلات بعد</p>';
+                timelineCardEl.appendChild(newEmpty);
+              }
+            } else {
+              if (existingEmpty) existingEmpty.remove();
+              let listEl = existingList as HTMLElement | null;
+              if (!listEl) {
+                listEl = doc.createElement('div');
+                listEl.className = 'timeline-list';
+                timelineCardEl.appendChild(listEl);
+              }
+              listEl.innerHTML = activeItems.map((item: any, idx: number) => `
+                <div class="timeline-item" data-section="about" data-index="${idx}">
+                  <span class="timeline-badge">${item.stage || String(idx + 1)}</span>
+                  <div class="timeline-content">
+                    ${item.title ? `<strong class="timeline-title">${item.title}</strong>` : ''}
+                    ${item.description ? `<p class="timeline-desc">${item.description}</p>` : ''}
+                  </div>
+                </div>
+              `).join('');
+            }
+          }
+        }
       }
 
       // 9. Gallery Section Live Updates (#gallery)
       if (content.gallery) {
-        updateText('#gallery .eyebrow, #gallery .section-header .eyebrow', content.gallery.caption || 'معرض الصف');
-        updateText('#gallery .gallery-heading, #gallery h2', content.gallery.title || 'لقطات من البيئة التعليمية');
-        updateText('#gallery .gallery-subtitle, #gallery .section-header p', content.gallery.subtitle || 'أنشطة وتجارب تفاعلية في القاعات الدراسية.');
-        updateText('#gallery .empty-state-title', content.gallery.emptyText || 'لا توجد صور في المعرض حالياً');
+        updateText('#gallery .eyebrow, #gallery .section-header .eyebrow', content.gallery.caption ?? 'معرض الصف');
+        updateText('#gallery .gallery-heading, #gallery h2', content.gallery.title ?? 'لقطات من البيئة التعليمية');
+        updateText('#gallery .gallery-subtitle, #gallery .section-header p', content.gallery.subtitle ?? 'أنشطة وتجارب تفاعلية في القاعات الدراسية.');
+        updateText('#gallery .empty-state-title, #gallery .gallery-empty-state .empty-title', content.gallery.emptyText ?? 'لا توجد صور في المعرض حالياً');
 
         const gallerySec = doc.querySelector('#gallery, [data-section="gallery"]') as HTMLElement;
         if (gallerySec) {
@@ -1492,14 +1728,66 @@ export default function PageBuilderPage() {
             galleryHeader.style.fontFamily = '';
           }
         }
+
+        if (Array.isArray(content.gallery.items)) {
+          const gallerySecContainer = doc.querySelector('#gallery .container') as HTMLElement | null;
+          if (gallerySecContainer) {
+            const activeImgs = content.gallery.items.filter((item: any) => item.enabled !== false && item.image_url && String(item.image_url).trim());
+            const emptyTitle = content.gallery.emptyText ?? 'لا توجد صور في المعرض حالياً';
+            const emptySubtitle = content.gallery.subtitle ?? 'أنشطة وتجارب تفاعلية في القاعات الدراسية.';
+
+            const existingGrid = gallerySecContainer.querySelector('.gallery-grid');
+            const existingEmpty = gallerySecContainer.querySelector('.gallery-empty-state');
+
+            if (activeImgs.length === 0) {
+              if (existingGrid) existingGrid.remove();
+              if (!existingEmpty) {
+                const newEmpty = doc.createElement('div');
+                newEmpty.className = 'gallery-empty-state';
+                newEmpty.setAttribute('data-section', 'gallery');
+                newEmpty.innerHTML = `
+                  <div class="empty-icon-shell">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                      <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                  </div>
+                  <h3 class="empty-title">${emptyTitle}</h3>
+                  <p class="empty-desc">${emptySubtitle}</p>
+                `;
+                gallerySecContainer.appendChild(newEmpty);
+              } else {
+                const tEl = existingEmpty.querySelector('.empty-title');
+                if (tEl) tEl.textContent = emptyTitle;
+                const pEl = existingEmpty.querySelector('.empty-desc');
+                if (pEl) pEl.textContent = emptySubtitle;
+              }
+            } else {
+              if (existingEmpty) existingEmpty.remove();
+              let gridEl = existingGrid as HTMLElement | null;
+              if (!gridEl) {
+                gridEl = doc.createElement('div');
+                gridEl.className = 'gallery-grid';
+                gallerySecContainer.appendChild(gridEl);
+              }
+              gridEl.innerHTML = activeImgs.map((item: any, idx: number) => `
+                <figure class="gallery-item" data-section="gallery" data-index="${idx}">
+                  <img src="${item.image_url}" alt="${item.caption || 'معرض الصف'}" loading="lazy" />
+                  ${item.caption ? `<figcaption class="gallery-caption">${item.caption}</figcaption>` : ''}
+                </figure>
+              `).join('');
+            }
+          }
+        }
       }
 
       // 10. Testimonials Section Live Updates (#testimonials)
       if (content.testimonials) {
-        updateText('#testimonials .eyebrow, #testimonials .section-header .eyebrow', content.testimonials.caption || 'آراء الطلاب');
-        updateText('#testimonials .testimonials-heading, #testimonials h2', content.testimonials.title || 'ماذا يقول طلابنا المتفوقون؟');
-        updateText('#testimonials .testimonials-subtitle, #testimonials .section-header p', content.testimonials.subtitle || 'تجارب واقعية وقصص نجاح يرويها شركاء النجاح من الطلاب المتفوقين.');
-        updateText('#testimonials .empty-state-title', content.testimonials.emptyText || 'سيتم إضافة آراء وتجارب الطلاب قريباً');
+        updateText('#testimonials .eyebrow, #testimonials .section-header .eyebrow', content.testimonials.caption ?? 'آراء الطلاب');
+        updateText('#testimonials .testimonials-heading, #testimonials h2', content.testimonials.title ?? 'ماذا يقول طلابنا المتفوقون؟');
+        updateText('#testimonials .testimonials-subtitle, #testimonials .section-header p', content.testimonials.subtitle ?? 'تجارب واقعية وقصص نجاح يرويها شركاء النجاح من الطلاب المتفوقين.');
+        updateText('#testimonials .empty-state-title, #testimonials .testimonials-empty-state .empty-title', content.testimonials.emptyText ?? 'سيتم إضافة آراء وتجارب الطلاب قريباً');
 
         const testimonialsSec = doc.querySelector('#testimonials, [data-section="testimonials"]') as HTMLElement;
         if (testimonialsSec) {
@@ -1520,14 +1808,79 @@ export default function PageBuilderPage() {
             testimonialsHeader.style.fontFamily = '';
           }
         }
+
+        if (Array.isArray(content.testimonials.items)) {
+          const testSecContainer = doc.querySelector('#testimonials .container') as HTMLElement | null;
+          if (testSecContainer) {
+            const activeTestimonials = content.testimonials.items.filter((item: any) => item.enabled !== false);
+            const emptyTitle = content.testimonials.emptyText ?? 'سيتم إضافة آراء وتجارب الطلاب قريباً';
+            const emptySubtitle = content.testimonials.subtitle ?? 'تجارب واقعية وقصص نجاح يرويها شركاء النجاح من الطلاب المتفوقين.';
+
+            const existingGrid = testSecContainer.querySelector('.quote-grid');
+            const existingEmpty = testSecContainer.querySelector('.testimonials-empty-state');
+
+            if (activeTestimonials.length === 0) {
+              if (existingGrid) existingGrid.remove();
+              if (!existingEmpty) {
+                const newEmpty = doc.createElement('div');
+                newEmpty.className = 'testimonials-empty-state';
+                newEmpty.setAttribute('data-section', 'testimonials');
+                newEmpty.innerHTML = `
+                  <div class="empty-icon-shell">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                  </div>
+                  <h3 class="empty-title">${emptyTitle}</h3>
+                  <p class="empty-desc">${emptySubtitle}</p>
+                `;
+                testSecContainer.appendChild(newEmpty);
+              } else {
+                const tEl = existingEmpty.querySelector('.empty-title');
+                if (tEl) tEl.textContent = emptyTitle;
+                const pEl = existingEmpty.querySelector('.empty-desc');
+                if (pEl) pEl.textContent = emptySubtitle;
+              }
+            } else {
+              if (existingEmpty) existingEmpty.remove();
+              let gridEl = existingGrid as HTMLElement | null;
+              if (!gridEl) {
+                gridEl = doc.createElement('div');
+                gridEl.className = 'quote-grid';
+                testSecContainer.appendChild(gridEl);
+              }
+              gridEl.innerHTML = activeTestimonials.map((item: any, idx: number) => {
+                const rating = Math.max(1, Math.min(5, Math.round(Number(item.rating) || 5)));
+                let stars = '';
+                for (let s = 1; s <= 5; s++) {
+                  const isFilled = s <= rating;
+                  stars += `<svg width="16" height="16" viewBox="0 0 24 24" fill="${isFilled ? '#f59e0b' : '#cbd5e1'}" stroke="${isFilled ? '#f59e0b' : '#cbd5e1'}" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="star-icon"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+                }
+                return `
+                  <article class="quote-card" data-section="testimonials" data-index="${idx}">
+                    <div class="quote-top-row">
+                      <div class="quote-stars" aria-label="تقييم ${rating} من 5">${stars}</div>
+                      <div class="quote-mark">“</div>
+                    </div>
+                    <p class="quote-text">${item.text || ''}</p>
+                    <div class="quote-author">
+                      <strong>${item.name || 'طالب متميز'}</strong>
+                      ${item.course ? `<span class="quote-course">${item.course}</span>` : ''}
+                    </div>
+                  </article>
+                `;
+              }).join('');
+            }
+          }
+        }
       }
 
       // 11. FAQ Section Live Updates (#faq)
       if (content.faq) {
-        updateText('#faq .eyebrow, #faq .section-header .eyebrow', content.faq.caption || 'الأسئلة الشائعة');
-        updateText('#faq .faq-heading, #faq h2', content.faq.title || 'كل ما تود معرفته عن طريقة الدراسة والمتابعة');
-        updateText('#faq .faq-subtitle, #faq .section-header p', content.faq.subtitle || 'إجابات واضحة ومباشرة على أكثر الاستفسارات تكراراً.');
-        updateText('#faq .empty-state-title', content.faq.emptyText || 'لا توجد أسئلة شائعة مضافة حالياً');
+        updateText('#faq .eyebrow, #faq .section-header .eyebrow', content.faq.caption ?? 'الأسئلة الشائعة');
+        updateText('#faq .faq-heading, #faq h2', content.faq.title ?? 'كل ما تود معرفته عن طريقة الدراسة والمتابعة');
+        updateText('#faq .faq-subtitle, #faq .section-header p', content.faq.subtitle ?? 'إجابات واضحة ومباشرة على أكثر الاستفسارات تكراراً.');
+        updateText('#faq .empty-state-title, #faq .faq-empty-state .empty-title', content.faq.emptyText ?? 'لا توجد أسئلة شائعة مضافة حالياً');
 
         const faqSec = doc.querySelector('#faq, [data-section="faq"]') as HTMLElement;
         if (faqSec) {
@@ -1548,16 +1901,144 @@ export default function PageBuilderPage() {
             faqHeader.style.fontFamily = '';
           }
         }
+
+        if (Array.isArray(content.faq.items)) {
+          const faqSecContainer = doc.querySelector('#faq .container') as HTMLElement | null;
+          if (faqSecContainer) {
+            const activeFaqs = content.faq.items.filter((item: any) => item.enabled !== false);
+            const emptyTitle = content.faq.emptyText ?? 'لا توجد أسئلة شائعة مضافة حالياً';
+            const emptySubtitle = content.faq.subtitle ?? 'إجابات واضحة ومباشرة على أكثر الاستفسارات تكراراً.';
+
+            const existingList = faqSecContainer.querySelector('.faq-list');
+            const existingEmpty = faqSecContainer.querySelector('.faq-empty-state');
+
+            if (activeFaqs.length === 0) {
+              if (existingList) existingList.remove();
+              if (!existingEmpty) {
+                const newEmpty = doc.createElement('div');
+                newEmpty.className = 'faq-empty-state';
+                newEmpty.setAttribute('data-section', 'faq');
+                newEmpty.innerHTML = `
+                  <div class="empty-icon-shell">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                  </div>
+                  <h3 class="empty-title">${emptyTitle}</h3>
+                  <p class="empty-desc">${emptySubtitle}</p>
+                `;
+                faqSecContainer.appendChild(newEmpty);
+              } else {
+                const tEl = existingEmpty.querySelector('.empty-title');
+                if (tEl) tEl.textContent = emptyTitle;
+                const pEl = existingEmpty.querySelector('.empty-desc');
+                if (pEl) pEl.textContent = emptySubtitle;
+              }
+            } else {
+              if (existingEmpty) existingEmpty.remove();
+              let listEl = existingList as HTMLElement | null;
+              if (!listEl) {
+                listEl = doc.createElement('div');
+                listEl.className = 'faq-list';
+                faqSecContainer.appendChild(listEl);
+              }
+              listEl.innerHTML = activeFaqs.map((item: any, idx: number) => `
+                <div class="faq-item" data-section="faq" data-index="${idx}">
+                  <button type="button" class="faq-question" aria-expanded="false">
+                    <span>${item.question || ''}</span>
+                    <span class="plus" aria-hidden="true">+</span>
+                  </button>
+                  <div class="faq-answer">
+                    <p>${item.answer || ''}</p>
+                  </div>
+                </div>
+              `).join('');
+            }
+          }
+        }
       }
 
       // 12. Final CTA Section Live Updates (#cta)
       const ctaData = content.cta || content.contact;
       if (ctaData) {
-        updateText('#cta .eyebrow, #cta .eyebrow-light', ctaData.caption || 'جاهز للبدء والتفوق؟');
-        updateText('#cta .cta-title, #cta h2', ctaData.title || 'احجز مكانك في مجموعاتنا التعليمية الآن');
-        updateText('#cta .cta-desc, #cta p', ctaData.description || 'انضم إلينا وابدأ رحلة التفوق مع أسلوب تعليمي متميز ومتابعة دقيقة.');
-        updateText('#cta .primary-cta-btn', ctaData.primaryButtonText || (ctaData as any).buttonText || 'ابدأ التعلم');
-        updateText('#cta .whatsapp-cta-btn span', ctaData.whatsappButtonLabel || 'كلمنا على الواتساب');
+        const ctaCaptionEl = doc.querySelector('#cta .eyebrow, #cta .eyebrow-light') as HTMLElement | null;
+        if (ctaCaptionEl) {
+          const cVal = ctaData.caption !== undefined ? ctaData.caption : 'جاهز للبدء والتفوق؟';
+          if (!cVal.trim()) {
+            ctaCaptionEl.style.display = 'none';
+            ctaCaptionEl.textContent = '';
+          } else {
+            ctaCaptionEl.style.display = '';
+            ctaCaptionEl.textContent = cVal;
+          }
+        }
+
+        const ctaTitleEl = doc.querySelector('#cta .cta-title, #cta h2') as HTMLElement | null;
+        if (ctaTitleEl) {
+          const tVal = ctaData.title !== undefined ? ctaData.title : 'احجز مكانك في مجموعاتنا التعليمية الآن';
+          if (!tVal.trim()) {
+            ctaTitleEl.style.display = 'none';
+            ctaTitleEl.textContent = '';
+          } else {
+            ctaTitleEl.style.display = '';
+            ctaTitleEl.textContent = tVal;
+          }
+        }
+
+        const ctaDescEl = doc.querySelector('#cta .cta-desc, #cta p') as HTMLElement | null;
+        if (ctaDescEl) {
+          const dVal = ctaData.description !== undefined ? ctaData.description : 'انضم إلينا وابدأ رحلة التفوق مع أسلوب تعليمي متميز ومتابعة دقيقة.';
+          if (!dVal.trim()) {
+            ctaDescEl.style.display = 'none';
+            ctaDescEl.textContent = '';
+          } else {
+            ctaDescEl.style.display = '';
+            ctaDescEl.textContent = dVal;
+          }
+        }
+
+        const ctaPrimaryBtn = doc.querySelector('#cta .primary-cta-btn') as HTMLElement | null;
+        if (ctaPrimaryBtn) {
+          const pText = ctaData.primaryButtonText !== undefined ? ctaData.primaryButtonText : (ctaData as any).buttonText ?? 'ابدأ التعلم';
+          if (!pText.trim()) {
+            ctaPrimaryBtn.style.display = 'none';
+          } else {
+            ctaPrimaryBtn.style.display = 'inline-flex';
+            ctaPrimaryBtn.textContent = pText;
+            const pLink = (ctaData.primaryButtonLink || (ctaData as any).buttonLink || '#courses').trim();
+            if (pLink) {
+              ctaPrimaryBtn.setAttribute('href', pLink);
+              if (pLink.startsWith('#')) {
+                ctaPrimaryBtn.setAttribute('data-scroll', pLink.replace('#', ''));
+              }
+            }
+          }
+        }
+
+        const ctaWhatsappBtn = doc.querySelector('#cta .whatsapp-cta-btn') as HTMLElement | null;
+        if (ctaWhatsappBtn) {
+          const wText = ctaData.whatsappButtonLabel !== undefined ? ctaData.whatsappButtonLabel : 'كلمنا على الواتساب';
+          if (!wText.trim()) {
+            ctaWhatsappBtn.style.display = 'none';
+          } else {
+            ctaWhatsappBtn.style.display = 'inline-flex';
+            const spanEl = ctaWhatsappBtn.querySelector('span');
+            if (spanEl) spanEl.textContent = wText;
+            const wUrl = (ctaData.whatsappUrl || ctaData.phoneNumber || (ctaData as any).whatsapp || '').trim();
+            if (wUrl) {
+              let normUrl = wUrl;
+              if (!normUrl.startsWith('http://') && !normUrl.startsWith('https://')) {
+                const digits = normUrl.replace(/\D/g, '');
+                if (digits) normUrl = `https://wa.me/${digits}`;
+              }
+              ctaWhatsappBtn.setAttribute('href', normUrl);
+              ctaWhatsappBtn.setAttribute('target', '_blank');
+              ctaWhatsappBtn.setAttribute('rel', 'noopener noreferrer');
+            }
+          }
+        }
 
         const ctaSec = doc.querySelector('#cta, [data-section="cta"]') as HTMLElement;
         if (ctaSec) {
@@ -1572,6 +2053,12 @@ export default function PageBuilderPage() {
 
         const ctaBox = doc.querySelector('#cta .cta-box') as HTMLElement;
         if (ctaBox) {
+          const boxBg = (ctaData as any).cardBg || (ctaData as any).boxBg || '';
+          if (boxBg) {
+            ctaBox.style.background = boxBg;
+          } else {
+            ctaBox.style.background = '';
+          }
           if (ctaData.fontFamily) {
             ctaBox.style.fontFamily = `'${ctaData.fontFamily}', system-ui, sans-serif`;
           } else {
@@ -1874,15 +2361,25 @@ export default function PageBuilderPage() {
       if (!currentRole) return;
       setLoading(true);
 
+      const currentTemplateId = currentRole === 'schoolcoach'
+        ? 'template_1'
+        : (templateIdParam || (currentRole === 'coach' ? 'template_courses_1' : 'academic'));
+      setActiveTemplateId(currentTemplateId);
+
       let resolvedPageId: string | null = null;
       try {
-        const apiPages = await getPages(true);
-        // Find a page matching templateIdParam
-        let page = apiPages.find((p: any) => p.title === templateIdParam || p.template === templateIdParam || p.template_id === templateIdParam);
+        const apiPages = await getPages(true, currentTemplateId);
+        // Find an existing page for the current template (prefer active/published)
+        let page = apiPages.find((p: any) =>
+          (p.template === currentTemplateId || p.template_name === currentTemplateId || p.title === currentTemplateId || p.template_id === currentTemplateId) &&
+          (p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true' || p.status === 'published')
+        ) || apiPages.find((p: any) =>
+          p.template === currentTemplateId || p.template_name === currentTemplateId || p.title === currentTemplateId || p.template_id === currentTemplateId
+        );
 
-        // If not found, look for any active page or first page
+        // If not found, look for any active page
         if (!page) {
-          page = apiPages.find((p: any) => p.is_active === 1 || p.is_active === true);
+          page = apiPages.find((p: any) => p.is_active === 1 || p.is_active === '1' || p.is_active === true || p.is_active === 'true');
         }
 
         if (page) {
@@ -1891,10 +2388,10 @@ export default function PageBuilderPage() {
         } else {
           // Create a new page for this template
           const payload = {
-            title: templateIdParam,
+            title: currentTemplateId,
             slug: `home-${Date.now()}`,
             status: 'published',
-            template: templateIdParam,
+            template: currentTemplateId,
             is_active: 1
           };
           const created = await createPage(payload);
@@ -1933,10 +2430,47 @@ export default function PageBuilderPage() {
               console.warn('Failed to load courses for builder preview', e);
             }
 
+            let realBagsData: any[] = [];
+            try {
+              const bagsRes = await getBags();
+              if (bagsRes && Array.isArray(bagsRes)) {
+                realBagsData = bagsRes;
+                setAvailableBags(bagsRes);
+              }
+            } catch (e) {
+              console.warn('Failed to load bags for builder preview', e);
+            }
+
+            let profileData: any = null;
+            try {
+              const profileRes = await getMyAcademyProfile();
+              if (profileRes) {
+                profileData = profileRes;
+                setTeacherProfile(profileRes);
+              }
+            } catch (e) {
+              console.warn('Failed to load teacher profile for builder preview', e);
+            }
+
             // Reconstruct content state from database sections!
             const fallback = getDefaultContent(currentRole, activeTemplateId);
             if (fallback.courses && realCoursesData.length > 0) {
               fallback.courses.items = realCoursesData;
+            }
+            if (fallback.bags && realBagsData.length > 0) {
+              fallback.bags.items = realBagsData;
+            }
+            const teacherNameFromProfile =
+              profileData?.site_name ||
+              (Array.isArray(profileData) ? profileData.find((x: any) => x?.key === 'site_name')?.value : '') ||
+              profileData?.name ||
+              '';
+            if (teacherNameFromProfile) {
+              if (fallback.profile) fallback.profile.teacherName = teacherNameFromProfile;
+              if (fallback.navbar) {
+                fallback.navbar.teacherName = teacherNameFromProfile;
+                fallback.navbar.title = teacherNameFromProfile;
+              }
             }
 
             const navbarNode = editorNodes.find(n => n.type === 'navbar');
@@ -1945,6 +2479,7 @@ export default function PageBuilderPage() {
             const aboutNode = editorNodes.find(n => n.type === 'about');
             const featuresNode = editorNodes.find(n => n.type === 'features' || n.type === 'features_section');
             const courseNode = editorNodes.find(n => n.type === 'course-cards' || n.type === 'courses');
+            const bagsNode = editorNodes.find(n => n.type === 'bags' || n.type === 'bags_section');
             const stepsNode = editorNodes.find(n => n.type === 'steps' || n.type === 'getting-started' || n.type === 'first-time');
             const videosNode = editorNodes.find(n => n.type === 'videos' || n.type === 'videos_section' || n.type === 'latest-videos');
             const resourcesNode = editorNodes.find(n => n.type === 'resources' || n.type === 'resources_section' || n.type === 'notes');
@@ -1965,7 +2500,7 @@ export default function PageBuilderPage() {
               if (typeof list === 'string') {
                 try { list = JSON.parse(list); } catch (e) { list = []; }
               }
-              if (!Array.isArray(list) || list.length === 0) return defaultItems || [];
+              if (!Array.isArray(list)) return defaultItems || [];
               return list.map(item => {
                 const merged = { ...item };
                 if (merged.features && !Array.isArray(merged.features)) {
@@ -1975,9 +2510,9 @@ export default function PageBuilderPage() {
               });
             };
 
-            // Safe string accessor: returns value if non-null/non-empty, else fallback
+            // Safe string accessor: returns value if non-null and not undefined. Preserves explicit empty strings!
             const sv = (val: any, fallbackVal: any) =>
-              (val !== null && val !== undefined && val !== '') ? val : fallbackVal;
+              (val !== null && val !== undefined) ? val : fallbackVal;
 
             // Build parsedContent by spreading ALL api props first (preserving every field
             // that exists in the DB section), then filling with sv() for known
@@ -1990,14 +2525,17 @@ export default function PageBuilderPage() {
             // Canonical Teacher Identity: single source of truth across navbar & profile
             const pProps = profileNode?.props || {};
             const nProps = navbarNode?.props || {};
-            const canonicalTeacherName = sv(pProps.teacherName ?? pProps.name ?? nProps.teacherName ?? nProps.title, fallback.profile?.teacherName || '');
+            const canonicalTeacherName =
+              teacherNameFromProfile ||
+              sv(pProps.teacherName ?? pProps.name ?? nProps.teacherName ?? nProps.title, fallback.profile?.teacherName || '');
             const canonicalTeacherTitle = sv(pProps.teacherTitle ?? pProps.jobTitle ?? pProps.title ?? nProps.teacherTitle ?? nProps.teacher_title, fallback.profile?.teacherTitle || '');
 
             const parsedProfile = (profileNode?.props ? ({
               ...mergeSection(profileNode.props, fallback.profile || {}),
+              visible: profileNode.props.visible !== undefined ? Boolean(profileNode.props.visible) : (fallback.profile?.visible ?? true),
               teacherName: canonicalTeacherName,
               teacherTitle: canonicalTeacherTitle,
-              description: sv(pProps.description ?? pProps.bio, fallback.profile?.description || ''),
+              description: sv(pProps.description ?? pProps.bio, ''),
               goal: sv(pProps.goal ?? pProps.mission, fallback.profile?.goal || ''),
               avatar: sv(pProps.avatar ?? pProps.avatarImage ?? pProps.image, fallback.profile?.avatar || ''),
               cover: sv(pProps.cover ?? pProps.coverImage, fallback.profile?.cover || ''),
@@ -2016,6 +2554,7 @@ export default function PageBuilderPage() {
             const parsedContent: TemplateContent = {
               navbar: (navbarNode?.props ? ({
                 ...mergeSection(navbarNode.props, fallback.navbar),
+                visible: navbarNode.props.visible !== undefined ? Boolean(navbarNode.props.visible) : (fallback.navbar?.visible ?? true),
                 teacherName: canonicalTeacherName,
                 teacherTitle: canonicalTeacherTitle,
                 title: sv(navbarNode.props.title ?? canonicalTeacherName, fallback.navbar.title),
@@ -2047,6 +2586,7 @@ export default function PageBuilderPage() {
 
               hero: (heroNode?.props ? ({
                 ...mergeSection(heroNode.props, fallback.hero),
+                visible: heroNode.props.visible !== undefined ? Boolean(heroNode.props.visible) : (fallback.hero?.visible ?? true),
                 buttonText: sv(heroNode.props.buttonText ?? heroNode.props.button_text, fallback.hero.buttonText),
                 buttonLink: sv(heroNode.props.buttonLink ?? heroNode.props.button_link, fallback.hero.buttonLink),
                 secondaryButtonText: sv(heroNode.props.secondaryButtonText ?? heroNode.props.secondary_button_text ?? heroNode.props.demoButtonText ?? heroNode.props.demo_button_text, fallback.hero.secondaryButtonText || 'طلب عرض توضيحي'),
@@ -2057,10 +2597,11 @@ export default function PageBuilderPage() {
 
               about: (aboutNode?.props ? ({
                 ...mergeSection(aboutNode.props, fallback.about),
+                visible: aboutNode.props.visible !== undefined ? Boolean(aboutNode.props.visible) : (fallback.about?.visible ?? true),
                 caption: sv(aboutNode.props.caption, fallback.about.caption || 'نبذة عن المعلم'),
                 title: sv(aboutNode.props.title, fallback.about.title || 'الخبرة والمنهجية التعليمية'),
-                subtitle: sv(aboutNode.props.subtitle ?? aboutNode.props.description, fallback.about.subtitle || ''),
-                description: sv(aboutNode.props.description ?? aboutNode.props.subtitle, fallback.about.description || ''),
+                subtitle: sv(aboutNode.props.subtitle ?? aboutNode.props.description, ''),
+                description: sv(aboutNode.props.description ?? aboutNode.props.subtitle, ''),
                 timelineTitle: sv(aboutNode.props.timelineTitle ?? aboutNode.props.timeline_title, fallback.about.timelineTitle || 'المؤهلات والمسيرة المهنية'),
                 items: safeItems(aboutNode.props.items, fallback.about?.items || []),
                 fontFamily: sv(aboutNode.props.fontFamily ?? aboutNode.props.font_family, fallback.about.fontFamily || ''),
@@ -2079,6 +2620,7 @@ export default function PageBuilderPage() {
 
               features: (featuresNode?.props ? ({
                 ...mergeSection(featuresNode.props, fallback.features),
+                visible: featuresNode.props.visible !== undefined ? Boolean(featuresNode.props.visible) : (fallback.features?.visible ?? true),
                 items: safeItems(featuresNode.props.items, fallback.features.items),
                 backgroundColor: sv(featuresNode.props.backgroundColor ?? featuresNode.props.background_color ?? featuresNode.props.bg_color, fallback.features.backgroundColor),
                 textColor: sv(featuresNode.props.textColor ?? featuresNode.props.text_color, fallback.features.textColor),
@@ -2086,6 +2628,7 @@ export default function PageBuilderPage() {
 
               courses: (courseNode?.props ? ({
                 ...mergeSection(courseNode.props, fallback.courses || {}),
+                visible: courseNode.props.visible !== undefined ? Boolean(courseNode.props.visible) : (fallback.courses?.visible ?? true),
                 title: sv(courseNode.props.title, fallback.courses?.title || 'الكورسات المتاحة'),
                 subtitle: sv(courseNode.props.subtitle ?? courseNode.props.description, fallback.courses?.subtitle || 'اختار الكورس المناسب ليك وابدأ رحلتك التعليمية.'),
                 emptyText: sv(courseNode.props.emptyText ?? courseNode.props.empty_text, fallback.courses?.emptyText || 'لا توجد كورسات متاحة حالياً'),
@@ -2102,8 +2645,24 @@ export default function PageBuilderPage() {
                 items: fallback.courses?.items || [],
               }) : fallback.courses) as any,
 
+              bags: (bagsNode?.props ? ({
+                ...mergeSection(bagsNode.props, fallback.bags || {}),
+                visible: bagsNode.props.visible !== undefined ? Boolean(bagsNode.props.visible) : (fallback.bags?.visible ?? true),
+                title: sv(bagsNode.props.title, fallback.bags?.title || 'الحقائب التعليمية'),
+                subtitle: sv(bagsNode.props.subtitle ?? bagsNode.props.description, fallback.bags?.subtitle || 'مجموعات وباقات تعليمية شاملة ومصممة لضمان تفوقك الدراسي.'),
+                emptyText: sv(bagsNode.props.emptyText ?? bagsNode.props.empty_text, fallback.bags?.emptyText || 'لا توجد حقائب تعليمية متاحة حالياً'),
+                buttonText: sv(bagsNode.props.buttonText ?? bagsNode.props.button_text, fallback.bags?.buttonText || 'تفاصيل الحقيبة'),
+                selectedBagIds: Array.isArray(bagsNode.props.selectedBagIds) ? bagsNode.props.selectedBagIds : (fallback.bags?.selectedBagIds || []),
+                limit: bagsNode.props.limit ? Number(bagsNode.props.limit) : (fallback.bags?.limit ?? 6),
+                backgroundColor: sv(bagsNode.props.backgroundColor ?? bagsNode.props.background_color ?? bagsNode.props.bg_color, fallback.bags?.backgroundColor || ''),
+                textColor: sv(bagsNode.props.textColor ?? bagsNode.props.text_color, fallback.bags?.textColor || ''),
+                fontFamily: sv(bagsNode.props.fontFamily ?? bagsNode.props.font_family, fallback.bags?.fontFamily || ''),
+                items: fallback.bags?.items || [],
+              }) : fallback.bags) as any,
+
               steps: (stepsNode?.props ? ({
                 ...mergeSection(stepsNode.props, fallback.steps || {}),
+                visible: stepsNode.props.visible !== undefined ? Boolean(stepsNode.props.visible) : (fallback.steps?.visible ?? true),
                 title: sv(stepsNode.props.title, fallback.steps?.title || 'لسه أول مرة تذاكر معايا؟'),
                 subtitle: sv(stepsNode.props.subtitle ?? stepsNode.props.description, fallback.steps?.subtitle || 'ابدأ بالخطوات دي، وفي دقائق هتعرف أنسب مكان ليك.'),
                 backgroundColor: sv(stepsNode.props.backgroundColor ?? stepsNode.props.background_color ?? stepsNode.props.bg_color, fallback.steps?.backgroundColor || ''),
@@ -2114,6 +2673,7 @@ export default function PageBuilderPage() {
 
               videos: (videosNode?.props ? ({
                 ...mergeSection(videosNode.props, fallback.videos || {}),
+                visible: videosNode.props.visible !== undefined ? Boolean(videosNode.props.visible) : (fallback.videos?.visible ?? true),
                 title: sv(videosNode.props.title, fallback.videos?.title || 'أحدث الفيديوهات'),
                 subtitle: sv(videosNode.props.subtitle ?? videosNode.props.description, fallback.videos?.subtitle || 'شاهد أحدث الدروس والشروحات المصورة بجودة عالية.'),
                 emptyText: sv(videosNode.props.emptyText ?? videosNode.props.empty_text, fallback.videos?.emptyText || 'لا توجد فيديوهات متاحة حالياً'),
@@ -2125,6 +2685,7 @@ export default function PageBuilderPage() {
 
               resources: (resourcesNode?.props ? ({
                 ...mergeSection(resourcesNode.props, fallback.resources || {}),
+                visible: resourcesNode.props.visible !== undefined ? Boolean(resourcesNode.props.visible) : (fallback.resources?.visible ?? true),
                 title: sv(resourcesNode.props.title, fallback.resources?.title || 'المذكرات والموارد التعليمية'),
                 subtitle: sv(resourcesNode.props.subtitle ?? resourcesNode.props.description, fallback.resources?.subtitle || 'حمل أحدث المذكرات، ملخصات الدروس، وبنوك الأسئلة المعتمدة.'),
                 emptyText: sv(resourcesNode.props.emptyText ?? resourcesNode.props.empty_text, fallback.resources?.emptyText || 'لا توجد مذكرات أو موارد متاحة حالياً'),
@@ -2136,6 +2697,7 @@ export default function PageBuilderPage() {
 
               results: (resultsNode?.props ? ({
                 ...mergeSection(resultsNode.props, fallback.results || {}),
+                visible: resultsNode.props.visible !== undefined ? Boolean(resultsNode.props.visible) : (fallback.results?.visible ?? true),
                 title: sv(resultsNode.props.title, fallback.results?.title || 'لوحة شرف الأوائل والنتائج'),
                 subtitle: sv(resultsNode.props.subtitle ?? resultsNode.props.description, fallback.results?.subtitle || 'فخورون بما حققه أبطالنا وطلابنا من درجات نهائية وتفوق مستمر.'),
                 emptyText: sv(resultsNode.props.emptyText ?? resultsNode.props.empty_text, fallback.results?.emptyText || 'لا توجد نتائج مضافة حالياً'),
@@ -2146,11 +2708,19 @@ export default function PageBuilderPage() {
                 backgroundColor: sv(resultsNode.props.backgroundColor ?? resultsNode.props.background_color ?? resultsNode.props.bg_color, fallback.results?.backgroundColor || ''),
                 textColor: sv(resultsNode.props.textColor ?? resultsNode.props.text_color, fallback.results?.textColor || ''),
                 fontFamily: sv(resultsNode.props.fontFamily ?? resultsNode.props.font_family, fallback.results?.fontFamily || ''),
-                items: safeItems(resultsNode.props.items, fallback.results?.items || []),
+                items: safeItems(resultsNode.props.items, fallback.results?.items || []).map((it: any) => ({
+                  name: it.name ?? it.studentName ?? it.student_name ?? '',
+                  batch: it.batch ?? it.year ?? it.grade ?? '',
+                  score: it.score ?? it.result ?? it.grade_score ?? '',
+                  course: it.course ?? it.courseName ?? it.course_name ?? it.subject ?? '',
+                  image: it.image ?? it.avatar ?? it.image_url ?? '',
+                  enabled: it.enabled !== undefined ? Boolean(it.enabled) : true,
+                })),
               }) : fallback.results) as any,
 
               stats: (statsNode?.props ? ({
                 ...mergeSection(statsNode.props, fallback.stats || {}),
+                visible: statsNode.props.visible !== undefined ? Boolean(statsNode.props.visible) : (fallback.stats?.visible ?? true),
                 items: safeItems(statsNode.props.items || statsNode.props.cards, fallback.stats?.items || []),
                 backgroundColor: sv(statsNode.props.backgroundColor ?? statsNode.props.background_color ?? statsNode.props.bg_color, fallback.stats?.backgroundColor || ''),
                 textColor: sv(statsNode.props.textColor ?? statsNode.props.text_color, fallback.stats?.textColor || ''),
@@ -2158,6 +2728,7 @@ export default function PageBuilderPage() {
 
               gallery: (galleryNode?.props ? ({
                 ...mergeSection(galleryNode.props, fallback.gallery || {}),
+                visible: galleryNode.props.visible !== undefined ? Boolean(galleryNode.props.visible) : (fallback.gallery?.visible ?? true),
                 caption: sv(galleryNode.props.caption, fallback.gallery?.caption || 'معرض الصف'),
                 title: sv(galleryNode.props.title, fallback.gallery?.title || 'لقطات من البيئة التعليمية'),
                 subtitle: sv(galleryNode.props.subtitle ?? galleryNode.props.description, fallback.gallery?.subtitle || 'أنشطة وتجارب تفاعلية في القاعات الدراسية.'),
@@ -2170,6 +2741,7 @@ export default function PageBuilderPage() {
 
               testimonials: (testimonialsNode?.props ? ({
                 ...mergeSection(testimonialsNode.props, fallback.testimonials || {}),
+                visible: testimonialsNode.props.visible !== undefined ? Boolean(testimonialsNode.props.visible) : (fallback.testimonials?.visible ?? true),
                 caption: sv(testimonialsNode.props.caption, fallback.testimonials?.caption || 'آراء الطلاب'),
                 title: sv(testimonialsNode.props.title, fallback.testimonials?.title || 'ماذا يقول طلابنا المتفوقون؟'),
                 subtitle: sv(testimonialsNode.props.subtitle ?? testimonialsNode.props.description, fallback.testimonials?.subtitle || 'تجارب واقعية وقصص نجاح يرويها شركاء النجاح من الطلاب المتفوقين.'),
@@ -2182,6 +2754,7 @@ export default function PageBuilderPage() {
 
               pricing: (pricingNode?.props ? ({
                 ...mergeSection(pricingNode.props, fallback.pricing),
+                visible: pricingNode.props.visible !== undefined ? Boolean(pricingNode.props.visible) : (fallback.pricing?.visible ?? true),
                 items: safeItems(pricingNode.props.items, fallback.pricing.items),
                 backgroundColor: sv(pricingNode.props.backgroundColor ?? pricingNode.props.background_color ?? pricingNode.props.bg_color, fallback.pricing.backgroundColor),
                 textColor: sv(pricingNode.props.textColor ?? pricingNode.props.text_color, fallback.pricing.textColor),
@@ -2202,6 +2775,7 @@ export default function PageBuilderPage() {
 
               faq: (faqNode?.props ? ({
                 ...mergeSection(faqNode.props, fallback.faq),
+                visible: faqNode.props.visible !== undefined ? Boolean(faqNode.props.visible) : (fallback.faq?.visible ?? true),
                 caption: sv(faqNode.props.caption, fallback.faq?.caption || 'الأسئلة الشائعة'),
                 title: sv(faqNode.props.title, fallback.faq?.title || 'كل ما تود معرفته عن طريقة الدراسة والمتابعة'),
                 subtitle: sv(faqNode.props.subtitle ?? faqNode.props.description, fallback.faq?.subtitle || 'إجابات واضحة ومباشرة على أكثر الاستفسارات تكراراً.'),
@@ -2216,6 +2790,7 @@ export default function PageBuilderPage() {
 
               contact: (contactNode?.props || ctaNode?.props ? ({
                 ...mergeSection((ctaNode?.props || contactNode?.props) as any, fallback.contact),
+                visible: (ctaNode?.props?.visible !== undefined ? Boolean(ctaNode.props.visible) : contactNode?.props?.visible !== undefined ? Boolean(contactNode.props.visible) : (fallback.contact?.visible ?? true)),
                 caption: sv((ctaNode?.props || contactNode?.props)?.caption, fallback.contact.caption || 'جاهز للبدء والتفوق؟'),
                 phoneNumber: sv(contactNode?.props?.phoneNumber ?? contactNode?.props?.phone_number ?? ctaNode?.props?.phoneNumber ?? ctaNode?.props?.phone_number ?? ctaNode?.props?.whatsappUrl, fallback.contact.phoneNumber),
                 buttonText: sv(contactNode?.props?.buttonText ?? contactNode?.props?.button_text ?? ctaNode?.props?.primaryButtonText ?? ctaNode?.props?.buttonText, fallback.contact.buttonText),
@@ -2225,12 +2800,14 @@ export default function PageBuilderPage() {
                 whatsappUrl: sv(ctaNode?.props?.whatsappUrl ?? contactNode?.props?.whatsappUrl, fallback.contact.whatsappUrl || ''),
                 fontFamily: sv(ctaNode?.props?.fontFamily ?? contactNode?.props?.fontFamily, fallback.contact.fontFamily || ''),
                 backgroundColor: sv((ctaNode?.props || contactNode?.props)?.backgroundColor ?? (ctaNode?.props || contactNode?.props)?.background_color ?? (ctaNode?.props || contactNode?.props)?.bg_color, fallback.contact.backgroundColor),
+                cardBg: sv((ctaNode?.props || contactNode?.props)?.cardBg ?? (ctaNode?.props || contactNode?.props)?.card_bg ?? (ctaNode?.props || contactNode?.props)?.boxBg ?? (ctaNode?.props || contactNode?.props)?.box_bg, fallback.contact.cardBg || ''),
                 textColor: sv((ctaNode?.props || contactNode?.props)?.textColor ?? (ctaNode?.props || contactNode?.props)?.text_color, fallback.contact.textColor),
               }) : fallback.contact) as any,
 
               cta: (ctaNode?.props || contactNode?.props ? ({
                 ...mergeSection((ctaNode?.props || contactNode?.props) as any, (fallback.cta || fallback.contact) as any),
-                caption: sv((ctaNode?.props || contactNode?.props)?.caption, (fallback.cta as any)?.caption || 'جاهز للبدء والتفوق؟'),
+                visible: (ctaNode?.props?.visible !== undefined ? Boolean(ctaNode.props.visible) : contactNode?.props?.visible !== undefined ? Boolean(contactNode.props.visible) : (fallback.cta?.visible ?? true)),
+                caption: sv((ctaNode?.props || contactNode?.props)?.caption ?? (ctaNode?.props || contactNode?.props)?.badge ?? (ctaNode?.props || contactNode?.props)?.eyebrow, (fallback.cta as any)?.caption || 'جاهز للبدء والتفوق؟'),
                 title: sv((ctaNode?.props || contactNode?.props)?.title, (fallback.cta as any)?.title || 'احجز مكانك في مجموعاتنا التعليمية الآن'),
                 description: sv((ctaNode?.props || contactNode?.props)?.description, (fallback.cta as any)?.description || 'انضم إلينا وابدأ رحلة التفوق مع أسلوب تعليمي متميز ومتابعة دقيقة.'),
                 primaryButtonText: sv(ctaNode?.props?.primaryButtonText ?? ctaNode?.props?.primary_button_text ?? contactNode?.props?.buttonText ?? contactNode?.props?.button_text, (fallback.cta as any)?.primaryButtonText || 'ابدأ التعلم'),
@@ -2240,11 +2817,13 @@ export default function PageBuilderPage() {
                 phoneNumber: sv(ctaNode?.props?.phoneNumber ?? ctaNode?.props?.phone_number ?? contactNode?.props?.phoneNumber ?? contactNode?.props?.phone_number, (fallback.cta as any)?.phoneNumber || ''),
                 fontFamily: sv((ctaNode?.props || contactNode?.props)?.fontFamily ?? (ctaNode?.props || contactNode?.props)?.font_family, (fallback.cta as any)?.fontFamily || ''),
                 backgroundColor: sv((ctaNode?.props || contactNode?.props)?.backgroundColor ?? (ctaNode?.props || contactNode?.props)?.background_color ?? (ctaNode?.props || contactNode?.props)?.bg_color, (fallback.cta as any)?.backgroundColor || ''),
+                cardBg: sv((ctaNode?.props || contactNode?.props)?.cardBg ?? (ctaNode?.props || contactNode?.props)?.card_bg ?? (ctaNode?.props || contactNode?.props)?.boxBg ?? (ctaNode?.props || contactNode?.props)?.box_bg, (fallback.cta as any)?.cardBg || ''),
                 textColor: sv((ctaNode?.props || contactNode?.props)?.textColor ?? (ctaNode?.props || contactNode?.props)?.text_color, (fallback.cta as any)?.textColor || ''),
               }) : (fallback.cta || fallback.contact)) as any,
 
               footer: (footerNode?.props ? ({
                 ...mergeSection(footerNode.props, fallback.footer),
+                visible: footerNode.props.visible !== undefined ? Boolean(footerNode.props.visible) : (fallback.footer?.visible ?? true),
                 description: sv(footerNode.props.description ?? footerNode.props.aboutText ?? footerNode.props.about_text, fallback.footer.description || ''),
                 workingHours: sv(footerNode.props.workingHours ?? footerNode.props.timings ?? footerNode.props.working_hours, fallback.footer.workingHours || ''),
                 email: sv(footerNode.props.email, fallback.footer.email || ''),
@@ -2287,6 +2866,32 @@ export default function PageBuilderPage() {
         const res = await getCourses();
         if (res && Array.isArray(res) && defaults.courses) {
           defaults.courses.items = res;
+          setAvailableCourses(res);
+        }
+      } catch (e) { }
+      try {
+        const bagsRes = await getBags();
+        if (bagsRes && Array.isArray(bagsRes) && defaults.bags) {
+          defaults.bags.items = bagsRes;
+          setAvailableBags(bagsRes);
+        }
+      } catch (e) { }
+      try {
+        const profileRes = await getMyAcademyProfile();
+        if (profileRes) {
+          setTeacherProfile(profileRes);
+          const teacherNameFromRes =
+            profileRes.site_name ||
+            (Array.isArray(profileRes) ? profileRes.find((x: any) => x?.key === 'site_name')?.value : '') ||
+            profileRes.name ||
+            '';
+          if (teacherNameFromRes) {
+            if (defaults.profile) defaults.profile.teacherName = teacherNameFromRes;
+            if (defaults.navbar) {
+              defaults.navbar.teacherName = teacherNameFromRes;
+              defaults.navbar.title = teacherNameFromRes;
+            }
+          }
         }
       } catch (e) { }
       setContent(defaults);
@@ -2319,6 +2924,7 @@ export default function PageBuilderPage() {
         { id: 'about', type: 'about', props: { ...content.about, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         { id: 'features', type: 'features', props: { ...content.features, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         ...(content.courses ? [{ id: 'courses', type: 'course-cards', props: { ...content.courses, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
+        ...(content.bags ? [{ id: 'bags', type: 'bags', props: { ...content.bags, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         ...(content.steps ? [{ id: 'steps', type: 'steps', props: { ...content.steps, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         ...(content.videos ? [{ id: 'videos', type: 'videos', props: { ...content.videos, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         ...(content.resources ? [{ id: 'resources', type: 'resources', props: { ...content.resources, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
@@ -2328,8 +2934,8 @@ export default function PageBuilderPage() {
         ...(content.testimonials ? [{ id: 'testimonials', type: 'testimonials_section', props: { ...content.testimonials, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         { id: 'pricing', type: 'pricing', props: { ...content.pricing, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         { id: 'faq', type: 'faq', props: { ...content.faq, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
-        { id: 'contact', type: 'contact', props: { ...content.contact, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
-        ...(content.cta ? [{ id: 'cta', type: 'cta', props: { ...content.cta, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
+        { id: 'contact', type: 'contact', props: { ...(content.cta ? { ...content.contact, ...content.cta } : content.contact), role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        ...(content.cta ? [{ id: 'cta', type: 'cta', props: { ...(content.contact ? { ...content.contact, ...content.cta } : content.cta), role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         { id: 'footer', type: 'footer', props: { ...content.footer, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
       ];
 
@@ -2400,6 +3006,7 @@ export default function PageBuilderPage() {
         { id: 'about', type: 'about', props: { ...content.about, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         { id: 'features', type: 'features', props: { ...content.features, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         ...(content.courses ? [{ id: 'courses', type: 'course-cards', props: { ...content.courses, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
+        ...(content.bags ? [{ id: 'bags', type: 'bags', props: { ...content.bags, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         ...(content.steps ? [{ id: 'steps', type: 'steps', props: { ...content.steps, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         ...(content.videos ? [{ id: 'videos', type: 'videos', props: { ...content.videos, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         ...(content.resources ? [{ id: 'resources', type: 'resources', props: { ...content.resources, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
@@ -2409,8 +3016,8 @@ export default function PageBuilderPage() {
         ...(content.testimonials ? [{ id: 'testimonials', type: 'testimonials_section', props: { ...content.testimonials, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         { id: 'pricing', type: 'pricing', props: { ...content.pricing, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         { id: 'faq', type: 'faq', props: { ...content.faq, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
-        { id: 'contact', type: 'contact', props: { ...content.contact, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
-        ...(content.cta ? [{ id: 'cta', type: 'cta', props: { ...content.cta, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
+        { id: 'contact', type: 'contact', props: { ...(content.cta ? { ...content.contact, ...content.cta } : content.contact), role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        ...(content.cta ? [{ id: 'cta', type: 'cta', props: { ...(content.contact ? { ...content.contact, ...content.cta } : content.cta), role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         { id: 'footer', type: 'footer', props: { ...content.footer, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
       ];
 
@@ -2507,8 +3114,15 @@ export default function PageBuilderPage() {
         [nestedKey]: arrayCopy
       }
     };
+    const iframe = document.getElementById('website-builder-iframe') as HTMLIFrameElement;
+    if (iframe?.contentWindow) {
+      try {
+        lastScrollYRef.current = iframe.contentWindow.scrollY || iframe.contentDocument?.documentElement.scrollTop || 0;
+      } catch (e) { }
+    }
     setContent(updated);
     setPreviewContent(updated);
+    setInitialHtml(getHtmlForRole(currentRole, updated));
   };
 
   const handleAddListItem = (section: keyof TemplateContent, nestedKey: string, newItemTemplate: any) => {
@@ -2650,13 +3264,7 @@ export default function PageBuilderPage() {
             >
               القالب الأول
             </button>
-            <button
-              onClick={() => setActiveTemplateId('template_2')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${activeTemplateId === 'template_2' ? 'bg-white shadow-xs text-blue-600' : 'text-slate-500 hover:text-slate-900'
-                }`}
-            >
-              القالب الثاني
-            </button>
+
           </div>
           <button
             onClick={handleSaveDraft}
@@ -2700,19 +3308,19 @@ export default function PageBuilderPage() {
                   const SECTION_LABELS: Record<string, string> = currentRole === 'schoolcoach'
                     ? SCHOOLCOACH_NEW_SECTION_LABELS
                     : {
-                        navbar: 'شريط التنقل العلوي (Navbar)',
-                        hero: 'البانر الترحيبي (Hero Banner)',
-                        about: 'النبذة والتعريف (About Section)',
-                        video: 'فيديو العرض التعريفي (Video Intro)',
-                        features: 'مميزات الأكاديمية (Features)',
-                        courses: 'الدورات والبرامج التدريبية (Courses)',
-                        stats: 'إحصائيات ورضا الطلاب (Stats & Benefits)',
-                        pricing: 'المخرجات والنتائج الإحصائية (Outcomes & Statistics)',
-                        testimonials: 'آراء العملاء والتقييمات (Testimonials)',
-                        faq: 'الأسئلة الشائعة (FAQ Accordions)',
-                        contact: 'أزرار التواصل (Contact/WhatsApp)',
-                        footer: 'تذييل الصفحة (Footer Bar)',
-                      };
+                      navbar: 'شريط التنقل العلوي (Navbar)',
+                      hero: 'البانر الترحيبي (Hero Banner)',
+                      about: 'النبذة والتعريف (About Section)',
+                      video: 'فيديو العرض التعريفي (Video Intro)',
+                      features: 'مميزات الأكاديمية (Features)',
+                      courses: 'الدورات والبرامج التدريبية (Courses)',
+                      stats: 'إحصائيات ورضا الطلاب (Stats & Benefits)',
+                      pricing: 'المخرجات والنتائج الإحصائية (Outcomes & Statistics)',
+                      testimonials: 'آراء العملاء والتقييمات (Testimonials)',
+                      faq: 'الأسئلة الشائعة (FAQ Accordions)',
+                      contact: 'أزرار التواصل (Contact/WhatsApp)',
+                      footer: 'تذييل الصفحة (Footer Bar)',
+                    };
                   return (
                     <option key={sectionType} value={sectionType}>
                       {SECTION_LABELS[sectionType] ?? sectionType}
@@ -2729,6 +3337,48 @@ export default function PageBuilderPage() {
           {/* Section Dynamic Editors (Scrollable) */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden p-5">
             <div key={activeSection} className="border border-blue-200 bg-blue-50/10 rounded-2xl p-5 space-y-6 shadow-inner ring-2 ring-blue-600/5 animate-in fade-in duration-300 min-w-0">
+
+              {/* Universal Section Visibility Control */}
+              <div className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl shadow-xs">
+                <div className="flex items-center gap-2.5">
+                  {content[activeSection]?.visible !== false ? (
+                    <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-50" />
+                  ) : (
+                    <span className="flex h-2.5 w-2.5 rounded-full bg-slate-400 ring-4 ring-slate-100" />
+                  )}
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800">حالة ظهور القسم</h4>
+                    <p className="text-[10px] text-slate-500 font-medium">
+                      {content[activeSection]?.visible !== false
+                        ? 'القسم ظاهر في الموقع والمعاينة'
+                        : 'القسم مخفي ولن يظهر للزوار أو في القوائم'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentVis = content[activeSection]?.visible !== false;
+                    handleUpdateField(activeSection as keyof TemplateContent, 'visible', !currentVis);
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${content[activeSection]?.visible !== false
+                    ? 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
+                    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                    }`}
+                >
+                  {content[activeSection]?.visible !== false ? (
+                    <>
+                      <EyeOff className="w-3.5 h-3.5" />
+                      <span>إخفاء القسم</span>
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>إظهار القسم</span>
+                    </>
+                  )}
+                </button>
+              </div>
 
               {/* Navbar Editor */}
               {activeSection === 'navbar' && (
@@ -2918,8 +3568,9 @@ export default function PageBuilderPage() {
                               <label className="text-[9px] font-bold text-slate-600">تسمية زر الواتساب</label>
                               <input
                                 type="text"
-                                value={content.navbar?.whatsappButtonLabel || 'واتساب'}
+                                value={content.navbar?.whatsappButtonLabel ?? ''}
                                 onChange={(e) => handleUpdateField('navbar', 'whatsappButtonLabel', e.target.value)}
+                                placeholder="واتساب"
                                 className="w-full min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
                               />
                             </div>
@@ -2941,8 +3592,9 @@ export default function PageBuilderPage() {
                               <label className="text-[9px] font-bold text-slate-600">تسمية زر الاتصال</label>
                               <input
                                 type="text"
-                                value={content.navbar?.phoneButtonLabel || 'اتصال'}
+                                value={content.navbar?.phoneButtonLabel ?? ''}
                                 onChange={(e) => handleUpdateField('navbar', 'phoneButtonLabel', e.target.value)}
+                                placeholder="اتصال"
                                 className="w-full min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
                               />
                             </div>
@@ -2968,8 +3620,9 @@ export default function PageBuilderPage() {
                           <label className="text-[9px] font-bold text-slate-500">نص زر تسجيل الدخول</label>
                           <input
                             type="text"
-                            value={content.navbar?.loginText || 'تسجيل الدخول'}
+                            value={content.navbar?.loginText ?? ''}
                             onChange={(e) => handleUpdateField('navbar', 'loginText', e.target.value)}
+                            placeholder="تسجيل الدخول"
                             className="w-full min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
                           />
                         </div>
@@ -3112,7 +3765,7 @@ export default function PageBuilderPage() {
                     {/* 1. Teacher Image & Cover */}
                     <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-3 min-w-0">
                       <span className="text-[10px] font-extrabold text-slate-700 block border-b border-slate-200 pb-1">صورة المعلم والغلاف</span>
-                      
+
                       {/* Avatar Image */}
                       <div className="flex flex-col gap-1 min-w-0">
                         <label className="text-[10px] font-bold text-slate-600">صورة المعلم الدائرية (Avatar)</label>
@@ -3245,8 +3898,9 @@ export default function PageBuilderPage() {
                           <label className="text-[9px] font-bold text-slate-500">نص شارة التوثيق</label>
                           <input
                             type="text"
-                            value={content.profile?.verifiedText || 'موثّق'}
+                            value={content.profile?.verifiedText ?? ''}
                             onChange={(e) => handleUpdateField('profile', 'verifiedText', e.target.value)}
+                            placeholder="موثّق"
                             className="w-full min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
                           />
                         </div>
@@ -3268,11 +3922,11 @@ export default function PageBuilderPage() {
                           const currentStats = (Array.isArray(content.profile?.stats) && content.profile.stats.length > 0)
                             ? content.profile.stats
                             : [
-                                { value: '8000+', label: 'طالب متفوق', enabled: true },
-                                { value: '12+', label: 'سنوات خبرة', enabled: true },
-                                { value: '350+', label: 'فيديو تعليمي', enabled: true },
-                                { value: '4.9', label: 'تقييم عام', enabled: true },
-                              ];
+                              { value: '8000+', label: 'طالب متفوق', enabled: true },
+                              { value: '12+', label: 'سنوات خبرة', enabled: true },
+                              { value: '350+', label: 'فيديو تعليمي', enabled: true },
+                              { value: '4.9', label: 'تقييم عام', enabled: true },
+                            ];
 
                           return currentStats.slice(0, 4).map((stat: any, index: number) => (
                             <div key={index} className="bg-white border border-slate-200/80 rounded-xl p-2.5 space-y-2">
@@ -3342,8 +3996,9 @@ export default function PageBuilderPage() {
                         <label className="text-[9px] font-bold text-slate-500">تسمية الزر</label>
                         <input
                           type="text"
-                          value={content.profile?.ctaPrimaryText || 'ابدأ التعلم'}
+                          value={content.profile?.ctaPrimaryText ?? ''}
                           onChange={(e) => handleUpdateField('profile', 'ctaPrimaryText', e.target.value)}
+                          placeholder="ابدأ التعلم"
                           className="w-full min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
                         />
                       </div>
@@ -3385,8 +4040,9 @@ export default function PageBuilderPage() {
                         <label className="text-[9px] font-bold text-slate-500">تسمية الزر</label>
                         <input
                           type="text"
-                          value={content.profile?.ctaSecondaryText || 'شاهد الفيديوهات'}
+                          value={content.profile?.ctaSecondaryText ?? ''}
                           onChange={(e) => handleUpdateField('profile', 'ctaSecondaryText', e.target.value)}
+                          placeholder="شاهد الفيديوهات"
                           className="w-full min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
                         />
                       </div>
@@ -4158,7 +4814,7 @@ export default function PageBuilderPage() {
                       <label className="text-[11px] font-bold text-slate-600">عنوان قسم الكورسات</label>
                       <input
                         type="text"
-                        value={content.courses.title || 'الكورسات المتاحة'}
+                        value={content.courses.title ?? ''}
                         onChange={(e) => handleUpdateField('courses', 'title', e.target.value)}
                         placeholder="الكورسات المتاحة"
                         className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
@@ -4181,7 +4837,7 @@ export default function PageBuilderPage() {
                       <label className="text-[11px] font-bold text-slate-600">نص الحالة الفارغة (عند عدم توفر كورسات)</label>
                       <input
                         type="text"
-                        value={content.courses.emptyText || 'لا توجد كورسات متاحة حالياً'}
+                        value={content.courses.emptyText ?? ''}
                         onChange={(e) => handleUpdateField('courses', 'emptyText', e.target.value)}
                         placeholder="لا توجد كورسات متاحة حالياً"
                         className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
@@ -4272,6 +4928,160 @@ export default function PageBuilderPage() {
                       ) : (
                         <div className="text-[10px] text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-200">
                           لا توجد كورسات مضافة حالياً في حسابك. يمكنك إضافة كورسات من إدارة الكورسات.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Bags Editor for SchoolCoach */}
+              {activeSection === 'bags' && content.bags && currentRole === 'schoolcoach' && (
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 className="text-xs font-extrabold text-slate-800">تخصيص قسم الحقائب التعليمية (Section: Bags)</h3>
+                  </div>
+
+                  <div className="bg-blue-50/70 border border-blue-200 p-3.5 rounded-xl text-[11px] text-blue-900 font-bold leading-relaxed flex items-start gap-2">
+                    <span className="material-symbols-outlined text-[18px] text-blue-600 shrink-0 mt-0.5">inventory_2</span>
+                    <div>
+                      تُعرض الحقائب التعليمية تلقائياً من قاعدة بيانات الحقائب الفعلية الخاصة بالأستاذ. يمكنك هنا تخصيص عنوان القسم، الوصف، الخط، الألوان وتحديد الحقائب المعروضة.
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* Section Heading */}
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">عنوان قسم الحقائب التعليمية</label>
+                      <input
+                        type="text"
+                        value={content.bags.title ?? ''}
+                        onChange={(e) => handleUpdateField('bags', 'title', e.target.value)}
+                        placeholder="الحقائب التعليمية"
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    {/* Section Caption */}
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">الوصف التعريفي للقسم (Caption)</label>
+                      <textarea
+                        value={content.bags.subtitle ?? ''}
+                        onChange={(e) => handleUpdateField('bags', 'subtitle', e.target.value)}
+                        placeholder="مجموعات متكاملة من الدورات والموارد التعليمية بأفضل قيمة."
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[60px] resize-none"
+                      />
+                    </div>
+
+                    {/* Empty State Text */}
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">نص الحالة الفارغة (عند عدم توفر حقائب)</label>
+                      <input
+                        type="text"
+                        value={content.bags.emptyText ?? ''}
+                        onChange={(e) => handleUpdateField('bags', 'emptyText', e.target.value)}
+                        placeholder="لا توجد حقائب تعليمية متاحة حالياً"
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    {/* Bag Button Text */}
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">نص زر الحقيبة</label>
+                      <input
+                        type="text"
+                        value={content.bags.buttonText ?? ''}
+                        onChange={(e) => handleUpdateField('bags', 'buttonText', e.target.value)}
+                        placeholder="تفاصيل الحقيبة"
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      />
+                    </div>
+
+                    {/* Typography / Font Selector */}
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">نوع الخط للعنوان والوصف (Font Family)</label>
+                      <select
+                        value={content.bags.fontFamily || ''}
+                        onChange={(e) => handleUpdateField('bags', 'fontFamily', e.target.value)}
+                        className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                      >
+                        {ARABIC_FONT_OPTIONS.map((f) => (
+                          <option key={f.value} value={f.value}>{f.label}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Background & Text Colors */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.bags.backgroundColor || '#f8fafc'}
+                            onChange={(e) => handleUpdateField('bags', 'backgroundColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.bags.backgroundColor || 'افتراضي'}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-600">لون النصوص والعناوين</label>
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                          <input
+                            type="color"
+                            value={content.bags.textColor || '#0f172a'}
+                            onChange={(e) => handleUpdateField('bags', 'textColor', e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                          />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.bags.textColor || 'افتراضي'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bag Selection / Filter */}
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+                      <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                        <span className="text-[10px] font-extrabold text-slate-700">تحديد الحقائب المعروضة في القسم</span>
+                        <span className="text-[9px] text-slate-500 font-bold">
+                          {((content.bags.selectedBagIds || []).length > 0)
+                            ? `${content.bags.selectedBagIds?.length} حقيبة محددة`
+                            : 'عرض كل الحقائب المتاحة'}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 leading-normal">
+                        اترك التحديد فارغاً لعرض جميع حقائبك تلقائياً، أو حدد حقائب بعينها لعرضها فقط:
+                      </p>
+                      {availableBags.length > 0 ? (
+                        <div className="space-y-1.5 max-h-48 overflow-y-auto pt-1">
+                          {availableBags.map((b: any) => {
+                            const bId = String(b.id || b.bag_id || b._id);
+                            const isSelected = (content.bags?.selectedBagIds || []).includes(bId);
+                            return (
+                              <label key={bId} className="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 transition-colors">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={(e) => {
+                                    const currentSelected = content.bags?.selectedBagIds || [];
+                                    const updated = e.target.checked
+                                      ? [...currentSelected, bId]
+                                      : currentSelected.filter((id: string) => id !== bId);
+                                    handleUpdateField('bags', 'selectedBagIds', updated);
+                                  }}
+                                  className="w-4 h-4 text-blue-600 rounded cursor-pointer"
+                                />
+                                <span className="text-xs font-bold text-slate-800 flex-1 truncate">{b.name || b.title || `حقيبة #${bId}`}</span>
+                                <span className="text-[10px] text-blue-600 font-bold">{b.price ? `${b.price} ر.س` : 'متاح'}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-[10px] text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-200">
+                          لا توجد حقائب تعليمية مسجلة في حسابك حالياً. يمكنك إضافة حقائب من إدارة الحقائب.
                         </div>
                       )}
                     </div>
@@ -4466,27 +5276,15 @@ export default function PageBuilderPage() {
                               )}
                             </div>
 
-                            <div className="grid grid-cols-3 gap-2">
-                              <div className="flex flex-col gap-1 col-span-1">
-                                <label className="text-[9px] font-bold text-slate-500">رقم الخطوة</label>
-                                <input
-                                  type="text"
-                                  value={step.number || String(idx + 1)}
-                                  onChange={(e) => handleUpdateNestedField('steps', 'items', idx, 'number', e.target.value)}
-                                  className="border border-slate-200 rounded-lg p-2 text-xs bg-white outline-none font-bold text-center"
-                                  placeholder="1"
-                                />
-                              </div>
-                              <div className="flex flex-col gap-1 col-span-2">
-                                <label className="text-[9px] font-bold text-slate-500">عنوان الخطوة</label>
-                                <input
-                                  type="text"
-                                  value={step.title || ''}
-                                  onChange={(e) => handleUpdateNestedField('steps', 'items', idx, 'title', e.target.value)}
-                                  className="border border-slate-200 rounded-lg p-2 text-xs bg-white outline-none font-bold"
-                                  placeholder="شاهد درس تجريبي"
-                                />
-                              </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] font-bold text-slate-500">عنوان الخطوة</label>
+                              <input
+                                type="text"
+                                value={step.title || ''}
+                                onChange={(e) => handleUpdateNestedField('steps', 'items', idx, 'title', e.target.value)}
+                                className="border border-slate-200 rounded-lg p-2 text-xs bg-white outline-none font-bold"
+                                placeholder="شاهد درس تجريبي"
+                              />
                             </div>
 
                             <div className="flex flex-col gap-1">
@@ -4626,7 +5424,7 @@ export default function PageBuilderPage() {
                   <div className="bg-blue-50/70 border border-blue-200 p-3.5 rounded-xl text-[11px] text-blue-900 font-bold leading-relaxed flex items-start gap-2">
                     <span className="material-symbols-outlined text-[18px] text-blue-600 shrink-0 mt-0.5">menu_book</span>
                     <div>
-                      تُعرض المذكرات والموارد التعليمية تلقائياً من مكتبة المذكرات الخاصة بالمعلم عند توفر نقطة النهاية (Endpoint). يمكنك هنا التحكم في عناوين المظهر، نصوص الأزرار، والخطوط والألوان.
+                      قسم مخصص لعرض المذكرات والموارد التعليمية. يمكنك هنا التحكم في عناوين ومظهر القسم، نصوص الأزرار، والخطوط والألوان.
                     </div>
                   </div>
 
@@ -6057,7 +6855,7 @@ export default function PageBuilderPage() {
                               handleUpdateField('contact', 'phoneNumber', e.target.value);
                               handleUpdateField('contact', 'whatsappUrl', e.target.value);
                             }}
-                            placeholder="01012345678 أو https://wa.me/..."
+                            placeholder="https://wa.me/..."
                             className="border border-slate-200 rounded-xl p-2.5 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
                             dir="ltr"
                           />
@@ -6082,7 +6880,7 @@ export default function PageBuilderPage() {
                       </div>
 
                       {/* Colors */}
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-3 gap-2">
                         <div className="flex flex-col gap-1">
                           <label className="text-[11px] font-bold text-slate-600">خلفية القسم</label>
                           <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
@@ -6096,6 +6894,22 @@ export default function PageBuilderPage() {
                               className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                             />
                             <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.cta?.backgroundColor || 'افتراضي'}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] font-bold text-slate-600">خلفية الصندوق</label>
+                          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
+                            <input
+                              type="color"
+                              value={content.cta?.cardBg || content.contact?.cardBg || '#1e293b'}
+                              onChange={(e) => {
+                                handleUpdateField('cta', 'cardBg', e.target.value);
+                                handleUpdateField('contact', 'cardBg', e.target.value);
+                              }}
+                              className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                            />
+                            <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.cta?.cardBg || 'افتراضي'}</span>
                           </div>
                         </div>
 
@@ -6235,7 +7049,7 @@ export default function PageBuilderPage() {
               )}
 
               {/* Footer Editor */}
-              {activeSection === 'footer' && (
+              {activeSection === 'footer' && currentRole !== 'schoolcoach' && (
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
                     <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
