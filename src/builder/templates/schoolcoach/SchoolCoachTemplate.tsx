@@ -842,8 +842,11 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
   }
 
   // Contact & Final CTA
+  const ctaContactNode = contactNode || nodes.find(n => n.type === 'contact' || n.type === 'contact_section');
   const ctaNode = nodes.find(n => n.type === 'cta' || n.type === 'final-cta');
-  const rawCtaProps = ctaNode ? parseProps(ctaNode.props) : (contactNode ? parseProps(contactNode.props) : {});
+  const rawContactProps = ctaContactNode ? parseProps(ctaContactNode.props) : {};
+  const rawCtaOnlyProps = ctaNode ? parseProps(ctaNode.props) : {};
+  const rawCtaProps = { ...rawContactProps, ...rawCtaOnlyProps };
 
   const cta = {
     ...fallback.cta,

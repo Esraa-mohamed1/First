@@ -279,6 +279,7 @@ interface ContactConfig {
   description: string;
   phoneNumber: string;
   buttonText: string;
+  buttonLink?: string;
   primaryButtonText?: string;
   primaryButtonLink?: string;
   secondaryButtonText?: string;
@@ -1961,11 +1962,11 @@ export default function PageBuilderPage() {
       }
 
       // 12. Final CTA Section Live Updates (#cta)
-      const ctaData = content.cta || content.contact;
+      const ctaData = { ...(content.contact || {}), ...(content.cta || {}) };
       if (ctaData) {
-        const ctaCaptionEl = doc.querySelector('#cta .eyebrow, #cta .eyebrow-light') as HTMLElement | null;
+        let ctaCaptionEl = doc.querySelector('#cta .eyebrow, #cta .eyebrow-light') as HTMLElement | null;
+        const cVal = ctaData.caption !== undefined ? ctaData.caption : 'جاهز للبدء والتفوق؟';
         if (ctaCaptionEl) {
-          const cVal = ctaData.caption !== undefined ? ctaData.caption : 'جاهز للبدء والتفوق؟';
           if (!cVal.trim()) {
             ctaCaptionEl.style.display = 'none';
             ctaCaptionEl.textContent = '';
@@ -1973,11 +1974,19 @@ export default function PageBuilderPage() {
             ctaCaptionEl.style.display = '';
             ctaCaptionEl.textContent = cVal;
           }
+        } else if (cVal.trim()) {
+          const infoBox = doc.querySelector('#cta .cta-info');
+          if (infoBox) {
+            ctaCaptionEl = doc.createElement('div');
+            ctaCaptionEl.className = 'eyebrow eyebrow-light';
+            ctaCaptionEl.textContent = cVal;
+            infoBox.prepend(ctaCaptionEl);
+          }
         }
 
-        const ctaTitleEl = doc.querySelector('#cta .cta-title, #cta h2') as HTMLElement | null;
+        let ctaTitleEl = doc.querySelector('#cta .cta-title, #cta h2') as HTMLElement | null;
+        const tVal = ctaData.title !== undefined ? ctaData.title : 'احجز مكانك في مجموعاتنا التعليمية الآن';
         if (ctaTitleEl) {
-          const tVal = ctaData.title !== undefined ? ctaData.title : 'احجز مكانك في مجموعاتنا التعليمية الآن';
           if (!tVal.trim()) {
             ctaTitleEl.style.display = 'none';
             ctaTitleEl.textContent = '';
@@ -1985,11 +1994,24 @@ export default function PageBuilderPage() {
             ctaTitleEl.style.display = '';
             ctaTitleEl.textContent = tVal;
           }
+        } else if (tVal.trim()) {
+          const infoBox = doc.querySelector('#cta .cta-info');
+          if (infoBox) {
+            ctaTitleEl = doc.createElement('h2');
+            ctaTitleEl.className = 'cta-title';
+            ctaTitleEl.textContent = tVal;
+            const descEl = infoBox.querySelector('.cta-desc');
+            if (descEl) {
+              infoBox.insertBefore(ctaTitleEl, descEl);
+            } else {
+              infoBox.appendChild(ctaTitleEl);
+            }
+          }
         }
 
-        const ctaDescEl = doc.querySelector('#cta .cta-desc, #cta p') as HTMLElement | null;
+        let ctaDescEl = doc.querySelector('#cta .cta-desc, #cta p') as HTMLElement | null;
+        const dVal = ctaData.description !== undefined ? ctaData.description : 'انضم إلينا وابدأ رحلة التفوق مع أسلوب تعليمي متميز ومتابعة دقيقة.';
         if (ctaDescEl) {
-          const dVal = ctaData.description !== undefined ? ctaData.description : 'انضم إلينا وابدأ رحلة التفوق مع أسلوب تعليمي متميز ومتابعة دقيقة.';
           if (!dVal.trim()) {
             ctaDescEl.style.display = 'none';
             ctaDescEl.textContent = '';
@@ -1997,36 +2019,49 @@ export default function PageBuilderPage() {
             ctaDescEl.style.display = '';
             ctaDescEl.textContent = dVal;
           }
+        } else if (dVal.trim()) {
+          const infoBox = doc.querySelector('#cta .cta-info');
+          if (infoBox) {
+            ctaDescEl = doc.createElement('p');
+            ctaDescEl.className = 'cta-desc';
+            ctaDescEl.textContent = dVal;
+            infoBox.appendChild(ctaDescEl);
+          }
         }
 
-        const ctaPrimaryBtn = doc.querySelector('#cta .primary-cta-btn') as HTMLElement | null;
+        let ctaPrimaryBtn = doc.querySelector('#cta .primary-cta-btn') as HTMLElement | null;
+        const pText = ctaData.primaryButtonText !== undefined ? ctaData.primaryButtonText : ((ctaData as any).buttonText ?? 'ابدأ التعلم');
         if (ctaPrimaryBtn) {
-          const pText = ctaData.primaryButtonText !== undefined ? ctaData.primaryButtonText : (ctaData as any).buttonText ?? 'ابدأ التعلم';
           if (!pText.trim()) {
             ctaPrimaryBtn.style.display = 'none';
           } else {
             ctaPrimaryBtn.style.display = 'inline-flex';
             ctaPrimaryBtn.textContent = pText;
-            const pLink = (ctaData.primaryButtonLink || (ctaData as any).buttonLink || '#courses').trim();
+            const pLink = (ctaData.primaryButtonLink ?? (ctaData as any).buttonLink ?? '#courses').trim();
             if (pLink) {
               ctaPrimaryBtn.setAttribute('href', pLink);
               if (pLink.startsWith('#')) {
                 ctaPrimaryBtn.setAttribute('data-scroll', pLink.replace('#', ''));
+              } else {
+                ctaPrimaryBtn.removeAttribute('data-scroll');
               }
+            } else {
+              ctaPrimaryBtn.removeAttribute('href');
+              ctaPrimaryBtn.removeAttribute('data-scroll');
             }
           }
         }
 
-        const ctaWhatsappBtn = doc.querySelector('#cta .whatsapp-cta-btn') as HTMLElement | null;
+        let ctaWhatsappBtn = doc.querySelector('#cta .whatsapp-cta-btn') as HTMLElement | null;
+        const wText = ctaData.whatsappButtonLabel !== undefined ? ctaData.whatsappButtonLabel : 'كلمنا على الواتساب';
         if (ctaWhatsappBtn) {
-          const wText = ctaData.whatsappButtonLabel !== undefined ? ctaData.whatsappButtonLabel : 'كلمنا على الواتساب';
           if (!wText.trim()) {
             ctaWhatsappBtn.style.display = 'none';
           } else {
             ctaWhatsappBtn.style.display = 'inline-flex';
             const spanEl = ctaWhatsappBtn.querySelector('span');
             if (spanEl) spanEl.textContent = wText;
-            const wUrl = (ctaData.whatsappUrl || ctaData.phoneNumber || (ctaData as any).whatsapp || '').trim();
+            const wUrl = (ctaData.whatsappUrl ?? ctaData.phoneNumber ?? (ctaData as any).whatsapp ?? '').trim();
             if (wUrl) {
               let normUrl = wUrl;
               if (!normUrl.startsWith('http://') && !normUrl.startsWith('https://')) {
@@ -2036,6 +2071,12 @@ export default function PageBuilderPage() {
               ctaWhatsappBtn.setAttribute('href', normUrl);
               ctaWhatsappBtn.setAttribute('target', '_blank');
               ctaWhatsappBtn.setAttribute('rel', 'noopener noreferrer');
+              ctaWhatsappBtn.removeAttribute('data-contact-action');
+            } else {
+              ctaWhatsappBtn.removeAttribute('href');
+              ctaWhatsappBtn.removeAttribute('target');
+              ctaWhatsappBtn.removeAttribute('rel');
+              ctaWhatsappBtn.setAttribute('data-contact-action', 'true');
             }
           }
         }
@@ -2788,38 +2829,48 @@ export default function PageBuilderPage() {
                 testimonialsSubtitle: sv(faqNode.props.testimonialsSubtitle ?? faqNode.props.testimonials_subtitle, fallback.faq.testimonialsSubtitle),
               }) : fallback.faq) as any,
 
-              contact: (contactNode?.props || ctaNode?.props ? ({
-                ...mergeSection((ctaNode?.props || contactNode?.props) as any, fallback.contact),
-                visible: (ctaNode?.props?.visible !== undefined ? Boolean(ctaNode.props.visible) : contactNode?.props?.visible !== undefined ? Boolean(contactNode.props.visible) : (fallback.contact?.visible ?? true)),
-                caption: sv((ctaNode?.props || contactNode?.props)?.caption, fallback.contact.caption || 'جاهز للبدء والتفوق؟'),
-                phoneNumber: sv(contactNode?.props?.phoneNumber ?? contactNode?.props?.phone_number ?? ctaNode?.props?.phoneNumber ?? ctaNode?.props?.phone_number ?? ctaNode?.props?.whatsappUrl, fallback.contact.phoneNumber),
-                buttonText: sv(contactNode?.props?.buttonText ?? contactNode?.props?.button_text ?? ctaNode?.props?.primaryButtonText ?? ctaNode?.props?.buttonText, fallback.contact.buttonText),
-                secondaryButtonText: sv(contactNode?.props?.secondaryButtonText ?? contactNode?.props?.secondary_button_text ?? contactNode?.props?.demoButtonText ?? contactNode?.props?.demo_button_text, fallback.contact.secondaryButtonText || 'طلب عرض توضيحي'),
-                secondaryButtonLink: sv(contactNode?.props?.secondaryButtonLink ?? contactNode?.props?.secondary_button_link ?? contactNode?.props?.demoButtonLink ?? contactNode?.props?.demo_button_link, fallback.contact.secondaryButtonLink || 'https://example.com/demo'),
-                whatsappButtonLabel: sv(ctaNode?.props?.whatsappButtonLabel ?? contactNode?.props?.whatsappButtonLabel, fallback.contact.whatsappButtonLabel || 'كلمنا على الواتساب'),
-                whatsappUrl: sv(ctaNode?.props?.whatsappUrl ?? contactNode?.props?.whatsappUrl, fallback.contact.whatsappUrl || ''),
-                fontFamily: sv(ctaNode?.props?.fontFamily ?? contactNode?.props?.fontFamily, fallback.contact.fontFamily || ''),
-                backgroundColor: sv((ctaNode?.props || contactNode?.props)?.backgroundColor ?? (ctaNode?.props || contactNode?.props)?.background_color ?? (ctaNode?.props || contactNode?.props)?.bg_color, fallback.contact.backgroundColor),
-                cardBg: sv((ctaNode?.props || contactNode?.props)?.cardBg ?? (ctaNode?.props || contactNode?.props)?.card_bg ?? (ctaNode?.props || contactNode?.props)?.boxBg ?? (ctaNode?.props || contactNode?.props)?.box_bg, fallback.contact.cardBg || ''),
-                textColor: sv((ctaNode?.props || contactNode?.props)?.textColor ?? (ctaNode?.props || contactNode?.props)?.text_color, fallback.contact.textColor),
-              }) : fallback.contact) as any,
+              contact: (contactNode?.props || ctaNode?.props ? (() => {
+                const combinedCtaNodeProps = { ...(contactNode?.props || {}), ...(ctaNode?.props || {}) };
+                return {
+                  ...mergeSection(combinedCtaNodeProps as any, fallback.contact),
+                  visible: (ctaNode?.props?.visible !== undefined ? Boolean(ctaNode.props.visible) : contactNode?.props?.visible !== undefined ? Boolean(contactNode.props.visible) : (fallback.contact?.visible ?? true)),
+                  caption: sv(combinedCtaNodeProps.caption ?? combinedCtaNodeProps.badge ?? combinedCtaNodeProps.eyebrow, fallback.contact?.caption ?? 'جاهز للبدء والتفوق؟'),
+                  title: sv(combinedCtaNodeProps.title, (fallback.contact as any)?.title ?? 'احجز مكانك في مجموعاتنا التعليمية الآن'),
+                  description: sv(combinedCtaNodeProps.description ?? combinedCtaNodeProps.subtitle, fallback.contact?.description ?? 'انضم إلينا وابدأ رحلة التفوق مع أسلوب تعليمي متميز ومتابعة دقيقة.'),
+                  phoneNumber: sv(combinedCtaNodeProps.phoneNumber ?? combinedCtaNodeProps.phone_number ?? combinedCtaNodeProps.whatsappUrl ?? combinedCtaNodeProps.whatsapp_url, fallback.contact?.phoneNumber ?? ''),
+                  buttonText: sv(combinedCtaNodeProps.buttonText ?? combinedCtaNodeProps.button_text ?? combinedCtaNodeProps.primaryButtonText ?? combinedCtaNodeProps.primary_button_text, fallback.contact?.buttonText ?? 'ابدأ التعلم'),
+                  primaryButtonText: sv(combinedCtaNodeProps.primaryButtonText ?? combinedCtaNodeProps.primary_button_text ?? combinedCtaNodeProps.buttonText ?? combinedCtaNodeProps.button_text, (fallback.contact as any)?.primaryButtonText ?? 'ابدأ التعلم'),
+                  primaryButtonLink: sv(combinedCtaNodeProps.primaryButtonLink ?? combinedCtaNodeProps.primary_button_link ?? combinedCtaNodeProps.buttonLink ?? combinedCtaNodeProps.button_link, (fallback.contact as any)?.primaryButtonLink ?? '#courses'),
+                  secondaryButtonText: sv(combinedCtaNodeProps.secondaryButtonText ?? combinedCtaNodeProps.secondary_button_text ?? combinedCtaNodeProps.demoButtonText ?? combinedCtaNodeProps.demo_button_text, fallback.contact?.secondaryButtonText ?? 'طلب عرض توضيحي'),
+                  secondaryButtonLink: sv(combinedCtaNodeProps.secondaryButtonLink ?? combinedCtaNodeProps.secondary_button_link ?? combinedCtaNodeProps.demoButtonLink ?? combinedCtaNodeProps.demo_button_link, fallback.contact?.secondaryButtonLink ?? 'https://example.com/demo'),
+                  whatsappButtonLabel: sv(combinedCtaNodeProps.whatsappButtonLabel ?? combinedCtaNodeProps.whatsapp_button_label, fallback.contact?.whatsappButtonLabel ?? 'كلمنا على الواتساب'),
+                  whatsappUrl: sv(combinedCtaNodeProps.whatsappUrl ?? combinedCtaNodeProps.whatsapp_url ?? combinedCtaNodeProps.whatsapp ?? combinedCtaNodeProps.phoneNumber ?? combinedCtaNodeProps.phone_number, fallback.contact?.whatsappUrl ?? ''),
+                  fontFamily: sv(combinedCtaNodeProps.fontFamily ?? combinedCtaNodeProps.font_family, fallback.contact?.fontFamily ?? ''),
+                  backgroundColor: sv(combinedCtaNodeProps.backgroundColor ?? combinedCtaNodeProps.background_color ?? combinedCtaNodeProps.bg_color, fallback.contact?.backgroundColor ?? ''),
+                  cardBg: sv(combinedCtaNodeProps.cardBg ?? combinedCtaNodeProps.card_bg ?? combinedCtaNodeProps.boxBg ?? combinedCtaNodeProps.box_bg, fallback.contact?.cardBg ?? ''),
+                  textColor: sv(combinedCtaNodeProps.textColor ?? combinedCtaNodeProps.text_color, fallback.contact?.textColor ?? ''),
+                };
+              })() : fallback.contact) as any,
 
-              cta: (ctaNode?.props || contactNode?.props ? ({
-                ...mergeSection((ctaNode?.props || contactNode?.props) as any, (fallback.cta || fallback.contact) as any),
-                visible: (ctaNode?.props?.visible !== undefined ? Boolean(ctaNode.props.visible) : contactNode?.props?.visible !== undefined ? Boolean(contactNode.props.visible) : (fallback.cta?.visible ?? true)),
-                caption: sv((ctaNode?.props || contactNode?.props)?.caption ?? (ctaNode?.props || contactNode?.props)?.badge ?? (ctaNode?.props || contactNode?.props)?.eyebrow, (fallback.cta as any)?.caption || 'جاهز للبدء والتفوق؟'),
-                title: sv((ctaNode?.props || contactNode?.props)?.title, (fallback.cta as any)?.title || 'احجز مكانك في مجموعاتنا التعليمية الآن'),
-                description: sv((ctaNode?.props || contactNode?.props)?.description, (fallback.cta as any)?.description || 'انضم إلينا وابدأ رحلة التفوق مع أسلوب تعليمي متميز ومتابعة دقيقة.'),
-                primaryButtonText: sv(ctaNode?.props?.primaryButtonText ?? ctaNode?.props?.primary_button_text ?? contactNode?.props?.buttonText ?? contactNode?.props?.button_text, (fallback.cta as any)?.primaryButtonText || 'ابدأ التعلم'),
-                primaryButtonLink: sv(ctaNode?.props?.primaryButtonLink ?? ctaNode?.props?.primary_button_link ?? contactNode?.props?.buttonLink, (fallback.cta as any)?.primaryButtonLink || '#courses'),
-                whatsappButtonLabel: sv(ctaNode?.props?.whatsappButtonLabel ?? ctaNode?.props?.whatsapp_button_label ?? contactNode?.props?.whatsappButtonLabel, (fallback.cta as any)?.whatsappButtonLabel || 'كلمنا على الواتساب'),
-                whatsappUrl: sv(ctaNode?.props?.whatsappUrl ?? ctaNode?.props?.whatsapp_url ?? ctaNode?.props?.whatsapp ?? contactNode?.props?.phoneNumber ?? contactNode?.props?.phone_number, (fallback.cta as any)?.whatsappUrl || ''),
-                phoneNumber: sv(ctaNode?.props?.phoneNumber ?? ctaNode?.props?.phone_number ?? contactNode?.props?.phoneNumber ?? contactNode?.props?.phone_number, (fallback.cta as any)?.phoneNumber || ''),
-                fontFamily: sv((ctaNode?.props || contactNode?.props)?.fontFamily ?? (ctaNode?.props || contactNode?.props)?.font_family, (fallback.cta as any)?.fontFamily || ''),
-                backgroundColor: sv((ctaNode?.props || contactNode?.props)?.backgroundColor ?? (ctaNode?.props || contactNode?.props)?.background_color ?? (ctaNode?.props || contactNode?.props)?.bg_color, (fallback.cta as any)?.backgroundColor || ''),
-                cardBg: sv((ctaNode?.props || contactNode?.props)?.cardBg ?? (ctaNode?.props || contactNode?.props)?.card_bg ?? (ctaNode?.props || contactNode?.props)?.boxBg ?? (ctaNode?.props || contactNode?.props)?.box_bg, (fallback.cta as any)?.cardBg || ''),
-                textColor: sv((ctaNode?.props || contactNode?.props)?.textColor ?? (ctaNode?.props || contactNode?.props)?.text_color, (fallback.cta as any)?.textColor || ''),
-              }) : (fallback.cta || fallback.contact)) as any,
+              cta: (contactNode?.props || ctaNode?.props ? (() => {
+                const combinedCtaNodeProps = { ...(contactNode?.props || {}), ...(ctaNode?.props || {}) };
+                return {
+                  ...mergeSection(combinedCtaNodeProps as any, (fallback.cta || fallback.contact) as any),
+                  visible: (ctaNode?.props?.visible !== undefined ? Boolean(ctaNode.props.visible) : contactNode?.props?.visible !== undefined ? Boolean(contactNode.props.visible) : (fallback.cta?.visible ?? true)),
+                  caption: sv(combinedCtaNodeProps.caption ?? combinedCtaNodeProps.badge ?? combinedCtaNodeProps.eyebrow, (fallback.cta as any)?.caption ?? 'جاهز للبدء والتفوق؟'),
+                  title: sv(combinedCtaNodeProps.title, (fallback.cta as any)?.title ?? 'احجز مكانك في مجموعاتنا التعليمية الآن'),
+                  description: sv(combinedCtaNodeProps.description ?? combinedCtaNodeProps.subtitle, (fallback.cta as any)?.description ?? 'انضم إلينا وابدأ رحلة التفوق مع أسلوب تعليمي متميز ومتابعة دقيقة.'),
+                  primaryButtonText: sv(combinedCtaNodeProps.primaryButtonText ?? combinedCtaNodeProps.primary_button_text ?? combinedCtaNodeProps.buttonText ?? combinedCtaNodeProps.button_text, (fallback.cta as any)?.primaryButtonText ?? 'ابدأ التعلم'),
+                  primaryButtonLink: sv(combinedCtaNodeProps.primaryButtonLink ?? combinedCtaNodeProps.primary_button_link ?? combinedCtaNodeProps.buttonLink ?? combinedCtaNodeProps.button_link, (fallback.cta as any)?.primaryButtonLink ?? '#courses'),
+                  whatsappButtonLabel: sv(combinedCtaNodeProps.whatsappButtonLabel ?? combinedCtaNodeProps.whatsapp_button_label, (fallback.cta as any)?.whatsappButtonLabel ?? 'كلمنا على الواتساب'),
+                  whatsappUrl: sv(combinedCtaNodeProps.whatsappUrl ?? combinedCtaNodeProps.whatsapp_url ?? combinedCtaNodeProps.whatsapp ?? combinedCtaNodeProps.phoneNumber ?? combinedCtaNodeProps.phone_number, (fallback.cta as any)?.whatsappUrl ?? ''),
+                  phoneNumber: sv(combinedCtaNodeProps.phoneNumber ?? combinedCtaNodeProps.phone_number ?? combinedCtaNodeProps.whatsappUrl ?? combinedCtaNodeProps.whatsapp_url, (fallback.cta as any)?.phoneNumber ?? ''),
+                  fontFamily: sv(combinedCtaNodeProps.fontFamily ?? combinedCtaNodeProps.font_family, (fallback.cta as any)?.fontFamily ?? ''),
+                  backgroundColor: sv(combinedCtaNodeProps.backgroundColor ?? combinedCtaNodeProps.background_color ?? combinedCtaNodeProps.bg_color, (fallback.cta as any)?.backgroundColor ?? ''),
+                  cardBg: sv(combinedCtaNodeProps.cardBg ?? combinedCtaNodeProps.card_bg ?? combinedCtaNodeProps.boxBg ?? combinedCtaNodeProps.box_bg, (fallback.cta as any)?.cardBg ?? ''),
+                  textColor: sv(combinedCtaNodeProps.textColor ?? combinedCtaNodeProps.text_color, (fallback.cta as any)?.textColor ?? ''),
+                };
+              })() : (fallback.cta || fallback.contact)) as any,
 
               footer: (footerNode?.props ? ({
                 ...mergeSection(footerNode.props, fallback.footer),
@@ -2934,8 +2985,8 @@ export default function PageBuilderPage() {
         ...(content.testimonials ? [{ id: 'testimonials', type: 'testimonials_section', props: { ...content.testimonials, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         { id: 'pricing', type: 'pricing', props: { ...content.pricing, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         { id: 'faq', type: 'faq', props: { ...content.faq, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
-        { id: 'contact', type: 'contact', props: { ...(content.cta ? { ...content.contact, ...content.cta } : content.contact), role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
-        ...(content.cta ? [{ id: 'cta', type: 'cta', props: { ...(content.contact ? { ...content.contact, ...content.cta } : content.cta), role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
+        { id: 'contact', type: 'contact', props: { ...(content.contact || {}), ...(content.cta || {}), role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        ...(content.cta ? [{ id: 'cta', type: 'cta', props: { ...(content.contact || {}), ...(content.cta || {}), role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         { id: 'footer', type: 'footer', props: { ...content.footer, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
       ];
 
@@ -3016,8 +3067,8 @@ export default function PageBuilderPage() {
         ...(content.testimonials ? [{ id: 'testimonials', type: 'testimonials_section', props: { ...content.testimonials, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         { id: 'pricing', type: 'pricing', props: { ...content.pricing, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         { id: 'faq', type: 'faq', props: { ...content.faq, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
-        { id: 'contact', type: 'contact', props: { ...(content.cta ? { ...content.contact, ...content.cta } : content.contact), role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
-        ...(content.cta ? [{ id: 'cta', type: 'cta', props: { ...(content.contact ? { ...content.contact, ...content.cta } : content.cta), role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
+        { id: 'contact', type: 'contact', props: { ...(content.contact || {}), ...(content.cta || {}), role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        ...(content.cta ? [{ id: 'cta', type: 'cta', props: { ...(content.contact || {}), ...(content.cta || {}), role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         { id: 'footer', type: 'footer', props: { ...content.footer, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
       ];
 
@@ -3062,40 +3113,102 @@ export default function PageBuilderPage() {
 
   // --- Specific Content Fields Handlers ---
   const handleUpdateField = (section: keyof TemplateContent, field: string, value: any) => {
-    if (!content) return;
+    setContent(prev => {
+      if (!prev) return prev;
 
-    // Canonical Teacher Identity Synchronization
-    if (field === 'teacherName' || field === 'teacherTitle') {
+      // Canonical Teacher Identity Synchronization
+      if (field === 'teacherName' || field === 'teacherTitle') {
+        const updated = {
+          ...prev,
+          navbar: {
+            ...(prev.navbar || {}),
+            [field]: value,
+            ...(field === 'teacherName' ? { title: value } : {}),
+          },
+          profile: {
+            ...(prev.profile || {}),
+            [field]: value,
+          },
+          hero: {
+            ...(prev.hero || {}),
+            [field]: value,
+          }
+        };
+        setPreviewContent(updated);
+        return updated;
+      }
+
+      // Final CTA / Contact Synchronization
+      if (section === 'cta' || section === 'contact') {
+        const prevCta = ((prev.cta || {}) as Record<string, any>);
+        const prevContact = ((prev.contact || {}) as Record<string, any>);
+        const nextCta: Record<string, any> = { ...prevCta, [field]: value };
+        const nextContact: Record<string, any> = { ...prevContact, [field]: value };
+
+        // Synchronize cross-referenced field aliases
+        if (field === 'primaryButtonText' || field === 'buttonText') {
+          nextCta.primaryButtonText = value;
+          nextCta.buttonText = value;
+          nextContact.buttonText = value;
+          nextContact.primaryButtonText = value;
+        } else if (field === 'primaryButtonLink' || field === 'buttonLink') {
+          nextCta.primaryButtonLink = value;
+          nextCta.buttonLink = value;
+          nextContact.buttonLink = value;
+          nextContact.primaryButtonLink = value;
+        } else if (field === 'whatsappUrl' || field === 'phoneNumber') {
+          nextCta.whatsappUrl = value;
+          nextCta.phoneNumber = value;
+          nextContact.phoneNumber = value;
+          nextContact.whatsappUrl = value;
+        } else if (field === 'whatsappButtonLabel') {
+          nextCta.whatsappButtonLabel = value;
+          nextContact.whatsappButtonLabel = value;
+        } else if (field === 'caption') {
+          nextCta.caption = value;
+          nextContact.caption = value;
+        } else if (field === 'title') {
+          nextCta.title = value;
+          nextContact.title = value;
+        } else if (field === 'description') {
+          nextCta.description = value;
+          nextContact.description = value;
+        } else if (field === 'visible') {
+          nextCta.visible = value;
+          nextContact.visible = value;
+        } else if (field === 'backgroundColor') {
+          nextCta.backgroundColor = value;
+          nextContact.backgroundColor = value;
+        } else if (field === 'cardBg') {
+          nextCta.cardBg = value;
+          nextContact.cardBg = value;
+        } else if (field === 'textColor') {
+          nextCta.textColor = value;
+          nextContact.textColor = value;
+        } else if (field === 'fontFamily') {
+          nextCta.fontFamily = value;
+          nextContact.fontFamily = value;
+        }
+
+        const updated: TemplateContent = {
+          ...prev,
+          cta: nextCta as any,
+          contact: nextContact as any,
+        };
+        setPreviewContent(updated);
+        return updated;
+      }
+
       const updated = {
-        ...content,
-        navbar: {
-          ...(content.navbar || {}),
-          [field]: value,
-          ...(field === 'teacherName' ? { title: value } : {}),
-        },
-        profile: {
-          ...(content.profile || {}),
-          [field]: value,
-        },
-        hero: {
-          ...(content.hero || {}),
-          [field]: value,
+        ...prev,
+        [section]: {
+          ...((prev[section] as any) || {}),
+          [field]: value
         }
       };
-      setContent(updated);
       setPreviewContent(updated);
-      return;
-    }
-
-    const updated = {
-      ...content,
-      [section]: {
-        ...(content[section] || {}),
-        [field]: value
-      }
-    };
-    setContent(updated);
-    setPreviewContent(updated);
+      return updated;
+    });
   };
 
   const handleUpdateNestedField = (section: keyof TemplateContent, nestedKey: string, index: number, field: string, value: any) => {
@@ -6756,11 +6869,8 @@ export default function PageBuilderPage() {
                         <label className="text-[11px] font-bold text-slate-600">الشارة العلوية للقسم (Caption)</label>
                         <input
                           type="text"
-                          value={content.cta?.caption || content.contact?.caption || ''}
-                          onChange={(e) => {
-                            handleUpdateField('cta', 'caption', e.target.value);
-                            handleUpdateField('contact', 'caption', e.target.value);
-                          }}
+                          value={content.cta?.caption ?? content.contact?.caption ?? ''}
+                          onChange={(e) => handleUpdateField('cta', 'caption', e.target.value)}
                           placeholder="جاهز للبدء والتفوق؟"
                           className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
                         />
@@ -6770,11 +6880,8 @@ export default function PageBuilderPage() {
                         <label className="text-[11px] font-bold text-slate-600">عنوان القسم الرئيسي (Headline)</label>
                         <input
                           type="text"
-                          value={content.cta?.title || content.contact?.title || ''}
-                          onChange={(e) => {
-                            handleUpdateField('cta', 'title', e.target.value);
-                            handleUpdateField('contact', 'title', e.target.value);
-                          }}
+                          value={content.cta?.title ?? content.contact?.title ?? ''}
+                          onChange={(e) => handleUpdateField('cta', 'title', e.target.value)}
                           placeholder="احجز مكانك في مجموعاتنا التعليمية الآن"
                           className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-bold"
                         />
@@ -6783,11 +6890,8 @@ export default function PageBuilderPage() {
                       <div className="flex flex-col gap-1">
                         <label className="text-[11px] font-bold text-slate-600">الوصف والدعوة للعمل (Description)</label>
                         <textarea
-                          value={content.cta?.description || content.contact?.description || ''}
-                          onChange={(e) => {
-                            handleUpdateField('cta', 'description', e.target.value);
-                            handleUpdateField('contact', 'description', e.target.value);
-                          }}
+                          value={content.cta?.description ?? content.contact?.description ?? ''}
+                          onChange={(e) => handleUpdateField('cta', 'description', e.target.value)}
                           placeholder="انضم إلينا وابدأ رحلة التفوق مع أسلوب تعليمي متميز ومتابعة دقيقة."
                           className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium min-h-[70px] resize-none"
                         />
@@ -6803,11 +6907,8 @@ export default function PageBuilderPage() {
                           <label className="text-[10px] font-bold text-slate-500">نص الزر الأول</label>
                           <input
                             type="text"
-                            value={content.cta?.primaryButtonText || content.contact?.buttonText || ''}
-                            onChange={(e) => {
-                              handleUpdateField('cta', 'primaryButtonText', e.target.value);
-                              handleUpdateField('contact', 'buttonText', e.target.value);
-                            }}
+                            value={content.cta?.primaryButtonText ?? content.contact?.buttonText ?? ''}
+                            onChange={(e) => handleUpdateField('cta', 'primaryButtonText', e.target.value)}
                             placeholder="ابدأ التعلم"
                             className="border border-slate-200 rounded-xl p-2.5 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
                           />
@@ -6816,7 +6917,7 @@ export default function PageBuilderPage() {
                           <label className="text-[10px] font-bold text-slate-500">رابط الزر الأول (URL أو #courses)</label>
                           <input
                             type="text"
-                            value={content.cta?.primaryButtonLink || '#courses'}
+                            value={content.cta?.primaryButtonLink ?? content.contact?.buttonLink ?? ''}
                             onChange={(e) => handleUpdateField('cta', 'primaryButtonLink', e.target.value)}
                             placeholder="#courses"
                             className="border border-slate-200 rounded-xl p-2.5 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
@@ -6835,11 +6936,8 @@ export default function PageBuilderPage() {
                           <label className="text-[10px] font-bold text-slate-500">نص زر الواتساب</label>
                           <input
                             type="text"
-                            value={content.cta?.whatsappButtonLabel || content.contact?.whatsappButtonLabel || ''}
-                            onChange={(e) => {
-                              handleUpdateField('cta', 'whatsappButtonLabel', e.target.value);
-                              handleUpdateField('contact', 'whatsappButtonLabel', e.target.value);
-                            }}
+                            value={content.cta?.whatsappButtonLabel ?? content.contact?.whatsappButtonLabel ?? ''}
+                            onChange={(e) => handleUpdateField('cta', 'whatsappButtonLabel', e.target.value)}
                             placeholder="كلمنا على الواتساب"
                             className="border border-slate-200 rounded-xl p-2.5 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
                           />
@@ -6848,13 +6946,8 @@ export default function PageBuilderPage() {
                           <label className="text-[10px] font-bold text-slate-500">رقم الهاتف أو رابط الواتساب (WhatsApp URL / Number)</label>
                           <input
                             type="text"
-                            value={content.cta?.whatsappUrl || content.cta?.phoneNumber || content.contact?.phoneNumber || ''}
-                            onChange={(e) => {
-                              handleUpdateField('cta', 'whatsappUrl', e.target.value);
-                              handleUpdateField('cta', 'phoneNumber', e.target.value);
-                              handleUpdateField('contact', 'phoneNumber', e.target.value);
-                              handleUpdateField('contact', 'whatsappUrl', e.target.value);
-                            }}
+                            value={content.cta?.whatsappUrl ?? content.cta?.phoneNumber ?? content.contact?.phoneNumber ?? content.contact?.whatsappUrl ?? ''}
+                            onChange={(e) => handleUpdateField('cta', 'whatsappUrl', e.target.value)}
                             placeholder="https://wa.me/..."
                             className="border border-slate-200 rounded-xl p-2.5 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
                             dir="ltr"
@@ -6866,11 +6959,8 @@ export default function PageBuilderPage() {
                       <div className="flex flex-col gap-1">
                         <label className="text-[11px] font-bold text-slate-600">نوع الخط للقسم (Font Family)</label>
                         <select
-                          value={content.cta?.fontFamily || content.contact?.fontFamily || ''}
-                          onChange={(e) => {
-                            handleUpdateField('cta', 'fontFamily', e.target.value);
-                            handleUpdateField('contact', 'fontFamily', e.target.value);
-                          }}
+                          value={content.cta?.fontFamily ?? content.contact?.fontFamily ?? ''}
+                          onChange={(e) => handleUpdateField('cta', 'fontFamily', e.target.value)}
                           className="border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
                         >
                           {ARABIC_FONT_OPTIONS.map((f) => (
@@ -6887,10 +6977,7 @@ export default function PageBuilderPage() {
                             <input
                               type="color"
                               value={content.cta?.backgroundColor || content.contact?.backgroundColor || '#0f172a'}
-                              onChange={(e) => {
-                                handleUpdateField('cta', 'backgroundColor', e.target.value);
-                                handleUpdateField('contact', 'backgroundColor', e.target.value);
-                              }}
+                              onChange={(e) => handleUpdateField('cta', 'backgroundColor', e.target.value)}
                               className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                             />
                             <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.cta?.backgroundColor || 'افتراضي'}</span>
@@ -6903,10 +6990,7 @@ export default function PageBuilderPage() {
                             <input
                               type="color"
                               value={content.cta?.cardBg || content.contact?.cardBg || '#1e293b'}
-                              onChange={(e) => {
-                                handleUpdateField('cta', 'cardBg', e.target.value);
-                                handleUpdateField('contact', 'cardBg', e.target.value);
-                              }}
+                              onChange={(e) => handleUpdateField('cta', 'cardBg', e.target.value)}
                               className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                             />
                             <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.cta?.cardBg || 'افتراضي'}</span>
@@ -6919,10 +7003,7 @@ export default function PageBuilderPage() {
                             <input
                               type="color"
                               value={content.cta?.textColor || content.contact?.textColor || '#ffffff'}
-                              onChange={(e) => {
-                                handleUpdateField('cta', 'textColor', e.target.value);
-                                handleUpdateField('contact', 'textColor', e.target.value);
-                              }}
+                              onChange={(e) => handleUpdateField('cta', 'textColor', e.target.value)}
                               className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 shrink-0 outline-none"
                             />
                             <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">{content.cta?.textColor || 'افتراضي'}</span>
