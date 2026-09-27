@@ -116,11 +116,19 @@ export interface BagPurchaseItem {
 /** Helper to get Arabic currency symbol for bags */
 export function getCurrencySymbol(currency?: string): string {
   if (!currency) return 'ر.س';
-  const upper = currency.toUpperCase();
-  if (upper === 'KWD' || upper === 'KW') return 'د.ك';
-  if (upper === 'EGP' || upper === 'EG') return 'ج.م';
-  if (upper === 'SAR' || upper === 'SA') return 'ر.س';
-  if (upper === 'USD') return '$';
-  if (upper === 'EUR') return '€';
-  return upper;
+  const trimmed = currency.trim();
+  const upper = trimmed.toUpperCase();
+
+  if (upper === 'KWD' || upper === 'KW' || trimmed === 'د.ك') return 'د.ك';
+  if (upper === 'EGP' || upper === 'EG' || trimmed === 'ج.م') return 'ج.م';
+  if (upper === 'SAR' || upper === 'SA' || trimmed === 'ر.س') return 'ر.س';
+  if (upper === 'AED' || upper === 'AE' || trimmed === 'د.إ') return 'د.إ';
+  if (upper === 'QAR' || upper === 'QA' || trimmed === 'ر.ق') return 'ر.ق';
+  if (upper === 'BHD' || upper === 'BH' || trimmed === 'د.ب') return 'د.ب';
+  if (upper === 'OMR' || upper === 'OM' || trimmed === 'ر.ع') return 'ر.ع';
+  if (upper === 'JOD' || upper === 'JO' || trimmed === 'د.أ') return 'د.أ';
+  if (upper === 'USD' || trimmed === '$') return '$';
+  if (upper === 'EUR' || trimmed === '€') return '€';
+  if (upper === 'GBP' || trimmed === '£') return '£';
+  return trimmed || upper;
 }

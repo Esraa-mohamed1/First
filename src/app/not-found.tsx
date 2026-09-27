@@ -32,7 +32,7 @@ export default function NotFound() {
         </p>
 
         {/* Action Buttons to Main Academy Template */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
+        {/* <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
           <Link
             href="/"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-sm shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all active:scale-[0.98]"
@@ -48,11 +48,11 @@ export default function NotFound() {
             <BookOpen size={18} />
             <span>استعراض الدورات المتاحة</span>
           </Link>
-        </div>
+        </div> */}
 
         <div className="mt-8 text-xs text-slate-400 font-bold flex items-center gap-1">
-          <ArrowRight size={14} />
-          <span>تأكد من صحة الرابط أو تواصل مع الدعم الفني</span>
+          {/* <ArrowRight size={14} /> */}
+          <span>تأكد من صحة الرابط</span>
         </div>
       </div>
     </div>
