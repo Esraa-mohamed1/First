@@ -1491,17 +1491,31 @@ export default function PageBuilderPage() {
         }
 
         if (Array.isArray(content.steps.items)) {
-          content.steps.items.forEach((st: any, idx: number) => {
-            const itemEl = doc.querySelector(`[data-section="steps"][data-index="${idx}"], #steps .step-item:nth-child(${idx + 1}), #steps .step-card:nth-child(${idx + 1})`);
-            if (itemEl) {
-              const numEl = itemEl.querySelector('.step-badge, .step-number');
-              if (numEl) numEl.textContent = String(idx + 1).padStart(2, '0');
-              const titleEl = itemEl.querySelector('.step-title');
-              if (titleEl) titleEl.textContent = st.title || '';
-              const descEl = itemEl.querySelector('.step-description');
-              if (descEl) descEl.textContent = st.description || '';
-            }
-          });
+          const wrapper = doc.querySelector('#steps .steps-wrapper');
+          const currentCards = doc.querySelectorAll('#steps .steps-wrapper .step-card, #steps .steps-wrapper .step-item');
+          if (wrapper && currentCards.length !== content.steps.items.length) {
+            wrapper.innerHTML = content.steps.items.map((st: any, idx: number) => `
+              <div class="step-card" data-section="steps" data-index="${idx}">
+                <div class="step-badge">${String(idx + 1).padStart(2, '0')}</div>
+                <div class="step-content">
+                  <h3 class="step-title">${st.title || ''}</h3>
+                  <p class="step-description">${st.description || ''}</p>
+                </div>
+              </div>
+            `).join('');
+          } else {
+            content.steps.items.forEach((st: any, idx: number) => {
+              const itemEl = doc.querySelector(`[data-section="steps"][data-index="${idx}"], #steps .step-item:nth-child(${idx + 1}), #steps .step-card:nth-child(${idx + 1})`);
+              if (itemEl) {
+                const numEl = itemEl.querySelector('.step-badge, .step-number');
+                if (numEl) numEl.textContent = String(idx + 1).padStart(2, '0');
+                const titleEl = itemEl.querySelector('.step-title');
+                if (titleEl) titleEl.textContent = st.title || '';
+                const descEl = itemEl.querySelector('.step-description');
+                if (descEl) descEl.textContent = st.description || '';
+              }
+            });
+          }
         }
       }
 
@@ -1591,39 +1605,65 @@ export default function PageBuilderPage() {
         }
 
         if (Array.isArray(content.results.items)) {
-          content.results.items.forEach((res: any, idx: number) => {
-            const itemEls = doc.querySelectorAll(`[data-section="results"][data-index="${idx}"]`);
-            itemEls.forEach((itemEl) => {
-              const nameEl = itemEl.querySelector('.result-student-name, h3');
-              if (nameEl) nameEl.textContent = res.name || 'طالب متميز';
-              const scoreEl = itemEl.querySelector('.result-score-badge');
-              if (scoreEl) scoreEl.textContent = res.score || '';
-              const courseEl = itemEl.querySelector('.result-course-tag');
-              if (courseEl) courseEl.textContent = res.course || '';
-              const batchEl = itemEl.querySelector('.result-batch-tag');
-              if (batchEl) batchEl.textContent = res.batch || '';
-              const avatarEl = itemEl.querySelector('.result-avatar') as HTMLElement | null;
-              if (avatarEl) {
-                if (res.image) {
-                  avatarEl.style.backgroundImage = `url('${res.image}')`;
-                  avatarEl.classList.remove('result-avatar-default');
-                  const initEl = avatarEl.querySelector('.result-avatar-initial');
-                  if (initEl) initEl.remove();
-                } else {
-                  avatarEl.style.backgroundImage = '';
-                  avatarEl.classList.add('result-avatar-default');
-                  let initEl = avatarEl.querySelector('.result-avatar-initial');
-                  const initial = (res.name || 'ط').trim().charAt(0) || 'ط';
-                  if (!initEl) {
-                    initEl = doc.createElement('span');
-                    initEl.className = 'result-avatar-initial';
-                    avatarEl.appendChild(initEl);
+          const resultsGrid = doc.querySelector('#results .results-grid');
+          const currentCards = doc.querySelectorAll('#results .results-grid .result-card');
+          if (resultsGrid && currentCards.length !== content.results.items.length) {
+            resultsGrid.innerHTML = content.results.items.map((res: any, idx: number) => `
+              <div class="result-card" data-section="results" data-index="${idx}">
+                <div class="result-card-header">
+                  <div class="result-avatar ${res.image ? '' : 'result-avatar-default'}" style="${res.image ? `background-image: url('${res.image}');` : ''}">
+                    ${res.image ? '' : `<span class="result-avatar-initial">${(res.name || 'ط').trim().charAt(0) || 'ط'}</span>`}
+                  </div>
+                  <div class="result-card-info">
+                    <h3 class="result-student-name">${res.name || 'طالب متميز'}</h3>
+                    <div class="result-meta-row">
+                      ${res.course ? `<span class="result-course-tag">${res.course}</span>` : ''}
+                      ${res.batch ? `<span class="result-batch-tag">${res.batch}</span>` : ''}
+                    </div>
+                  </div>
+                </div>
+                ${res.score ? `
+                  <div class="result-score-badge">
+                    <span>${res.score}</span>
+                  </div>
+                ` : ''}
+              </div>
+            `).join('');
+          } else {
+            content.results.items.forEach((res: any, idx: number) => {
+              const itemEls = doc.querySelectorAll(`[data-section="results"][data-index="${idx}"]`);
+              itemEls.forEach((itemEl) => {
+                const nameEl = itemEl.querySelector('.result-student-name, h3');
+                if (nameEl) nameEl.textContent = res.name || 'طالب متميز';
+                const scoreEl = itemEl.querySelector('.result-score-badge span, .result-score-badge');
+                if (scoreEl) scoreEl.textContent = res.score || '';
+                const courseEl = itemEl.querySelector('.result-course-tag');
+                if (courseEl) courseEl.textContent = res.course || '';
+                const batchEl = itemEl.querySelector('.result-batch-tag');
+                if (batchEl) batchEl.textContent = res.batch || '';
+                const avatarEl = itemEl.querySelector('.result-avatar') as HTMLElement | null;
+                if (avatarEl) {
+                  if (res.image) {
+                    avatarEl.style.backgroundImage = `url('${res.image}')`;
+                    avatarEl.classList.remove('result-avatar-default');
+                    const initEl = avatarEl.querySelector('.result-avatar-initial');
+                    if (initEl) initEl.remove();
+                  } else {
+                    avatarEl.style.backgroundImage = '';
+                    avatarEl.classList.add('result-avatar-default');
+                    let initEl = avatarEl.querySelector('.result-avatar-initial');
+                    const initial = (res.name || 'ط').trim().charAt(0) || 'ط';
+                    if (!initEl) {
+                      initEl = doc.createElement('span');
+                      initEl.className = 'result-avatar-initial';
+                      avatarEl.appendChild(initEl);
+                    }
+                    initEl.textContent = initial;
                   }
-                  initEl.textContent = initial;
                 }
-              }
+              });
             });
-          });
+          }
         }
       }
 
@@ -2126,11 +2166,10 @@ export default function PageBuilderPage() {
       }, { passive: true });
 
       if (lastScrollYRef.current > 0) {
-        setTimeout(() => {
-          try {
-            win.scrollTo({ top: lastScrollYRef.current, behavior: 'instant' });
-          } catch (e) { }
-        }, 50);
+        try {
+          win.scrollTo({ top: lastScrollYRef.current, behavior: 'instant' });
+        } catch (e) { }
+        lastScrollYRef.current = 0;
       }
     }
 
@@ -2458,7 +2497,10 @@ export default function PageBuilderPage() {
               ...apiSectionTypes,
               ...KNOWN_SECTION_TYPES.filter(t => !apiSectionTypes.includes(t))
             ];
-            setSectionsList(merged);
+            const finalSections = currentRole === 'schoolcoach'
+              ? merged.filter(t => t !== 'footer')
+              : merged;
+            setSectionsList(finalSections);
 
             let realCoursesData: any[] = [];
             try {
@@ -3134,7 +3176,6 @@ export default function PageBuilderPage() {
             [field]: value,
           }
         };
-        setPreviewContent(updated);
         return updated;
       }
 
@@ -3195,7 +3236,6 @@ export default function PageBuilderPage() {
           cta: nextCta as any,
           contact: nextContact as any,
         };
-        setPreviewContent(updated);
         return updated;
       }
 
@@ -3206,86 +3246,64 @@ export default function PageBuilderPage() {
           [field]: value
         }
       };
-      setPreviewContent(updated);
       return updated;
     });
   };
 
   const handleUpdateNestedField = (section: keyof TemplateContent, nestedKey: string, index: number, field: string, value: any) => {
-    if (!content || !content[section]) return;
-    const currentArray = (content[section] as any)?.[nestedKey];
-    if (!Array.isArray(currentArray)) return;
-    const arrayCopy = [...currentArray];
-    arrayCopy[index] = {
-      ...arrayCopy[index],
-      [field]: value
-    };
-    const updated = {
-      ...content,
-      [section]: {
-        ...content[section],
-        [nestedKey]: arrayCopy
-      }
-    };
-    const iframe = document.getElementById('website-builder-iframe') as HTMLIFrameElement;
-    if (iframe?.contentWindow) {
-      try {
-        lastScrollYRef.current = iframe.contentWindow.scrollY || iframe.contentDocument?.documentElement.scrollTop || 0;
-      } catch (e) { }
-    }
-    setContent(updated);
-    setPreviewContent(updated);
-    setInitialHtml(getHtmlForRole(currentRole, updated));
+    setContent(prev => {
+      if (!prev || !prev[section]) return prev;
+      const currentArray = (prev[section] as any)?.[nestedKey];
+      if (!Array.isArray(currentArray)) return prev;
+      const arrayCopy = [...currentArray];
+      arrayCopy[index] = {
+        ...arrayCopy[index],
+        [field]: value
+      };
+      return {
+        ...prev,
+        [section]: {
+          ...prev[section],
+          [nestedKey]: arrayCopy
+        }
+      };
+    });
   };
 
   const handleAddListItem = (section: keyof TemplateContent, nestedKey: string, newItemTemplate: any) => {
-    if (!content || !content[section]) return;
-    const currentArray = (content[section] as any)?.[nestedKey];
-    const arrayCopy = Array.isArray(currentArray) ? [...currentArray] : [];
-    arrayCopy.push(newItemTemplate);
-    const updated = {
-      ...content,
-      [section]: {
-        ...content[section],
-        [nestedKey]: arrayCopy
-      }
-    };
-    const iframe = document.getElementById('website-builder-iframe') as HTMLIFrameElement;
-    if (iframe?.contentWindow) {
-      try {
-        lastScrollYRef.current = iframe.contentWindow.scrollY || iframe.contentDocument?.documentElement.scrollTop || 0;
-      } catch (e) { }
-    }
-    setContent(updated);
-    setPreviewContent(updated);
-    setInitialHtml(getHtmlForRole(currentRole, updated));
+    setContent(prev => {
+      if (!prev || !prev[section]) return prev;
+      const currentArray = (prev[section] as any)?.[nestedKey];
+      const arrayCopy = Array.isArray(currentArray) ? [...currentArray] : [];
+      arrayCopy.push(newItemTemplate);
+      return {
+        ...prev,
+        [section]: {
+          ...prev[section],
+          [nestedKey]: arrayCopy
+        }
+      };
+    });
   };
 
   const handleRemoveListItem = (section: keyof TemplateContent, nestedKey: string, index: number) => {
-    if (!content || !content[section]) return;
-    const currentArray = (content[section] as any)?.[nestedKey];
-    if (!Array.isArray(currentArray)) return;
-    if (section !== 'results' && section !== 'gallery' && section !== 'testimonials' && section !== 'faq' && section !== 'about' && currentArray.length <= 1) {
-      toast.error('يجب توفر عنصر واحد على الأقل في هذا القسم.');
-      return;
-    }
-    const filtered = currentArray.filter((_, i) => i !== index);
-    const updated = {
-      ...content,
-      [section]: {
-        ...content[section],
-        [nestedKey]: filtered
+    setContent(prev => {
+      if (!prev || !prev[section]) return prev;
+      const currentArray = (prev[section] as any)?.[nestedKey];
+      if (!Array.isArray(currentArray)) return prev;
+      if (section !== 'results' && section !== 'gallery' && section !== 'testimonials' && section !== 'faq' && section !== 'about' && currentArray.length <= 1) {
+        toast.error('يجب توفر عنصر واحد على الأقل في هذا القسم.');
+        return prev;
       }
-    };
-    const iframe = document.getElementById('website-builder-iframe') as HTMLIFrameElement;
-    if (iframe?.contentWindow) {
-      try {
-        lastScrollYRef.current = iframe.contentWindow.scrollY || iframe.contentDocument?.documentElement.scrollTop || 0;
-      } catch (e) { }
-    }
-    setContent(updated);
-    setPreviewContent(updated);
-    setInitialHtml(getHtmlForRole(currentRole, updated));
+      const filtered = currentArray.filter((_, i) => i !== index);
+      return {
+        ...prev,
+        [section]: {
+          ...prev[section],
+          [nestedKey]: filtered
+        }
+      };
+    });
   };
 
   // Renders loading spinner on start
@@ -3417,7 +3435,7 @@ export default function PageBuilderPage() {
                 }}
                 className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-white font-extrabold focus:outline-none focus:border-blue-600 cursor-pointer pr-8 text-slate-800"
               >
-                {sectionsList.map((sectionType) => {
+                {sectionsList.filter(sectionType => !(currentRole === 'schoolcoach' && sectionType === 'footer')).map((sectionType) => {
                   const SECTION_LABELS: Record<string, string> = currentRole === 'schoolcoach'
                     ? SCHOOLCOACH_NEW_SECTION_LABELS
                     : {
