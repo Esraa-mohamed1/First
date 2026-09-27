@@ -87,15 +87,56 @@ export default function CreateBagModal({
 
   if (!isOpen) return null;
 
+  const validateStep = (stepNumber: number): boolean => {
+    if (stepNumber === 1) {
+      if (!formData.title?.trim()) {
+        toast.error('عنوان الحقيبة مطلوب');
+        return false;
+      }
+      if (!formData.description?.trim()) {
+        toast.error('وصف الحقيبة مطلوب');
+        return false;
+      }
+    }
+
+    if (stepNumber === 3) {
+      if (!formData.isFree) {
+        const priceNum = Number(formData.price) || 0;
+        const discountNum = Number(formData.discountPrice) || 0;
+
+        if (priceNum <= 0) {
+          toast.error('يرجى تحديد سعر الحقيبة التدريبية');
+          return false;
+        }
+
+        if (discountNum > 0 && discountNum >= priceNum) {
+          toast.error('يجب أن يكون السعر بعد الخصم أقل من السعر الأساسي للمنتج');
+          return false;
+        }
+
+        if (!formData.paymentMethods || formData.paymentMethods.length === 0) {
+          toast.error('يرجى تحديد وسيلة دفع واحدة على الأقل للحقيبة المدفوعة');
+          return false;
+        }
+      }
+    }
+
+    return true;
+  };
+
+  const handleNextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep((prev) => Math.min(prev + 1, 3));
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title?.trim()) {
-      toast.error('عنوان الحقيبة مطلوب');
+    if (!validateStep(1)) {
       setCurrentStep(1);
       return;
     }
-    if (!formData.isFree && (!formData.paymentMethods || formData.paymentMethods.length === 0)) {
-      toast.error('يرجى تحديد وسيلة دفع واحدة على الأقل للحقيبة المدفوعة');
+    if (!validateStep(3)) {
       setCurrentStep(3);
       return;
     }
@@ -668,8 +709,8 @@ export default function CreateBagModal({
             {currentStep < 3 ? (
               <button
                 type="button"
-                onClick={() => setCurrentStep((prev) => prev + 1)}
-                className="px-8 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm shadow-md shadow-blue-200 transition-all"
+                onClick={handleNextStep}
+                className="px-8 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm shadow-md shadow-blue-200 transition-all cursor-pointer"
               >
                 التالي
               </button>

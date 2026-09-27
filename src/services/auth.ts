@@ -188,7 +188,7 @@ export const updateAcademySettings = async (
   }
 };
 
-export const forgetPassword = async (payload: { email: string }): Promise<any> => {
+export const forgetPassword = async (payload: { email?: string; phone?: string }): Promise<any> => {
   try {
     const response = await api.post<any>('https://api.darab.academy/api/auth/forget-password', payload);
     return response.data;

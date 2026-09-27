@@ -16,59 +16,79 @@ function buildBagFormData(payload: CreateBagPayload): FormData {
   const fd = new FormData();
 
   // Required field — backend will reject without this
-  fd.append('title', payload.title);
+  if (payload.title != null && payload.title !== '') {
+    fd.append('title', payload.title);
+  }
 
-  // Optional scalar fields
-  if (payload.short_description != null)
+  // Optional scalar fields — append only if defined and not null
+  if (payload.short_description !== undefined && payload.short_description !== null)
     fd.append('short_description', payload.short_description);
 
-  if (payload.description != null)
+  if (payload.description !== undefined && payload.description !== null)
     fd.append('description', payload.description);
 
-  if (payload.category_name != null)
+  if (payload.category_name !== undefined && payload.category_name !== null)
     fd.append('category_name', payload.category_name);
 
-  if (payload.category_bag_id != null)
+  if (payload.category_bag_id !== undefined && payload.category_bag_id !== null)
     fd.append('category_bag_id', String(payload.category_bag_id));
 
-  if (payload.type_price != null)
+  if (payload.type_price !== undefined && payload.type_price !== null)
     fd.append('type_price', payload.type_price);
 
-  if (payload.price != null)
+  if (payload.price !== undefined && payload.price !== null)
     fd.append('price', String(payload.price));
 
-  if (payload.discount_price != null)
+  if (payload.discount_price !== undefined && payload.discount_price !== null)
     fd.append('discount_price', String(payload.discount_price));
 
-  if (payload.currency != null)
+  if (payload.currency !== undefined && payload.currency !== null)
     fd.append('currency', payload.currency);
 
-  if (payload.is_active != null)
+  if (payload.is_active !== undefined && payload.is_active !== null)
     fd.append('is_active', String(payload.is_active));
 
   if (payload.count_download !== undefined && payload.count_download !== null)
     fd.append('count_download', String(payload.count_download));
 
-  if (payload.download_type != null)
+  if (payload.download_type !== undefined && payload.download_type !== null)
     fd.append('download_type', payload.download_type);
 
   if (payload.download_limit !== undefined && payload.download_limit !== null)
     fd.append('download_limit', String(payload.download_limit));
 
-  // Main Cover Image: File object = upload binary file; string = existing URL
+  // Main Cover Image: File object = upload binary file
+  // Remote HTTP/HTTPS string URLs are omitted in edit mode so backend does not overwrite existing stored image
   if (payload.image instanceof File) {
     fd.append('image', payload.image);
-  } else if (typeof payload.image === 'string' && payload.image && !payload.image.startsWith('blob:') && !payload.image.startsWith('data:')) {
+  } else if (
+    typeof payload.image === 'string' &&
+    payload.image &&
+    !payload.image.startsWith('blob:') &&
+    !payload.image.startsWith('data:') &&
+    !payload.image.startsWith('http://') &&
+    !payload.image.startsWith('https://')
+  ) {
     fd.append('image', payload.image);
   }
 
-  // Bag Gallery Images: array of File objects or URL strings
+  // Bag Gallery Images: array of File objects or newly modified non-remote strings
   if (Array.isArray(payload.gallery) && payload.gallery.length > 0) {
-    payload.gallery.forEach((gItem, idx) => {
+    let gIdx = 0;
+    payload.gallery.forEach((gItem) => {
       if (gItem instanceof File) {
-        fd.append(`gallery[${idx}]`, gItem);
-      } else if (typeof gItem === 'string' && gItem && !gItem.startsWith('blob:') && !gItem.startsWith('data:')) {
-        fd.append(`gallery[${idx}]`, gItem);
+        fd.append(`gallery[${gIdx}]`, gItem);
+        gIdx++;
+      } else if (
+        typeof gItem === 'string' &&
+        gItem &&
+        !gItem.startsWith('blob:') &&
+        !gItem.startsWith('data:') &&
+        !gItem.startsWith('http://') &&
+        !gItem.startsWith('https://')
+      ) {
+        fd.append(`gallery[${gIdx}]`, gItem);
+        gIdx++;
       }
     });
   }

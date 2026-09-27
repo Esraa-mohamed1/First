@@ -10,17 +10,31 @@ const MySwal = withReactContent(Swal);
 export function useForgetPasswordState() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const [mode, setMode] = useState<'email' | 'phone'>('email');
     const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
     const [error, setError] = useState('');
+    const [otpSent, setOtpSent] = useState(false);
 
     const validateForm = () => {
-        if (!email) {
-            setError('يرجى إدخال البريد الإلكتروني');
-            return false;
-        }
-        if (!/\S+@\S+\.\S+/.test(email)) {
-            setError('البريد الإلكتروني غير صالح');
-            return false;
+        if (mode === 'email') {
+            if (!email) {
+                setError('يرجى إدخال البريد الإلكتروني');
+                return false;
+            }
+            if (!/\S+@\S+\.\S+/.test(email)) {
+                setError('البريد الإلكتروني غير صالح');
+                return false;
+            }
+        } else {
+            if (!phone) {
+                setError('يرجى إدخال رقم الجوال');
+                return false;
+            }
+            if (phone.replace(/\D/g, '').length < 7) {
+                setError('رقم الجوال غير صالح');
+                return false;
+            }
         }
         setError('');
         return true;
@@ -32,23 +46,35 @@ export function useForgetPasswordState() {
 
         setIsLoading(true);
         try {
-            await forgetPassword({ email });
+            const payload = mode === 'email'
+                ? { email }
+                : { phone };
+            await forgetPassword(payload);
+
+            setOtpSent(true);
 
             await MySwal.fire({
                 title: 'تم إرسال رمز التحقق!',
-                text: 'تم إرسال رمز تحقق إلى بريدك الإلكتروني لإعادة تعيين كلمة المرور.',
+                text: mode === 'email'
+                    ? 'تم إرسال رمز تحقق إلى بريدك الإلكتروني لإعادة تعيين كلمة المرور.'
+                    : 'تم إرسال رمز تحقق إلى رقم جوالك لإعادة تعيين كلمة المرور.',
                 icon: 'success',
                 confirmButtonText: 'حسناً، متابعة',
                 confirmButtonColor: '#2563eb'
             });
 
-            router.push(`/auth/reset-password?email=${encodeURIComponent(email)}`);
+            const query = mode === 'email'
+                ? `email=${encodeURIComponent(email)}`
+                : `phone=${encodeURIComponent(phone)}`;
+            router.push(`/auth/reset-password?${query}`);
         } catch (err: any) {
             console.error('Forget password error:', err);
             let errorMessage = err.message || err.error || 'حدث خطأ أثناء إرسال رمز التحقق';
 
             if (errorMessage.toLowerCase().includes('user not found') || errorMessage.toLowerCase().includes('email not found') || errorMessage.includes('لا يوجد مستخدم')) {
-                errorMessage = 'البريد الإلكتروني المدخل غير مسجل لدينا';
+                errorMessage = mode === 'email'
+                    ? 'البريد الإلكتروني المدخل غير مسجل لدينا'
+                    : 'رقم الجوال المدخل غير مسجل لدينا';
             } else if (errorMessage.toLowerCase().includes('network error')) {
                 errorMessage = 'حدث خطأ في الاتصال، يرجى التحقق من الشبكة';
             }
@@ -63,10 +89,16 @@ export function useForgetPasswordState() {
     return {
         router,
         isLoading,
+        mode,
+        setMode,
         email,
         setEmail,
+        phone,
+        setPhone,
         error,
         setError,
+        otpSent,
+        setOtpSent,
         handleSubmit
     };
 }

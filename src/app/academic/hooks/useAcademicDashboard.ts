@@ -43,7 +43,20 @@ export const useAcademicDashboard = () => {
       }
 
       const rawReqs: any = purchaseReqs;
-      setPurchaseRequests(Array.isArray(rawReqs) ? rawReqs : (rawReqs?.data || []));
+      const reqList = Array.isArray(rawReqs) ? rawReqs : (rawReqs?.data || []);
+      setPurchaseRequests(reqList);
+
+      // Compute sales by currency breakdown
+      const salesByCurrency: Record<string, number> = {
+        SAR: 0,
+        EGP: 0,
+        KWD: 0,
+        USD: 0,
+      };
+
+      let hasApiTotalSales = false;
+      let apiRevenueTotal = 0;
+      let percentageRevenue = 0;
 
       if (dashboardData) {
         // Extract courses from various potential response fields ensuring it is an array
@@ -58,10 +71,81 @@ export const useAcademicDashboard = () => {
           : (Array.isArray(dashboardData.students) ? dashboardData.students : []);
         setStudents(studentsData);
 
+        // Extract total_sales object from API response: e.g. { "EGP": { "total": 25, "percentage": 0 } }
+        if (dashboardData.total_sales && typeof dashboardData.total_sales === 'object' && Object.keys(dashboardData.total_sales).length > 0) {
+          hasApiTotalSales = true;
+          Object.entries(dashboardData.total_sales).forEach(([currKey, itemObj]: [string, any]) => {
+            const upperKey = currKey.trim().toUpperCase();
+            if (upperKey === 'TOTAL') {
+              const val = typeof itemObj === 'object' ? itemObj?.total ?? itemObj?.amount : itemObj;
+              if (val !== undefined && val !== null) apiRevenueTotal = Number(val);
+            } else if (upperKey !== 'PERCENTAGE') {
+              const totalVal = typeof itemObj === 'object' ? (itemObj?.total ?? itemObj?.amount ?? 0) : itemObj;
+              const percVal = typeof itemObj === 'object' ? (itemObj?.percentage ?? 0) : 0;
+              const numVal = Number(totalVal);
+              if (!isNaN(numVal) && numVal >= 0) {
+                let code = 'SAR';
+                if (upperKey === 'EGP' || upperKey === 'EG' || currKey === 'ج.م') code = 'EGP';
+                else if (upperKey === 'KWD' || upperKey === 'KW' || currKey === 'د.ك') code = 'KWD';
+                else if (upperKey === 'USD' || currKey === '$') code = 'USD';
+                else if (upperKey === 'SAR' || upperKey === 'SA' || currKey === 'ر.س') code = 'SAR';
+                else code = upperKey;
+
+                salesByCurrency[code] = (salesByCurrency[code] || 0) + numVal;
+                apiRevenueTotal += numVal;
+                if (percVal) percentageRevenue = Number(percVal);
+              }
+            }
+          });
+        } else if (typeof dashboardData.total_sales === 'number' || !isNaN(Number(dashboardData.total_sales))) {
+          hasApiTotalSales = true;
+          apiRevenueTotal = Number(dashboardData.total_sales);
+        }
+      }
+
+      // Only fall back to computing from purchase requests if total_sales was not provided by API
+      let computedRevenueSum = 0;
+      if (!hasApiTotalSales) {
+        reqList.forEach((req: any) => {
+          const rawPrice =
+            req.price ??
+            req.amount ??
+            req.paid_amount ??
+            req.total_price ??
+            req.course?.final_price ??
+            req.course?.price ??
+            0;
+          const priceNum = Number(rawPrice);
+          if (!isNaN(priceNum) && priceNum > 0) {
+            computedRevenueSum += priceNum;
+            const rawCur =
+              req.currency ||
+              req.currency_code ||
+              req.course?.currency ||
+              req.course?.currency_code ||
+              req.bag?.currency ||
+              'SAR';
+            const upper = rawCur.trim().toUpperCase();
+            let code = 'SAR';
+            if (upper === 'EGP' || upper === 'EG' || rawCur === 'ج.م') code = 'EGP';
+            else if (upper === 'KWD' || upper === 'KW' || rawCur === 'د.ك') code = 'KWD';
+            else if (upper === 'USD' || upper === '$') code = 'USD';
+            else if (upper === 'SAR' || upper === 'SA' || rawCur === 'ر.س') code = 'SAR';
+            else code = upper;
+
+            salesByCurrency[code] = (salesByCurrency[code] || 0) + priceNum;
+          }
+        });
+      }
+
+      if (dashboardData) {
+        const totalRev = (apiRevenueTotal > 0) ? apiRevenueTotal : (dashboardData.total_revenue ?? computedRevenueSum);
+
         // Extract stats mapping to the exact structure from the /dashboard response
         const statsData = {
-          total_revenue: dashboardData.total_sales?.total ?? dashboardData.total_revenue ?? dashboardData.stats?.total_revenue,
-          total_revenue_percentage: dashboardData.total_sales?.percentage,
+          total_revenue: totalRev,
+          salesByCurrency,
+          total_revenue_percentage: percentageRevenue || dashboardData.total_sales?.percentage,
           active_students: dashboardData.new_students?.total ?? dashboardData.active_students ?? dashboardData.stats?.active_students,
           active_students_percentage: dashboardData.new_students?.percentage,
           published_courses: (dashboardData.courses && typeof dashboardData.courses === 'object' && !Array.isArray(dashboardData.courses))
@@ -73,6 +157,11 @@ export const useAcademicDashboard = () => {
           instructors_count: dashboardData.instructors_count ?? dashboardData.stats?.instructors_count
         };
         setStats(statsData);
+      } else {
+        setStats({
+          total_revenue: computedRevenueSum,
+          salesByCurrency,
+        });
       }
       setUsageLimits(usageResponse?.data || (Array.isArray(usageResponse) ? usageResponse : []));
     } catch (error) {

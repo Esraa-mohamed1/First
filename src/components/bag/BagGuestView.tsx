@@ -802,8 +802,7 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                             <span className={`px-2.5 py-0.5 rounded-lg border font-black ${badge.bg}`}>
                               {badge.label}
                             </span>
-                            <span>•</span>
-                            <span>رقم العنصر #{item.id}</span>
+
                           </div>
                         </div>
                       </div>
@@ -1040,18 +1039,16 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                     <button
                       type="button"
                       onClick={() => { setAuthMode('register'); setAuthError(''); }}
-                      className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all ${
-                        authMode === 'register' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'
-                      }`}
+                      className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all ${authMode === 'register' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+                        }`}
                     >
                       إنشاء حساب طالب جديد
                     </button>
                     <button
                       type="button"
                       onClick={() => { setAuthMode('login'); setAuthError(''); }}
-                      className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all ${
-                        authMode === 'login' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'
-                      }`}
+                      className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all ${authMode === 'login' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+                        }`}
                     >
                       تسجيل الدخول لحسابك
                     </button>
@@ -1076,9 +1073,8 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                             value={regName}
                             onChange={(e) => { setRegName(e.target.value); if (regErrors.name) setRegErrors(prev => ({ ...prev, name: '' })); }}
                             placeholder="أدخل اسمك الكامل"
-                            className={`w-full p-3 pr-10 text-right bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${
-                              regErrors.name ? 'border-red-500' : 'border-gray-200'
-                            }`}
+                            className={`w-full p-3 pr-10 text-right bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${regErrors.name ? 'border-red-500' : 'border-gray-200'
+                              }`}
                           />
                           <User className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600" size={16} />
                         </div>
@@ -1095,9 +1091,8 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                             value={regEmail}
                             onChange={(e) => { setRegEmail(e.target.value); if (regErrors.email) setRegErrors(prev => ({ ...prev, email: '' })); }}
                             placeholder="example@mail.com"
-                            className={`w-full p-3 pr-10 text-right bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${
-                              regErrors.email ? 'border-red-500' : 'border-gray-200'
-                            }`}
+                            className={`w-full p-3 pr-10 text-right bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${regErrors.email ? 'border-red-500' : 'border-gray-200'
+                              }`}
                           />
                           <Mail className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600" size={16} />
                         </div>
@@ -1113,9 +1108,8 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                           placeholder="اكتب رقم الجوال"
                           value={regPhone}
                           onChange={(e) => { setRegPhone(e.target.value.replace(/\D/g, '')); if (regErrors.phone) setRegErrors(prev => ({ ...prev, phone: '' })); }}
-                          className={`p-3 text-left bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${
-                            regErrors.phone ? 'border-red-500' : 'border-gray-200'
-                          }`}
+                          className={`p-3 text-left bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${regErrors.phone ? 'border-red-500' : 'border-gray-200'
+                            }`}
                         />
                         {regErrors.phone && <p className="text-red-500 text-[10px] font-bold px-1">{regErrors.phone}</p>}
                       </div>
@@ -1131,9 +1125,8 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                               value={regPassword}
                               onChange={(e) => { setRegPassword(e.target.value); if (regErrors.password) setRegErrors(prev => ({ ...prev, password: '' })); }}
                               placeholder="••••••••"
-                              className={`w-full p-3 pr-10 text-right bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${
-                                regErrors.password ? 'border-red-500' : 'border-gray-200'
-                              }`}
+                              className={`w-full p-3 pr-10 text-right bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${regErrors.password ? 'border-red-500' : 'border-gray-200'
+                                }`}
                             />
                             <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600" size={16} />
                             <button
@@ -1156,9 +1149,8 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                               value={regConfirmPassword}
                               onChange={(e) => { setRegConfirmPassword(e.target.value); if (regErrors.confirmPassword) setRegErrors(prev => ({ ...prev, confirmPassword: '' })); }}
                               placeholder="••••••••"
-                              className={`w-full p-3 pr-10 text-right bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${
-                                regErrors.confirmPassword ? 'border-red-500' : 'border-gray-200'
-                              }`}
+                              className={`w-full p-3 pr-10 text-right bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${regErrors.confirmPassword ? 'border-red-500' : 'border-gray-200'
+                                }`}
                             />
                             <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600" size={16} />
                           </div>
@@ -1196,9 +1188,8 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                             value={loginIdentity}
                             onChange={(e) => { setLoginIdentity(e.target.value); if (loginErrors.identity) setLoginErrors(prev => ({ ...prev, identity: '' })); }}
                             placeholder="example@mail.com أو 05xxxxxxx"
-                            className={`w-full p-3 pr-10 text-right bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${
-                              loginErrors.identity ? 'border-red-500' : 'border-gray-200'
-                            }`}
+                            className={`w-full p-3 pr-10 text-right bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${loginErrors.identity ? 'border-red-500' : 'border-gray-200'
+                              }`}
                           />
                           <Mail className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600" size={16} />
                         </div>
@@ -1215,9 +1206,8 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
                             value={loginPassword}
                             onChange={(e) => { setLoginPassword(e.target.value); if (loginErrors.password) setLoginErrors(prev => ({ ...prev, password: '' })); }}
                             placeholder="••••••••"
-                            className={`w-full p-3 pr-10 text-right bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${
-                              loginErrors.password ? 'border-red-500' : 'border-gray-200'
-                            }`}
+                            className={`w-full p-3 pr-10 text-right bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${loginErrors.password ? 'border-red-500' : 'border-gray-200'
+                              }`}
                           />
                           <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600" size={16} />
                           <button

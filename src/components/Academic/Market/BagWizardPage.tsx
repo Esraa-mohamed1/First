@@ -86,6 +86,7 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
   const [formData, setFormData] = useState<BagFormState>(initialFormState);
   const [isSaving, setIsSaving] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [stepErrors, setStepErrors] = useState<{ [key: string]: string }>({});
 
   // Bag Photos State (Main Cover + Gallery Photos)
   const [bagPhotos, setBagPhotos] = useState<BagPhotoItem[]>([]);
@@ -128,6 +129,11 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
         setCoverImageFile(main.file || null);
       }
       return updated;
+    });
+    setStepErrors((prev) => {
+      const next = { ...prev };
+      delete next.cover;
+      return next;
     });
   };
 
@@ -461,6 +467,11 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
   /** Toggle payment method selection safely */
   const togglePaymentMethod = (method: string) => {
     setPaymentError(null);
+    setStepErrors((prev) => {
+      const next = { ...prev };
+      delete next.payment;
+      return next;
+    });
     const isSelected = safePaymentMethods.includes(method);
     if (!isSelected && safePaymentMethods.length >= 3) {
       toast.error('يمكنك اختيار ٣ وسائل دفع كحد أقصى');
@@ -478,6 +489,11 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
       ? safeSelectedCourseIds.filter((id) => id !== courseId)
       : [...safeSelectedCourseIds, courseId];
     setFormData((prev) => ({ ...prev, selectedCourseIds: updated }));
+    setStepErrors((prev) => {
+      const next = { ...prev };
+      delete next.content;
+      return next;
+    });
   };
 
   /** Select or deselect all courses */
@@ -502,24 +518,97 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
     .filter((c) => safeSelectedCourseIds.includes(c.id))
     .reduce((sum, c) => sum + (c.lessonCount || 20), 0);
 
+  /** Validate specific step fields before moving to next step or saving */
+  const validateStep = (stepNumber: number): boolean => {
+    const errors: { [key: string]: string } = {};
+
+    if (stepNumber === 1) {
+      if (!formData.title?.trim()) {
+        errors.title = 'يرجى إدخال عنوان الحقيبة التدريبية';
+      }
+      if (!formData.description?.trim()) {
+        errors.description = 'يرجى إدخال وصف الحقيبة التدريبية';
+      }
+      if (bagPhotos.length === 0 && !formData.coverImage) {
+        errors.cover = 'يرجى إضافة صورة غلاف واحدة على الأقل للحقيبة';
+      }
+    }
+
+    if (stepNumber === 2) {
+      if (uploadedBagFiles.length === 0 && safeSelectedCourseIds.length === 0) {
+        errors.content = 'يرجى إرفاق ملف واحد على الأقل أو تحديد دورة تدريبية لمحتوى الحقيبة';
+      }
+    }
+
+    if (stepNumber === 3) {
+      if (!formData.isFree) {
+        const priceNum = Number(formData.price) || 0;
+        const discountNum = Number(formData.discountPrice) || 0;
+
+        if (priceNum <= 0) {
+          errors.price = 'يرجى تحديد سعر الحقيبة التدريبية';
+        }
+
+        if (discountNum > 0 && discountNum >= priceNum) {
+          errors.discountPrice = 'يجب أن يكون السعر بعد الخصم أقل من السعر الأساسي للمنتج';
+        }
+
+        const validPaymentIds = safePaymentMethods
+          .map((s) => Number(s))
+          .filter((n) => !isNaN(n) && n > 0);
+
+        if (validPaymentIds.length === 0) {
+          errors.payment = 'يرجى تحديد وسيلة دفع واحدة على الأقل للحقيبة المدفوعة';
+          setPaymentError('يرجى تحديد وسيلة دفع واحدة على الأقل للحقيبة المدفوعة');
+        }
+      }
+    }
+
+    setStepErrors((prev) => ({ ...prev, ...errors }));
+
+    if (Object.keys(errors).length > 0) {
+      const firstErrorMessage = Object.values(errors)[0];
+      toast.error(firstErrorMessage);
+      return false;
+    }
+
+    return true;
+  };
+
+  /** Handle moving to the next step with validation */
+  const handleNextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep((prev) => Math.min(prev + 1, 3));
+    }
+  };
+
+  /** Handle direct tab click navigation with step validation */
+  const handleStepClick = (targetStep: number) => {
+    if (targetStep <= currentStep) {
+      setCurrentStep(targetStep);
+      return;
+    }
+    // If attempting to jump ahead, validate current step and intermediate steps
+    for (let s = currentStep; s < targetStep; s++) {
+      if (!validateStep(s)) {
+        return;
+      }
+    }
+    setCurrentStep(targetStep);
+  };
+
   /** Submit & Save — called directly from the publish button, NOT via form onSubmit */
   const handleSaveBag = async () => {
-    if (!formData.title?.trim()) {
-      toast.error('عنوان الحقيبة مطلوب');
+    // Validate all 3 steps before saving
+    if (!validateStep(1)) {
       setCurrentStep(1);
       return;
     }
-
-    // Build valid payment_info_ids — only numeric IDs from instructor_receiver_accounts.
-    const validPaymentIds = safePaymentMethods
-      .map((s) => Number(s))
-      .filter((n) => !isNaN(n) && n > 0);
-
-    // Require at least one payment method if bag is paid
-    if (!formData.isFree && validPaymentIds.length === 0) {
-      const errorMsg = 'يرجى تحديد وسيلة دفع واحدة على الأقل للحقيبة المدفوعة';
-      setPaymentError(errorMsg);
-      toast.error(errorMsg);
+    if (!validateStep(2)) {
+      setCurrentStep(2);
+      return;
+    }
+    if (!validateStep(3)) {
       setCurrentStep(3);
       if (typeof window !== 'undefined') {
         setTimeout(() => {
@@ -529,6 +618,11 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
       }
       return;
     }
+
+    // Build valid payment_info_ids — only numeric IDs from instructor_receiver_accounts.
+    const validPaymentIds = safePaymentMethods
+      .map((s) => Number(s))
+      .filter((n) => !isNaN(n) && n > 0);
 
     setIsSaving(true);
     try {
@@ -551,16 +645,26 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
       const mainPhoto = bagPhotos.find((p) => p.isMain) || bagPhotos[0];
       const galleryPhotos = bagPhotos.filter((p) => p.id !== mainPhoto?.id);
 
-      const mainImagePayload = mainPhoto?.file
-        ? mainPhoto.file
-        : mainPhoto?.url && !mainPhoto.url.startsWith('blob:') && !mainPhoto.url.startsWith('data:')
-          ? mainPhoto.url
-          : coverImageFile || (formData.coverImage && !formData.coverImage.startsWith('blob:') ? formData.coverImage : undefined);
+      // In Edit mode (editBagId present), ONLY send image if a new File was uploaded or edited.
+      // If it's an un-edited existing remote URL, leave undefined so backend doesn't overwrite stored file.
+      let mainImagePayload: File | string | undefined = undefined;
+      if (mainPhoto?.file instanceof File) {
+        mainImagePayload = mainPhoto.file;
+      } else if (coverImageFile instanceof File) {
+        mainImagePayload = coverImageFile;
+      } else if (!editBagId) {
+        if (mainPhoto?.url && !mainPhoto.url.startsWith('blob:') && !mainPhoto.url.startsWith('data:')) {
+          mainImagePayload = mainPhoto.url;
+        } else if (formData.coverImage && !formData.coverImage.startsWith('blob:') && !formData.coverImage.startsWith('data:')) {
+          mainImagePayload = formData.coverImage;
+        }
+      }
 
+      // In Edit mode, only send newly uploaded gallery files (File objects) or new items, not existing remote HTTP URLs
       const galleryPayload: Array<File | string> = galleryPhotos
         .map((p) => {
-          if (p.file) return p.file;
-          if (p.url && !p.url.startsWith('blob:') && !p.url.startsWith('data:')) return p.url;
+          if (p.file instanceof File) return p.file;
+          if (!editBagId && p.url && !p.url.startsWith('blob:') && !p.url.startsWith('data:')) return p.url;
           return null;
         })
         .filter((x): x is File | string => x !== null);
@@ -596,9 +700,9 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
         payment_info_ids: validPaymentIds.length > 0 ? validPaymentIds : undefined,
         // Include items array with type and file for each selected course/file
         items: itemsPayload.length > 0 ? itemsPayload : undefined,
-        // Main Cover Image
+        // Main Cover Image (undefined if unedited in edit mode)
         image: mainImagePayload,
-        // Gallery Images Array
+        // Gallery Images Array (undefined if no new files in edit mode)
         gallery: galleryPayload.length > 0 ? galleryPayload : undefined,
       };
 
@@ -649,7 +753,7 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
       <div className="bg-white rounded-3xl p-3 border border-gray-100 shadow-sm grid grid-cols-3 gap-3">
         <button
           type="button"
-          onClick={() => setCurrentStep(1)}
+          onClick={() => handleStepClick(1)}
           className={`py-4 px-4 rounded-2xl flex items-center justify-center gap-3 transition-all font-black text-sm ${currentStep === 1
             ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
             : 'bg-gray-50/70 text-blue-600 hover:bg-gray-100'
@@ -666,7 +770,7 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
 
         <button
           type="button"
-          onClick={() => setCurrentStep(2)}
+          onClick={() => handleStepClick(2)}
           className={`py-4 px-4 rounded-2xl flex items-center justify-center gap-3 transition-all font-black text-sm ${currentStep === 2
             ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
             : 'bg-gray-50/70 text-blue-600 hover:bg-gray-100'
@@ -683,7 +787,7 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
 
         <button
           type="button"
-          onClick={() => setCurrentStep(3)}
+          onClick={() => handleStepClick(3)}
           className={`py-4 px-4 rounded-2xl flex items-center justify-center gap-3 transition-all font-black text-sm ${currentStep === 3
             ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
             : 'bg-gray-50/70 text-blue-600 hover:bg-gray-100'
@@ -714,45 +818,80 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-black text-gray-700 block">
-                عنوان الحقيبة التدريبية
+              <label className="text-xs font-black text-gray-700 flex items-center gap-1">
+                <span>عنوان الحقيبة التدريبية</span>
+                <span className="text-red-500 font-black">*</span>
               </label>
               <input
                 type="text"
                 placeholder="مثال: Tailwind CSS Mastery"
                 value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:border-blue-500 transition-all text-gray-900"
+                onChange={(e) => {
+                  setFormData({ ...formData, title: e.target.value });
+                  if (stepErrors.title) {
+                    setStepErrors((prev) => {
+                      const next = { ...prev };
+                      delete next.title;
+                      return next;
+                    });
+                  }
+                }}
+                className={`w-full bg-gray-50 border rounded-2xl p-4 text-sm font-bold outline-none transition-all text-gray-900 ${stepErrors.title ? 'border-red-500 focus:border-red-500 bg-red-50/30' : 'border-gray-200 focus:border-blue-500'}`}
               />
+              {stepErrors.title && (
+                <p className="text-xs font-bold text-red-500 flex items-center gap-1 mt-1">
+                  <AlertCircle size={14} />
+                  <span>{stepErrors.title}</span>
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-black text-gray-700 block">
-                وصف الحقيبة
+              <label className="text-xs font-black text-gray-700 flex items-center gap-1">
+                <span>وصف الحقيبة</span>
+                <span className="text-red-500 font-black">*</span>
               </label>
               <textarea
                 rows={4}
                 placeholder="أدخل وصفاً تفصيلياً محفزاً للشراء..."
                 value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-bold outline-none focus:border-blue-500 transition-all text-gray-900"
+                onChange={(e) => {
+                  setFormData({ ...formData, description: e.target.value });
+                  if (stepErrors.description) {
+                    setStepErrors((prev) => {
+                      const next = { ...prev };
+                      delete next.description;
+                      return next;
+                    });
+                  }
+                }}
+                className={`w-full bg-gray-50 border rounded-2xl p-4 text-sm font-bold outline-none transition-all text-gray-900 ${stepErrors.description ? 'border-red-500 focus:border-red-500 bg-red-50/30' : 'border-gray-200 focus:border-blue-500'}`}
               />
+              {stepErrors.description && (
+                <p className="text-xs font-bold text-red-500 flex items-center gap-1 mt-1">
+                  <AlertCircle size={14} />
+                  <span>{stepErrors.description}</span>
+                </p>
+              )}
             </div>
 
             {/* Cover Image & Gallery Upload Section */}
             <div className="space-y-4 pt-2">
               <div className="flex items-center justify-between border-t border-gray-100 pt-4">
                 <div>
-                  <label className="text-sm font-black text-gray-900 block">
-                    صور ومعرض الحقيبة التدريبية
+                  <label className="text-sm font-black text-gray-900 flex items-center gap-1">
+                    <span>صور ومعرض الحقيبة التدريبية</span>
+                    <span className="text-red-500 font-black">*</span>
                   </label>
                   <p className="text-xs font-bold text-gray-400 mt-0.5">
                     يمكنك رفع عدة صور للحقيبة. حدد صورة واحدة كـ <span className="text-blue-600 font-black">غلاف رئيسي</span>، والباقي سينتقل تلقائياً إلى <span className="text-purple-600 font-black">معرض الصور (Gallery)</span>.
                   </p>
+                  {stepErrors.cover && (
+                    <p className="text-xs font-bold text-red-500 flex items-center gap-1 mt-1">
+                      <AlertCircle size={14} />
+                      <span>{stepErrors.cover}</span>
+                    </p>
+                  )}
                 </div>
 
                 {/* Upload Mode Selector */}
@@ -1029,6 +1168,11 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                         };
                       });
                       setUploadedBagFiles((prev) => [...prev, ...newFiles]);
+                      setStepErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.content;
+                        return next;
+                      });
                       toast.success(`تم إرفاق ${newFiles.length} ملف بنجاح`);
                     }
                   }}
@@ -1061,6 +1205,11 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                         };
                       });
                       setUploadedBagFiles((prev) => [...prev, ...newFiles]);
+                      setStepErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.content;
+                        return next;
+                      });
                       toast.success(`تم إرفاق ${newFiles.length} ملف بنجاح`);
                     }
                   }}
@@ -1167,13 +1316,13 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
               {uploadedBagFiles.length === 0 ? (
                 <div
                   onClick={() => bagFilesInputRef.current?.click()}
-                  className="border-2 border-dashed border-gray-200 rounded-[28px] p-10 text-center bg-white hover:bg-gray-50/50 cursor-pointer transition-all space-y-3"
+                  className={`border-2 border-dashed rounded-[28px] p-10 text-center bg-white hover:bg-gray-50/50 cursor-pointer transition-all space-y-3 ${stepErrors.content ? 'border-red-400 bg-red-50/20' : 'border-gray-200'}`}
                 >
-                  <div className="w-14 h-14 rounded-2xl bg-gray-100 text-gray-400 flex items-center justify-center mx-auto">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto ${stepErrors.content ? 'bg-red-100 text-red-500' : 'bg-gray-100 text-gray-400'}`}>
                     <File size={26} />
                   </div>
-                  <p className="text-sm font-black text-gray-600">
-                    لم يتم إرفاق ملفات بعد
+                  <p className={`text-sm font-black ${stepErrors.content ? 'text-red-600' : 'text-gray-600'}`}>
+                    {stepErrors.content || 'لم يتم إرفاق ملفات بعد'}
                   </p>
                   <p className="text-xs font-bold text-gray-400">
                     اضغط هنا أو اسحب الملفات إلى المنطقة أعلاه لإضافة محتويات الحقيبة.
@@ -1341,21 +1490,31 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                 {!formData.isFree && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in duration-200">
                     <div className="space-y-2">
-                      <label className="text-xs font-black text-gray-700 block">
-                        سعر المنتج
+                      <label className="text-xs font-black text-gray-700 flex items-center gap-1">
+                        <span>سعر المنتج</span>
+                        <span className="text-red-500 font-black">*</span>
                       </label>
-                      <div className="flex items-center bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden focus-within:border-blue-500 transition-all">
+                      <div className={`flex items-center bg-gray-50 border rounded-2xl overflow-hidden transition-all ${stepErrors.price ? 'border-red-500 bg-red-50/30' : 'border-gray-200 focus-within:border-blue-500'}`}>
                         <input
                           type="number"
                           min="0"
                           step="0.01"
                           value={formData.price}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              price: parseFloat(e.target.value) || 0,
-                            })
-                          }
+                          onChange={(e) => {
+                            const newPrice = parseFloat(e.target.value) || 0;
+                            setFormData((prev) => ({
+                              ...prev,
+                              price: newPrice,
+                            }));
+                            setStepErrors((prev) => {
+                              const next = { ...prev };
+                              if (newPrice > 0) delete next.price;
+                              if (prev.discountPrice && (Number(formData.discountPrice) || 0) < newPrice) {
+                                delete next.discountPrice;
+                              }
+                              return next;
+                            });
+                          }}
                           placeholder="0.00"
                           className="w-full bg-transparent p-3.5 text-sm font-black outline-none text-gray-900"
                         />
@@ -1386,6 +1545,12 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                           <ChevronDown size={14} className="text-blue-600 pointer-events-none" />
                         </div>
                       </div>
+                      {stepErrors.price && (
+                        <p className="text-xs font-bold text-red-500 flex items-center gap-1 mt-1">
+                          <AlertCircle size={14} />
+                          <span>{stepErrors.price}</span>
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -1397,15 +1562,32 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                         min="0"
                         step="0.01"
                         value={formData.discountPrice}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            discountPrice: parseFloat(e.target.value) || 0,
-                          })
-                        }
+                        onChange={(e) => {
+                          const newDiscount = parseFloat(e.target.value) || 0;
+                          setFormData((prev) => ({
+                            ...prev,
+                            discountPrice: newDiscount,
+                          }));
+                          setStepErrors((prev) => {
+                            const next = { ...prev };
+                            const currentPrice = Number(formData.price) || 0;
+                            if (newDiscount > 0 && currentPrice > 0 && newDiscount >= currentPrice) {
+                              next.discountPrice = 'يجب أن يكون السعر بعد الخصم أقل من السعر الأساسي للمنتج';
+                            } else {
+                              delete next.discountPrice;
+                            }
+                            return next;
+                          });
+                        }}
                         placeholder="0.00"
-                        className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm font-black outline-none focus:border-blue-500 transition-all text-gray-900"
+                        className={`w-full bg-gray-50 border rounded-2xl p-3.5 text-sm font-black outline-none transition-all text-gray-900 ${stepErrors.discountPrice ? 'border-red-500 focus:border-red-500 bg-red-50/30' : 'border-gray-200 focus:border-blue-500'}`}
                       />
+                      {stepErrors.discountPrice && (
+                        <p className="text-xs font-bold text-red-500 flex items-center gap-1 mt-1">
+                          <AlertCircle size={14} />
+                          <span>{stepErrors.discountPrice}</span>
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
@@ -1703,8 +1885,8 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
           /* type="button" prevents any accidental form submission */
           <button
             type="button"
-            onClick={() => setCurrentStep((prev) => prev + 1)}
-            className="px-10 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm shadow-md shadow-blue-200 transition-all"
+            onClick={handleNextStep}
+            className="px-10 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm shadow-md shadow-blue-200 transition-all cursor-pointer"
           >
             التالي
           </button>

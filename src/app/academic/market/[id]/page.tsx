@@ -573,8 +573,7 @@ export default function BagDetailsPage() {
                             <span className={`px-2.5 py-0.5 rounded-lg border font-black ${badge.bg}`}>
                               {badge.label}
                             </span>
-                            <span>•</span>
-                            <span>رقم العنصر #{item.id}</span>
+
                           </div>
                         </div>
                       </div>

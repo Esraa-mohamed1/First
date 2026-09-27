@@ -14,7 +14,10 @@ export function useResetPasswordState() {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    // Identifier - email or phone passed from forget-password page
     const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
+    const [identifierMode, setIdentifierMode] = useState<'email' | 'phone'>('email');
     const [code, setCode] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -22,6 +25,7 @@ export function useResetPasswordState() {
     const [generalError, setGeneralError] = useState('');
     const [errors, setErrors] = useState({
         email: '',
+        phone: '',
         code: '',
         password: '',
         confirmPassword: ''
@@ -35,8 +39,13 @@ export function useResetPasswordState() {
 
     useEffect(() => {
         const emailParam = searchParams.get('email');
+        const phoneParam = searchParams.get('phone');
         if (emailParam) {
             setEmail(emailParam);
+            setIdentifierMode('email');
+        } else if (phoneParam) {
+            setPhone(phoneParam);
+            setIdentifierMode('phone');
         }
     }, [searchParams]);
 
@@ -54,14 +63,24 @@ export function useResetPasswordState() {
 
     const validateForm = () => {
         let isValid = true;
-        const newErrors = { email: '', code: '', password: '', confirmPassword: '' };
+        const newErrors = { email: '', phone: '', code: '', password: '', confirmPassword: '' };
 
-        if (!email) {
-            newErrors.email = 'يرجى إدخال البريد الإلكتروني';
-            isValid = false;
-        } else if (!/\S+@\S+\.\S+/.test(email)) {
-            newErrors.email = 'البريد الإلكتروني غير صالح';
-            isValid = false;
+        if (identifierMode === 'email') {
+            if (!email) {
+                newErrors.email = 'يرجى إدخال البريد الإلكتروني';
+                isValid = false;
+            } else if (!/\S+@\S+\.\S+/.test(email)) {
+                newErrors.email = 'البريد الإلكتروني غير صالح';
+                isValid = false;
+            }
+        } else {
+            if (!phone) {
+                newErrors.phone = 'يرجى إدخال رقم الجوال';
+                isValid = false;
+            } else if (phone.replace(/\D/g, '').length < 7) {
+                newErrors.phone = 'رقم الجوال غير صالح';
+                isValid = false;
+            }
         }
 
         if (!code) {
@@ -96,14 +115,19 @@ export function useResetPasswordState() {
         setIsLoading(true);
         setGeneralError('');
         try {
-            const payload = {
-                email,
+            const payload: any = {
                 code,
                 token: code,
                 otp: code,
                 password,
                 password_confirmation: confirmPassword
             };
+
+            if (identifierMode === 'email') {
+                payload.email = email;
+            } else {
+                payload.phone = phone;
+            }
 
             await resetPassword(payload);
 
@@ -141,8 +165,11 @@ export function useResetPasswordState() {
         setShowPassword,
         showConfirmPassword,
         setShowConfirmPassword,
+        identifierMode,
         email,
         setEmail,
+        phone,
+        setPhone,
         code,
         setCode,
         password,

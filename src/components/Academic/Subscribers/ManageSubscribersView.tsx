@@ -11,6 +11,9 @@ import withReactContent from 'sweetalert2-react-content';
 import AddSubscriberModal from '@/components/Academic/Modals/AddSubscriberModal';
 import EditUserModal from '@/components/Academic/Modals/EditUserModal';
 
+import { SubscriptionFilterParams } from '@/services/finance';
+import { getCurrencySymbol } from '@/types/bags';
+
 const MySwal = withReactContent(Swal);
 
 interface ManageSubscribersViewProps {
@@ -23,6 +26,9 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'pending'>('all');
+  const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'yesterday' | 'week' | 'month' | 'year' | 'custom'>('all');
+  const [fromDate, setFromDate] = useState<string>('');
+  const [toDate, setToDate] = useState<string>('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<User | null>(null);
   const [drawerStudent, setDrawerStudent] = useState<any | null>(null);
@@ -34,16 +40,24 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
   useEffect(() => {
     fetchStudents();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId]);
+  }, [courseId, dateFilter, fromDate, toDate]);
 
   const fetchStudents = async () => {
     setLoading(true);
     try {
+      const filterParams: SubscriptionFilterParams = {};
+      if (dateFilter === 'custom') {
+        if (fromDate) filterParams.from = fromDate;
+        if (toDate) filterParams.to = toDate;
+      } else if (dateFilter !== 'all') {
+        filterParams.period = dateFilter; // 'today', 'yesterday', 'week', 'month', 'year'
+      }
+
       let data: any[] = [];
       if (courseId) {
-        data = await getCourseSubscribers(courseId);
+        data = await getCourseSubscribers(courseId, filterParams);
       } else {
-        data = await getStudentPurchaseRequests();
+        data = await getStudentPurchaseRequests(filterParams);
       }
 
       const avatarColors = [
@@ -69,16 +83,25 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
           user?.amount ??
           null;
 
+        const rawCurrency =
+          item.currency ||
+          item.currency_code ||
+          item.course?.currency ||
+          item.course?.currency_code ||
+          item.bag?.currency ||
+          user?.currency ||
+          'SAR';
+        const currencySymbol = getCurrencySymbol(rawCurrency);
+
         let formattedAmount = '—';
         if (rawPrice !== null && rawPrice !== undefined) {
           const num = Number(rawPrice);
           if (rawPrice === 0 || rawPrice === '0' || rawPrice === 'free' || num === 0) {
-            formattedAmount = 'مجاني (0 SAR)';
+            formattedAmount = `مجاني (0 ${currencySymbol})`;
           } else if (!isNaN(num)) {
-            const currency = item.currency || item.course?.currency || 'SAR';
-            formattedAmount = `${num} ${currency}`;
+            formattedAmount = `${num} ${currencySymbol}`;
           } else {
-            formattedAmount = String(rawPrice);
+            formattedAmount = `${rawPrice} ${currencySymbol}`;
           }
         }
 
@@ -210,7 +233,34 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
       s.status === statusFilter ||
       (statusFilter === 'active' && (s.status === 'accepted' || !s.status)) ||
       (statusFilter === 'inactive' && (s.status === 'rejected' || s.status === 'cancelled'));
-    return matchesSearch && matchesStatus;
+
+    let matchesDate = true;
+    if (dateFilter !== 'all' && s.created_at) {
+      const itemDate = new Date(s.created_at);
+      const now = new Date();
+      if (!isNaN(itemDate.getTime())) {
+        if (dateFilter === 'today') {
+          matchesDate = itemDate.toDateString() === now.toDateString();
+        } else if (dateFilter === 'yesterday') {
+          const yesterday = new Date(now);
+          yesterday.setDate(now.getDate() - 1);
+          matchesDate = itemDate.toDateString() === yesterday.toDateString();
+        } else if (dateFilter === 'week') {
+          const oneWeekAgo = new Date(now);
+          oneWeekAgo.setDate(now.getDate() - 7);
+          matchesDate = itemDate >= oneWeekAgo && itemDate <= now;
+        } else if (dateFilter === 'month') {
+          matchesDate = itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+        } else if (dateFilter === 'year') {
+          matchesDate = itemDate.getFullYear() === now.getFullYear();
+        } else if (dateFilter === 'custom') {
+          if (fromDate) matchesDate = matchesDate && itemDate >= new Date(fromDate);
+          if (toDate) matchesDate = matchesDate && itemDate <= new Date(toDate);
+        }
+      }
+    }
+
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage) || 1;
@@ -291,8 +341,46 @@ export default function ManageSubscribersView({ showTopHeader = true, courseId }
             />
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as any)} className="px-4 py-2.5 rounded-xl border border-outline-variant text-sm bg-white font-bold cursor-pointer outline-none">
-              <option value="all">الكل</option>
+            <select value={dateFilter} onChange={e => { setDateFilter(e.target.value as any); setCurrentPage(1); }} className="px-4 py-2.5 rounded-xl border border-outline-variant text-sm bg-white font-bold cursor-pointer outline-none">
+              <option value="all">كل التواريخ</option>
+              <option value="today">اليوم (today)</option>
+              <option value="yesterday">أمس (yesterday)</option>
+              <option value="week">هذا الأسبوع (week)</option>
+              <option value="month">هذا الشهر (month)</option>
+              <option value="year">هذه السنة (year)</option>
+              <option value="custom">تاريخ مخصص (from / to)</option>
+            </select>
+            {dateFilter === 'custom' && (
+              <div className="flex items-center gap-2 flex-wrap bg-gray-50 p-1.5 rounded-xl border border-outline-variant">
+                <div className="flex items-center gap-1">
+                  <span className="text-xs font-bold text-gray-600">من:</span>
+                  <input
+                    type="date"
+                    value={fromDate}
+                    onChange={e => {
+                      const newFrom = e.target.value;
+                      setFromDate(newFrom);
+                      // Reset toDate if it's now before the new fromDate
+                      if (toDate && newFrom && toDate < newFrom) setToDate('');
+                      setCurrentPage(1);
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg border border-outline-variant text-xs bg-white font-bold outline-none cursor-pointer"
+                  />
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs font-bold text-gray-600">إلى:</span>
+                  <input
+                    type="date"
+                    value={toDate}
+                    min={fromDate || undefined}
+                    onChange={e => { setToDate(e.target.value); setCurrentPage(1); }}
+                    className={`px-2.5 py-1.5 rounded-lg border text-xs bg-white font-bold outline-none cursor-pointer ${toDate && fromDate && toDate < fromDate ? 'border-red-400' : 'border-outline-variant'}`}
+                  />
+                </div>
+              </div>
+            )}
+            <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value as any); setCurrentPage(1); }} className="px-4 py-2.5 rounded-xl border border-outline-variant text-sm bg-white font-bold cursor-pointer outline-none">
+              <option value="all">جميع الحالات</option>
               <option value="active">النشطون</option>
               <option value="pending">المعلقون</option>
               <option value="inactive">المرفوضون</option>
