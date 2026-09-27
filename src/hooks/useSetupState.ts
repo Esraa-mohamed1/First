@@ -39,9 +39,8 @@ export function useSetupState() {
   const domainSuffix = '.darab.academy';
 
   useEffect(() => {
-    // Clear any stale tenant key and token from a previous session.
+    // Clear any stale tenant key from a previous session.
     localStorage.removeItem('academy_link_name');
-    localStorage.removeItem('token');
 
     const storedMethod = (localStorage.getItem('registration_method') as 'email' | 'phone') || 'email';
     setRegistrationMethod(storedMethod);
@@ -127,15 +126,21 @@ export function useSetupState() {
       const pending = pendingStr ? JSON.parse(pendingStr) : {};
       const regMethod = registrationMethod || localStorage.getItem('registration_method') || (pending.email || cachedEmail ? 'email' : 'phone');
 
-      // 1. Step 1: Call createAccount FIRST with cached registration data
-      let token = localStorage.getItem('token');
-      if (!token) {
+      const currentPassword = pending.password || localStorage.getItem('user_password') || getCookie('backup_password');
+      const currentIdentifier = regMethod === 'email' ? finalEmail : finalPhone;
+
+      // 1. Step 1: Call createAccount only if not already created for this email/phone & password
+      let token: string | null = localStorage.getItem('token') || getCookie('token') || null;
+      const lastCreatedIdentifier = localStorage.getItem('last_created_account_identifier');
+      const isAccountAlreadyCreated = localStorage.getItem('account_created_successfully') === 'true' && lastCreatedIdentifier === currentIdentifier;
+
+      if (!token && !isAccountAlreadyCreated) {
         const name = academyName || (regMethod === 'email' ? (finalEmail ? finalEmail.split('@')[0] : '') : finalPhone) || 'أكاديمي';
 
         const accountPayload: any = {
           name: name,
           academy_name: academyName || `${name}'s Academy`,
-          password: pending.password || localStorage.getItem('user_password') || getCookie('backup_password'),
+          password: currentPassword,
           package_id: pending.package_id
         };
 
@@ -146,11 +151,42 @@ export function useSetupState() {
           accountPayload.country_code = activeCountry?.isoCode || pending.country_code || 'SA';
         }
 
-        const accountRes: any = await createAccount(accountPayload);
-        token = accountRes?.data?.token || accountRes?.token || accountRes?.data?.access_token || accountRes?.access_token || accountRes?.meta?.access_token || accountRes?.data?.meta?.access_token;
-        if (token) {
-          localStorage.setItem('token', token);
-          document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+        try {
+          const accountRes: any = await createAccount(accountPayload);
+          token = accountRes?.data?.token || accountRes?.token || accountRes?.data?.access_token || accountRes?.access_token || accountRes?.meta?.access_token || accountRes?.data?.meta?.access_token;
+          if (token) {
+            localStorage.setItem('token', token);
+            document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+          }
+          localStorage.setItem('account_created_successfully', 'true');
+          localStorage.setItem('last_created_account_identifier', currentIdentifier);
+        } catch (accountErr: any) {
+          console.warn('createAccount error, checking if user already exists:', accountErr);
+          const errMessage = (accountErr?.message || JSON.stringify(accountErr || '')).toLowerCase();
+          const emailOrPhoneExists = errMessage.includes('already been taken') || errMessage.includes('already exists') || errMessage.includes('مستخدم بالفعل');
+          
+          if (emailOrPhoneExists && currentPassword && (finalEmail || finalPhone)) {
+            // Account is already registered! Try logging in to get the token without failing
+            try {
+              const loginRes = await login({
+                email: finalEmail || undefined,
+                phone: finalEmail ? undefined : (finalPhone || undefined),
+                password: currentPassword
+              });
+              token = loginRes?.meta?.access_token || (loginRes as any)?.token;
+              if (token) {
+                localStorage.setItem('token', token);
+                document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+              }
+              localStorage.setItem('account_created_successfully', 'true');
+              localStorage.setItem('last_created_account_identifier', currentIdentifier);
+            } catch (loginErr) {
+              console.error('Failed to login existing account:', loginErr);
+              throw accountErr;
+            }
+          } else {
+            throw accountErr;
+          }
         }
       }
 
@@ -229,6 +265,8 @@ export function useSetupState() {
       }
 
       localStorage.removeItem('user_password');
+      localStorage.removeItem('account_created_successfully');
+      localStorage.removeItem('last_created_account_identifier');
 
       const isLocal = typeof window !== 'undefined' && window.location.hostname.includes('localhost');
       const defaultSuffix = isLocal ? '.darab.academy.localhost:3000' : '.darab.academy';

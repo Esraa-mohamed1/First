@@ -27,6 +27,9 @@ import {
   FileCode,
   FileType,
   Lock,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getAcademyBag, BagApiItem, BagItemDetail, getCurrencySymbol } from '@/services/bags';
@@ -74,6 +77,7 @@ export default function BagDetailsPage() {
   const [bag, setBag] = useState<BagApiItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState<string | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [includedCourses, setIncludedCourses] = useState<Course[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<Array<{ id: number; name: string; logo?: string; account_number?: string }>>([]);
 
@@ -223,12 +227,29 @@ export default function BagDetailsPage() {
 
   // Price checks
   const isFree = bag.type_price === 'free' || (!bag.price && !bag.discount_price);
+  const isPurchased = Boolean(
+    purchaseSuccess ||
+    bag.purchased === true ||
+    (bag as any).purchased === 1 ||
+    bag.is_purchased === true ||
+    (bag as any).is_purchased === 1 ||
+    (bag as any).is_purchased === 'true'
+  );
+
   const numericPrice = typeof bag.price === 'string' ? parseFloat(bag.price) : bag.price || 0;
   const numericDiscount = typeof bag.discount_price === 'string' ? parseFloat(bag.discount_price) : bag.discount_price || 0;
 
   const displayPrice = numericDiscount > 0 ? numericDiscount : numericPrice;
   const originalPrice = numericPrice > numericDiscount && numericDiscount > 0 ? numericPrice : null;
   const currencySymbol = getCurrencySymbol(bag.currency);
+
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host)) {
+      router.back();
+    } else {
+      router.push('/');
+    }
+  };
 
   // Extract bag items (support both object items and course IDs)
   const itemsList: BagItemDetail[] = Array.isArray(bag.items)
@@ -240,39 +261,82 @@ export default function BagDetailsPage() {
   // Extract gallery photos list
   const allGalleryUrls: string[] = [];
   if (bag.image) allGalleryUrls.push(bag.image);
-  if (Array.isArray(bag.gallery)) {
-    bag.gallery.forEach((g: any) => {
-      const url = typeof g === 'string' ? g : g?.path || g?.url;
+
+  let rawGallery: any = bag.gallery ?? (bag as any).galleries ?? (bag as any).bag_galleries ?? (bag as any).images ?? [];
+  if (typeof rawGallery === 'string') {
+    try {
+      rawGallery = JSON.parse(rawGallery);
+    } catch (e) {
+      if (rawGallery.includes(',')) {
+        rawGallery = rawGallery.split(',').map((s: string) => s.trim());
+      } else if (rawGallery.trim()) {
+        rawGallery = [rawGallery.trim()];
+      } else {
+        rawGallery = [];
+      }
+    }
+  }
+
+  if (Array.isArray(rawGallery)) {
+    rawGallery.forEach((g: any) => {
+      const url = typeof g === 'string'
+        ? g
+        : (g?.image || g?.image_url || g?.url || g?.path || g?.file_url || g?.file || g?.photo || g?.photo_url || g?.full_url || g?.attachment);
       if (url && !allGalleryUrls.includes(url)) {
         allGalleryUrls.push(url);
       }
     });
   }
 
-  const currentDisplayImage = activeImage || bag.image;
+  const currentDisplayImage = activeImage || (allGalleryUrls.length > 0 ? allGalleryUrls[0] : bag.image);
+  const currentImageIndex = currentDisplayImage ? Math.max(0, allGalleryUrls.indexOf(currentDisplayImage)) : 0;
+
+  const handleNextImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (allGalleryUrls.length <= 1) return;
+    const nextIdx = (currentImageIndex + 1) % allGalleryUrls.length;
+    setActiveImage(allGalleryUrls[nextIdx]);
+  };
+
+  const handlePrevImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (allGalleryUrls.length <= 1) return;
+    const prevIdx = (currentImageIndex - 1 + allGalleryUrls.length) % allGalleryUrls.length;
+    setActiveImage(allGalleryUrls[prevIdx]);
+  };
 
   return (
     <div className="space-y-8 pb-16" dir="rtl">
       {/* Top Header Breadcrumb & Actions */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-100 pb-6">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
-            <span
-              onClick={() => router.push('/academic/market')}
-              className="hover:text-blue-600 cursor-pointer transition-colors"
-            >
-              متجر الحقائب
-            </span>
-            <span>/</span>
-            <span className="text-gray-700">{bag.category_name || 'عام'}</span>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="w-10 h-10 rounded-2xl bg-white border border-gray-200 text-gray-700 flex items-center justify-center shadow-sm hover:bg-gray-50 hover:border-gray-300 transition-all cursor-pointer"
+            title="رجوع"
+          >
+            <ArrowRight size={20} />
+          </button>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
+              <span
+                onClick={() => router.push('/academic/market')}
+                className="hover:text-blue-600 cursor-pointer transition-colors"
+              >
+                متجر الحقائب
+              </span>
+              <span>/</span>
+              <span className="text-gray-700">{bag.category_name || 'عام'}</span>
+            </div>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">{bag.title}</h1>
           </div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">{bag.title}</h1>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push('/academic/market')}
-            className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2.5 rounded-2xl text-xs font-black text-gray-700 shadow-sm hover:bg-gray-50 transition-all"
+            className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2.5 rounded-2xl text-xs font-black text-gray-700 shadow-sm hover:bg-gray-50 transition-all cursor-pointer"
           >
             <ArrowRight size={16} />
             <span>العودة للمتجر</span>
@@ -280,7 +344,7 @@ export default function BagDetailsPage() {
 
           <button
             onClick={() => router.push(`/academic/market/edit/${bag.id}`)}
-            className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2.5 rounded-2xl text-xs font-black transition-all"
+            className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer"
             title="تعديل الحقيبة"
           >
             <Edit size={16} />
@@ -289,7 +353,7 @@ export default function BagDetailsPage() {
 
           <button
             onClick={handleShare}
-            className="w-10 h-10 rounded-2xl bg-white border border-gray-200 text-gray-600 flex items-center justify-center shadow-sm hover:bg-gray-50 transition-all"
+            className="w-10 h-10 rounded-2xl bg-white border border-gray-200 text-gray-600 flex items-center justify-center shadow-sm hover:bg-gray-50 transition-all cursor-pointer"
             title="مشاركة"
           >
             <Share2 size={18} />
@@ -297,7 +361,7 @@ export default function BagDetailsPage() {
 
           <button
             onClick={handleToggleSave}
-            className={`w-10 h-10 rounded-2xl border flex items-center justify-center shadow-sm transition-all ${isSaved ? 'bg-amber-50 border-amber-200 text-amber-600' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+            className={`w-10 h-10 rounded-2xl border flex items-center justify-center shadow-sm transition-all cursor-pointer ${isSaved ? 'bg-amber-50 border-amber-200 text-amber-600' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
               }`}
             title="حفظ"
           >
@@ -312,16 +376,25 @@ export default function BagDetailsPage() {
         <div className="lg:col-span-8 space-y-8">
           {/* Main Cover Banner & Gallery Selector */}
           <div className="space-y-4">
-            <div className="relative w-full h-72 lg:h-96 rounded-3xl overflow-hidden bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 shadow-lg border border-gray-100">
+            <div
+              onClick={() => currentDisplayImage && setLightboxOpen(true)}
+              className={`relative w-full h-72 lg:h-96 rounded-3xl overflow-hidden bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 shadow-lg border border-gray-100 group ${currentDisplayImage ? 'cursor-pointer' : ''}`}
+            >
               {currentDisplayImage ? (
-                <img src={currentDisplayImage} alt={bag.title} className="w-full h-full object-cover transition-all duration-300" />
+                <img
+                  src={currentDisplayImage}
+                  alt={bag.title}
+                  className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105"
+                />
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-white/50 gap-4">
                   <Layers size={64} />
                   <span className="text-sm font-bold text-white/60">غلاف الحقيبة التدريبية</span>
                 </div>
               )}
-              <div className="absolute top-4 right-4 flex items-center gap-2">
+
+              {/* Category & Price Badges */}
+              <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
                 <span className="bg-blue-600/90 backdrop-blur-md text-white text-xs font-black px-4 py-2 rounded-xl shadow-md">
                   {bag.category_name || 'حقيبة رقمية'}
                 </span>
@@ -335,24 +408,80 @@ export default function BagDetailsPage() {
                   </span>
                 )}
               </div>
+
+              {/* Image Counter & Lightbox trigger */}
+              {allGalleryUrls.length > 0 && (
+                <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
+                  <span className="bg-black/60 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-xl border border-white/20">
+                    {currentImageIndex + 1} / {allGalleryUrls.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLightboxOpen(true);
+                    }}
+                    className="p-2 rounded-xl bg-black/60 backdrop-blur-md text-white hover:bg-black/80 transition-colors border border-white/20 cursor-pointer"
+                    title="تكبير الصورة"
+                  >
+                    <Maximize2 size={15} />
+                  </button>
+                </div>
+              )}
+
+              {/* Navigation Arrows for Gallery Carousel */}
+              {allGalleryUrls.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handlePrevImage}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/75 backdrop-blur-md text-white flex items-center justify-center transition-all z-10 cursor-pointer shadow-lg hover:scale-110"
+                    title="الصورة السابقة"
+                  >
+                    <ChevronLeft size={22} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextImage}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/75 backdrop-blur-md text-white flex items-center justify-center transition-all z-10 cursor-pointer shadow-lg hover:scale-110"
+                    title="الصورة التالية"
+                  >
+                    <ChevronRight size={22} />
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Gallery Thumbnails Carousel Row */}
             {allGalleryUrls.length > 0 && (
-              <div className="flex items-center gap-3 overflow-x-auto pb-2 pt-1 scrollbar-thin">
-                {allGalleryUrls.map((imgUrl, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setActiveImage(imgUrl)}
-                    className={`w-20 h-20 rounded-2xl overflow-hidden border-2 flex-shrink-0 transition-all ${currentDisplayImage === imgUrl
-                      ? 'border-blue-600 ring-2 ring-blue-100 scale-105 shadow-md'
-                      : 'border-gray-200 opacity-70 hover:opacity-100'
-                      }`}
-                  >
-                    <img src={imgUrl} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
-                  </button>
-                ))}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-xs font-black text-gray-500 flex items-center gap-1.5">
+                    <Layers size={14} className="text-blue-600" />
+                    <span>معرض صور الحقيبة ({allGalleryUrls.length} صور)</span>
+                  </span>
+                  <span className="text-[11px] font-bold text-gray-400">انقر على أي صورة للمعاينة والتكبير</span>
+                </div>
+                <div className="flex items-center gap-3 overflow-x-auto pb-2 pt-1 scrollbar-thin">
+                  {allGalleryUrls.map((imgUrl, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setActiveImage(imgUrl)}
+                      className={`w-20 h-20 rounded-2xl overflow-hidden border-2 flex-shrink-0 transition-all cursor-pointer relative group ${currentDisplayImage === imgUrl
+                        ? 'border-blue-600 ring-4 ring-blue-100 scale-105 shadow-md'
+                        : 'border-gray-200 opacity-75 hover:opacity-100 hover:border-gray-300'
+                        }`}
+                    >
+                      <img src={imgUrl} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                      {currentDisplayImage === imgUrl && (
+                        <span className="absolute bottom-1 right-1 bg-blue-600 text-white rounded-full p-0.5 shadow-sm">
+                          <Check size={10} strokeWidth={3} />
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -444,25 +573,25 @@ export default function BagDetailsPage() {
                             <span className={`px-2.5 py-0.5 rounded-lg border font-black ${badge.bg}`}>
                               {badge.label}
                             </span>
-                            <span>•</span>
-                            <span>رقم العنصر #{item.id}</span>
+
                           </div>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-200">
                         {Boolean(
+                          isPurchased ||
+                          isFree ||
                           purchaseSuccess ||
                           bag.purchased === true ||
                           (bag as any).is_purchased === true ||
-                          bag.type_price === 'free' ||
                           (!bag.price && !bag.discount_price)
                         ) ? (
                           <a
                             href={item.path}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-black text-xs shadow-sm shadow-blue-200 transition-all"
+                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-black text-xs shadow-sm shadow-blue-200 transition-all cursor-pointer"
                           >
                             <Download size={15} />
                             <span>تنزيل / فتح الملف</span>
@@ -508,7 +637,7 @@ export default function BagDetailsPage() {
                       </span>
                       <button
                         onClick={() => router.push(`/academic/courses/${course.id}`)}
-                        className="text-xs font-black text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                        className="text-xs font-black text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
                       >
                         <span>معاينة الدورة</span>
                         <ExternalLink size={14} />
@@ -548,13 +677,20 @@ export default function BagDetailsPage() {
 
             {/* Action CTAs */}
             <div className="space-y-3">
-              <button
-                onClick={() => setShowBuyModal(true)}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-base flex items-center justify-center gap-3 shadow-lg shadow-blue-200 transition-all hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <ShoppingCart size={22} />
-                <span>{isFree ? 'احصل عليها مجاناً الآن' : 'اشترِ الحقيبة الآن'}</span>
-              </button>
+              {isPurchased ? (
+                <div className="w-full py-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-black text-base flex items-center justify-center gap-2.5 shadow-sm">
+                  <CheckCircle2 size={22} className="text-emerald-600" />
+                  <span>الحقيبة مشتراة ومتاحة بالكامل</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowBuyModal(true)}
+                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-base flex items-center justify-center gap-3 shadow-lg shadow-blue-200 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                >
+                  <ShoppingCart size={22} />
+                  <span>{isFree ? 'احصل عليها مجاناً الآن' : 'اشترِ الحقيبة الآن'}</span>
+                </button>
+              )}
 
               <button
                 onClick={handleShare}
@@ -788,6 +924,77 @@ export default function BagDetailsPage() {
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Fullscreen Lightbox Modal */}
+      {lightboxOpen && currentDisplayImage && (
+        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-8 animate-in fade-in duration-200" dir="rtl">
+          {/* Header */}
+          <div className="w-full max-w-5xl flex items-center justify-between text-white border-b border-white/10 pb-4 z-10">
+            <div className="space-y-0.5">
+              <h3 className="text-base font-black text-white">{bag.title}</h3>
+              <p className="text-xs font-medium text-white/60">
+                صورة {currentImageIndex + 1} من {allGalleryUrls.length}
+              </p>
+            </div>
+            <button
+              onClick={() => setLightboxOpen(false)}
+              className="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+              title="إغلاق"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Main Image View with Navigation */}
+          <div className="relative flex-1 w-full max-w-5xl flex items-center justify-center my-4 overflow-hidden">
+            <img
+              src={currentDisplayImage}
+              alt={bag.title}
+              className="max-h-[75vh] max-w-full object-contain rounded-2xl shadow-2xl transition-all duration-300"
+            />
+
+            {allGalleryUrls.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={handlePrevImage}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/25 backdrop-blur-md text-white flex items-center justify-center transition-all cursor-pointer hover:scale-110 shadow-lg"
+                  title="الصورة السابقة"
+                >
+                  <ChevronLeft size={28} />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNextImage}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/25 backdrop-blur-md text-white flex items-center justify-center transition-all cursor-pointer hover:scale-110 shadow-lg"
+                  title="الصورة التالية"
+                >
+                  <ChevronRight size={28} />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Bottom Thumbnails */}
+          {allGalleryUrls.length > 1 && (
+            <div className="w-full max-w-4xl flex items-center justify-center gap-3 overflow-x-auto py-2 scrollbar-thin">
+              {allGalleryUrls.map((imgUrl, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setActiveImage(imgUrl)}
+                  className={`w-16 h-16 rounded-xl overflow-hidden border-2 flex-shrink-0 transition-all cursor-pointer ${currentDisplayImage === imgUrl
+                    ? 'border-blue-500 scale-110 shadow-lg ring-2 ring-blue-400/50'
+                    : 'border-white/20 opacity-50 hover:opacity-100'
+                    }`}
+                >
+                  <img src={imgUrl} alt={`Thumb ${idx + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

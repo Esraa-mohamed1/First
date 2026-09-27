@@ -1,7 +1,7 @@
 'use client';
 
 import React, { Suspense } from 'react';
-import { Mail, Lock, Loader2, Eye, EyeOff, ArrowRight, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
+import { Mail, Phone, Lock, Loader2, Eye, EyeOff, ArrowRight, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useResetPasswordState } from '@/hooks/useResetPasswordState';
 
 function ResetPasswordContent() {
@@ -12,8 +12,11 @@ function ResetPasswordContent() {
         setShowPassword,
         showConfirmPassword,
         setShowConfirmPassword,
+        identifierMode,
         email,
         setEmail,
+        phone,
+        setPhone,
         code,
         setCode,
         password,
@@ -27,8 +30,11 @@ function ResetPasswordContent() {
         handleSubmit
     } = useResetPasswordState();
 
+    // The identifier (email/phone) came from the URL — it's always locked (OTP already sent)
+    const identifierLocked = !!(identifierMode === 'email' ? email : phone);
+
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 relative font-sans overflow-hidden " dir="rtl">
+        <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 relative font-sans overflow-hidden" dir="rtl">
             <div className="w-full max-w-2xl relative z-10 animate-fade-in-up">
                 <div className="bg-white p-10 sm:p-14 rounded-[40px] shadow-xl border">
                     <div className="mb-10 text-center">
@@ -48,22 +54,53 @@ function ResetPasswordContent() {
                         )}
 
                         <div className="space-y-4">
-                            {/* Email */}
-                            <div className="space-y-1">
-                                <label className="block text-right text-xs font-black text-gray-700 px-1">البريد الإلكتروني</label>
-                                <div className="relative group opacity-80">
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="example@mail.com"
-                                        className={`w-full p-4 pr-12 text-right bg-gray-100 border-2 rounded-2xl outline-none font-bold text-gray-700 ${errors.email ? 'border-red-500' : 'border-transparent'}`}
-                                    />
-                                    <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                            {/* Email or Phone — locked after OTP sent */}
+                            {identifierMode === 'email' ? (
+                                <div className="space-y-1">
+                                    <label className="block text-right text-xs font-black text-gray-700 px-1">
+                                        البريد الإلكتروني
+                                        {identifierLocked && (
+                                            <span className="mr-2 text-emerald-600 text-[10px]">(تم الإرسال — لا يمكن التعديل)</span>
+                                        )}
+                                    </label>
+                                    <div className={`relative group ${identifierLocked ? 'opacity-70' : ''}`}>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value={email}
+                                            disabled={identifierLocked}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            placeholder="example@mail.com"
+                                            className={`w-full p-4 pr-12 text-right border-2 rounded-2xl outline-none font-bold text-gray-700 ${identifierLocked ? 'bg-gray-100 cursor-not-allowed border-transparent' : `bg-gray-50 focus:bg-white focus:border-blue-500 transition-all duration-300 ${errors.email ? 'border-red-500' : 'border-transparent'}`}`}
+                                        />
+                                        <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                                    </div>
+                                    {errors.email && <p className="text-red-500 text-xs font-bold px-1">{errors.email}</p>}
                                 </div>
-                                {errors.email && <p className="text-red-500 text-xs font-bold px-1">{errors.email}</p>}
-                            </div>
+                            ) : (
+                                <div className="space-y-1">
+                                    <label className="block text-right text-xs font-black text-gray-700 px-1">
+                                        رقم الجوال
+                                        {identifierLocked && (
+                                            <span className="mr-2 text-emerald-600 text-[10px]">(تم الإرسال — لا يمكن التعديل)</span>
+                                        )}
+                                    </label>
+                                    <div className={`relative group ${identifierLocked ? 'opacity-70' : ''}`}>
+                                        <input
+                                            type="tel"
+                                            name="phone"
+                                            value={phone}
+                                            disabled={identifierLocked}
+                                            onChange={(e) => setPhone(e.target.value)}
+                                            placeholder="+966 5xx xxx xxxx"
+                                            dir="ltr"
+                                            className={`w-full p-4 pr-12 text-left border-2 rounded-2xl outline-none font-bold text-gray-700 ${identifierLocked ? 'bg-gray-100 cursor-not-allowed border-transparent' : `bg-gray-50 focus:bg-white focus:border-blue-500 transition-all duration-300 ${errors.phone ? 'border-red-500' : 'border-transparent'}`}`}
+                                        />
+                                        <Phone className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                                    </div>
+                                    {errors.phone && <p className="text-red-500 text-xs font-bold px-1">{errors.phone}</p>}
+                                </div>
+                            )}
 
                             {/* Verification Code */}
                             <div className="space-y-1">

@@ -22,9 +22,27 @@ export default function BagPreviewCard({ formData = {} }: BagPreviewCardProps) {
 
   const allImages: string[] = [];
   if (formData.coverImage) allImages.push(formData.coverImage);
-  if (Array.isArray(formData.gallery)) {
-    formData.gallery.forEach((g: any) => {
-      const url = typeof g === 'string' ? g : g?.path || g?.url;
+
+  let rawGallery: any = formData.gallery ?? (formData as any)?.galleries ?? (formData as any)?.bag_galleries ?? (formData as any)?.images ?? [];
+  if (typeof rawGallery === 'string') {
+    try {
+      rawGallery = JSON.parse(rawGallery);
+    } catch (e) {
+      if (rawGallery.includes(',')) {
+        rawGallery = rawGallery.split(',').map((s: string) => s.trim());
+      } else if (rawGallery.trim()) {
+        rawGallery = [rawGallery.trim()];
+      } else {
+        rawGallery = [];
+      }
+    }
+  }
+
+  if (Array.isArray(rawGallery)) {
+    rawGallery.forEach((g: any) => {
+      const url = typeof g === 'string'
+        ? g
+        : (g?.image || g?.image_url || g?.url || g?.path || g?.file_url || g?.file || g?.photo || g?.photo_url || g?.full_url || g?.attachment);
       if (url && !allImages.includes(url)) {
         allImages.push(url);
       }

@@ -6,7 +6,7 @@ import {
   Search, Archive, FolderArchive, Layers, ChevronLeft, Sparkles,
   AlertCircle, RefreshCw, ShoppingCart, Eye
 } from 'lucide-react';
-import { getBags } from '@/services/bags';
+import { getBags, getCurrencySymbol } from '@/services/bags';
 import { getMyAcademyProfile } from '@/services/student-auth';
 import { BagApiItem } from '@/types/bags';
 import toast from 'react-hot-toast';
@@ -334,7 +334,7 @@ export default function BagsPage() {
                           <div className="flex items-baseline gap-1.5">
                             <span className="text-sm font-black text-indigo-600">
                               {Number(bag.discount_price || bag.price).toLocaleString()}
-                              <span className="text-[10px] font-bold mr-0.5">SAR</span>
+                              <span className="text-[10px] font-bold mr-1">{getCurrencySymbol(bag.currency)}</span>
                             </span>
                             {hasDiscount && (
                               <span className="text-[10px] font-bold text-slate-300 line-through">

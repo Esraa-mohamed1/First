@@ -408,10 +408,21 @@ export const getDashboard = async (): Promise<any> => {
   }
 };
 
-export const getCourseSubscribers = async (courseId: number | string): Promise<any[]> => {
+export const getCourseSubscribers = async (
+  courseId: number | string,
+  params?: { period?: string; from?: string; to?: string }
+): Promise<any[]> => {
   try {
+    const queryParams = new URLSearchParams();
+    queryParams.append('course_id', String(courseId));
+    if (params?.period && params.period !== 'all' && params.period !== 'custom') {
+      queryParams.append('period', params.period);
+    }
+    if (params?.from) queryParams.append('from', params.from);
+    if (params?.to) queryParams.append('to', params.to);
+
     // Primary User subscription endpoint: user_subscribes
-    const response = await academyApi.get<ApiResponse<any[]>>(`user_subscribes?course_id=${courseId}`);
+    const response = await academyApi.get<ApiResponse<any[]>>(`user_subscribes?${queryParams.toString()}`);
     return response.data.data || [];
   } catch {
     try {

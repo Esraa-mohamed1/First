@@ -285,9 +285,29 @@ export const configureReceiverAccount = async (payload: ConfigureReceiverAccount
 
 // StudentPurchaseRequest re-exported from @/types/finance above
 
-export const getStudentPurchaseRequests = async (): Promise<StudentPurchaseRequest[]> => {
+export interface SubscriptionFilterParams {
+  period?: string;
+  from?: string;
+  to?: string;
+}
+
+export const getStudentPurchaseRequests = async (params?: SubscriptionFilterParams): Promise<StudentPurchaseRequest[]> => {
   try {
-    const response = await academyApi.get<ApiResponse<StudentPurchaseRequest[]>>('user_subscribes');
+    const queryParams = new URLSearchParams();
+    if (params?.period && params.period !== 'all' && params.period !== 'custom') {
+      queryParams.append('period', params.period);
+    }
+    if (params?.from) {
+      queryParams.append('from', params.from);
+    }
+    if (params?.to) {
+      queryParams.append('to', params.to);
+    }
+
+    const queryString = queryParams.toString();
+    const endpoint = `user_subscribes${queryString ? `?${queryString}` : ''}`;
+
+    const response = await academyApi.get<ApiResponse<StudentPurchaseRequest[]>>(endpoint);
     return response.data.data || [];
   } catch (error: any) {
     console.error('Failed to get student purchase requests:', error);
