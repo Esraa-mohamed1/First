@@ -5446,7 +5446,7 @@ export default function PageBuilderPage() {
                   <div className="bg-blue-50/70 border border-blue-200 p-3.5 rounded-xl text-[11px] text-blue-900 font-bold leading-relaxed flex items-start gap-2">
                     <span className="material-symbols-outlined text-[18px] text-blue-600 shrink-0 mt-0.5">smart_display</span>
                     <div>
-                      يتم جلب بطاقات الفيديوهات التعليمية تلقائياً من مكتبة الفيديو الخاصة بالمعلم عند توفر نقطة النهاية (Endpoint). يمكنك هنا التحكم في عناوين المظهر، نصوص الأزرار، والخطوط والألوان.
+                      يتم جلب بطاقات الفيديوهات التعليمية تلقائياً من مكتبة الفيديو الخاصة بالمعلم عند توفرها . يمكنك هنا التحكم في عناوين المظهر، نصوص الأزرار، والخطوط والألوان.
                     </div>
                   </div>
 

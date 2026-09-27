@@ -91,34 +91,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     };
   }, [pathname]);
 
-  // Keep "الدورات" expanded while inside any courses page
-  useEffect(() => {
-    if (pathname.startsWith('/academic/students')) {
-      setExpandedItems(prev => (prev.includes('الطلاب') ? prev : [...prev, 'الطلاب']));
-    }
-    if (pathname.startsWith('/academic/courses')) {
-      setExpandedItems(prev => (prev.includes('الدورات') ? prev : [...prev, 'الدورات']));
-    }
-    if (pathname.startsWith('/academic/market') || pathname.startsWith('/academic/bag-purchases')) {
-      setExpandedItems(prev => (prev.includes('المتجر') ? prev : [...prev, 'المتجر']));
-    }
-    if (pathname.startsWith('/academic/settings')) {
-      setExpandedItems(prev => (prev.includes('الأعدادات') ? prev : [...prev, 'الأعدادات']));
-    }
-    if (pathname === '/academic/settings/login-data') {
-      setExpandedItems(prev => (prev.includes('الأعدادات') ? prev : [...prev, 'الأعدادات']));
-    }
-    if (pathname.startsWith('/academic/templates') || pathname.startsWith('/academic/website') || pathname === '/academic/domain') {
-      setExpandedItems(prev => (prev.includes('الموقع') ? prev : [...prev, 'الموقع']));
-    }
-    if (pathname.startsWith('/academic/finance')) {
-      setExpandedItems(prev => (prev.includes('المالية') ? prev : [...prev, 'المالية']));
-    }
-    if (pathname.startsWith('/academic/marketing') || pathname.startsWith('/academic/coupons')) {
-      setExpandedItems(prev => (prev.includes('التسويق') ? prev : [...prev, 'التسويق']));
-    }
-  }, [pathname]);
-
   const menuItems = [
     {
       label: 'الرئيسية',
@@ -138,12 +110,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         { label: 'دورة مسجلة', href: '/academic/courses/recorded' },
         { label: 'دورة لايف اون لاين', href: '/academic/courses/live-online' },
         { label: 'دورة حضوري', href: '/academic/courses/in-person' },
-
         {
           label: 'التصنيف والصفوف الدراسية',
           href: '/academic/courses/categories',
         },
-
         { label: 'معاينة كطالب  ', href: '/academic/courses/8/student' },
       ],
     },
@@ -228,6 +198,31 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     },
   ];
 
+  // Auto-expand parent sections when on a child page or on route change
+  useEffect(() => {
+    menuItems.forEach((item) => {
+      if ((item as any).subItems && (item as any).subItems.length > 0) {
+        const matchesChild = (item as any).subItems.some((subItem: any) => {
+          const subPath = subItem.href.split('?')[0];
+          return pathname === subPath || (subPath !== '/academic' && pathname.startsWith(subPath + '/'));
+        });
+        const parentPath = item.href ? item.href.split('?')[0] : '';
+        const matchesParent = parentPath && parentPath !== '/academic' && (pathname === parentPath || pathname.startsWith(parentPath + '/'));
+
+        // Additional sub-route mappings
+        const isSpecialMatch =
+          (item.label === 'المتجر' && pathname.startsWith('/academic/bag-purchases')) ||
+          (item.label === 'الموقع' && (pathname === '/academic/domain' || pathname.startsWith('/academic/templates'))) ||
+          (item.label === 'الأعدادات' && pathname === '/academic/settings/login-data') ||
+          (item.label === 'التسويق' && pathname.startsWith('/academic/coupons'));
+
+        if (matchesChild || matchesParent || isSpecialMatch) {
+          setExpandedItems((prev) => (prev.includes(item.label) ? prev : [...prev, item.label]));
+        }
+      }
+    });
+  }, [pathname, activeTemplate, activePage]);
+
   return (
     <>
       <aside className={twMerge(
@@ -293,71 +288,100 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             }
             return true;
           }).map((item) => {
-            const isActive = pathname === item.href || (item.href !== '/academic' && pathname.startsWith(item.href));
-            const hasSubItems = (item as any).subItems && (item as any).subItems.length > 0;
+            const hasSubItems = Boolean((item as any).subItems && (item as any).subItems.length > 0);
             const isExpanded = expandedItems.includes(item.label);
+
+            const isChildActive = hasSubItems && (item as any).subItems.some((subItem: any) => {
+              const cleanSub = subItem.href.split('?')[0];
+              return pathname === cleanSub || (cleanSub !== '/academic' && pathname.startsWith(cleanSub + '/'));
+            });
+
+            const isDirectActive = pathname === item.href || (item.href !== '/academic' && pathname.startsWith(item.href + '/'));
+            const isActive = hasSubItems ? isChildActive : isDirectActive;
 
             return (
               <div key={item.label} className="group">
-                <div
-                  onClick={() => {
-                    if (hasSubItems) {
-                      toggleExpand(item.label);
-                      router.push(item.href);
-                    }
-                  }}
-                  className={twMerge(
-                    'flex items-center justify-between px-5 py-4 rounded-2xl transition-all duration-300',
-                    isActive
-                      ? 'bg-[#EBF1FF] text-[#2563eb]'
-                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900',
-                    hasSubItems ? 'cursor-pointer' : ''
-                  )}
-                >
-                  {!hasSubItems ? (
-                    <Link href={item.href} className="flex items-center justify-between w-full">
-                      <div className="flex items-center gap-4">
-                        <item.icon size={20} className={twMerge(
-                          isActive ? "text-[#2563eb]" : "text-gray-400 group-hover:text-gray-600"
-                        )} />
-                        <span className="font-bold text-[14px]">{item.label}</span>
-                      </div>
-                    </Link>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-4">
-                        <item.icon size={20} className={twMerge(
-                          isActive ? "text-[#2563eb]" : "text-gray-400 group-hover:text-gray-600"
-                        )} />
-                        <span className="font-bold text-[14px]">{item.label}</span>
-                      </div>
-                      <ChevronLeft
-                        size={16}
+                {hasSubItems ? (
+                  <button
+                    type="button"
+                    aria-expanded={isExpanded}
+                    aria-controls={`submenu-${item.label}`}
+                    onClick={() => toggleExpand(item.label)}
+                    className={twMerge(
+                      'w-full flex items-center justify-between px-5 py-3.5 rounded-2xl transition-all duration-200 select-none text-right cursor-pointer',
+                      isActive
+                        ? 'bg-[#EBF1FF] text-[#2563eb] font-bold'
+                        : isExpanded
+                          ? 'text-gray-900 bg-gray-50/70 font-semibold'
+                          : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-semibold'
+                    )}
+                  >
+                    <div className="flex items-center gap-4">
+                      <item.icon
+                        size={20}
                         className={twMerge(
-                          "transition-transform duration-300 text-gray-400",
-                          isExpanded ? "-rotate-90 text-[#2563eb]" : ""
+                          'transition-colors shrink-0',
+                          isActive ? 'text-[#2563eb]' : 'text-gray-400 group-hover:text-gray-600'
                         )}
                       />
-                    </>
-                  )}
-                </div>
+                      <span className="text-[14px] leading-tight">{item.label}</span>
+                    </div>
+                    <ChevronLeft
+                      size={16}
+                      className={twMerge(
+                        'transition-transform duration-200 text-gray-400 shrink-0',
+                        isExpanded ? '-rotate-90 text-[#2563eb]' : ''
+                      )}
+                    />
+                  </button>
+                ) : (
+                  <Link
+                    href={item.href}
+                    className={twMerge(
+                      'flex items-center justify-between px-5 py-3.5 rounded-2xl transition-all duration-200 text-right',
+                      isActive
+                        ? 'bg-[#EBF1FF] text-[#2563eb] font-bold'
+                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-semibold'
+                    )}
+                  >
+                    <div className="flex items-center gap-4">
+                      <item.icon
+                        size={20}
+                        className={twMerge(
+                          'transition-colors shrink-0',
+                          isActive ? 'text-[#2563eb]' : 'text-gray-400 group-hover:text-gray-600'
+                        )}
+                      />
+                      <span className="text-[14px] leading-tight">{item.label}</span>
+                    </div>
+                  </Link>
+                )}
 
                 {hasSubItems && isExpanded && (
-                  <div className="mt-2 mr-4 pr-4 border-r-2 border-gray-100 space-y-1">
-                    {(item as any).subItems.map((subItem: any) => (
-                      <Link
-                        key={subItem.href}
-                        href={subItem.href}
-                        className={twMerge(
-                          'block px-4 py-2 text-sm font-medium rounded-lg transition-colors',
-                          pathname === subItem.href || pathname.startsWith(subItem.href + '/')
-                            ? 'text-blue-600 bg-blue-50'
-                            : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                        )}
-                      >
-                        {subItem.label}
-                      </Link>
-                    ))}
+                  <div
+                    id={`submenu-${item.label}`}
+                    role="region"
+                    aria-label={item.label}
+                    className="mt-1.5 mr-5 pr-3.5 border-r-2 border-blue-100 space-y-1 transition-all"
+                  >
+                    {(item as any).subItems.map((subItem: any) => {
+                      const cleanSubHref = subItem.href.split('?')[0];
+                      const isSubActive = pathname === cleanSubHref || (cleanSubHref !== '/academic' && pathname.startsWith(cleanSubHref + '/'));
+                      return (
+                        <Link
+                          key={subItem.href}
+                          href={subItem.href}
+                          className={twMerge(
+                            'flex items-center px-4 py-2.5 text-[13px] rounded-xl transition-all duration-150',
+                            isSubActive
+                              ? 'text-blue-600 bg-blue-50 font-bold shadow-xs'
+                              : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 font-medium'
+                          )}
+                        >
+                          <span>{subItem.label}</span>
+                        </Link>
+                      );
+                    })}
                   </div>
                 )}
               </div>
