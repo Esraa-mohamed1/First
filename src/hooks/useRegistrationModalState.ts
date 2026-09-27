@@ -275,11 +275,11 @@ export function useRegistrationModalState() {
             }
 
             if (isStudent) {
-                const name = contactMethod === 'email' ? formData.email.split('@')[0] : formData.phone;
+                const name = formData.email ? formData.email.split('@')[0] : (formData.phone || 'طالب جديد');
                 const response = await registerStudent({
                     name,
-                    email: contactMethod === 'email' ? formData.email : undefined,
-                    phone: contactMethod === 'phone' ? formData.phone : undefined,
+                    email: formData.email || undefined,
+                    phone: formData.phone || undefined,
                     password: formData.password,
                     password_confirmation: formData.confirmPassword,
                     role: 'student'

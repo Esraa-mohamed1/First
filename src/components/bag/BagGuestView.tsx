@@ -11,6 +11,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Maximize2,
+  User,
+  Mail,
+  Phone,
+  Eye,
+  EyeOff,
+  UserPlus,
+  AlertCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getBag, BagApiItem, BagItemDetail, purchaseBag, getCurrencySymbol } from '@/services/bags';
@@ -18,7 +25,10 @@ import { getStudentCourses } from '@/services/student-courses';
 import { getUserPaymentInfos } from '@/services/finance';
 import { Course } from '@/types/api';
 import { useModal } from '@/context/ModalContext';
-import { getStoredAuthToken } from '@/lib/auth-storage';
+import { getStoredAuthToken, persistAuthToken } from '@/lib/auth-storage';
+import { registerStudent } from '@/services/student-auth';
+import { login } from '@/services/auth';
+import { PhoneInput } from '@/components/CountrySelector';
 
 interface BagGuestViewProps {
   bagId: string;
@@ -75,13 +85,50 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
   const [isProcessingPurchase, setIsProcessingPurchase] = useState(false);
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
 
+  // Student Authentication state for modal
+  const [authTokenState, setAuthTokenState] = useState<string | null>(null);
+  const [authMode, setAuthMode] = useState<'register' | 'login'>('register');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [showAuthPassword, setShowAuthPassword] = useState(false);
+
+  // Registration form fields
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPhone, setRegPhone] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  const [regErrors, setRegErrors] = useState<Record<string, string>>({});
+
+  // Login form fields
+  const [loginIdentity, setLoginIdentity] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginErrors, setLoginErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const checkToken = () => {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || getStoredAuthToken()) : null;
+      setAuthTokenState(token);
+    };
+    checkToken();
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('student-registered', checkToken);
+      window.addEventListener('student-logged-in', checkToken);
+      window.addEventListener('auth-changed', checkToken);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('student-registered', checkToken);
+        window.removeEventListener('student-logged-in', checkToken);
+        window.removeEventListener('auth-changed', checkToken);
+      }
+    };
+  }, []);
+
   const handleOpenBuyModal = () => {
     const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || getStoredAuthToken()) : null;
-    if (!token) {
-      toast.error('يرجى تسجيل الدخول أو إنشاء حساب جديد لإتمام عملية الشراء');
-      openModal('registration');
-      return;
-    }
+    setAuthTokenState(token);
     setShowBuyModal(true);
   };
 
@@ -99,12 +146,146 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
     }
   };
 
+  const handleStudentRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    const errs: Record<string, string> = {};
+
+    if (!regName.trim()) errs.name = 'يرجى إدخال الاسم الكامل';
+    if (!regEmail.trim()) errs.email = 'يرجى إدخال البريد الإلكتروني';
+    else if (!/\S+@\S+\.\S+/.test(regEmail)) errs.email = 'البريد الإلكتروني غير صالح';
+    if (!regPhone.trim()) errs.phone = 'يرجى إدخال رقم الجوال';
+    if (!regPassword) errs.password = 'يرجى إدخال كلمة المرور';
+    else if (regPassword.length < 8) errs.password = 'كلمة المرور يجب أن تكون 8 أحرف على الأقل';
+    if (regPassword !== regConfirmPassword) errs.confirmPassword = 'كلمات المرور غير متطابقة';
+
+    if (Object.keys(errs).length > 0) {
+      setRegErrors(errs);
+      return;
+    }
+
+    setAuthLoading(true);
+    try {
+      const response = await registerStudent({
+        name: regName.trim(),
+        email: regEmail.trim(),
+        phone: regPhone.trim(),
+        password: regPassword,
+        password_confirmation: regConfirmPassword,
+        role: 'student',
+      });
+
+      const resObj: any = response;
+      let token = resObj.data?.token || resObj.token || resObj.data?.access_token || resObj.access_token;
+      if (!token && resObj.meta?.access_token) token = resObj.meta.access_token;
+      if (!token && resObj.data?.meta?.access_token) token = resObj.data.meta.access_token;
+
+      if (token) {
+        persistAuthToken(token);
+        localStorage.setItem('user_info', JSON.stringify({
+          name: regName.trim(),
+          email: regEmail.trim(),
+          phone: regPhone.trim(),
+          role: 'student',
+        }));
+        setAuthTokenState(token);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('student-registered'));
+          window.dispatchEvent(new CustomEvent('student-logged-in'));
+        }
+        toast.success('تم إنشاء حساب الطالب بنجاح! يمكنك الآن إكمال عملية الشراء.');
+      } else {
+        toast.success('تم إنشاء الحساب بنجاح. يرجى تسجيل الدخول.');
+        setAuthMode('login');
+        setLoginIdentity(regEmail.trim() || regPhone.trim());
+      }
+    } catch (err: any) {
+      console.error('Failed to register student:', err);
+      let errorMsg = 'حدث خطأ أثناء إنشاء الحساب. يرجى التأكد من البيانات والمحاولة مجدداً.';
+      if (err?.errors && typeof err.errors === 'object') {
+        const firstVal = Object.values(err.errors)[0];
+        if (Array.isArray(firstVal) && firstVal.length > 0) {
+          errorMsg = String(firstVal[0]);
+        } else if (typeof firstVal === 'string') {
+          errorMsg = firstVal;
+        }
+      } else if (err?.message) {
+        errorMsg = String(err.message);
+      }
+      setAuthError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleStudentLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    const errs: Record<string, string> = {};
+
+    if (!loginIdentity.trim()) errs.identity = 'يرجى إدخال البريد الإلكتروني أو رقم الجوال';
+    if (!loginPassword) errs.password = 'يرجى إدخال كلمة المرور';
+
+    if (Object.keys(errs).length > 0) {
+      setLoginErrors(errs);
+      return;
+    }
+
+    setAuthLoading(true);
+    try {
+      const isEmail = loginIdentity.includes('@');
+      const payload = isEmail
+        ? { email: loginIdentity.trim(), password: loginPassword }
+        : { phone: loginIdentity.trim().replace(/\D/g, ''), password: loginPassword };
+
+      const res = await login(payload);
+      const token = res.meta?.access_token || (res as any).data?.token || (res as any).token;
+
+      if (token) {
+        persistAuthToken(token);
+        if (res.data) {
+          localStorage.setItem('user_info', JSON.stringify({
+            name: res.data.name,
+            email: res.data.email,
+            phone: res.data.phone,
+            role: (res.data as any).role || 'student',
+          }));
+        }
+        setAuthTokenState(token);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('student-logged-in'));
+        }
+        toast.success('تم تسجيل الدخول بنجاح! يمكنك الآن إكمال عملية الشراء.');
+      } else {
+        throw new Error('لم يتم استلام رمز المصادقة');
+      }
+    } catch (err: any) {
+      console.error('Failed to login student:', err);
+      let errorMsg = 'بيانات الدخول غير صحيحة';
+      if (err?.errors && typeof err.errors === 'object') {
+        const firstVal = Object.values(err.errors)[0];
+        if (Array.isArray(firstVal) && firstVal.length > 0) {
+          errorMsg = String(firstVal[0]);
+        } else if (typeof firstVal === 'string') {
+          errorMsg = firstVal;
+        }
+      } else if (err?.message) {
+        errorMsg = String(err.message);
+      }
+      setAuthError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   const handleConfirmPurchase = async () => {
     const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || getStoredAuthToken()) : null;
     if (!token) {
-      setShowBuyModal(false);
-      toast.error('يرجى تسجيل الدخول أو إنشاء حساب جديد لإتمام عملية الشراء');
-      openModal('registration');
+      setAuthTokenState(null);
+      setAuthMode('register');
+      toast.error('يرجى إنشاء حساب طالب جديد أو تسجيل الدخول أولاً لإتمام الشراء');
       return;
     }
 
@@ -842,7 +1023,235 @@ export default function BagGuestView({ bagId }: BagGuestViewProps) {
             </div>
 
             <div className="p-6 space-y-6">
-              {purchaseSuccess ? (
+              {!authTokenState ? (
+                <div className="space-y-5">
+                  <div className="p-4 rounded-2xl bg-blue-50 border border-blue-100 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                      <UserPlus size={20} />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-gray-900">إنشاء حساب طالب لشراء الحقيبة</h4>
+                      <p className="text-xs font-bold text-gray-500">يتطلب شراء الحقيبة وجود حساب طالب فعال لربط المشتريات والملفات</p>
+                    </div>
+                  </div>
+
+                  {/* Tab switcher */}
+                  <div className="flex rounded-2xl bg-gray-100 p-1 border border-gray-200">
+                    <button
+                      type="button"
+                      onClick={() => { setAuthMode('register'); setAuthError(''); }}
+                      className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all ${
+                        authMode === 'register' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+                      }`}
+                    >
+                      إنشاء حساب طالب جديد
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setAuthMode('login'); setAuthError(''); }}
+                      className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all ${
+                        authMode === 'login' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+                      }`}
+                    >
+                      تسجيل الدخول لحسابك
+                    </button>
+                  </div>
+
+                  {authError && (
+                    <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                      <AlertCircle size={16} className="text-red-500 shrink-0" />
+                      <span>{authError}</span>
+                    </div>
+                  )}
+
+                  {authMode === 'register' ? (
+                    <form onSubmit={handleStudentRegisterSubmit} className="space-y-4">
+                      {/* Name */}
+                      <div className="space-y-1">
+                        <label className="block text-right text-xs font-black text-gray-700">الاسم الكامل <span className="text-red-500">*</span></label>
+                        <div className="relative group">
+                          <input
+                            type="text"
+                            name="regName"
+                            value={regName}
+                            onChange={(e) => { setRegName(e.target.value); if (regErrors.name) setRegErrors(prev => ({ ...prev, name: '' })); }}
+                            placeholder="أدخل اسمك الكامل"
+                            className={`w-full p-3 pr-10 text-right bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${
+                              regErrors.name ? 'border-red-500' : 'border-gray-200'
+                            }`}
+                          />
+                          <User className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600" size={16} />
+                        </div>
+                        {regErrors.name && <p className="text-red-500 text-[10px] font-bold px-1">{regErrors.name}</p>}
+                      </div>
+
+                      {/* Email */}
+                      <div className="space-y-1">
+                        <label className="block text-right text-xs font-black text-gray-700">البريد الإلكتروني <span className="text-red-500">*</span></label>
+                        <div className="relative group">
+                          <input
+                            type="email"
+                            name="regEmail"
+                            value={regEmail}
+                            onChange={(e) => { setRegEmail(e.target.value); if (regErrors.email) setRegErrors(prev => ({ ...prev, email: '' })); }}
+                            placeholder="example@mail.com"
+                            className={`w-full p-3 pr-10 text-right bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${
+                              regErrors.email ? 'border-red-500' : 'border-gray-200'
+                            }`}
+                          />
+                          <Mail className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600" size={16} />
+                        </div>
+                        {regErrors.email && <p className="text-red-500 text-[10px] font-bold px-1">{regErrors.email}</p>}
+                      </div>
+
+                      {/* Phone Input with Country Selector */}
+                      <div className="space-y-1">
+                        <label className="block text-right text-xs font-black text-gray-700">رقم الجوال <span className="text-red-500">*</span></label>
+                        <PhoneInput
+                          name="regPhone"
+                          label=""
+                          placeholder="اكتب رقم الجوال"
+                          value={regPhone}
+                          onChange={(e) => { setRegPhone(e.target.value.replace(/\D/g, '')); if (regErrors.phone) setRegErrors(prev => ({ ...prev, phone: '' })); }}
+                          className={`p-3 text-left bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${
+                            regErrors.phone ? 'border-red-500' : 'border-gray-200'
+                          }`}
+                        />
+                        {regErrors.phone && <p className="text-red-500 text-[10px] font-bold px-1">{regErrors.phone}</p>}
+                      </div>
+
+                      {/* Password & Confirm Password */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="block text-right text-xs font-black text-gray-700">كلمة المرور <span className="text-red-500">*</span></label>
+                          <div className="relative group">
+                            <input
+                              type={showAuthPassword ? 'text' : 'password'}
+                              name="regPassword"
+                              value={regPassword}
+                              onChange={(e) => { setRegPassword(e.target.value); if (regErrors.password) setRegErrors(prev => ({ ...prev, password: '' })); }}
+                              placeholder="••••••••"
+                              className={`w-full p-3 pr-10 text-right bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${
+                                regErrors.password ? 'border-red-500' : 'border-gray-200'
+                              }`}
+                            />
+                            <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600" size={16} />
+                            <button
+                              type="button"
+                              onClick={() => setShowAuthPassword(!showAuthPassword)}
+                              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 p-1"
+                            >
+                              {showAuthPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                            </button>
+                          </div>
+                          {regErrors.password && <p className="text-red-500 text-[10px] font-bold px-1">{regErrors.password}</p>}
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="block text-right text-xs font-black text-gray-700">تأكيد كلمة المرور <span className="text-red-500">*</span></label>
+                          <div className="relative group">
+                            <input
+                              type={showAuthPassword ? 'text' : 'password'}
+                              name="regConfirmPassword"
+                              value={regConfirmPassword}
+                              onChange={(e) => { setRegConfirmPassword(e.target.value); if (regErrors.confirmPassword) setRegErrors(prev => ({ ...prev, confirmPassword: '' })); }}
+                              placeholder="••••••••"
+                              className={`w-full p-3 pr-10 text-right bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${
+                                regErrors.confirmPassword ? 'border-red-500' : 'border-gray-200'
+                              }`}
+                            />
+                            <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600" size={16} />
+                          </div>
+                          {regErrors.confirmPassword && <p className="text-red-500 text-[10px] font-bold px-1">{regErrors.confirmPassword}</p>}
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={authLoading}
+                        className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-sm flex items-center justify-center gap-2 shadow-md shadow-blue-200 transition-all disabled:opacity-50 cursor-pointer mt-2"
+                      >
+                        {authLoading ? (
+                          <>
+                            <Loader2 size={18} className="animate-spin" />
+                            <span>جاري إنشاء الحساب...</span>
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus size={18} />
+                            <span>إنشاء الحساب ومتابعة الشراء</span>
+                          </>
+                        )}
+                      </button>
+                    </form>
+                  ) : (
+                    <form onSubmit={handleStudentLoginSubmit} className="space-y-4">
+                      {/* Login Identity */}
+                      <div className="space-y-1">
+                        <label className="block text-right text-xs font-black text-gray-700">البريد الإلكتروني أو رقم الجوال <span className="text-red-500">*</span></label>
+                        <div className="relative group">
+                          <input
+                            type="text"
+                            name="loginIdentity"
+                            value={loginIdentity}
+                            onChange={(e) => { setLoginIdentity(e.target.value); if (loginErrors.identity) setLoginErrors(prev => ({ ...prev, identity: '' })); }}
+                            placeholder="example@mail.com أو 05xxxxxxx"
+                            className={`w-full p-3 pr-10 text-right bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${
+                              loginErrors.identity ? 'border-red-500' : 'border-gray-200'
+                            }`}
+                          />
+                          <Mail className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600" size={16} />
+                        </div>
+                        {loginErrors.identity && <p className="text-red-500 text-[10px] font-bold px-1">{loginErrors.identity}</p>}
+                      </div>
+
+                      {/* Password */}
+                      <div className="space-y-1">
+                        <label className="block text-right text-xs font-black text-gray-700">كلمة المرور <span className="text-red-500">*</span></label>
+                        <div className="relative group">
+                          <input
+                            type={showAuthPassword ? 'text' : 'password'}
+                            name="loginPassword"
+                            value={loginPassword}
+                            onChange={(e) => { setLoginPassword(e.target.value); if (loginErrors.password) setLoginErrors(prev => ({ ...prev, password: '' })); }}
+                            placeholder="••••••••"
+                            className={`w-full p-3 pr-10 text-right bg-gray-50 border rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-xs text-gray-900 ${
+                              loginErrors.password ? 'border-red-500' : 'border-gray-200'
+                            }`}
+                          />
+                          <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600" size={16} />
+                          <button
+                            type="button"
+                            onClick={() => setShowAuthPassword(!showAuthPassword)}
+                            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 p-1"
+                          >
+                            {showAuthPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                          </button>
+                        </div>
+                        {loginErrors.password && <p className="text-red-500 text-[10px] font-bold px-1">{loginErrors.password}</p>}
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={authLoading}
+                        className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-sm flex items-center justify-center gap-2 shadow-md shadow-blue-200 transition-all disabled:opacity-50 cursor-pointer mt-2"
+                      >
+                        {authLoading ? (
+                          <>
+                            <Loader2 size={18} className="animate-spin" />
+                            <span>جاري تسجيل الدخول...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Lock size={18} />
+                            <span>تسجيل الدخول ومتابعة الشراء</span>
+                          </>
+                        )}
+                      </button>
+                    </form>
+                  )}
+                </div>
+              ) : purchaseSuccess ? (
                 <div className="text-center py-8 space-y-4">
                   <div className="w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
                     <CheckCircle2 size={48} />
