@@ -78,7 +78,7 @@ function normalizeBunnyEmbedUrl(
 
 function appendStartTime(url: string, lesson: any): string {
   const watched = Number(lesson.watched_seconds ?? lesson.watchedSeconds ?? 0);
-  if (watched <= 0) return url;
+  if (watched <= 0 || watched >= 43200 || isNaN(watched)) return url;
   const separator = url.includes('?') ? '&' : '?';
   return `${url}${separator}t=${watched}`;
 }

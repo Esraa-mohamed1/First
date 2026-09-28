@@ -238,27 +238,27 @@ export const StudentHeader = ({ onMenuClick, isMobileMenuOpen = false }: Student
   }, []);
 
   return (
-    <header className="h-20 bg-white border-b border-gray-200/60 flex items-center justify-between px-6 lg:px-10 sticky top-0 z-40 shadow-sm">
-      <div className="flex items-center gap-6">
+    <header className="h-16 sm:h-20 bg-white border-b border-gray-200/60 flex items-center justify-between px-3 sm:px-6 lg:px-10 sticky top-0 z-40 shadow-xs">
+      <div className="flex items-center gap-2 sm:gap-6 min-w-0">
         <button
           type="button"
           onClick={onMenuClick}
-          className="lg:hidden text-gray-500 hover:text-gray-900 transition-colors p-2 rounded-xl hover:bg-gray-100 cursor-pointer"
+          className="lg:hidden text-gray-500 hover:text-gray-900 transition-colors p-2 rounded-xl hover:bg-gray-100 cursor-pointer shrink-0"
           aria-label="تنسيق القائمة الجانبية"
         >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
 
-        <Link href="/" className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-2 sm:gap-3 min-w-0">
           {isAcademyLoading ? (
             <div className="flex items-center gap-3 animate-pulse">
-              <div className="w-9 h-9 rounded-lg bg-gray-200 shrink-0"></div>
-              <div className="w-28 h-6 rounded-md bg-gray-200"></div>
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gray-200 shrink-0"></div>
+              <div className="w-20 sm:w-28 h-5 sm:h-6 rounded-md bg-gray-200"></div>
             </div>
           ) : (
             <>
               {academy.logo && !academyLogoError && (
-                <div className="w-9 h-9 relative rounded-lg overflow-hidden shrink-0">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 relative rounded-lg overflow-hidden shrink-0">
                   <Image
                     src={academy.logo}
                     alt={academy.name || 'Academy Logo'}
@@ -270,7 +270,7 @@ export const StudentHeader = ({ onMenuClick, isMobileMenuOpen = false }: Student
                 </div>
               )}
               {academy.name ? (
-                <div className="text-2xl font-bold text-blue-600 tracking-tight flex items-center">
+                <div className="text-base sm:text-xl lg:text-2xl font-bold text-blue-600 tracking-tight flex items-center truncate max-w-[140px] sm:max-w-[220px]">
                   {academy.name}
                 </div>
               ) : null}
@@ -278,7 +278,7 @@ export const StudentHeader = ({ onMenuClick, isMobileMenuOpen = false }: Student
           )}
         </Link>
 
-        <nav className="hidden md:flex items-center gap-6 ml-8">
+        <nav className="hidden xl:flex items-center gap-6 ml-8">
           <Link
             href="/"
             className={`font-medium transition-colors py-7 ${

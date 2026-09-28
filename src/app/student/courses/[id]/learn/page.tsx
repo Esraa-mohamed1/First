@@ -80,7 +80,7 @@ export default function CoursePlayerPage() {
   const [courseData, setCourseData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'about' | 'notes' | 'comments'>('about');
+  const [activeTab, setActiveTab] = useState<'about' | 'notes' | 'comments'>('comments');
   const [expandedChapters, setExpandedChapters] = useState<number[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
@@ -302,7 +302,7 @@ export default function CoursePlayerPage() {
         setLoading(true);
         const data = await getMyCourseDetails(id as string);
 
-        // Merge with local storage completion cache
+        // Merge with local storage completion cache and normalize completion flags
         try {
           const localCompleted = JSON.parse(localStorage.getItem(completedCacheKey) || '{}');
           const course = data?.course ?? data;
@@ -310,12 +310,19 @@ export default function CoursePlayerPage() {
             course.chapters = course.chapters.map((ch: any) => ({
               ...ch,
               lessons: (ch.lessons || []).map((l: any) => {
-                if (localCompleted[l.id] === true) {
-                  return { ...l, is_completed: true };
-                }
-                return l;
+                const isCompleted = Boolean(
+                  localCompleted[l.id] === true ||
+                  l.is_completed ||
+                  l.completed ||
+                  l.pivot?.is_completed ||
+                  l.pivot?.completed
+                );
+                return { ...l, is_completed: isCompleted };
               })
             }));
+            if (data?.course) {
+              data.course.chapters = course.chapters;
+            }
           }
         } catch (e) {
           console.warn('Failed to merge local completion cache:', e);
@@ -385,8 +392,7 @@ export default function CoursePlayerPage() {
    */
   const markLessonDoneLocally = useCallback((lessonId: number) => {
     // 1. Update the player-store's active lesson so the header/controls reflect completion
-    //    setCurrentLesson expects a direct Lesson value (Zustand store setter, not React useState)
-    if (currentLesson) {
+    if (currentLesson && Number(currentLesson.id) === Number(lessonId)) {
       setCurrentLesson({ ...(currentLesson as any), is_completed: true });
     }
 
@@ -406,7 +412,7 @@ export default function CoursePlayerPage() {
       const updatedChapters = (course.chapters || []).map((ch: any) => ({
         ...ch,
         lessons: (ch.lessons || []).map((l: any) =>
-          Number(l.id) === lessonId ? { ...l, is_completed: true } : l
+          Number(l.id) === Number(lessonId) ? { ...l, is_completed: true } : l
         ),
       }));
       // Handle both response shapes: { course: { chapters } } and flat { chapters }
@@ -819,11 +825,12 @@ export default function CoursePlayerPage() {
       resetPlayer();
       setShowResumePrompt(false);
 
-      // Determine saved position: prefer backend watched_seconds, fall back to localStorage
+      // Determine saved position: prefer local storage or valid backend seconds (< 43200)
       const backendSeconds = Number((currentLesson as any).watched_seconds ?? 0);
       const storedStr = localStorage.getItem(`bunny_current_time_${currentLesson.id}`);
       const localSeconds = storedStr ? parseInt(storedStr, 10) : 0;
-      const savedSeconds = backendSeconds > 0 ? backendSeconds : (!isNaN(localSeconds) ? localSeconds : 0);
+      const validBackendSeconds = (backendSeconds > 0 && backendSeconds < 43200) ? backendSeconds : 0;
+      const savedSeconds = (!isNaN(localSeconds) && localSeconds > 0) ? localSeconds : validBackendSeconds;
 
       resumeWatchedSeconds.current = savedSeconds;
 
@@ -890,7 +897,7 @@ export default function CoursePlayerPage() {
               const watched = Number(
                 lesson.watched_seconds ?? lesson.watchedSeconds ?? 0
               );
-              if (watched > 0) {
+              if (watched > 0 && watched < 43200) {
                 const timeSep = src.includes('?') ? '&' : '?';
                 src = `${src}${timeSep}t=${watched}`;
               }
@@ -944,47 +951,81 @@ export default function CoursePlayerPage() {
     } catch (err) {
       console.error('Failed to fetch updated course data for next lesson:', err);
     }
-  }; const handleToggleComplete = async () => {
+  };
+
+  const handleToggleComplete = async () => {
     if (!currentLesson || !course) return;
     try {
-      const isCurrentlyCompleted = (currentLesson as any).is_completed;
+      const lessonId = Number(currentLesson.id);
+      const isCurrentlyCompleted = Boolean((currentLesson as any).is_completed);
+      const newCompleted = !isCurrentlyCompleted;
 
-      // If we are marking as complete, send 'completed' event
-      const events = isCurrentlyCompleted ? ['play', 'pause', 'seek', 'end'] : ['play', 'pause', 'seek', 'end', 'completed'];
+      // 1. Immediately update currentLesson in local state so UI updates without refresh
+      setCurrentLesson({ ...currentLesson, is_completed: newCompleted });
 
-      await trackLessonProgress(id as string, Number(currentLesson.id), isCurrentlyCompleted ? 0 : 999999, events).catch(err => {
-        console.warn('Backend tracking failed (proceeding with local UI update):', err);
+      // 2. Immediately update chapters in courseData (both prev.course and prev) so sidebar checkmarks update immediately
+      setCourseData((prev: any) => {
+        if (!prev) return prev;
+        const c = prev.course ?? prev;
+        const updatedChapters = (c.chapters || []).map((ch: any) => ({
+          ...ch,
+          lessons: (ch.lessons || []).map((l: any) =>
+            Number(l.id) === lessonId ? { ...l, is_completed: newCompleted } : l
+          )
+        }));
+
+        if (prev.course) {
+          return {
+            ...prev,
+            course: {
+              ...prev.course,
+              chapters: updatedChapters
+            }
+          };
+        }
+        return { ...prev, chapters: updatedChapters };
       });
 
-      // Update local state
-      const updatedChapters = chapters.map((c: any) => ({
-        ...c,
-        lessons: c.lessons?.map((l: any) => l.id === currentLesson.id ? { ...l, is_completed: !isCurrentlyCompleted } : l)
-      }));
-      setCourseData({ ...courseData, chapters: updatedChapters });
-      setCurrentLesson({ ...currentLesson, is_completed: !isCurrentlyCompleted });
-
-      // Cache completion status in localStorage
+      // 3. Cache completion status in localStorage
       try {
         const localCompleted = JSON.parse(localStorage.getItem(completedCacheKey) || '{}');
-        if (isCurrentlyCompleted) {
-          delete localCompleted[currentLesson.id];
+        if (newCompleted) {
+          localCompleted[lessonId] = true;
         } else {
-          localCompleted[currentLesson.id] = true;
+          delete localCompleted[lessonId];
         }
         localStorage.setItem(completedCacheKey, JSON.stringify(localCompleted));
       } catch (e) {
         console.warn('Failed to update local completed cache:', e);
       }
 
-      if (!isCurrentlyCompleted) {
+      // 4. Send tracking to backend with real tracked seconds (never 999999)
+      const currentSeconds = Math.floor(videoDurationRef.current > 0 ? videoDurationRef.current : (liveCurrentTime > 0 ? liveCurrentTime : currentTime));
+      const dur = Math.floor(videoDurationRef.current > 0 ? videoDurationRef.current : currentSeconds);
+      const targetSeconds = newCompleted ? (dur > 0 ? dur : (currentSeconds > 0 ? currentSeconds : 1)) : 0;
+      const events = newCompleted
+        ? ['play', 'pause', 'seek', 'end', 'completed']
+        : ['play', 'pause', 'seek'];
+
+      trackLessonProgress(
+        id as string,
+        lessonId,
+        targetSeconds,
+        events,
+        dur > 0 ? dur : undefined,
+        newCompleted ? 100 : 0
+      ).catch(err => {
+        console.warn('Backend tracking failed (proceeding with local UI update):', err);
+      });
+
+      if (newCompleted) {
         setShowCelebration(true);
         setTimeout(() => setShowCelebration(false), 4000);
       }
 
       MySwal.fire({
         icon: 'success',
-        title: isCurrentlyCompleted ? 'تم إلغاء إكمال الدرس' : 'تم إكمال الدرس بنجاح!',
+        title: newCompleted ? 'تم إكمال الدرس بنجاح!' : 'تم إلغاء إكمال الدرس',
         toast: true,
         position: 'top-end',
         showConfirmButton: false,
@@ -994,6 +1035,30 @@ export default function CoursePlayerPage() {
       console.error('Failed to toggle completion:', err);
     }
   };
+  // Derive course/chapters from courseData (must be before any early return so hooks below stay unconditional)
+  const course = courseData?.course ?? courseData;
+  const chapters = (course?.chapters || []) as any[];
+
+  // Dynamic progress calculation based on completed lessons across all chapters
+  // IMPORTANT: This useMemo MUST stay before any early return to obey React Rules of Hooks
+  const { totalLessons, completedCount, dynamicProgress } = useMemo(() => {
+    let total = 0;
+    let completed = 0;
+    chapters.forEach((ch: any) => {
+      (ch.lessons || []).forEach((l: any) => {
+        total++;
+        if (Boolean(l.is_completed)) completed++;
+      });
+    });
+    const pct = total > 0 ? Math.round((completed / total) * 100) : Math.round(course?.progress ?? 0);
+    return {
+      totalLessons: total,
+      completedCount: completed,
+      dynamicProgress: Math.min(100, Math.max(0, pct))
+    };
+  }, [chapters, course?.progress]);
+
+  // Early returns AFTER all hooks
   if (loading) return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
       <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
@@ -1016,9 +1081,6 @@ export default function CoursePlayerPage() {
       </div>
     );
   }
-
-  const course = courseData?.course ?? courseData;
-  const chapters = course?.chapters || [];
 
   if (!course || (!chapters.length && !course.title)) {
     return (
@@ -1184,13 +1246,13 @@ export default function CoursePlayerPage() {
           <div className="flex items-center justify-between w-full mb-2">
             <span className="text-sm font-black text-gray-900 truncate">{course.title}</span>
             <span className="text-xs font-black text-[#0F766E]">
-              {Math.round(course.progress ?? 0)}% مكتمل
+              {dynamicProgress}% مكتمل
             </span>
           </div>
           <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <div
               className="h-full bg-[#0F766E] rounded-full transition-all duration-700"
-              style={{ width: `${Math.round(course.progress ?? 0)}%` }}
+              style={{ width: `${dynamicProgress}%` }}
             />
           </div>
         </div>
@@ -1220,6 +1282,20 @@ export default function CoursePlayerPage() {
         </div>
       </header>
 
+      {/* Mobile/Tablet Course Progress Banner */}
+      <div className="flex md:hidden flex-col px-4 py-2.5 bg-white border-b border-slate-200">
+        <div className="flex items-center justify-between text-xs font-black mb-1.5">
+          <span className="text-gray-800 truncate max-w-[70%]">{course?.title}</span>
+          <span className="text-[#0F766E] font-bold">{dynamicProgress}% مكتمل</span>
+        </div>
+        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-[#0F766E] rounded-full transition-all duration-500"
+            style={{ width: `${dynamicProgress}%` }}
+          />
+        </div>
+      </div>
+
       <div className="flex flex-1 relative overflow-hidden">
         {isSidebarOpen && (
           <button
@@ -1233,8 +1309,8 @@ export default function CoursePlayerPage() {
         <div className="flex flex-1 flex-col min-h-0 w-full">
           {/* Main Content Area */}
           <main className="flex-1 overflow-y-auto custom-scrollbar bg-[#F1F5F9]">
-            <div className="max-w-[1600px] w-full mx-auto p-4 lg:p-10 space-y-10">
-              <div className="flex flex-col gap-8">
+            <div className="max-w-[1600px] w-full mx-auto p-3 sm:p-5 lg:p-10 space-y-6 sm:space-y-10">
+              <div className="flex flex-col gap-6 sm:gap-8">
                 {/* Top Row: Video Player & Desktop Sidebar */}
                 <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 items-stretch">
                   {/* Desktop Curriculum Sidebar */}
@@ -1815,18 +1891,18 @@ export default function CoursePlayerPage() {
           type="button"
           onClick={() => setIsSidebarOpen(true)}
           className={cn(
-            'fixed bottom-8 left-8 z-[60] w-14 h-14 bg-gray-900 text-white rounded-2xl shadow-2xl items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95',
+            'fixed bottom-4 sm:bottom-8 left-4 sm:left-8 z-[60] w-12 sm:w-14 h-12 sm:h-14 bg-gray-900 text-white rounded-2xl shadow-2xl items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95',
             'lg:hidden',
             isSidebarOpen ? 'hidden' : 'flex'
           )}
           aria-label="عرض قائمة الدروس"
         >
-          <ListVideo size={24} />
+          <ListVideo size={22} />
         </button>
 
         {/* Urgent Help Button (Bottom Right) */}
-        <button className="fixed bottom-8 right-8 z-[60] flex items-center gap-3 px-6 py-3 bg-[#065F46] text-white rounded-2xl font-black text-sm shadow-2xl shadow-emerald-900/20 hover:scale-105 transition-all">
-          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">?</div>
+        <button className="fixed bottom-4 sm:bottom-8 right-4 sm:right-8 z-[60] flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2.5 sm:py-3 bg-[#065F46] text-white rounded-2xl font-black text-xs sm:text-sm shadow-2xl shadow-emerald-900/20 hover:scale-105 transition-all">
+          <div className="w-5 sm:w-6 h-5 sm:h-6 rounded-full bg-white/20 flex items-center justify-center text-xs sm:text-sm">?</div>
           <span>مساعدة فورية</span>
         </button>
       </div>
