@@ -72,6 +72,65 @@ export const DEFAULT_SCHOOLCOACH_NAV_ITEMS: SchoolCoachNavItem[] = [
   { key: 'about', target: 'about', label: 'عني', href: '#about' },
 ];
 
+// Section 11: Exported Reusable FAQ Renderers for SchoolCoach (shared between runtime & builder preview)
+export const renderSchoolCoachFaqItemHtml = (
+  item: any,
+  index: number,
+  faqTextColor: string = ''
+): string => {
+  const question = escapeHtml(item.question || item.q || '');
+  const answer = escapeHtml(item.answer || item.a || '');
+  return `
+      <div class="faq-item" data-section="faq" data-index="${index}">
+        <button type="button" class="faq-question" aria-expanded="false" aria-controls="faq-ans-${index}" id="faq-btn-${index}">
+          <span class="faq-q-text" style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${question}</span>
+          <span class="faq-icon-wrapper" aria-hidden="true">
+            <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </span>
+        </button>
+        <div class="faq-answer" id="faq-ans-${index}" role="region" aria-labelledby="faq-btn-${index}">
+          <div class="faq-answer-inner">
+            <div class="faq-answer-divider"></div>
+            <p style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.88;` : ''}">${answer}</p>
+          </div>
+        </div>
+      </div>
+    `;
+};
+
+export const renderSchoolCoachFaqListHtml = (
+  faqItems: any[],
+  faqTextColor: string = ''
+): string => {
+  const activeItems = (Array.isArray(faqItems) ? faqItems : []).filter(
+    (it: any) => it && it.enabled !== false && (it.question || it.q)
+  );
+  return activeItems
+    .map((item: any, index: number) => renderSchoolCoachFaqItemHtml(item, index, faqTextColor))
+    .join('');
+};
+
+export const renderSchoolCoachEmptyFaqHtml = (
+  faqEmptyText: string = 'لا توجد أسئلة شائعة مضافة حالياً',
+  faqSubtitle: string = 'إجابات واضحة ومباشرة على أكثر الاستفسارات تكراراً.'
+): string => {
+  return `
+    <div class="faq-empty-state" data-section="faq">
+      <div class="empty-icon-shell">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </div>
+      <h3 class="empty-title">${escapeHtml(faqEmptyText)}</h3>
+      <p class="empty-desc">${escapeHtml(faqSubtitle)}</p>
+    </div>
+  `;
+};
+
 export const getSchoolCoachNewDesignHtml = (
   content: TemplateContent,
   isEditing: boolean = false,
@@ -697,42 +756,8 @@ export const getSchoolCoachNewDesignHtml = (
   `;
 
   // Section 11: FAQ Accordion Items
-  const renderFaqAccordion = faqItems.map((item: any, index: number) => {
-    const question = escapeHtml(item.question || item.q || '');
-    const answer = escapeHtml(item.answer || item.a || '');
-    return `
-      <div class="faq-item" data-section="faq" data-index="${index}">
-        <button type="button" class="faq-question" aria-expanded="false" aria-controls="faq-ans-${index}" id="faq-btn-${index}">
-          <span class="faq-q-text" style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${question}</span>
-          <span class="faq-icon-wrapper" aria-hidden="true">
-            <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </span>
-        </button>
-        <div class="faq-answer" id="faq-ans-${index}" role="region" aria-labelledby="faq-btn-${index}">
-          <div class="faq-answer-inner">
-            <div class="faq-answer-divider"></div>
-            <p style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.88;` : ''}">${answer}</p>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  const renderEmptyFaqState = `
-    <div class="faq-empty-state" data-section="faq">
-      <div class="empty-icon-shell">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-          <line x1="12" y1="17" x2="12.01" y2="17"></line>
-        </svg>
-      </div>
-      <h3 class="empty-title">${escapeHtml(faqEmptyText)}</h3>
-      <p class="empty-desc">${escapeHtml(faqSubtitle)}</p>
-    </div>
-  `;
+  const renderFaqAccordion = renderSchoolCoachFaqListHtml(faqItems, faqTextColor);
+  const renderEmptyFaqState = renderSchoolCoachEmptyFaqHtml(faqEmptyText, faqSubtitle);
 
   return `<!doctype html>
   <html lang="ar" dir="rtl">

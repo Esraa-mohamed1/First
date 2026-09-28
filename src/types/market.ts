@@ -18,7 +18,7 @@ export interface BagItem {
   category: string;
   category_bag_id?: number | string;
   instructorName: string;
-  courseCount: number; // e.g. 20 فيديو وملف or 20 دورة
+  courseCount: number; // e.g.
   rating: number; // e.g. 4.9
   price: number; // Regular price in SAR
   discountPrice?: number; // Optional discounted price

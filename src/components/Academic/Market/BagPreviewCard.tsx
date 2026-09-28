@@ -77,9 +77,8 @@ export default function BagPreviewCard({ formData = {} }: BagPreviewCardProps) {
               key={idx}
               type="button"
               onClick={() => setActiveImg(imgUrl)}
-              className={`w-12 h-12 rounded-xl overflow-hidden border-2 flex-shrink-0 transition-all ${
-                currentImg === imgUrl ? 'border-blue-600 ring-2 ring-blue-100 scale-105' : 'border-gray-200 opacity-60 hover:opacity-100'
-              }`}
+              className={`w-12 h-12 rounded-xl overflow-hidden border-2 flex-shrink-0 transition-all ${currentImg === imgUrl ? 'border-blue-600 ring-2 ring-blue-100 scale-105' : 'border-gray-200 opacity-60 hover:opacity-100'
+                }`}
             >
               <img src={imgUrl} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
             </button>
@@ -107,7 +106,6 @@ export default function BagPreviewCard({ formData = {} }: BagPreviewCardProps) {
         {/* Lesson / File Count */}
         <div className="flex items-center gap-2 text-gray-400 text-xs font-bold">
           <BookOpen size={14} className="text-gray-400" />
-          <span>20 فيديو وملف</span>
         </div>
 
 
