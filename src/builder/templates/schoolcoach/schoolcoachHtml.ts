@@ -702,12 +702,19 @@ export const getSchoolCoachNewDesignHtml = (
     const answer = escapeHtml(item.answer || item.a || '');
     return `
       <div class="faq-item" data-section="faq" data-index="${index}">
-        <button type="button" class="faq-question" aria-expanded="false">
-          <span style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${question}</span>
-          <span class="plus" aria-hidden="true">+</span>
+        <button type="button" class="faq-question" aria-expanded="false" aria-controls="faq-ans-${index}" id="faq-btn-${index}">
+          <span class="faq-q-text" style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${question}</span>
+          <span class="faq-icon-wrapper" aria-hidden="true">
+            <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </span>
         </button>
-        <div class="faq-answer">
-          <p style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.85;` : ''}">${answer}</p>
+        <div class="faq-answer" id="faq-ans-${index}" role="region" aria-labelledby="faq-btn-${index}">
+          <div class="faq-answer-inner">
+            <div class="faq-answer-divider"></div>
+            <p style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.88;` : ''}">${answer}</p>
+          </div>
         </div>
       </div>
     `;
@@ -1537,17 +1544,139 @@ export const getSchoolCoachNewDesignHtml = (
         .testimonials-empty-state { padding: 36px 20px; text-align: center; background: #fff; border: 1px dashed var(--line); border-radius: 20px; }
 
         /* Section 11: FAQ Accordion */
-        .faq-list { display: flex; flex-direction: column; gap: 12px; max-width: 880px; margin: 0 auto; }
-        .faq-item { background: #fff; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(15,23,42,0.02); }
-        .faq-item:hover { border-color: #cbd5e1; }
-        .faq-question { width: 100%; background: none; border: none; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; text-align: right; font-weight: 700; font-size: 15px; color: var(--text); cursor: pointer; gap: 14px; }
-        .faq-question .plus { font-size: 22px; font-weight: 700; color: var(--brand); transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); line-height: 1; flex-shrink: 0; }
-        .faq-answer { display: none; padding: 0 20px 18px; }
-        .faq-answer p { margin: 0; font-size: 14px; color: #475569; line-height: 1.75; }
-        .faq-item.open { border-color: #bfdbfe; box-shadow: 0 6px 20px rgba(15, 103, 255, 0.08); }
-        .faq-item.open .faq-answer { display: block; border-top: 1px solid #f1f5f9; padding-top: 14px; }
-        .faq-item.open .faq-question .plus { transform: rotate(45deg); color: #dc2626; }
-        .faq-empty-state { padding: 36px 20px; text-align: center; background: #fff; border: 1px dashed var(--line); border-radius: 20px; }
+        .faq-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          max-width: 860px;
+          margin: 0 auto;
+        }
+        .faq-item {
+          background: #ffffff;
+          border: 1px solid var(--line);
+          border-radius: 16px;
+          overflow: hidden;
+          transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease, background-color 0.2s ease;
+          box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);
+        }
+        .faq-item:hover {
+          border-color: #cbd5e1;
+          box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+          transform: translateY(-1px);
+        }
+        .faq-item.open {
+          border-color: #bfdbfe;
+          box-shadow: 0 8px 24px rgba(15, 103, 255, 0.08);
+          background-color: #ffffff;
+        }
+        .faq-question {
+          width: 100%;
+          background: transparent;
+          border: none;
+          padding: 18px 22px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          text-align: right;
+          cursor: pointer;
+          gap: 16px;
+          user-select: none;
+          -webkit-user-select: none;
+          transition: background-color 0.2s ease;
+        }
+        .faq-question:focus-visible {
+          outline: 2px solid var(--brand);
+          outline-offset: -2px;
+        }
+        .faq-question:hover {
+          background-color: rgba(248, 250, 252, 0.7);
+        }
+        .faq-item.open .faq-question {
+          background-color: rgba(239, 246, 255, 0.25);
+        }
+        .faq-q-text {
+          font-size: 15.5px;
+          font-weight: 700;
+          color: var(--text);
+          line-height: 1.5;
+          text-align: right;
+          flex: 1;
+          transition: color 0.2s ease;
+        }
+        .faq-item.open .faq-q-text {
+          color: var(--brand);
+        }
+        .faq-icon-wrapper {
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          background: #f1f5f9;
+          color: #64748b;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+          border: 1px solid transparent;
+        }
+        .faq-question:hover .faq-icon-wrapper {
+          background: #e2e8f0;
+          color: var(--text);
+        }
+        .faq-chevron {
+          width: 17px;
+          height: 17px;
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .faq-item.open .faq-icon-wrapper {
+          background: #eff6ff;
+          color: var(--brand);
+          border-color: #bfdbfe;
+        }
+        .faq-item.open .faq-chevron {
+          transform: rotate(180deg);
+        }
+        .faq-answer {
+          display: grid;
+          grid-template-rows: 0fr;
+          transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          overflow: hidden;
+        }
+        .faq-item.open .faq-answer {
+          grid-template-rows: 1fr;
+        }
+        .faq-answer-inner {
+          min-height: 0;
+          opacity: 0;
+          transform: translateY(-4px);
+          transition: opacity 0.25s ease, transform 0.25s ease, padding 0.3s ease;
+          padding: 0 22px;
+        }
+        .faq-item.open .faq-answer-inner {
+          opacity: 1;
+          transform: translateY(0);
+          padding: 0 22px 20px;
+        }
+        .faq-answer-divider {
+          height: 1px;
+          background: #f1f5f9;
+          margin-bottom: 14px;
+        }
+        .faq-answer p {
+          margin: 0;
+          font-size: 14.5px;
+          color: #475569;
+          line-height: 1.8;
+          text-align: right;
+          word-break: break-word;
+        }
+        .faq-empty-state {
+          padding: 36px 20px;
+          text-align: center;
+          background: #fff;
+          border: 1px dashed var(--line);
+          border-radius: 20px;
+        }
 
         /* Section 12: Final CTA */
         .cta-box { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); border-radius: 24px; padding: 40px 36px; color: #fff; display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; box-shadow: 0 16px 36px rgba(15,23,42,0.14); }
@@ -1817,6 +1946,13 @@ export const getSchoolCoachNewDesignHtml = (
           .step-badge { width: 38px; height: 38px; font-size: 16px; border-radius: 11px; }
           .step-content h3.step-title { font-size: 15px; }
           .step-content p.step-description { font-size: 13px; }
+          .faq-question { padding: 15px 16px; gap: 12px; }
+          .faq-q-text { font-size: 14.5px; }
+          .faq-icon-wrapper { width: 30px; height: 30px; }
+          .faq-chevron { width: 15px; height: 15px; }
+          .faq-answer-inner { padding: 0 16px; }
+          .faq-item.open .faq-answer-inner { padding: 0 16px 16px; }
+          .faq-answer p { font-size: 13.5px; }
         }
       </style>
     </head>
@@ -2361,16 +2497,6 @@ export const getSchoolCoachNewDesignHtml = (
       <div class="toast" id="schoolcoach-toast" aria-live="polite">تمت العملية بنجاح</div>
 
       <script>
-        const faqItems = document.querySelectorAll('.faq-item');
-        faqItems.forEach((item) => {
-          const button = item.querySelector('.faq-question');
-          if (button) {
-            button.addEventListener('click', () => {
-              item.classList.toggle('open');
-            });
-          }
-        });
-
         const showToast = (message) => {
           const toast = document.getElementById('schoolcoach-toast');
           if (!toast) return;
@@ -2432,7 +2558,7 @@ export const getSchoolCoachNewDesignHtml = (
             const faqItem = faqBtn.closest('.faq-item');
             if (faqItem) {
               const isOpen = faqItem.classList.contains('open');
-              faqItem.classList.toggle('open');
+              faqItem.classList.toggle('open', !isOpen);
               faqBtn.setAttribute('aria-expanded', !isOpen ? 'true' : 'false');
             }
             return;
