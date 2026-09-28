@@ -5,8 +5,6 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
   Menu,
-  Search,
-  Bell,
   ExternalLink,
   Plus,
   ChevronDown,
@@ -16,7 +14,6 @@ import {
   KeyRound,
   Globe,
   LogOut,
-  CheckCircle2,
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import SelectCourseTypeModal from './Modals/SelectCourseTypeModal';
@@ -45,28 +42,32 @@ interface DropdownItemConfig {
 
 interface HeaderProps {
   onMenuClick?: () => void;
+  onToggleSidebar?: () => void;
+  isSidebarCollapsed?: boolean;
+  isMobileSidebarOpen?: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
+const Header: React.FC<HeaderProps> = ({
+  onMenuClick,
+  onToggleSidebar,
+  isSidebarCollapsed = false,
+  isMobileSidebarOpen = false,
+}) => {
   const router = useRouter();
   const pathname = usePathname();
 
   const [user, setUser] = useState<HeaderUser | null>(null);
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isSelectTypeModalOpen, setIsSelectTypeModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const addMenuRef = useRef<HTMLDivElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
-  const notificationsMenuRef = useRef<HTMLDivElement>(null);
 
   // Close all open dropdowns
   const closeAllDropdowns = useCallback(() => {
     setIsAddMenuOpen(false);
     setIsProfileMenuOpen(false);
-    setIsNotificationsOpen(false);
   }, []);
 
   // Handle outside click & Escape key
@@ -77,9 +78,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         addMenuRef.current &&
         !addMenuRef.current.contains(target) &&
         profileMenuRef.current &&
-        !profileMenuRef.current.contains(target) &&
-        notificationsMenuRef.current &&
-        !notificationsMenuRef.current.contains(target)
+        !profileMenuRef.current.contains(target)
       ) {
         closeAllDropdowns();
       }
@@ -196,12 +195,20 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const handleLogout = () => {
     closeAllDropdowns();
     clearUserSessionAndCache();
-    window.location.href = '/auth/login';
+    window.location.href = '/';
   };
 
   const displayName = user?.name || user?.academy_name || user?.title || 'الأكاديمية';
   const displayEmail = user?.email || 'admin@darab.academy';
   const avatarChar = displayName.charAt(0).toUpperCase() || 'أ';
+
+  const handleToggle = () => {
+    if (onToggleSidebar) {
+      onToggleSidebar();
+    } else if (onMenuClick) {
+      onMenuClick();
+    }
+  };
 
   return (
     <>
@@ -211,135 +218,82 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
       >
         <div className="flex items-center justify-between h-20 px-4 sm:px-6 lg:px-8 gap-3 sm:gap-4 max-w-[1800px] mx-auto">
           
-          {/* Right Section: Mobile Toggle, Search & Notifications */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Mobile Menu Button */}
-            <button
-              type="button"
-              onClick={onMenuClick}
-              className="p-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-150 lg:hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20"
-              aria-label="القائمة الجانبية"
-            >
-              <Menu size={22} />
-            </button>
-
-            {/* Search Input Bar */}
-            <div className="relative hidden md:flex items-center text-gray-400 focus-within:text-blue-600 transition-colors">
-              <Search size={17} className="absolute right-3.5 pointer-events-none text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="بحث..."
-                className="w-44 lg:w-60 bg-gray-50/80 hover:bg-gray-100/70 focus:bg-white text-gray-900 placeholder:text-gray-400 text-xs sm:text-sm font-medium pr-10 pl-3.5 py-2.5 rounded-xl border border-gray-200/70 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all duration-150"
-              />
-            </div>
-
-            {/* Notifications Button & Dropdown */}
-            <div className="relative" ref={notificationsMenuRef}>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsNotificationsOpen(prev => !prev);
-                  setIsAddMenuOpen(false);
-                  setIsProfileMenuOpen(false);
-                }}
-                className={twMerge(
-                  'w-10 h-10 flex items-center justify-center rounded-xl border transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 cursor-pointer',
-                  isNotificationsOpen
-                    ? 'bg-blue-50 border-blue-200 text-blue-600 shadow-xs'
-                    : 'bg-white border-gray-200/70 text-gray-600 hover:text-gray-900 hover:bg-gray-50 hover:border-gray-300'
-                )}
-                aria-label="الإشعارات"
-                aria-haspopup="true"
-                aria-expanded={isNotificationsOpen}
-              >
-                <Bell size={18} />
-                <span className="absolute top-2.5 left-2.5 w-2 h-2 bg-blue-600 rounded-full ring-2 ring-white" />
-              </button>
-
-              {isNotificationsOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-200/60 p-2 z-50 animate-in fade-in zoom-in-95 duration-150 text-right">
-                  <div className="px-3 py-2.5 border-b border-gray-100 flex items-center justify-between">
-                    <span className="font-bold text-sm text-gray-900">الإشعارات</span>
-                    <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
-                      جديد
-                    </span>
-                  </div>
-                  <div className="py-6 text-center text-gray-500 text-xs">
-                    <div className="w-10 h-10 bg-gray-50 text-gray-400 rounded-full flex items-center justify-center mx-auto mb-2">
-                      <CheckCircle2 size={20} />
-                    </div>
-                    <p className="font-medium text-gray-700">لا توجد إشعارات جديدة</p>
-                    <p className="text-[11px] text-gray-400 mt-0.5">أنت على اطلاع دائم بكافة التحديثات</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Center Section: "معاينة الموقع" (Preview Site) Button */}
+          {/* Right Section (RTL Start): Sidebar Toggle Button */}
           <div className="flex items-center">
             <button
               type="button"
-              onClick={() => window.open('/', '_blank')}
-              className="bg-white hover:bg-blue-50/80 border border-gray-200/80 hover:border-blue-200 text-gray-700 hover:text-blue-600 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm shadow-2xs hover:shadow-xs transition-all duration-200 flex items-center gap-2 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20"
+              onClick={handleToggle}
+              className="p-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl border border-gray-200/70 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 cursor-pointer"
+              aria-label="تبديل القائمة الجانبية"
+              aria-expanded={!isSidebarCollapsed || isMobileSidebarOpen}
             >
-              <ExternalLink size={15} className="text-gray-500 group-hover:text-blue-600 transition-colors shrink-0" />
-              <span className="whitespace-nowrap">معاينة الموقع</span>
+              <Menu size={20} />
             </button>
           </div>
 
-          {/* Left Section: "إضافة" Button & Profile Menu */}
+          {/* Left Section (RTL End): "معاينة الموقع" and "إضافة" Side by Side + Profile */}
           <div className="flex items-center gap-2.5 sm:gap-3">
-
-            {/* "إضافة" (Add) Button + Dropdown */}
-            <div className="relative" ref={addMenuRef}>
+            
+            {/* Action Buttons: Side by Side with matched styling */}
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              
+              {/* "معاينة الموقع" (Preview Site) Button */}
               <button
                 type="button"
-                onClick={() => {
-                  setIsAddMenuOpen(prev => !prev);
-                  setIsProfileMenuOpen(false);
-                  setIsNotificationsOpen(false);
-                }}
-                className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm shadow-sm hover:shadow-md hover:shadow-blue-500/20 transition-all duration-150 flex items-center gap-2 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2"
-                aria-haspopup="true"
-                aria-expanded={isAddMenuOpen}
+                onClick={() => window.open('/', '_blank')}
+                className="h-10 bg-white hover:bg-blue-50/80 border border-gray-200/80 hover:border-blue-200 text-gray-700 hover:text-blue-600 px-3.5 sm:px-4 rounded-xl font-bold text-xs sm:text-sm shadow-2xs hover:shadow-xs transition-all duration-200 flex items-center gap-2 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 shrink-0"
               >
-                <Plus size={17} strokeWidth={2.5} className="shrink-0" />
-                <span className="whitespace-nowrap">إضافة</span>
-                <ChevronDown
-                  size={14}
-                  className={twMerge(
-                    'transition-transform duration-200 shrink-0',
-                    isAddMenuOpen ? '-rotate-180' : ''
-                  )}
-                />
+                <ExternalLink size={15} className="text-gray-500 group-hover:text-blue-600 transition-colors shrink-0" />
+                <span className="whitespace-nowrap">معاينة الموقع</span>
               </button>
 
-              {/* Add Dropdown Menu (Contains only 2 items) */}
-              {isAddMenuOpen && (
-                <div className="absolute left-0 mt-2 w-52 bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-200/60 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="space-y-0.5">
-                    {addMenuItems.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={item.onClick}
-                          className="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl transition-all duration-150 text-right cursor-pointer"
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-500 group-hover:text-blue-600 transition-colors shrink-0">
-                            <Icon size={16} />
-                          </div>
-                          <span className="flex-1 leading-none">{item.label}</span>
-                        </button>
-                      );
-                    })}
+              {/* "إضافة" (Add) Button + Dropdown */}
+              <div className="relative" ref={addMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddMenuOpen(prev => !prev);
+                    setIsProfileMenuOpen(false);
+                  }}
+                  className="h-10 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-3.5 sm:px-4 rounded-xl font-bold text-xs sm:text-sm shadow-sm hover:shadow-md hover:shadow-blue-500/20 transition-all duration-150 flex items-center gap-2 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2 shrink-0"
+                  aria-haspopup="true"
+                  aria-expanded={isAddMenuOpen}
+                >
+                  <Plus size={17} strokeWidth={2.5} className="shrink-0" />
+                  <span className="whitespace-nowrap">إضافة</span>
+                  <ChevronDown
+                    size={14}
+                    className={twMerge(
+                      'transition-transform duration-200 shrink-0',
+                      isAddMenuOpen ? '-rotate-180' : ''
+                    )}
+                  />
+                </button>
+
+                {/* Add Dropdown Menu (Contains only 2 items) */}
+                {isAddMenuOpen && (
+                  <div className="absolute left-0 mt-2 w-52 bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-200/60 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="space-y-0.5">
+                      {addMenuItems.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={item.onClick}
+                            className="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl transition-all duration-150 text-right cursor-pointer"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-500 group-hover:text-blue-600 transition-colors shrink-0">
+                              <Icon size={16} />
+                            </div>
+                            <span className="flex-1 leading-none">{item.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* Subtle Divider */}
@@ -352,7 +306,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 onClick={() => {
                   setIsProfileMenuOpen(prev => !prev);
                   setIsAddMenuOpen(false);
-                  setIsNotificationsOpen(false);
                 }}
                 className={twMerge(
                   'flex items-center gap-2.5 sm:gap-3 p-1 sm:p-1.5 -m-1 rounded-xl transition-all duration-150 cursor-pointer group select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20',
