@@ -20,8 +20,20 @@ export default function CustomDomainPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
 
+  const getTenantKey = (rawStr: string): string => {
+    if (!rawStr) return '';
+    let clean = rawStr.trim().toLowerCase();
+    clean = clean.replace(/^https?:\/\//, '');
+    clean = clean.split('/')[0];
+    clean = clean.split(':')[0];
+    if (clean.includes('.')) {
+      return clean.split('.')[0];
+    }
+    return clean;
+  };
+
   useEffect(() => {
-    // Read domain name from window location instead of API GET
+    // Read domain name from window location
     if (typeof window !== 'undefined') {
       let hostname = window.location.hostname;
 
@@ -31,21 +43,22 @@ export default function CustomDomainPage() {
         if (storedTenant) hostname = `${storedTenant}.darab.academy`;
       }
 
-      setEditValue(hostname);
       setCustomDomain({
         domain: hostname,
         status: 'active'
       });
+      setEditValue(getTenantKey(hostname));
       setIsLoading(false);
     }
   }, []);
 
   const handleUpdate = async () => {
-    if (!editValue.trim()) return;
+    const tenantKey = getTenantKey(editValue);
+    if (!tenantKey) return;
 
     const result = await Swal.fire({
-      title: 'تنبيه: تغيير الدومين',
-      text: 'تغيير الدومين سيؤدي إلى تسجيل خروجك وتحديث بيانات الدخول. هل أنت متأكد من الاستمرار؟',
+      title: 'تنبيه: تغيير النطاق الفرعي',
+      text: 'تغيير النطاق الفرعي سيؤدي إلى تسجيل خروجك وتحديث بيانات الدخول. هل أنت متأكد من الاستمرار؟',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#2563eb',
@@ -65,69 +78,61 @@ export default function CustomDomainPage() {
     setErrors({});
 
     try {
-      const response = await academyApi.put('custom-domain', {
-        domain: editValue.trim().toLowerCase()
+      const response = await academyApi.put('custom-subdomain', {
+        subdomain: tenantKey,
+        tenant_key: tenantKey,
+        domain: tenantKey
       });
 
       if (response.data.success) {
-        toast.success('تم تحديث الدومين بنجاح. سيتم توجيهك الآن.');
+        toast.success('تم تحديث النطاق الفرعي بنجاح. سيتم توجيهك الآن.');
 
-        // Update local storage
         if (typeof window !== 'undefined') {
-          const lowerDomain = editValue.trim().toLowerCase();
-          localStorage.setItem('academy_link_name', lowerDomain);
+          localStorage.setItem('academy_link_name', tenantKey);
 
           triggerPageLoader(true);
 
-          // Construct new URL
           const protocol = window.location.protocol;
           const isLocal = window.location.hostname.includes('localhost');
           const port = window.location.port ? `:${window.location.port}` : '';
 
           let newUrl = '';
           if (isLocal) {
-            // If on localhost, handle sub-subdomains 
             const currentHostname = window.location.hostname;
-            // Check if we are on a subdomain already
             if (currentHostname.includes('.darab.academy.localhost')) {
-              // Replace the tenant part (everything before .darab.academy.localhost)
-              const tenantPrefix = lowerDomain.split('.')[0]; // Take the first part of the new domain
-              newUrl = `${protocol}//${tenantPrefix}.darab.academy.localhost${port}/academic`;
+              newUrl = `${protocol}//${tenantKey}.darab.academy.localhost${port}/academic`;
             } else {
-              // Fallback for simple localhost
-              newUrl = `${protocol}//${lowerDomain}${port}/academic`;
+              newUrl = `${protocol}//${tenantKey}.localhost${port}/academic`;
             }
           } else {
-            // Production: Use the new domain directly
-            newUrl = `${protocol}//${lowerDomain}/academic`;
+            if (window.location.hostname.includes('darab.academy')) {
+              newUrl = `${protocol}//${tenantKey}.darab.academy/academic`;
+            } else {
+              newUrl = `${protocol}//${tenantKey}/academic`;
+            }
           }
 
-          // Clear auth data and redirect
           setTimeout(() => {
-            // Clear ALL local storage except maybe some essential UI state if needed
-            // But user said "clear local storage"
             localStorage.clear();
-            // Re-set the new academy link name so the next page knows the tenant
-            localStorage.setItem('academy_link_name', lowerDomain);
+            localStorage.setItem('academy_link_name', tenantKey);
 
-            // Clear cookies
             document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
-            document.cookie = "academy_link_name=; path=/; max-age=0; SameSite=Lax";
+            document.cookie = `academy_link_name=${tenantKey}; path=/; max-age=0; SameSite=Lax`;
 
             window.location.href = newUrl;
           }, 1500);
         }
 
-        setCustomDomain(response.data.data || { domain: editValue.trim().toLowerCase(), status: 'pending' });
+        setCustomDomain({ domain: tenantKey, status: 'active' });
         setIsEditing(false);
       } else {
         if (response.data.errors) {
           setErrors(response.data.errors);
         }
-        toast.error(response.data.message || 'فشل في تحديث الدومين');
+        toast.error(response.data.message || 'فشل في تحديث النطاق الفرعي');
       }
     } catch (error: any) {
-      console.error('Error updating custom domain:', error);
+      console.error('Error updating subdomain:', error);
       if (error.response?.data?.errors) {
         setErrors(error.response.data.errors);
       }
@@ -139,8 +144,8 @@ export default function CustomDomainPage() {
 
   const handleRemove = async () => {
     const result = await Swal.fire({
-      title: 'حذف الدومين المخصص',
-      text: 'هل أنت متأكد من حذف الدومين المخصص؟',
+      title: 'حذف النطاق الفرعي',
+      text: 'هل أنت متأكد من حذف النطاق الفرعي؟',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
@@ -156,16 +161,16 @@ export default function CustomDomainPage() {
 
     try {
       setIsSubmitting(true);
-      const response = await academyApi.delete('custom-domain');
+      const response = await academyApi.delete('subdomain');
       if (response.data.success) {
-        toast.success('تم حذف الدومين بنجاح');
+        toast.success('تم حذف النطاق الفرعي بنجاح');
         setCustomDomain(null);
         if (typeof window !== 'undefined') {
-          setEditValue(window.location.hostname);
+          setEditValue(getTenantKey(window.location.hostname));
         }
       }
     } catch (error: any) {
-      toast.error('فشل في حذف الدومين');
+      toast.error('فشل في حذف النطاق الفرعي');
     } finally {
       setIsSubmitting(false);
     }
@@ -205,7 +210,7 @@ export default function CustomDomainPage() {
             </div>
             {customDomain && (
               <div className={`px-6 py-2.5 rounded-2xl text-xs font-black shadow-sm ${customDomain.status === 'active' ? 'bg-green-50 text-green-600' :
-                  customDomain.status === 'pending' ? 'bg-orange-50 text-orange-600 animate-pulse' : 'bg-red-50 text-red-600'
+                customDomain.status === 'pending' ? 'bg-orange-50 text-orange-600 animate-pulse' : 'bg-red-50 text-red-600'
                 }`}>
                 {customDomain.status === 'active' ? 'نشط' :
                   customDomain.status === 'pending' ? 'جاري التحقق...' : 'فشل التحقق'}
@@ -217,21 +222,22 @@ export default function CustomDomainPage() {
             {isEditing ? (
               <div className="space-y-6 animate-in slide-in-from-top-4 duration-500">
                 <div className="space-y-3">
-                  <label className="text-lg font-black text-gray-800">تعديل اسم النطاق</label>
+                  <label className="text-lg font-black text-gray-800">تعديل النطاق الفرعي (Tenant Key)</label>
                   <div className="relative">
                     <input
                       type="text"
                       value={editValue}
-                      onChange={(e) => setEditValue(e.target.value.toLowerCase())}
-                      placeholder="example.com"
-                      className={`w-full p-5 bg-gray-50 border ${errors.domain ? 'border-red-300' : 'border-gray-100'} rounded-[2rem] outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-left font-bold text-lg text-gray-900`}
+                      onChange={(e) => setEditValue(getTenantKey(e.target.value))}
+                      placeholder="qacuke"
+                      className={`w-full p-5 bg-gray-50 border ${errors.subdomain || errors.domain ? 'border-red-300' : 'border-gray-100'
+                        } rounded-[2rem] outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-left font-bold text-lg text-gray-900`}
                       dir="ltr"
                       autoFocus
                     />
-                    {errors.domain && (
+                    {(errors.subdomain || errors.domain) && (
                       <p className="text-red-500 text-sm font-bold mt-2 pr-4 flex items-center gap-2">
                         <AlertCircle size={16} />
-                        {errors.domain[0]}
+                        {errors.subdomain?.[0] || errors.domain?.[0]}
                       </p>
                     )}
                   </div>
@@ -244,10 +250,14 @@ export default function CustomDomainPage() {
                     className="flex-1 bg-blue-600 text-white py-5 rounded-[2rem] font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-3 disabled:opacity-50"
                   >
                     {isSubmitting ? <Loader2 className="animate-spin" /> : <Check size={24} strokeWidth={3} />}
-                    <span>تحديث النطاق</span>
+                    <span>تحديث النطاق الفرعي</span>
                   </button>
                   <button
-                    onClick={() => { setIsEditing(false); setErrors({}); setEditValue(customDomain?.domain || ''); }}
+                    onClick={() => {
+                      setIsEditing(false);
+                      setErrors({});
+                      setEditValue(getTenantKey(customDomain?.domain || ''));
+                    }}
                     disabled={isSubmitting}
                     className="px-10 py-5 bg-gray-100 text-gray-500 rounded-[2rem] font-black text-lg hover:bg-gray-200 transition-all disabled:opacity-50"
                   >
@@ -270,7 +280,10 @@ export default function CustomDomainPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => { setIsEditing(true); setEditValue(customDomain?.domain || editValue); }}
+                    onClick={() => {
+                      setIsEditing(true);
+                      setEditValue(getTenantKey(customDomain?.domain || editValue));
+                    }}
                     className="p-4 bg-white text-gray-400 hover:text-blue-600 rounded-2xl border border-gray-100 shadow-sm transition-all"
                     title="تعديل"
                   >
