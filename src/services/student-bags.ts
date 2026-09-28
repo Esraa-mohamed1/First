@@ -54,7 +54,7 @@ export const purchaseBag = async (payload: PurchaseBagPayload): Promise<any> => 
     if (payload.notes) {
       fd.append('notes', payload.notes);
     }
-    if (payload.receipt instanceof File) {
+    if (typeof File !== 'undefined' && typeof File === 'function' && payload.receipt instanceof File) {
       fd.append('receipt', payload.receipt);
       fd.append('receipt_file', payload.receipt);
     } else if (typeof payload.receipt === 'string' && payload.receipt) {

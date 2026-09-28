@@ -57,9 +57,11 @@ function buildBagFormData(payload: CreateBagPayload): FormData {
   if (payload.download_limit !== undefined && payload.download_limit !== null)
     fd.append('download_limit', String(payload.download_limit));
 
+  const isFile = (v: any): v is File => typeof File !== 'undefined' && typeof File === 'function' && v instanceof File;
+
   // Main Cover Image: File object = upload binary file
   // Remote HTTP/HTTPS string URLs are omitted in edit mode so backend does not overwrite existing stored image
-  if (payload.image instanceof File) {
+  if (isFile(payload.image)) {
     fd.append('image', payload.image);
   } else if (
     typeof payload.image === 'string' &&
@@ -76,7 +78,7 @@ function buildBagFormData(payload: CreateBagPayload): FormData {
   if (Array.isArray(payload.gallery) && payload.gallery.length > 0) {
     let gIdx = 0;
     payload.gallery.forEach((gItem) => {
-      if (gItem instanceof File) {
+      if (isFile(gItem)) {
         fd.append(`gallery[${gIdx}]`, gItem);
         gIdx++;
       } else if (
@@ -106,7 +108,7 @@ function buildBagFormData(payload: CreateBagPayload): FormData {
       if (item.type != null) {
         fd.append(`items[${idx}][type]`, String(item.type));
       }
-      if (item.file instanceof File) {
+      if (isFile(item.file)) {
         fd.append(`items[${idx}][file]`, item.file);
       } else if (item.file != null) {
         fd.append(`items[${idx}][file]`, String(item.file));

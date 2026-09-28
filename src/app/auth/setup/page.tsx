@@ -14,6 +14,13 @@ export default function SetupPage() {
     saudiCountry,
     kuwaitCountry,
     egyptCountry,
+    registrationMethod,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    phone,
+    setPhone,
     academyName,
     setAcademyName,
     fieldErrors,
@@ -217,6 +224,84 @@ export default function SetupPage() {
 
             {/* Domain & Academy Name Details */}
             <div className="space-y-6 pt-4 border-t border-slate-200/60">
+              {/* Optional / Error-driven Email or Phone & Password fields */}
+              {(fieldErrors.email || fieldErrors.password || fieldErrors.phone || fieldErrors.phone_academy || !email) && (
+                <div className="space-y-4 p-4 bg-red-50/30 rounded-xl border border-red-100/60">
+                  {registrationMethod === 'email' ? (
+                    <div className="relative group">
+                      <label className="block text-xs font-bold text-gray-700 mb-2 text-right">البريد الإلكتروني</label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={email}
+                        onChange={e => {
+                          setEmail(e.target.value);
+                          if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: '' }));
+                        }}
+                        placeholder="example@mail.com"
+                        className={`w-full p-4 border rounded-xl bg-white focus:outline-none text-sm font-medium text-[#111827] transition-all dir-ltr text-left ${
+                          fieldErrors.email ? 'border-red-500 bg-red-50/20 focus:border-red-500' : 'border-slate-300 focus:border-[#004ac6]'
+                        }`}
+                      />
+                      {fieldErrors.email && (
+                        <p className="mt-1 text-red-500 text-xs font-semibold flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" />
+                          {fieldErrors.email}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="relative group">
+                      <label className="block text-xs font-bold text-gray-700 mb-2 text-right">رقم الجوال</label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={phone}
+                        onChange={e => {
+                          setPhone(e.target.value);
+                          if (fieldErrors.phone || fieldErrors.phone_academy) {
+                            setFieldErrors(prev => ({ ...prev, phone: '', phone_academy: '' }));
+                          }
+                        }}
+                        placeholder="0500000000"
+                        className={`w-full p-4 border rounded-xl bg-white focus:outline-none text-sm font-medium text-[#111827] transition-all dir-ltr text-left ${
+                          fieldErrors.phone || fieldErrors.phone_academy ? 'border-red-500 bg-red-50/20 focus:border-red-500' : 'border-slate-300 focus:border-[#004ac6]'
+                        }`}
+                      />
+                      {(fieldErrors.phone || fieldErrors.phone_academy) && (
+                        <p className="mt-1 text-red-500 text-xs font-semibold flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" />
+                          {fieldErrors.phone || fieldErrors.phone_academy}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="relative group">
+                    <label className="block text-xs font-bold text-gray-700 mb-2 text-right">كلمة المرور</label>
+                    <input
+                      type="password"
+                      name="password"
+                      value={password}
+                      onChange={e => {
+                        setPassword(e.target.value);
+                        if (fieldErrors.password) setFieldErrors(prev => ({ ...prev, password: '' }));
+                      }}
+                      placeholder="••••••••"
+                      className={`w-full p-4 border rounded-xl bg-white focus:outline-none text-sm font-medium text-[#111827] transition-all dir-ltr text-left ${
+                        fieldErrors.password ? 'border-red-500 bg-red-50/20 focus:border-red-500' : 'border-slate-300 focus:border-[#004ac6]'
+                      }`}
+                    />
+                    {fieldErrors.password && (
+                      <p className="mt-1 text-red-500 text-xs font-semibold flex items-center gap-1">
+                        <AlertCircle className="w-4 h-4" />
+                        {fieldErrors.password}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Academy Name Input */}
               <div className="relative group">
                 <label className="block text-xs font-bold text-gray-700 mb-2 text-right">اسم الأكاديمية / المنصة</label>
@@ -229,6 +314,7 @@ export default function SetupPage() {
                 )}
                 <input
                   type="text"
+                  name="academy_name"
                   value={academyName}
                   title={fieldErrors.username || fieldErrors.academy_name || ''}
                   onChange={e => {
@@ -262,6 +348,7 @@ export default function SetupPage() {
                 <div className={`flex items-center border rounded-xl overflow-hidden transition-colors bg-white ${domainError || fieldErrors.link_academy ? 'border-red-500 focus-within:border-red-500 bg-red-50/20' : 'border-slate-300 focus-within:border-[#004ac6]'}`}>
                   <input
                     type="text"
+                    name="domain_prefix"
                     dir="ltr"
                     value={domainPrefix}
                     title={fieldErrors.link_academy || domainError || ''}

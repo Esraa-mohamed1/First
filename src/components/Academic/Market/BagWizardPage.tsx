@@ -26,7 +26,7 @@ import {
   X,
   ShieldCheck,
   CheckCircle2,
-  File,
+  File as FileIcon,
   Sparkles,
   Star,
   Plus,
@@ -645,12 +645,14 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
       const mainPhoto = bagPhotos.find((p) => p.isMain) || bagPhotos[0];
       const galleryPhotos = bagPhotos.filter((p) => p.id !== mainPhoto?.id);
 
+      const isFileObj = (v: any): v is File => typeof File !== 'undefined' && typeof File === 'function' && v instanceof File;
+
       // In Edit mode (editBagId present), ONLY send image if a new File was uploaded or edited.
       // If it's an un-edited existing remote URL, leave undefined so backend doesn't overwrite stored file.
       let mainImagePayload: File | string | undefined = undefined;
-      if (mainPhoto?.file instanceof File) {
+      if (isFileObj(mainPhoto?.file)) {
         mainImagePayload = mainPhoto.file;
-      } else if (coverImageFile instanceof File) {
+      } else if (isFileObj(coverImageFile)) {
         mainImagePayload = coverImageFile;
       } else if (!editBagId) {
         if (mainPhoto?.url && !mainPhoto.url.startsWith('blob:') && !mainPhoto.url.startsWith('data:')) {
@@ -663,7 +665,7 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
       // In Edit mode, only send newly uploaded gallery files (File objects) or new items, not existing remote HTTP URLs
       const galleryPayload: Array<File | string> = galleryPhotos
         .map((p) => {
-          if (p.file instanceof File) return p.file;
+          if (isFileObj(p.file)) return p.file;
           if (!editBagId && p.url && !p.url.startsWith('blob:') && !p.url.startsWith('data:')) return p.url;
           return null;
         })
@@ -1319,7 +1321,7 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                   className={`border-2 border-dashed rounded-[28px] p-10 text-center bg-white hover:bg-gray-50/50 cursor-pointer transition-all space-y-3 ${stepErrors.content ? 'border-red-400 bg-red-50/20' : 'border-gray-200'}`}
                 >
                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto ${stepErrors.content ? 'bg-red-100 text-red-500' : 'bg-gray-100 text-gray-400'}`}>
-                    <File size={26} />
+                    <FileIcon size={26} />
                   </div>
                   <p className={`text-sm font-black ${stepErrors.content ? 'text-red-600' : 'text-gray-600'}`}>
                     {stepErrors.content || 'لم يتم إرفاق ملفات بعد'}
@@ -1392,7 +1394,7 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
                             ) : isMp4 ? (
                               <Video size={22} />
                             ) : (
-                              <File size={22} />
+                              <FileIcon size={22} />
                             )}
                           </div>
                         </div>
