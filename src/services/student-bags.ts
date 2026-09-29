@@ -87,3 +87,89 @@ export const getUserBagPurchases = async (): Promise<BagPurchaseItem[]> => {
     }
   }
 };
+
+/**
+ * Download a bag via POST /api/user/bags/:id/download
+ */
+export const downloadBag = async (bagId: number | string): Promise<any> => {
+  try {
+    const response = await studentApi.post(`bags/${bagId}/download`);
+    return response.data;
+  } catch (error: any) {
+    console.error(`Failed to download bag ${bagId}:`, error);
+    throw error.response?.data || error;
+  }
+};
+
+/**
+ * Helper to trigger bag download and handle all response shapes (URL string, object with url/path/file, blob, or array)
+ */
+export const handleBagDownloadResponse = (data: any, fallbackBagId?: number | string) => {
+  if (!data) return;
+
+  // Case 1: Direct string URL
+  if (typeof data === 'string' && (data.startsWith('http://') || data.startsWith('https://') || data.startsWith('/'))) {
+    const link = document.createElement('a');
+    link.href = data;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.setAttribute('download', '');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    return;
+  }
+
+  // Case 2: Object containing URL, file_url, download_url, link, file, or path
+  const targetUrl =
+    data.url ||
+    data.download_url ||
+    data.file_url ||
+    data.link ||
+    data.file ||
+    data.path ||
+    data.data?.url ||
+    data.data?.download_url ||
+    data.data?.file_url ||
+    data.data?.link ||
+    data.data?.file ||
+    data.data?.path ||
+    (typeof data.data === 'string' && (data.data.startsWith('http://') || data.data.startsWith('https://') || data.data.startsWith('/')) ? data.data : null);
+
+  if (targetUrl) {
+    const link = document.createElement('a');
+    link.href = targetUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.setAttribute('download', '');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    return;
+  }
+
+  // Case 3: Blob response
+  if (typeof Blob !== 'undefined' && data instanceof Blob) {
+    const blobUrl = window.URL.createObjectURL(data);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.setAttribute('download', `bag_${fallbackBagId || 'download'}.zip`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+    return;
+  }
+
+  // Case 4: Array of items or paths
+  const items = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : (Array.isArray(data.data?.items) ? data.data.items : null));
+  if (items && items.length > 0) {
+    items.forEach((item: any) => {
+      const itemUrl = item.path || item.url || item.file || item.download_url;
+      if (itemUrl) {
+        window.open(itemUrl, '_blank');
+      }
+    });
+  }
+};
+
