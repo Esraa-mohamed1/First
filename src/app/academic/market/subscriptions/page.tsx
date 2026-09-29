@@ -1,46 +1,123 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Package,
   Clock,
   CheckCircle2,
   XCircle,
   FileText,
-  Eye,
   ArrowRight,
   RefreshCw,
   Loader2,
   X,
   User,
+  ChevronRight,
+  ChevronLeft,
+  Filter,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getAcademyBagPurchases, updateBagPurchaseStatus, BagPurchaseItem } from '@/services/bags';
+import {
+  getAcademyBagPurchases,
+  updateBagPurchaseStatus,
+  getBagPurchasesStats,
+  BagPurchaseItem,
+  BagPurchasesStats,
+} from '@/services/bags';
 
-export default function AcademyBagSubscriptionsPage() {
+function getPaginationWindow(current: number, total: number): (number | '...')[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  if (current <= 4) {
+    return [1, 2, 3, 4, 5, '...', total];
+  }
+  if (current >= total - 3) {
+    return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+  }
+  return [1, '...', current - 1, current, current + 1, '...', total];
+}
+
+function SubscriptionsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const bagIdFromQuery = searchParams.get('bag_id') || undefined;
+
+  const [bagId, setBagId] = useState<string | undefined>(bagIdFromQuery);
   const [purchases, setPurchases] = useState<BagPurchaseItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState<number>(1);
+  const [limit] = useState<number>(10);
+  const [totalCount, setTotalCount] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [stats, setStats] = useState<BagPurchasesStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [previewReceiptUrl, setPreviewReceiptUrl] = useState<string | null>(null);
 
-  const fetchPurchases = async () => {
-    setLoading(true);
+  // Sync state if URL query parameter changes
+  useEffect(() => {
+    const qBagId = searchParams.get('bag_id') || undefined;
+    setBagId(qBagId);
+    setPage(1);
+  }, [searchParams]);
+
+  const fetchPurchases = useCallback(
+    async (currentPage: number, currentBagId?: string) => {
+      setLoading(true);
+      try {
+        const data = await getAcademyBagPurchases({
+          bag_id: currentBagId,
+          page: currentPage,
+          limit,
+        });
+        setPurchases(data.items);
+        setTotalCount(data.total);
+        setTotalPages(data.totalPages);
+        setPage(data.page);
+      } catch (err) {
+        console.error('Failed to fetch academy bag purchases:', err);
+        toast.error('حدث خطأ أثناء تحميل طلبات شراء الحقائب');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [limit]
+  );
+
+  const fetchStats = useCallback(async (currentBagId?: string) => {
+    setStatsLoading(true);
     try {
-      const data = await getAcademyBagPurchases();
-      setPurchases(data);
+      const data = await getBagPurchasesStats(currentBagId);
+      setStats(data);
     } catch (err) {
-      console.error('Failed to fetch academy bag purchases:', err);
-      toast.error('حدث خطأ أثناء تحميل طلبات شراء الحقائب');
+      console.error('Failed to fetch bag purchases stats:', err);
     } finally {
-      setLoading(false);
+      setStatsLoading(false);
     }
-  };
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    fetchPurchases(page, bagId);
+    fetchStats(bagId);
+  }, [fetchPurchases, fetchStats, page, bagId]);
 
   useEffect(() => {
-    fetchPurchases();
-  }, []);
+    fetchPurchases(page, bagId);
+    fetchStats(bagId);
+  }, [page, bagId, fetchPurchases, fetchStats]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages || newPage === page) return;
+    setPage(newPage);
+  };
+
+  const handleClearBagFilter = () => {
+    setBagId(undefined);
+    setPage(1);
+    router.push('/academic/market/subscriptions');
+  };
 
   const handleUpdateStatus = async (id: number, status: 'accepted' | 'rejected') => {
     setUpdatingId(id);
@@ -50,24 +127,29 @@ export default function AcademyBagSubscriptionsPage() {
       setPurchases((prev) =>
         prev.map((item) => (item.id === id ? { ...item, status } : item))
       );
+      // Refresh stats after status update
+      fetchStats(bagId);
     } catch (err: any) {
       console.error(`Failed to update purchase ${id}:`, err);
       setPurchases((prev) =>
         prev.map((item) => (item.id === id ? { ...item, status } : item))
       );
       toast.success(status === 'accepted' ? 'تم قبول وتفعيل الطلب بنجاح' : 'تم رفض الطلب بنجاح');
+      fetchStats(bagId);
     } finally {
       setUpdatingId(null);
     }
   };
 
-  const totalCount = purchases.length;
-  const approvedCount = purchases.filter(
+  const approvedCount = stats?.accepted_active ?? purchases.filter(
     (p) => (p.status || '').toLowerCase() === 'accepted' || (p.status || '').toLowerCase() === 'approved'
   ).length;
-  const pendingCount = purchases.filter(
+
+  const pendingCount = stats?.pending_review ?? purchases.filter(
     (p) => !p.status || (p.status || '').toLowerCase() === 'pending'
   ).length;
+
+  const displayTotalCount = stats?.total_requests ?? totalCount;
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto" dir="rtl">
@@ -92,20 +174,51 @@ export default function AcademyBagSubscriptionsPage() {
           </p>
         </div>
         <button
-          onClick={fetchPurchases}
+          onClick={handleRefresh}
           className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl text-xs font-bold transition-all border border-gray-200 cursor-pointer"
         >
-          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+          <RefreshCw size={14} className={loading || statsLoading ? 'animate-spin' : ''} />
           تحديث البيانات
         </button>
       </div>
+
+      {/* Bag Specific Filter Banner */}
+      {bagId && (
+        <div className="bg-purple-50/70 border border-purple-200/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-purple-900">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-purple-200/70 text-purple-700 flex items-center justify-center flex-shrink-0 font-bold">
+              <Filter size={18} />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-purple-600">تصفية النتائج الحالية</div>
+              <div className="text-sm font-black">
+                عرض الطلبات والإحصائيات الخاصة بالحقيبة رقم #{bagId}
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleClearBagFilter}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+          >
+            <X size={14} />
+            <span>عرض جميع الحقائب (إلغاء التصفية)</span>
+          </button>
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-bold text-gray-400 block">إجمالي طلبات الشراء</span>
-            <span className="text-2xl font-black text-gray-900 mt-1 block">{totalCount}</span>
+            <span className="text-2xl font-black text-gray-900 mt-1 block">
+              {statsLoading ? (
+                <span className="inline-block w-6 h-6 rounded bg-gray-100 animate-pulse" />
+              ) : (
+                displayTotalCount
+              )}
+            </span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center">
             <Package size={24} />
@@ -115,7 +228,13 @@ export default function AcademyBagSubscriptionsPage() {
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-bold text-gray-400 block">طلبات مفعّلة ومقبولة</span>
-            <span className="text-2xl font-black text-emerald-600 mt-1 block">{approvedCount}</span>
+            <span className="text-2xl font-black text-emerald-600 mt-1 block">
+              {statsLoading ? (
+                <span className="inline-block w-6 h-6 rounded bg-gray-100 animate-pulse" />
+              ) : (
+                approvedCount
+              )}
+            </span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
             <CheckCircle2 size={24} />
@@ -125,7 +244,13 @@ export default function AcademyBagSubscriptionsPage() {
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-bold text-gray-400 block">طلبات في انتظار التدقيق</span>
-            <span className="text-2xl font-black text-amber-600 mt-1 block">{pendingCount}</span>
+            <span className="text-2xl font-black text-amber-600 mt-1 block">
+              {statsLoading ? (
+                <span className="inline-block w-6 h-6 rounded bg-gray-100 animate-pulse" />
+              ) : (
+                pendingCount
+              )}
+            </span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
             <Clock size={24} />
@@ -152,8 +277,18 @@ export default function AcademyBagSubscriptionsPage() {
             </div>
             <h3 className="text-base font-black text-gray-700">لا توجد طلبات شراء للحقائب حالياً</h3>
             <p className="text-xs text-gray-400 max-w-sm">
-              عند قيام الطلاب بشراء أو الحصول على الحقائب التدريبية الخاصة بك، ستظهر جميع الطلبات هنا.
+              {bagId
+                ? 'لا توجد طلبات شراء مسجلة لهذه الحقيبة التدريبية المحددة حالياً.'
+                : 'عند قيام الطلاب بشراء أو الحصول على الحقائب التدريبية الخاصة بك، ستظهر جميع الطلبات هنا.'}
             </p>
+            {bagId && (
+              <button
+                onClick={handleClearBagFilter}
+                className="mt-2 px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                عرض طلبات جميع الحقائب
+              </button>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-gray-100 overflow-x-auto">
@@ -171,9 +306,12 @@ export default function AcademyBagSubscriptionsPage() {
               </thead>
               <tbody className="divide-y divide-gray-100 font-bold">
                 {purchases.map((item) => {
-                  const studentName = item.user?.name || item.student_name || item.user_name || `طالب #${item.user_id || item.id}`;
-                  const studentEmail = item.user?.email || item.student_email || item.user_email || '';
-                  const bagTitle = item.bag?.title || item.bag_title || `حقيبة رقمية #${item.bag_id || item.id}`;
+                  const studentName =
+                    item.user?.name || item.student_name || item.user_name || `طالب #${item.user_id || item.id}`;
+                  const studentEmail =
+                    item.user?.email || item.student_email || item.user_email || '';
+                  const bagTitle =
+                    item.bag?.title || item.bag_title || `حقيبة رقمية #${item.bag_id || item.id}`;
                   const price = item.price || item.amount || item.bag?.price || 'مجاناً';
                   const dateStr = item.created_at ? item.created_at.split('T')[0] : 'اليوم';
                   const statusRaw = (item.status || 'pending').toLowerCase();
@@ -207,7 +345,9 @@ export default function AcademyBagSubscriptionsPage() {
                           </div>
                           <div>
                             <span className="text-gray-900 font-black block">{studentName}</span>
-                            {studentEmail && <span className="text-[10px] text-gray-400 font-mono block">{studentEmail}</span>}
+                            {studentEmail && (
+                              <span className="text-[10px] text-gray-400 font-mono block">{studentEmail}</span>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -269,6 +409,66 @@ export default function AcademyBagSubscriptionsPage() {
             </table>
           </div>
         )}
+
+        {/* Pagination Bar */}
+        {!loading && totalPages > 1 && (
+          <div className="p-4 sm:p-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold text-gray-500">
+            <div>
+              عرض {purchases.length > 0 ? (page - 1) * limit + 1 : 0} إلى {Math.min(page * limit, totalCount)} من إجمالي {totalCount} طلب
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page <= 1}
+                className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                title="الصفحة السابقة"
+              >
+                <ChevronRight size={16} />
+              </button>
+
+              <div className="flex items-center gap-1">
+                {getPaginationWindow(page, totalPages).map((p, idx) => {
+                  if (p === '...') {
+                    return (
+                      <span
+                        key={`ellipsis-${idx}`}
+                        className="w-8 h-8 flex items-center justify-center text-gray-400 font-bold text-xs select-none"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+                  return (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => handlePageChange(Number(p))}
+                      className={`w-8 h-8 rounded-xl font-black text-xs transition-all cursor-pointer ${
+                        page === p
+                          ? 'bg-purple-600 text-white shadow-sm shadow-purple-200'
+                          : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page >= totalPages}
+                className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                title="الصفحة التالية"
+              >
+                <ChevronLeft size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Receipt Modal Preview */}
@@ -308,5 +508,20 @@ export default function AcademyBagSubscriptionsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AcademyBagSubscriptionsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center py-24 gap-4 text-gray-400" dir="rtl">
+          <Loader2 size={40} className="animate-spin text-purple-600" />
+          <span className="text-sm font-bold">جاري التحميل...</span>
+        </div>
+      }
+    >
+      <SubscriptionsContent />
+    </Suspense>
   );
 }

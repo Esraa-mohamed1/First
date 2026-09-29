@@ -113,6 +113,30 @@ export interface BagPurchaseItem {
   notes?: string;
 }
 
+export interface BagPurchasesStats {
+  pending_review: number;
+  accepted_active: number;
+  total_requests: number;
+  total_downloads: number;
+}
+
+export interface BagPurchasesQueryParams {
+  bag_id?: number | string;
+  page?: number;
+  limit?: number;
+  per_page?: number;
+  status?: string;
+  search?: string;
+}
+
+export interface BagPurchasesListResponse {
+  items: BagPurchaseItem[];
+  total: number;
+  page: number;
+  totalPages: number;
+  limit: number;
+}
+
 /** Helper to get Arabic currency symbol for bags */
 export function getCurrencySymbol(currency?: string): string {
   if (!currency) return 'ر.س';
