@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Monitor,
@@ -27,7 +27,8 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
-  Settings
+  Settings,
+  ChevronDown
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
@@ -38,12 +39,14 @@ import { getPages, getSections, saveSections, createPage, updatePage, apiToEdito
 import { syncHomepageCache } from '@/lib/homepage-cache';
 import { getAcademicHtml, renderVideoPlayer } from '@/builder/templates/academic/academicHtml';
 import { getCoachHtml } from '@/builder/templates/coach/coachHtml';
+import ImageUploader from '@/builder/inspector/components/ImageUploader';
 import {
   getSchoolCoachHtml,
   getSchoolCoachNewDesignHtml,
   renderSchoolCoachFaqItemHtml,
   renderSchoolCoachFaqListHtml,
   renderSchoolCoachEmptyFaqHtml,
+  normalizeWhatsappUrl,
 } from '@/builder/templates/schoolcoach/schoolcoachHtml';
 import { getCourses } from '@/services/courses';
 import { getBags } from '@/services/bags';
@@ -348,6 +351,8 @@ interface StepItemConfig {
   number: string;
   title: string;
   description: string;
+  titleColor?: string;
+  descriptionColor?: string;
   enabled?: boolean;
 }
 
@@ -480,6 +485,7 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         contactIconVisible: true,
         contactModalTitle: 'تواصل مع الفريق',
         contactModalDescription: 'للحجز والاستفسار، يمكنك التواصل مباشرة مع الفريق.',
+        whatsappCountryCode: '+20',
         whatsappUrl: '',
         phoneNumber: '',
         whatsappButtonLabel: 'واتساب',
@@ -651,9 +657,9 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         textColor: '',
         fontFamily: '',
         items: [
-          { number: '1', title: 'شاهد درس تجريبي', description: 'اعرف أسلوب الشرح قبل الاشتراك.', enabled: true },
-          { number: '2', title: 'اختار صفك الدراسي', description: 'هنرشح لك المحتوى المناسب فقط.', enabled: true },
-          { number: '3', title: 'ابدأ الكورس المناسب', description: 'ابدأ رحلتك التعليمية بالطريقة المناسبة ليك.', enabled: true },
+          { number: '1', title: 'شاهد درس تجريبي', description: 'اعرف أسلوب الشرح قبل الاشتراك.', titleColor: '', descriptionColor: '', enabled: true },
+          { number: '2', title: 'اختار صفك الدراسي', description: 'هنرشح لك المحتوى المناسب فقط.', titleColor: '', descriptionColor: '', enabled: true },
+          { number: '3', title: 'ابدأ الكورس المناسب', description: 'ابدأ رحلتك التعليمية بالطريقة المناسبة ليك.', titleColor: '', descriptionColor: '', enabled: true },
         ],
       },
       videos: {
@@ -786,6 +792,36 @@ export default function PageBuilderPage() {
   const [content, setContent] = useState<TemplateContent | null>(null);
   const [previewContent, setPreviewContent] = useState<TemplateContent | null>(null);
   const [initialHtml, setInitialHtml] = useState<string>('');
+
+  // Memoized available gallery images across sections for image picker
+  const availableGalleryImages = useMemo(() => {
+    const list: string[] = [];
+    if (Array.isArray(content?.gallery?.items)) {
+      content.gallery.items.forEach((item: any) => {
+        const url = item?.image_url || item?.image || item?.img || (typeof item === 'string' ? item : '');
+        if (url && typeof url === 'string' && url.trim() && !list.includes(url.trim())) {
+          list.push(url.trim());
+        }
+      });
+    }
+    if (Array.isArray(availableBags)) {
+      availableBags.forEach((bag: any) => {
+        if (bag.image && !list.includes(bag.image)) list.push(bag.image);
+        if (Array.isArray(bag.gallery)) {
+          bag.gallery.forEach((g: any) => {
+            const gUrl = typeof g === 'string' ? g : g?.url || g?.image;
+            if (gUrl && !list.includes(gUrl)) list.push(gUrl);
+          });
+        }
+      });
+    }
+    if (Array.isArray(availableCourses)) {
+      availableCourses.forEach((crs: any) => {
+        if (crs.image && !list.includes(crs.image)) list.push(crs.image);
+      });
+    }
+    return list;
+  }, [content?.gallery?.items, availableBags, availableCourses]);
 
   // Debounce preview updates to prevent iframe reload flicker during typing
   useEffect(() => {
@@ -1270,6 +1306,19 @@ export default function PageBuilderPage() {
       updateText('#generic-modal p', content.navbar?.contactModalDescription || 'للحجز والاستفسار، يمكنك التواصل مباشرة مع الفريق.');
       updateText('#generic-modal a.whatsapp-btn span', content.navbar?.whatsappButtonLabel || 'واتساب');
       updateText('#generic-modal a.phone-btn span', content.navbar?.phoneButtonLabel || 'اتصال');
+      const rawModalWhatsapp = content.navbar?.whatsappUrl || '';
+      const modalCountryCode = content.navbar?.whatsappCountryCode || '+20';
+      const resolvedModalWhatsappUrl = normalizeWhatsappUrl(rawModalWhatsapp, modalCountryCode);
+      const modalWhatsappLink = doc.querySelector('#generic-modal a.whatsapp-btn, a.whatsapp-btn') as HTMLAnchorElement;
+      if (modalWhatsappLink) {
+        if (resolvedModalWhatsappUrl) {
+          modalWhatsappLink.href = resolvedModalWhatsappUrl;
+          modalWhatsappLink.style.display = 'inline-flex';
+        } else {
+          modalWhatsappLink.href = '#';
+          modalWhatsappLink.style.display = 'none';
+        }
+      }
 
       // 2. Hero Profile Live Updates
       updateText('.teacher-name', teacherName || 'اسم المعلم');
@@ -1461,57 +1510,70 @@ export default function PageBuilderPage() {
 
       // 4. Steps Section Live Updates (#steps)
       if (content.steps) {
-        updateText('#steps .steps-heading, #steps h2', content.steps.title ?? 'لسه أول مرة تذاكر معايا؟');
-        updateText('#steps .steps-caption, #steps .steps-header p, #steps .section-header p', content.steps.subtitle ?? 'ابدأ بالخطوات دي، وفي دقائق هتعرف أنسب مكان ليك.');
+        const stepsSecConfig = content.steps;
+        updateText('#steps .steps-heading, #steps h2', stepsSecConfig.title ?? 'لسه أول مرة تذاكر معايا؟');
+        updateText('#steps .steps-caption, #steps .steps-header p, #steps .section-header p', stepsSecConfig.subtitle ?? 'ابدأ بالخطوات دي، وفي دقائق هتعرف أنسب مكان ليك.');
 
         const stepsSec = doc.querySelector('#steps, [data-section="steps"]') as HTMLElement;
         if (stepsSec) {
-          if (content.steps.backgroundColor) stepsSec.style.backgroundColor = content.steps.backgroundColor;
+          if (stepsSecConfig.backgroundColor) stepsSec.style.backgroundColor = stepsSecConfig.backgroundColor;
           else stepsSec.style.backgroundColor = '';
-          if (content.steps.textColor) {
-            stepsSec.style.color = content.steps.textColor;
+          if (stepsSecConfig.textColor) {
+            stepsSec.style.color = stepsSecConfig.textColor;
             const heading = stepsSec.querySelector('.steps-heading') as HTMLElement;
-            if (heading) heading.style.color = content.steps.textColor;
+            if (heading) heading.style.color = stepsSecConfig.textColor;
           }
         }
 
         const stepsHeader = doc.querySelector('#steps .steps-header, #steps .section-header') as HTMLElement;
         if (stepsHeader) {
-          if (content.steps.fontFamily) {
-            stepsHeader.style.fontFamily = `'${content.steps.fontFamily}', system-ui, sans-serif`;
+          if (stepsSecConfig.fontFamily) {
+            stepsHeader.style.fontFamily = `'${stepsSecConfig.fontFamily}', system-ui, sans-serif`;
           } else {
             stepsHeader.style.fontFamily = '';
           }
         }
 
         const stepsWrapper = doc.querySelector('#steps .steps-wrapper') as HTMLElement;
-        if (stepsWrapper && content.steps.fontFamily) {
-          stepsWrapper.style.fontFamily = `'${content.steps.fontFamily}', system-ui, sans-serif`;
+        if (stepsWrapper && stepsSecConfig.fontFamily) {
+          stepsWrapper.style.fontFamily = `'${stepsSecConfig.fontFamily}', system-ui, sans-serif`;
         }
 
-        if (Array.isArray(content.steps.items)) {
+        if (Array.isArray(stepsSecConfig.items)) {
           const wrapper = doc.querySelector('#steps .steps-wrapper');
           const currentCards = doc.querySelectorAll('#steps .steps-wrapper .step-card, #steps .steps-wrapper .step-item');
-          if (wrapper && currentCards.length !== content.steps.items.length) {
-            wrapper.innerHTML = content.steps.items.map((st: any, idx: number) => `
-              <div class="step-card" data-section="steps" data-index="${idx}">
-                <div class="step-badge">${String(idx + 1).padStart(2, '0')}</div>
-                <div class="step-content">
-                  <h3 class="step-title">${st.title || ''}</h3>
-                  <p class="step-description">${st.description || ''}</p>
+          if (wrapper && currentCards.length !== stepsSecConfig.items.length) {
+            wrapper.innerHTML = stepsSecConfig.items.map((st: any, idx: number) => {
+              const itemTitleColor = st.titleColor || st.title_color || stepsSecConfig.textColor || '';
+              const itemDescColor = st.descriptionColor || st.description_color || (stepsSecConfig.textColor ? stepsSecConfig.textColor : '');
+              return `
+                <div class="step-card" data-section="steps" data-index="${idx}">
+                  <div class="step-badge">${String(idx + 1).padStart(2, '0')}</div>
+                  <div class="step-content">
+                    <h3 class="step-title" style="${itemTitleColor ? `color: ${itemTitleColor};` : ''}">${st.title || ''}</h3>
+                    <p class="step-description" style="${itemDescColor ? `color: ${itemDescColor};` : ''}">${st.description || ''}</p>
+                  </div>
                 </div>
-              </div>
-            `).join('');
+              `;
+            }).join('');
           } else {
-            content.steps.items.forEach((st: any, idx: number) => {
+            stepsSecConfig.items.forEach((st: any, idx: number) => {
               const itemEl = doc.querySelector(`[data-section="steps"][data-index="${idx}"], #steps .step-item:nth-child(${idx + 1}), #steps .step-card:nth-child(${idx + 1})`);
               if (itemEl) {
                 const numEl = itemEl.querySelector('.step-badge, .step-number');
                 if (numEl) numEl.textContent = String(idx + 1).padStart(2, '0');
-                const titleEl = itemEl.querySelector('.step-title');
-                if (titleEl) titleEl.textContent = st.title || '';
-                const descEl = itemEl.querySelector('.step-description');
-                if (descEl) descEl.textContent = st.description || '';
+                const titleEl = itemEl.querySelector('.step-title') as HTMLElement;
+                if (titleEl) {
+                  titleEl.textContent = st.title || '';
+                  const itemTitleColor = st.titleColor || st.title_color || stepsSecConfig.textColor || '';
+                  titleEl.style.color = itemTitleColor || '';
+                }
+                const descEl = itemEl.querySelector('.step-description') as HTMLElement;
+                if (descEl) {
+                  descEl.textContent = st.description || '';
+                  const itemDescColor = st.descriptionColor || st.description_color || (stepsSecConfig.textColor ? stepsSecConfig.textColor : '');
+                  descEl.style.color = itemDescColor || '';
+                }
               }
             });
           }
@@ -2661,6 +2723,7 @@ export default function PageBuilderPage() {
                 contactIconVisible: navbarNode.props.contactIconVisible !== undefined ? Boolean(navbarNode.props.contactIconVisible) : (fallback.navbar.contactIconVisible ?? true),
                 contactModalTitle: sv(navbarNode.props.contactModalTitle ?? navbarNode.props.contact_title ?? navbarNode.props.modalTitle, fallback.navbar.contactModalTitle),
                 contactModalDescription: sv(navbarNode.props.contactModalDescription ?? navbarNode.props.contact_description ?? navbarNode.props.modalDescription, fallback.navbar.contactModalDescription),
+                whatsappCountryCode: sv(navbarNode.props.whatsappCountryCode ?? navbarNode.props.whatsapp_country_code ?? navbarNode.props.countryCode ?? navbarNode.props.country_code, fallback.navbar.whatsappCountryCode || '+20'),
                 whatsappUrl: sv(navbarNode.props.whatsappUrl ?? navbarNode.props.whatsapp_url ?? navbarNode.props.whatsapp, fallback.navbar.whatsappUrl),
                 phoneNumber: sv(navbarNode.props.phoneNumber ?? navbarNode.props.phone_number ?? navbarNode.props.phone, fallback.navbar.phoneNumber),
                 whatsappButtonLabel: sv(navbarNode.props.whatsappButtonLabel ?? navbarNode.props.whatsapp_button_label ?? navbarNode.props.whatsappLabel, fallback.navbar.whatsappButtonLabel),
@@ -3723,14 +3786,29 @@ export default function PageBuilderPage() {
                             </div>
                             <div className="flex flex-col gap-1 min-w-0">
                               <label className="text-[9px] font-bold text-slate-600">رقم أو رابط الواتساب</label>
-                              <input
-                                type="text"
-                                dir="ltr"
-                                value={content.navbar?.whatsappUrl || ''}
-                                onChange={(e) => handleUpdateField('navbar', 'whatsappUrl', e.target.value)}
-                                placeholder="مثال: 201xxxxxxxxx أو https://wa.me/..."
-                                className="w-full min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
-                              />
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <div className="relative shrink-0 w-28">
+                                  <select
+                                    value={content.navbar?.whatsappCountryCode || '+20'}
+                                    onChange={(e) => handleUpdateField('navbar', 'whatsappCountryCode', e.target.value)}
+                                    className="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-bold text-slate-700 appearance-none pr-2 pl-6 cursor-pointer"
+                                    dir="rtl"
+                                  >
+                                    <option value="+20">مصر (+20)</option>
+                                    <option value="+966">السعودية (+966)</option>
+                                    <option value="+965">الكويت (+965)</option>
+                                  </select>
+                                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                </div>
+                                <input
+                                  type="text"
+                                  dir="ltr"
+                                  value={content.navbar?.whatsappUrl || ''}
+                                  onChange={(e) => handleUpdateField('navbar', 'whatsappUrl', e.target.value)}
+                                  placeholder="مثال: 101xxxxxxx أو https://wa.me/..."
+                                  className="flex-1 min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                                />
+                              </div>
                             </div>
                           </div>
 
@@ -3915,64 +3993,23 @@ export default function PageBuilderPage() {
 
                       {/* Avatar Image */}
                       <div className="flex flex-col gap-1 min-w-0">
-                        <label className="text-[10px] font-bold text-slate-600">صورة المعلم الدائرية (Avatar)</label>
-                        <div className="flex items-center gap-2 min-w-0">
-                          {content.profile?.avatar ? (
-                            <img src={content.profile.avatar} className="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0 bg-white" alt="Avatar preview" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-black text-sm flex items-center justify-center shrink-0">
-                              {(content.profile?.teacherName || 'م').trim().charAt(0) || 'م'}
-                            </div>
-                          )}
-                          <input
-                            type="text"
-                            dir="ltr"
-                            value={content.profile?.avatar || ''}
-                            onChange={(e) => handleUpdateField('profile', 'avatar', e.target.value)}
-                            placeholder="https://... رابط صورة المعلم"
-                            className="flex-1 min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
-                          />
-                          {content.profile?.avatar && (
-                            <button
-                              type="button"
-                              onClick={() => handleUpdateField('profile', 'avatar', '')}
-                              className="text-slate-400 hover:text-red-500 p-1 shrink-0"
-                              title="إزالة الصورة والعودة للحرف الافتراضي"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
+                        <ImageUploader
+                          value={content.profile?.avatar || ''}
+                          onChange={(val) => handleUpdateField('profile', 'avatar', val)}
+                          label="صورة المعلم الدائرية (Avatar)"
+                          galleryImages={availableGalleryImages}
+                          circlePreview={true}
+                        />
                       </div>
 
                       {/* Cover Image */}
                       <div className="flex flex-col gap-1 min-w-0">
-                        <label className="text-[10px] font-bold text-slate-600">صورة غلاف البانر (Cover Image)</label>
-                        <div className="flex items-center gap-2 min-w-0">
-                          {content.profile?.cover ? (
-                            <img src={content.profile.cover} className="w-12 h-8 rounded-lg object-cover border border-slate-200 shrink-0 bg-white" alt="Cover preview" />
-                          ) : (
-                            <div className="w-12 h-8 rounded-lg bg-gradient-to-r from-slate-900 to-blue-950 shrink-0"></div>
-                          )}
-                          <input
-                            type="text"
-                            dir="ltr"
-                            value={content.profile?.cover || ''}
-                            onChange={(e) => handleUpdateField('profile', 'cover', e.target.value)}
-                            placeholder="https://... رابط خلفية الغلاف (اختياري)"
-                            className="flex-1 min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
-                          />
-                          {content.profile?.cover && (
-                            <button
-                              type="button"
-                              onClick={() => handleUpdateField('profile', 'cover', '')}
-                              className="text-slate-400 hover:text-red-500 p-1 shrink-0"
-                              title="إزالة الغلاف والعودة للتدرج الافتراضي"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
+                        <ImageUploader
+                          value={content.profile?.cover || ''}
+                          onChange={(val) => handleUpdateField('profile', 'cover', val)}
+                          label="صورة غلاف البانر (Cover Image)"
+                          galleryImages={availableGalleryImages}
+                        />
                       </div>
                     </div>
 
@@ -5388,6 +5425,8 @@ export default function PageBuilderPage() {
                             number: String((content.steps?.items?.length || 0) + 1),
                             title: 'خطوة جديدة',
                             description: 'اكتب وصف الخطوة هنا.',
+                            titleColor: '',
+                            descriptionColor: '',
                             enabled: true
                           })}
                           className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-0.5"
@@ -5442,6 +5481,59 @@ export default function PageBuilderPage() {
                                 className="border border-slate-200 rounded-lg p-2 text-xs bg-white outline-none min-h-[50px] resize-none"
                                 placeholder="اعرف أسلوب الشرح قبل الاشتراك."
                               />
+                            </div>
+
+                            {/* Title Color & Description Color Controls */}
+                            <div className="grid grid-cols-2 gap-2 pt-1">
+                              <div className="flex flex-col gap-1 min-w-0">
+                                <label className="text-[9px] font-bold text-slate-500">لون عنوان الخطوة</label>
+                                <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg p-1.5 min-w-0">
+                                  <input
+                                    type="color"
+                                    value={step.titleColor || '#0f172a'}
+                                    onChange={(e) => handleUpdateNestedField('steps', 'items', idx, 'titleColor', e.target.value)}
+                                    className="w-6 h-6 rounded cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                                  />
+                                  <span className="text-[8.5px] font-mono font-bold text-slate-500 truncate uppercase">
+                                    {step.titleColor || 'افتراضي'}
+                                  </span>
+                                  {step.titleColor && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdateNestedField('steps', 'items', idx, 'titleColor', '')}
+                                      className="text-slate-400 hover:text-red-500 p-0.5 shrink-0 mr-auto"
+                                      title="استعادة اللون الافتراضي"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col gap-1 min-w-0">
+                                <label className="text-[9px] font-bold text-slate-500">لون وصف الخطوة</label>
+                                <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg p-1.5 min-w-0">
+                                  <input
+                                    type="color"
+                                    value={step.descriptionColor || '#64748b'}
+                                    onChange={(e) => handleUpdateNestedField('steps', 'items', idx, 'descriptionColor', e.target.value)}
+                                    className="w-6 h-6 rounded cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                                  />
+                                  <span className="text-[8.5px] font-mono font-bold text-slate-500 truncate uppercase">
+                                    {step.descriptionColor || 'افتراضي'}
+                                  </span>
+                                  {step.descriptionColor && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdateNestedField('steps', 'items', idx, 'descriptionColor', '')}
+                                      className="text-slate-400 hover:text-red-500 p-0.5 shrink-0 mr-auto"
+                                      title="استعادة اللون الافتراضي"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         ))}

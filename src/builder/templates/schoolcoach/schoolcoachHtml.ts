@@ -26,13 +26,23 @@ const getSafeValue = (obj: any, keys: string[], fallback: any = '') => {
   return fallback;
 };
 
-const normalizeWhatsappUrl = (val: string): string => {
+export const normalizeWhatsappUrl = (val: string, countryCode?: string): string => {
   if (!val || typeof val !== 'string') return '';
   const trimmed = val.trim();
   if (!trimmed) return '';
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
-  const digits = trimmed.replace(/\D/g, '');
+  let digits = trimmed.replace(/\D/g, '');
   if (!digits) return '';
+
+  if (countryCode) {
+    const cleanCode = countryCode.replace(/\D/g, '');
+    if (cleanCode && !digits.startsWith(cleanCode)) {
+      if (digits.startsWith('0')) {
+        digits = digits.replace(/^0+/, '');
+      }
+      digits = `${cleanCode}${digits}`;
+    }
+  }
   return `https://wa.me/${digits}`;
 };
 
@@ -232,11 +242,12 @@ export const getSchoolCoachNewDesignHtml = (
   const contactModalTitle = getSafeValue((content as any)?.navbar, ['contactModalTitle', 'contact_title', 'modalTitle'], 'تواصل مع الفريق');
   const contactModalDescription = getSafeValue((content as any)?.navbar, ['contactModalDescription', 'contact_description', 'modalDescription'], 'للحجز والاستفسار، يمكنك التواصل مباشرة مع الفريق.');
   const rawWhatsapp = getSafeValue((content as any)?.navbar, ['whatsappUrl', 'whatsapp_url', 'whatsappNumber', 'whatsapp_number', 'whatsapp'], '');
+  const whatsappCountryCode = getSafeValue((content as any)?.navbar, ['whatsappCountryCode', 'whatsapp_country_code', 'countryCode', 'country_code'], '+20');
   const rawPhone = getSafeValue((content as any)?.navbar, ['phoneNumber', 'phone_number', 'phone'], '');
   const whatsappLabel = getSafeValue((content as any)?.navbar, ['whatsappButtonLabel', 'whatsapp_button_label', 'whatsappLabel'], 'واتساب');
   const phoneLabel = getSafeValue((content as any)?.navbar, ['phoneButtonLabel', 'phone_button_label', 'phoneLabel'], 'اتصال');
 
-  const whatsappUrl = normalizeWhatsappUrl(rawWhatsapp);
+  const whatsappUrl = normalizeWhatsappUrl(rawWhatsapp, whatsappCountryCode);
   const phoneTel = normalizePhoneTel(rawPhone);
 
   // 5 Canonical Navbar Navigation Items (Filtered by section visibility)
@@ -422,7 +433,7 @@ export const getSchoolCoachNewDesignHtml = (
   const ctaPrimaryLink = getSafeValue((content as any)?.cta, ['primaryButtonLink', 'buttonLink', 'primaryLink'], (content as any)?.contact?.buttonLink ?? (content as any)?.contact?.primaryButtonLink ?? '#courses');
   const ctaWhatsappLabel = getSafeValue((content as any)?.cta, ['whatsappButtonLabel', 'whatsappLabel'], (content as any)?.contact?.whatsappButtonLabel ?? 'كلمنا على الواتساب');
   const rawCtaWhatsapp = getSafeValue((content as any)?.cta, ['whatsappUrl', 'whatsapp_url', 'whatsappNumber', 'whatsapp_number', 'phoneNumber', 'phone_number', 'whatsapp'], getSafeValue((content as any)?.contact, ['whatsappUrl', 'whatsapp_url', 'whatsappNumber', 'whatsapp_number', 'phoneNumber', 'phone_number', 'whatsapp'], rawWhatsapp || rawPhone || ''));
-  const ctaWhatsappUrl = normalizeWhatsappUrl(rawCtaWhatsapp);
+  const ctaWhatsappUrl = normalizeWhatsappUrl(rawCtaWhatsapp, whatsappCountryCode);
   const ctaBg = getSafeValue((content as any)?.cta, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], (content as any)?.contact?.backgroundColor || '');
   const ctaBoxBg = getSafeValue((content as any)?.cta, ['cardBg', 'card_bg', 'boxBg', 'box_bg', 'containerBg', 'textBg'], (content as any)?.contact?.cardBg || (content as any)?.contact?.boxBg || '');
   const ctaTextColor = getSafeValue((content as any)?.cta, ['textColor', 'text_color'], (content as any)?.contact?.textColor || '');
@@ -521,13 +532,15 @@ export const getSchoolCoachNewDesignHtml = (
     const num = escapeHtml(String(index + 1).padStart(2, '0'));
     const title = escapeHtml(item.title || '');
     const desc = escapeHtml(item.description || item.desc || '');
+    const itemTitleColor = item.titleColor || item.title_color || stepsTextColor || '';
+    const itemDescColor = item.descriptionColor || item.description_color || (stepsTextColor ? stepsTextColor : '');
 
     return `
       <div class="step-item" data-section="steps" data-index="${index}">
         <div class="step-badge">${num}</div>
         <div class="step-content">
-          <h3 class="step-title" style="${stepsTextColor ? `color: ${stepsTextColor};` : ''}">${title}</h3>
-          ${desc ? `<p class="step-description" style="${stepsTextColor ? `color: ${stepsTextColor}; opacity: 0.85;` : ''}">${desc}</p>` : ''}
+          <h3 class="step-title" style="${itemTitleColor ? `color: ${itemTitleColor};` : ''}">${title}</h3>
+          ${desc ? `<p class="step-description" style="${itemDescColor ? `color: ${itemDescColor};` : (stepsTextColor ? `color: ${stepsTextColor}; opacity: 0.85;` : '')}">${desc}</p>` : ''}
         </div>
       </div>
     `;
