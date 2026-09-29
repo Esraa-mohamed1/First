@@ -1,6 +1,7 @@
 'use client';
 
-import { Edit, Trash2, BookOpen, Layers, Code2 } from 'lucide-react';
+import { Edit, Trash2, BookOpen, Layers, Code2, Share2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { BagItem } from '@/types/market';
 
 interface BagCardProps {
@@ -19,6 +20,15 @@ interface BagCardProps {
  * Displays digital bag cards matching exact design from Image 4.
  */
 export default function BagCard({ bag, onEdit, onDelete, onPreview }: BagCardProps) {
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const bagUrl = `${window.location.origin}/bags/${bag.id}`;
+    if (typeof window !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(bagUrl);
+      toast.success('تم نسخ رابط الحقيبة بنجاح!');
+    }
+  };
+
   // Determine badge styling based on title or category
   const getBadgeStyle = () => {
     if (bag.title.toLowerCase().includes('tailwind') || bag.title.includes('Tailwind')) {
@@ -96,7 +106,7 @@ export default function BagCard({ bag, onEdit, onDelete, onPreview }: BagCardPro
             {/* Delete Button */}
             <button
               onClick={() => onDelete(bag.id)}
-              className="w-10 h-10 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center transition-colors flex-shrink-0"
+              className="w-10 h-10 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center transition-colors flex-shrink-0 cursor-pointer"
               title="حذف"
             >
               <Trash2 size={18} />
@@ -105,16 +115,25 @@ export default function BagCard({ bag, onEdit, onDelete, onPreview }: BagCardPro
             {/* Edit Button */}
             <button
               onClick={() => onEdit(bag)}
-              className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-colors flex-shrink-0"
+              className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-colors flex-shrink-0 cursor-pointer"
               title="تعديل"
             >
               <Edit size={18} />
             </button>
 
+            {/* Share Button */}
+            <button
+              onClick={handleShare}
+              className="w-10 h-10 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 flex items-center justify-center transition-colors flex-shrink-0 cursor-pointer"
+              title="مشاركة رابط الحقيبة"
+            >
+              <Share2 size={18} />
+            </button>
+
             {/* Preview Button */}
             <button
               onClick={() => onPreview(bag)}
-              className="flex-1 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm flex items-center justify-center transition-colors shadow-sm shadow-blue-200"
+              className="flex-1 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm flex items-center justify-center transition-colors shadow-sm shadow-blue-200 cursor-pointer"
             >
               معاينة
             </button>

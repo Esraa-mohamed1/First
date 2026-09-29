@@ -131,7 +131,7 @@ export default function BagDetailsPage() {
                   id: acc.id,
                   name: acc.receiver_account?.name || acc.name || 'وسيلة دفع',
                   logo: acc.receiver_account?.logo || acc.logo || '',
-                  account_number: acc.accountValue || acc.account_value || '',
+                  account_number: acc.num || acc.number || acc.accountValue || acc.account_value || acc.value || acc.account_number || acc.phone || acc.iban || acc.receiver_account?.num || acc.receiver_account?.number || acc.receiver_account?.account_number || '',
                 }));
               }
             }
@@ -141,7 +141,7 @@ export default function BagDetailsPage() {
                 id: info.id || info.payment_info_id || (idx + 1),
                 name: info.name || info.account_name || info.payment_info?.name || info.receiver_account?.name || `وسيلة دفع #${idx + 1}`,
                 logo: info.logo || info.payment_info?.logo || info.receiver_account?.logo || '',
-                account_number: info.value || info.account_number || info.payment_info?.account_number || info.receiver_account?.account_number || '',
+                account_number: info.num || info.number || info.accountValue || info.account_value || info.value || info.account_number || info.phone || info.iban || info.payment_info?.num || info.payment_info?.number || info.payment_info?.account_number || info.receiver_account?.account_number || '',
               }));
             }
 
@@ -154,7 +154,7 @@ export default function BagDetailsPage() {
                 id: info.id || info.payment_info_id || (idx + 1),
                 name: info.name || info.account_name || info.payment_info?.name || info.receiver_account?.name || `وسيلة دفع #${idx + 1}`,
                 logo: info.logo || info.payment_info?.logo || info.receiver_account?.logo || '',
-                account_number: info.value || info.account_number || info.payment_info?.account_number || info.receiver_account?.account_number || '',
+                account_number: info.num || info.number || info.accountValue || info.account_value || info.value || info.account_number || info.phone || info.iban || info.payment_info?.num || info.payment_info?.number || info.payment_info?.account_number || info.receiver_account?.account_number || '',
               }));
               setPaymentMethods(mapped);
               if (mapped.length > 0) setSelectedPaymentMethod(mapped[0].id);
@@ -863,33 +863,48 @@ export default function BagDetailsPage() {
                       <label className="text-xs font-black text-gray-700 block">اختر طريقة الدفع المناسبة:</label>
                       <div className="space-y-2">
                         {paymentMethods.length > 0 ? (
-                          paymentMethods.map((pm) => (
-                            <div
-                              key={pm.id}
-                              onClick={() => setSelectedPaymentMethod(pm.id)}
-                              className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${selectedPaymentMethod === pm.id
-                                ? 'border-blue-600 bg-blue-50/50 shadow-sm'
-                                : 'border-gray-200 hover:border-gray-300 bg-white'
+                          paymentMethods.map((pm) => {
+                            const isSelected = selectedPaymentMethod === pm.id;
+                            const numVal = pm.account_number || (pm as any).num || (pm as any).accountValue || (pm as any).value;
+                            return (
+                              <div
+                                key={pm.id}
+                                onClick={() => setSelectedPaymentMethod(pm.id)}
+                                className={`p-4 rounded-2xl border cursor-pointer transition-all flex flex-col gap-2 ${
+                                  isSelected
+                                    ? 'border-blue-600 bg-blue-50/50 shadow-sm'
+                                    : 'border-gray-200 hover:border-gray-300 bg-white'
                                 }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPaymentMethod === pm.id
-                                    ? 'border-blue-600 bg-blue-600 text-white'
-                                    : 'border-gray-300'
-                                    }`}
-                                >
-                                  {selectedPaymentMethod === pm.id && <Check size={12} strokeWidth={3} />}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                        isSelected
+                                          ? 'border-blue-600 bg-blue-600 text-white'
+                                          : 'border-gray-300'
+                                      }`}
+                                    >
+                                      {isSelected && <Check size={12} strokeWidth={3} />}
+                                    </div>
+                                    <span className="text-sm font-black text-gray-800">{pm.name}</span>
+                                  </div>
+                                  {!isSelected && numVal && (
+                                    <span className="text-xs font-bold text-gray-500 bg-white px-3 py-1 rounded-xl border border-gray-200 font-mono dir-ltr">
+                                      {numVal}
+                                    </span>
+                                  )}
                                 </div>
-                                <span className="text-sm font-black text-gray-800">{pm.name}</span>
+
+                                {isSelected && numVal && (
+                                  <div className="mt-1 p-2.5 bg-white/90 rounded-xl border border-blue-200 flex items-center justify-between text-xs">
+                                    <span className="font-bold text-gray-600">رقم الحساب / المحفظة للتحويل:</span>
+                                    <span className="font-black font-mono text-blue-700 text-sm select-all dir-ltr">{numVal}</span>
+                                  </div>
+                                )}
                               </div>
-                              {pm.account_number && (
-                                <span className="text-xs font-bold text-gray-500 bg-white px-3 py-1 rounded-xl border border-gray-200">
-                                  {pm.account_number}
-                                </span>
-                              )}
-                            </div>
-                          ))
+                            );
+                          })
                         ) : (
                           <div className="p-4 rounded-2xl border border-blue-600 bg-blue-50/50 flex items-center justify-between">
                             <div className="flex items-center gap-3">
