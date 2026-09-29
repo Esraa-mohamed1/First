@@ -6,7 +6,8 @@ import {
   Package,
   ShoppingCart,
   Download,
-  ChevronDown,
+  CheckCircle2,
+  Clock,
   Plus,
   Lightbulb,
   ImageIcon,
@@ -19,7 +20,7 @@ import withReactContent from 'sweetalert2-react-content';
 import toast from 'react-hot-toast';
 import BagCard from '@/components/Academic/Market/BagCard';
 import { BagItem } from '@/types/market';
-import { getAcademyBags, deleteBag, BagApiItem } from '@/services/bags';
+import { getAcademyBags, deleteBag, getBagPurchasesStats, BagApiItem, BagPurchasesStats } from '@/services/bags';
 
 const MySwal = withReactContent(Swal);
 
@@ -49,6 +50,9 @@ export default function MarketPage() {
   const router = useRouter();
   const [bags, setBags] = useState<BagItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<BagPurchasesStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState(false);
 
   const fetchBagsFromApi = useCallback(async () => {
     setLoading(true);
@@ -63,12 +67,28 @@ export default function MarketPage() {
     }
   }, []);
 
+  const fetchStatsFromApi = useCallback(async () => {
+    setStatsLoading(true);
+    setStatsError(false);
+    try {
+      const data = await getBagPurchasesStats();
+      setStats(data);
+    } catch (err) {
+      console.error('Failed to load bag purchases stats:', err);
+      setStatsError(true);
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchBagsFromApi();
-  }, [fetchBagsFromApi]);
+    fetchStatsFromApi();
+  }, [fetchBagsFromApi, fetchStatsFromApi]);
 
   const handleNavigateToCreate = () => router.push('/academic/market/create');
   const handleNavigateToEdit = (bag: BagItem) => router.push(`/academic/market/edit/${bag.id}`);
+  const handleNavigateToStats = (bag: BagItem) => router.push(`/academic/market/subscriptions?bag_id=${bag.id}`);
 
   const handleDeleteBag = async (id: number) => {
     const result = await MySwal.fire({
@@ -97,9 +117,15 @@ export default function MarketPage() {
 
   const handlePreviewBag = (bag: BagItem) => router.push(`/academic/market/${bag.id}`);
 
-  const totalBagsCount = bags.length;
-  const totalSalesCount = bags.reduce((sum, b) => sum + (Number((b as any).count_sales || (b as any).sales_count) || 0), 0);
-  const totalDownloads = bags.reduce((sum, b) => sum + (Number((b as any).count_download || (b as any).downloads_count) || 0), 0);
+  const renderStatValue = (val?: number) => {
+    if (statsLoading) {
+      return <span className="inline-block w-8 h-8 rounded-lg bg-gray-100 animate-pulse" />;
+    }
+    if (statsError || val === undefined || val === null || isNaN(val)) {
+      return <span className="text-xl font-bold text-gray-400">—</span>;
+    }
+    return (val ?? 0).toLocaleString('ar-EG');
+  };
 
   return (
     <div className="space-y-10" dir="rtl">
@@ -116,37 +142,69 @@ export default function MarketPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Total Requests */}
         <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all min-h-[130px]">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-gray-400">المبيعات</span>
-            <div className="w-12 h-12 rounded-2xl bg-purple-100/70 text-purple-600 flex items-center justify-center flex-shrink-0"><ShoppingCart size={22} /></div>
+            <span className="text-xs font-bold text-gray-400">إجمالي الطلبات</span>
+            <div className="w-12 h-12 rounded-2xl bg-purple-100/70 text-purple-600 flex items-center justify-center flex-shrink-0">
+              <ShoppingCart size={22} />
+            </div>
           </div>
           <div className="space-y-1 pt-2">
-            <span className="text-3xl font-black text-gray-900 block">{totalSalesCount > 0 ? totalSalesCount.toLocaleString('ar-EG') : 0}</span>
-            <span className="text-xs font-bold text-gray-500 block">إجمالي مبيعات الحقائب</span>
+            <span className="text-3xl font-black text-gray-900 block">
+              {renderStatValue(stats?.total_requests)}
+            </span>
+            <span className="text-xs font-bold text-gray-500 block">إجمالي طلبات الشراء</span>
           </div>
         </div>
 
+        {/* Accepted Active */}
         <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all min-h-[130px]">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-gray-400">العدد الكلي</span>
-            <div className="w-12 h-12 rounded-2xl bg-blue-100/70 text-blue-600 flex items-center justify-center flex-shrink-0"><Package size={22} /></div>
+            <span className="text-xs font-bold text-gray-400">مقبول ونشط</span>
+            <div className="w-12 h-12 rounded-2xl bg-emerald-100/70 text-emerald-600 flex items-center justify-center flex-shrink-0">
+              <CheckCircle2 size={22} />
+            </div>
           </div>
           <div className="space-y-1 pt-2">
-            <span className="text-3xl font-black text-gray-900 block">{loading ? '...' : totalBagsCount}</span>
-            <span className="text-xs font-bold text-gray-500 block">إجمالي عدد الحقائب</span>
+            <span className="text-3xl font-black text-emerald-600 block">
+              {renderStatValue(stats?.accepted_active)}
+            </span>
+            <span className="text-xs font-bold text-gray-500 block">الاشتراكات والطلبات المفعلة</span>
           </div>
         </div>
 
+        {/* Pending Review */}
+        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all min-h-[130px]">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-gray-400">قيد المراجعة</span>
+            <div className="w-12 h-12 rounded-2xl bg-amber-100/70 text-amber-600 flex items-center justify-center flex-shrink-0">
+              <Clock size={22} />
+            </div>
+          </div>
+          <div className="space-y-1 pt-2">
+            <span className="text-3xl font-black text-amber-600 block">
+              {renderStatValue(stats?.pending_review)}
+            </span>
+            <span className="text-xs font-bold text-gray-500 block">طلبات في انتظار التدقيق</span>
+          </div>
+        </div>
+
+        {/* Total Downloads */}
         <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all min-h-[130px]">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-gray-400">التنزيلات</span>
-            <div className="w-12 h-12 rounded-2xl bg-orange-100/70 text-orange-500 flex items-center justify-center flex-shrink-0"><Download size={22} /></div>
+            <div className="w-12 h-12 rounded-2xl bg-orange-100/70 text-orange-500 flex items-center justify-center flex-shrink-0">
+              <Download size={22} />
+            </div>
           </div>
           <div className="space-y-1 pt-2">
-            <span className="text-3xl font-black text-gray-900 block">{totalDownloads > 0 ? totalDownloads.toLocaleString('ar-EG') : 0}</span>
-            <span className="text-xs font-bold text-gray-500 block">إجمالي عدد تحميلات الحقائب</span>
+            <span className="text-3xl font-black text-gray-900 block">
+              {renderStatValue(stats?.total_downloads)}
+            </span>
+            <span className="text-xs font-bold text-gray-500 block">إجمالي تحميلات الحقائب</span>
           </div>
         </div>
       </div>
@@ -161,7 +219,7 @@ export default function MarketPage() {
           <div className="w-20 h-20 rounded-3xl bg-purple-100/70 text-purple-600 flex items-center justify-center shadow-inner"><Layers size={42} /></div>
           <h3 className="text-2xl lg:text-3xl font-black text-gray-900">أنشئ أول حقيبة تدريبية وابدأ بيع محتواك للطلاب</h3>
           <p className="text-gray-500 font-bold max-w-xl text-sm lg:text-base leading-relaxed">أضف حقائبك التدريبية الرقمية، حدد أسعارها، ونظمها داخل متجرك لتصبح متاحة للشراء من قبل طلابك.</p>
-          <button onClick={handleNavigateToCreate} className="flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black text-base shadow-lg shadow-blue-200 hover:scale-105 transition-all">
+          <button onClick={handleNavigateToCreate} className="flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black text-base shadow-lg shadow-blue-200 hover:scale-105 transition-all cursor-pointer">
             <Plus size={22} strokeWidth={3} />
             <span>أنشئ أول حقيبة</span>
           </button>
@@ -170,14 +228,21 @@ export default function MarketPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-2xl font-black text-gray-900">أخر الحقائب الإلكترونية التي أنشأتها</h3>
-            <button onClick={handleNavigateToCreate} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-black text-sm shadow-md shadow-blue-100 transition-all">
+            <button onClick={handleNavigateToCreate} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-black text-sm shadow-md shadow-blue-100 transition-all cursor-pointer">
               <Plus size={18} strokeWidth={3} />
               <span>إنشاء حقيبة جديدة</span>
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {bags.map((bag) => (
-              <BagCard key={bag.id} bag={bag} onEdit={handleNavigateToEdit} onDelete={handleDeleteBag} onPreview={handlePreviewBag} />
+              <BagCard
+                key={bag.id}
+                bag={bag}
+                onEdit={handleNavigateToEdit}
+                onDelete={handleDeleteBag}
+                onPreview={handlePreviewBag}
+                onStatistics={handleNavigateToStats}
+              />
             ))}
           </div>
         </div>

@@ -38,7 +38,13 @@ import { getPages, getSections, saveSections, createPage, updatePage, apiToEdito
 import { syncHomepageCache } from '@/lib/homepage-cache';
 import { getAcademicHtml, renderVideoPlayer } from '@/builder/templates/academic/academicHtml';
 import { getCoachHtml } from '@/builder/templates/coach/coachHtml';
-import { getSchoolCoachHtml, getSchoolCoachNewDesignHtml } from '@/builder/templates/schoolcoach/schoolcoachHtml';
+import {
+  getSchoolCoachHtml,
+  getSchoolCoachNewDesignHtml,
+  renderSchoolCoachFaqItemHtml,
+  renderSchoolCoachFaqListHtml,
+  renderSchoolCoachEmptyFaqHtml,
+} from '@/builder/templates/schoolcoach/schoolcoachHtml';
 import { getCourses } from '@/services/courses';
 import { getBags } from '@/services/bags';
 import { getMyAcademyProfile } from '@/services/student-auth';
@@ -1152,20 +1158,13 @@ export default function PageBuilderPage() {
       });
     }
 
-    if (currentRole === 'schoolcoach') {
-      updateText('#testimonials h2.section-title, #testimonials h2', content.faq.testimonialsTitle || '');
-      updateText('#testimonials p.text-body-lg.max-w-2xl', content.faq.testimonialsSubtitle || '');
-      content.faq.items.forEach((item, idx) => {
-        updateText(`[data-section="faq"][data-index="${idx}"] h4`, item.question);
-        updateText(`[data-section="faq"][data-index="${idx}"] p`, `"${item.answer}"`);
-      });
-    } else if (currentRole === 'coach') {
+    if (currentRole === 'coach') {
       updateText('[data-section="faq"] > div > div > h2, [data-section="faq"] h2', content.faq.title);
       content.faq.items.forEach((item, idx) => {
         updateText(`[data-section="faq"][data-index="${idx}"] span.font-headline-md, [data-section="faq"][data-index="${idx}"] span.font-body-lg`, item.question);
         updateText(`[data-section="faq"][data-index="${idx}"] span.font-label-sm, [data-section="faq"][data-index="${idx}"] div.bg-surface`, item.answer);
       });
-    } else {
+    } else if (currentRole === 'academy') {
       updateText('[data-section="faq"] h2', content.faq.title);
       content.faq.items.forEach((item, idx) => {
         updateText(`[data-section="faq"][data-index="${idx}"] h4, [data-section="faq"][data-index="${idx}"] .font-body-lg`, item.question);
@@ -1922,6 +1921,7 @@ export default function PageBuilderPage() {
         updateText('#faq .faq-heading, #faq h2', content.faq.title ?? 'كل ما تود معرفته عن طريقة الدراسة والمتابعة');
         updateText('#faq .faq-subtitle, #faq .section-header p', content.faq.subtitle ?? 'إجابات واضحة ومباشرة على أكثر الاستفسارات تكراراً.');
         updateText('#faq .empty-state-title, #faq .faq-empty-state .empty-title', content.faq.emptyText ?? 'لا توجد أسئلة شائعة مضافة حالياً');
+        updateText('#faq .faq-empty-state .empty-desc', content.faq.subtitle ?? 'إجابات واضحة ومباشرة على أكثر الاستفسارات تكراراً.');
 
         const faqSec = doc.querySelector('#faq, [data-section="faq"]') as HTMLElement;
         if (faqSec) {
@@ -1944,9 +1944,9 @@ export default function PageBuilderPage() {
         }
 
         if (Array.isArray(content.faq.items)) {
-          const faqSecContainer = doc.querySelector('#faq .container') as HTMLElement | null;
+          const faqSecContainer = doc.querySelector('#faq .container, #faq') as HTMLElement | null;
           if (faqSecContainer) {
-            const activeFaqs = content.faq.items.filter((item: any) => item.enabled !== false);
+            const activeFaqs = content.faq.items.filter((item: any) => item && item.enabled !== false && (item.question || item.q));
             const emptyTitle = content.faq.emptyText ?? 'لا توجد أسئلة شائعة مضافة حالياً';
             const emptySubtitle = content.faq.subtitle ?? 'إجابات واضحة ومباشرة على أكثر الاستفسارات تكراراً.';
 
@@ -1957,20 +1957,9 @@ export default function PageBuilderPage() {
               if (existingList) existingList.remove();
               if (!existingEmpty) {
                 const newEmpty = doc.createElement('div');
-                newEmpty.className = 'faq-empty-state';
-                newEmpty.setAttribute('data-section', 'faq');
-                newEmpty.innerHTML = `
-                  <div class="empty-icon-shell">
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                      <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                    </svg>
-                  </div>
-                  <h3 class="empty-title">${emptyTitle}</h3>
-                  <p class="empty-desc">${emptySubtitle}</p>
-                `;
-                faqSecContainer.appendChild(newEmpty);
+                newEmpty.innerHTML = renderSchoolCoachEmptyFaqHtml(emptyTitle, emptySubtitle);
+                const firstChild = newEmpty.firstElementChild;
+                if (firstChild) faqSecContainer.appendChild(firstChild);
               } else {
                 const tEl = existingEmpty.querySelector('.empty-title');
                 if (tEl) tEl.textContent = emptyTitle;
@@ -1985,17 +1974,31 @@ export default function PageBuilderPage() {
                 listEl.className = 'faq-list';
                 faqSecContainer.appendChild(listEl);
               }
-              listEl.innerHTML = activeFaqs.map((item: any, idx: number) => `
-                <div class="faq-item" data-section="faq" data-index="${idx}">
-                  <button type="button" class="faq-question" aria-expanded="false">
-                    <span>${item.question || ''}</span>
-                    <span class="plus" aria-hidden="true">+</span>
-                  </button>
-                  <div class="faq-answer">
-                    <p>${item.answer || ''}</p>
-                  </div>
-                </div>
-              `).join('');
+
+              const currentItems = listEl.querySelectorAll('.faq-item');
+              if (currentItems.length !== activeFaqs.length) {
+                listEl.innerHTML = renderSchoolCoachFaqListHtml(activeFaqs, content.faq.textColor || '');
+              } else {
+                activeFaqs.forEach((item: any, idx: number) => {
+                  const itemEl = listEl?.querySelector(`[data-section="faq"][data-index="${idx}"], .faq-item:nth-child(${idx + 1})`);
+                  if (itemEl) {
+                    const qTextEl = itemEl.querySelector('.faq-q-text');
+                    const newQuestion = item.question || item.q || '';
+                    if (qTextEl && qTextEl.textContent !== newQuestion) {
+                      qTextEl.textContent = newQuestion;
+                    }
+                    const aTextEl = itemEl.querySelector('.faq-answer-inner p, .faq-answer p');
+                    const newAnswer = item.answer || item.a || '';
+                    if (aTextEl && aTextEl.textContent !== newAnswer) {
+                      aTextEl.textContent = newAnswer;
+                    }
+                    if (content.faq.textColor) {
+                      if (qTextEl) (qTextEl as HTMLElement).style.color = content.faq.textColor;
+                      if (aTextEl) (aTextEl as HTMLElement).style.color = content.faq.textColor;
+                    }
+                  }
+                });
+              }
             }
           }
         }
@@ -2273,6 +2276,19 @@ export default function PageBuilderPage() {
             const el = document.getElementById('about-analytics-editor-header');
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }, 120);
+        }
+
+        // Toggle FAQ accordion in builder preview mode if clicked
+        const faqBtn = target.closest('.faq-question');
+        const faqItemEl = target.closest('.faq-item') || (itemEl && (sectionName === 'faq' || sectionEl.id === 'faq') ? itemEl : null);
+        if (faqBtn || (faqItemEl && (sectionName === 'faq' || sectionEl.id === 'faq'))) {
+          const actualItem = faqBtn ? faqBtn.closest('.faq-item') : faqItemEl;
+          if (actualItem) {
+            const btn = actualItem.querySelector('.faq-question') as HTMLElement | null;
+            const isOpen = actualItem.classList.contains('open');
+            actualItem.classList.toggle('open', !isOpen);
+            if (btn) btn.setAttribute('aria-expanded', !isOpen ? 'true' : 'false');
+          }
         }
 
         if (itemEl && sectionEl.contains(itemEl)) {

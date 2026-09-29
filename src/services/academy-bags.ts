@@ -5,6 +5,9 @@ import {
   CreateBagPayload,
   BagCategory,
   BagPurchaseItem,
+  BagPurchasesStats,
+  BagPurchasesQueryParams,
+  BagPurchasesListResponse,
 } from '@/types/bags';
 
 /* ─────────────────────────────────────────────────────────
@@ -221,18 +224,142 @@ export const createBagCategory = async (name: string): Promise<BagCategory> => {
   }
 };
 
-/** Fetch academy bag purchases/subscriptions from /api/academy/bag_purchases */
-export const getAcademyBagPurchases = async (): Promise<BagPurchaseItem[]> => {
+/** Fetch bag purchase stats from /api/academy/bag_purchases/stats */
+export const getBagPurchasesStats = async (
+  bagId?: number | string
+): Promise<BagPurchasesStats> => {
   try {
-    const response = await academyApi.get<any>('bag_purchases');
-    return extractList<BagPurchaseItem>(response.data);
+    const params: Record<string, any> = {};
+    if (bagId !== undefined && bagId !== null && bagId !== '') {
+      params.bag_id = bagId;
+    }
+
+    const response = await academyApi.get<any>('bag_purchases/stats', {
+      params: Object.keys(params).length > 0 ? params : undefined,
+    });
+
+    const data = response.data?.data ?? response.data ?? {};
+    return {
+      pending_review: Number(data.pending_review) || 0,
+      accepted_active: Number(data.accepted_active) || 0,
+      total_requests: Number(data.total_requests) || 0,
+      total_downloads: Number(data.total_downloads) || 0,
+    };
+  } catch (error: any) {
+    console.error('Failed to fetch bag purchases stats:', error);
+    throw error;
+  }
+};
+
+/** Fetch academy bag purchases/subscriptions from /api/academy/bag_purchases */
+export const getAcademyBagPurchases = async (
+  params?: BagPurchasesQueryParams
+): Promise<BagPurchasesListResponse> => {
+  try {
+    const queryParams: Record<string, any> = {};
+
+    if (params?.bag_id !== undefined && params?.bag_id !== null && params?.bag_id !== '') {
+      queryParams.bag_id = params.bag_id;
+    }
+    if (params?.page !== undefined && params?.page !== null) {
+      queryParams.page = params.page;
+    }
+    if (params?.limit !== undefined && params?.limit !== null) {
+      queryParams.limit = params.limit;
+      queryParams.per_page = params.limit;
+    }
+    if (params?.status && params.status !== 'all') {
+      queryParams.status = params.status;
+    }
+    if (params?.search && params.search.trim() !== '') {
+      queryParams.search = params.search.trim();
+    }
+
+    const response = await academyApi.get<any>('bag_purchases', {
+      params: Object.keys(queryParams).length > 0 ? queryParams : undefined,
+    });
+
+    const resData = response.data;
+    let rawList: any[] = [];
+
+    if (Array.isArray(resData)) {
+      rawList = resData;
+    } else if (resData?.data && Array.isArray(resData.data)) {
+      rawList = resData.data;
+    } else if (resData?.data?.data && Array.isArray(resData.data.data)) {
+      rawList = resData.data.data;
+    } else if (Array.isArray(resData?.items)) {
+      rawList = resData.items;
+    }
+
+    const meta =
+      resData?.meta ||
+      resData?.pagination ||
+      (resData?.data && typeof resData.data === 'object' && !Array.isArray(resData.data) ? resData.data : null) ||
+      resData;
+
+    const requestedPage = params?.page || 1;
+    const requestedLimit = params?.limit || 10;
+
+    const total =
+      meta?.total !== undefined && typeof meta.total === 'number'
+        ? meta.total
+        : (resData?.total !== undefined && typeof resData.total === 'number' ? resData.total : rawList.length);
+
+    const currentPage =
+      meta?.current_page !== undefined
+        ? Number(meta.current_page)
+        : (resData?.current_page !== undefined ? Number(resData.current_page) : requestedPage);
+
+    const perPage =
+      meta?.per_page !== undefined
+        ? Number(meta.per_page)
+        : (resData?.per_page !== undefined ? Number(resData.per_page) : requestedLimit);
+
+    const lastPageFromMeta =
+      meta?.last_page !== undefined
+        ? Number(meta.last_page)
+        : (resData?.last_page !== undefined ? Number(resData.last_page) : undefined);
+
+    const totalPages =
+      lastPageFromMeta !== undefined
+        ? lastPageFromMeta
+        : Math.max(1, Math.ceil(total / (perPage || 10)));
+
+    return {
+      items: rawList as BagPurchaseItem[],
+      total,
+      page: currentPage,
+      totalPages,
+      limit: perPage,
+    };
   } catch (error: any) {
     console.warn('Failed to fetch academy/bag_purchases, trying fallback endpoints:', error);
     try {
-      const fb1 = await academyApi.get<any>('bag-purchases');
-      return extractList<BagPurchaseItem>(fb1.data);
+      const queryParams: Record<string, any> = {};
+      if (params?.bag_id) queryParams.bag_id = params.bag_id;
+      if (params?.page) queryParams.page = params.page;
+      if (params?.limit) queryParams.limit = params.limit;
+
+      const fb1 = await academyApi.get<any>('bag-purchases', {
+        params: Object.keys(queryParams).length > 0 ? queryParams : undefined,
+      });
+      const rawList = extractList<BagPurchaseItem>(fb1.data);
+      return {
+        items: rawList,
+        total: rawList.length,
+        page: params?.page || 1,
+        totalPages: 1,
+        limit: params?.limit || 10,
+      };
     } catch (e1) {
-      return [];
+      return {
+        items: [],
+        total: 0,
+        page: 1,
+        totalPages: 1,
+        limit: 10,
+      };
     }
   }
 };

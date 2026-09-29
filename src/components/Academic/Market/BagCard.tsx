@@ -1,6 +1,6 @@
 'use client';
 
-import { Edit, Trash2, BookOpen, Layers, Code2, Share2 } from 'lucide-react';
+import { Edit, Trash2, BookOpen, Layers, Code2, Share2, BarChart3 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { BagItem } from '@/types/market';
 
@@ -13,13 +13,15 @@ interface BagCardProps {
   onDelete: (id: number) => void;
   /** Callback fired on preview click */
   onPreview: (bag: BagItem) => void;
+  /** Callback fired on statistics click */
+  onStatistics?: (bag: BagItem) => void;
 }
 
 /**
  * BagCard Component
  * Displays digital bag cards matching exact design from Image 4.
  */
-export default function BagCard({ bag, onEdit, onDelete, onPreview }: BagCardProps) {
+export default function BagCard({ bag, onEdit, onDelete, onPreview, onStatistics }: BagCardProps) {
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
     const bagUrl = `${window.location.origin}/bags/${bag.id}`;
@@ -114,6 +116,7 @@ export default function BagCard({ bag, onEdit, onDelete, onPreview }: BagCardPro
 
             {/* Edit Button */}
             <button
+              type="button"
               onClick={() => onEdit(bag)}
               className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-colors flex-shrink-0 cursor-pointer"
               title="تعديل"
@@ -130,8 +133,21 @@ export default function BagCard({ bag, onEdit, onDelete, onPreview }: BagCardPro
               <Share2 size={18} />
             </button>
 
+            {/* Statistics Button */}
+            {onStatistics && (
+              <button
+                type="button"
+                onClick={() => onStatistics(bag)}
+                className="w-10 h-10 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-600 flex items-center justify-center transition-colors flex-shrink-0 cursor-pointer"
+                title="إحصائيات وطلبات الحقيبة"
+              >
+                <BarChart3 size={18} />
+              </button>
+            )}
+
             {/* Preview Button */}
             <button
+              type="button"
               onClick={() => onPreview(bag)}
               className="flex-1 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm flex items-center justify-center transition-colors shadow-sm shadow-blue-200 cursor-pointer"
             >
