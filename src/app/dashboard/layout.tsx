@@ -17,7 +17,7 @@ export default function DashboardLayout({
   useEffect(() => {
     const token = getStoredAuthToken();
     if (!token) {
-      router.push('/auth/login');
+      router.push('/superadmin/login');
     }
   }, [router]);
 

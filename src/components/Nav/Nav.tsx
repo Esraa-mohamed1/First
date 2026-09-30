@@ -30,12 +30,6 @@ const Nav = () => {
                     >
                         إنشاء حساب
                     </button>
-                    <button
-                        onClick={() => openModal('login')}
-                        className="px-6 py-2.5 font-bold bg-[#2563eb] text-white rounded-xl shadow-lg shadow-blue-200 hover:-translate-y-0.5 hover:shadow-blue-300 transition-all cursor-pointer"
-                    >
-                        تسجيل الدخول
-                    </button>
                 </div>
             </div>
         </nav>
