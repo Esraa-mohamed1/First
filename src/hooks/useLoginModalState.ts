@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useModal } from '@/context/ModalContext';
-import { login } from '@/services/auth';
+import { login, superAdminLogin } from '@/services/auth';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useCountry } from '@/hooks/useCountry';
@@ -145,9 +145,38 @@ export function useLoginModalState() {
                 ? { email: formData.email, password: formData.password }
                 : { phone: formData.phone, password: formData.password, country_code: selectedCountry?.isoCode };
 
-            const response = await login(payload);
-            const res = response as any;
+            let response: any;
+            let isSuperAdmin = false;
 
+            const isRootLanding = typeof window !== 'undefined' && (
+                window.location.hostname === 'localhost' ||
+                window.location.hostname === 'darab.academy' ||
+                window.location.hostname === 'www.darab.academy' ||
+                window.location.pathname === '/'
+            );
+
+            if (isRootLanding || formData.email.toLowerCase().includes('superadmin')) {
+                try {
+                    response = await superAdminLogin(payload);
+                    isSuperAdmin = true;
+                } catch (superAdminErr: any) {
+                    console.warn('superAdminLogin failed, falling back to standard login:', superAdminErr);
+                    response = await login(payload);
+                }
+            } else {
+                try {
+                    response = await login(payload);
+                } catch (loginErr: any) {
+                    try {
+                        response = await superAdminLogin(payload);
+                        isSuperAdmin = true;
+                    } catch {
+                        throw loginErr;
+                    }
+                }
+            }
+
+            const res = response as any;
             const token = res?.meta?.access_token || res?.token || res?.access_token || res?.data?.token || res?.data?.access_token;
 
             if (token) {
@@ -155,10 +184,10 @@ export function useLoginModalState() {
                 localStorage.setItem('token', token);
                 
                 const user = res?.data?.user || res?.data || res?.user || {};
-                const userRole = user.role || 'student';
+                const userRole = isSuperAdmin ? 'superadmin' : (user.role || 'student');
 
                 localStorage.setItem('user_info', JSON.stringify({
-                    name: user.name || 'User',
+                    name: user.name || (isSuperAdmin ? 'Super Admin' : 'User'),
                     email: user.email || formData.email,
                     phone: user.phone || formData.phone,
                     role: userRole
@@ -173,7 +202,11 @@ export function useLoginModalState() {
 
                     const pathname = window.location.pathname;
                     const isCoursePage = pathname.includes('/course') || pathname.includes('/bags') || pathname.startsWith('/[slug]');
-                    if (!isCoursePage) {
+                    
+                    if (isSuperAdmin || userRole === 'superadmin') {
+                        triggerPageLoader(true);
+                        window.location.href = '/dashboard';
+                    } else if (!isCoursePage) {
                         triggerPageLoader(true);
                         if (userRole === 'admin' || userRole === 'academy') {
                             window.location.href = '/academic';
