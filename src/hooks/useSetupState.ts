@@ -32,6 +32,7 @@ export function useSetupState() {
   const [password, setPassword] = useState('');
   const [academyName, setAcademyName] = useState('');
   const [phone, setPhone] = useState('');
+  const [showCredentials, setShowCredentials] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Step 3: Domain state
@@ -84,6 +85,10 @@ export function useSetupState() {
     if (cachedPhone) setPhone(cachedPhone);
     if (cachedEmail) setEmail(cachedEmail);
     if (cachedPassword) setPassword(cachedPassword);
+
+    if (!cachedEmail && !cachedPhone) {
+      setShowCredentials(true);
+    }
   }, []);
 
   const selectCard = (cardIndex: number, field: string) => {
@@ -358,6 +363,10 @@ export function useSetupState() {
 
         setFieldErrors(newErrors);
 
+        if (newErrors.email || newErrors.password || newErrors.phone || newErrors.phone_academy) {
+          setShowCredentials(true);
+        }
+
         if (newErrors.email || newErrors.password || newErrors.phone || newErrors.phone_academy || newErrors.username || newErrors.academy_name) {
           const errKey = newErrors.email ? 'email' : (newErrors.password ? 'password' : (newErrors.phone ? 'phone' : (newErrors.phone_academy ? 'phone_academy' : 'username')));
           const msg = newErrors[errKey];
@@ -380,12 +389,14 @@ export function useSetupState() {
       if (!handled) {
         let rawMessage = error?.message || (typeof error === 'string' ? error : 'حدث خطأ أثناء حفظ معلومات المنصة');
         if (typeof rawMessage === 'string' && rawMessage.toLowerCase().includes('already been taken')) {
+          setShowCredentials(true);
           const translated = 'رابط المنصة أو الحساب مستخدم بالفعل، يرجى اختيار بيانات أخرى.';
           setDomainError(translated);
           toast.error(translated);
           goToStep(2);
           focusErrorInput(['link_academy', 'email']);
         } else if (typeof rawMessage === 'string' && rawMessage.toLowerCase().includes('validation errors detected')) {
+          setShowCredentials(true);
           toast.error('يرجى التأكد من ملء الحقول المطلوبة ومراجعة بيانات الحساب ورابط المنصة.');
           goToStep(2);
           focusErrorInput(['email', 'password', 'academy_name', 'link_academy']);
@@ -422,6 +433,8 @@ export function useSetupState() {
     setAcademyName,
     phone,
     setPhone,
+    showCredentials,
+    setShowCredentials,
     fieldErrors,
     setFieldErrors,
     domainPrefix,

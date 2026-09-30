@@ -21,6 +21,8 @@ export default function SetupPage() {
     setPassword,
     phone,
     setPhone,
+    showCredentials,
+    setShowCredentials,
     academyName,
     setAcademyName,
     fieldErrors,
@@ -224,9 +226,31 @@ export default function SetupPage() {
 
             {/* Domain & Academy Name Details */}
             <div className="space-y-6 pt-4 border-t border-slate-200/60">
+              {/* Toggle to edit credentials if hidden */}
+              {!showCredentials && !fieldErrors.email && !fieldErrors.password && !fieldErrors.phone && !fieldErrors.phone_academy && email && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowCredentials(true)}
+                    className="text-xs text-[#004ac6] hover:text-[#003896] hover:underline font-bold transition-colors py-1 flex items-center gap-1"
+                  >
+                    <span>تعديل البريد الإلكتروني أو كلمة المرور</span>
+                  </button>
+                </div>
+              )}
+
               {/* Optional / Error-driven Email or Phone & Password fields */}
-              {(fieldErrors.email || fieldErrors.password || fieldErrors.phone || fieldErrors.phone_academy || !email) && (
-                <div className="space-y-4 p-4 bg-red-50/30 rounded-xl border border-red-100/60">
+              {(showCredentials || fieldErrors.email || fieldErrors.password || fieldErrors.phone || fieldErrors.phone_academy || !email) && (
+                <div className="space-y-4 p-5 bg-blue-50/20 rounded-2xl border border-slate-200 transition-all shadow-sm">
+                  <div className="flex items-center justify-between pb-1 border-b border-slate-200/60">
+                    <span className="text-xs font-bold text-gray-800">بيانات الحساب</span>
+                    {(fieldErrors.email || fieldErrors.password || fieldErrors.phone || fieldErrors.phone_academy) ? (
+                      <span className="text-[11px] font-semibold text-red-600 bg-red-100/80 px-2 py-0.5 rounded-full">يرجى تصحيح البيانات</span>
+                    ) : (
+                      <span className="text-[11px] font-medium text-slate-500">يمكنك تعديل بيانات تسجيل الدخول</span>
+                    )}
+                  </div>
+
                   {registrationMethod === 'email' ? (
                     <div className="relative group">
                       <label className="block text-xs font-bold text-gray-700 mb-2 text-right">البريد الإلكتروني</label>
