@@ -229,6 +229,7 @@ const Sidebar = ({ isOpen = false, onClose, isCollapsed = false, onToggleCollaps
       href: '/academic/market',
       subItems: [
         { label: 'الحقائب', href: '/academic/market' },
+        { label: 'الفيديوهات', href: '/academic/market/videos' },
         { label: 'اشتراكات ومشتريات الحقائب', href: '/academic/market/subscriptions' },
       ],
     },
@@ -292,7 +293,7 @@ const Sidebar = ({ isOpen = false, onClose, isCollapsed = false, onToggleCollaps
         const matchesParent = parentPath && parentPath !== '/academic' && (pathname === parentPath || pathname.startsWith(parentPath + '/'));
 
         const isSpecialMatch =
-          (item.label === 'المتجر' && pathname.startsWith('/academic/bag-purchases')) ||
+          (item.label === 'المتجر' && (pathname.startsWith('/academic/bag-purchases') || pathname.startsWith('/academic/videos') || pathname.startsWith('/academic/market/videos'))) ||
           (item.label === 'الموقع' && (pathname === '/academic/domain' || pathname.startsWith('/academic/templates'))) ||
           (item.label === 'الأعدادات' && pathname === '/academic/settings/login-data') ||
           (item.label === 'التسويق' && pathname.startsWith('/academic/coupons'));

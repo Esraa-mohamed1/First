@@ -14,6 +14,7 @@ import {
   Tag,
   Layers,
   Loader2,
+  Film,
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -132,6 +133,13 @@ export default function MarketPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h2 className="text-3xl font-black text-gray-900 tracking-tight">متجر الحقائب</h2>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => router.push('/academic/market/videos')}
+            className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 px-5 py-3.5 rounded-2xl text-sm font-black text-white shadow-md shadow-purple-200 transition-all cursor-pointer"
+          >
+            <Film size={18} />
+            <span>مكتبة الفيديوهات</span>
+          </button>
           <button
             onClick={() => router.push('/academic/market/subscriptions')}
             className="flex items-center gap-2 bg-purple-50 hover:bg-purple-100 border border-purple-100 px-5 py-3.5 rounded-2xl text-sm font-black text-purple-700 shadow-sm transition-all cursor-pointer"
