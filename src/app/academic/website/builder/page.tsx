@@ -47,6 +47,7 @@ import {
   renderSchoolCoachFaqListHtml,
   renderSchoolCoachEmptyFaqHtml,
   normalizeWhatsappUrl,
+  extractLocalWhatsappNumber,
 } from '@/builder/templates/schoolcoach/schoolcoachHtml';
 import { getCourses } from '@/services/courses';
 import { getBags } from '@/services/bags';
@@ -1432,8 +1433,8 @@ export default function PageBuilderPage() {
           btn1.style.display = 'inline-flex';
           const spanText = btn1.querySelector('span');
           if (spanText) spanText.textContent = primaryText;
-          if (content.profile?.ctaPrimaryBg) btn1.style.background = content.profile.ctaPrimaryBg;
-          if (content.profile?.ctaPrimaryColor) btn1.style.color = content.profile.ctaPrimaryColor;
+          btn1.style.background = content.profile?.ctaPrimaryBg || '';
+          btn1.style.color = content.profile?.ctaPrimaryColor || '';
         }
       }
 
@@ -1447,8 +1448,9 @@ export default function PageBuilderPage() {
           btn2.style.display = 'inline-flex';
           const spanText = btn2.querySelector('span');
           if (spanText) spanText.textContent = secondaryText;
-          if (content.profile?.ctaSecondaryBg) btn2.style.backgroundColor = content.profile.ctaSecondaryBg;
-          if (content.profile?.ctaSecondaryColor) btn2.style.color = content.profile.ctaSecondaryColor;
+          btn2.style.backgroundColor = content.profile?.ctaSecondaryBg || '';
+          btn2.style.background = content.profile?.ctaSecondaryBg || '';
+          btn2.style.color = content.profile?.ctaSecondaryColor || '';
         }
       }
 
@@ -2635,8 +2637,10 @@ export default function PageBuilderPage() {
             }
 
             const navbarNode = editorNodes.find(n => n.type === 'navbar');
-            const profileNode = editorNodes.find(n => n.type === 'profile' || n.type === 'hero');
-            const heroNode = editorNodes.find(n => n.type === 'hero' || n.type === 'profile');
+            const profileSectionNode = editorNodes.find(n => n.type === 'profile');
+            const heroSectionNode = editorNodes.find(n => n.type === 'hero');
+            const profileNode = profileSectionNode || heroSectionNode;
+            const heroNode = heroSectionNode || profileSectionNode;
             const aboutNode = editorNodes.find(n => n.type === 'about');
             const featuresNode = editorNodes.find(n => n.type === 'features' || n.type === 'features_section');
             const courseNode = editorNodes.find(n => n.type === 'course-cards' || n.type === 'courses');
@@ -2684,12 +2688,78 @@ export default function PageBuilderPage() {
             });
 
             // Canonical Teacher Identity: single source of truth across navbar & profile
-            const pProps = profileNode?.props || {};
+            const pProps = {
+              ...(heroSectionNode?.props || {}),
+              ...(profileSectionNode?.props || {}),
+            };
             const nProps = navbarNode?.props || {};
             const canonicalTeacherName =
               teacherNameFromProfile ||
               sv(pProps.teacherName ?? pProps.name ?? nProps.teacherName ?? nProps.title, fallback.profile?.teacherName || '');
             const canonicalTeacherTitle = sv(pProps.teacherTitle ?? pProps.jobTitle ?? pProps.title ?? nProps.teacherTitle ?? nProps.teacher_title, fallback.profile?.teacherTitle || '');
+
+            // Helper for resolving first non-empty string among candidates
+            const resolveNonEmpty = (...candidates: any[]) => {
+              for (const c of candidates) {
+                if (c !== null && c !== undefined && typeof c === 'string' && c.trim() !== '') return c.trim();
+                if (c !== null && c !== undefined && typeof c !== 'string' && c !== '') return c;
+              }
+              return '';
+            };
+
+            const coverVal = resolveNonEmpty(
+              profileSectionNode?.props?.cover,
+              profileSectionNode?.props?.coverImage,
+              profileSectionNode?.props?.cover_image,
+              profileSectionNode?.props?.banner,
+              profileSectionNode?.props?.bannerImage,
+              profileSectionNode?.props?.banner_image,
+              profileSectionNode?.props?.backgroundImage,
+              profileSectionNode?.props?.background_image,
+              heroSectionNode?.props?.cover,
+              heroSectionNode?.props?.coverImage,
+              heroSectionNode?.props?.cover_image,
+              heroSectionNode?.props?.banner,
+              heroSectionNode?.props?.bannerImage,
+              heroSectionNode?.props?.banner_image,
+              heroSectionNode?.props?.backgroundImage,
+              heroSectionNode?.props?.background_image,
+              pProps.cover,
+              pProps.coverImage,
+              pProps.cover_image,
+              pProps.banner,
+              pProps.bannerImage,
+              pProps.banner_image,
+              pProps.backgroundImage,
+              pProps.background_image,
+              fallback.profile?.cover
+            );
+
+            const avatarVal = resolveNonEmpty(
+              profileSectionNode?.props?.avatar,
+              profileSectionNode?.props?.avatarImage,
+              profileSectionNode?.props?.avatar_image,
+              profileSectionNode?.props?.image,
+              profileSectionNode?.props?.imageUrl,
+              profileSectionNode?.props?.image_url,
+              profileSectionNode?.props?.profileImage,
+              profileSectionNode?.props?.profile_image,
+              heroSectionNode?.props?.avatar,
+              heroSectionNode?.props?.avatarImage,
+              heroSectionNode?.props?.avatar_image,
+              heroSectionNode?.props?.image,
+              heroSectionNode?.props?.imageUrl,
+              heroSectionNode?.props?.image_url,
+              heroSectionNode?.props?.profileImage,
+              heroSectionNode?.props?.profile_image,
+              pProps.avatar,
+              pProps.avatarImage,
+              pProps.avatar_image,
+              pProps.image,
+              pProps.imageUrl,
+              pProps.image_url,
+              fallback.profile?.avatar
+            );
 
             const parsedProfile = (profileNode?.props ? ({
               ...mergeSection(profileNode.props, fallback.profile || {}),
@@ -2698,18 +2768,18 @@ export default function PageBuilderPage() {
               teacherTitle: canonicalTeacherTitle,
               description: sv(pProps.description ?? pProps.bio, ''),
               goal: sv(pProps.goal ?? pProps.mission, fallback.profile?.goal || ''),
-              avatar: sv(pProps.avatar ?? pProps.avatarImage ?? pProps.image, fallback.profile?.avatar || ''),
-              cover: sv(pProps.cover ?? pProps.coverImage, fallback.profile?.cover || ''),
+              avatar: avatarVal,
+              cover: coverVal,
               verified: pProps.verified !== undefined ? Boolean(pProps.verified) : (fallback.profile?.verified ?? true),
               verifiedText: sv(pProps.verifiedText ?? pProps.verified_text, fallback.profile?.verifiedText || 'موثّق'),
-              ctaPrimaryText: sv(pProps.ctaPrimaryText ?? pProps.cta_primary_text ?? pProps.buttonText, fallback.profile?.ctaPrimaryText || 'ابدأ التعلم'),
-              ctaPrimaryLink: sv(pProps.ctaPrimaryLink ?? pProps.cta_primary_link ?? pProps.buttonLink, '#courses'),
-              ctaPrimaryBg: sv(pProps.ctaPrimaryBg ?? pProps.buttonBg, fallback.profile?.ctaPrimaryBg || ''),
-              ctaPrimaryColor: sv(pProps.ctaPrimaryColor ?? pProps.buttonTextColor, fallback.profile?.ctaPrimaryColor || ''),
-              ctaSecondaryText: sv(pProps.ctaSecondaryText ?? pProps.cta_secondary_text ?? pProps.secondaryButtonText, fallback.profile?.ctaSecondaryText || 'شاهد الفيديوهات'),
-              ctaSecondaryLink: sv(pProps.ctaSecondaryLink ?? pProps.cta_secondary_link ?? pProps.secondaryButtonLink, '#videos'),
-              ctaSecondaryBg: sv(pProps.ctaSecondaryBg ?? pProps.secondaryButtonBg, fallback.profile?.ctaSecondaryBg || ''),
-              ctaSecondaryColor: sv(pProps.ctaSecondaryColor ?? pProps.secondaryButtonTextColor, fallback.profile?.ctaSecondaryColor || ''),
+              ctaPrimaryText: resolveNonEmpty(pProps.ctaPrimaryText, pProps.cta_primary_text, pProps.buttonText, pProps.button_text, fallback.profile?.ctaPrimaryText, 'ابدأ التعلم'),
+              ctaPrimaryLink: resolveNonEmpty(pProps.ctaPrimaryLink, pProps.cta_primary_link, pProps.buttonLink, pProps.button_link, '#courses'),
+              ctaPrimaryBg: resolveNonEmpty(pProps.ctaPrimaryBg, pProps.cta_primary_bg, pProps.primaryButtonBg, pProps.primary_button_bg, pProps.buttonBg, pProps.button_bg, fallback.profile?.ctaPrimaryBg),
+              ctaPrimaryColor: resolveNonEmpty(pProps.ctaPrimaryColor, pProps.cta_primary_color, pProps.ctaPrimaryTextColor, pProps.cta_primary_text_color, pProps.primaryButtonTextColor, pProps.primary_button_text_color, pProps.buttonTextColor, pProps.button_text_color, fallback.profile?.ctaPrimaryColor),
+              ctaSecondaryText: resolveNonEmpty(pProps.ctaSecondaryText, pProps.cta_secondary_text, pProps.secondaryButtonText, pProps.secondary_button_text, fallback.profile?.ctaSecondaryText, 'شاهد الفيديوهات'),
+              ctaSecondaryLink: resolveNonEmpty(pProps.ctaSecondaryLink, pProps.cta_secondary_link, pProps.secondaryButtonLink, pProps.secondary_button_link, '#videos'),
+              ctaSecondaryBg: resolveNonEmpty(pProps.ctaSecondaryBg, pProps.cta_secondary_bg, pProps.secondaryButtonBg, pProps.secondary_button_bg, fallback.profile?.ctaSecondaryBg),
+              ctaSecondaryColor: resolveNonEmpty(pProps.ctaSecondaryColor, pProps.cta_secondary_color, pProps.ctaSecondaryTextColor, pProps.cta_secondary_text_color, pProps.secondaryButtonTextColor, pProps.secondary_button_text_color, fallback.profile?.ctaSecondaryColor),
             }) : fallback.profile) as any;
 
             const parsedContent: TemplateContent = {
@@ -2724,7 +2794,10 @@ export default function PageBuilderPage() {
                 contactModalTitle: sv(navbarNode.props.contactModalTitle ?? navbarNode.props.contact_title ?? navbarNode.props.modalTitle, fallback.navbar.contactModalTitle),
                 contactModalDescription: sv(navbarNode.props.contactModalDescription ?? navbarNode.props.contact_description ?? navbarNode.props.modalDescription, fallback.navbar.contactModalDescription),
                 whatsappCountryCode: sv(navbarNode.props.whatsappCountryCode ?? navbarNode.props.whatsapp_country_code ?? navbarNode.props.countryCode ?? navbarNode.props.country_code, fallback.navbar.whatsappCountryCode || '+20'),
-                whatsappUrl: sv(navbarNode.props.whatsappUrl ?? navbarNode.props.whatsapp_url ?? navbarNode.props.whatsapp, fallback.navbar.whatsappUrl),
+                whatsappUrl: extractLocalWhatsappNumber(
+                  sv(navbarNode.props.whatsappUrl ?? navbarNode.props.whatsapp_url ?? navbarNode.props.whatsapp ?? navbarNode.props.whatsappNumber ?? navbarNode.props.whatsapp_number, fallback.navbar.whatsappUrl || ''),
+                  sv(navbarNode.props.whatsappCountryCode ?? navbarNode.props.whatsapp_country_code ?? navbarNode.props.countryCode ?? navbarNode.props.country_code, fallback.navbar.whatsappCountryCode || '+20')
+                ) || sv(navbarNode.props.whatsappUrl ?? navbarNode.props.whatsapp_url ?? navbarNode.props.whatsapp ?? navbarNode.props.whatsappNumber ?? navbarNode.props.whatsapp_number, fallback.navbar.whatsappUrl || ''),
                 phoneNumber: sv(navbarNode.props.phoneNumber ?? navbarNode.props.phone_number ?? navbarNode.props.phone, fallback.navbar.phoneNumber),
                 whatsappButtonLabel: sv(navbarNode.props.whatsappButtonLabel ?? navbarNode.props.whatsapp_button_label ?? navbarNode.props.whatsappLabel, fallback.navbar.whatsappButtonLabel),
                 phoneButtonLabel: sv(navbarNode.props.phoneButtonLabel ?? navbarNode.props.phone_button_label ?? navbarNode.props.phoneLabel, fallback.navbar.phoneButtonLabel),
@@ -3089,8 +3162,23 @@ export default function PageBuilderPage() {
       localStorage.setItem(cacheKey, JSON.stringify(content));
 
       // 2. Prepare database sections payload
+      const rawNavbarWhatsapp = content.navbar?.whatsappUrl || '';
+      const navbarCountryCode = content.navbar?.whatsappCountryCode || '+20';
+      const normalizedNavbarWhatsapp = normalizeWhatsappUrl(rawNavbarWhatsapp, navbarCountryCode);
+
+      const navbarPayloadProps = {
+        ...content.navbar,
+        whatsappUrl: normalizedNavbarWhatsapp || rawNavbarWhatsapp,
+        whatsapp_url: normalizedNavbarWhatsapp || rawNavbarWhatsapp,
+        whatsappCountryCode: navbarCountryCode,
+        whatsapp_country_code: navbarCountryCode,
+        role: currentRole,
+        templateId: activeTemplateId,
+        template_id: activeTemplateId,
+      };
+
       const nodes = [
-        { id: 'navbar', type: 'navbar', props: { ...content.navbar, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        { id: 'navbar', type: 'navbar', props: navbarPayloadProps },
         ...(content.profile ? [{ id: 'profile', type: 'profile', props: { ...content.profile, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         { id: 'hero', type: 'hero', props: { ...(content.profile ? { ...content.hero, ...content.profile } : content.hero), role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         { id: 'about', type: 'about', props: { ...content.about, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
@@ -3171,8 +3259,23 @@ export default function PageBuilderPage() {
       }));
 
       // 2. Prepare and save database sections
+      const rawNavbarWhatsapp = content.navbar?.whatsappUrl || '';
+      const navbarCountryCode = content.navbar?.whatsappCountryCode || '+20';
+      const normalizedNavbarWhatsapp = normalizeWhatsappUrl(rawNavbarWhatsapp, navbarCountryCode);
+
+      const navbarPayloadProps = {
+        ...content.navbar,
+        whatsappUrl: normalizedNavbarWhatsapp || rawNavbarWhatsapp,
+        whatsapp_url: normalizedNavbarWhatsapp || rawNavbarWhatsapp,
+        whatsappCountryCode: navbarCountryCode,
+        whatsapp_country_code: navbarCountryCode,
+        role: currentRole,
+        templateId: activeTemplateId,
+        template_id: activeTemplateId,
+      };
+
       const nodes = [
-        { id: 'navbar', type: 'navbar', props: { ...content.navbar, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        { id: 'navbar', type: 'navbar', props: navbarPayloadProps },
         ...(content.profile ? [{ id: 'profile', type: 'profile', props: { ...content.profile, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         { id: 'hero', type: 'hero', props: { ...(content.profile ? { ...content.hero, ...content.profile } : content.hero), role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         { id: 'about', type: 'about', props: { ...content.about, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
@@ -3773,7 +3876,7 @@ export default function PageBuilderPage() {
                             />
                           </div>
 
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-2">
                             <div className="flex flex-col gap-1 min-w-0">
                               <label className="text-[9px] font-bold text-slate-600">تسمية زر الواتساب</label>
                               <input
@@ -3784,19 +3887,20 @@ export default function PageBuilderPage() {
                                 className="w-full min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
                               />
                             </div>
+
                             <div className="flex flex-col gap-1 min-w-0">
                               <label className="text-[9px] font-bold text-slate-600">رقم أو رابط الواتساب</label>
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <div className="relative shrink-0 w-28">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="relative shrink-0 w-32">
                                   <select
                                     value={content.navbar?.whatsappCountryCode || '+20'}
                                     onChange={(e) => handleUpdateField('navbar', 'whatsappCountryCode', e.target.value)}
-                                    className="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-bold text-slate-700 appearance-none pr-2 pl-6 cursor-pointer"
+                                    className="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-bold text-slate-700 appearance-none pr-2 pl-6 cursor-pointer text-right"
                                     dir="rtl"
                                   >
-                                    <option value="+20">مصر (+20)</option>
-                                    <option value="+966">السعودية (+966)</option>
-                                    <option value="+965">الكويت (+965)</option>
+                                    <option value="+20">🇪🇬 مصر (+20)</option>
+                                    <option value="+966">🇸🇦 السعودية (+966)</option>
+                                    <option value="+965">🇰🇼 الكويت (+965)</option>
                                   </select>
                                   <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                                 </div>
@@ -3805,7 +3909,7 @@ export default function PageBuilderPage() {
                                   dir="ltr"
                                   value={content.navbar?.whatsappUrl || ''}
                                   onChange={(e) => handleUpdateField('navbar', 'whatsappUrl', e.target.value)}
-                                  placeholder="مثال: 101xxxxxxx أو https://wa.me/..."
+                                  placeholder="مثال: 1012345678 أو https://wa.me/..."
                                   className="flex-1 min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
                                 />
                               </div>

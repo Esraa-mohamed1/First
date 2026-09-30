@@ -2,6 +2,7 @@ import axios from 'axios';
 import { BuilderNode } from '@/builder/interfaces';
 import academyApi from '@/lib/academy-api';
 import api from '@/lib/api';
+import { normalizeWhatsappUrl } from '@/builder/templates/schoolcoach/schoolcoachHtml';
 
 // -----------------------------------------------------------------------
 // Types
@@ -425,15 +426,121 @@ export function normalizeSectionProps(type: string, rawProps: any): Record<strin
     merged.whatsappButtonLabel = val;
     merged.whatsapp_button_label = val;
   }
-  if (merged.whatsapp_url || merged.whatsappUrl) {
-    const val = merged.whatsappUrl || merged.whatsapp_url;
+  if (merged.whatsapp_country_code || merged.whatsappCountryCode || merged.country_code || merged.countryCode) {
+    const val = merged.whatsappCountryCode || merged.whatsapp_country_code || merged.countryCode || merged.country_code;
+    merged.whatsappCountryCode = val;
+    merged.whatsapp_country_code = val;
+    merged.countryCode = val;
+    merged.country_code = val;
+  }
+  if (merged.whatsapp_url || merged.whatsappUrl || merged.whatsapp || merged.whatsapp_number || merged.whatsappNumber) {
+    const rawVal = merged.whatsappUrl || merged.whatsapp_url || merged.whatsapp || merged.whatsappNumber || merged.whatsapp_number;
+    const countryCode = merged.whatsappCountryCode || merged.whatsapp_country_code || merged.countryCode || merged.country_code || '+20';
+    const val = normalizeWhatsappUrl(rawVal, countryCode) || rawVal;
     merged.whatsappUrl = val;
     merged.whatsapp_url = val;
+    merged.whatsapp = val;
   }
   if (merged.phone_number || merged.phoneNumber) {
     const val = merged.phoneNumber || merged.phone_number;
     merged.phoneNumber = val;
     merged.phone_number = val;
+  }
+  // Cover / Banner / Background images
+  if (
+    merged.cover || merged.cover_image || merged.coverImage ||
+    merged.banner || merged.banner_image || merged.bannerImage ||
+    merged.backgroundImage || merged.background_image ||
+    merged.coverUrl || merged.cover_url ||
+    merged.bgImage || merged.bg_image
+  ) {
+    const val =
+      merged.cover || merged.coverImage || merged.cover_image ||
+      merged.banner || merged.bannerImage || merged.banner_image ||
+      merged.backgroundImage || merged.background_image ||
+      merged.coverUrl || merged.cover_url ||
+      merged.bgImage || merged.bg_image;
+    merged.cover = val;
+    merged.coverImage = val;
+    merged.cover_image = val;
+    merged.banner = val;
+    merged.bannerImage = val;
+    merged.banner_image = val;
+    merged.backgroundImage = val;
+    merged.background_image = val;
+    merged.coverUrl = val;
+    merged.cover_url = val;
+    merged.bgImage = val;
+    merged.bg_image = val;
+  }
+  // Avatar / Profile image
+  if (
+    merged.avatar || merged.avatar_image || merged.avatarImage ||
+    merged.image || merged.imageUrl || merged.image_url ||
+    merged.profileImage || merged.profile_image
+  ) {
+    const val =
+      merged.avatar || merged.avatarImage || merged.avatar_image ||
+      merged.image || merged.imageUrl || merged.image_url ||
+      merged.profileImage || merged.profile_image;
+    merged.avatar = val;
+    merged.avatarImage = val;
+    merged.avatar_image = val;
+    merged.image = val;
+    merged.imageUrl = val;
+    merged.image_url = val;
+    merged.profileImage = val;
+    merged.profile_image = val;
+  }
+  // CTA Primary Button
+  if (merged.cta_primary_text || merged.ctaPrimaryText) {
+    const val = merged.ctaPrimaryText || merged.cta_primary_text;
+    merged.ctaPrimaryText = val;
+    merged.cta_primary_text = val;
+  }
+  if (merged.cta_primary_link || merged.ctaPrimaryLink) {
+    const val = merged.ctaPrimaryLink || merged.cta_primary_link;
+    merged.ctaPrimaryLink = val;
+    merged.cta_primary_link = val;
+  }
+  if (merged.cta_primary_bg || merged.ctaPrimaryBg || merged.primary_button_bg || merged.primaryButtonBg) {
+    const val = merged.ctaPrimaryBg || merged.cta_primary_bg || merged.primaryButtonBg || merged.primary_button_bg;
+    merged.ctaPrimaryBg = val;
+    merged.cta_primary_bg = val;
+    merged.primaryButtonBg = val;
+    merged.primary_button_bg = val;
+  }
+  if (merged.cta_primary_color || merged.ctaPrimaryColor || merged.cta_primary_text_color || merged.ctaPrimaryTextColor || merged.primary_button_text_color || merged.primaryButtonTextColor || merged.button_text_color || merged.buttonTextColor) {
+    const val = merged.ctaPrimaryColor || merged.cta_primary_color || merged.ctaPrimaryTextColor || merged.cta_primary_text_color || merged.primaryButtonTextColor || merged.primary_button_text_color || merged.buttonTextColor || merged.button_text_color;
+    merged.ctaPrimaryColor = val;
+    merged.cta_primary_color = val;
+    merged.ctaPrimaryTextColor = val;
+    merged.cta_primary_text_color = val;
+  }
+  // CTA Secondary Button
+  if (merged.cta_secondary_text || merged.ctaSecondaryText) {
+    const val = merged.ctaSecondaryText || merged.cta_secondary_text;
+    merged.ctaSecondaryText = val;
+    merged.cta_secondary_text = val;
+  }
+  if (merged.cta_secondary_link || merged.ctaSecondaryLink) {
+    const val = merged.ctaSecondaryLink || merged.cta_secondary_link;
+    merged.ctaSecondaryLink = val;
+    merged.cta_secondary_link = val;
+  }
+  if (merged.cta_secondary_bg || merged.ctaSecondaryBg || merged.secondary_button_bg || merged.secondaryButtonBg) {
+    const val = merged.ctaSecondaryBg || merged.cta_secondary_bg || merged.secondaryButtonBg || merged.secondary_button_bg;
+    merged.ctaSecondaryBg = val;
+    merged.cta_secondary_bg = val;
+    merged.secondaryButtonBg = val;
+    merged.secondary_button_bg = val;
+  }
+  if (merged.cta_secondary_color || merged.ctaSecondaryColor || merged.cta_secondary_text_color || merged.ctaSecondaryTextColor || merged.secondary_button_text_color || merged.secondaryButtonTextColor) {
+    const val = merged.ctaSecondaryColor || merged.cta_secondary_color || merged.ctaSecondaryTextColor || merged.cta_secondary_text_color || merged.secondaryButtonTextColor || merged.secondary_button_text_color;
+    merged.ctaSecondaryColor = val;
+    merged.cta_secondary_color = val;
+    merged.ctaSecondaryTextColor = val;
+    merged.cta_secondary_text_color = val;
   }
   if (merged.secondary_button_text || merged.secondaryButtonText || merged.demo_button_text || merged.demoButtonText) {
     const val = merged.secondaryButtonText || merged.secondary_button_text || merged.demoButtonText || merged.demo_button_text;

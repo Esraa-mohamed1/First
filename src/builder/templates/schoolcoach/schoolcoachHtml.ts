@@ -20,13 +20,13 @@ const getSafeValue = (obj: any, keys: string[], fallback: any = '') => {
   for (const key of keys) {
     if (key in obj) {
       const value = obj[key];
-      if (value !== undefined && value !== null) return value;
+      if (value !== undefined && value !== null && value !== '') return value;
     }
   }
   return fallback;
 };
 
-export const normalizeWhatsappUrl = (val: string, countryCode?: string): string => {
+export const normalizeWhatsappUrl = (val: string, countryCode: string = '+20'): string => {
   if (!val || typeof val !== 'string') return '';
   const trimmed = val.trim();
   if (!trimmed) return '';
@@ -34,16 +34,40 @@ export const normalizeWhatsappUrl = (val: string, countryCode?: string): string 
   let digits = trimmed.replace(/\D/g, '');
   if (!digits) return '';
 
-  if (countryCode) {
-    const cleanCode = countryCode.replace(/\D/g, '');
-    if (cleanCode && !digits.startsWith(cleanCode)) {
-      if (digits.startsWith('0')) {
-        digits = digits.replace(/^0+/, '');
-      }
-      digits = `${cleanCode}${digits}`;
+  const cleanCode = (countryCode || '+20').replace(/\D/g, '');
+  const strippedDigits = digits.replace(/^0+/, '');
+
+  if (cleanCode) {
+    if (strippedDigits.startsWith(cleanCode)) {
+      digits = strippedDigits;
+    } else {
+      digits = `${cleanCode}${strippedDigits}`;
     }
+  } else {
+    digits = strippedDigits || digits;
   }
   return `https://wa.me/${digits}`;
+};
+
+export const extractLocalWhatsappNumber = (urlOrNumber: string, countryCode: string = '+20'): string => {
+  if (!urlOrNumber || typeof urlOrNumber !== 'string') return '';
+  const trimmed = urlOrNumber.trim();
+  if (!trimmed) return '';
+  const cleanCode = (countryCode || '+20').replace(/\D/g, '');
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    const match = trimmed.match(/(?:wa\.me\/|api\.whatsapp\.com\/send\?phone=)(\d+)/);
+    if (!match) return trimmed;
+    let fullDigits = match[1];
+    if (cleanCode && fullDigits.startsWith(cleanCode)) {
+      return fullDigits.slice(cleanCode.length);
+    }
+    return fullDigits;
+  }
+  let digits = trimmed.replace(/\D/g, '');
+  if (cleanCode && digits.startsWith(cleanCode)) {
+    return digits.slice(cleanCode.length);
+  }
+  return trimmed;
 };
 
 const normalizePhoneTel = (val: string): string => {
@@ -206,16 +230,30 @@ export const getSchoolCoachNewDesignHtml = (
   // Hero Profile props
   const profileBio = getSafeValue((content as any)?.profile, ['description', 'bio', 'about', 'summary'], '');
   const profileGoal = getSafeValue((content as any)?.profile, ['goal', 'mission', 'learningGoal'], '');
-  const coverImage = normalizeImage(getSafeValue((content as any)?.profile, ['cover', 'coverImage', 'cover_image'], ''), '');
-  const avatarImage = normalizeImage(getSafeValue((content as any)?.profile, ['avatar', 'avatarImage', 'image', 'profileImage'], ''), '');
+  const coverImage = normalizeImage(
+    getSafeValue(
+      (content as any)?.profile,
+      ['cover', 'coverImage', 'cover_image', 'banner', 'bannerImage', 'banner_image', 'backgroundImage', 'background_image', 'cover_url', 'coverUrl', 'bgImage', 'bg_image'],
+      getSafeValue((content as any)?.hero, ['cover', 'coverImage', 'cover_image', 'banner', 'bannerImage', 'banner_image', 'backgroundImage', 'background_image', 'image', 'cover_url', 'coverUrl', 'bgImage', 'bg_image'], '')
+    ),
+    ''
+  );
+  const avatarImage = normalizeImage(
+    getSafeValue(
+      (content as any)?.profile,
+      ['avatar', 'avatarImage', 'avatar_image', 'image', 'imageUrl', 'image_url', 'profileImage', 'profile_image'],
+      getSafeValue((content as any)?.hero, ['avatar', 'avatarImage', 'avatar_image', 'image', 'imageUrl', 'image_url', 'profileImage', 'profile_image'], '')
+    ),
+    ''
+  );
   const verifiedVisible = (content as any)?.profile?.verified !== false;
   const verifiedText = getSafeValue((content as any)?.profile, ['verifiedText', 'verified_text'], 'موثّق');
-  const startLearningLabel = getSafeValue((content as any)?.profile, ['ctaPrimaryText', 'startLearningText', 'primaryButtonText'], 'ابدأ التعلم');
-  const watchVideosLabel = getSafeValue((content as any)?.profile, ['ctaSecondaryText', 'watchVideosText', 'secondaryButtonText'], 'شاهد الفيديوهات');
-  const ctaPrimaryBg = getSafeValue((content as any)?.profile, ['ctaPrimaryBg', 'primaryButtonBg', 'buttonBg'], '');
-  const ctaPrimaryTextColor = getSafeValue((content as any)?.profile, ['ctaPrimaryTextColor', 'primaryButtonTextColor', 'buttonTextColor'], '');
-  const ctaSecondaryBg = getSafeValue((content as any)?.profile, ['ctaSecondaryBg', 'secondaryButtonBg'], '');
-  const ctaSecondaryTextColor = getSafeValue((content as any)?.profile, ['ctaSecondaryTextColor', 'secondaryButtonTextColor'], '');
+  const startLearningLabel = getSafeValue((content as any)?.profile, ['ctaPrimaryText', 'cta_primary_text', 'startLearningText', 'primaryButtonText', 'buttonText'], 'ابدأ التعلم');
+  const watchVideosLabel = getSafeValue((content as any)?.profile, ['ctaSecondaryText', 'cta_secondary_text', 'watchVideosText', 'secondaryButtonText'], 'شاهد الفيديوهات');
+  const ctaPrimaryBg = getSafeValue((content as any)?.profile, ['ctaPrimaryBg', 'cta_primary_bg', 'primaryButtonBg', 'primary_button_bg', 'buttonBg', 'button_bg'], '');
+  const ctaPrimaryTextColor = getSafeValue((content as any)?.profile, ['ctaPrimaryColor', 'cta_primary_color', 'ctaPrimaryTextColor', 'cta_primary_text_color', 'primaryButtonTextColor', 'primary_button_text_color', 'buttonTextColor', 'button_text_color'], '');
+  const ctaSecondaryBg = getSafeValue((content as any)?.profile, ['ctaSecondaryBg', 'cta_secondary_bg', 'secondaryButtonBg', 'secondary_button_bg'], '');
+  const ctaSecondaryTextColor = getSafeValue((content as any)?.profile, ['ctaSecondaryColor', 'cta_secondary_color', 'ctaSecondaryTextColor', 'cta_secondary_text_color', 'secondaryButtonTextColor', 'secondary_button_text_color'], '');
   
   // 4 Achievement / Stat Cards
   const rawStats = Array.isArray((content as any)?.profile?.stats)
@@ -2105,13 +2143,13 @@ export const getSchoolCoachNewDesignHtml = (
               <!-- 8. CTA Buttons -->
               <div class="hero-actions">
                 ${startLearningLabel !== '' ? `
-                  <button type="button" class="primary-btn" data-hero-btn="primary" data-open-screen="course-library" style="${ctaPrimaryBg ? `background: ${ctaPrimaryBg};` : ''} ${ctaPrimaryTextColor ? `color: ${ctaPrimaryTextColor};` : ''}">
+                  <button type="button" class="primary-btn" data-hero-btn="primary" data-open-screen="course-library" style="${ctaPrimaryBg ? `background: ${ctaPrimaryBg} !important; border-color: ${ctaPrimaryBg} !important;` : ''} ${ctaPrimaryTextColor ? `color: ${ctaPrimaryTextColor} !important;` : ''}">
                     <span>${escapeHtml(startLearningLabel)}</span>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:6px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                   </button>
                 ` : ''}
                 ${watchVideosLabel !== '' ? `
-                  <button type="button" class="secondary-btn" data-hero-btn="secondary" data-open-screen="video-library" style="${ctaSecondaryBg ? `background-color: ${ctaSecondaryBg};` : ''} ${ctaSecondaryTextColor ? `color: ${ctaSecondaryTextColor};` : ''}">
+                  <button type="button" class="secondary-btn" data-hero-btn="secondary" data-open-screen="video-library" style="${ctaSecondaryBg ? `background: ${ctaSecondaryBg} !important; background-color: ${ctaSecondaryBg} !important;` : ''} ${ctaSecondaryTextColor ? `color: ${ctaSecondaryTextColor} !important;` : ''}">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block; vertical-align:middle; margin-left:6px;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                     <span>${escapeHtml(watchVideosLabel)}</span>
                   </button>
