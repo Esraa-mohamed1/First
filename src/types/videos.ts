@@ -1,6 +1,7 @@
 export interface AcademyVideo {
   id: number | string;
   title: string;
+  description?: string;
   video_id: string;
   video_url: string;
   library_id?: string;
@@ -15,6 +16,7 @@ export interface AcademyVideo {
 
 export interface CreateVideoPayload {
   title: string;
+  description?: string;
   video_id: string;
   video_url: string;
   library_id: string;
@@ -24,6 +26,7 @@ export interface CreateVideoPayload {
 
 export interface UpdateVideoPayload {
   title?: string;
+  description?: string;
   order?: number | string;
 }
 
