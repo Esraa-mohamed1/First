@@ -48,6 +48,8 @@ import {
   renderSchoolCoachEmptyFaqHtml,
   normalizeWhatsappUrl,
   extractLocalWhatsappNumber,
+  normalizePhoneNumber,
+  extractLocalPhoneNumber,
 } from '@/builder/templates/schoolcoach/schoolcoachHtml';
 import { getCourses } from '@/services/courses';
 import { getBags } from '@/services/bags';
@@ -488,6 +490,7 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         contactModalDescription: 'للحجز والاستفسار، يمكنك التواصل مباشرة مع الفريق.',
         whatsappCountryCode: '+20',
         whatsappUrl: '',
+        phoneCountryCode: '+20',
         phoneNumber: '',
         whatsappButtonLabel: 'واتساب',
         phoneButtonLabel: 'اتصال',
@@ -1308,8 +1311,8 @@ export default function PageBuilderPage() {
       updateText('#generic-modal a.whatsapp-btn span', content.navbar?.whatsappButtonLabel || 'واتساب');
       updateText('#generic-modal a.phone-btn span', content.navbar?.phoneButtonLabel || 'اتصال');
       const rawModalWhatsapp = content.navbar?.whatsappUrl || '';
-      const modalCountryCode = content.navbar?.whatsappCountryCode || '+20';
-      const resolvedModalWhatsappUrl = normalizeWhatsappUrl(rawModalWhatsapp, modalCountryCode);
+      const modalWhatsappCountryCode = content.navbar?.whatsappCountryCode || '+20';
+      const resolvedModalWhatsappUrl = normalizeWhatsappUrl(rawModalWhatsapp, modalWhatsappCountryCode);
       const modalWhatsappLink = doc.querySelector('#generic-modal a.whatsapp-btn, a.whatsapp-btn') as HTMLAnchorElement;
       if (modalWhatsappLink) {
         if (resolvedModalWhatsappUrl) {
@@ -1318,6 +1321,20 @@ export default function PageBuilderPage() {
         } else {
           modalWhatsappLink.href = '#';
           modalWhatsappLink.style.display = 'none';
+        }
+      }
+
+      const rawModalPhone = content.navbar?.phoneNumber || '';
+      const modalPhoneCountryCode = content.navbar?.phoneCountryCode || content.navbar?.countryCode || '+20';
+      const resolvedModalPhone = normalizePhoneNumber(rawModalPhone, modalPhoneCountryCode);
+      const modalPhoneLink = doc.querySelector('#generic-modal a.phone-btn, a.phone-btn') as HTMLAnchorElement;
+      if (modalPhoneLink) {
+        if (resolvedModalPhone) {
+          modalPhoneLink.href = `tel:${resolvedModalPhone}`;
+          modalPhoneLink.style.display = 'inline-flex';
+        } else {
+          modalPhoneLink.href = '#';
+          modalPhoneLink.style.display = 'none';
         }
       }
 
@@ -2793,12 +2810,16 @@ export default function PageBuilderPage() {
                 contactIconVisible: navbarNode.props.contactIconVisible !== undefined ? Boolean(navbarNode.props.contactIconVisible) : (fallback.navbar.contactIconVisible ?? true),
                 contactModalTitle: sv(navbarNode.props.contactModalTitle ?? navbarNode.props.contact_title ?? navbarNode.props.modalTitle, fallback.navbar.contactModalTitle),
                 contactModalDescription: sv(navbarNode.props.contactModalDescription ?? navbarNode.props.contact_description ?? navbarNode.props.modalDescription, fallback.navbar.contactModalDescription),
-                whatsappCountryCode: sv(navbarNode.props.whatsappCountryCode ?? navbarNode.props.whatsapp_country_code ?? navbarNode.props.countryCode ?? navbarNode.props.country_code, fallback.navbar.whatsappCountryCode || '+20'),
+                whatsappCountryCode: sv(navbarNode.props.whatsappCountryCode ?? navbarNode.props.whatsapp_country_code, fallback.navbar.whatsappCountryCode || '+20'),
                 whatsappUrl: extractLocalWhatsappNumber(
                   sv(navbarNode.props.whatsappUrl ?? navbarNode.props.whatsapp_url ?? navbarNode.props.whatsapp ?? navbarNode.props.whatsappNumber ?? navbarNode.props.whatsapp_number, fallback.navbar.whatsappUrl || ''),
-                  sv(navbarNode.props.whatsappCountryCode ?? navbarNode.props.whatsapp_country_code ?? navbarNode.props.countryCode ?? navbarNode.props.country_code, fallback.navbar.whatsappCountryCode || '+20')
+                  sv(navbarNode.props.whatsappCountryCode ?? navbarNode.props.whatsapp_country_code, fallback.navbar.whatsappCountryCode || '+20')
                 ) || sv(navbarNode.props.whatsappUrl ?? navbarNode.props.whatsapp_url ?? navbarNode.props.whatsapp ?? navbarNode.props.whatsappNumber ?? navbarNode.props.whatsapp_number, fallback.navbar.whatsappUrl || ''),
-                phoneNumber: sv(navbarNode.props.phoneNumber ?? navbarNode.props.phone_number ?? navbarNode.props.phone, fallback.navbar.phoneNumber),
+                phoneCountryCode: sv(navbarNode.props.phoneCountryCode ?? navbarNode.props.phone_country_code ?? navbarNode.props.countryCode ?? navbarNode.props.country_code, fallback.navbar.phoneCountryCode || '+20'),
+                phoneNumber: extractLocalPhoneNumber(
+                  sv(navbarNode.props.phoneNumber ?? navbarNode.props.phone_number ?? navbarNode.props.phone, fallback.navbar.phoneNumber || ''),
+                  sv(navbarNode.props.phoneCountryCode ?? navbarNode.props.phone_country_code ?? navbarNode.props.countryCode ?? navbarNode.props.country_code, fallback.navbar.phoneCountryCode || '+20')
+                ) || sv(navbarNode.props.phoneNumber ?? navbarNode.props.phone_number ?? navbarNode.props.phone, fallback.navbar.phoneNumber || ''),
                 whatsappButtonLabel: sv(navbarNode.props.whatsappButtonLabel ?? navbarNode.props.whatsapp_button_label ?? navbarNode.props.whatsappLabel, fallback.navbar.whatsappButtonLabel),
                 phoneButtonLabel: sv(navbarNode.props.phoneButtonLabel ?? navbarNode.props.phone_button_label ?? navbarNode.props.phoneLabel, fallback.navbar.phoneButtonLabel),
                 coursesLabel: sv(navbarNode.props.coursesLabel ?? navbarNode.props.courses_label, fallback.navbar.coursesLabel),
@@ -3163,15 +3184,25 @@ export default function PageBuilderPage() {
 
       // 2. Prepare database sections payload
       const rawNavbarWhatsapp = content.navbar?.whatsappUrl || '';
-      const navbarCountryCode = content.navbar?.whatsappCountryCode || '+20';
-      const normalizedNavbarWhatsapp = normalizeWhatsappUrl(rawNavbarWhatsapp, navbarCountryCode);
+      const navbarWhatsappCountryCode = content.navbar?.whatsappCountryCode || '+20';
+      const normalizedNavbarWhatsapp = normalizeWhatsappUrl(rawNavbarWhatsapp, navbarWhatsappCountryCode);
+
+      const rawNavbarPhone = content.navbar?.phoneNumber || '';
+      const navbarPhoneCountryCode = content.navbar?.phoneCountryCode || content.navbar?.countryCode || '+20';
+      const normalizedNavbarPhone = normalizePhoneNumber(rawNavbarPhone, navbarPhoneCountryCode);
 
       const navbarPayloadProps = {
         ...content.navbar,
         whatsappUrl: normalizedNavbarWhatsapp || rawNavbarWhatsapp,
         whatsapp_url: normalizedNavbarWhatsapp || rawNavbarWhatsapp,
-        whatsappCountryCode: navbarCountryCode,
-        whatsapp_country_code: navbarCountryCode,
+        whatsappCountryCode: navbarWhatsappCountryCode,
+        whatsapp_country_code: navbarWhatsappCountryCode,
+        phoneNumber: normalizedNavbarPhone || rawNavbarPhone,
+        phone_number: normalizedNavbarPhone || rawNavbarPhone,
+        phoneCountryCode: navbarPhoneCountryCode,
+        phone_country_code: navbarPhoneCountryCode,
+        countryCode: navbarPhoneCountryCode,
+        country_code: navbarPhoneCountryCode,
         role: currentRole,
         templateId: activeTemplateId,
         template_id: activeTemplateId,
@@ -3260,15 +3291,25 @@ export default function PageBuilderPage() {
 
       // 2. Prepare and save database sections
       const rawNavbarWhatsapp = content.navbar?.whatsappUrl || '';
-      const navbarCountryCode = content.navbar?.whatsappCountryCode || '+20';
-      const normalizedNavbarWhatsapp = normalizeWhatsappUrl(rawNavbarWhatsapp, navbarCountryCode);
+      const navbarWhatsappCountryCode = content.navbar?.whatsappCountryCode || '+20';
+      const normalizedNavbarWhatsapp = normalizeWhatsappUrl(rawNavbarWhatsapp, navbarWhatsappCountryCode);
+
+      const rawNavbarPhone = content.navbar?.phoneNumber || '';
+      const navbarPhoneCountryCode = content.navbar?.phoneCountryCode || content.navbar?.countryCode || '+20';
+      const normalizedNavbarPhone = normalizePhoneNumber(rawNavbarPhone, navbarPhoneCountryCode);
 
       const navbarPayloadProps = {
         ...content.navbar,
         whatsappUrl: normalizedNavbarWhatsapp || rawNavbarWhatsapp,
         whatsapp_url: normalizedNavbarWhatsapp || rawNavbarWhatsapp,
-        whatsappCountryCode: navbarCountryCode,
-        whatsapp_country_code: navbarCountryCode,
+        whatsappCountryCode: navbarWhatsappCountryCode,
+        whatsapp_country_code: navbarWhatsappCountryCode,
+        phoneNumber: normalizedNavbarPhone || rawNavbarPhone,
+        phone_number: normalizedNavbarPhone || rawNavbarPhone,
+        phoneCountryCode: navbarPhoneCountryCode,
+        phone_country_code: navbarPhoneCountryCode,
+        countryCode: navbarPhoneCountryCode,
+        country_code: navbarPhoneCountryCode,
         role: currentRole,
         templateId: activeTemplateId,
         template_id: activeTemplateId,
@@ -3916,7 +3957,7 @@ export default function PageBuilderPage() {
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-2">
                             <div className="flex flex-col gap-1 min-w-0">
                               <label className="text-[9px] font-bold text-slate-600">تسمية زر الاتصال</label>
                               <input
@@ -3927,16 +3968,35 @@ export default function PageBuilderPage() {
                                 className="w-full min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
                               />
                             </div>
+
                             <div className="flex flex-col gap-1 min-w-0">
                               <label className="text-[9px] font-bold text-slate-600">رقم الهاتف المباشر</label>
-                              <input
-                                type="text"
-                                dir="ltr"
-                                value={content.navbar?.phoneNumber || ''}
-                                onChange={(e) => handleUpdateField('navbar', 'phoneNumber', e.target.value)}
-                                placeholder="مثال: +201xxxxxxxxx"
-                                className="w-full min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
-                              />
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="relative shrink-0 w-32">
+                                  <select
+                                    value={content.navbar?.phoneCountryCode || content.navbar?.countryCode || '+20'}
+                                    onChange={(e) => {
+                                      handleUpdateField('navbar', 'phoneCountryCode', e.target.value);
+                                      handleUpdateField('navbar', 'countryCode', e.target.value);
+                                    }}
+                                    className="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-bold text-slate-700 appearance-none pr-2 pl-6 cursor-pointer text-right"
+                                    dir="rtl"
+                                  >
+                                    <option value="+20">🇪🇬 مصر (+20)</option>
+                                    <option value="+966">🇸🇦 السعودية (+966)</option>
+                                    <option value="+965">🇰🇼 الكويت (+965)</option>
+                                  </select>
+                                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                </div>
+                                <input
+                                  type="text"
+                                  dir="ltr"
+                                  value={content.navbar?.phoneNumber || ''}
+                                  onChange={(e) => handleUpdateField('navbar', 'phoneNumber', e.target.value)}
+                                  placeholder="مثال: 1012345678 أو 501234567"
+                                  className="flex-1 min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                                />
+                              </div>
                             </div>
                           </div>
                         </div>

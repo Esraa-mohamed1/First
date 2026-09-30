@@ -70,13 +70,47 @@ export const extractLocalWhatsappNumber = (urlOrNumber: string, countryCode: str
   return trimmed;
 };
 
-const normalizePhoneTel = (val: string): string => {
+export const normalizePhoneNumber = (val: string, countryCode: string = '+20'): string => {
   if (!val || typeof val !== 'string') return '';
   const trimmed = val.trim();
   if (!trimmed) return '';
-  const sanitized = trimmed.replace(/[^\d+]/g, '');
-  if (!sanitized) return '';
-  return `tel:${sanitized}`;
+  let digits = trimmed.replace(/\D/g, '');
+  if (!digits) return '';
+
+  const cleanCode = (countryCode || '+20').replace(/\D/g, '');
+  const strippedDigits = digits.replace(/^0+/, '');
+
+  if (cleanCode) {
+    if (strippedDigits.startsWith(cleanCode)) {
+      digits = strippedDigits;
+    } else {
+      digits = `${cleanCode}${strippedDigits}`;
+    }
+  } else {
+    digits = strippedDigits || digits;
+  }
+  return digits;
+};
+
+export const extractLocalPhoneNumber = (phone: string, countryCode: string = '+20'): string => {
+  if (!phone || typeof phone !== 'string') return '';
+  const trimmed = phone.trim();
+  if (!trimmed) return '';
+  const cleanCode = (countryCode || '+20').replace(/\D/g, '');
+  let digits = trimmed.replace(/\D/g, '');
+  if (cleanCode && digits.startsWith(cleanCode)) {
+    return digits.slice(cleanCode.length);
+  }
+  return trimmed;
+};
+
+export const normalizePhoneTel = (val: string, countryCode: string = '+20'): string => {
+  if (!val || typeof val !== 'string') return '';
+  const trimmed = val.trim();
+  if (!trimmed) return '';
+  const digits = normalizePhoneNumber(trimmed, countryCode);
+  if (!digits) return '';
+  return `tel:${digits}`;
 };
 
 /**
@@ -280,13 +314,14 @@ export const getSchoolCoachNewDesignHtml = (
   const contactModalTitle = getSafeValue((content as any)?.navbar, ['contactModalTitle', 'contact_title', 'modalTitle'], 'تواصل مع الفريق');
   const contactModalDescription = getSafeValue((content as any)?.navbar, ['contactModalDescription', 'contact_description', 'modalDescription'], 'للحجز والاستفسار، يمكنك التواصل مباشرة مع الفريق.');
   const rawWhatsapp = getSafeValue((content as any)?.navbar, ['whatsappUrl', 'whatsapp_url', 'whatsappNumber', 'whatsapp_number', 'whatsapp'], '');
-  const whatsappCountryCode = getSafeValue((content as any)?.navbar, ['whatsappCountryCode', 'whatsapp_country_code', 'countryCode', 'country_code'], '+20');
+  const whatsappCountryCode = getSafeValue((content as any)?.navbar, ['whatsappCountryCode', 'whatsapp_country_code'], '+20');
   const rawPhone = getSafeValue((content as any)?.navbar, ['phoneNumber', 'phone_number', 'phone'], '');
+  const phoneCountryCode = getSafeValue((content as any)?.navbar, ['phoneCountryCode', 'phone_country_code', 'countryCode', 'country_code'], '+20');
   const whatsappLabel = getSafeValue((content as any)?.navbar, ['whatsappButtonLabel', 'whatsapp_button_label', 'whatsappLabel'], 'واتساب');
   const phoneLabel = getSafeValue((content as any)?.navbar, ['phoneButtonLabel', 'phone_button_label', 'phoneLabel'], 'اتصال');
 
   const whatsappUrl = normalizeWhatsappUrl(rawWhatsapp, whatsappCountryCode);
-  const phoneTel = normalizePhoneTel(rawPhone);
+  const phoneTel = normalizePhoneTel(rawPhone, phoneCountryCode);
 
   // 5 Canonical Navbar Navigation Items (Filtered by section visibility)
   const coursesLabel = getSafeValue((content as any)?.navbar, ['coursesLabel', 'courses_label'], '');

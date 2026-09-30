@@ -2,7 +2,7 @@ import axios from 'axios';
 import { BuilderNode } from '@/builder/interfaces';
 import academyApi from '@/lib/academy-api';
 import api from '@/lib/api';
-import { normalizeWhatsappUrl } from '@/builder/templates/schoolcoach/schoolcoachHtml';
+import { normalizeWhatsappUrl, normalizePhoneNumber } from '@/builder/templates/schoolcoach/schoolcoachHtml';
 
 // -----------------------------------------------------------------------
 // Types
@@ -426,25 +426,40 @@ export function normalizeSectionProps(type: string, rawProps: any): Record<strin
     merged.whatsappButtonLabel = val;
     merged.whatsapp_button_label = val;
   }
-  if (merged.whatsapp_country_code || merged.whatsappCountryCode || merged.country_code || merged.countryCode) {
-    const val = merged.whatsappCountryCode || merged.whatsapp_country_code || merged.countryCode || merged.country_code;
+  if (merged.whatsapp_country_code || merged.whatsappCountryCode) {
+    const val = merged.whatsappCountryCode || merged.whatsapp_country_code;
     merged.whatsappCountryCode = val;
     merged.whatsapp_country_code = val;
-    merged.countryCode = val;
-    merged.country_code = val;
   }
   if (merged.whatsapp_url || merged.whatsappUrl || merged.whatsapp || merged.whatsapp_number || merged.whatsappNumber) {
     const rawVal = merged.whatsappUrl || merged.whatsapp_url || merged.whatsapp || merged.whatsappNumber || merged.whatsapp_number;
-    const countryCode = merged.whatsappCountryCode || merged.whatsapp_country_code || merged.countryCode || merged.country_code || '+20';
+    const countryCode = merged.whatsappCountryCode || merged.whatsapp_country_code || '+20';
     const val = normalizeWhatsappUrl(rawVal, countryCode) || rawVal;
     merged.whatsappUrl = val;
     merged.whatsapp_url = val;
     merged.whatsapp = val;
   }
-  if (merged.phone_number || merged.phoneNumber) {
-    const val = merged.phoneNumber || merged.phone_number;
+  if (merged.phone_button_label || merged.phoneButtonLabel || merged.phone_label || merged.phoneLabel) {
+    const val = merged.phoneButtonLabel || merged.phone_button_label || merged.phoneLabel || merged.phone_label;
+    merged.phoneButtonLabel = val;
+    merged.phone_button_label = val;
+    merged.phoneLabel = val;
+    merged.phone_label = val;
+  }
+  if (merged.phone_country_code || merged.phoneCountryCode || merged.country_code || merged.countryCode) {
+    const val = merged.phoneCountryCode || merged.phone_country_code || merged.countryCode || merged.country_code;
+    merged.phoneCountryCode = val;
+    merged.phone_country_code = val;
+    merged.countryCode = val;
+    merged.country_code = val;
+  }
+  if (merged.phone_number || merged.phoneNumber || merged.phone) {
+    const rawVal = merged.phoneNumber || merged.phone_number || merged.phone;
+    const phoneCountryCode = merged.phoneCountryCode || merged.phone_country_code || merged.countryCode || merged.country_code || '+20';
+    const val = normalizePhoneNumber(rawVal, phoneCountryCode) || rawVal;
     merged.phoneNumber = val;
     merged.phone_number = val;
+    merged.phone = val;
   }
   // Cover / Banner / Background images
   if (
