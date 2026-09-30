@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getSchoolCoachHtml, getSchoolCoachNewDesignHtml, normalizeWhatsappUrl } from './schoolcoachHtml';
+import { getSchoolCoachHtml, getSchoolCoachNewDesignHtml, normalizeWhatsappUrl, normalizePhoneNumber } from './schoolcoachHtml';
 import { getPublicPages, getPublicSections, apiToEditor } from '@/services/pages';
 import { getCourses } from '@/services/courses';
 import { getStudentCourses } from '@/services/student-courses';
@@ -45,6 +45,7 @@ const DEFAULT_CONTENT = {
     contactModalDescription: 'للحجز والاستفسار، يمكنك التواصل مباشرة مع الفريق.',
     whatsappCountryCode: '+20',
     whatsappUrl: '',
+    phoneCountryCode: '+20',
     phoneNumber: '',
     whatsappButtonLabel: 'واتساب',
     phoneButtonLabel: 'اتصال',
@@ -498,12 +499,16 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
       contactIconVisible: np.contactIconVisible !== undefined ? Boolean(np.contactIconVisible) : (fallback.navbar.contactIconVisible ?? true),
       contactModalTitle: np.contactModalTitle ?? np.contact_title ?? np.modalTitle ?? fallback.navbar.contactModalTitle,
       contactModalDescription: np.contactModalDescription ?? np.contact_description ?? np.modalDescription ?? fallback.navbar.contactModalDescription,
-      whatsappCountryCode: np.whatsappCountryCode ?? np.whatsapp_country_code ?? np.countryCode ?? np.country_code ?? fallback.navbar.whatsappCountryCode ?? '+20',
+      whatsappCountryCode: np.whatsappCountryCode ?? np.whatsapp_country_code ?? fallback.navbar.whatsappCountryCode ?? '+20',
       whatsappUrl: normalizeWhatsappUrl(
         np.whatsappUrl ?? np.whatsapp_url ?? np.whatsapp ?? np.whatsappNumber ?? np.whatsapp_number ?? fallback.navbar.whatsappUrl,
-        np.whatsappCountryCode ?? np.whatsapp_country_code ?? np.countryCode ?? np.country_code ?? fallback.navbar.whatsappCountryCode ?? '+20'
+        np.whatsappCountryCode ?? np.whatsapp_country_code ?? fallback.navbar.whatsappCountryCode ?? '+20'
       ) || (np.whatsappUrl ?? np.whatsapp_url ?? np.whatsapp ?? fallback.navbar.whatsappUrl),
-      phoneNumber: np.phoneNumber ?? np.phone_number ?? np.phone ?? fallback.navbar.phoneNumber,
+      phoneCountryCode: np.phoneCountryCode ?? np.phone_country_code ?? np.countryCode ?? np.country_code ?? fallback.navbar.phoneCountryCode ?? '+20',
+      phoneNumber: normalizePhoneNumber(
+        np.phoneNumber ?? np.phone_number ?? np.phone ?? fallback.navbar.phoneNumber,
+        np.phoneCountryCode ?? np.phone_country_code ?? np.countryCode ?? np.country_code ?? fallback.navbar.phoneCountryCode ?? '+20'
+      ) || (np.phoneNumber ?? np.phone_number ?? np.phone ?? fallback.navbar.phoneNumber),
       whatsappButtonLabel: np.whatsappButtonLabel ?? np.whatsapp_button_label ?? np.whatsappLabel ?? fallback.navbar.whatsappButtonLabel,
       phoneButtonLabel: np.phoneButtonLabel ?? np.phone_button_label ?? np.phoneLabel ?? fallback.navbar.phoneButtonLabel,
       coursesLabel: np.coursesLabel ?? np.courses_label ?? fallback.navbar.coursesLabel,
