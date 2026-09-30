@@ -134,7 +134,7 @@ export default function MarketPage() {
         <h2 className="text-3xl font-black text-gray-900 tracking-tight">متجر الحقائب</h2>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => router.push('/academic/market/videos')}
+            onClick={() => router.push('/academic/videos')}
             className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 px-5 py-3.5 rounded-2xl text-sm font-black text-white shadow-md shadow-purple-200 transition-all cursor-pointer"
           >
             <Film size={18} />

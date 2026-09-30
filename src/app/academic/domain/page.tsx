@@ -796,73 +796,104 @@ export default function CustomDomainPage() {
 
           <div className="p-8 sm:p-10 space-y-6">
             
-            {/* Mode Switcher & Upgrade Banner */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-gray-50/80 rounded-2xl border border-gray-100">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-black text-gray-700">نوع النطاق:</span>
-                <div className="flex items-center bg-white p-1 rounded-xl border border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => setEditMode('subdomain')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                      editMode === 'subdomain'
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'text-gray-500 hover:text-gray-900'
-                    }`}
-                  >
-                    نطاق فرعي (Subdomain)
-                  </button>
-                  
-                  {hasCustomDomainFeature ? (
-                    <button
-                      type="button"
-                      onClick={() => setEditMode('custom_domain')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                        editMode === 'custom_domain'
-                          ? 'bg-purple-600 text-white shadow-sm'
-                          : 'text-gray-500 hover:text-gray-900'
-                      }`}
-                    >
-                      دومين مخصص (Custom Domain)
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-
-              {/* While customizing subdomain: show custom domain option or upgrade prompt */}
-              {editMode === 'subdomain' && (
-                hasCustomDomainFeature ? (
-                  <button
-                    type="button"
-                    onClick={() => setEditMode('custom_domain')}
-                    className="text-xs font-black text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer border border-purple-200"
-                  >
-                    <Globe size={14} />
-                    <span>إذا كنت تريد استخدام نطاقك الخاص (Custom Domain) يمكنك تخصيصه الآن</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => router.push('/academic/packages/upgrade')}
-                    className="text-xs font-black text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer border border-amber-200 shadow-sm"
-                  >
-                    <Sparkles size={14} />
-                    <span>إذا كنت تريد دومينك الخاص، قم بترقية باقتك</span>
-                    <ChevronLeft size={14} />
-                  </button>
-                )
-              )}
-
-              {editMode === 'custom_domain' && (
+            {/* Clear and Larger 2-Option Domain Mode Selector */}
+            <div className="space-y-3">
+              <label className="text-sm font-black text-gray-800">اختر نوع النطاق الذي ترغب في تخصيصه:</label>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Option 1: Subdomain */}
                 <button
                   type="button"
                   onClick={() => setEditMode('subdomain')}
-                  className="text-xs font-black text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer border border-blue-200"
+                  className={`p-5 rounded-3xl border-2 transition-all flex items-center justify-between text-right cursor-pointer ${
+                    editMode === 'subdomain'
+                      ? 'border-blue-600 bg-blue-50/60 shadow-md shadow-blue-500/10 ring-2 ring-blue-500/20'
+                      : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/60'
+                  }`}
                 >
-                  <Layers size={14} />
-                  <span>الرجوع للنطاق الفرعي (darab.academy)</span>
+                  <div className="flex items-center gap-4">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
+                      editMode === 'subdomain' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'bg-gray-100 text-gray-500'
+                    }`}>
+                      <Layers size={26} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-black text-base text-gray-900">نطاق فرعي (Subdomain)</span>
+                        {editMode === 'subdomain' && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-black">محدد</span>
+                        )}
+                      </div>
+                      <p className="text-xs font-bold text-gray-500 mt-1" dir="ltr">
+                        {subdomainInput || domainInfo?.subdomain || 'academy'}.darab.academy
+                      </p>
+                    </div>
+                  </div>
+                  <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
+                    editMode === 'subdomain' ? 'border-blue-600 bg-blue-600 text-white' : 'border-gray-300 bg-white'
+                  }`}>
+                    {editMode === 'subdomain' && <Check size={16} strokeWidth={3} />}
+                  </div>
                 </button>
-              )}
+
+                {/* Option 2: Custom Domain */}
+                {hasCustomDomainFeature ? (
+                  <button
+                    type="button"
+                    onClick={() => setEditMode('custom_domain')}
+                    className={`p-5 rounded-3xl border-2 transition-all flex items-center justify-between text-right cursor-pointer ${
+                      editMode === 'custom_domain'
+                        ? 'border-purple-600 bg-purple-50/60 shadow-md shadow-purple-500/10 ring-2 ring-purple-500/20'
+                        : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
+                        editMode === 'custom_domain' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        <Globe size={26} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-base text-gray-900">دومين مخصص (Custom Domain)</span>
+                          {editMode === 'custom_domain' && (
+                            <span className="px-2.5 py-0.5 rounded-full bg-purple-600 text-white text-[10px] font-black">محدد</span>
+                          )}
+                        </div>
+                        <p className="text-xs font-bold text-gray-500 mt-1" dir="ltr">
+                          {customDomainInput || 'yourdomain.com'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
+                      editMode === 'custom_domain' ? 'border-purple-600 bg-purple-600 text-white' : 'border-gray-300 bg-white'
+                    }`}>
+                      {editMode === 'custom_domain' && <Check size={16} strokeWidth={3} />}
+                    </div>
+                  </button>
+                ) : (
+                  <div
+                    onClick={() => router.push('/academic/packages/upgrade')}
+                    className="p-5 rounded-3xl border-2 border-dashed border-amber-200 bg-amber-50/40 hover:bg-amber-50/80 transition-all flex items-center justify-between text-right cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <Sparkles size={26} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-base text-gray-900">دومين مخصص (Custom Domain)</span>
+                          <span className="px-2 py-0.5 rounded-md bg-amber-200/80 text-amber-900 text-[10px] font-black">ترقية الباقة</span>
+                        </div>
+                        <p className="text-xs font-bold text-amber-700 mt-1">
+                          إذا كنت تريد استخدام نطاقك الخاص، قم بترقية باقتك
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronLeft size={22} className="text-amber-600 group-hover:-translate-x-1.5 transition-transform" />
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Input Field */}

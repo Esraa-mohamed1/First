@@ -57,6 +57,7 @@ export const createAcademyVideo = async (
 ): Promise<AcademyVideo> => {
   const formPayload = {
     title: payload.title,
+    description: payload.description || '',
     video_id: payload.video_id,
     video_url: payload.video_url,
     library_id: payload.library_id,

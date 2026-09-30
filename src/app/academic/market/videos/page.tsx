@@ -121,19 +121,19 @@ export default function AcademyVideosPage() {
     }
   };
 
-  // Handle Edit (Title and Order)
+  // Handle Edit (Title and Description)
   const handleEditVideo = async (video: AcademyVideo) => {
     const { value: formValues } = await MySwal.fire({
       title: 'تعديل بيانات الفيديو',
       html: `
-        <div class="space-y-4 text-right" dir="rtl">
+        <div class="space-y-4 text-right font-sans" dir="rtl">
           <div>
             <label class="block text-xs font-bold text-gray-700 mb-1">عنوان الفيديو</label>
             <input id="swal-title" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-800 outline-none" value="${video.title || ''}" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">الترتيب</label>
-            <input id="swal-order" type="number" min="1" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-800 outline-none" value="${video.order || 1}" />
+            <label class="block text-xs font-bold text-gray-700 mb-1">وصف الفيديو</label>
+            <textarea id="swal-desc" rows="3" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-800 outline-none resize-none" placeholder="وصف الفيديو...">${video.description || ''}</textarea>
           </div>
         </div>
       `,
@@ -149,12 +149,12 @@ export default function AcademyVideosPage() {
       },
       preConfirm: () => {
         const titleInput = (document.getElementById('swal-title') as HTMLInputElement)?.value;
-        const orderInput = (document.getElementById('swal-order') as HTMLInputElement)?.value;
+        const descInput = (document.getElementById('swal-desc') as HTMLTextAreaElement)?.value;
         if (!titleInput) {
           Swal.showValidationMessage('يرجى إدخال عنوان الفيديو');
           return false;
         }
-        return { title: titleInput, order: Number(orderInput) || 1 };
+        return { title: titleInput, description: descInput || '' };
       },
     });
 

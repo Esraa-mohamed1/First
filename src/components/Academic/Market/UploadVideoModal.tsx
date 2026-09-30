@@ -26,7 +26,7 @@ export default function UploadVideoModal({
   suggestedOrder = 1,
 }: UploadVideoModalProps) {
   const [title, setTitle] = useState('');
-  const [order, setOrder] = useState<number | string>(suggestedOrder);
+  const [description, setDescription] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -49,7 +49,7 @@ export default function UploadVideoModal({
 
   const resetForm = () => {
     setTitle('');
-    setOrder(suggestedOrder);
+    setDescription('');
     setSelectedFile(null);
     setUploadStatus('idle');
     setUploadProgress(0);
@@ -209,10 +209,11 @@ export default function UploadVideoModal({
 
       const savedVideo = await createAcademyVideo({
         title: title.trim(),
+        description: description.trim(),
         video_id: guid,
         video_url: videoEmbedUrl,
         library_id: libraryId,
-        order: Number(order) || 1,
+        order: Number(suggestedOrder) || 1,
         file_size_mb: fileSizeMb,
       });
 
@@ -259,7 +260,7 @@ export default function UploadVideoModal({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* Title Input */}
           <div className="space-y-2">
             <label className="block text-sm font-black text-gray-800">
@@ -271,21 +272,20 @@ export default function UploadVideoModal({
               onChange={(e) => setTitle(e.target.value)}
               disabled={isSubmitting}
               placeholder="مثال: مقدمة الحقيبة التدريبية - الجزء الأول"
-              className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold text-gray-800 outline-none focus:border-purple-600 focus:bg-white focus:ring-4 focus:ring-purple-600/10 transition-all disabled:opacity-60"
+              className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold text-gray-800 outline-none focus:border-purple-600 focus:bg-white focus:ring-4 focus:ring-purple-600/10 transition-all disabled:opacity-60"
             />
           </div>
 
-          {/* Order Input */}
+          {/* Description Input */}
           <div className="space-y-2">
-            <label className="block text-sm font-black text-gray-800">ترتيب العرض (Order)</label>
-            <input
-              type="number"
-              min="1"
-              value={order}
-              onChange={(e) => setOrder(e.target.value)}
+            <label className="block text-sm font-black text-gray-800">وصف الفيديو (Description)</label>
+            <textarea
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               disabled={isSubmitting}
-              placeholder="1"
-              className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold text-gray-800 outline-none focus:border-purple-600 focus:bg-white focus:ring-4 focus:ring-purple-600/10 transition-all disabled:opacity-60"
+              placeholder="اكتب وصفاً موجزاً لمحتوى الفيديو والمهارات المستفادة..."
+              className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold text-gray-800 outline-none focus:border-purple-600 focus:bg-white focus:ring-4 focus:ring-purple-600/10 transition-all disabled:opacity-60 resize-none"
             />
           </div>
 

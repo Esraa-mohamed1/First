@@ -104,10 +104,16 @@ export default function VideoCard({ video, onPreview, onDelete, onEdit }: VideoC
             </h3>
           </div>
 
-          {/* Subtext info */}
-          <p className="text-gray-400 text-xs font-semibold truncate pt-1" dir="ltr">
-            ID: {video.video_id || '—'}
-          </p>
+          {/* Description or Subtext info */}
+          {video.description ? (
+            <p className="text-gray-500 text-xs font-medium line-clamp-2 leading-relaxed pt-0.5" title={video.description}>
+              {video.description}
+            </p>
+          ) : (
+            <p className="text-gray-400 text-xs font-semibold truncate pt-1" dir="ltr">
+              ID: {video.video_id || '—'}
+            </p>
+          )}
         </div>
 
         {/* Action Buttons Row */}
