@@ -21,6 +21,16 @@ api.interceptors.response.use(
 
 
 
+const SYSTEM_DOMAINS = new Set([
+  'darab.academy',
+  'www.darab.academy',
+  'ip.darab.academy',
+  'app.darab.academy',
+  'api.darab.academy',
+  'localhost',
+  '127.0.0.1'
+]);
+
 const getFullTenantDomain = (): string => {
   if (typeof window === 'undefined') return '';
 
@@ -29,8 +39,8 @@ const getFullTenantDomain = (): string => {
     hostname = hostname.replace(/\.localhost$/, '').trim().toLowerCase();
   }
 
-  if (hostname && hostname !== 'localhost') {
-    if (hostname.endsWith('darab.academy') || hostname.includes('.')) {
+  if (hostname && !SYSTEM_DOMAINS.has(hostname) && hostname !== 'localhost' && hostname !== '127.0.0.1') {
+    if (hostname.endsWith('.darab.academy') || hostname.includes('.')) {
       return hostname.toLowerCase();
     }
     return `${hostname.toLowerCase()}.darab.academy`;
@@ -39,25 +49,35 @@ const getFullTenantDomain = (): string => {
   const storedLink = localStorage.getItem('academy_link_name');
   if (storedLink) {
     const clean = storedLink.trim().toLowerCase();
-    if (clean.includes('.')) {
-      return clean.toLowerCase();
+    if (clean && !SYSTEM_DOMAINS.has(clean)) {
+      if (clean.includes('.')) {
+        return clean.toLowerCase();
+      }
+      return `${clean.toLowerCase()}.darab.academy`;
     }
-    return `${clean.toLowerCase()}.darab.academy`;
   }
 
   try {
     const rawUser = localStorage.getItem('user_info');
     if (rawUser) {
       const parsed = JSON.parse(rawUser);
-      if (parsed.domain) return String(parsed.domain).trim().toLowerCase();
-      if (parsed.custom_domain) return String(parsed.custom_domain).trim().toLowerCase();
+      if (parsed.domain && !SYSTEM_DOMAINS.has(String(parsed.domain).trim().toLowerCase())) {
+        return String(parsed.domain).trim().toLowerCase();
+      }
+      if (parsed.custom_domain && !SYSTEM_DOMAINS.has(String(parsed.custom_domain).trim().toLowerCase())) {
+        return String(parsed.custom_domain).trim().toLowerCase();
+      }
       if (parsed.subdomain) {
         const sub = String(parsed.subdomain).trim().toLowerCase();
-        return sub.includes('.') ? sub : `${sub}.darab.academy`;
+        if (!SYSTEM_DOMAINS.has(sub) && sub !== 'ip' && sub !== 'app' && sub !== 'www' && sub !== 'api') {
+          return sub.includes('.') ? sub : `${sub}.darab.academy`;
+        }
       }
       if (parsed.academy_link_name) {
         const link = String(parsed.academy_link_name).trim().toLowerCase();
-        return link.includes('.') ? link : `${link}.darab.academy`;
+        if (!SYSTEM_DOMAINS.has(link)) {
+          return link.includes('.') ? link : `${link}.darab.academy`;
+        }
       }
     }
   } catch {}
