@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, ChevronDown, Download, Loader2, Edit, Trash2, UserPlus, Eye, Mail, Phone } from 'lucide-react';
+import { Search, ChevronDown, Download, Loader2, Edit, Trash2, UserPlus, Mail, Phone } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getUsers, deleteUser } from '@/services/users';
@@ -189,22 +189,21 @@ export default function StudentsPage() {
                       {student.created_at ? new Date(student.created_at).toLocaleDateString('ar-EG') : 'غير متوفر'}
                     </td>
                     <td className="px-8 py-8 whitespace-nowrap">
-                       <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                         <button 
-                           className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                           title="عرض التفاصيل"
+                       <div className="flex items-center gap-2">
+                         <button
+                           onClick={(e) => { e.stopPropagation(); setEditingStudent(student); }}
+                           className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all cursor-pointer"
+                           title="تعديل"
                          >
-                           <Eye size={18} />
+                           <Edit size={18} />
                          </button>
-                         {isAdmin && (
-                           <button
-                             onClick={(e) => { e.stopPropagation(); setEditingStudent(student); }}
-                             className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                             title="تعديل"
-                           >
-                             <Edit size={18} />
-                           </button>
-                         )}
+                         <button
+                           onClick={(e) => { e.stopPropagation(); handleDeleteStudent(student.id); }}
+                           className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
+                           title="حذف"
+                         >
+                           <Trash2 size={18} />
+                         </button>
                        </div>
                      </td>
                   </tr>

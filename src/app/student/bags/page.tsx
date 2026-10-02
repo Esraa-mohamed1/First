@@ -50,34 +50,34 @@ export default function StudentBagsPage() {
   ).length;
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto" dir="rtl">
+    <div className="p-3 sm:p-6 space-y-6 max-w-7xl mx-auto" dir="rtl">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 sm:p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-gray-900 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
               <Package size={22} />
             </div>
-            اشتراكات ومشتريات الحقائب الرقمية
+            <span>اشتراكات ومشتريات الحقائب الرقمية</span>
           </h1>
           <p className="text-xs sm:text-sm text-gray-500 font-bold mt-1">
             استعرض جميع طلبات واشتراكات الحقائب التدريبية الخاصة بك وتتبع حالة الإيصالات
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <Link
             href="/bags"
-            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black transition-all shadow-md cursor-pointer"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black transition-all shadow-md cursor-pointer"
           >
             <ShoppingCart size={15} />
             <span>تصفح وشراء الحقائب</span>
           </Link>
           <button
             onClick={fetchPurchases}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl text-xs font-bold transition-all border border-gray-200 cursor-pointer"
+            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl text-xs font-bold transition-all border border-gray-200 cursor-pointer"
           >
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-            تحديث البيانات
+            <span>تحديث</span>
           </button>
         </div>
       </div>

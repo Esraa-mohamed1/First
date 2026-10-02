@@ -20,29 +20,97 @@ const getSafeValue = (obj: any, keys: string[], fallback: any = '') => {
   for (const key of keys) {
     if (key in obj) {
       const value = obj[key];
-      if (value !== undefined && value !== null) return value;
+      if (value !== undefined && value !== null && value !== '') return value;
     }
   }
   return fallback;
 };
 
-const normalizeWhatsappUrl = (val: string): string => {
+export const normalizeWhatsappUrl = (val: string, countryCode: string = '+20'): string => {
   if (!val || typeof val !== 'string') return '';
   const trimmed = val.trim();
   if (!trimmed) return '';
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
-  const digits = trimmed.replace(/\D/g, '');
+  let digits = trimmed.replace(/\D/g, '');
   if (!digits) return '';
+
+  const cleanCode = (countryCode || '+20').replace(/\D/g, '');
+  const strippedDigits = digits.replace(/^0+/, '');
+
+  if (cleanCode) {
+    if (strippedDigits.startsWith(cleanCode)) {
+      digits = strippedDigits;
+    } else {
+      digits = `${cleanCode}${strippedDigits}`;
+    }
+  } else {
+    digits = strippedDigits || digits;
+  }
   return `https://wa.me/${digits}`;
 };
 
-const normalizePhoneTel = (val: string): string => {
+export const extractLocalWhatsappNumber = (urlOrNumber: string, countryCode: string = '+20'): string => {
+  if (!urlOrNumber || typeof urlOrNumber !== 'string') return '';
+  const trimmed = urlOrNumber.trim();
+  if (!trimmed) return '';
+  const cleanCode = (countryCode || '+20').replace(/\D/g, '');
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    const match = trimmed.match(/(?:wa\.me\/|api\.whatsapp\.com\/send\?phone=)(\d+)/);
+    if (!match) return trimmed;
+    let fullDigits = match[1];
+    if (cleanCode && fullDigits.startsWith(cleanCode)) {
+      return fullDigits.slice(cleanCode.length);
+    }
+    return fullDigits;
+  }
+  let digits = trimmed.replace(/\D/g, '');
+  if (cleanCode && digits.startsWith(cleanCode)) {
+    return digits.slice(cleanCode.length);
+  }
+  return trimmed;
+};
+
+export const normalizePhoneNumber = (val: string, countryCode: string = '+20'): string => {
   if (!val || typeof val !== 'string') return '';
   const trimmed = val.trim();
   if (!trimmed) return '';
-  const sanitized = trimmed.replace(/[^\d+]/g, '');
-  if (!sanitized) return '';
-  return `tel:${sanitized}`;
+  let digits = trimmed.replace(/\D/g, '');
+  if (!digits) return '';
+
+  const cleanCode = (countryCode || '+20').replace(/\D/g, '');
+  const strippedDigits = digits.replace(/^0+/, '');
+
+  if (cleanCode) {
+    if (strippedDigits.startsWith(cleanCode)) {
+      digits = strippedDigits;
+    } else {
+      digits = `${cleanCode}${strippedDigits}`;
+    }
+  } else {
+    digits = strippedDigits || digits;
+  }
+  return digits;
+};
+
+export const extractLocalPhoneNumber = (phone: string, countryCode: string = '+20'): string => {
+  if (!phone || typeof phone !== 'string') return '';
+  const trimmed = phone.trim();
+  if (!trimmed) return '';
+  const cleanCode = (countryCode || '+20').replace(/\D/g, '');
+  let digits = trimmed.replace(/\D/g, '');
+  if (cleanCode && digits.startsWith(cleanCode)) {
+    return digits.slice(cleanCode.length);
+  }
+  return trimmed;
+};
+
+export const normalizePhoneTel = (val: string, countryCode: string = '+20'): string => {
+  if (!val || typeof val !== 'string') return '';
+  const trimmed = val.trim();
+  if (!trimmed) return '';
+  const digits = normalizePhoneNumber(trimmed, countryCode);
+  if (!digits) return '';
+  return `tel:${digits}`;
 };
 
 /**
@@ -71,6 +139,65 @@ export const DEFAULT_SCHOOLCOACH_NAV_ITEMS: SchoolCoachNavItem[] = [
   { key: 'results', target: 'results', label: 'النتائج', href: '#results' },
   { key: 'about', target: 'about', label: 'عني', href: '#about' },
 ];
+
+// Section 11: Exported Reusable FAQ Renderers for SchoolCoach (shared between runtime & builder preview)
+export const renderSchoolCoachFaqItemHtml = (
+  item: any,
+  index: number,
+  faqTextColor: string = ''
+): string => {
+  const question = escapeHtml(item.question || item.q || '');
+  const answer = escapeHtml(item.answer || item.a || '');
+  return `
+      <div class="faq-item" data-section="faq" data-index="${index}">
+        <button type="button" class="faq-question" aria-expanded="false" aria-controls="faq-ans-${index}" id="faq-btn-${index}">
+          <span class="faq-q-text" style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${question}</span>
+          <span class="faq-icon-wrapper" aria-hidden="true">
+            <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </span>
+        </button>
+        <div class="faq-answer" id="faq-ans-${index}" role="region" aria-labelledby="faq-btn-${index}">
+          <div class="faq-answer-inner">
+            <div class="faq-answer-divider"></div>
+            <p style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.88;` : ''}">${answer}</p>
+          </div>
+        </div>
+      </div>
+    `;
+};
+
+export const renderSchoolCoachFaqListHtml = (
+  faqItems: any[],
+  faqTextColor: string = ''
+): string => {
+  const activeItems = (Array.isArray(faqItems) ? faqItems : []).filter(
+    (it: any) => it && it.enabled !== false && (it.question || it.q)
+  );
+  return activeItems
+    .map((item: any, index: number) => renderSchoolCoachFaqItemHtml(item, index, faqTextColor))
+    .join('');
+};
+
+export const renderSchoolCoachEmptyFaqHtml = (
+  faqEmptyText: string = 'لا توجد أسئلة شائعة مضافة حالياً',
+  faqSubtitle: string = 'إجابات واضحة ومباشرة على أكثر الاستفسارات تكراراً.'
+): string => {
+  return `
+    <div class="faq-empty-state" data-section="faq">
+      <div class="empty-icon-shell">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </div>
+      <h3 class="empty-title">${escapeHtml(faqEmptyText)}</h3>
+      <p class="empty-desc">${escapeHtml(faqSubtitle)}</p>
+    </div>
+  `;
+};
 
 export const getSchoolCoachNewDesignHtml = (
   content: TemplateContent,
@@ -137,16 +264,30 @@ export const getSchoolCoachNewDesignHtml = (
   // Hero Profile props
   const profileBio = getSafeValue((content as any)?.profile, ['description', 'bio', 'about', 'summary'], '');
   const profileGoal = getSafeValue((content as any)?.profile, ['goal', 'mission', 'learningGoal'], '');
-  const coverImage = normalizeImage(getSafeValue((content as any)?.profile, ['cover', 'coverImage', 'cover_image'], ''), '');
-  const avatarImage = normalizeImage(getSafeValue((content as any)?.profile, ['avatar', 'avatarImage', 'image', 'profileImage'], ''), '');
+  const coverImage = normalizeImage(
+    getSafeValue(
+      (content as any)?.profile,
+      ['cover', 'coverImage', 'cover_image', 'banner', 'bannerImage', 'banner_image', 'backgroundImage', 'background_image', 'cover_url', 'coverUrl', 'bgImage', 'bg_image'],
+      getSafeValue((content as any)?.hero, ['cover', 'coverImage', 'cover_image', 'banner', 'bannerImage', 'banner_image', 'backgroundImage', 'background_image', 'image', 'cover_url', 'coverUrl', 'bgImage', 'bg_image'], '')
+    ),
+    ''
+  );
+  const avatarImage = normalizeImage(
+    getSafeValue(
+      (content as any)?.profile,
+      ['avatar', 'avatarImage', 'avatar_image', 'image', 'imageUrl', 'image_url', 'profileImage', 'profile_image'],
+      getSafeValue((content as any)?.hero, ['avatar', 'avatarImage', 'avatar_image', 'image', 'imageUrl', 'image_url', 'profileImage', 'profile_image'], '')
+    ),
+    ''
+  );
   const verifiedVisible = (content as any)?.profile?.verified !== false;
   const verifiedText = getSafeValue((content as any)?.profile, ['verifiedText', 'verified_text'], 'موثّق');
-  const startLearningLabel = getSafeValue((content as any)?.profile, ['ctaPrimaryText', 'startLearningText', 'primaryButtonText'], 'ابدأ التعلم');
-  const watchVideosLabel = getSafeValue((content as any)?.profile, ['ctaSecondaryText', 'watchVideosText', 'secondaryButtonText'], 'شاهد الفيديوهات');
-  const ctaPrimaryBg = getSafeValue((content as any)?.profile, ['ctaPrimaryBg', 'primaryButtonBg', 'buttonBg'], '');
-  const ctaPrimaryTextColor = getSafeValue((content as any)?.profile, ['ctaPrimaryTextColor', 'primaryButtonTextColor', 'buttonTextColor'], '');
-  const ctaSecondaryBg = getSafeValue((content as any)?.profile, ['ctaSecondaryBg', 'secondaryButtonBg'], '');
-  const ctaSecondaryTextColor = getSafeValue((content as any)?.profile, ['ctaSecondaryTextColor', 'secondaryButtonTextColor'], '');
+  const startLearningLabel = getSafeValue((content as any)?.profile, ['ctaPrimaryText', 'cta_primary_text', 'startLearningText', 'primaryButtonText', 'buttonText'], 'ابدأ التعلم');
+  const watchVideosLabel = getSafeValue((content as any)?.profile, ['ctaSecondaryText', 'cta_secondary_text', 'watchVideosText', 'secondaryButtonText'], 'شاهد الفيديوهات');
+  const ctaPrimaryBg = getSafeValue((content as any)?.profile, ['ctaPrimaryBg', 'cta_primary_bg', 'primaryButtonBg', 'primary_button_bg', 'buttonBg', 'button_bg'], '');
+  const ctaPrimaryTextColor = getSafeValue((content as any)?.profile, ['ctaPrimaryColor', 'cta_primary_color', 'ctaPrimaryTextColor', 'cta_primary_text_color', 'primaryButtonTextColor', 'primary_button_text_color', 'buttonTextColor', 'button_text_color'], '');
+  const ctaSecondaryBg = getSafeValue((content as any)?.profile, ['ctaSecondaryBg', 'cta_secondary_bg', 'secondaryButtonBg', 'secondary_button_bg'], '');
+  const ctaSecondaryTextColor = getSafeValue((content as any)?.profile, ['ctaSecondaryColor', 'cta_secondary_color', 'ctaSecondaryTextColor', 'cta_secondary_text_color', 'secondaryButtonTextColor', 'secondary_button_text_color'], '');
   
   // 4 Achievement / Stat Cards
   const rawStats = Array.isArray((content as any)?.profile?.stats)
@@ -173,12 +314,14 @@ export const getSchoolCoachNewDesignHtml = (
   const contactModalTitle = getSafeValue((content as any)?.navbar, ['contactModalTitle', 'contact_title', 'modalTitle'], 'تواصل مع الفريق');
   const contactModalDescription = getSafeValue((content as any)?.navbar, ['contactModalDescription', 'contact_description', 'modalDescription'], 'للحجز والاستفسار، يمكنك التواصل مباشرة مع الفريق.');
   const rawWhatsapp = getSafeValue((content as any)?.navbar, ['whatsappUrl', 'whatsapp_url', 'whatsappNumber', 'whatsapp_number', 'whatsapp'], '');
+  const whatsappCountryCode = getSafeValue((content as any)?.navbar, ['whatsappCountryCode', 'whatsapp_country_code'], '+20');
   const rawPhone = getSafeValue((content as any)?.navbar, ['phoneNumber', 'phone_number', 'phone'], '');
+  const phoneCountryCode = getSafeValue((content as any)?.navbar, ['phoneCountryCode', 'phone_country_code', 'countryCode', 'country_code'], '+20');
   const whatsappLabel = getSafeValue((content as any)?.navbar, ['whatsappButtonLabel', 'whatsapp_button_label', 'whatsappLabel'], 'واتساب');
   const phoneLabel = getSafeValue((content as any)?.navbar, ['phoneButtonLabel', 'phone_button_label', 'phoneLabel'], 'اتصال');
 
-  const whatsappUrl = normalizeWhatsappUrl(rawWhatsapp);
-  const phoneTel = normalizePhoneTel(rawPhone);
+  const whatsappUrl = normalizeWhatsappUrl(rawWhatsapp, whatsappCountryCode);
+  const phoneTel = normalizePhoneTel(rawPhone, phoneCountryCode);
 
   // 5 Canonical Navbar Navigation Items (Filtered by section visibility)
   const coursesLabel = getSafeValue((content as any)?.navbar, ['coursesLabel', 'courses_label'], '');
@@ -363,7 +506,7 @@ export const getSchoolCoachNewDesignHtml = (
   const ctaPrimaryLink = getSafeValue((content as any)?.cta, ['primaryButtonLink', 'buttonLink', 'primaryLink'], (content as any)?.contact?.buttonLink ?? (content as any)?.contact?.primaryButtonLink ?? '#courses');
   const ctaWhatsappLabel = getSafeValue((content as any)?.cta, ['whatsappButtonLabel', 'whatsappLabel'], (content as any)?.contact?.whatsappButtonLabel ?? 'كلمنا على الواتساب');
   const rawCtaWhatsapp = getSafeValue((content as any)?.cta, ['whatsappUrl', 'whatsapp_url', 'whatsappNumber', 'whatsapp_number', 'phoneNumber', 'phone_number', 'whatsapp'], getSafeValue((content as any)?.contact, ['whatsappUrl', 'whatsapp_url', 'whatsappNumber', 'whatsapp_number', 'phoneNumber', 'phone_number', 'whatsapp'], rawWhatsapp || rawPhone || ''));
-  const ctaWhatsappUrl = normalizeWhatsappUrl(rawCtaWhatsapp);
+  const ctaWhatsappUrl = normalizeWhatsappUrl(rawCtaWhatsapp, whatsappCountryCode);
   const ctaBg = getSafeValue((content as any)?.cta, ['backgroundColor', 'background_color', 'bgColor', 'bg_color'], (content as any)?.contact?.backgroundColor || '');
   const ctaBoxBg = getSafeValue((content as any)?.cta, ['cardBg', 'card_bg', 'boxBg', 'box_bg', 'containerBg', 'textBg'], (content as any)?.contact?.cardBg || (content as any)?.contact?.boxBg || '');
   const ctaTextColor = getSafeValue((content as any)?.cta, ['textColor', 'text_color'], (content as any)?.contact?.textColor || '');
@@ -462,13 +605,15 @@ export const getSchoolCoachNewDesignHtml = (
     const num = escapeHtml(String(index + 1).padStart(2, '0'));
     const title = escapeHtml(item.title || '');
     const desc = escapeHtml(item.description || item.desc || '');
+    const itemTitleColor = item.titleColor || item.title_color || stepsTextColor || '';
+    const itemDescColor = item.descriptionColor || item.description_color || (stepsTextColor ? stepsTextColor : '');
 
     return `
       <div class="step-item" data-section="steps" data-index="${index}">
         <div class="step-badge">${num}</div>
         <div class="step-content">
-          <h3 class="step-title" style="${stepsTextColor ? `color: ${stepsTextColor};` : ''}">${title}</h3>
-          ${desc ? `<p class="step-description" style="${stepsTextColor ? `color: ${stepsTextColor}; opacity: 0.85;` : ''}">${desc}</p>` : ''}
+          <h3 class="step-title" style="${itemTitleColor ? `color: ${itemTitleColor};` : ''}">${title}</h3>
+          ${desc ? `<p class="step-description" style="${itemDescColor ? `color: ${itemDescColor};` : (stepsTextColor ? `color: ${stepsTextColor}; opacity: 0.85;` : '')}">${desc}</p>` : ''}
         </div>
       </div>
     `;
@@ -697,35 +842,8 @@ export const getSchoolCoachNewDesignHtml = (
   `;
 
   // Section 11: FAQ Accordion Items
-  const renderFaqAccordion = faqItems.map((item: any, index: number) => {
-    const question = escapeHtml(item.question || item.q || '');
-    const answer = escapeHtml(item.answer || item.a || '');
-    return `
-      <div class="faq-item" data-section="faq" data-index="${index}">
-        <button type="button" class="faq-question" aria-expanded="false">
-          <span style="${faqTextColor ? `color: ${faqTextColor};` : ''}">${question}</span>
-          <span class="plus" aria-hidden="true">+</span>
-        </button>
-        <div class="faq-answer">
-          <p style="${faqTextColor ? `color: ${faqTextColor}; opacity: 0.85;` : ''}">${answer}</p>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  const renderEmptyFaqState = `
-    <div class="faq-empty-state" data-section="faq">
-      <div class="empty-icon-shell">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-          <line x1="12" y1="17" x2="12.01" y2="17"></line>
-        </svg>
-      </div>
-      <h3 class="empty-title">${escapeHtml(faqEmptyText)}</h3>
-      <p class="empty-desc">${escapeHtml(faqSubtitle)}</p>
-    </div>
-  `;
+  const renderFaqAccordion = renderSchoolCoachFaqListHtml(faqItems, faqTextColor);
+  const renderEmptyFaqState = renderSchoolCoachEmptyFaqHtml(faqEmptyText, faqSubtitle);
 
   return `<!doctype html>
   <html lang="ar" dir="rtl">
@@ -1537,17 +1655,139 @@ export const getSchoolCoachNewDesignHtml = (
         .testimonials-empty-state { padding: 36px 20px; text-align: center; background: #fff; border: 1px dashed var(--line); border-radius: 20px; }
 
         /* Section 11: FAQ Accordion */
-        .faq-list { display: flex; flex-direction: column; gap: 12px; max-width: 880px; margin: 0 auto; }
-        .faq-item { background: #fff; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(15,23,42,0.02); }
-        .faq-item:hover { border-color: #cbd5e1; }
-        .faq-question { width: 100%; background: none; border: none; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; text-align: right; font-weight: 700; font-size: 15px; color: var(--text); cursor: pointer; gap: 14px; }
-        .faq-question .plus { font-size: 22px; font-weight: 700; color: var(--brand); transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); line-height: 1; flex-shrink: 0; }
-        .faq-answer { display: none; padding: 0 20px 18px; }
-        .faq-answer p { margin: 0; font-size: 14px; color: #475569; line-height: 1.75; }
-        .faq-item.open { border-color: #bfdbfe; box-shadow: 0 6px 20px rgba(15, 103, 255, 0.08); }
-        .faq-item.open .faq-answer { display: block; border-top: 1px solid #f1f5f9; padding-top: 14px; }
-        .faq-item.open .faq-question .plus { transform: rotate(45deg); color: #dc2626; }
-        .faq-empty-state { padding: 36px 20px; text-align: center; background: #fff; border: 1px dashed var(--line); border-radius: 20px; }
+        .faq-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          max-width: 860px;
+          margin: 0 auto;
+        }
+        .faq-item {
+          background: #ffffff;
+          border: 1px solid var(--line);
+          border-radius: 16px;
+          overflow: hidden;
+          transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease, background-color 0.2s ease;
+          box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);
+        }
+        .faq-item:hover {
+          border-color: #cbd5e1;
+          box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+          transform: translateY(-1px);
+        }
+        .faq-item.open {
+          border-color: #bfdbfe;
+          box-shadow: 0 8px 24px rgba(15, 103, 255, 0.08);
+          background-color: #ffffff;
+        }
+        .faq-question {
+          width: 100%;
+          background: transparent;
+          border: none;
+          padding: 18px 22px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          text-align: right;
+          cursor: pointer;
+          gap: 16px;
+          user-select: none;
+          -webkit-user-select: none;
+          transition: background-color 0.2s ease;
+        }
+        .faq-question:focus-visible {
+          outline: 2px solid var(--brand);
+          outline-offset: -2px;
+        }
+        .faq-question:hover {
+          background-color: rgba(248, 250, 252, 0.7);
+        }
+        .faq-item.open .faq-question {
+          background-color: rgba(239, 246, 255, 0.25);
+        }
+        .faq-q-text {
+          font-size: 15.5px;
+          font-weight: 700;
+          color: var(--text);
+          line-height: 1.5;
+          text-align: right;
+          flex: 1;
+          transition: color 0.2s ease;
+        }
+        .faq-item.open .faq-q-text {
+          color: var(--brand);
+        }
+        .faq-icon-wrapper {
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          background: #f1f5f9;
+          color: #64748b;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+          border: 1px solid transparent;
+        }
+        .faq-question:hover .faq-icon-wrapper {
+          background: #e2e8f0;
+          color: var(--text);
+        }
+        .faq-chevron {
+          width: 17px;
+          height: 17px;
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .faq-item.open .faq-icon-wrapper {
+          background: #eff6ff;
+          color: var(--brand);
+          border-color: #bfdbfe;
+        }
+        .faq-item.open .faq-chevron {
+          transform: rotate(180deg);
+        }
+        .faq-answer {
+          display: grid;
+          grid-template-rows: 0fr;
+          transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          overflow: hidden;
+        }
+        .faq-item.open .faq-answer {
+          grid-template-rows: 1fr;
+        }
+        .faq-answer-inner {
+          min-height: 0;
+          opacity: 0;
+          transform: translateY(-4px);
+          transition: opacity 0.25s ease, transform 0.25s ease, padding 0.3s ease;
+          padding: 0 22px;
+        }
+        .faq-item.open .faq-answer-inner {
+          opacity: 1;
+          transform: translateY(0);
+          padding: 0 22px 20px;
+        }
+        .faq-answer-divider {
+          height: 1px;
+          background: #f1f5f9;
+          margin-bottom: 14px;
+        }
+        .faq-answer p {
+          margin: 0;
+          font-size: 14.5px;
+          color: #475569;
+          line-height: 1.8;
+          text-align: right;
+          word-break: break-word;
+        }
+        .faq-empty-state {
+          padding: 36px 20px;
+          text-align: center;
+          background: #fff;
+          border: 1px dashed var(--line);
+          border-radius: 20px;
+        }
 
         /* Section 12: Final CTA */
         .cta-box { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); border-radius: 24px; padding: 40px 36px; color: #fff; display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; box-shadow: 0 16px 36px rgba(15,23,42,0.14); }
@@ -1817,6 +2057,13 @@ export const getSchoolCoachNewDesignHtml = (
           .step-badge { width: 38px; height: 38px; font-size: 16px; border-radius: 11px; }
           .step-content h3.step-title { font-size: 15px; }
           .step-content p.step-description { font-size: 13px; }
+          .faq-question { padding: 15px 16px; gap: 12px; }
+          .faq-q-text { font-size: 14.5px; }
+          .faq-icon-wrapper { width: 30px; height: 30px; }
+          .faq-chevron { width: 15px; height: 15px; }
+          .faq-answer-inner { padding: 0 16px; }
+          .faq-item.open .faq-answer-inner { padding: 0 16px 16px; }
+          .faq-answer p { font-size: 13.5px; }
         }
       </style>
     </head>
@@ -1931,13 +2178,13 @@ export const getSchoolCoachNewDesignHtml = (
               <!-- 8. CTA Buttons -->
               <div class="hero-actions">
                 ${startLearningLabel !== '' ? `
-                  <button type="button" class="primary-btn" data-hero-btn="primary" data-open-screen="course-library" style="${ctaPrimaryBg ? `background: ${ctaPrimaryBg};` : ''} ${ctaPrimaryTextColor ? `color: ${ctaPrimaryTextColor};` : ''}">
+                  <button type="button" class="primary-btn" data-hero-btn="primary" data-open-screen="course-library" style="${ctaPrimaryBg ? `background: ${ctaPrimaryBg} !important; border-color: ${ctaPrimaryBg} !important;` : ''} ${ctaPrimaryTextColor ? `color: ${ctaPrimaryTextColor} !important;` : ''}">
                     <span>${escapeHtml(startLearningLabel)}</span>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:6px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                   </button>
                 ` : ''}
                 ${watchVideosLabel !== '' ? `
-                  <button type="button" class="secondary-btn" data-hero-btn="secondary" data-open-screen="video-library" style="${ctaSecondaryBg ? `background-color: ${ctaSecondaryBg};` : ''} ${ctaSecondaryTextColor ? `color: ${ctaSecondaryTextColor};` : ''}">
+                  <button type="button" class="secondary-btn" data-hero-btn="secondary" data-open-screen="video-library" style="${ctaSecondaryBg ? `background: ${ctaSecondaryBg} !important; background-color: ${ctaSecondaryBg} !important;` : ''} ${ctaSecondaryTextColor ? `color: ${ctaSecondaryTextColor} !important;` : ''}">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block; vertical-align:middle; margin-left:6px;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                     <span>${escapeHtml(watchVideosLabel)}</span>
                   </button>
@@ -2361,16 +2608,6 @@ export const getSchoolCoachNewDesignHtml = (
       <div class="toast" id="schoolcoach-toast" aria-live="polite">تمت العملية بنجاح</div>
 
       <script>
-        const faqItems = document.querySelectorAll('.faq-item');
-        faqItems.forEach((item) => {
-          const button = item.querySelector('.faq-question');
-          if (button) {
-            button.addEventListener('click', () => {
-              item.classList.toggle('open');
-            });
-          }
-        });
-
         const showToast = (message) => {
           const toast = document.getElementById('schoolcoach-toast');
           if (!toast) return;
@@ -2432,7 +2669,7 @@ export const getSchoolCoachNewDesignHtml = (
             const faqItem = faqBtn.closest('.faq-item');
             if (faqItem) {
               const isOpen = faqItem.classList.contains('open');
-              faqItem.classList.toggle('open');
+              faqItem.classList.toggle('open', !isOpen);
               faqBtn.setAttribute('aria-expanded', !isOpen ? 'true' : 'false');
             }
             return;

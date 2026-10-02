@@ -36,16 +36,9 @@ export default function StudentLayout({
         isMobileMenuOpen={isSidebarOpen}
       />
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Mobile Overlay Backdrop */}
-        {isSidebarOpen && (
-          <div
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 lg:hidden transition-opacity"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-        )}
         <StudentSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-5 md:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto w-full">
             {children}
           </div>
         </main>

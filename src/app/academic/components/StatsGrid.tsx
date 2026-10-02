@@ -10,24 +10,17 @@ interface StatsGridProps {
 }
 
 export const StatsGrid = ({ stats }: StatsGridProps) => {
-  const [selectedCurrency, setSelectedCurrency] = useState<'ALL' | 'SAR' | 'EGP' | 'KWD' | 'USD'>('ALL');
+  const [selectedCurrency, setSelectedCurrency] = useState<'SAR' | 'EGP' | 'KWD' | 'USD'>('SAR');
 
   const getSalesValue = () => {
-    if (!stats) return '0';
+    if (!stats) return `0 ${getCurrencySymbol(selectedCurrency)}`;
 
-    if (selectedCurrency === 'ALL') {
-      const val = stats.total_revenue !== undefined && stats.total_revenue !== null ? stats.total_revenue : 0;
-      const num = Number(val);
-      return !isNaN(num) ? `${num.toLocaleString('ar-EG')}` : `${val}`;
-    }
-
-    const curAmount = stats.salesByCurrency?.[selectedCurrency] ?? 0;
+    const curAmount = stats.salesByCurrency?.[selectedCurrency] ?? (selectedCurrency === 'SAR' ? (stats.total_revenue ?? 0) : 0);
     const symbol = getCurrencySymbol(selectedCurrency);
     return `${Number(curAmount).toLocaleString('ar-EG')} ${symbol}`;
   };
 
   const currencyOptions = [
-    { code: 'ALL', label: 'الكل' },
     { code: 'SAR', label: 'ر.س' },
     { code: 'EGP', label: 'ج.م' },
     { code: 'KWD', label: 'د.ك' },
@@ -61,7 +54,7 @@ export const StatsGrid = ({ stats }: StatsGridProps) => {
 
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-5">
         <StatCard
-          title={selectedCurrency === 'ALL' ? 'اجمالي المبيعات' : `اجمالي المبيعات (${getCurrencySymbol(selectedCurrency)})`}
+          title={`اجمالي المبيعات (${getCurrencySymbol(selectedCurrency)})`}
           value={getSalesValue()}
           trend={{ 
             value: stats?.total_revenue_percentage !== undefined ? Math.abs(stats.total_revenue_percentage) : 0, 

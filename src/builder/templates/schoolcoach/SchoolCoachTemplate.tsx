@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getSchoolCoachHtml, getSchoolCoachNewDesignHtml } from './schoolcoachHtml';
+import { getSchoolCoachHtml, getSchoolCoachNewDesignHtml, normalizeWhatsappUrl, normalizePhoneNumber } from './schoolcoachHtml';
 import { getPublicPages, getPublicSections, apiToEditor } from '@/services/pages';
 import { getCourses } from '@/services/courses';
 import { getStudentCourses } from '@/services/student-courses';
@@ -43,7 +43,9 @@ const DEFAULT_CONTENT = {
     contactIconVisible: true,
     contactModalTitle: 'تواصل مع الفريق',
     contactModalDescription: 'للحجز والاستفسار، يمكنك التواصل مباشرة مع الفريق.',
+    whatsappCountryCode: '+20',
     whatsappUrl: '',
+    phoneCountryCode: '+20',
     phoneNumber: '',
     whatsappButtonLabel: 'واتساب',
     phoneButtonLabel: 'اتصال',
@@ -244,9 +246,9 @@ const DEFAULT_CONTENT = {
     textColor: '',
     fontFamily: '',
     items: [
-      { number: '1', title: 'شاهد درس تجريبي', description: 'اعرف أسلوب الشرح قبل الاشتراك.', enabled: true },
-      { number: '2', title: 'اختار صفك الدراسي', description: 'هنرشح لك المحتوى المناسب فقط.', enabled: true },
-      { number: '3', title: 'ابدأ الكورس المناسب', description: 'ابدأ رحلتك التعليمية بالطريقة المناسبة ليك.', enabled: true },
+      { number: '1', title: 'شاهد درس تجريبي', description: 'اعرف أسلوب الشرح قبل الاشتراك.', titleColor: '', descriptionColor: '', enabled: true },
+      { number: '2', title: 'اختار صفك الدراسي', description: 'هنرشح لك المحتوى المناسب فقط.', titleColor: '', descriptionColor: '', enabled: true },
+      { number: '3', title: 'ابدأ الكورس المناسب', description: 'ابدأ رحلتك التعليمية بالطريقة المناسبة ليك.', titleColor: '', descriptionColor: '', enabled: true },
     ],
   },
   videos: {
@@ -362,8 +364,10 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
   }
 
   const navbarNode = nodes.find(n => n.type === 'navbar' || n.id === 'navbar');
-  const profileNode = nodes.find(n => n.type === 'profile' || n.type === 'hero' || n.id === 'profile');
-  const heroNode = nodes.find(n => n.type === 'hero' || n.type === 'profile' || n.id === 'hero');
+  const profileSectionNode = nodes.find(n => n.type === 'profile' || n.id === 'profile');
+  const heroSectionNode = nodes.find(n => n.type === 'hero' || n.id === 'hero');
+  const profileNode = profileSectionNode || heroSectionNode;
+  const heroNode = heroSectionNode || profileSectionNode;
   const aboutNode = nodes.find(n => n.type === 'about' || n.type === 'about_section' || n.type === 'timeline' || n.id === 'about');
   const featuresNode = nodes.find(n => n.type === 'features' || n.type === 'features_section' || n.id === 'features');
   const courseNode = nodes.find(n => n.type === 'course-cards' || n.type === 'courses' || n.id === 'courses');
@@ -381,7 +385,10 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
 
   // Parse Profile
   let profile: any = null;
-  const pp = profileNode ? parseProps(profileNode.props) : {};
+  const pp = {
+    ...(heroSectionNode ? parseProps(heroSectionNode.props) : {}),
+    ...(profileSectionNode ? parseProps(profileSectionNode.props) : {}),
+  };
   const np = navbarNode ? parseProps(navbarNode.props) : {};
 
   // Canonical Teacher Identity: single source of truth from my-academy (key: site_name)
@@ -412,6 +419,43 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
     if (sItems.length > 0) parsedStats = sItems;
   }
 
+  // Helper for resolving first non-empty string among candidates
+  const resolveNonEmpty = (...candidates: any[]) => {
+    for (const c of candidates) {
+      if (c !== null && c !== undefined && typeof c === 'string' && c.trim() !== '') return c.trim();
+      if (c !== null && c !== undefined && typeof c !== 'string' && c !== '') return c;
+    }
+    return '';
+  };
+
+  const coverVal = resolveNonEmpty(
+    pp.cover,
+    pp.coverImage,
+    pp.cover_image,
+    pp.banner,
+    pp.bannerImage,
+    pp.banner_image,
+    pp.backgroundImage,
+    pp.background_image,
+    pp.coverUrl,
+    pp.cover_url,
+    pp.bgImage,
+    pp.bg_image,
+    fallback.profile?.cover
+  );
+
+  const avatarVal = resolveNonEmpty(
+    pp.avatar,
+    pp.avatarImage,
+    pp.avatar_image,
+    pp.image,
+    pp.imageUrl,
+    pp.image_url,
+    pp.profileImage,
+    pp.profile_image,
+    fallback.profile?.avatar
+  );
+
   profile = {
     ...fallback.profile,
     ...pp,
@@ -420,19 +464,19 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
     teacherTitle: canonicalTeacherTitle,
     description: pp.description ?? pp.bio ?? fallback.profile?.description ?? '',
     goal: pp.goal ?? pp.mission ?? fallback.profile?.goal ?? '',
-    avatar: pp.avatar ?? pp.avatarImage ?? pp.image ?? pp.img ?? fallback.profile?.avatar ?? '',
-    cover: pp.cover ?? pp.coverImage ?? pp.backgroundImage ?? fallback.profile?.cover ?? '',
+    avatar: avatarVal,
+    cover: coverVal,
     verified: pp.verified !== undefined ? Boolean(pp.verified) : (fallback.profile?.verified ?? true),
     verifiedText: pp.verifiedText ?? pp.verified_text ?? fallback.profile?.verifiedText ?? 'موثّق',
     stats: parsedStats,
-    ctaPrimaryText: pp.ctaPrimaryText ?? pp.cta_primary_text ?? pp.buttonText ?? pp.button_text ?? fallback.profile?.ctaPrimaryText ?? 'ابدأ التعلم',
-    ctaPrimaryLink: pp.ctaPrimaryLink ?? pp.cta_primary_link ?? pp.buttonLink ?? pp.button_link ?? '#courses',
-    ctaPrimaryBg: pp.ctaPrimaryBg ?? pp.buttonBg ?? fallback.profile?.ctaPrimaryBg ?? '',
-    ctaPrimaryColor: pp.ctaPrimaryColor ?? pp.buttonTextColor ?? fallback.profile?.ctaPrimaryColor ?? '',
-    ctaSecondaryText: pp.ctaSecondaryText ?? pp.cta_secondary_text ?? pp.secondaryButtonText ?? fallback.profile?.ctaSecondaryText ?? 'شاهد الفيديوهات',
-    ctaSecondaryLink: pp.ctaSecondaryLink ?? pp.cta_secondary_link ?? pp.secondaryButtonLink ?? '#videos',
-    ctaSecondaryBg: pp.ctaSecondaryBg ?? pp.secondaryButtonBg ?? fallback.profile?.ctaSecondaryBg ?? '',
-    ctaSecondaryColor: pp.ctaSecondaryColor ?? pp.secondaryButtonTextColor ?? fallback.profile?.ctaSecondaryColor ?? '',
+    ctaPrimaryText: resolveNonEmpty(pp.ctaPrimaryText, pp.cta_primary_text, pp.buttonText, pp.button_text, fallback.profile?.ctaPrimaryText, 'ابدأ التعلم'),
+    ctaPrimaryLink: resolveNonEmpty(pp.ctaPrimaryLink, pp.cta_primary_link, pp.buttonLink, pp.button_link, '#courses'),
+    ctaPrimaryBg: resolveNonEmpty(pp.ctaPrimaryBg, pp.cta_primary_bg, pp.primaryButtonBg, pp.primary_button_bg, pp.buttonBg, pp.button_bg, fallback.profile?.ctaPrimaryBg),
+    ctaPrimaryColor: resolveNonEmpty(pp.ctaPrimaryColor, pp.cta_primary_color, pp.ctaPrimaryTextColor, pp.cta_primary_text_color, pp.primaryButtonTextColor, pp.primary_button_text_color, pp.buttonTextColor, pp.button_text_color, fallback.profile?.ctaPrimaryColor),
+    ctaSecondaryText: resolveNonEmpty(pp.ctaSecondaryText, pp.cta_secondary_text, pp.secondaryButtonText, pp.secondary_button_text, fallback.profile?.ctaSecondaryText, 'شاهد الفيديوهات'),
+    ctaSecondaryLink: resolveNonEmpty(pp.ctaSecondaryLink, pp.cta_secondary_link, pp.secondaryButtonLink, pp.secondary_button_link, '#videos'),
+    ctaSecondaryBg: resolveNonEmpty(pp.ctaSecondaryBg, pp.cta_secondary_bg, pp.secondaryButtonBg, pp.secondary_button_bg, fallback.profile?.ctaSecondaryBg),
+    ctaSecondaryColor: resolveNonEmpty(pp.ctaSecondaryColor, pp.cta_secondary_color, pp.ctaSecondaryTextColor, pp.cta_secondary_text_color, pp.secondaryButtonTextColor, pp.secondary_button_text_color, fallback.profile?.ctaSecondaryColor),
   };
 
   // Navbar
@@ -455,8 +499,16 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
       contactIconVisible: np.contactIconVisible !== undefined ? Boolean(np.contactIconVisible) : (fallback.navbar.contactIconVisible ?? true),
       contactModalTitle: np.contactModalTitle ?? np.contact_title ?? np.modalTitle ?? fallback.navbar.contactModalTitle,
       contactModalDescription: np.contactModalDescription ?? np.contact_description ?? np.modalDescription ?? fallback.navbar.contactModalDescription,
-      whatsappUrl: np.whatsappUrl ?? np.whatsapp_url ?? np.whatsapp ?? fallback.navbar.whatsappUrl,
-      phoneNumber: np.phoneNumber ?? np.phone_number ?? np.phone ?? fallback.navbar.phoneNumber,
+      whatsappCountryCode: np.whatsappCountryCode ?? np.whatsapp_country_code ?? fallback.navbar.whatsappCountryCode ?? '+20',
+      whatsappUrl: normalizeWhatsappUrl(
+        np.whatsappUrl ?? np.whatsapp_url ?? np.whatsapp ?? np.whatsappNumber ?? np.whatsapp_number ?? fallback.navbar.whatsappUrl,
+        np.whatsappCountryCode ?? np.whatsapp_country_code ?? fallback.navbar.whatsappCountryCode ?? '+20'
+      ) || (np.whatsappUrl ?? np.whatsapp_url ?? np.whatsapp ?? fallback.navbar.whatsappUrl),
+      phoneCountryCode: np.phoneCountryCode ?? np.phone_country_code ?? np.countryCode ?? np.country_code ?? fallback.navbar.phoneCountryCode ?? '+20',
+      phoneNumber: normalizePhoneNumber(
+        np.phoneNumber ?? np.phone_number ?? np.phone ?? fallback.navbar.phoneNumber,
+        np.phoneCountryCode ?? np.phone_country_code ?? np.countryCode ?? np.country_code ?? fallback.navbar.phoneCountryCode ?? '+20'
+      ) || (np.phoneNumber ?? np.phone_number ?? np.phone ?? fallback.navbar.phoneNumber),
       whatsappButtonLabel: np.whatsappButtonLabel ?? np.whatsapp_button_label ?? np.whatsappLabel ?? fallback.navbar.whatsappButtonLabel,
       phoneButtonLabel: np.phoneButtonLabel ?? np.phone_button_label ?? np.phoneLabel ?? fallback.navbar.phoneButtonLabel,
       coursesLabel: np.coursesLabel ?? np.courses_label ?? fallback.navbar.coursesLabel,
@@ -598,6 +650,8 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
         number: p.number ?? it.number ?? '1',
         title: p.title ?? it.title ?? '',
         description: p.description ?? it.description ?? '',
+        titleColor: p.titleColor ?? p.title_color ?? it.titleColor ?? it.title_color ?? '',
+        descriptionColor: p.descriptionColor ?? p.description_color ?? it.descriptionColor ?? it.description_color ?? '',
         enabled: p.enabled !== undefined ? Boolean(p.enabled) : true,
       };
     }) : fallback.steps.items;

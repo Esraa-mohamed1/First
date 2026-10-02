@@ -84,8 +84,8 @@ export const StudentsTable = ({
                     <td className="py-3 px-2 text-[10px] sm:text-xs font-bold text-gray-500 whitespace-nowrap">{student.date}</td>
                     <td className="py-3 px-2 text-left">
                       <span className={`px-2.5 py-1 rounded-lg text-[9px] sm:px-3 sm:py-1.5 sm:rounded-xl sm:text-[10px] font-black inline-block min-w-[70px] sm:min-w-[80px] text-center ${student.status === 'مدفوع' ? 'bg-green-50 text-emerald-600 border border-green-100' :
-                          student.status === 'انتظار' ? 'bg-orange-50 text-orange-500 border border-orange-100' :
-                            'bg-gray-50 text-gray-500 border border-gray-100'
+                        student.status === 'انتظار' ? 'bg-orange-50 text-orange-500 border border-orange-100' :
+                          'bg-gray-50 text-gray-500 border border-gray-100'
                         }`}>
                         {student.status}
                       </span>
@@ -101,7 +101,7 @@ export const StudentsTable = ({
             <span className="text-[10px] sm:text-xs font-bold text-gray-400">
               عرض 1 إلى {Math.min(enrichedStudents.length, 5)} من أصل {enrichedStudents.length} طالب
             </span>
-            <div className="flex items-center gap-1 sm:gap-1.5" dir="ltr">
+            {/* <div className="flex items-center gap-1 sm:gap-1.5" dir="ltr">
               <button className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:bg-gray-50 transition-colors">
                 <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
@@ -117,7 +117,7 @@ export const StudentsTable = ({
               <button className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:bg-gray-50 transition-colors">
                 <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
       )}

@@ -49,7 +49,7 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col pt-12 pb-24">
       <div className="max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         <div className="text-center mb-12 space-y-2">
           <h1 className="text-4xl font-black text-gray-900 tracking-tight">إعداد أكاديميتك</h1>
           <p className="text-lg text-gray-500 font-medium">أكمل الخطوات التالية لتبدأ في استقبال طلابك</p>
@@ -59,11 +59,11 @@ export default function OnboardingPage() {
         <div className="mb-12">
           <div className="flex items-center justify-between relative">
             <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-gray-200 rounded-full z-0" />
-            <div 
-              className="absolute right-0 top-1/2 -translate-y-1/2 h-1 bg-blue-600 rounded-full z-0 transition-all duration-500 ease-in-out" 
+            <div
+              className="absolute right-0 top-1/2 -translate-y-1/2 h-1 bg-blue-600 rounded-full z-0 transition-all duration-500 ease-in-out"
               style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
             />
-            
+
             {steps.map((step, index) => {
               const Icon = step.icon;
               const isActive = index === currentStep;
@@ -71,9 +71,9 @@ export default function OnboardingPage() {
 
               return (
                 <div key={step.id} className="relative z-10 flex flex-col items-center group">
-                  <div 
+                  <div
                     className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-sm
-                      ${isActive ? 'bg-blue-600 text-white scale-110 shadow-blue-500/30' : 
+                      ${isActive ? 'bg-blue-600 text-white scale-110 shadow-blue-500/30' :
                         isCompleted ? 'bg-green-500 text-white' : 'bg-white text-gray-400 border-2 border-gray-100'}
                     `}
                   >
@@ -189,3 +189,4 @@ export default function OnboardingPage() {
     </div>
   );
 }
+//saving the problem

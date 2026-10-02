@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from '@/components/Academic/Sidebar';
 import Header from '@/components/Academic/Header';
 import { getProfileStatus } from '@/services/auth';
-import { AlertCircle } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { twMerge } from 'tailwind-merge';
 
@@ -14,10 +13,37 @@ export default function AcademicLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
   const [isActive, setIsActive] = useState<boolean | null>(null);
   const router = useRouter();
   const pathname = usePathname();
+
+  // Load collapsed state from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('academic_sidebar_collapsed');
+      if (saved !== null) {
+        try {
+          setIsSidebarCollapsed(JSON.parse(saved));
+        } catch (e) {
+          console.error('Failed to parse sidebar collapsed state:', e);
+        }
+      }
+    }
+  }, []);
+
+  const handleToggleSidebar = useCallback(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+      setIsSidebarCollapsed(prev => {
+        const next = !prev;
+        localStorage.setItem('academic_sidebar_collapsed', JSON.stringify(next));
+        return next;
+      });
+    } else {
+      setIsSidebarOpen(prev => !prev);
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -78,24 +104,7 @@ export default function AcademicLayout({
     }
   }, [router]);
 
-  const handleVerificationClick = () => {
-    const userStr = localStorage.getItem('user_info');
-    let contact = '';
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        contact = user.email || user.phone || '';
-      } catch (e) {
-        console.error('Failed to parse user info');
-      }
-    }
-
-    router.push(`/auth/verification?contact=${encodeURIComponent(contact)}`);
-  };
-
   // On course create/edit pages, the course's own header acts as the main nav.
-  // Only match /academic/courses/create and /academic/courses/{numericId}[/...]
-  // so that list pages like /academic/courses/recorded still show the nav.
   const isCourseCreateOrEdit =
     pathname === '/academic/courses/create' ||
     /^\/academic\/courses\/\d+/.test(pathname);
@@ -105,57 +114,57 @@ export default function AcademicLayout({
 
       {!pathname.match(/\/courses\/.*\/student/) && (
         <>
+          {/* Mobile backdrop */}
           {isSidebarOpen && (
             <div
-              className="fixed inset-0 bg-black/50 z-[45] lg:hidden backdrop-blur-sm transition-all"
+              className="fixed inset-0 bg-black/50 z-[45] lg:hidden backdrop-blur-sm transition-opacity duration-300"
               onClick={() => setIsSidebarOpen(false)}
             />
           )}
 
-          <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+          <Sidebar
+            isOpen={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapse={() => {
+              setIsSidebarCollapsed(prev => {
+                const next = !prev;
+                localStorage.setItem('academic_sidebar_collapsed', JSON.stringify(next));
+                return next;
+              });
+            }}
+          />
         </>
       )}
 
-      <main className={twMerge("flex-1 transition-all duration-300 w-full overflow-x-hidden", !pathname.match(/\/courses\/.*\/student/) && "lg:mr-72")}>
-        {/* Hide the global profile header on create/edit course — the course header replaces it */}
-        {!pathname.match(/\/courses\/.*\/student/) && !isCourseCreateOrEdit && (
-          <Header onMenuClick={() => setIsSidebarOpen(true)} />
+      <main
+        className={twMerge(
+          'flex-1 transition-all duration-300 ease-in-out w-full overflow-x-hidden',
+          !pathname.match(/\/courses\/.*\/student/) && (isSidebarCollapsed ? 'lg:mr-20' : 'lg:mr-72')
         )}
-        <div className={twMerge(
-          !pathname.match(/\/courses\/.*\/student/)
-            ? isCourseCreateOrEdit
-              ? 'p-0 max-w-[1800px] mx-auto'
-              : 'p-8 md:p-12 max-w-[1800px] mx-auto'
-            : ''
-        )}>
+      >
+        {/* Top Header */}
+        {!pathname.match(/\/courses\/.*\/student/) && !isCourseCreateOrEdit && (
+          <Header
+            onToggleSidebar={handleToggleSidebar}
+            onMenuClick={() => setIsSidebarOpen(true)}
+            isSidebarCollapsed={isSidebarCollapsed}
+            isMobileSidebarOpen={isSidebarOpen}
+          />
+        )}
+
+        <div
+          className={twMerge(
+            !pathname.match(/\/courses\/.*\/student/)
+              ? isCourseCreateOrEdit
+                ? 'p-0 max-w-[1800px] mx-auto'
+                : 'p-6 sm:p-8 md:p-12 max-w-[1800px] mx-auto'
+              : ''
+          )}
+        >
           {children}
         </div>
       </main>
     </div>
   );
 }
-
-
-
-
-
-{/* Verification Overlay  */ }
-{/* {isVerified === false && isActive !== false && (
-        <div className="fixed inset-0 z-[100] backdrop-blur-md bg-white/50 flex items-center justify-center">
-          <div className="bg-white p-10 rounded-[2rem] shadow-2xl text-center max-w-md border border-red-100 animate-in fade-in zoom-in duration-300 mx-4">
-            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <AlertCircle className="w-10 h-10 text-red-500" />
-            </div>
-            <h3 className="text-2xl font-black text-gray-900 mb-3">حسابك غير مفعل بعد</h3>
-            <p className="text-gray-500 mb-8 text-lg font-medium leading-relaxed">
-              يرجى تفعيل حسابك للاستمرار في استخدام لوحة التحكم والاستفادة من كافة المميزات.
-            </p>
-            <button 
-              onClick={handleVerificationClick}
-              className="w-full py-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-red-500/30 hover:-translate-y-1"
-            >
-              تفعيل الحساب
-            </button>
-          </div>
-        </div>
-      )} */}

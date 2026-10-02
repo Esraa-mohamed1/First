@@ -32,6 +32,14 @@ export default function NotFound() {
         </p>
 
         {/* Action Buttons to Main Academy Template */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full"></div>
+        <Link
+          href="https://darab.academy/"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-sm shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all active:scale-[0.98]"
+        >
+          <Home size={18} />
+          <span>العودة للرئيسية</span>
+        </Link>
         {/* <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
           <Link
             href="/"

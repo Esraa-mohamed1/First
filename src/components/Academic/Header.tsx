@@ -1,115 +1,424 @@
 'use client';
 
-import { Plus, Menu } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
+import {
+  Menu,
+  ExternalLink,
+  Plus,
+  ChevronDown,
+  UserPlus,
+  GraduationCap,
+  User,
+  KeyRound,
+  Globe,
+  LogOut,
+} from 'lucide-react';
+import { twMerge } from 'tailwind-merge';
 import SelectCourseTypeModal from './Modals/SelectCourseTypeModal';
+import { clearUserSessionAndCache } from '@/lib/auth-storage';
+import { getMeProfile } from '@/services/auth';
 
-const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
+interface HeaderUser {
+  name?: string;
+  academy_name?: string;
+  title?: string;
+  email?: string;
+  role?: string;
+  logo?: string;
+  avatar?: string;
+  profile_image?: string;
+}
+
+interface DropdownItemConfig {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  href?: string;
+  onClick?: () => void;
+  isDanger?: boolean;
+}
+
+interface HeaderProps {
+  onMenuClick?: () => void;
+  onToggleSidebar?: () => void;
+  isSidebarCollapsed?: boolean;
+  isMobileSidebarOpen?: boolean;
+}
+
+const Header: React.FC<HeaderProps> = ({
+  onMenuClick,
+  onToggleSidebar,
+  isSidebarCollapsed = false,
+  isMobileSidebarOpen = false,
+}) => {
   const router = useRouter();
-  const [user, setUser] = useState<{ name: string, role: string } | null>(null);
+  const pathname = usePathname();
+
+  const [user, setUser] = useState<HeaderUser | null>(null);
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isSelectTypeModalOpen, setIsSelectTypeModalOpen] = useState(false);
 
+  const addMenuRef = useRef<HTMLDivElement>(null);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close all open dropdowns
+  const closeAllDropdowns = useCallback(() => {
+    setIsAddMenuOpen(false);
+    setIsProfileMenuOpen(false);
+  }, []);
+
+  // Handle outside click & Escape key
   useEffect(() => {
-    const loadUser = () => {
+    const handleDocumentClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        addMenuRef.current &&
+        !addMenuRef.current.contains(target) &&
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(target)
+      ) {
+        closeAllDropdowns();
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeAllDropdowns();
+      }
+    };
+
+    document.addEventListener('mousedown', handleDocumentClick);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentClick);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [closeAllDropdowns]);
+
+  // Load user data from localStorage & API
+  useEffect(() => {
+    const loadUserFromStorage = () => {
       const storedUser = localStorage.getItem('user_info');
       if (storedUser) {
         try {
           const parsed = JSON.parse(storedUser);
-          if (parsed && (parsed.name || parsed.academy_name)) {
+          if (parsed) {
             setUser(parsed);
             return true;
           }
         } catch (e) {
-          console.error("Failed to parse user info");
+          console.error('Failed to parse user info:', e);
         }
       }
       return false;
     };
 
-    if (!loadUser()) {
-      const interval = setInterval(() => {
-        if (loadUser()) {
-          clearInterval(interval);
+    loadUserFromStorage();
+
+    const fetchUserProfile = async () => {
+      try {
+        const response = await getMeProfile();
+        const data = response?.data || response;
+        if (data) {
+          setUser(prev => ({
+            ...prev,
+            ...data,
+            name: data.name || data.academy_name || data.title || prev?.name,
+            email: data.email || prev?.email,
+          }));
         }
-      }, 300);
-      const timer = setTimeout(() => clearInterval(interval), 5000);
-      return () => {
-        clearInterval(interval);
-        clearTimeout(timer);
-      };
-    }
+      } catch (e) {
+        // Fallback to storage data
+      }
+    };
+
+    fetchUserProfile();
+
+    const handleStorageChange = () => {
+      loadUserFromStorage();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
+
+  // Add dropdown actions config (ONLY 2 items: إضافة طالب & إضافة دورة)
+  const addMenuItems: DropdownItemConfig[] = [
+    {
+      id: 'add-student',
+      label: 'إضافة طالب',
+      icon: UserPlus,
+      onClick: () => {
+        setIsAddMenuOpen(false);
+        router.push('/academic/students');
+      },
+    },
+    {
+      id: 'add-course',
+      label: 'إضافة دورة',
+      icon: GraduationCap,
+      onClick: () => {
+        setIsAddMenuOpen(false);
+        setIsSelectTypeModalOpen(true);
+      },
+    },
+  ];
+
+  // Profile navigation items config
+  const profileNavItems: DropdownItemConfig[] = [
+    {
+      id: 'academy-data',
+      label: 'الملف الشخصي',
+      icon: User,
+      href: '/academic/settings/academy',
+    },
+    {
+      id: 'account-settings',
+      label: 'إعدادات الحساب',
+      icon: KeyRound,
+      href: '/academic/settings/login-data',
+    },
+    {
+      id: 'website-settings',
+      label: 'إعدادات الموقع',
+      icon: Globe,
+      href: '/academic/domain',
+    },
+  ];
+
+  const handleLogout = () => {
+    closeAllDropdowns();
+    clearUserSessionAndCache();
+    window.location.href = '/';
+  };
+
+  const displayName = user?.name || user?.academy_name || user?.title || 'الأكاديمية';
+  const displayEmail = user?.email || 'admin@darab.academy';
+  const avatarChar = displayName.charAt(0).toUpperCase() || 'أ';
+
+  const handleToggle = () => {
+    if (onToggleSidebar) {
+      onToggleSidebar();
+    } else if (onMenuClick) {
+      onMenuClick();
+    }
+  };
 
   return (
     <>
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-40">
-        <div className="flex flex-row items-center justify-between px-6 py-4 gap-8 relative">
-
-          {/* Right Side: Mobile Menu Button */}
-          <div className="flex items-center gap-4">
+      <header
+        className="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-all duration-200"
+        dir="rtl"
+      >
+        <div className="flex items-center justify-between h-20 px-4 sm:px-6 lg:px-8 gap-3 sm:gap-4 max-w-[1800px] mx-auto">
+          
+          {/* Right Section (RTL Start): Sidebar Toggle Button */}
+          <div className="flex items-center">
             <button
-              onClick={onMenuClick}
-              className="p-2 hover:bg-gray-50 rounded-xl transition-all lg:hidden"
+              type="button"
+              onClick={handleToggle}
+              className="p-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl border border-gray-200/70 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 cursor-pointer"
+              aria-label="تبديل القائمة الجانبية"
+              aria-expanded={!isSidebarCollapsed || isMobileSidebarOpen}
             >
-              <Menu size={24} className="text-gray-500" />
+              <Menu size={20} />
             </button>
           </div>
 
-          {/* Center: Preview Website Button */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
-            <button
-              onClick={() => window.open('/', '_blank')}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-black text-sm shadow-lg shadow-blue-100 transition-all whitespace-nowrap"
-            >
-              معاينة الموقع
-            </button>
-          </div>
+          {/* Left Section (RTL End): "معاينة الموقع" and "إضافة" Side by Side + Profile */}
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            
+            {/* Action Buttons: Side by Side with matched styling */}
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              
+              {/* "معاينة الموقع" (Preview Site) Button */}
+              <button
+                type="button"
+                onClick={() => window.open('/', '_blank')}
+                className="h-10 bg-white hover:bg-blue-50/80 border border-gray-200/80 hover:border-blue-200 text-gray-700 hover:text-blue-600 px-3.5 sm:px-4 rounded-xl font-bold text-xs sm:text-sm shadow-2xs hover:shadow-xs transition-all duration-200 flex items-center gap-2 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 shrink-0"
+              >
+                <ExternalLink size={15} className="text-gray-500 group-hover:text-blue-600 transition-colors shrink-0" />
+                <span className="whitespace-nowrap">معاينة الموقع</span>
+              </button>
 
-          {/* Left Side: Actions & Profile */}
-          <div className="flex items-center gap-4">
-
-            {/* Add Course Button Control */}
-            <button
-              onClick={() => setIsSelectTypeModalOpen(true)}
-              className="flex items-center gap-2 group cursor-pointer transition-all"
-            >
-              <div className="w-10 h-10 bg-blue-600 group-hover:bg-blue-700 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-100 transition-all shrink-0">
-                <Plus size={20} strokeWidth={3} />
-              </div>
-              <span className="bg-white border border-blue-100 text-blue-600 group-hover:bg-blue-50/60 px-3.5 py-2 rounded-xl text-xs font-black shadow-xs whitespace-nowrap hidden sm:inline-block transition-colors">
-                إضافة دورة
-              </span>
-            </button>
-
-            {/* User Profile */}
-            <div className="flex items-center gap-3 pr-4 border-r border-gray-100 hidden sm:flex">
-              {user?.name ? (
-                <>
-                  <div className="text-right">
-                    <h4 className="text-sm font-black text-gray-900 leading-none">{user.name}</h4>
-                    {user.role && (
-                      <p className="text-[10px] text-gray-400 font-bold mt-1.5 leading-none">{user.role}</p>
+              {/* "إضافة" (Add) Button + Dropdown */}
+              <div className="relative" ref={addMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddMenuOpen(prev => !prev);
+                    setIsProfileMenuOpen(false);
+                  }}
+                  className="h-10 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-3.5 sm:px-4 rounded-xl font-bold text-xs sm:text-sm shadow-sm hover:shadow-md hover:shadow-blue-500/20 transition-all duration-150 flex items-center gap-2 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2 shrink-0"
+                  aria-haspopup="true"
+                  aria-expanded={isAddMenuOpen}
+                >
+                  <Plus size={17} strokeWidth={2.5} className="shrink-0" />
+                  <span className="whitespace-nowrap">إضافة</span>
+                  <ChevronDown
+                    size={14}
+                    className={twMerge(
+                      'transition-transform duration-200 shrink-0',
+                      isAddMenuOpen ? '-rotate-180' : ''
                     )}
+                  />
+                </button>
+
+                {/* Add Dropdown Menu (Contains only 2 items) */}
+                {isAddMenuOpen && (
+                  <div className="absolute left-0 mt-2 w-52 bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-200/60 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="space-y-0.5">
+                      {addMenuItems.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={item.onClick}
+                            className="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl transition-all duration-150 text-right cursor-pointer"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-500 group-hover:text-blue-600 transition-colors shrink-0">
+                              <Icon size={16} />
+                            </div>
+                            <span className="flex-1 leading-none">{item.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-sm ring-2 ring-white shadow-sm shrink-0">
-                    {user.name.charAt(0)}
+                )}
+              </div>
+            </div>
+
+            {/* Subtle Divider */}
+            <div className="h-7 w-px bg-gray-200/80 hidden sm:block mx-0.5" />
+
+            {/* Profile Trigger & Dropdown */}
+            <div className="relative" ref={profileMenuRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsProfileMenuOpen(prev => !prev);
+                  setIsAddMenuOpen(false);
+                }}
+                className={twMerge(
+                  'flex items-center gap-2.5 sm:gap-3 p-1 sm:p-1.5 -m-1 rounded-xl transition-all duration-150 cursor-pointer group select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20',
+                  isProfileMenuOpen ? 'bg-gray-50' : 'hover:bg-gray-50/80'
+                )}
+                aria-haspopup="true"
+                aria-expanded={isProfileMenuOpen}
+              >
+                {/* User Info (Desktop / Tablet) */}
+                <div className="text-right hidden sm:block min-w-0">
+                  <h4 className="text-sm font-black text-gray-900 leading-tight truncate max-w-[130px] md:max-w-[170px]">
+                    {displayName}
+                  </h4>
+                  <p className="text-[11px] text-gray-400 font-bold mt-0.5 leading-tight">
+                    مدرس
+                  </p>
+                </div>
+
+                {/* Avatar Initial */}
+                <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-sm ring-2 ring-blue-50 shadow-xs shrink-0 select-none">
+                  {avatarChar}
+                </div>
+
+                {/* Chevron */}
+                <ChevronDown
+                  size={15}
+                  className={twMerge(
+                    'text-gray-400 group-hover:text-gray-600 transition-transform duration-200 shrink-0 hidden sm:block',
+                    isProfileMenuOpen ? '-rotate-180 text-blue-600' : ''
+                  )}
+                />
+              </button>
+
+              {/* Profile Dropdown Menu */}
+              {isProfileMenuOpen && (
+                <div className="absolute left-0 mt-2 w-64 bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-200/60 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 text-right">
+                  
+                  {/* User Profile Header */}
+                  <div className="px-3.5 py-3 flex items-center gap-3 bg-gray-50/60 rounded-xl mb-1">
+                    <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-sm ring-2 ring-white shadow-xs shrink-0">
+                      {avatarChar}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-sm font-black text-gray-900 truncate leading-snug">
+                        {displayName}
+                      </h4>
+                      <p className="text-[11px] text-gray-500 font-medium truncate leading-snug dir-ltr text-right">
+                        {displayEmail}
+                      </p>
+                    </div>
                   </div>
-                </>
-              ) : (
-                <>
-                  <div className="text-right space-y-1.5">
-                    <div className="h-3.5 w-20 bg-gray-200 rounded-md animate-pulse"></div>
-                    <div className="h-2.5 w-14 bg-gray-100 rounded-md animate-pulse"></div>
+
+                  <div className="my-1 border-t border-gray-100" />
+
+                  {/* Navigation Links */}
+                  <div className="space-y-0.5">
+                    {profileNavItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActive =
+                        pathname === item.href ||
+                        (item.href !== '/academic' && pathname?.startsWith(item.href || ''));
+
+                      return (
+                        <Link
+                          key={item.id}
+                          href={item.href || '#'}
+                          onClick={() => setIsProfileMenuOpen(false)}
+                          className={twMerge(
+                            'w-full flex items-center gap-3 px-3.5 py-2.5 text-xs sm:text-sm rounded-xl transition-all duration-150',
+                            isActive
+                              ? 'bg-blue-50 text-blue-600 font-bold shadow-2xs'
+                              : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50/60 font-semibold'
+                          )}
+                        >
+                          <div
+                            className={twMerge(
+                              'w-8 h-8 rounded-lg flex items-center justify-center transition-colors shrink-0',
+                              isActive
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-50 text-gray-500 group-hover:text-blue-600'
+                            )}
+                          >
+                            <Icon size={16} />
+                          </div>
+                          <span className="flex-1 leading-none">{item.label}</span>
+                        </Link>
+                      );
+                    })}
                   </div>
-                  <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse ring-2 ring-white shadow-sm shrink-0"></div>
-                </>
+
+                  <div className="my-1 border-t border-gray-100" />
+
+                  {/* Logout Button */}
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl transition-all duration-150 text-right cursor-pointer"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center shrink-0">
+                      <LogOut size={16} />
+                    </div>
+                    <span className="flex-1 leading-none">تسجيل الخروج</span>
+                  </button>
+                </div>
               )}
             </div>
 
           </div>
+
         </div>
       </header>
+
+      {/* Select Course Type Modal (Unchanged functionality) */}
       <SelectCourseTypeModal
         isOpen={isSelectTypeModalOpen}
         onClose={() => setIsSelectTypeModalOpen(false)}

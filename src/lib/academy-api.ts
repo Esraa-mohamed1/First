@@ -8,19 +8,79 @@ const academyApi = axios.create({
   },
 });
 
+const SYSTEM_DOMAINS = new Set([
+  'darab.academy',
+  'www.darab.academy',
+  'ip.darab.academy',
+  'app.darab.academy',
+  'api.darab.academy',
+  'localhost',
+  '127.0.0.1'
+]);
+
+// Helper to get full domain or subdomain name (strictly lowercase)
+const getFullTenantDomain = (): string => {
+  if (typeof window === 'undefined') return '';
+
+  let hostname = (window.location.hostname || '').trim().toLowerCase();
+  if (hostname.endsWith('.localhost')) {
+    hostname = hostname.replace(/\.localhost$/, '').trim().toLowerCase();
+  }
+
+  // If hostname is a tenant subdomain/domain and NOT a system platform domain
+  if (hostname && !SYSTEM_DOMAINS.has(hostname) && hostname !== 'localhost' && hostname !== '127.0.0.1') {
+    if (hostname.endsWith('.darab.academy') || hostname.includes('.')) {
+      return hostname.toLowerCase();
+    }
+    return `${hostname.toLowerCase()}.darab.academy`;
+  }
+
+  // Fallback: Check stored academy_link_name (e.g. set after creating info academy or during login)
+  const storedLink = localStorage.getItem('academy_link_name');
+  if (storedLink) {
+    const clean = storedLink.trim().toLowerCase();
+    if (clean && !SYSTEM_DOMAINS.has(clean)) {
+      if (clean.includes('.')) {
+        return clean.toLowerCase();
+      }
+      return `${clean.toLowerCase()}.darab.academy`;
+    }
+  }
+
+  // Fallback: Check user_info in localStorage
+  try {
+    const rawUser = localStorage.getItem('user_info');
+    if (rawUser) {
+      const parsed = JSON.parse(rawUser);
+      if (parsed.domain && !SYSTEM_DOMAINS.has(String(parsed.domain).trim().toLowerCase())) {
+        return String(parsed.domain).trim().toLowerCase();
+      }
+      if (parsed.custom_domain && !SYSTEM_DOMAINS.has(String(parsed.custom_domain).trim().toLowerCase())) {
+        return String(parsed.custom_domain).trim().toLowerCase();
+      }
+      if (parsed.subdomain) {
+        const sub = String(parsed.subdomain).trim().toLowerCase();
+        if (!SYSTEM_DOMAINS.has(sub) && sub !== 'ip' && sub !== 'app' && sub !== 'www' && sub !== 'api') {
+          return sub.includes('.') ? sub : `${sub}.darab.academy`;
+        }
+      }
+      if (parsed.academy_link_name) {
+        const link = String(parsed.academy_link_name).trim().toLowerCase();
+        if (!SYSTEM_DOMAINS.has(link)) {
+          return link.includes('.') ? link : `${link}.darab.academy`;
+        }
+      }
+    }
+  } catch {}
+
+  return '';
+};
+
 academyApi.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token');
-      let tenantKey = localStorage.getItem('academy_link_name');
-      if (!tenantKey) {
-        let hostname = window.location.hostname;
-                if (hostname.endsWith('.localhost')) {
-          hostname = hostname.replace('.localhost', '');
-        }        if (hostname && hostname !== 'localhost') {
-           tenantKey = hostname;
-        }
-      }
+      const fullTenantDomain = getFullTenantDomain();
 
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -28,13 +88,13 @@ academyApi.interceptors.request.use(
         console.warn('AcademyAPI: No token found in localStorage');
       }
       
-      if (tenantKey) {
-        const lowerKey = tenantKey.toLowerCase();
-        config.headers['X-Tenant-Key'] = lowerKey;
-        config.headers['X-Tenant'] = lowerKey;
-        config.headers['x-tenant-name'] = lowerKey;
+      if (fullTenantDomain) {
+        const lowerDomain = fullTenantDomain.trim().toLowerCase();
+        config.headers['X-Tenant-Key'] = lowerDomain;
+        config.headers['X-Tenant'] = lowerDomain;
+        config.headers['x-tenant-name'] = lowerDomain;
       } else {
-        console.warn('AcademyAPI: No academy_link_name found in localStorage/hostname');
+        console.warn('AcademyAPI: No full tenant domain found in localStorage/hostname');
       }
     }
     return config;

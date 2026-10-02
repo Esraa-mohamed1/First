@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Monitor,
@@ -27,7 +27,8 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
-  Settings
+  Settings,
+  ChevronDown
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
@@ -38,7 +39,18 @@ import { getPages, getSections, saveSections, createPage, updatePage, apiToEdito
 import { syncHomepageCache } from '@/lib/homepage-cache';
 import { getAcademicHtml, renderVideoPlayer } from '@/builder/templates/academic/academicHtml';
 import { getCoachHtml } from '@/builder/templates/coach/coachHtml';
-import { getSchoolCoachHtml, getSchoolCoachNewDesignHtml } from '@/builder/templates/schoolcoach/schoolcoachHtml';
+import ImageUploader from '@/builder/inspector/components/ImageUploader';
+import {
+  getSchoolCoachHtml,
+  getSchoolCoachNewDesignHtml,
+  renderSchoolCoachFaqItemHtml,
+  renderSchoolCoachFaqListHtml,
+  renderSchoolCoachEmptyFaqHtml,
+  normalizeWhatsappUrl,
+  extractLocalWhatsappNumber,
+  normalizePhoneNumber,
+  extractLocalPhoneNumber,
+} from '@/builder/templates/schoolcoach/schoolcoachHtml';
 import { getCourses } from '@/services/courses';
 import { getBags } from '@/services/bags';
 import { getMyAcademyProfile } from '@/services/student-auth';
@@ -342,6 +354,8 @@ interface StepItemConfig {
   number: string;
   title: string;
   description: string;
+  titleColor?: string;
+  descriptionColor?: string;
   enabled?: boolean;
 }
 
@@ -474,7 +488,9 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         contactIconVisible: true,
         contactModalTitle: 'تواصل مع الفريق',
         contactModalDescription: 'للحجز والاستفسار، يمكنك التواصل مباشرة مع الفريق.',
+        whatsappCountryCode: '+20',
         whatsappUrl: '',
+        phoneCountryCode: '+20',
         phoneNumber: '',
         whatsappButtonLabel: 'واتساب',
         phoneButtonLabel: 'اتصال',
@@ -645,9 +661,9 @@ const getDefaultContent = (role: string, templateId: string): TemplateContent =>
         textColor: '',
         fontFamily: '',
         items: [
-          { number: '1', title: 'شاهد درس تجريبي', description: 'اعرف أسلوب الشرح قبل الاشتراك.', enabled: true },
-          { number: '2', title: 'اختار صفك الدراسي', description: 'هنرشح لك المحتوى المناسب فقط.', enabled: true },
-          { number: '3', title: 'ابدأ الكورس المناسب', description: 'ابدأ رحلتك التعليمية بالطريقة المناسبة ليك.', enabled: true },
+          { number: '1', title: 'شاهد درس تجريبي', description: 'اعرف أسلوب الشرح قبل الاشتراك.', titleColor: '', descriptionColor: '', enabled: true },
+          { number: '2', title: 'اختار صفك الدراسي', description: 'هنرشح لك المحتوى المناسب فقط.', titleColor: '', descriptionColor: '', enabled: true },
+          { number: '3', title: 'ابدأ الكورس المناسب', description: 'ابدأ رحلتك التعليمية بالطريقة المناسبة ليك.', titleColor: '', descriptionColor: '', enabled: true },
         ],
       },
       videos: {
@@ -780,6 +796,36 @@ export default function PageBuilderPage() {
   const [content, setContent] = useState<TemplateContent | null>(null);
   const [previewContent, setPreviewContent] = useState<TemplateContent | null>(null);
   const [initialHtml, setInitialHtml] = useState<string>('');
+
+  // Memoized available gallery images across sections for image picker
+  const availableGalleryImages = useMemo(() => {
+    const list: string[] = [];
+    if (Array.isArray(content?.gallery?.items)) {
+      content.gallery.items.forEach((item: any) => {
+        const url = item?.image_url || item?.image || item?.img || (typeof item === 'string' ? item : '');
+        if (url && typeof url === 'string' && url.trim() && !list.includes(url.trim())) {
+          list.push(url.trim());
+        }
+      });
+    }
+    if (Array.isArray(availableBags)) {
+      availableBags.forEach((bag: any) => {
+        if (bag.image && !list.includes(bag.image)) list.push(bag.image);
+        if (Array.isArray(bag.gallery)) {
+          bag.gallery.forEach((g: any) => {
+            const gUrl = typeof g === 'string' ? g : g?.url || g?.image;
+            if (gUrl && !list.includes(gUrl)) list.push(gUrl);
+          });
+        }
+      });
+    }
+    if (Array.isArray(availableCourses)) {
+      availableCourses.forEach((crs: any) => {
+        if (crs.image && !list.includes(crs.image)) list.push(crs.image);
+      });
+    }
+    return list;
+  }, [content?.gallery?.items, availableBags, availableCourses]);
 
   // Debounce preview updates to prevent iframe reload flicker during typing
   useEffect(() => {
@@ -1152,20 +1198,13 @@ export default function PageBuilderPage() {
       });
     }
 
-    if (currentRole === 'schoolcoach') {
-      updateText('#testimonials h2.section-title, #testimonials h2', content.faq.testimonialsTitle || '');
-      updateText('#testimonials p.text-body-lg.max-w-2xl', content.faq.testimonialsSubtitle || '');
-      content.faq.items.forEach((item, idx) => {
-        updateText(`[data-section="faq"][data-index="${idx}"] h4`, item.question);
-        updateText(`[data-section="faq"][data-index="${idx}"] p`, `"${item.answer}"`);
-      });
-    } else if (currentRole === 'coach') {
+    if (currentRole === 'coach') {
       updateText('[data-section="faq"] > div > div > h2, [data-section="faq"] h2', content.faq.title);
       content.faq.items.forEach((item, idx) => {
         updateText(`[data-section="faq"][data-index="${idx}"] span.font-headline-md, [data-section="faq"][data-index="${idx}"] span.font-body-lg`, item.question);
         updateText(`[data-section="faq"][data-index="${idx}"] span.font-label-sm, [data-section="faq"][data-index="${idx}"] div.bg-surface`, item.answer);
       });
-    } else {
+    } else if (currentRole === 'academy') {
       updateText('[data-section="faq"] h2', content.faq.title);
       content.faq.items.forEach((item, idx) => {
         updateText(`[data-section="faq"][data-index="${idx}"] h4, [data-section="faq"][data-index="${idx}"] .font-body-lg`, item.question);
@@ -1271,6 +1310,33 @@ export default function PageBuilderPage() {
       updateText('#generic-modal p', content.navbar?.contactModalDescription || 'للحجز والاستفسار، يمكنك التواصل مباشرة مع الفريق.');
       updateText('#generic-modal a.whatsapp-btn span', content.navbar?.whatsappButtonLabel || 'واتساب');
       updateText('#generic-modal a.phone-btn span', content.navbar?.phoneButtonLabel || 'اتصال');
+      const rawModalWhatsapp = content.navbar?.whatsappUrl || '';
+      const modalWhatsappCountryCode = content.navbar?.whatsappCountryCode || '+20';
+      const resolvedModalWhatsappUrl = normalizeWhatsappUrl(rawModalWhatsapp, modalWhatsappCountryCode);
+      const modalWhatsappLink = doc.querySelector('#generic-modal a.whatsapp-btn, a.whatsapp-btn') as HTMLAnchorElement;
+      if (modalWhatsappLink) {
+        if (resolvedModalWhatsappUrl) {
+          modalWhatsappLink.href = resolvedModalWhatsappUrl;
+          modalWhatsappLink.style.display = 'inline-flex';
+        } else {
+          modalWhatsappLink.href = '#';
+          modalWhatsappLink.style.display = 'none';
+        }
+      }
+
+      const rawModalPhone = content.navbar?.phoneNumber || '';
+      const modalPhoneCountryCode = content.navbar?.phoneCountryCode || content.navbar?.countryCode || '+20';
+      const resolvedModalPhone = normalizePhoneNumber(rawModalPhone, modalPhoneCountryCode);
+      const modalPhoneLink = doc.querySelector('#generic-modal a.phone-btn, a.phone-btn') as HTMLAnchorElement;
+      if (modalPhoneLink) {
+        if (resolvedModalPhone) {
+          modalPhoneLink.href = `tel:${resolvedModalPhone}`;
+          modalPhoneLink.style.display = 'inline-flex';
+        } else {
+          modalPhoneLink.href = '#';
+          modalPhoneLink.style.display = 'none';
+        }
+      }
 
       // 2. Hero Profile Live Updates
       updateText('.teacher-name', teacherName || 'اسم المعلم');
@@ -1384,8 +1450,8 @@ export default function PageBuilderPage() {
           btn1.style.display = 'inline-flex';
           const spanText = btn1.querySelector('span');
           if (spanText) spanText.textContent = primaryText;
-          if (content.profile?.ctaPrimaryBg) btn1.style.background = content.profile.ctaPrimaryBg;
-          if (content.profile?.ctaPrimaryColor) btn1.style.color = content.profile.ctaPrimaryColor;
+          btn1.style.background = content.profile?.ctaPrimaryBg || '';
+          btn1.style.color = content.profile?.ctaPrimaryColor || '';
         }
       }
 
@@ -1399,8 +1465,9 @@ export default function PageBuilderPage() {
           btn2.style.display = 'inline-flex';
           const spanText = btn2.querySelector('span');
           if (spanText) spanText.textContent = secondaryText;
-          if (content.profile?.ctaSecondaryBg) btn2.style.backgroundColor = content.profile.ctaSecondaryBg;
-          if (content.profile?.ctaSecondaryColor) btn2.style.color = content.profile.ctaSecondaryColor;
+          btn2.style.backgroundColor = content.profile?.ctaSecondaryBg || '';
+          btn2.style.background = content.profile?.ctaSecondaryBg || '';
+          btn2.style.color = content.profile?.ctaSecondaryColor || '';
         }
       }
 
@@ -1462,57 +1529,70 @@ export default function PageBuilderPage() {
 
       // 4. Steps Section Live Updates (#steps)
       if (content.steps) {
-        updateText('#steps .steps-heading, #steps h2', content.steps.title ?? 'لسه أول مرة تذاكر معايا؟');
-        updateText('#steps .steps-caption, #steps .steps-header p, #steps .section-header p', content.steps.subtitle ?? 'ابدأ بالخطوات دي، وفي دقائق هتعرف أنسب مكان ليك.');
+        const stepsSecConfig = content.steps;
+        updateText('#steps .steps-heading, #steps h2', stepsSecConfig.title ?? 'لسه أول مرة تذاكر معايا؟');
+        updateText('#steps .steps-caption, #steps .steps-header p, #steps .section-header p', stepsSecConfig.subtitle ?? 'ابدأ بالخطوات دي، وفي دقائق هتعرف أنسب مكان ليك.');
 
         const stepsSec = doc.querySelector('#steps, [data-section="steps"]') as HTMLElement;
         if (stepsSec) {
-          if (content.steps.backgroundColor) stepsSec.style.backgroundColor = content.steps.backgroundColor;
+          if (stepsSecConfig.backgroundColor) stepsSec.style.backgroundColor = stepsSecConfig.backgroundColor;
           else stepsSec.style.backgroundColor = '';
-          if (content.steps.textColor) {
-            stepsSec.style.color = content.steps.textColor;
+          if (stepsSecConfig.textColor) {
+            stepsSec.style.color = stepsSecConfig.textColor;
             const heading = stepsSec.querySelector('.steps-heading') as HTMLElement;
-            if (heading) heading.style.color = content.steps.textColor;
+            if (heading) heading.style.color = stepsSecConfig.textColor;
           }
         }
 
         const stepsHeader = doc.querySelector('#steps .steps-header, #steps .section-header') as HTMLElement;
         if (stepsHeader) {
-          if (content.steps.fontFamily) {
-            stepsHeader.style.fontFamily = `'${content.steps.fontFamily}', system-ui, sans-serif`;
+          if (stepsSecConfig.fontFamily) {
+            stepsHeader.style.fontFamily = `'${stepsSecConfig.fontFamily}', system-ui, sans-serif`;
           } else {
             stepsHeader.style.fontFamily = '';
           }
         }
 
         const stepsWrapper = doc.querySelector('#steps .steps-wrapper') as HTMLElement;
-        if (stepsWrapper && content.steps.fontFamily) {
-          stepsWrapper.style.fontFamily = `'${content.steps.fontFamily}', system-ui, sans-serif`;
+        if (stepsWrapper && stepsSecConfig.fontFamily) {
+          stepsWrapper.style.fontFamily = `'${stepsSecConfig.fontFamily}', system-ui, sans-serif`;
         }
 
-        if (Array.isArray(content.steps.items)) {
+        if (Array.isArray(stepsSecConfig.items)) {
           const wrapper = doc.querySelector('#steps .steps-wrapper');
           const currentCards = doc.querySelectorAll('#steps .steps-wrapper .step-card, #steps .steps-wrapper .step-item');
-          if (wrapper && currentCards.length !== content.steps.items.length) {
-            wrapper.innerHTML = content.steps.items.map((st: any, idx: number) => `
-              <div class="step-card" data-section="steps" data-index="${idx}">
-                <div class="step-badge">${String(idx + 1).padStart(2, '0')}</div>
-                <div class="step-content">
-                  <h3 class="step-title">${st.title || ''}</h3>
-                  <p class="step-description">${st.description || ''}</p>
+          if (wrapper && currentCards.length !== stepsSecConfig.items.length) {
+            wrapper.innerHTML = stepsSecConfig.items.map((st: any, idx: number) => {
+              const itemTitleColor = st.titleColor || st.title_color || stepsSecConfig.textColor || '';
+              const itemDescColor = st.descriptionColor || st.description_color || (stepsSecConfig.textColor ? stepsSecConfig.textColor : '');
+              return `
+                <div class="step-card" data-section="steps" data-index="${idx}">
+                  <div class="step-badge">${String(idx + 1).padStart(2, '0')}</div>
+                  <div class="step-content">
+                    <h3 class="step-title" style="${itemTitleColor ? `color: ${itemTitleColor};` : ''}">${st.title || ''}</h3>
+                    <p class="step-description" style="${itemDescColor ? `color: ${itemDescColor};` : ''}">${st.description || ''}</p>
+                  </div>
                 </div>
-              </div>
-            `).join('');
+              `;
+            }).join('');
           } else {
-            content.steps.items.forEach((st: any, idx: number) => {
+            stepsSecConfig.items.forEach((st: any, idx: number) => {
               const itemEl = doc.querySelector(`[data-section="steps"][data-index="${idx}"], #steps .step-item:nth-child(${idx + 1}), #steps .step-card:nth-child(${idx + 1})`);
               if (itemEl) {
                 const numEl = itemEl.querySelector('.step-badge, .step-number');
                 if (numEl) numEl.textContent = String(idx + 1).padStart(2, '0');
-                const titleEl = itemEl.querySelector('.step-title');
-                if (titleEl) titleEl.textContent = st.title || '';
-                const descEl = itemEl.querySelector('.step-description');
-                if (descEl) descEl.textContent = st.description || '';
+                const titleEl = itemEl.querySelector('.step-title') as HTMLElement;
+                if (titleEl) {
+                  titleEl.textContent = st.title || '';
+                  const itemTitleColor = st.titleColor || st.title_color || stepsSecConfig.textColor || '';
+                  titleEl.style.color = itemTitleColor || '';
+                }
+                const descEl = itemEl.querySelector('.step-description') as HTMLElement;
+                if (descEl) {
+                  descEl.textContent = st.description || '';
+                  const itemDescColor = st.descriptionColor || st.description_color || (stepsSecConfig.textColor ? stepsSecConfig.textColor : '');
+                  descEl.style.color = itemDescColor || '';
+                }
               }
             });
           }
@@ -1922,6 +2002,7 @@ export default function PageBuilderPage() {
         updateText('#faq .faq-heading, #faq h2', content.faq.title ?? 'كل ما تود معرفته عن طريقة الدراسة والمتابعة');
         updateText('#faq .faq-subtitle, #faq .section-header p', content.faq.subtitle ?? 'إجابات واضحة ومباشرة على أكثر الاستفسارات تكراراً.');
         updateText('#faq .empty-state-title, #faq .faq-empty-state .empty-title', content.faq.emptyText ?? 'لا توجد أسئلة شائعة مضافة حالياً');
+        updateText('#faq .faq-empty-state .empty-desc', content.faq.subtitle ?? 'إجابات واضحة ومباشرة على أكثر الاستفسارات تكراراً.');
 
         const faqSec = doc.querySelector('#faq, [data-section="faq"]') as HTMLElement;
         if (faqSec) {
@@ -1944,9 +2025,9 @@ export default function PageBuilderPage() {
         }
 
         if (Array.isArray(content.faq.items)) {
-          const faqSecContainer = doc.querySelector('#faq .container') as HTMLElement | null;
+          const faqSecContainer = doc.querySelector('#faq .container, #faq') as HTMLElement | null;
           if (faqSecContainer) {
-            const activeFaqs = content.faq.items.filter((item: any) => item.enabled !== false);
+            const activeFaqs = content.faq.items.filter((item: any) => item && item.enabled !== false && (item.question || item.q));
             const emptyTitle = content.faq.emptyText ?? 'لا توجد أسئلة شائعة مضافة حالياً';
             const emptySubtitle = content.faq.subtitle ?? 'إجابات واضحة ومباشرة على أكثر الاستفسارات تكراراً.';
 
@@ -1957,20 +2038,9 @@ export default function PageBuilderPage() {
               if (existingList) existingList.remove();
               if (!existingEmpty) {
                 const newEmpty = doc.createElement('div');
-                newEmpty.className = 'faq-empty-state';
-                newEmpty.setAttribute('data-section', 'faq');
-                newEmpty.innerHTML = `
-                  <div class="empty-icon-shell">
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                      <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                    </svg>
-                  </div>
-                  <h3 class="empty-title">${emptyTitle}</h3>
-                  <p class="empty-desc">${emptySubtitle}</p>
-                `;
-                faqSecContainer.appendChild(newEmpty);
+                newEmpty.innerHTML = renderSchoolCoachEmptyFaqHtml(emptyTitle, emptySubtitle);
+                const firstChild = newEmpty.firstElementChild;
+                if (firstChild) faqSecContainer.appendChild(firstChild);
               } else {
                 const tEl = existingEmpty.querySelector('.empty-title');
                 if (tEl) tEl.textContent = emptyTitle;
@@ -1985,17 +2055,31 @@ export default function PageBuilderPage() {
                 listEl.className = 'faq-list';
                 faqSecContainer.appendChild(listEl);
               }
-              listEl.innerHTML = activeFaqs.map((item: any, idx: number) => `
-                <div class="faq-item" data-section="faq" data-index="${idx}">
-                  <button type="button" class="faq-question" aria-expanded="false">
-                    <span>${item.question || ''}</span>
-                    <span class="plus" aria-hidden="true">+</span>
-                  </button>
-                  <div class="faq-answer">
-                    <p>${item.answer || ''}</p>
-                  </div>
-                </div>
-              `).join('');
+
+              const currentItems = listEl.querySelectorAll('.faq-item');
+              if (currentItems.length !== activeFaqs.length) {
+                listEl.innerHTML = renderSchoolCoachFaqListHtml(activeFaqs, content.faq.textColor || '');
+              } else {
+                activeFaqs.forEach((item: any, idx: number) => {
+                  const itemEl = listEl?.querySelector(`[data-section="faq"][data-index="${idx}"], .faq-item:nth-child(${idx + 1})`);
+                  if (itemEl) {
+                    const qTextEl = itemEl.querySelector('.faq-q-text');
+                    const newQuestion = item.question || item.q || '';
+                    if (qTextEl && qTextEl.textContent !== newQuestion) {
+                      qTextEl.textContent = newQuestion;
+                    }
+                    const aTextEl = itemEl.querySelector('.faq-answer-inner p, .faq-answer p');
+                    const newAnswer = item.answer || item.a || '';
+                    if (aTextEl && aTextEl.textContent !== newAnswer) {
+                      aTextEl.textContent = newAnswer;
+                    }
+                    if (content.faq.textColor) {
+                      if (qTextEl) (qTextEl as HTMLElement).style.color = content.faq.textColor;
+                      if (aTextEl) (aTextEl as HTMLElement).style.color = content.faq.textColor;
+                    }
+                  }
+                });
+              }
             }
           }
         }
@@ -2273,6 +2357,19 @@ export default function PageBuilderPage() {
             const el = document.getElementById('about-analytics-editor-header');
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }, 120);
+        }
+
+        // Toggle FAQ accordion in builder preview mode if clicked
+        const faqBtn = target.closest('.faq-question');
+        const faqItemEl = target.closest('.faq-item') || (itemEl && (sectionName === 'faq' || sectionEl.id === 'faq') ? itemEl : null);
+        if (faqBtn || (faqItemEl && (sectionName === 'faq' || sectionEl.id === 'faq'))) {
+          const actualItem = faqBtn ? faqBtn.closest('.faq-item') : faqItemEl;
+          if (actualItem) {
+            const btn = actualItem.querySelector('.faq-question') as HTMLElement | null;
+            const isOpen = actualItem.classList.contains('open');
+            actualItem.classList.toggle('open', !isOpen);
+            if (btn) btn.setAttribute('aria-expanded', !isOpen ? 'true' : 'false');
+          }
         }
 
         if (itemEl && sectionEl.contains(itemEl)) {
@@ -2557,8 +2654,10 @@ export default function PageBuilderPage() {
             }
 
             const navbarNode = editorNodes.find(n => n.type === 'navbar');
-            const profileNode = editorNodes.find(n => n.type === 'profile' || n.type === 'hero');
-            const heroNode = editorNodes.find(n => n.type === 'hero' || n.type === 'profile');
+            const profileSectionNode = editorNodes.find(n => n.type === 'profile');
+            const heroSectionNode = editorNodes.find(n => n.type === 'hero');
+            const profileNode = profileSectionNode || heroSectionNode;
+            const heroNode = heroSectionNode || profileSectionNode;
             const aboutNode = editorNodes.find(n => n.type === 'about');
             const featuresNode = editorNodes.find(n => n.type === 'features' || n.type === 'features_section');
             const courseNode = editorNodes.find(n => n.type === 'course-cards' || n.type === 'courses');
@@ -2606,12 +2705,78 @@ export default function PageBuilderPage() {
             });
 
             // Canonical Teacher Identity: single source of truth across navbar & profile
-            const pProps = profileNode?.props || {};
+            const pProps = {
+              ...(heroSectionNode?.props || {}),
+              ...(profileSectionNode?.props || {}),
+            };
             const nProps = navbarNode?.props || {};
             const canonicalTeacherName =
               teacherNameFromProfile ||
               sv(pProps.teacherName ?? pProps.name ?? nProps.teacherName ?? nProps.title, fallback.profile?.teacherName || '');
             const canonicalTeacherTitle = sv(pProps.teacherTitle ?? pProps.jobTitle ?? pProps.title ?? nProps.teacherTitle ?? nProps.teacher_title, fallback.profile?.teacherTitle || '');
+
+            // Helper for resolving first non-empty string among candidates
+            const resolveNonEmpty = (...candidates: any[]) => {
+              for (const c of candidates) {
+                if (c !== null && c !== undefined && typeof c === 'string' && c.trim() !== '') return c.trim();
+                if (c !== null && c !== undefined && typeof c !== 'string' && c !== '') return c;
+              }
+              return '';
+            };
+
+            const coverVal = resolveNonEmpty(
+              profileSectionNode?.props?.cover,
+              profileSectionNode?.props?.coverImage,
+              profileSectionNode?.props?.cover_image,
+              profileSectionNode?.props?.banner,
+              profileSectionNode?.props?.bannerImage,
+              profileSectionNode?.props?.banner_image,
+              profileSectionNode?.props?.backgroundImage,
+              profileSectionNode?.props?.background_image,
+              heroSectionNode?.props?.cover,
+              heroSectionNode?.props?.coverImage,
+              heroSectionNode?.props?.cover_image,
+              heroSectionNode?.props?.banner,
+              heroSectionNode?.props?.bannerImage,
+              heroSectionNode?.props?.banner_image,
+              heroSectionNode?.props?.backgroundImage,
+              heroSectionNode?.props?.background_image,
+              pProps.cover,
+              pProps.coverImage,
+              pProps.cover_image,
+              pProps.banner,
+              pProps.bannerImage,
+              pProps.banner_image,
+              pProps.backgroundImage,
+              pProps.background_image,
+              fallback.profile?.cover
+            );
+
+            const avatarVal = resolveNonEmpty(
+              profileSectionNode?.props?.avatar,
+              profileSectionNode?.props?.avatarImage,
+              profileSectionNode?.props?.avatar_image,
+              profileSectionNode?.props?.image,
+              profileSectionNode?.props?.imageUrl,
+              profileSectionNode?.props?.image_url,
+              profileSectionNode?.props?.profileImage,
+              profileSectionNode?.props?.profile_image,
+              heroSectionNode?.props?.avatar,
+              heroSectionNode?.props?.avatarImage,
+              heroSectionNode?.props?.avatar_image,
+              heroSectionNode?.props?.image,
+              heroSectionNode?.props?.imageUrl,
+              heroSectionNode?.props?.image_url,
+              heroSectionNode?.props?.profileImage,
+              heroSectionNode?.props?.profile_image,
+              pProps.avatar,
+              pProps.avatarImage,
+              pProps.avatar_image,
+              pProps.image,
+              pProps.imageUrl,
+              pProps.image_url,
+              fallback.profile?.avatar
+            );
 
             const parsedProfile = (profileNode?.props ? ({
               ...mergeSection(profileNode.props, fallback.profile || {}),
@@ -2620,18 +2785,18 @@ export default function PageBuilderPage() {
               teacherTitle: canonicalTeacherTitle,
               description: sv(pProps.description ?? pProps.bio, ''),
               goal: sv(pProps.goal ?? pProps.mission, fallback.profile?.goal || ''),
-              avatar: sv(pProps.avatar ?? pProps.avatarImage ?? pProps.image, fallback.profile?.avatar || ''),
-              cover: sv(pProps.cover ?? pProps.coverImage, fallback.profile?.cover || ''),
+              avatar: avatarVal,
+              cover: coverVal,
               verified: pProps.verified !== undefined ? Boolean(pProps.verified) : (fallback.profile?.verified ?? true),
               verifiedText: sv(pProps.verifiedText ?? pProps.verified_text, fallback.profile?.verifiedText || 'موثّق'),
-              ctaPrimaryText: sv(pProps.ctaPrimaryText ?? pProps.cta_primary_text ?? pProps.buttonText, fallback.profile?.ctaPrimaryText || 'ابدأ التعلم'),
-              ctaPrimaryLink: sv(pProps.ctaPrimaryLink ?? pProps.cta_primary_link ?? pProps.buttonLink, '#courses'),
-              ctaPrimaryBg: sv(pProps.ctaPrimaryBg ?? pProps.buttonBg, fallback.profile?.ctaPrimaryBg || ''),
-              ctaPrimaryColor: sv(pProps.ctaPrimaryColor ?? pProps.buttonTextColor, fallback.profile?.ctaPrimaryColor || ''),
-              ctaSecondaryText: sv(pProps.ctaSecondaryText ?? pProps.cta_secondary_text ?? pProps.secondaryButtonText, fallback.profile?.ctaSecondaryText || 'شاهد الفيديوهات'),
-              ctaSecondaryLink: sv(pProps.ctaSecondaryLink ?? pProps.cta_secondary_link ?? pProps.secondaryButtonLink, '#videos'),
-              ctaSecondaryBg: sv(pProps.ctaSecondaryBg ?? pProps.secondaryButtonBg, fallback.profile?.ctaSecondaryBg || ''),
-              ctaSecondaryColor: sv(pProps.ctaSecondaryColor ?? pProps.secondaryButtonTextColor, fallback.profile?.ctaSecondaryColor || ''),
+              ctaPrimaryText: resolveNonEmpty(pProps.ctaPrimaryText, pProps.cta_primary_text, pProps.buttonText, pProps.button_text, fallback.profile?.ctaPrimaryText, 'ابدأ التعلم'),
+              ctaPrimaryLink: resolveNonEmpty(pProps.ctaPrimaryLink, pProps.cta_primary_link, pProps.buttonLink, pProps.button_link, '#courses'),
+              ctaPrimaryBg: resolveNonEmpty(pProps.ctaPrimaryBg, pProps.cta_primary_bg, pProps.primaryButtonBg, pProps.primary_button_bg, pProps.buttonBg, pProps.button_bg, fallback.profile?.ctaPrimaryBg),
+              ctaPrimaryColor: resolveNonEmpty(pProps.ctaPrimaryColor, pProps.cta_primary_color, pProps.ctaPrimaryTextColor, pProps.cta_primary_text_color, pProps.primaryButtonTextColor, pProps.primary_button_text_color, pProps.buttonTextColor, pProps.button_text_color, fallback.profile?.ctaPrimaryColor),
+              ctaSecondaryText: resolveNonEmpty(pProps.ctaSecondaryText, pProps.cta_secondary_text, pProps.secondaryButtonText, pProps.secondary_button_text, fallback.profile?.ctaSecondaryText, 'شاهد الفيديوهات'),
+              ctaSecondaryLink: resolveNonEmpty(pProps.ctaSecondaryLink, pProps.cta_secondary_link, pProps.secondaryButtonLink, pProps.secondary_button_link, '#videos'),
+              ctaSecondaryBg: resolveNonEmpty(pProps.ctaSecondaryBg, pProps.cta_secondary_bg, pProps.secondaryButtonBg, pProps.secondary_button_bg, fallback.profile?.ctaSecondaryBg),
+              ctaSecondaryColor: resolveNonEmpty(pProps.ctaSecondaryColor, pProps.cta_secondary_color, pProps.ctaSecondaryTextColor, pProps.cta_secondary_text_color, pProps.secondaryButtonTextColor, pProps.secondary_button_text_color, fallback.profile?.ctaSecondaryColor),
             }) : fallback.profile) as any;
 
             const parsedContent: TemplateContent = {
@@ -2645,8 +2810,16 @@ export default function PageBuilderPage() {
                 contactIconVisible: navbarNode.props.contactIconVisible !== undefined ? Boolean(navbarNode.props.contactIconVisible) : (fallback.navbar.contactIconVisible ?? true),
                 contactModalTitle: sv(navbarNode.props.contactModalTitle ?? navbarNode.props.contact_title ?? navbarNode.props.modalTitle, fallback.navbar.contactModalTitle),
                 contactModalDescription: sv(navbarNode.props.contactModalDescription ?? navbarNode.props.contact_description ?? navbarNode.props.modalDescription, fallback.navbar.contactModalDescription),
-                whatsappUrl: sv(navbarNode.props.whatsappUrl ?? navbarNode.props.whatsapp_url ?? navbarNode.props.whatsapp, fallback.navbar.whatsappUrl),
-                phoneNumber: sv(navbarNode.props.phoneNumber ?? navbarNode.props.phone_number ?? navbarNode.props.phone, fallback.navbar.phoneNumber),
+                whatsappCountryCode: sv(navbarNode.props.whatsappCountryCode ?? navbarNode.props.whatsapp_country_code, fallback.navbar.whatsappCountryCode || '+20'),
+                whatsappUrl: extractLocalWhatsappNumber(
+                  sv(navbarNode.props.whatsappUrl ?? navbarNode.props.whatsapp_url ?? navbarNode.props.whatsapp ?? navbarNode.props.whatsappNumber ?? navbarNode.props.whatsapp_number, fallback.navbar.whatsappUrl || ''),
+                  sv(navbarNode.props.whatsappCountryCode ?? navbarNode.props.whatsapp_country_code, fallback.navbar.whatsappCountryCode || '+20')
+                ) || sv(navbarNode.props.whatsappUrl ?? navbarNode.props.whatsapp_url ?? navbarNode.props.whatsapp ?? navbarNode.props.whatsappNumber ?? navbarNode.props.whatsapp_number, fallback.navbar.whatsappUrl || ''),
+                phoneCountryCode: sv(navbarNode.props.phoneCountryCode ?? navbarNode.props.phone_country_code ?? navbarNode.props.countryCode ?? navbarNode.props.country_code, fallback.navbar.phoneCountryCode || '+20'),
+                phoneNumber: extractLocalPhoneNumber(
+                  sv(navbarNode.props.phoneNumber ?? navbarNode.props.phone_number ?? navbarNode.props.phone, fallback.navbar.phoneNumber || ''),
+                  sv(navbarNode.props.phoneCountryCode ?? navbarNode.props.phone_country_code ?? navbarNode.props.countryCode ?? navbarNode.props.country_code, fallback.navbar.phoneCountryCode || '+20')
+                ) || sv(navbarNode.props.phoneNumber ?? navbarNode.props.phone_number ?? navbarNode.props.phone, fallback.navbar.phoneNumber || ''),
                 whatsappButtonLabel: sv(navbarNode.props.whatsappButtonLabel ?? navbarNode.props.whatsapp_button_label ?? navbarNode.props.whatsappLabel, fallback.navbar.whatsappButtonLabel),
                 phoneButtonLabel: sv(navbarNode.props.phoneButtonLabel ?? navbarNode.props.phone_button_label ?? navbarNode.props.phoneLabel, fallback.navbar.phoneButtonLabel),
                 coursesLabel: sv(navbarNode.props.coursesLabel ?? navbarNode.props.courses_label, fallback.navbar.coursesLabel),
@@ -3010,8 +3183,33 @@ export default function PageBuilderPage() {
       localStorage.setItem(cacheKey, JSON.stringify(content));
 
       // 2. Prepare database sections payload
+      const rawNavbarWhatsapp = content.navbar?.whatsappUrl || '';
+      const navbarWhatsappCountryCode = content.navbar?.whatsappCountryCode || '+20';
+      const normalizedNavbarWhatsapp = normalizeWhatsappUrl(rawNavbarWhatsapp, navbarWhatsappCountryCode);
+
+      const rawNavbarPhone = content.navbar?.phoneNumber || '';
+      const navbarPhoneCountryCode = content.navbar?.phoneCountryCode || content.navbar?.countryCode || '+20';
+      const normalizedNavbarPhone = normalizePhoneNumber(rawNavbarPhone, navbarPhoneCountryCode);
+
+      const navbarPayloadProps = {
+        ...content.navbar,
+        whatsappUrl: normalizedNavbarWhatsapp || rawNavbarWhatsapp,
+        whatsapp_url: normalizedNavbarWhatsapp || rawNavbarWhatsapp,
+        whatsappCountryCode: navbarWhatsappCountryCode,
+        whatsapp_country_code: navbarWhatsappCountryCode,
+        phoneNumber: normalizedNavbarPhone || rawNavbarPhone,
+        phone_number: normalizedNavbarPhone || rawNavbarPhone,
+        phoneCountryCode: navbarPhoneCountryCode,
+        phone_country_code: navbarPhoneCountryCode,
+        countryCode: navbarPhoneCountryCode,
+        country_code: navbarPhoneCountryCode,
+        role: currentRole,
+        templateId: activeTemplateId,
+        template_id: activeTemplateId,
+      };
+
       const nodes = [
-        { id: 'navbar', type: 'navbar', props: { ...content.navbar, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        { id: 'navbar', type: 'navbar', props: navbarPayloadProps },
         ...(content.profile ? [{ id: 'profile', type: 'profile', props: { ...content.profile, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         { id: 'hero', type: 'hero', props: { ...(content.profile ? { ...content.hero, ...content.profile } : content.hero), role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         { id: 'about', type: 'about', props: { ...content.about, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
@@ -3092,8 +3290,33 @@ export default function PageBuilderPage() {
       }));
 
       // 2. Prepare and save database sections
+      const rawNavbarWhatsapp = content.navbar?.whatsappUrl || '';
+      const navbarWhatsappCountryCode = content.navbar?.whatsappCountryCode || '+20';
+      const normalizedNavbarWhatsapp = normalizeWhatsappUrl(rawNavbarWhatsapp, navbarWhatsappCountryCode);
+
+      const rawNavbarPhone = content.navbar?.phoneNumber || '';
+      const navbarPhoneCountryCode = content.navbar?.phoneCountryCode || content.navbar?.countryCode || '+20';
+      const normalizedNavbarPhone = normalizePhoneNumber(rawNavbarPhone, navbarPhoneCountryCode);
+
+      const navbarPayloadProps = {
+        ...content.navbar,
+        whatsappUrl: normalizedNavbarWhatsapp || rawNavbarWhatsapp,
+        whatsapp_url: normalizedNavbarWhatsapp || rawNavbarWhatsapp,
+        whatsappCountryCode: navbarWhatsappCountryCode,
+        whatsapp_country_code: navbarWhatsappCountryCode,
+        phoneNumber: normalizedNavbarPhone || rawNavbarPhone,
+        phone_number: normalizedNavbarPhone || rawNavbarPhone,
+        phoneCountryCode: navbarPhoneCountryCode,
+        phone_country_code: navbarPhoneCountryCode,
+        countryCode: navbarPhoneCountryCode,
+        country_code: navbarPhoneCountryCode,
+        role: currentRole,
+        templateId: activeTemplateId,
+        template_id: activeTemplateId,
+      };
+
       const nodes = [
-        { id: 'navbar', type: 'navbar', props: { ...content.navbar, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
+        { id: 'navbar', type: 'navbar', props: navbarPayloadProps },
         ...(content.profile ? [{ id: 'profile', type: 'profile', props: { ...content.profile, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } }] : []),
         { id: 'hero', type: 'hero', props: { ...(content.profile ? { ...content.hero, ...content.profile } : content.hero), role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
         { id: 'about', type: 'about', props: { ...content.about, role: currentRole, templateId: activeTemplateId, template_id: activeTemplateId } },
@@ -3694,7 +3917,7 @@ export default function PageBuilderPage() {
                             />
                           </div>
 
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-2">
                             <div className="flex flex-col gap-1 min-w-0">
                               <label className="text-[9px] font-bold text-slate-600">تسمية زر الواتساب</label>
                               <input
@@ -3705,20 +3928,36 @@ export default function PageBuilderPage() {
                                 className="w-full min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
                               />
                             </div>
+
                             <div className="flex flex-col gap-1 min-w-0">
                               <label className="text-[9px] font-bold text-slate-600">رقم أو رابط الواتساب</label>
-                              <input
-                                type="text"
-                                dir="ltr"
-                                value={content.navbar?.whatsappUrl || ''}
-                                onChange={(e) => handleUpdateField('navbar', 'whatsappUrl', e.target.value)}
-                                placeholder="مثال: 201xxxxxxxxx أو https://wa.me/..."
-                                className="w-full min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
-                              />
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="relative shrink-0 w-32">
+                                  <select
+                                    value={content.navbar?.whatsappCountryCode || '+20'}
+                                    onChange={(e) => handleUpdateField('navbar', 'whatsappCountryCode', e.target.value)}
+                                    className="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-bold text-slate-700 appearance-none pr-2 pl-6 cursor-pointer text-right"
+                                    dir="rtl"
+                                  >
+                                    <option value="+20">🇪🇬 مصر (+20)</option>
+                                    <option value="+966">🇸🇦 السعودية (+966)</option>
+                                    <option value="+965">🇰🇼 الكويت (+965)</option>
+                                  </select>
+                                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                </div>
+                                <input
+                                  type="text"
+                                  dir="ltr"
+                                  value={content.navbar?.whatsappUrl || ''}
+                                  onChange={(e) => handleUpdateField('navbar', 'whatsappUrl', e.target.value)}
+                                  placeholder="مثال: 1012345678 أو https://wa.me/..."
+                                  className="flex-1 min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                                />
+                              </div>
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-2">
                             <div className="flex flex-col gap-1 min-w-0">
                               <label className="text-[9px] font-bold text-slate-600">تسمية زر الاتصال</label>
                               <input
@@ -3729,16 +3968,35 @@ export default function PageBuilderPage() {
                                 className="w-full min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-medium"
                               />
                             </div>
+
                             <div className="flex flex-col gap-1 min-w-0">
                               <label className="text-[9px] font-bold text-slate-600">رقم الهاتف المباشر</label>
-                              <input
-                                type="text"
-                                dir="ltr"
-                                value={content.navbar?.phoneNumber || ''}
-                                onChange={(e) => handleUpdateField('navbar', 'phoneNumber', e.target.value)}
-                                placeholder="مثال: +201xxxxxxxxx"
-                                className="w-full min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
-                              />
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="relative shrink-0 w-32">
+                                  <select
+                                    value={content.navbar?.phoneCountryCode || content.navbar?.countryCode || '+20'}
+                                    onChange={(e) => {
+                                      handleUpdateField('navbar', 'phoneCountryCode', e.target.value);
+                                      handleUpdateField('navbar', 'countryCode', e.target.value);
+                                    }}
+                                    className="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-bold text-slate-700 appearance-none pr-2 pl-6 cursor-pointer text-right"
+                                    dir="rtl"
+                                  >
+                                    <option value="+20">🇪🇬 مصر (+20)</option>
+                                    <option value="+966">🇸🇦 السعودية (+966)</option>
+                                    <option value="+965">🇰🇼 الكويت (+965)</option>
+                                  </select>
+                                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                </div>
+                                <input
+                                  type="text"
+                                  dir="ltr"
+                                  value={content.navbar?.phoneNumber || ''}
+                                  onChange={(e) => handleUpdateField('navbar', 'phoneNumber', e.target.value)}
+                                  placeholder="مثال: 1012345678 أو 501234567"
+                                  className="flex-1 min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
+                                />
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -3899,64 +4157,23 @@ export default function PageBuilderPage() {
 
                       {/* Avatar Image */}
                       <div className="flex flex-col gap-1 min-w-0">
-                        <label className="text-[10px] font-bold text-slate-600">صورة المعلم الدائرية (Avatar)</label>
-                        <div className="flex items-center gap-2 min-w-0">
-                          {content.profile?.avatar ? (
-                            <img src={content.profile.avatar} className="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0 bg-white" alt="Avatar preview" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-black text-sm flex items-center justify-center shrink-0">
-                              {(content.profile?.teacherName || 'م').trim().charAt(0) || 'م'}
-                            </div>
-                          )}
-                          <input
-                            type="text"
-                            dir="ltr"
-                            value={content.profile?.avatar || ''}
-                            onChange={(e) => handleUpdateField('profile', 'avatar', e.target.value)}
-                            placeholder="https://... رابط صورة المعلم"
-                            className="flex-1 min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
-                          />
-                          {content.profile?.avatar && (
-                            <button
-                              type="button"
-                              onClick={() => handleUpdateField('profile', 'avatar', '')}
-                              className="text-slate-400 hover:text-red-500 p-1 shrink-0"
-                              title="إزالة الصورة والعودة للحرف الافتراضي"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
+                        <ImageUploader
+                          value={content.profile?.avatar || ''}
+                          onChange={(val) => handleUpdateField('profile', 'avatar', val)}
+                          label="صورة المعلم الدائرية (Avatar)"
+                          galleryImages={availableGalleryImages}
+                          circlePreview={true}
+                        />
                       </div>
 
                       {/* Cover Image */}
                       <div className="flex flex-col gap-1 min-w-0">
-                        <label className="text-[10px] font-bold text-slate-600">صورة غلاف البانر (Cover Image)</label>
-                        <div className="flex items-center gap-2 min-w-0">
-                          {content.profile?.cover ? (
-                            <img src={content.profile.cover} className="w-12 h-8 rounded-lg object-cover border border-slate-200 shrink-0 bg-white" alt="Cover preview" />
-                          ) : (
-                            <div className="w-12 h-8 rounded-lg bg-gradient-to-r from-slate-900 to-blue-950 shrink-0"></div>
-                          )}
-                          <input
-                            type="text"
-                            dir="ltr"
-                            value={content.profile?.cover || ''}
-                            onChange={(e) => handleUpdateField('profile', 'cover', e.target.value)}
-                            placeholder="https://... رابط خلفية الغلاف (اختياري)"
-                            className="flex-1 min-w-0 border border-slate-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-blue-600 font-mono text-left"
-                          />
-                          {content.profile?.cover && (
-                            <button
-                              type="button"
-                              onClick={() => handleUpdateField('profile', 'cover', '')}
-                              className="text-slate-400 hover:text-red-500 p-1 shrink-0"
-                              title="إزالة الغلاف والعودة للتدرج الافتراضي"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
+                        <ImageUploader
+                          value={content.profile?.cover || ''}
+                          onChange={(val) => handleUpdateField('profile', 'cover', val)}
+                          label="صورة غلاف البانر (Cover Image)"
+                          galleryImages={availableGalleryImages}
+                        />
                       </div>
                     </div>
 
@@ -5372,6 +5589,8 @@ export default function PageBuilderPage() {
                             number: String((content.steps?.items?.length || 0) + 1),
                             title: 'خطوة جديدة',
                             description: 'اكتب وصف الخطوة هنا.',
+                            titleColor: '',
+                            descriptionColor: '',
                             enabled: true
                           })}
                           className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-0.5"
@@ -5426,6 +5645,59 @@ export default function PageBuilderPage() {
                                 className="border border-slate-200 rounded-lg p-2 text-xs bg-white outline-none min-h-[50px] resize-none"
                                 placeholder="اعرف أسلوب الشرح قبل الاشتراك."
                               />
+                            </div>
+
+                            {/* Title Color & Description Color Controls */}
+                            <div className="grid grid-cols-2 gap-2 pt-1">
+                              <div className="flex flex-col gap-1 min-w-0">
+                                <label className="text-[9px] font-bold text-slate-500">لون عنوان الخطوة</label>
+                                <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg p-1.5 min-w-0">
+                                  <input
+                                    type="color"
+                                    value={step.titleColor || '#0f172a'}
+                                    onChange={(e) => handleUpdateNestedField('steps', 'items', idx, 'titleColor', e.target.value)}
+                                    className="w-6 h-6 rounded cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                                  />
+                                  <span className="text-[8.5px] font-mono font-bold text-slate-500 truncate uppercase">
+                                    {step.titleColor || 'افتراضي'}
+                                  </span>
+                                  {step.titleColor && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdateNestedField('steps', 'items', idx, 'titleColor', '')}
+                                      className="text-slate-400 hover:text-red-500 p-0.5 shrink-0 mr-auto"
+                                      title="استعادة اللون الافتراضي"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col gap-1 min-w-0">
+                                <label className="text-[9px] font-bold text-slate-500">لون وصف الخطوة</label>
+                                <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg p-1.5 min-w-0">
+                                  <input
+                                    type="color"
+                                    value={step.descriptionColor || '#64748b'}
+                                    onChange={(e) => handleUpdateNestedField('steps', 'items', idx, 'descriptionColor', e.target.value)}
+                                    className="w-6 h-6 rounded cursor-pointer bg-transparent border-0 shrink-0 outline-none"
+                                  />
+                                  <span className="text-[8.5px] font-mono font-bold text-slate-500 truncate uppercase">
+                                    {step.descriptionColor || 'افتراضي'}
+                                  </span>
+                                  {step.descriptionColor && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdateNestedField('steps', 'items', idx, 'descriptionColor', '')}
+                                      className="text-slate-400 hover:text-red-500 p-0.5 shrink-0 mr-auto"
+                                      title="استعادة اللون الافتراضي"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         ))}
