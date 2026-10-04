@@ -684,6 +684,22 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
       const downloadTypePayload = isLimitedPolicy ? 'limited' : 'unlimited';
       const downloadLimitPayload = isLimitedPolicy ? (Number(formData.downloadLimit) || 0) : undefined;
 
+      // Map download validity period from formData.downloadExpiry (30_days -> 30, 60_days -> 60, 1_year -> 365)
+      let downloadValidityDaysPayload: number | null | undefined = undefined;
+      if (isLimitedPolicy) {
+        if (formData.downloadExpiry === '30_days') {
+          downloadValidityDaysPayload = 30;
+        } else if (formData.downloadExpiry === '60_days') {
+          downloadValidityDaysPayload = 60;
+        } else if (formData.downloadExpiry === '1_year') {
+          downloadValidityDaysPayload = 365;
+        } else if (formData.downloadExpiry === 'never') {
+          downloadValidityDaysPayload = null;
+        } else if (formData.downloadExpiry && !isNaN(Number(formData.downloadExpiry))) {
+          downloadValidityDaysPayload = Number(formData.downloadExpiry);
+        }
+      }
+
       const payload = {
         title: formData.title.trim(),
         short_description: formData.description || undefined,
@@ -698,6 +714,7 @@ export default function BagWizardPage({ editBagId }: BagWizardPageProps) {
         count_download: countDownloadPayload,
         download_type: downloadTypePayload,
         download_limit: downloadLimitPayload,
+        download_validity_days: downloadValidityDaysPayload,
         // Only include payment_info_ids when non-empty (omitting avoids backend 422)
         payment_info_ids: validPaymentIds.length > 0 ? validPaymentIds : undefined,
         // Include items array with type and file for each selected course/file

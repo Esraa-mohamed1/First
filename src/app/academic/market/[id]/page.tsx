@@ -225,16 +225,10 @@ export default function BagDetailsPage() {
     );
   }
 
-  // Price checks
   const isFree = bag.type_price === 'free' || (!bag.price && !bag.discount_price);
-  const isPurchased = Boolean(
-    purchaseSuccess ||
-    bag.purchased === true ||
-    (bag as any).purchased === 1 ||
-    bag.is_purchased === true ||
-    (bag as any).is_purchased === 1 ||
-    (bag as any).is_purchased === 'true'
-  );
+  const isPurchased = bag.is_purchased === 'purchased' || purchaseSuccess;
+  const isPending = bag.is_purchased === 'pending';
+  const canDownload = isPurchased || isFree;
 
   const numericPrice = typeof bag.price === 'string' ? parseFloat(bag.price) : bag.price || 0;
   const numericDiscount = typeof bag.discount_price === 'string' ? parseFloat(bag.discount_price) : bag.discount_price || 0;
@@ -257,6 +251,37 @@ export default function BagDetailsPage() {
     : [];
 
   const totalItemsCount = itemsList.length > 0 ? itemsList.length : includedCourses.length > 0 ? includedCourses.length : 0;
+
+  // Dynamic access duration text from API response
+  const accessDurationText = (() => {
+    const type = bag.access_duration_type || (bag as any).access_type || (bag as any).accessDurationType;
+    const days = bag.access_days ?? (bag as any).accessDays ?? (bag as any).days;
+    const untilDate = bag.access_until_date ?? (bag as any).accessUntilDate ?? (bag as any).access_date ?? (bag as any).expiry_date;
+    const period = bag.access_period ?? (bag as any).access_duration ?? (bag as any).duration ?? (bag as any).period;
+
+    if (period && typeof period === 'string') {
+      return period;
+    }
+    if (type === 'days' || (days != null && Number(days) > 0)) {
+      return `وصول لمدة ${days} يوم`;
+    }
+    if (type === 'until_date' || type === 'date' || untilDate) {
+      const cleanDate = typeof untilDate === 'string' && untilDate.includes('T') ? untilDate.split('T')[0] : untilDate;
+      return `وصول حتى ${cleanDate}`;
+    }
+    if (type === 'lifetime' || type === 'unlimited') {
+      return 'مدى الحياة';
+    }
+    return 'مدى الحياة';
+  })();
+
+  // Dynamic download info from API response
+  const countDl = bag.count_download ?? (bag as any).download_limit ?? (bag as any).download_count ?? (bag as any).downloads_count;
+  const isDownloadLimited = (bag.download_type === 'limited') || (countDl != null && Number(countDl) > 0);
+  const downloadGridText = isDownloadLimited ? `${countDl} مرات تحميل` : 'مباشر وغير محدود';
+  const downloadFeatureText = isDownloadLimited
+    ? `عدد التحميلات المتاحة: ${countDl} مرات`
+    : 'تحميل غير محدود وتنزيل دائم (مدى الحياة)';
 
   // Extract gallery photos list
   const allGalleryUrls: string[] = [];
@@ -517,13 +542,13 @@ export default function BagDetailsPage() {
               <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex flex-col items-center text-center space-y-1">
                 <Clock size={22} className="text-purple-600" />
                 <span className="text-xs font-bold text-gray-400">مدة الوصول</span>
-                <span className="text-sm font-black text-gray-900">مدى الحياة</span>
+                <span className="text-sm font-black text-gray-900">{accessDurationText}</span>
               </div>
 
               <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex flex-col items-center text-center space-y-1">
                 <Download size={22} className="text-emerald-600" />
                 <span className="text-xs font-bold text-gray-400">التحميل</span>
-                <span className="text-sm font-black text-gray-900">مباشر وغير محدود</span>
+                <span className="text-sm font-black text-gray-900">{downloadGridText}</span>
               </div>
               {/* 
               <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex flex-col items-center text-center space-y-1">
@@ -579,14 +604,7 @@ export default function BagDetailsPage() {
                       </div>
 
                       <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-200">
-                        {Boolean(
-                          isPurchased ||
-                          isFree ||
-                          purchaseSuccess ||
-                          bag.purchased === true ||
-                          (bag as any).is_purchased === true ||
-                          (!bag.price && !bag.discount_price)
-                        ) ? (
+                        {canDownload ? (
                           <a
                             href={item.path}
                             target="_blank"
@@ -601,10 +619,10 @@ export default function BagDetailsPage() {
                             type="button"
                             disabled
                             className="flex items-center gap-2 bg-gray-100 text-gray-400 px-5 py-2.5 rounded-xl font-black text-xs cursor-not-allowed border border-gray-200"
-                            title="يجب شراء الحقيبة أولاً للتمكن من تحميل الملفات"
+                            title={bag.is_purchased === 'pending' ? 'طلب الشراء قيد المعالجة حالياً' : 'يجب شراء الحقيبة أولاً للتمكن من تحميل الملفات'}
                           >
                             <Lock size={15} />
-                            <span>التنزيل غير متاح (شراء مطلوب)</span>
+                            <span>{bag.is_purchased === 'pending' ? 'التنزيل غير متاح (قيد المعالجة)' : 'التنزيل غير متاح (شراء مطلوب)'}</span>
                           </button>
                         )}
                       </div>
@@ -677,10 +695,15 @@ export default function BagDetailsPage() {
 
             {/* Action CTAs */}
             <div className="space-y-3">
-              {isPurchased ? (
+              {bag.is_purchased === 'purchased' || purchaseSuccess ? (
                 <div className="w-full py-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-black text-base flex items-center justify-center gap-2.5 shadow-sm">
                   <CheckCircle2 size={22} className="text-emerald-600" />
-                  <span>الحقيبة مشتراة ومتاحة بالكامل</span>
+                  <span>تم شراء الحقيبة</span>
+                </div>
+              ) : bag.is_purchased === 'pending' ? (
+                <div className="w-full py-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 font-black text-base flex items-center justify-center gap-2.5 shadow-sm">
+                  <Clock size={22} className="text-amber-600" />
+                  <span>جاري معالجة طلبك</span>
                 </div>
               ) : (
                 <button
@@ -719,6 +742,10 @@ export default function BagDetailsPage() {
                 <li className="flex items-center gap-2.5">
                   <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
                   <span>تحميل مباشر لجميع ملفات الحقيبة</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
+                  <span>{downloadFeatureText}</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />

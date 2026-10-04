@@ -43,10 +43,10 @@ export default function StudentBagsPage() {
 
   const totalCount = purchases.length;
   const approvedCount = purchases.filter(
-    (p) => (p.status || '').toLowerCase() === 'accepted' || (p.status || '').toLowerCase() === 'approved'
+    (p) => p.bag?.is_purchased === 'purchased' || (p.status || '').toLowerCase() === 'accepted' || (p.status || '').toLowerCase() === 'approved'
   ).length;
   const pendingCount = purchases.filter(
-    (p) => !p.status || (p.status || '').toLowerCase() === 'pending'
+    (p) => p.bag?.is_purchased === 'pending' || (!p.status || (p.status || '').toLowerCase() === 'pending')
   ).length;
 
   return (
@@ -156,22 +156,24 @@ export default function StudentBagsPage() {
                   const bagImage = item.bag?.image;
                   const price = item.price || item.amount || item.bag?.price || 'مجاناً';
                   const dateStr = item.created_at ? item.created_at.split('T')[0] : 'اليوم';
-                  const statusRaw = (item.status || 'pending').toLowerCase();
+                  const statusRaw = (item.status || '').toLowerCase();
+                  const isApproved = item.bag?.is_purchased === 'purchased' || statusRaw === 'accepted' || statusRaw === 'approved';
+                  const isRejected = statusRaw === 'rejected';
 
                   const receiptUrl = item.receipt || item.receipt_file;
 
                   let statusBadge = (
                     <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px]">
-                      <Clock size={12} /> قيد المراجعة
+                      <Clock size={12} /> جاري معالجة طلبك
                     </span>
                   );
-                  if (statusRaw === 'accepted' || statusRaw === 'approved') {
+                  if (isApproved) {
                     statusBadge = (
                       <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px]">
-                        <CheckCircle2 size={12} /> مقبول ومفعل
+                        <CheckCircle2 size={12} /> تم شراء الحقيبة
                       </span>
                     );
-                  } else if (statusRaw === 'rejected') {
+                  } else if (isRejected) {
                     statusBadge = (
                       <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 text-[11px]">
                         <XCircle size={12} /> مرفوض
@@ -222,7 +224,7 @@ export default function StudentBagsPage() {
                       <td className="p-4">{statusBadge}</td>
 
                       <td className="p-4 text-center">
-                        {statusRaw === 'accepted' || statusRaw === 'approved' ? (
+                        {isApproved ? (
                           <Link
                             href={`/bags/${targetBagId}`}
                             className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-xs transition-colors"
@@ -230,13 +232,13 @@ export default function StudentBagsPage() {
                             <span>فتح وتحميل الحقيبة</span>
                             <ExternalLink size={13} />
                           </Link>
-                        ) : statusRaw === 'rejected' ? (
+                        ) : isRejected ? (
                           <span className="inline-block px-3 py-1 rounded-xl bg-red-50 text-red-600 border border-red-200 text-xs font-bold">
                             الطلب مرفوض
                           </span>
                         ) : (
                           <span className="inline-block px-3 py-1 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold">
-                            في انتظار الموافقة
+                            جاري معالجة طلبك
                           </span>
                         )}
                       </td>

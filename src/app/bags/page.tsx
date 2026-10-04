@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Search, Archive, FolderArchive, Layers, ChevronLeft, Sparkles,
-  AlertCircle, RefreshCw, ShoppingCart, Eye
+  AlertCircle, RefreshCw, ShoppingCart, Eye, CheckCircle2, Clock
 } from 'lucide-react';
 import { getBags, getCurrencySymbol } from '@/services/bags';
 import { getMyAcademyProfile } from '@/services/student-auth';
@@ -306,6 +306,19 @@ export default function BagsPage() {
                         {getBagCategoryName(bag) || 'عام'}
                       </span>
                     )}
+
+                    {/* Purchase Status Tag */}
+                    {bag.is_purchased === 'purchased' ? (
+                      <span className="absolute top-4 left-4 px-2.5 py-1 bg-emerald-600 text-white backdrop-blur border border-emerald-500 text-[10px] font-black rounded-lg shadow-sm flex items-center gap-1">
+                        <CheckCircle2 size={12} />
+                        تم شراء الحقيبة
+                      </span>
+                    ) : bag.is_purchased === 'pending' ? (
+                      <span className="absolute top-4 left-4 px-2.5 py-1 bg-amber-500 text-white backdrop-blur border border-amber-400 text-[10px] font-black rounded-lg shadow-sm flex items-center gap-1">
+                        <Clock size={12} />
+                        جاري معالجة طلبك
+                      </span>
+                    ) : null}
                   </div>
 
                   {/* Card Body */}
@@ -328,7 +341,15 @@ export default function BagsPage() {
                     {/* Price and Action Footer */}
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col">
-                        {bag.type_price === 'free' || Number(bag.price || 0) === 0 ? (
+                        {bag.is_purchased === 'purchased' ? (
+                          <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg">
+                            تم شراء الحقيبة
+                          </span>
+                        ) : bag.is_purchased === 'pending' ? (
+                          <span className="text-xs font-black text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg">
+                            جاري معالجة طلبك
+                          </span>
+                        ) : bag.type_price === 'free' || Number(bag.price || 0) === 0 ? (
                           <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">مجاناً</span>
                         ) : (
                           <div className="flex items-baseline gap-1.5">
@@ -345,7 +366,13 @@ export default function BagsPage() {
                         )}
                       </div>
 
-                      <div className="w-8 h-8 rounded-full bg-slate-50 group-hover:bg-indigo-600 group-hover:text-white flex items-center justify-center text-slate-400 transition-all">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                        bag.is_purchased === 'purchased'
+                          ? 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white'
+                          : bag.is_purchased === 'pending'
+                          ? 'bg-amber-50 text-amber-600 group-hover:bg-amber-500 group-hover:text-white'
+                          : 'bg-slate-50 group-hover:bg-indigo-600 group-hover:text-white text-slate-400'
+                      }`}>
                         <ChevronLeft size={16} />
                       </div>
                     </div>
