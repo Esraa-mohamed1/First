@@ -5,6 +5,7 @@ import { getSchoolCoachHtml, getSchoolCoachNewDesignHtml, normalizeWhatsappUrl, 
 import { getPublicPages, getPublicSections, apiToEditor } from '@/services/pages';
 import { getCourses } from '@/services/courses';
 import { getStudentCourses } from '@/services/student-courses';
+import { getStudentVideos } from '@/services/student-videos';
 import { getStudentGrades, getStudentSubjects, getGrades, getSubjects } from '@/services/academic-classification';
 import { getBags } from '@/services/bags';
 import { getMyAcademyProfile } from '@/services/student-auth';
@@ -333,7 +334,7 @@ function parseItems(items: any): any[] {
   return Array.isArray(items) ? items : [];
 }
 
-function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, realCourses: any[] = [], realBags: any[] = [], isEditing: boolean = false, teacherProfile: any = null) {
+function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, realCourses: any[] = [], realBags: any[] = [], isEditing: boolean = false, teacherProfile: any = null, realVideos: any[] = []) {
   const hasApiData = Array.isArray(nodes) && nodes.length > 0;
 
   if (!hasApiData) {
@@ -350,7 +351,7 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
       features: fallback.features,
       courses: { ...fallback.courses, items: realCourses.length > 0 ? realCourses : [] },
       steps: fallback.steps,
-      videos: fallback.videos,
+      videos: { ...fallback.videos, items: realVideos.length > 0 ? realVideos : [] },
       resources: { ...fallback.resources, items: [] },
       results: fallback.results,
       bags: { ...fallback.bags, items: realBags.length > 0 ? realBags : [] },
@@ -673,6 +674,10 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
 
   // Videos
   let videos: any = null;
+  const rawVideoItems = Array.isArray(realVideos) && realVideos.length > 0
+    ? realVideos
+    : (videosNode ? parseItems(parseProps(videosNode.props).items || videosNode.items) : (fallback.videos?.items || []));
+
   if (videosNode) {
     const vp = parseProps(videosNode.props);
     videos = {
@@ -686,10 +691,13 @@ function parseSectionsToContent(nodes: any[], fallback: typeof DEFAULT_CONTENT, 
       backgroundColor: vp.backgroundColor ?? vp.background_color ?? vp.bgColor ?? vp.bg_color ?? '',
       textColor: vp.textColor ?? vp.text_color ?? '',
       fontFamily: vp.fontFamily ?? vp.font_family ?? '',
-      items: parseItems(vp.items || videosNode.items),
+      items: rawVideoItems,
     };
   } else {
-    videos = fallback.videos;
+    videos = {
+      ...fallback.videos,
+      items: rawVideoItems,
+    };
   }
 
   // Resources (Pure resources - no Bags data fallback)
@@ -976,6 +984,7 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
   const [content, setContent] = useState<any>(null);
   const [realCourses, setRealCourses] = useState<any[]>([]);
   const [realBags, setRealBags] = useState<any[]>([]);
+  const [realVideos, setRealVideos] = useState<any[]>([]);
   const [teacherProfile, setTeacherProfile] = useState<any>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -1159,6 +1168,30 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
     };
   }, []);
 
+  // Fetch videos dynamically from base api user ('videos' endpoint)
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchVideos() {
+      try {
+        const data = await getStudentVideos();
+        if (isMounted) {
+          const videosList = Array.isArray(data) ? data : [];
+          setRealVideos(videosList);
+          iframeRef.current?.contentWindow?.postMessage({
+            type: 'SCHOOLCOACH_UPDATE_VIDEOS',
+            videos: videosList,
+          }, '*');
+        }
+      } catch (err) {
+        console.error('[SchoolCoachTemplate] Failed to fetch videos:', err);
+      }
+    }
+    fetchVideos();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Fetch courses in background and update iframe smoothly without hard refresh
   useEffect(() => {
     let isMounted = true;
@@ -1207,7 +1240,7 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
       const fallback = DEFAULT_CONTENT;
 
       if (sectionsProp && sectionsProp.length > 0) {
-        const parsed = parseSectionsToContent(sectionsProp, fallback, realCourses, realBags, isEditing, teacherProfile);
+        const parsed = parseSectionsToContent(sectionsProp, fallback, realCourses, realBags, isEditing, teacherProfile, realVideos);
         setContent(parsed);
         return;
       }
@@ -1232,7 +1265,7 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
           const apiSections = await getPublicSections(activePage.id);
           if (apiSections && apiSections.length > 0) {
             const editorNodes = apiToEditor(apiSections);
-            const parsed = parseSectionsToContent(editorNodes, fallback, realCourses, realBags, isEditing, teacherProfile);
+            const parsed = parseSectionsToContent(editorNodes, fallback, realCourses, realBags, isEditing, teacherProfile, realVideos);
             setContent(parsed);
             return;
           }
@@ -1241,11 +1274,11 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
         console.error('[SchoolCoachTemplate] Failed to fetch sections from API:', err);
       }
 
-      setContent(parseSectionsToContent([], fallback, realCourses, realBags, isEditing, teacherProfile));
+      setContent(parseSectionsToContent([], fallback, realCourses, realBags, isEditing, teacherProfile, realVideos));
     }
 
     load();
-  }, [sectionsProp, isEditing, realCourses, realBags, teacherProfile]);
+  }, [sectionsProp, isEditing, realCourses, realBags, teacherProfile, realVideos]);
 
   // Listen to filter events from iframe
   useEffect(() => {
@@ -1284,6 +1317,12 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
           bags: realBags,
         }, '*');
       }
+      if (realVideos.length > 0) {
+        iframeRef.current.contentWindow.postMessage({
+          type: 'SCHOOLCOACH_UPDATE_VIDEOS',
+          videos: realVideos,
+        }, '*');
+      }
     }
   };
 
@@ -1301,9 +1340,10 @@ export default function SchoolCoachTemplate({ sections: sectionsProp }: SchoolCo
       '',
       realCourses,
       realBags,
-      teacherProfile
+      teacherProfile,
+      realVideos
     );
-  }, [content, isEditing, isLoggedIn, dashboardUrl, grades, subjects, realCourses, realBags, teacherProfile]);
+  }, [content, isEditing, isLoggedIn, dashboardUrl, grades, subjects, realCourses, realBags, teacherProfile, realVideos]);
 
   if (!content) return null;
 

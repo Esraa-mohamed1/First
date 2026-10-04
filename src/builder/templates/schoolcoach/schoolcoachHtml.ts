@@ -210,7 +210,8 @@ export const getSchoolCoachNewDesignHtml = (
   selectedSubject: string = '',
   realCourses: any[] = [],
   realBags: any[] = [],
-  teacherProfile: any = null
+  teacherProfile: any = null,
+  realVideos: any[] = []
 ) => {
   // Shared Canonical Teacher Identity: single source of truth from my-academy (key: site_name)
   const canonicalTeacherName =
@@ -442,7 +443,9 @@ export const getSchoolCoachNewDesignHtml = (
     ? rawBagItems.filter((b: any) => selectedBagIds.includes(String(b.id ?? b.bag_id ?? b._id)))
     : rawBagItems).filter((b: any) => b && (b.enabled !== false));
 
-  const rawVideoItems = Array.isArray((content as any)?.videos?.items) ? (content as any).videos.items : (Array.isArray((content as any)?.video?.items) ? (content as any).video.items : []);
+  const rawVideoItems = Array.isArray(realVideos) && realVideos.length > 0
+    ? realVideos
+    : (Array.isArray((content as any)?.videos?.items) ? (content as any).videos.items : (Array.isArray((content as any)?.video?.items) ? (content as any).video.items : []));
   const videoItems = rawVideoItems.filter((v: any) => v && (v.enabled !== false));
 
   const rawResultItems = Array.isArray((content as any)?.results?.items)
@@ -621,19 +624,21 @@ export const getSchoolCoachNewDesignHtml = (
 
   const renderVideoCards = videoItems.map((item: any, index: number) => {
     const title = escapeHtml(item.title || item.name || 'فيديو تعليمي');
+    const desc = escapeHtml(item.description || item.desc || item.short_description || '');
     const duration = escapeHtml(item.duration || item.time || '');
-    const thumb = normalizeImage(item.thumbnail || item.image || item.img || item.cover, '');
+    const thumb = normalizeImage(item.thumbnail_url || item.thumbnail || item.image || item.img || item.cover || item.poster, '');
     const videoId = escapeHtml(String(item.id || index));
+    const videoUrl = escapeHtml(item.video_url || item.url || item.link || item.embed_url || '');
 
     return `
-      <article class="mini-card video-card" data-section="videos" data-index="${index}" data-video-id="${videoId}">
+      <article class="mini-card video-card" data-section="videos" data-index="${index}" data-video-id="${videoId}" data-video-url="${videoUrl}">
         <div class="video-thumb ${!thumb ? 'video-thumb-default' : ''}" style="${thumb ? `background-image:url('${thumb}')` : ''}">
           <span class="play-badge">▶</span>
           ${duration ? `<span class="video-time">${duration}</span>` : ''}
         </div>
         <div class="card-body tight">
           <h3 class="video-card-title">${title}</h3>
-          ${item.description ? `<p class="video-card-desc">${escapeHtml(item.description)}</p>` : ''}
+          ${desc ? `<p class="video-card-desc">${desc}</p>` : ''}
         </div>
       </article>
     `;
@@ -2253,7 +2258,7 @@ export const getSchoolCoachNewDesignHtml = (
                 ` : ''}
               </div>
             ` : ''}
-            <div class="mini-grid videos-grid">
+            <div class="mini-grid videos-grid" id="schoolcoach-videos-container">
               ${videoItems.length > 0 ? renderVideoCards : renderEmptyVideosState}
             </div>
           </div>
@@ -3867,6 +3872,37 @@ ${!isEditing && isLoggedIn ? `
                 }
                 bHtml += '</div>';
                 bagsContainer.innerHTML = bHtml;
+              }
+            }
+          } else if (e.data.type === 'SCHOOLCOACH_UPDATE_VIDEOS') {
+            if (Array.isArray(e.data.videos)) {
+              var videosContainer = document.getElementById('schoolcoach-videos-container') || document.querySelector('#videos .videos-grid, #videos .mini-grid');
+              if (videosContainer) {
+                if (e.data.videos.length === 0) {
+                  videosContainer.innerHTML = '<div class="videos-empty-state" data-section="videos"><div class="empty-icon-shell"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></div><h3 class="empty-title">' + escapeHtml(videosEmptyText || 'لا توجد فيديوهات متاحة حالياً') + '</h3><p class="empty-desc">' + escapeHtml(videosSubtitle || 'شاهد أحدث الشروحات والدروس المصورة.') + '</p></div>';
+                } else {
+                  var vHtml = '';
+                  e.data.videos.forEach(function(v, idx) {
+                    var vTitle = escapeHtml(v.title || v.name || 'فيديو تعليمي');
+                    var vDesc = escapeHtml(v.description || v.desc || v.short_description || '');
+                    var vDur = escapeHtml(v.duration || v.time || '');
+                    var vThumb = normalizeImage(v.thumbnail_url || v.thumbnail || v.image || v.img || v.cover || v.poster, '');
+                    var vId = escapeHtml(String(v.id || idx));
+                    var vUrl = escapeHtml(v.video_url || v.url || v.link || v.embed_url || '');
+
+                    vHtml += '<article class="mini-card video-card" data-section="videos" data-index="' + idx + '" data-video-id="' + vId + '" data-video-url="' + vUrl + '">';
+                    vHtml += '<div class="video-thumb ' + (!vThumb ? 'video-thumb-default' : '') + '" style="' + (vThumb ? 'background-image:url(\'' + vThumb + '\')' : '') + '">';
+                    vHtml += '<span class="play-badge">▶</span>';
+                    if (vDur) vHtml += '<span class="video-time">' + vDur + '</span>';
+                    vHtml += '</div>';
+                    vHtml += '<div class="card-body tight">';
+                    vHtml += '<h3 class="video-card-title">' + vTitle + '</h3>';
+                    if (vDesc) vHtml += '<p class="video-card-desc">' + vDesc + '</p>';
+                    vHtml += '</div>';
+                    vHtml += '</article>';
+                  });
+                  videosContainer.innerHTML = vHtml;
+                }
               }
             }
           } else if (e.data.type === 'SCHOOLCOACH_UPDATE_DROPDOWNS') {

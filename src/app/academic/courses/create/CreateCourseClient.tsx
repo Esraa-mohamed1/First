@@ -54,6 +54,7 @@ import { User, ReceiverAccount } from '@/types/api';
 import AddLessonModal from '@/components/Academic/Modals/AddLessonModal';
 import EditLessonModal from '@/components/Academic/Modals/EditLessonModal';
 import EditUnitModal from '@/components/Academic/Modals/EditUnitModal';
+import { ExamModal } from '@/components/Academic/Exam';
 import { PaymentMethodDropdown } from '@/components/payment/PaymentMethodDropdown';
 import { AcademyPaymentMethod, PaymentMethod } from '@/types/payment';
 import { getUserPaymentInfos, UserPaymentInfo, getReceiverAccounts, createUserPaymentInfo } from '@/services/finance';
@@ -319,6 +320,9 @@ export default function CreateCourseClient() {
   const [editingUnit, setEditingUnit] = useState<any | null>(null);
   const [isEditLessonOpen, setIsEditLessonOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<any | null>(null);
+  const [isExamModalOpen, setIsExamModalOpen] = useState(false);
+  const [currentUnitForExam, setCurrentUnitForExam] = useState<number | null>(null);
+  const [editingExamData, setEditingExamData] = useState<any | null>(null);
 
   // Resolved course type — initialized from URL param (create mode), overridden from API data (edit mode)
   // Inline the mapping here to avoid TDZ since mapTypeToBackend is defined later in this component
@@ -2834,17 +2838,31 @@ export default function CreateCourseClient() {
                           <div className="divide-y divide-slate-200">
                             {lessonsList.length === 0 ? (
                               <div className="p-8 text-center bg-slate-50/50">
-                                <p className="text-sm font-medium text-slate-400 mb-3">لا توجد دروس داخل هذه الوحدة حتى الآن</p>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setCurrentUnitForLesson(unit.id);
-                                    setIsLessonModalOpen(true);
-                                  }}
-                                  className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold hover:bg-blue-100 border border-blue-200 transition-colors"
-                                >
-                                  + إضافة درس للوحدة
-                                </button>
+                                <p className="text-sm font-medium text-slate-400 mb-3">لا توجد دروس أو اختبارات داخل هذه الوحدة حتى الآن</p>
+                                <div className="flex items-center justify-center gap-3">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setCurrentUnitForLesson(unit.id);
+                                      setIsLessonModalOpen(true);
+                                    }}
+                                    className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer"
+                                  >
+                                    + إضافة درس للوحدة
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setCurrentUnitForExam(unit.id);
+                                      setEditingExamData(null);
+                                      setIsExamModalOpen(true);
+                                    }}
+                                    className="px-4 py-2 bg-purple-50 text-purple-600 rounded-xl text-xs font-bold hover:bg-purple-100 border border-purple-200 transition-colors cursor-pointer flex items-center gap-1"
+                                  >
+                                    <span className="material-symbols-outlined text-[16px]">quiz</span>
+                                    <span>+ إضافة اختبار للوحدة</span>
+                                  </button>
+                                </div>
                               </div>
                             ) : (
                               lessonsList.map((lesson: any) => {
@@ -2965,8 +2983,14 @@ export default function CreateCourseClient() {
                                           type="button"
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            setEditingLesson(lesson);
-                                            setIsEditLessonOpen(true);
+                                            if (lessonType === 'quiz') {
+                                              setCurrentUnitForExam(unit.id);
+                                              setEditingExamData(lesson);
+                                              setIsExamModalOpen(true);
+                                            } else {
+                                              setEditingLesson(lesson);
+                                              setIsEditLessonOpen(true);
+                                            }
                                           }}
                                           className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
                                           title="تعديل الدرس"
@@ -3020,18 +3044,30 @@ export default function CreateCourseClient() {
                               })
                             )}
 
-                            {/* Bottom Add Action with Dropdown Menu */}
-                            <div className="p-3 bg-slate-50/70 flex justify-center border-t border-dashed border-slate-300 relative">
+                            {/* Bottom Add Actions */}
+                            <div className="p-3 bg-slate-50/70 flex items-center justify-center gap-3 border-t border-dashed border-slate-300 relative">
                               <button
                                 type="button"
                                 onClick={() => {
                                   setCurrentUnitForLesson(unit.id);
                                   setIsLessonModalOpen(true);
                                 }}
-                                className="text-blue-600 font-bold text-sm flex items-center gap-2 hover:bg-blue-50 px-4 py-2 rounded-xl transition-colors border border-blue-200/80 shadow-2xs"
+                                className="text-blue-600 font-bold text-xs flex items-center gap-1.5 hover:bg-blue-50 px-3.5 py-2 rounded-xl transition-colors border border-blue-200/80 shadow-2xs cursor-pointer"
                               >
-                                <span className="material-symbols-outlined text-xl">add_circle</span>
-                                <span>إضافة محتوى للوحدة</span>
+                                <span className="material-symbols-outlined text-lg">add_circle</span>
+                                <span>إضافة درس</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCurrentUnitForExam(unit.id);
+                                  setEditingExamData(null);
+                                  setIsExamModalOpen(true);
+                                }}
+                                className="text-purple-600 font-bold text-xs flex items-center gap-1.5 hover:bg-purple-50 px-3.5 py-2 rounded-xl transition-colors border border-purple-200/80 shadow-2xs cursor-pointer"
+                              >
+                                <span className="material-symbols-outlined text-lg">quiz</span>
+                                <span>إضافة اختبار</span>
                               </button>
                             </div>
                           </div>
@@ -4102,6 +4138,25 @@ export default function CreateCourseClient() {
           if (id) refreshUnits(Number(id));
         }}
         courseType={resolvedCourseType}
+      />
+
+      {/* Exam / Quiz Modal */}
+      <ExamModal
+        isOpen={isExamModalOpen}
+        onClose={() => {
+          setIsExamModalOpen(false);
+          setCurrentUnitForExam(null);
+          setEditingExamData(null);
+        }}
+        unitId={currentUnitForExam || 0}
+        courseId={courseId || (params?.id ? Number(params.id) : undefined)}
+        unitTitle={units.find((u) => u.id === currentUnitForExam)?.title || ''}
+        courseTitle={title}
+        initialData={editingExamData}
+        onExamSaved={() => {
+          const id = courseId || (params?.id ? (Array.isArray(params.id) ? params.id[0] : params.id) : null);
+          if (id) refreshUnits(Number(id));
+        }}
       />
 
       {/* Publish Success & Social Share Popup Modal */}
