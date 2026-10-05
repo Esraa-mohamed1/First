@@ -1,98 +1,123 @@
 'use client';
 
 import React from 'react';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { ChevronRight, Eye, MoreVertical, Check, Sparkles } from 'lucide-react';
 
 interface ExamHeaderProps {
-  unitTitle: string;
-  activeTab: 'questions' | 'settings';
-  setActiveTab: (tab: 'questions' | 'settings') => void;
-  onNextOrSave: () => void;
-  onCancel: () => void;
-  isSubmitting?: boolean;
+  title: string;
+  targetSubtitle?: string;
+  activeTab: 'questions' | 'settings' | 'publish';
+  setActiveTab: (tab: 'questions' | 'settings' | 'publish') => void;
+  onBackOrCancel: () => void;
+  onOpenPreview: () => void;
+  questionsCount: number;
 }
 
 export const ExamHeader: React.FC<ExamHeaderProps> = ({
-  unitTitle,
+  title,
+  targetSubtitle = 'محفوظ تلقائياً • اختبار مستقل',
   activeTab,
   setActiveTab,
-  onNextOrSave,
-  onCancel,
-  isSubmitting = false,
+  onBackOrCancel,
+  onOpenPreview,
+  questionsCount,
 }) => {
   return (
-    <div className="flex items-center justify-between px-6 py-3.5 bg-white border-b border-slate-200 shrink-0 select-none">
-      {/* Right side: Breadcrumb / Title */}
-      <div className="flex items-center gap-2 text-right">
-        <div className="flex items-center gap-1.5 font-bold text-slate-800 text-base">
-          <span className="text-blue-600 font-extrabold flex items-center gap-1">
-            <span className="material-symbols-outlined text-blue-500 text-[20px]">
-              stars
-            </span>
-            اختبار :
-          </span>
-          <span className="text-slate-500 font-medium text-sm">
-            ({unitTitle || 'الوحدة'})
-          </span>
+    <div className="bg-white border-b border-slate-200 shrink-0 select-none text-right" dir="rtl">
+      {/* Top Bar Row (Matching screenshot) */}
+      <div className="flex items-center justify-between px-6 py-3">
+        {/* Right Side: Back Arrow, Title, Subtitle */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onBackOrCancel}
+            className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+            title="رجوع"
+          >
+            <ChevronRight size={20} />
+          </button>
+
+          <div>
+            <h2 className="text-base font-bold text-slate-900 line-clamp-1">
+              {title || 'اختبار بدون عنوان'}
+            </h2>
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
+              <Check size={12} className="text-emerald-500 stroke-[3]" />
+              <span>{targetSubtitle}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Left Side: Preview (Eye) & More Options (3 Dots) */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onOpenPreview}
+            className="p-2 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer"
+            title="معاينة الاختبار كطالب"
+          >
+            <Eye size={18} />
+          </button>
+
+          <button
+            type="button"
+            onClick={onBackOrCancel}
+            className="p-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+            title="إغلاق"
+          >
+            <MoreVertical size={18} />
+          </button>
         </div>
       </div>
 
-      {/* Center: Tabs */}
-      <div className="flex items-center gap-8 font-bold text-sm">
+      {/* Tabs Row (Matching screenshot: الأسئلة 3 / الإعدادات / النشر 🔴) */}
+      <div className="flex items-center gap-8 px-8 text-xs font-bold border-t border-slate-100/80">
+        {/* Tab 1: الأسئلة */}
         <button
           type="button"
           onClick={() => setActiveTab('questions')}
-          className={`pb-2 transition-all relative cursor-pointer ${
+          className={`py-3 relative transition-all cursor-pointer ${
             activeTab === 'questions'
-              ? 'text-slate-900 font-extrabold'
-              : 'text-slate-400 hover:text-slate-600'
+              ? 'text-blue-600 font-extrabold'
+              : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <span>تفاصيل الأسئلة</span>
+          <span>الأسئلة {questionsCount > 0 ? questionsCount : ''}</span>
           {activeTab === 'questions' && (
-            <div className="absolute bottom-[-14px] left-0 right-0 h-[3px] bg-blue-600 rounded-full" />
+            <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-blue-600 rounded-full" />
           )}
         </button>
 
+        {/* Tab 2: الإعدادات */}
         <button
           type="button"
           onClick={() => setActiveTab('settings')}
-          className={`pb-2 transition-all relative cursor-pointer ${
+          className={`py-3 relative transition-all cursor-pointer ${
             activeTab === 'settings'
-              ? 'text-slate-900 font-extrabold'
-              : 'text-slate-400 hover:text-slate-600'
+              ? 'text-blue-600 font-extrabold'
+              : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <span>الأعدادات</span>
+          <span>الإعدادات</span>
           {activeTab === 'settings' && (
-            <div className="absolute bottom-[-14px] left-0 right-0 h-[3px] bg-blue-600 rounded-full" />
+            <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-blue-600 rounded-full" />
           )}
         </button>
-      </div>
 
-      {/* Left side: Action Buttons */}
-      <div className="flex items-center gap-3">
+        {/* Tab 3: النشر */}
         <button
           type="button"
-          onClick={onCancel}
-          className="px-5 py-2 text-slate-400 hover:text-slate-600 font-bold text-sm transition-colors cursor-pointer"
+          onClick={() => setActiveTab('publish')}
+          className={`py-3 relative transition-all cursor-pointer flex items-center gap-1.5 ${
+            activeTab === 'publish'
+              ? 'text-blue-600 font-extrabold'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
         >
-          إلغاء
-        </button>
-
-        <button
-          type="button"
-          onClick={onNextOrSave}
-          disabled={isSubmitting}
-          className="px-7 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-sm rounded-xl shadow-md shadow-blue-500/10 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 size={16} className="animate-spin" />
-              <span>جاري الحفظ...</span>
-            </>
-          ) : (
-            <span>{activeTab === 'questions' ? 'التالي' : 'حفظ'}</span>
+          <span className="w-2 h-2 rounded-full bg-rose-500" />
+          <span>النشر</span>
+          {activeTab === 'publish' && (
+            <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-blue-600 rounded-full" />
           )}
         </button>
       </div>

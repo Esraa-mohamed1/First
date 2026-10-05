@@ -4,4 +4,8 @@ export * from './ExamQuestionsSidebar';
 export * from './QuestionSettingsSidebar';
 export * from './QuestionEditor';
 export * from './ExamSettingsTab';
+export * from './ExamTakingModal';
+export * from './EquationEditorModal';
+export * from './AddQuestionModal';
+export * from './KaTeXRenderer';
 export * from './constants';

@@ -76,6 +76,17 @@ export interface ExamBasicSettings {
   allowedAttempts: number;
   passingScorePercentage: number;
   maxQuestionsToAnswer: number;
+  
+  // Extra Darab settings
+  showSolutionOnSubmit?: boolean;
+  shuffleQuestions?: boolean;
+  shuffleOptions?: boolean;
+  linearNavigation?: boolean; // If true, student cannot go back to previous questions
+  enableCertificate?: boolean;
+  instructions?: string;
+  completionMessage?: string;
+  scheduleStart?: string;
+  scheduleEnd?: string;
 }
 
 export interface ExamAdvancedSettings {
@@ -103,4 +114,35 @@ export interface ExamPayload {
   questions: ExamQuestion[];
   settings: ExamSettings;
   is_free?: boolean | number;
+}
+
+// Student Taking & Attempt types
+export interface StudentAnswer {
+  questionId: string;
+  selectedOptionIds?: string[];
+  trueFalseValue?: boolean;
+  blanksAnswers?: string[];
+  textAnswer?: string;
+  matchingPairs?: Record<string, string>; // promptId -> target
+}
+
+export interface QuestionReviewItem {
+  question: ExamQuestion;
+  studentAnswer: StudentAnswer;
+  isCorrect: boolean;
+  earnedScore: number;
+  maxScore: number;
+}
+
+export interface ExamResultSummary {
+  totalQuestions: number;
+  answeredCount: number;
+  correctCount: number;
+  incorrectCount: number;
+  totalEarnedScore: number;
+  maxPossibleScore: number;
+  percentageScore: number;
+  isPassed: boolean;
+  timeSpentSeconds: number;
+  reviews: QuestionReviewItem[];
 }

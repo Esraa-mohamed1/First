@@ -18,6 +18,7 @@ import {
   Globe,
   ShoppingBag,
   Video,
+  ClipboardCheck,
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import Image from 'next/image';
@@ -62,6 +63,12 @@ export const SIDEBAR_PALETTE: Record<string, NavItemPalette> = {
     chipBg: 'bg-purple-50',
     chipText: 'text-purple-600',
     chipActiveBg: 'bg-purple-600',
+    chipActiveText: 'text-white',
+  },
+  'الاختبارات': {
+    chipBg: 'bg-blue-50',
+    chipText: 'text-blue-700',
+    chipActiveBg: 'bg-blue-600',
     chipActiveText: 'text-white',
   },
   'الطلاب': {
@@ -243,6 +250,11 @@ const Sidebar = ({ isOpen = false, onClose, isCollapsed = false, onToggleCollaps
       label: 'الفيديوهات',
       icon: Video,
       href: '/academic/videos',
+    },
+    {
+      label: 'الاختبارات',
+      icon: ClipboardCheck,
+      href: '/academic/exams',
     },
     {
       label: 'الطلاب',

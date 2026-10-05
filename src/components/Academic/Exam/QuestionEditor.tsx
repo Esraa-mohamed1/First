@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { Edit3 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Edit3, Calculator, HelpCircle, Eye, Pencil } from 'lucide-react';
 import { ExamQuestion } from '@/types/academic/exam.types';
 import { McqQuestionEditor } from './components/McqQuestionEditor';
 import { TrueFalseQuestionEditor } from './components/TrueFalseQuestionEditor';
@@ -9,6 +9,8 @@ import { FillBlanksQuestionEditor } from './components/FillBlanksQuestionEditor'
 import { ShortAnswerQuestionEditor } from './components/ShortAnswerQuestionEditor';
 import { MatchingQuestionEditor } from './components/MatchingQuestionEditor';
 import { ImageAnswerQuestionEditor } from './components/ImageAnswerQuestionEditor';
+import { EquationEditorModal } from './EquationEditorModal';
+import { KaTeXRenderer } from './KaTeXRenderer';
 
 interface QuestionEditorProps {
   question: ExamQuestion | null;
@@ -27,12 +29,13 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
   onUpdateExamMeta,
   onUpdateQuestion,
 }) => {
-  // Empty State when no question exists or is selected
+  const [isEquationModalOpen, setIsEquationModalOpen] = useState(false);
+  const [targetFieldForEquation, setTargetFieldForEquation] = useState<'title' | 'description' | 'explanation'>('title');
+
   if (!question) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50/30 overflow-y-auto select-none">
-        {/* Top Right Quiz Details Card */}
-        <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3 text-right mb-12">
+      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50/40 select-none" dir="rtl">
+        <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3 text-right mb-6">
           <input
             type="text"
             placeholder="اضافة عنوان الاختبار"
@@ -45,65 +48,85 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
             placeholder="أضف ملخص"
             value={examDescription}
             onChange={(e) => onUpdateExamMeta(examTitle, e.target.value)}
-            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-blue-500 focus:bg-white"
+            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-blue-500 focus:bg-white resize-none"
           />
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="px-4 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg"
-            >
-              موافق
-            </button>
-            <button
-              type="button"
-              onClick={() => onUpdateExamMeta('', '')}
-              className="px-3 py-1.5 text-slate-400 text-xs font-bold"
-            >
-              إلغاء
-            </button>
-          </div>
-        </div>
-
-        {/* Center Welcome Guide */}
-        <div className="max-w-md space-y-2">
-          <p className="text-sm font-bold text-slate-500 leading-relaxed">
-            أدخل عنوان الاختبار للبدء، ثم اختر من بين مجموعة متنوعة من أنواع الأسئلة لإنشاء تجربة تقييم أكثر تفاعلاً وفعالية.
-          </p>
         </div>
       </div>
     );
   }
 
+  const handleOpenEquationModal = (field: 'title' | 'description' | 'explanation') => {
+    setTargetFieldForEquation(field);
+    setIsEquationModalOpen(true);
+  };
+
+  const handleInsertEquation = (latexStr: string) => {
+    if (targetFieldForEquation === 'title') {
+      const current = question.title || '';
+      onUpdateQuestion({ title: current ? `${current} ${latexStr}` : latexStr });
+    } else if (targetFieldForEquation === 'description') {
+      const current = question.description || '';
+      onUpdateQuestion({ description: current ? `${current} ${latexStr}` : latexStr });
+    } else if (targetFieldForEquation === 'explanation') {
+      const current = question.explanation || '';
+      onUpdateQuestion({ explanation: current ? `${current} ${latexStr}` : latexStr });
+    }
+  };
+
   return (
-    <div className="flex-1 flex flex-col p-6 overflow-y-auto space-y-6 text-right bg-white">
-      {/* Question Title & Number */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1">
-          <input
-            type="text"
-            value={question.title}
-            onChange={(e) => onUpdateQuestion({ title: e.target.value })}
-            placeholder="اكتب نص السؤال هنا..."
-            className="w-full p-3.5 pl-10 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-2xs"
-          />
-          <Edit3
-            size={16}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-          />
+    <div className="flex-1 flex flex-col p-6 overflow-y-auto space-y-5 text-right bg-white custom-scrollbar" dir="rtl">
+      {/* Question Prompt Card with .2 on the right and edit icon on the left (Matching media_1791103057139.png) */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-black text-slate-700">نص السؤال</span>
+          <button
+            type="button"
+            onClick={() => handleOpenEquationModal('title')}
+            className="flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700"
+          >
+            <Calculator size={13} />
+            <span>إدراج معادلة</span>
+          </button>
         </div>
-        <span className="text-base font-black text-slate-800 shrink-0">
-          .{questionIndex + 1}
-        </span>
+
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={question.title}
+              onChange={(e) => onUpdateQuestion({ title: e.target.value })}
+              placeholder="اكتب نص السؤال هنا..."
+              className="w-full p-3.5 pl-10 bg-slate-50/80 border border-slate-200/80 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:border-blue-500 focus:bg-white transition shadow-2xs"
+            />
+            <Pencil
+              size={15}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+            />
+          </div>
+          <span className="text-sm font-black text-slate-700 shrink-0">
+            .{questionIndex + 1}
+          </span>
+        </div>
+
+        {/* Live KaTeX Preview if math formula present */}
+        {question.title && (question.title.includes('$') || question.title.includes('\\')) && (
+          <div className="p-2.5 bg-blue-50/50 border border-blue-100 rounded-xl text-xs text-slate-800 flex items-center gap-2">
+            <Eye size={14} className="text-blue-600 flex-shrink-0" />
+            <div className="flex-1">
+              <KaTeXRenderer content={question.title} />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Question Subtitle / Description (Optional) */}
+      {/* Subtitle: وصف السؤال (اختياري) */}
       <div>
         <input
           type="text"
           value={question.description || ''}
           onChange={(e) => onUpdateQuestion({ description: e.target.value })}
           placeholder="وصف السؤال (اختياري)"
-          className="w-full p-3 bg-slate-50/70 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all"
+          className="w-full p-3 bg-slate-50/60 border border-slate-200/70 rounded-xl text-xs font-medium text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition"
         />
       </div>
 
@@ -160,16 +183,23 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
         )}
       </div>
 
-      {/* Bottom: Explanation Box */}
-      <div className="pt-4 border-t border-slate-100">
+      {/* Explanation Box: اكتب شرح الاجابة (Matching media_1791103057139.png) */}
+      <div className="pt-4 border-t border-slate-100 space-y-1.5">
         <textarea
           rows={3}
           value={question.explanation || ''}
           onChange={(e) => onUpdateQuestion({ explanation: e.target.value })}
           placeholder="اكتب شرح الاجابة"
-          className="w-full p-3.5 bg-slate-50/80 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all"
+          className="w-full p-3 bg-slate-50/60 border border-slate-200/70 rounded-xl text-xs font-medium text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition resize-none leading-relaxed"
         />
       </div>
+
+      {/* Equation Modal */}
+      <EquationEditorModal
+        isOpen={isEquationModalOpen}
+        onClose={() => setIsEquationModalOpen(false)}
+        onInsert={handleInsertEquation}
+      />
     </div>
   );
 };

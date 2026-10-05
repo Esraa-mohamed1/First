@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Plus, ChevronDown, ChevronUp, Pencil, Trash2, Video, FileText, FilePieChart as FilePowerpoint } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp, Pencil, Trash2, Video, FileText, FilePieChart as FilePowerpoint, FileQuestion, Sparkles } from 'lucide-react';
 import { Course } from '@/types/api';
 
 interface CourseContentTabProps {
@@ -21,6 +21,7 @@ interface CourseContentTabProps {
   handleEditLesson: (lessonId: number) => void;
   handleDeleteLesson: (lessonId: number) => void;
   handleAddLesson: (unitId: number, unitTitle: string) => void;
+  handleAddExam?: (unitId: number, unitTitle: string) => void;
   setActiveTab: (tab: 'info' | 'content' | 'pricing' | 'landing_pages' | 'subscribers') => void;
 }
 
@@ -41,6 +42,7 @@ export const CourseContentTab: React.FC<CourseContentTabProps> = ({
   handleEditLesson,
   handleDeleteLesson,
   handleAddLesson,
+  handleAddExam,
   setActiveTab,
 }) => {
   return (
@@ -152,16 +154,22 @@ export const CourseContentTab: React.FC<CourseContentTabProps> = ({
                     unit.lessons.map((lesson: any) => (
                       <div key={lesson.id} className="flex items-center justify-between p-3 bg-white border border-outline-variant rounded-xl hover:border-primary/45 transition-all group shadow-sm">
                         <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${lesson.type === 'video' ? 'bg-blue-50 text-blue-600' :
-                              lesson.type === 'pdf' ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'
-                            }`}>
-                            {lesson.type === 'video' ? <Video size={18} /> :
-                              lesson.type === 'pdf' ? <FileText size={18} /> : <FilePowerpoint size={18} />}
+                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                            lesson.type === 'quiz' ? 'bg-purple-50 text-purple-600' :
+                            lesson.type === 'video' ? 'bg-blue-50 text-blue-600' :
+                            lesson.type === 'pdf' ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'
+                          }`}>
+                            {lesson.type === 'quiz' ? <FileQuestion size={18} /> :
+                            lesson.type === 'video' ? <Video size={18} /> :
+                            lesson.type === 'pdf' ? <FileText size={18} /> : <FilePowerpoint size={18} />}
                           </div>
                           <div>
                             <h4 className="font-bold text-gray-900 text-sm">{lesson.title}</h4>
                             <div className="flex items-center gap-2 text-[10px] text-gray-400 font-bold mt-0.5">
-                              <span>{lesson.type === 'video' ? 'فيديو' : lesson.type === 'pdf' ? 'ملف PDF' : 'عرض تقديمي'}</span>
+                              <span>
+                                {lesson.type === 'quiz' ? 'اختبار تقييمي' :
+                                lesson.type === 'video' ? 'فيديو' : lesson.type === 'pdf' ? 'ملف PDF' : 'عرض تقديمي'}
+                              </span>
                               {lesson.duration && <span>• {lesson.duration} دقيقة</span>}
                             </div>
                           </div>
@@ -187,18 +195,33 @@ export const CourseContentTab: React.FC<CourseContentTabProps> = ({
                     ))
                   ) : null}
 
-                  {/* Add Lesson Button */}
-                  <div className="border-2 border-dashed border-outline-variant rounded-xl p-1.5">
-                    <button
-                      type="button"
-                      onClick={() => handleAddLesson(unit.id, unit.title)}
-                      className="w-full py-3.5 rounded-xl text-gray-500 font-bold hover:text-primary hover:bg-blue-50/50 transition-all flex items-center justify-center gap-2 text-sm group"
-                    >
-                      <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center group-hover:bg-primary transition-all transform group-hover:scale-110">
-                        <Plus size={14} strokeWidth={3} className="text-white" />
-                      </div>
-                      <span>اضف درس جديد</span>
-                    </button>
+                  {/* Add Lesson & Add Exam Buttons */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div className="border-2 border-dashed border-outline-variant rounded-xl p-1">
+                      <button
+                        type="button"
+                        onClick={() => handleAddLesson(unit.id, unit.title)}
+                        className="w-full py-2.5 rounded-lg text-gray-500 font-bold hover:text-primary hover:bg-blue-50/50 transition-all flex items-center justify-center gap-2 text-xs group"
+                      >
+                        <div className="w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center group-hover:bg-primary transition-all transform group-hover:scale-110">
+                          <Plus size={12} strokeWidth={3} className="text-white" />
+                        </div>
+                        <span>أضف درس جديد</span>
+                      </button>
+                    </div>
+
+                    <div className="border-2 border-dashed border-blue-200 bg-blue-50/20 rounded-xl p-1">
+                      <button
+                        type="button"
+                        onClick={() => handleAddExam ? handleAddExam(unit.id, unit.title) : handleAddLesson(unit.id, unit.title)}
+                        className="w-full py-2.5 rounded-lg text-blue-700 font-bold hover:bg-blue-50 transition-all flex items-center justify-center gap-2 text-xs group"
+                      >
+                        <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center transition-all transform group-hover:scale-110">
+                          <Sparkles size={12} strokeWidth={3} className="text-white" />
+                        </div>
+                        <span>إضافة اختبار للوحدة</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
