@@ -21,6 +21,13 @@ export interface BagApiItem {
   price?: number | string;
   discount_price?: number | string | null;
   count_download?: number | null;
+  download_type?: 'unlimited' | 'limited' | string | null;
+  download_limit?: number | string | null;
+  download_validity?: number | string | null;
+  access_duration_type?: 'lifetime' | 'days' | 'until_date' | 'date' | 'unlimited' | string | null;
+  access_days?: number | string | null;
+  access_until_date?: string | null;
+  access_period?: string | null;
   count_view?: number | null;
   /** "published" | "active" | "draft" */
   status?: string;
@@ -37,7 +44,7 @@ export interface BagApiItem {
   receiver_accounts?: any[];
   currency?: string;
   purchased?: boolean;
-  is_purchased?: boolean;
+  is_purchased?: null | 'pending' | 'purchased';
   created_at?: string;
   updated_at?: string;
 }
@@ -65,6 +72,7 @@ export interface CreateBagPayload {
   count_download?: number | string | null;
   download_type?: 'unlimited' | 'limited' | string;
   download_limit?: number | string | null;
+  download_validity_days?: number | string | null;
   items?: BagItemInput[];
   payment_info_ids?: number[];
 }

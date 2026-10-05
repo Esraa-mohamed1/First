@@ -60,6 +60,16 @@ function buildBagFormData(payload: CreateBagPayload): FormData {
   if (payload.download_limit !== undefined && payload.download_limit !== null)
     fd.append('download_limit', String(payload.download_limit));
 
+  if (
+    payload.download_validity_days !== undefined &&
+    payload.download_validity_days !== null
+  ) {
+    fd.append(
+      'download_validity_days',
+      String(payload.download_validity_days)
+    );
+  }
+
   const isFile = (v: any): v is File => typeof File !== 'undefined' && typeof File === 'function' && v instanceof File;
 
   // Main Cover Image: File object = upload binary file

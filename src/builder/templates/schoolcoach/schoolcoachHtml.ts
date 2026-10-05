@@ -574,18 +574,31 @@ export const getSchoolCoachNewDesignHtml = (
     const image = normalizeImage(item.image || item.cover_image || item.thumbnail, 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=900&q=80');
     const bagHref = `/bags/${item.id}`;
 
+    let buttonHtml = '';
+    let chipHtml = '<span class="chip">حقيبة تعليمية</span>';
+
+    if (item.is_purchased === 'purchased') {
+      buttonHtml = `<a href="${bagHref}" target="_top" class="small-btn small-btn-purchased" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; font-weight:800;">تم شراء الحقيبة</a>`;
+      chipHtml = '<span class="chip" style="background:#ecfdf5; color:#047857; border-color:#a7f3d0;">تم شراء الحقيبة</span>';
+    } else if (item.is_purchased === 'pending') {
+      buttonHtml = `<a href="${bagHref}" target="_top" class="small-btn small-btn-pending" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; background:#fffbeb; color:#b45309; border:1px solid #fde68a; font-weight:800;">جاري معالجة طلبك</a>`;
+      chipHtml = '<span class="chip" style="background:#fffbeb; color:#b45309; border-color:#fde68a;">جاري معالجة طلبك</span>';
+    } else {
+      buttonHtml = `<a href="${bagHref}" target="_top" class="small-btn" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">${escapeHtml(bagsButtonText || 'تفاصيل الحقيبة')}</a>`;
+    }
+
     return `
       <article class="mini-card bag-card" data-section="bags" data-index="${index}">
         <a href="${bagHref}" target="_top" class="card-thumb-link">
           <div class="thumb" style="background-image:url('${image}')"></div>
         </a>
         <div class="card-body">
-          <span class="chip">حقيبة تعليمية</span>
+          ${chipHtml}
           <h3 class="course-card-title"><a href="${bagHref}" target="_top" style="text-decoration:none; color:inherit;">${title}</a></h3>
           ${description ? `<p class="course-card-desc">${description}</p>` : ''}
           <div class="course-meta">
             <span class="price">${escapeHtml(priceText)}</span>
-            <a href="${bagHref}" target="_top" class="small-btn" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">${escapeHtml(bagsButtonText || 'تفاصيل الحقيبة')}</a>
+            ${buttonHtml}
           </div>
         </div>
       </article>
@@ -1294,6 +1307,10 @@ export const getSchoolCoachNewDesignHtml = (
         .price { font-weight: 800; color: var(--brand); font-size: 16px; }
         .small-btn { background: #edf4ff; color: var(--brand); border: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; transition: all 0.15s ease; }
         .small-btn:hover { background: var(--brand); color: #fff; }
+        .small-btn.small-btn-purchased { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; font-weight: 800; }
+        .small-btn.small-btn-purchased:hover { background: #059669; color: #fff; }
+        .small-btn.small-btn-pending { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; font-weight: 800; }
+        .small-btn.small-btn-pending:hover { background: #d97706; color: #fff; }
 
         /* Steps - Clean Vertical Educational Flow */
         .steps-wrapper {
@@ -3603,9 +3620,19 @@ ${!isEditing && isLoggedIn ? `
                       </div>
                     </div>
                     <div>
-                      <a href="${bagHref}" target="_top" class="btn-primary block text-center w-full text-xs py-3.5 shadow-md hover:shadow-gold-500/20 font-bold">
-                        استعرض الحقيبة والملفات
-                      </a>
+                      ${bag.is_purchased === 'purchased' ? `
+                        <a href="${bagHref}" target="_top" class="btn-primary block text-center w-full text-xs py-3.5 shadow-md font-bold" style="background:#059669; border-color:#059669; color:#ffffff;">
+                          تم شراء الحقيبة
+                        </a>
+                      ` : bag.is_purchased === 'pending' ? `
+                        <a href="${bagHref}" target="_top" class="btn-primary block text-center w-full text-xs py-3.5 shadow-md font-bold" style="background:#d97706; border-color:#d97706; color:#ffffff;">
+                          جاري معالجة طلبك
+                        </a>
+                      ` : `
+                        <a href="${bagHref}" target="_top" class="btn-primary block text-center w-full text-xs py-3.5 shadow-md hover:shadow-gold-500/20 font-bold">
+                          استعرض الحقيبة والملفات
+                        </a>
+                      `}
                     </div>
                   </div>
                 `;
@@ -3867,7 +3894,13 @@ ${!isEditing && isLoggedIn ? `
                   bHtml += '<p class="text-xs text-gray-400 mb-6 leading-relaxed line-clamp-3">' + bDesc + '</p>';
                   bHtml += '<div class="flex items-center justify-between text-xs border-t border-navy-800 pt-3 mb-4 text-gray-400"><span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-[var(--color-gold-500)]">inventory_2</span> المحتويات</span><span class="font-bold text-white">' + bItemsCount + ' ملفات دراسية</span></div>';
                   bHtml += '</div>';
-                  bHtml += '<div><a href="' + bHref + '" target="_top" class="btn-primary block text-center w-full text-xs py-3.5 shadow-md hover:shadow-gold-500/20 font-bold">استعرض الحقيبة والملفات</a></div>';
+                  if (bItem.is_purchased === 'purchased') {
+                    bHtml += '<div><a href="' + bHref + '" target="_top" class="btn-primary block text-center w-full text-xs py-3.5 shadow-md font-bold" style="background:#059669; border-color:#059669; color:#ffffff;">تم شراء الحقيبة</a></div>';
+                  } else if (bItem.is_purchased === 'pending') {
+                    bHtml += '<div><a href="' + bHref + '" target="_top" class="btn-primary block text-center w-full text-xs py-3.5 shadow-md font-bold" style="background:#d97706; border-color:#d97706; color:#ffffff;">جاري معالجة طلبك</a></div>';
+                  } else {
+                    bHtml += '<div><a href="' + bHref + '" target="_top" class="btn-primary block text-center w-full text-xs py-3.5 shadow-md hover:shadow-gold-500/20 font-bold">استعرض الحقيبة والملفات</a></div>';
+                  }
                   bHtml += '</div>';
                 }
                 bHtml += '</div>';

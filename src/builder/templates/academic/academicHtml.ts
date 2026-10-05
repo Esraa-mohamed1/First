@@ -875,11 +875,20 @@ ${content?.bags ? `
                   <span class="absolute top-3 left-3 bg-surface/90 backdrop-blur-md font-extrabold text-xs px-3 py-1 rounded-full shadow-sm text-primary">
                     ${priceDisplay}
                   </span>
+                  ${bag.is_purchased === 'purchased' ? `
+                    <span class="absolute top-3 right-3 bg-emerald-600 text-white font-extrabold text-xs px-3 py-1 rounded-full shadow-sm">
+                      تم شراء الحقيبة
+                    </span>
+                  ` : bag.is_purchased === 'pending' ? `
+                    <span class="absolute top-3 right-3 bg-amber-500 text-white font-extrabold text-xs px-3 py-1 rounded-full shadow-sm">
+                      جاري معالجة طلبك
+                    </span>
+                  ` : ''}
                 </div>
                 <div class="p-6">
                   <div class="flex items-center gap-2 mb-3 text-xs font-bold text-primary">
                     <span class="material-symbols-outlined text-[16px]">folder_zip</span>
-                    <span>حقيبة رقمية</span>
+                    <span>${bag.is_purchased === 'purchased' ? 'تم شراء الحقيبة' : bag.is_purchased === 'pending' ? 'جاري معالجة طلبك' : 'حقيبة رقمية'}</span>
                   </div>
                   <h3 class="text-headline-md font-headline-md text-lg font-bold mb-2 text-on-surface group-hover:text-primary transition-colors line-clamp-2">
                     ${bagTitle}
