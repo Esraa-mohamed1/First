@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import Link from 'next/link';
+import toast from 'react-hot-toast';
 import {
   X,
   Plus,
@@ -22,6 +24,8 @@ import { ExamQuestion, McqOption, MatchingPair, QuestionType } from '@/types/aca
 import { OPTION_LETTERS, getQuestionTypeMeta } from './constants';
 import { KaTeXRenderer } from './KaTeXRenderer';
 import { EquationEditorModal } from './EquationEditorModal';
+import { useLibraries, useCreateBankItem } from '@/hooks/useBank';
+import { mapExamQuestionToBankQuestion } from '@/services/bank-exam-mapper';
 
 interface QuestionEditorModalProps {
   isOpen: boolean;
@@ -30,6 +34,7 @@ interface QuestionEditorModalProps {
   questionIndex: number;
   onSave: (updatedQuestion: ExamQuestion, addAnother?: boolean) => void;
   isNew?: boolean;
+  unitTitle?: string;
 }
 
 export const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
@@ -39,10 +44,17 @@ export const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
   questionIndex,
   onSave,
   isNew = false,
+  unitTitle,
 }) => {
+  // Hooks MUST all be placed before any conditional returns
+  const { data: libraries = [], isLoading: isLibrariesLoading } = useLibraries();
+  const createBankItemMutation = useCreateBankItem();
+
   // Local draft question state
   const [draft, setDraft] = useState<ExamQuestion>({ ...initialQuestion });
   const [saveToBank, setSaveToBank] = useState(false);
+  const [selectedLibraryId, setSelectedLibraryId] = useState<string | number>('');
+  const [isSavingBank, setIsSavingBank] = useState(false);
   const [isEquationModalOpen, setIsEquationModalOpen] = useState(false);
   const [equationMode, setEquationMode] = useState<'math' | 'phys' | 'chem'>('math');
   const [targetEquationField, setTargetEquationField] = useState<{ field: 'title' | 'explanation' | 'option'; optionId?: string }>({
@@ -51,9 +63,25 @@ export const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Sync draft when initialQuestion changes
+  useEffect(() => {
+    setDraft({ ...initialQuestion });
+  }, [initialQuestion]);
+
+  // Set default selected library
+  useEffect(() => {
+    if (libraries && libraries.length > 0 && !selectedLibraryId) {
+      setSelectedLibraryId(libraries[0].id);
+    }
+  }, [libraries, selectedLibraryId]);
+
+  // Calculate reverse map validity
+  const mapResult = useMemo(() => mapExamQuestionToBankQuestion(draft), [draft]);
+
   if (!isOpen) return null;
 
   const meta = getQuestionTypeMeta(draft.type);
+  const hasBankRef = Boolean(initialQuestion?.bankRef || draft?.bankRef);
 
   // Equation Editor trigger
   const handleOpenEquation = (mode: 'math' | 'phys' | 'chem', field: 'title' | 'explanation' | 'option', optionId?: string) => {
@@ -100,13 +128,35 @@ export const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
   };
 
   // Save handler with validation
-  const handlePerformSave = (addAnother: boolean = false) => {
+  const handlePerformSave = async (addAnother: boolean = false) => {
     if (!draft.title.trim()) {
       alert('يرجى كتابة نص السؤال أولاً');
       return;
     }
 
+    // 1. Call existing onSave FIRST (exam flow must never depend on the bank)
     onSave(draft, addAnother);
+
+    // 2. If saveToBank is checked and mappable, call useCreateBankItem
+    if (saveToBank && mapResult.ok && selectedLibraryId) {
+      setIsSavingBank(true);
+      try {
+        const targetLib = libraries.find((l) => String(l.id) === String(selectedLibraryId));
+        await createBankItemMutation.mutateAsync({
+          kind: 'question',
+          libraryId: selectedLibraryId,
+          unit: unitTitle?.trim() || undefined,
+          question: mapResult.question,
+          tags: [],
+        });
+        toast.success(`تم حفظ نسخة في «${targetLib?.name || 'المكتبة'}»`);
+      } catch {
+        toast.error('السؤال اتضاف للاختبار بس ماتحفظش في البنك');
+      } finally {
+        setIsSavingBank(false);
+      }
+    }
+
     if (!addAnother) {
       onClose();
     }
@@ -253,11 +303,10 @@ export const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
                     return (
                       <div key={option.id} className="space-y-1">
                         <div
-                          className={`flex items-center gap-2.5 p-2.5 px-3.5 rounded-2xl border transition-all ${
-                            isCorrect
-                              ? 'border-emerald-500 bg-emerald-50/50'
-                              : 'border-slate-200 bg-white hover:border-slate-300'
-                          }`}
+                          className={`flex items-center gap-2.5 p-2.5 px-3.5 rounded-2xl border transition-all ${isCorrect
+                            ? 'border-emerald-500 bg-emerald-50/50'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
+                            }`}
                         >
                           {/* Pick Button */}
                           <button
@@ -276,11 +325,10 @@ export const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
                                 setDraft((prev) => ({ ...prev, options: updated }));
                               }
                             }}
-                            className={`w-6 h-6 rounded-full border flex items-center justify-center transition cursor-pointer flex-shrink-0 ${
-                              isCorrect
-                                ? 'border-emerald-600 bg-emerald-600 text-white'
-                                : 'border-slate-300 bg-white'
-                            }`}
+                            className={`w-6 h-6 rounded-full border flex items-center justify-center transition cursor-pointer flex-shrink-0 ${isCorrect
+                              ? 'border-emerald-600 bg-emerald-600 text-white'
+                              : 'border-slate-300 bg-white'
+                              }`}
                           >
                             {isCorrect && <Check size={12} strokeWidth={3} />}
                           </button>
@@ -385,11 +433,10 @@ export const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setDraft((prev) => ({ ...prev, trueFalseValue: true }))}
-                    className={`p-4 rounded-2xl border font-bold text-sm transition flex items-center justify-center gap-2 cursor-pointer ${
-                      draft.trueFalseValue === true
-                        ? 'border-emerald-500 bg-emerald-50 text-emerald-800 shadow-xs'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
+                    className={`p-4 rounded-2xl border font-bold text-sm transition flex items-center justify-center gap-2 cursor-pointer ${draft.trueFalseValue === true
+                      ? 'border-emerald-500 bg-emerald-50 text-emerald-800 shadow-xs'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
                   >
                     <CheckCircle2 size={18} className="text-emerald-500" />
                     <span>صح (صحيح)</span>
@@ -398,11 +445,10 @@ export const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setDraft((prev) => ({ ...prev, trueFalseValue: false }))}
-                    className={`p-4 rounded-2xl border font-bold text-sm transition flex items-center justify-center gap-2 cursor-pointer ${
-                      draft.trueFalseValue === false
-                        ? 'border-rose-500 bg-rose-50 text-rose-800 shadow-xs'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
+                    className={`p-4 rounded-2xl border font-bold text-sm transition flex items-center justify-center gap-2 cursor-pointer ${draft.trueFalseValue === false
+                      ? 'border-rose-500 bg-rose-50 text-rose-800 shadow-xs'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
                   >
                     <X size={18} className="text-rose-500" />
                     <span>خطأ (غير صحيح)</span>
@@ -611,23 +657,79 @@ export const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
             />
           </div>
 
-          {/* 5. Save to Bank Checkbox Card */}
-          <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-200/80 space-y-2">
-            <label className="flex items-start gap-2.5 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={saveToBank}
-                onChange={(e) => setSaveToBank(e.target.checked)}
-                className="mt-0.5 rounded text-blue-600 focus:ring-0"
-              />
-              <div>
-                <b className="text-xs font-bold text-blue-950 block">حفظ نسخة في بنك المحتوى</b>
-                <span className="text-[11px] text-blue-700">
-                  حتى تتمكن من إعادة استخدام هذا السؤال في أي اختبار قادم بسهولة
-                </span>
-              </div>
-            </label>
-          </div>
+          {/* 5. Save to Bank Checkbox Card (Shown only when question has no bankRef) */}
+          {!hasBankRef && (
+            <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-200/80 space-y-3">
+              <label
+                className={`flex items-start gap-2.5 ${!mapResult.ok || (!isLibrariesLoading && libraries.length === 0)
+                  ? 'opacity-60 cursor-not-allowed'
+                  : 'cursor-pointer'
+                  }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={saveToBank && mapResult.ok && libraries.length > 0}
+                  onChange={(e) => setSaveToBank(e.target.checked)}
+                  disabled={!mapResult.ok || (!isLibrariesLoading && libraries.length === 0) || isSavingBank}
+                  className="mt-0.5 rounded text-blue-600 focus:ring-0 disabled:cursor-not-allowed"
+                />
+                <div className="flex-1">
+                  <b className="text-xs font-bold text-blue-950 block">حفظ نسخة في بنك المحتوى</b>
+                  <span className="text-[11px] text-blue-700">
+                    حتى تتمكن من إعادة استخدام هذا السؤال في أي اختبار قادم بسهولة
+                  </span>
+                </div>
+              </label>
+
+              {/* Warning/Reason if draft is not mappable */}
+              {!mapResult.ok && (
+                <div className="text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200/90 rounded-xl px-3 py-2 flex items-center gap-1.5">
+                  <span className="shrink-0">⚠️</span>
+                  <span>{mapResult.reason}</span>
+                </div>
+              )}
+
+              {/* Warning if no libraries exist */}
+              {!isLibrariesLoading && libraries.length === 0 && (
+                <div className="text-[11px] text-slate-700 bg-white/90 border border-slate-200 rounded-xl px-3 py-2 flex items-center justify-between">
+                  <span>اعمل مكتبة الأول من بنك المحتوى</span>
+                  <Link
+                    href="/academic/bank"
+                    target="_blank"
+                    className="text-blue-600 hover:text-blue-700 font-bold underline ms-2 shrink-0"
+                  >
+                    الانتقال للبنك
+                  </Link>
+                </div>
+              )}
+
+              {/* Library Selector when checked and mappable */}
+              {saveToBank && mapResult.ok && libraries.length > 0 && (
+                <div className="pt-2.5 border-t border-blue-100/80 flex flex-col sm:flex-row sm:items-center gap-2">
+                  <label htmlFor="bank-library-select" className="text-xs font-bold text-blue-950 shrink-0">
+                    اختر المكتبة:
+                  </label>
+                  <select
+                    id="bank-library-select"
+                    value={selectedLibraryId}
+                    onChange={(e) => setSelectedLibraryId(e.target.value)}
+                    disabled={isLibrariesLoading || isSavingBank}
+                    className="flex-1 bg-white border border-blue-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-blue-500 transition disabled:bg-slate-100 cursor-pointer"
+                  >
+                    {isLibrariesLoading ? (
+                      <option value="">جارٍ تحميل المكتبات...</option>
+                    ) : (
+                      libraries.map((lib) => (
+                        <option key={lib.id} value={lib.id}>
+                          {lib.name}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Foot Bar (Matching sh-foot with Save & Save + Add Another) */}
@@ -635,26 +737,29 @@ export const QuestionEditorModal: React.FC<QuestionEditorModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 font-bold text-xs transition"
+            disabled={isSavingBank}
+            className="px-5 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 font-bold text-xs transition disabled:opacity-50"
           >
             إلغاء
           </button>
 
           <button
             type="button"
+            disabled={isSavingBank}
             onClick={() => handlePerformSave(false)}
-            className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs shadow transition cursor-pointer"
+            className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs shadow transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isNew ? 'حفظ السؤال' : 'حفظ التعديلات'}
+            {isSavingBank ? 'جارٍ الحفظ...' : isNew ? 'حفظ السؤال' : 'حفظ التعديلات'}
           </button>
 
           {isNew && (
             <button
               type="button"
+              disabled={isSavingBank}
               onClick={() => handlePerformSave(true)}
-              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition cursor-pointer flex items-center gap-1.5"
+              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>حفظ وإضافة سؤال آخر</span>
+              <span>{isSavingBank ? 'جارٍ الحفظ...' : 'حفظ وإضافة سؤال آخر'}</span>
               <Plus size={14} />
             </button>
           )}

@@ -575,6 +575,11 @@ export const ExamModal: React.FC<ExamModalProps> = ({
                         ? chaptersList.find((ch) => ch.id === selectedUnitId)?.title || unitTitle || 'الوحدة التدريبية'
                         : 'اختبار مستقل'
                     }
+                    unitTitle={
+                      selectedTargetType === 'course'
+                        ? chaptersList.find((ch) => ch.id === selectedUnitId)?.title || unitTitle
+                        : undefined
+                    }
                   />
                 ) : (
                   /* 3-Column Question Editor (Matching media_1791103057139.png) */

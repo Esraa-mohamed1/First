@@ -46,6 +46,8 @@ export interface ExamQuestion {
   description?: string;
   explanation?: string;
   conditions: QuestionConditions;
+  bankRef?: string | number; // Optional reference to source content bank question ID (backend persistence UNVERIFIED)
+  
   
   // MCQ specific
   options?: McqOption[];
