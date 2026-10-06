@@ -10,7 +10,6 @@ const RegistrationModal = () => {
         isOpen,
         view,
         closeModal,
-        openModal,
         step,
         isLoading,
         contactMethod,
@@ -198,19 +197,7 @@ const RegistrationModal = () => {
                                 'التالي'
                             )}
                         </button>
-
-
-
-                        <p className="text-center text-xs font-bold text-[#6b7280] mt-4">
-                            لديك حساب بالفعل؟{' '}
-                            <button
-                                onClick={() => openModal('login')}
-                                className="text-[#2563eb] hover:underline font-black px-1"
-                            >
-                                تسجيل الدخول
-                            </button>
-                        </p>
-                    </div >
+                    </div>
                 );
             case 2:
                 return null;

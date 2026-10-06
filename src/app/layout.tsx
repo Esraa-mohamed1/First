@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ModalProvider } from "@/context/ModalContext";
 import RegistrationModal from "@/components/Modals/RegistrationModal";
-import LoginModal from "@/components/Modals/LoginModal";
 import { Toaster } from "react-hot-toast";
 import Providers from "@/components/Providers";
 import PageLoader from "@/components/PageLoader";
@@ -38,7 +37,6 @@ export default function RootLayout({
                         {children}
                         <PageLoader />
                         <RegistrationModal />
-                        <LoginModal />
                         <Toaster position="top-center" />
                     </ModalProvider>
                 </Providers>
