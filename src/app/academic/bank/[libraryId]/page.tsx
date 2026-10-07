@@ -22,11 +22,16 @@ import BankEmptyState from '@/components/Academic/Bank/BankEmptyState';
 import BankSkeleton from '@/components/Academic/Bank/BankSkeleton';
 import BankErrorState from '@/components/Academic/Bank/BankErrorState';
 import BankPagination from '@/components/Academic/Bank/BankPagination';
-import AddBankItemModal from '@/components/Academic/Bank/AddBankItemModal';
+import AddContentChooserModal from '@/components/Academic/Bank/AddContentChooserModal';
+import LessonFormModal from '@/components/Academic/Bank/LessonFormModal';
+import VideoFormModal from '@/components/Academic/Bank/VideoFormModal';
+import QuestionTypePickerModal from '@/components/Academic/Bank/QuestionTypePickerModal';
 import BulkActionToolbar from '@/components/Academic/Bank/BulkActionToolbar';
 import DeleteConfirmModal from '@/components/Academic/Bank/DeleteConfirmModal';
 import MoveLibraryModal from '@/components/Academic/Bank/MoveLibraryModal';
 import BankItemDetailModal from '@/components/Academic/Bank/BankItemDetailModal';
+
+type AddFlowStep = 'none' | 'chooser' | 'lesson' | 'video' | 'questionPicker';
 
 export default function LibraryDetailsPage() {
   const params = useParams();
@@ -38,8 +43,11 @@ export default function LibraryDetailsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  // Modals state
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  // Single orchestration state for add content flow
+  const [addFlowStep, setAddFlowStep] = useState<AddFlowStep>('none');
+  const addTriggerButtonRef = React.useRef<HTMLElement | null>(null);
+
+  // Other modals state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
   const [detailModalState, setDetailModalState] = useState<{
@@ -233,7 +241,7 @@ export default function LibraryDetailsPage() {
         selectedCount={selectedItemIds.size}
         onClearSelection={clearSelection}
         onSelectAllVisible={handleSelectAllVisible}
-        onOpenAddModal={() => setIsAddModalOpen(true)}
+        onOpenAddModal={() => setAddFlowStep('chooser')}
       />
 
       {/* Kind Filter Tabs */}
@@ -291,7 +299,7 @@ export default function LibraryDetailsPage() {
               <div className="pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsAddModalOpen(true)}
+                  onClick={() => setAddFlowStep('chooser')}
                   className="inline-flex items-center gap-2 px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-lg shadow-indigo-600/20 active:scale-[0.98] transition-all text-sm cursor-pointer"
                 >
                   <span>إضافة محتوى</span>
@@ -333,13 +341,36 @@ export default function LibraryDetailsPage() {
         )}
       </div>
 
-      {/* Add Content Modal */}
-      <AddBankItemModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+      {/* 1. Add Content Chooser Modal */}
+      <AddContentChooserModal
+        isOpen={addFlowStep === 'chooser'}
+        onClose={() => setAddFlowStep('none')}
+        onSelectChoice={(choice) => setAddFlowStep(choice)}
+      />
+
+      {/* 2. Lesson Form Modal */}
+      <LessonFormModal
+        isOpen={addFlowStep === 'lesson'}
+        onClose={() => setAddFlowStep('none')}
+        onBack={() => setAddFlowStep('chooser')}
         libraryId={libraryId}
-        onSelectQuestionType={(type) => {
-          setIsAddModalOpen(false);
+      />
+
+      {/* 3. Video Form Modal */}
+      <VideoFormModal
+        isOpen={addFlowStep === 'video'}
+        onClose={() => setAddFlowStep('none')}
+        onBack={() => setAddFlowStep('chooser')}
+        libraryId={libraryId}
+      />
+
+      {/* 4. Question Type Picker Modal */}
+      <QuestionTypePickerModal
+        isOpen={addFlowStep === 'questionPicker'}
+        onClose={() => setAddFlowStep('none')}
+        onBack={() => setAddFlowStep('chooser')}
+        onSelectType={(type) => {
+          setAddFlowStep('none');
           setDetailModalState({
             isOpen: true,
             mode: 'create',

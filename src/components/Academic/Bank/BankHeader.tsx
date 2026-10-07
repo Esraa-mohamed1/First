@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Plus, Database, Sparkles } from 'lucide-react';
+import { USE_MOCK_BANK } from '@/services/bank';
 
 interface BankHeaderProps {
   onOpenCreateModal: () => void;
@@ -16,12 +17,17 @@ export default function BankHeader({ onOpenCreateModal }: BankHeaderProps) {
             <Database size={22} />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight flex flex-wrap items-center gap-2">
               <span>بنك المحتوى</span>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100/80 text-indigo-700">
                 <Sparkles size={11} />
                 <span>مركز الموارد</span>
               </span>
+              {USE_MOCK_BANK && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                  وضع تجريبي — البيانات مش محفوظة
+                </span>
+              )}
             </h1>
           </div>
         </div>

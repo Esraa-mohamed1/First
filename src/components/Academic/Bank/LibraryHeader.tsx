@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { ArrowRight, Plus, X, CheckSquare, Folder } from 'lucide-react';
 import { Library } from '@/types/bank';
+import { USE_MOCK_BANK } from '@/services/bank';
 
 interface LibraryHeaderProps {
   library?: Library;
@@ -116,6 +117,12 @@ export default function LibraryHeader({
           <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-bold border border-gray-200/60">
             {totalItems} عنصر
           </span>
+
+          {USE_MOCK_BANK && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+              وضع تجريبي — البيانات مش محفوظة
+            </span>
+          )}
         </div>
 
         {library?.description && (

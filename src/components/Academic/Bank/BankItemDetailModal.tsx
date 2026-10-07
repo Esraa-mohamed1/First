@@ -22,6 +22,9 @@ import {
   RefreshCw,
   Repeat,
   ArrowLeftRight,
+  Calculator,
+  Atom,
+  FlaskConical,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -42,6 +45,7 @@ import {
 } from '@/constants/bank';
 import { useBankItem, useUpdateBankItem, useCreateBankItem } from '@/hooks/useBank';
 import { KaTeXRenderer } from '@/components/Academic/Exam/KaTeXRenderer';
+import { EquationEditorModal } from '@/components/Academic/Exam/EquationEditorModal';
 import { isBankQuestionSupportedInExams } from '@/services/bank-exam-mapper';
 
 export interface BankItemDetailModalProps {
@@ -110,7 +114,7 @@ export default function BankItemDetailModal({
   // ---------------------------------------------------------------------------
   const [qType, setQType] = useState<QuestionType>(createQuestionType);
   const [qText, setQText] = useState('');
-  const [qMarks, setQMarks] = useState<number>(createQuestionType === 'essay' ? 5 : 2);
+  const [qMarks, setQMarks] = useState<number | string>(createQuestionType === 'essay' ? 5 : 2);
   const [qDifficulty, setQDifficulty] = useState<Difficulty>('');
   const [qTagsInput, setQTagsInput] = useState('');
   const [qUnit, setQUnit] = useState('');
@@ -156,6 +160,142 @@ export default function BankItemDetailModal({
 
   // Deep comparison snapshot for dirty tracking
   const initialSnapshotRef = useRef<string>('');
+
+  // ---------------------------------------------------------------------------
+  // EQUATION INSERTION STATE & REFS
+  // ---------------------------------------------------------------------------
+  const [isEquationModalOpen, setIsEquationModalOpen] = useState(false);
+  const [equationMode, setEquationMode] = useState<'math' | 'phys' | 'chem'>('math');
+  const [hideEquationDisplayToggle, setHideEquationDisplayToggle] = useState(false);
+
+  interface ActiveEquationTarget {
+    field: 'text' | 'explanation' | 'option';
+    optionIndex?: number;
+    selectionStart: number;
+    selectionEnd: number;
+    inputElement?: HTMLInputElement | HTMLTextAreaElement | null;
+    triggerButton?: HTMLElement | null;
+  }
+
+  const equationTargetRef = useRef<ActiveEquationTarget | null>(null);
+  const questionTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const explanationTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const optionInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  /**
+   * Helper to normalize marks input: converts Arabic-Indic digits (٠-٩) to (0-9),
+   * normalizes decimal commas, trims, and parses to number or null.
+   */
+  const normalizeMarksInput = (val: string | number): number | null => {
+    if (typeof val === 'number') {
+      return isNaN(val) ? null : val;
+    }
+    if (!val || typeof val !== 'string') return null;
+    let normalized = val.replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
+    normalized = normalized.replace(/[,،٫]/g, '.').trim();
+    if (!normalized) return null;
+    const num = Number(normalized);
+    return isNaN(num) ? null : num;
+  };
+
+  /**
+   * Shared helper to insert a token at caret position with smart boundary spacing.
+   * Adds a leading space if preceding char is non-whitespace (and not start of string).
+   * Adds a trailing space if following char is non-whitespace (and not end of string).
+   */
+  const insertTokenWithSmartSpacing = (
+    originalText: string,
+    token: string,
+    start: number,
+    end: number
+  ): { newText: string; caretPosition: number } => {
+    const current = originalText || '';
+    const s = start >= 0 && start <= current.length ? start : current.length;
+    const e = end >= 0 && end <= current.length ? end : s;
+
+    const before = current.substring(0, s);
+    const after = current.substring(e);
+
+    const needsLeadingSpace = before.length > 0 && !/\s$/.test(before);
+    const needsTrailingSpace = after.length > 0 && !/^\s/.test(after);
+
+    const formattedToken = `${needsLeadingSpace ? ' ' : ''}${token}${needsTrailingSpace ? ' ' : ''}`;
+    const newText = `${before}${formattedToken}${after}`;
+    const caretPosition = before.length + formattedToken.length;
+
+    return { newText, caretPosition };
+  };
+
+  const handleOpenEquationModal = (
+    mode: 'math' | 'phys' | 'chem',
+    field: 'text' | 'explanation' | 'option',
+    optionIndex?: number,
+    e?: React.MouseEvent
+  ) => {
+    let inputEl: HTMLInputElement | HTMLTextAreaElement | null = null;
+    if (field === 'text') {
+      inputEl = questionTextareaRef.current;
+    } else if (field === 'explanation') {
+      inputEl = explanationTextareaRef.current;
+    } else if (field === 'option' && optionIndex !== undefined) {
+      inputEl = optionInputRefs.current[optionIndex];
+    }
+
+    const start = inputEl?.selectionStart ?? -1;
+    const end = inputEl?.selectionEnd ?? -1;
+
+    equationTargetRef.current = {
+      field,
+      optionIndex,
+      selectionStart: start,
+      selectionEnd: end,
+      inputElement: inputEl,
+      triggerButton: (e?.currentTarget as HTMLElement) || null,
+    };
+
+    setEquationMode(mode);
+    setHideEquationDisplayToggle(field === 'option');
+    setIsEquationModalOpen(true);
+  };
+
+  const handleInsertEquation = (latexStr: string) => {
+    const target = equationTargetRef.current;
+    if (!target) return;
+
+    const { field, optionIndex, selectionStart, selectionEnd, inputElement, triggerButton } = target;
+    let newCaretPos = 0;
+
+    if (field === 'text') {
+      const res = insertTokenWithSmartSpacing(qText, latexStr, selectionStart, selectionEnd);
+      setQText(res.newText);
+      newCaretPos = res.caretPosition;
+    } else if (field === 'explanation') {
+      const res = insertTokenWithSmartSpacing(qExplanation, latexStr, selectionStart, selectionEnd);
+      setQExplanation(res.newText);
+      newCaretPos = res.caretPosition;
+    } else if (field === 'option' && optionIndex !== undefined) {
+      const currentOptText = options[optionIndex]?.text || '';
+      const res = insertTokenWithSmartSpacing(currentOptText, latexStr, selectionStart, selectionEnd);
+      const nextOptions = [...options];
+      if (nextOptions[optionIndex]) {
+        nextOptions[optionIndex].text = res.newText;
+        setOptions(nextOptions);
+      }
+      newCaretPos = res.caretPosition;
+    }
+
+    setIsEquationModalOpen(false);
+    toast.success('تم إدراج المعادلة');
+
+    setTimeout(() => {
+      if (inputElement && document.body.contains(inputElement)) {
+        inputElement.focus();
+        inputElement.setSelectionRange(newCaretPos, newCaretPos);
+      } else if (triggerButton && document.body.contains(triggerButton)) {
+        triggerButton.focus();
+      }
+    }, 50);
+  };
 
   // Reset & Populate Form when item loads or modal opens
   useEffect(() => {
@@ -253,8 +393,8 @@ export default function BankItemDetailModal({
             text: opt.text || '',
             isCorrect: Boolean(
               opt.isCorrect ||
-                (typeof q.correct === 'string' && q.correct === opt.id) ||
-                (Array.isArray(q.correct) && q.correct.includes(opt.id))
+              (typeof q.correct === 'string' && q.correct === opt.id) ||
+              (Array.isArray(q.correct) && q.correct.includes(opt.id))
             ),
           }));
           setOptions(mappedOpts);
@@ -422,13 +562,13 @@ export default function BankItemDetailModal({
   // Escape key handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape' && isOpen && !isEquationModalOpen) {
         handleRequestClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, isDirty, mode]);
+  }, [isOpen, isDirty, mode, isEquationModalOpen]);
 
   if (!isOpen) return null;
 
@@ -542,10 +682,28 @@ export default function BankItemDetailModal({
     }
 
     // Numeric validation
+    let cleanNumValue = 0;
     if (qType === 'numeric') {
-      if (!numValue.trim() || isNaN(Number(numValue))) {
+      const normalizedNum = numValue
+        .replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+        .replace(/[,،٫]/g, '.')
+        .trim();
+      if (!normalizedNum || isNaN(Number(normalizedNum))) {
         newErrors.numeric = 'اكتب القيمة الرقمية';
+      } else {
+        cleanNumValue = Number(normalizedNum);
       }
+    }
+
+    // Marks validation
+    const parsedMarks = normalizeMarksInput(qMarks);
+    if (
+      parsedMarks === null ||
+      parsedMarks < 0.5 ||
+      parsedMarks > 20 ||
+      Math.round(parsedMarks * 2) !== parsedMarks * 2
+    ) {
+      newErrors.marks = 'الدرجة لازم تكون من 0.5 لـ 20 (مضاعفات 0.5)';
     }
 
     // Matching validation
@@ -583,7 +741,7 @@ export default function BankItemDetailModal({
     const questionPayload: Omit<Question, 'id'> & { id?: string | number } = {
       type: qType,
       text: trimmedText,
-      marks: qMarks,
+      marks: parsedMarks ?? 2,
       difficulty: qDifficulty,
       tags,
       explanation: qExplanation.trim() || undefined,
@@ -615,7 +773,7 @@ export default function BankItemDetailModal({
       questionPayload.correct = shortAnswer.trim();
       questionPayload.sampleAnswer = shortAnswer.trim();
     } else if (qType === 'numeric') {
-      questionPayload.value = Number(numValue);
+      questionPayload.value = cleanNumValue;
       questionPayload.tol = numTol;
       questionPayload.unit = numUnit.trim() || undefined;
     } else if (qType === 'matching') {
@@ -755,21 +913,21 @@ export default function BankItemDetailModal({
                 {mode === 'create'
                   ? 'إضافة سؤال جديد'
                   : mode === 'edit'
-                  ? 'تعديل العنصر'
-                  : item?.kind === 'lesson'
-                  ? 'تفاصيل الدرس'
-                  : item?.kind === 'video'
-                  ? 'تفاصيل الفيديو'
-                  : 'تفاصيل السؤال'}
+                    ? 'تعديل العنصر'
+                    : item?.kind === 'lesson'
+                      ? 'تفاصيل الدرس'
+                      : item?.kind === 'video'
+                        ? 'تفاصيل الفيديو'
+                        : 'تفاصيل السؤال'}
               </h2>
               <p className="text-xs text-gray-500 font-bold mt-0.5">
                 {isCreate
                   ? questionMeta?.label || 'بنك الأسئلة'
                   : item?.kind === 'lesson'
-                  ? 'درس ومستند تعليمي'
-                  : item?.kind === 'video'
-                  ? 'فيديو تعليمي'
-                  : questionMeta?.label || 'سؤال'}
+                    ? 'درس ومستند تعليمي'
+                    : item?.kind === 'video'
+                      ? 'فيديو تعليمي'
+                      : questionMeta?.label || 'سؤال'}
                 {currentLibrary?.name && ` · ${currentLibrary.name}`}
               </p>
             </div>
@@ -833,9 +991,8 @@ export default function BankItemDetailModal({
                     </span>
                     {item.question.difficulty && (
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-bold border ${
-                          getDifficultyMeta(item.question.difficulty).badgeClass
-                        }`}
+                        className={`px-3 py-1 rounded-full text-xs font-bold border ${getDifficultyMeta(item.question.difficulty).badgeClass
+                          }`}
                       >
                         {getDifficultyMeta(item.question.difficulty).label}
                       </span>
@@ -924,8 +1081,8 @@ export default function BankItemDetailModal({
                         {item.source === 'url'
                           ? 'رابط خارجي'
                           : item.source === 'library'
-                          ? 'مكتبة الفيديو'
-                          : 'ملف مرفوع'}
+                            ? 'مكتبة الفيديو'
+                            : 'ملف مرفوع'}
                       </span>
                     </div>
 
@@ -989,28 +1146,26 @@ export default function BankItemDetailModal({
                         {item.question.options?.map((opt, idx) => {
                           const isCorrect = Boolean(
                             opt.isCorrect ||
-                              (typeof item.question.correct === 'string' &&
-                                item.question.correct === opt.id) ||
-                              (Array.isArray(item.question.correct) &&
-                                item.question.correct.includes(opt.id))
+                            (typeof item.question.correct === 'string' &&
+                              item.question.correct === opt.id) ||
+                            (Array.isArray(item.question.correct) &&
+                              item.question.correct.includes(opt.id))
                           );
 
                           return (
                             <div
                               key={opt.id || idx}
-                              className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
-                                isCorrect
+                              className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${isCorrect
                                   ? 'bg-emerald-50/50 border-emerald-300 ring-1 ring-emerald-500/20'
                                   : 'bg-white border-gray-200'
-                              }`}
+                                }`}
                             >
                               <div className="flex items-center gap-3">
                                 <div
-                                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                                    isCorrect
+                                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${isCorrect
                                       ? 'bg-emerald-600 text-white'
                                       : 'bg-gray-100 text-gray-600'
-                                  }`}
+                                    }`}
                                 >
                                   {opt.letter || idx + 1}
                                 </div>
@@ -1038,9 +1193,8 @@ export default function BankItemDetailModal({
                       <label className="text-xs font-bold text-gray-400">الإجابة الصحيحة</label>
                       <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center gap-2">
                         <span
-                          className={`px-4 py-1.5 rounded-xl font-black text-sm text-white ${
-                            item.question.correct ? 'bg-emerald-600' : 'bg-red-600'
-                          }`}
+                          className={`px-4 py-1.5 rounded-xl font-black text-sm text-white ${item.question.correct ? 'bg-emerald-600' : 'bg-red-600'
+                            }`}
                         >
                           {item.question.correct ? 'صح (صحيحة)' : 'خطأ (خاطئة)'}
                         </span>
@@ -1156,7 +1310,7 @@ export default function BankItemDetailModal({
             // =================================================================
             // EDIT MODE: LESSON / VIDEO
             // =================================================================
-            <form id="lv-edit-form" onSubmit={handleSaveLessonVideo} className="space-y-4 text-start">
+            <form id="lv-edit-form" noValidate onSubmit={handleSaveLessonVideo} className="space-y-4 text-start">
               <div className="space-y-1.5">
                 <label className="block text-sm font-bold text-gray-900">
                   العنوان <span className="text-red-500">*</span>
@@ -1211,27 +1365,24 @@ export default function BankItemDetailModal({
                       <button
                         type="button"
                         onClick={() => setLvSource('url')}
-                        className={`py-2 text-xs font-bold rounded-xl transition cursor-pointer ${
-                          lvSource === 'url' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'
-                        }`}
+                        className={`py-2 text-xs font-bold rounded-xl transition cursor-pointer ${lvSource === 'url' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'
+                          }`}
                       >
                         رابط خارجي
                       </button>
                       <button
                         type="button"
                         onClick={() => setLvSource('upload')}
-                        className={`py-2 text-xs font-bold rounded-xl transition cursor-pointer ${
-                          lvSource === 'upload' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'
-                        }`}
+                        className={`py-2 text-xs font-bold rounded-xl transition cursor-pointer ${lvSource === 'upload' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'
+                          }`}
                       >
                         رفع فيديو
                       </button>
                       <button
                         type="button"
                         onClick={() => setLvSource('library')}
-                        className={`py-2 text-xs font-bold rounded-xl transition cursor-pointer ${
-                          lvSource === 'library' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'
-                        }`}
+                        className={`py-2 text-xs font-bold rounded-xl transition cursor-pointer ${lvSource === 'library' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'
+                          }`}
                       >
                         مكتبة الفيديو
                       </button>
@@ -1266,14 +1417,15 @@ export default function BankItemDetailModal({
             // =================================================================
             // EDIT / CREATE MODE: QUESTION EDITOR
             // =================================================================
-            <form id="question-edit-form" onSubmit={handleSaveQuestion} className="space-y-5 text-start">
+            <form id="question-edit-form" noValidate onSubmit={handleSaveQuestion} className="space-y-5 text-start">
               {/* Question Text Area */}
               <div className="space-y-1.5">
                 <label className="block text-sm font-bold text-gray-900">
                   نص السؤال <span className="text-red-500">*</span>
                 </label>
-                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-3 focus-within:border-indigo-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/10 transition">
+                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-3 focus-within:border-indigo-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/10 transition space-y-2">
                   <textarea
+                    ref={questionTextareaRef}
                     value={qText}
                     data-field="text"
                     onChange={(e) => setQText(e.target.value)}
@@ -1286,6 +1438,37 @@ export default function BankItemDetailModal({
                     disabled={updateMutation.isPending || createMutation.isPending}
                     className="w-full bg-transparent outline-none text-sm text-gray-900 resize-none font-medium leading-relaxed"
                   />
+
+                  {/* Toolbar inside question-text card */}
+                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-200/60">
+                    <button
+                      type="button"
+                      onClick={(e) => handleOpenEquationModal('math', 'text', undefined, e)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition border border-indigo-200/80 cursor-pointer shadow-2xs"
+                      title="إدراج معادلة رياضية"
+                    >
+                      <Calculator size={14} className="text-indigo-600" />
+                      <span>معادلة رياضية</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleOpenEquationModal('phys', 'text', undefined, e)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition border border-gray-200 cursor-pointer"
+                      title="إدراج معادلة فيزيائية"
+                    >
+                      <Atom size={14} className="text-blue-600" />
+                      <span>فيزياء</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleOpenEquationModal('chem', 'text', undefined, e)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition border border-gray-200 cursor-pointer"
+                      title="إدراج معادلة كيميائية"
+                    >
+                      <FlaskConical size={14} className="text-emerald-600" />
+                      <span>كيمياء</span>
+                    </button>
+                  </div>
                 </div>
                 {errors.text && <p className="text-xs text-red-500 font-bold">{errors.text}</p>}
 
@@ -1319,55 +1502,78 @@ export default function BankItemDetailModal({
 
                     <div className="space-y-2">
                       {options.map((opt, idx) => (
-                        <div
-                          key={opt.id || idx}
-                          className={`p-2.5 rounded-xl border flex items-center gap-2 transition ${
-                            opt.isCorrect
-                              ? 'bg-emerald-50/70 border-emerald-300 ring-1 ring-emerald-400/20'
-                              : 'bg-white border-gray-200'
-                          }`}
-                        >
-                          {/* Selection indicator */}
-                          <button
-                            type="button"
-                            onClick={() => handleSelectOptionCorrect(idx)}
-                            className={`w-6 h-6 rounded-full flex items-center justify-center transition shrink-0 cursor-pointer ${
+                        <div key={opt.id || idx} className="space-y-1.5">
+                          <div
+                            className={`p-2.5 rounded-xl border flex items-center gap-2 transition ${
                               opt.isCorrect
-                                ? 'bg-emerald-600 text-white shadow-xs'
-                                : 'border border-gray-300 bg-white hover:border-gray-400'
+                                ? 'bg-emerald-50/70 border-emerald-300 ring-1 ring-emerald-400/20'
+                                : 'bg-white border-gray-200'
                             }`}
-                            aria-label={`تحديد الاختيار ${idx + 1} كصحيح`}
                           >
-                            {opt.isCorrect && <Check size={13} strokeWidth={3} />}
-                          </button>
+                            {/* Selection indicator */}
+                            <button
+                              type="button"
+                              onClick={() => handleSelectOptionCorrect(idx)}
+                              className={`w-6 h-6 rounded-full flex items-center justify-center transition shrink-0 cursor-pointer ${
+                                opt.isCorrect
+                                  ? 'bg-emerald-600 text-white shadow-xs'
+                                  : 'border border-gray-300 bg-white hover:border-gray-400'
+                              }`}
+                              aria-label={`تحديد الاختيار ${idx + 1} كصحيح`}
+                            >
+                              {opt.isCorrect && <Check size={13} strokeWidth={3} />}
+                            </button>
 
-                          {/* Text input */}
-                          <input
-                            type="text"
-                            value={opt.text}
-                            onChange={(e) => {
-                              const next = [...options];
-                              next[idx].text = e.target.value;
-                              setOptions(next);
-                            }}
-                            placeholder={`الإجابة ${idx === 0 ? 'الأولى' : idx === 1 ? 'الثانية' : idx === 2 ? 'الثالثة' : idx === 3 ? 'الرابعة' : idx + 1}…`}
-                            className="flex-1 bg-transparent outline-none text-xs sm:text-sm font-medium text-gray-800"
-                          />
+                            {/* Text input */}
+                            <input
+                              ref={(el) => {
+                                optionInputRefs.current[idx] = el;
+                              }}
+                              type="text"
+                              value={opt.text}
+                              onChange={(e) => {
+                                const next = [...options];
+                                next[idx].text = e.target.value;
+                                setOptions(next);
+                              }}
+                              placeholder={`الإجابة ${idx === 0 ? 'الأولى' : idx === 1 ? 'الثانية' : idx === 2 ? 'الثالثة' : idx === 3 ? 'الرابعة' : idx + 1}…`}
+                              className="flex-1 bg-transparent outline-none text-xs sm:text-sm font-medium text-gray-800"
+                            />
 
-                          {opt.isCorrect && (
-                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-md shrink-0">
-                              صحيحة
-                            </span>
+                            {opt.isCorrect && (
+                              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-md shrink-0">
+                                صحيحة
+                              </span>
+                            )}
+
+                            {/* Sigma Equation Button */}
+                            <button
+                              type="button"
+                              onClick={(e) => handleOpenEquationModal('math', 'option', idx, e)}
+                              className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition shrink-0 cursor-pointer font-serif font-bold text-xs"
+                              aria-label="إضافة معادلة للإجابة"
+                              title="إضافة معادلة للإجابة"
+                            >
+                              Σ
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveOption(idx)}
+                              className="p-1 text-gray-400 hover:text-red-500 transition rounded-lg"
+                              title="حذف الاختيار"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+
+                          {/* Option equation preview if contains $ */}
+                          {opt.text.includes('$') && (
+                            <div className="ms-8 px-3 py-1.5 bg-indigo-50/40 rounded-xl border border-indigo-100/60 text-xs font-bold text-gray-900 flex items-center gap-2">
+                              <span className="text-[10px] text-indigo-600 font-bold shrink-0">معاينة:</span>
+                              <KaTeXRenderer content={opt.text} inline />
+                            </div>
                           )}
-
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveOption(idx)}
-                            className="p-1 text-gray-400 hover:text-red-500 transition rounded-lg"
-                            title="حذف الاختيار"
-                          >
-                            <X size={14} />
-                          </button>
                         </div>
                       ))}
                     </div>
@@ -1411,27 +1617,25 @@ export default function BankItemDetailModal({
                       <button
                         type="button"
                         onClick={() => setTfAnswer(true)}
-                        className={`py-3.5 rounded-2xl font-black text-sm border transition flex items-center justify-center gap-2 cursor-pointer ${
-                          tfAnswer === true
+                        className={`py-3.5 rounded-2xl font-black text-sm border transition flex items-center justify-center gap-2 cursor-pointer ${tfAnswer === true
                             ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20'
                             : 'bg-white text-gray-700 border-gray-200 hover:border-emerald-300'
-                        }`}
+                          }`}
                       >
                         <Check size={18} />
-                        <span>صح (صحيحة)</span>
+                        <span>صح</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setTfAnswer(false)}
-                        className={`py-3.5 rounded-2xl font-black text-sm border transition flex items-center justify-center gap-2 cursor-pointer ${
-                          tfAnswer === false
+                        className={`py-3.5 rounded-2xl font-black text-sm border transition flex items-center justify-center gap-2 cursor-pointer ${tfAnswer === false
                             ? 'bg-red-600 text-white border-red-600 shadow-md shadow-red-600/20'
                             : 'bg-white text-gray-700 border-gray-200 hover:border-red-300'
-                        }`}
+                          }`}
                       >
                         <X size={18} />
-                        <span>خطأ (خاطئة)</span>
+                        <span>خطأ</span>
                       </button>
                     </div>
                     {errors.tf && <p className="text-xs text-red-500 font-bold">{errors.tf}</p>}
@@ -1630,29 +1834,39 @@ export default function BankItemDetailModal({
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setQMarks((m) => Math.max(0.5, Number((m - 1).toFixed(1))))}
-                      className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 font-bold text-base flex items-center justify-center text-gray-700 transition"
+                      onClick={() => {
+                        const cur = normalizeMarksInput(qMarks) ?? 2;
+                        const next = cur <= 1 ? 0.5 : Math.max(0.5, Number((cur - 1).toFixed(1)));
+                        setQMarks(next);
+                      }}
+                      className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 font-bold text-base flex items-center justify-center text-gray-700 transition cursor-pointer"
                     >
                       -
                     </button>
                     <input
                       type="number"
+                      data-field="marks"
                       value={qMarks}
                       min={0.5}
                       max={20}
-                      step={1}
-                      onChange={(e) => setQMarks(Math.max(0.5, Math.min(20, Number(e.target.value) || 1)))}
-                      className="w-20 py-2 text-center bg-gray-50 border border-gray-200 rounded-xl font-mono font-bold text-sm outline-none focus:border-indigo-600"
+                      step={0.5}
+                      onChange={(e) => setQMarks(e.target.value)}
+                      className="w-20 py-2 text-center bg-gray-50 border border-gray-200 rounded-xl font-mono font-bold text-sm outline-none focus:border-indigo-600 focus:bg-white"
                     />
                     <button
                       type="button"
-                      onClick={() => setQMarks((m) => Math.min(20, Number((m + 1).toFixed(1))))}
-                      className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 font-bold text-base flex items-center justify-center text-gray-700 transition"
+                      onClick={() => {
+                        const cur = normalizeMarksInput(qMarks) ?? 2;
+                        const next = cur >= 19.5 ? 20 : Math.min(20, Number((cur + 1).toFixed(1)));
+                        setQMarks(next);
+                      }}
+                      className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 font-bold text-base flex items-center justify-center text-gray-700 transition cursor-pointer"
                     >
                       +
                     </button>
                     <span className="text-xs text-gray-500 font-bold">درجات</span>
                   </div>
+                  {errors.marks && <p className="text-xs text-red-500 font-bold">{errors.marks}</p>}
                 </div>
 
                 {/* Difficulty Segmented Buttons */}
@@ -1667,11 +1881,10 @@ export default function BankItemDetailModal({
                           key={d}
                           type="button"
                           onClick={() => setQDifficulty(isSelected ? '' : d)}
-                          className={`py-1.5 rounded-lg transition cursor-pointer ${
-                            isSelected
+                          className={`py-1.5 rounded-lg transition cursor-pointer ${isSelected
                               ? 'bg-white text-indigo-700 shadow-xs'
                               : 'text-gray-600 hover:text-gray-900'
-                          }`}
+                            }`}
                         >
                           {meta.label}
                         </button>
@@ -1720,14 +1933,50 @@ export default function BankItemDetailModal({
                 </button>
 
                 {isExplanationOpen && (
-                  <div className="p-3 bg-white border-t border-gray-100">
+                  <div className="p-3 bg-white border-t border-gray-100 space-y-2">
                     <textarea
+                      ref={explanationTextareaRef}
                       value={qExplanation}
                       onChange={(e) => setQExplanation(e.target.value)}
                       placeholder="اشرح الحل خطوة بخطوة…"
                       rows={3}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 resize-none outline-none focus:border-indigo-600"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 resize-none outline-none focus:border-indigo-600 leading-relaxed"
                     />
+
+                    {/* Toolbar under explanation textarea */}
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100">
+                      <button
+                        type="button"
+                        onClick={(e) => handleOpenEquationModal('math', 'explanation', undefined, e)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition border border-indigo-200/80 cursor-pointer shadow-2xs"
+                        title="إدراج معادلة رياضية"
+                      >
+                        <Calculator size={14} className="text-indigo-600" />
+                        <span>معادلة</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => handleOpenEquationModal('chem', 'explanation', undefined, e)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition border border-gray-200 cursor-pointer"
+                        title="إدراج معادلة كيميائية"
+                      >
+                        <FlaskConical size={14} className="text-emerald-600" />
+                        <span>كيمياء</span>
+                      </button>
+                    </div>
+
+                    {/* Math Live Preview block if explanation contains $ */}
+                    {qExplanation.includes('$') && (
+                      <div className="p-3 bg-indigo-50/50 rounded-xl border border-indigo-100 space-y-1">
+                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-indigo-700">
+                          <Sparkles size={13} />
+                          <span>معاينة الشرح:</span>
+                        </div>
+                        <div className="text-xs font-medium text-gray-900">
+                          <KaTeXRenderer content={qExplanation} inline />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1844,6 +2093,16 @@ export default function BankItemDetailModal({
           </div>
         </div>
       )}
+
+      {/* Equation Editor Modal */}
+      <EquationEditorModal
+        isOpen={isEquationModalOpen}
+        onClose={() => setIsEquationModalOpen(false)}
+        onInsert={handleInsertEquation}
+        initialCategory={equationMode}
+        zIndexClass="z-[130]"
+        hideDisplayToggle={hideEquationDisplayToggle}
+      />
     </div>
   );
 }
