@@ -30,6 +30,7 @@ interface ExamOverviewTabProps {
   onOpenPreview: () => void;
   onGoToSettingsOrPublish: () => void;
   courseTitle?: string;
+  unitTitle?: string;
 }
 
 export const ExamOverviewTab: React.FC<ExamOverviewTabProps> = ({
@@ -41,6 +42,7 @@ export const ExamOverviewTab: React.FC<ExamOverviewTabProps> = ({
   onOpenPreview,
   onGoToSettingsOrPublish,
   courseTitle = 'الاختبار الحالي',
+  unitTitle,
 }) => {
   const [isTypePickerOpen, setIsTypePickerOpen] = useState(false);
   const [isBankPickerOpen, setIsBankPickerOpen] = useState(false);
@@ -377,6 +379,7 @@ export const ExamOverviewTab: React.FC<ExamOverviewTabProps> = ({
           questionIndex={editingQuestion.index}
           isNew={editingQuestion.isNew}
           onSave={handleSaveQuestion}
+          unitTitle={unitTitle}
         />
       )}
 

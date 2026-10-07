@@ -19,6 +19,7 @@ import {
   ShoppingBag,
   Video,
   ClipboardCheck,
+  Database,
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import Image from 'next/image';
@@ -45,6 +46,12 @@ export const SIDEBAR_PALETTE: Record<string, NavItemPalette> = {
     chipBg: 'bg-violet-50',
     chipText: 'text-violet-600',
     chipActiveBg: 'bg-violet-600',
+    chipActiveText: 'text-white',
+  },
+  'بنك المحتوى': {
+    chipBg: 'bg-indigo-50',
+    chipText: 'text-indigo-600',
+    chipActiveBg: 'bg-indigo-600',
     chipActiveText: 'text-white',
   },
   'صفحات الهبوط': {
@@ -231,6 +238,11 @@ const Sidebar = ({ isOpen = false, onClose, isCollapsed = false, onToggleCollaps
         },
         { label: 'معاينة كطالب  ', href: '/academic/courses/8/student' },
       ],
+    },
+    {
+      label: 'بنك المحتوى',
+      icon: Database,
+      href: '/academic/bank',
     },
     {
       label: 'صفحات الهبوط',
